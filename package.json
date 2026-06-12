@@ -1,0 +1,17 @@
+{
+  "name": "annotation-project",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -k -n FRONTEND,BACKEND -c blue,magenta \"npm:dev:frontend\" \"npm:dev:backend\"",
+    "dev:frontend": "cd frontend && vite",
+    "dev:backend": "cd backend && ts-node-dev --respawn --transpile-only src/app.ts",
+    "build:frontend": "cd frontend && vite build",
+    "build:backend": "cd backend && tsc",
+    "build": "npm run build:frontend && npm run build:backend",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

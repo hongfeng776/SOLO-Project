@@ -1,0 +1,350 @@
+@use '@/styles/variables.scss' as *;
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: $font-family;
+  font-size: $font-size-base;
+  color: $color-text-primary;
+  background-color: $bg-color-page;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: $color-primary;
+  text-decoration: none;
+  transition: color $duration-fast $ease-in-out;
+  &:hover {
+    color: $color-primary-light;
+  }
+}
+
+ul,
+ol,
+li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin: 0;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  &:hover {
+    background: rgba(0, 0, 0, 0.25);
+  }
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#nprogress {
+  .bar {
+    background: $color-primary !important;
+    height: 3px !important;
+  }
+  .peg {
+    box-shadow: 0 0 10px $color-primary, 0 0 5px $color-primary !important;
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity $duration-page ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all $duration-page $ease-in-out;
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+@keyframes shake-animation {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+.shake {
+  animation: shake-animation $duration-base $ease-in-out;
+}
+
+@keyframes pulse-animation {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+.pulse {
+  animation: pulse-animation 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-move {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(100% + 200px) 0;
+  }
+}
+.skeleton {
+  background: $skeleton-color;
+  background-image: $skeleton-gradient;
+  background-size: 200% 100%;
+  animation: skeleton-move 1.5s ease-in-out infinite;
+  border-radius: $radius-xs;
+}
+
+.el-message {
+  border-radius: $radius-md !important;
+}
+.el-dialog {
+  border-radius: $radius-lg !important;
+  overflow: hidden;
+  &__header {
+    border-bottom: 1px solid $color-border-light;
+    padding: 16px 24px;
+  }
+  &__body {
+    padding: 20px 24px;
+  }
+  &__footer {
+    border-top: 1px solid $color-border-light;
+    padding: 12px 24px;
+  }
+}
+
+.el-button {
+  border-radius: $radius-md;
+  font-weight: 500;
+  transition:
+    transform $duration-fast $ease-in-out,
+    box-shadow $duration-fast $ease-in-out,
+    opacity $duration-fast,
+    background-color $duration-fast,
+    border-color $duration-fast,
+    color $duration-fast;
+
+  &:active:not(:disabled) {
+    transform: translateY(2px);
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  &.is-loading {
+    opacity: 0.75;
+    pointer-events: none;
+  }
+  &--primary {
+    background: $color-primary;
+    border-color: $color-primary;
+    &:hover:not(:disabled) {
+      background: $color-primary-light;
+      border-color: $color-primary-light;
+    }
+    &:active:not(:disabled) {
+      background: $color-primary-dark;
+      border-color: $color-primary-dark;
+    }
+  }
+}
+
+.el-input,
+.el-select,
+.el-date-editor,
+.el-cascader {
+  .el-input__wrapper {
+    border-radius: $radius-md;
+    transition:
+      all $duration-fast $ease-in-out,
+      transform $duration-fast $ease-in-out,
+      box-shadow $duration-fast $ease-in-out;
+    &.is-focus {
+      box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.15);
+      transform: scale(1.015);
+      border-color: $color-primary;
+    }
+  }
+  &.is-error {
+    .el-input__wrapper {
+      animation: shake-animation $duration-base $ease-in-out;
+    }
+  }
+}
+
+.el-card {
+  border-radius: $radius-lg;
+  border: none;
+  box-shadow: $shadow-sm;
+  transition: box-shadow $duration-base $ease-in-out;
+  &:hover {
+    box-shadow: $shadow-md;
+  }
+}
+
+.el-menu {
+  border-right: none !important;
+  background: transparent !important;
+  .el-menu-item,
+  .el-sub-menu__title {
+    margin: 4px 8px;
+    border-radius: $radius-md;
+    height: 42px;
+    line-height: 42px;
+    transition: background-color $duration-fast;
+    &:hover {
+      background: rgba(22, 119, 255, 0.08) !important;
+      color: $color-primary;
+    }
+    &.is-active {
+      background: rgba(22, 119, 255, 0.12) !important;
+      color: $color-primary !important;
+      font-weight: 500;
+    }
+  }
+}
+
+.el-table {
+  --el-table-border-color: $color-border-light;
+  --el-table-header-bg-color: $table-header-bg;
+  --el-table-header-text-color: $table-header-color;
+  --el-table-row-hover-bg-color: $table-row-hover;
+  border-radius: $radius-lg;
+  overflow: hidden;
+
+  th.el-table__cell {
+    background: $table-header-bg !important;
+    font-weight: 600;
+  }
+  tr.el-table__row {
+    background: $table-row-bg;
+    &:nth-child(2n) {
+      background: $table-row-alt;
+    }
+    &.current-row > td.el-table__cell {
+      background: $table-row-selected !important;
+    }
+    &:hover > td.el-table__cell {
+      background: $table-row-hover !important;
+    }
+  }
+}
+
+.el-pagination {
+  margin-top: $spacing-md;
+  display: flex;
+  justify-content: flex-end;
+  .btn-prev,
+  .btn-next,
+  .el-pager li {
+    border-radius: $radius-md;
+    &.is-active {
+      background: $color-primary;
+    }
+  }
+}
+
+.flex {
+  display: flex;
+}
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+.flex-1 {
+  flex: 1;
+}
+.items-center {
+  align-items: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.justify-center {
+  justify-content: center;
+}
+.w-full {
+  width: 100%;
+}
+.h-full {
+  height: 100%;
+}
+.mt-4 {
+  margin-top: $spacing-sm;
+}
+.mt-8 {
+  margin-top: $spacing-md;
+}
+.mb-4 {
+  margin-bottom: $spacing-sm;
+}
+.mb-8 {
+  margin-bottom: $spacing-md;
+}
+.p-8 {
+  padding: $spacing-md;
+}
+.p-16 {
+  padding: $spacing-lg;
+}
+.gap-4 {
+  gap: $spacing-sm;
+}
+.gap-8 {
+  gap: $spacing-md;
+}
+.text-ellipsis {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

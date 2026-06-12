@@ -1,0 +1,106 @@
+$color-primary: #1677ff;
+$color-primary-light: #4096ff;
+$color-primary-dark: #0958d9;
+$color-success: #52c41a;
+$color-warning: #faad14;
+$color-danger: #ff4d4f;
+$color-info: #909399;
+
+$color-text-primary: #1f2329;
+$color-text-regular: #4e5969;
+$color-text-secondary: #86909c;
+$color-text-placeholder: #c9cdd4;
+
+$color-border: #e5e6eb;
+$color-border-light: #f2f3f5;
+$color-divider: #f2f3f5;
+
+$bg-color: #f5f7fa;
+$bg-color-page: #f5f7fa;
+$bg-color-card: #ffffff;
+$bg-color-hover: #f5f7fa;
+$bg-color-mask: rgba(0, 0, 0, 0.45);
+
+$table-row-bg: #ffffff;
+$table-row-alt: #fafafa;
+$table-row-hover: #e8f4ff;
+$table-row-selected: #e8f4ff;
+$table-header-bg: #fafafa;
+$table-header-color: #1f2329;
+
+$radius-xs: 4px;
+$radius-sm: 6px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 16px;
+$radius-round: 999px;
+$radius-base: 8px;
+
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-xxl: 48px;
+$spacing-base: 8px;
+
+$shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+$shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.08);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+$shadow-base: 0 1px 4px rgba(0, 0, 0, 0.08);
+
+$font-size-xs: 12px;
+$font-size-sm: 13px;
+$font-size-base: 14px;
+$font-size-md: 14px;
+$font-size-lg: 16px;
+$font-size-xl: 18px;
+$font-size-xxl: 20px;
+$font-size-title: 24px;
+
+$font-family:
+  -apple-system,
+  BlinkMacSystemFont,
+  'Segoe UI',
+  Roboto,
+  'PingFang SC',
+  'Hiragino Sans GB',
+  'Microsoft YaHei',
+  'Helvetica Neue',
+  Helvetica,
+  Arial,
+  sans-serif;
+
+$transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+$transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+$transition-slow: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+
+$duration-base: 0.3s;
+$duration-fast: 0.15s;
+$duration-slow: 0.45s;
+$duration-page: 0.3s;
+$duration-modal: 0.3s;
+
+$ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+$ease-out: cubic-bezier(0, 0, 0.2, 1);
+$ease-in: cubic-bezier(0.4, 0, 1, 1);
+
+$sidebar-width: 220px;
+$sidebar-width-collapsed: 64px;
+$header-height: 56px;
+$footer-height: 48px;
+$tabs-height: 40px;
+
+$z-index-normal: 1;
+$z-index-top: 1000;
+$z-index-popper: 2000;
+$z-index-modal: 3000;
+$z-index-message: 4000;
+
+$input-height-base: 32px;
+$input-height-lg: 40px;
+$input-height-sm: 24px;
+
+$skeleton-color: #f2f3f5;
+$skeleton-gradient: linear-gradient(90deg, #f2f3f5 25%, #e5e6eb 50%, #f2f3f5 75%);
