@@ -19,13 +19,16 @@
     "@/config": "dist/config"
   },
   "dependencies": {
+    "@types/node-cache": "^4.1.3",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
+    "dayjs": "^1.11.21",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "module-alias": "^2.2.3",
     "mysql2": "^3.10.0",
+    "node-cache": "^5.1.2",
     "reflect-metadata": "^0.2.2",
     "sequelize": "^6.37.3",
     "sequelize-typescript": "^2.1.6"

@@ -72,16 +72,55 @@ export interface ModalProps {
   title: string;
   width?: string | number;
   height?: string | number;
+  top?: string;
   okText?: string;
   cancelText?: string;
   confirmLoading?: boolean;
   showFooter?: boolean;
   closeOnClickModal?: boolean;
+  appendToBody?: boolean;
+  destroyOnClose?: boolean;
+  round?: boolean;
 }
 
 export type ModalEmits = {
   (e: 'update:visible', val: boolean): void;
+  (e: 'update:confirmLoading', val: boolean): void;
   (e: 'ok'): void;
   (e: 'cancel'): void;
   (e: 'close'): void;
 };
+
+export interface TableSkeletonProps {
+  columns?: number;
+  rows?: number;
+  showHeader?: boolean;
+  cellHeight?: number;
+  headerHeight?: number;
+  bordered?: boolean;
+  rounded?: boolean;
+  animated?: boolean;
+  rowWidths?: number[];
+}
+
+export interface BaseTableExposed<T = any> {
+  clearSelection: () => void;
+  toggleRowSelection: (row: T, selected?: boolean) => void;
+  toggleAllSelection: () => void;
+  setCurrentRow: (row: T | null) => void;
+  clearSort: () => void;
+  clearFilter: (columnKeys?: string[]) => void;
+  doLayout: () => void;
+  sort: (prop: string, order: 'ascending' | 'descending' | null) => void;
+  selection: T[];
+  getSelection: () => T[];
+}
+
+export interface BaseModalExposed {
+  open: () => void;
+  close: () => void;
+  handleOk: () => Promise<void>;
+  handleCancel: () => void;
+  setConfirmLoading: (val: boolean) => void;
+}
+

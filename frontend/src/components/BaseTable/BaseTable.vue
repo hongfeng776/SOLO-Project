@@ -1,7 +1,15 @@
 <script setup lang="ts">
+/**
+ * 通用表格组件
+ * @description 内置隔行变色、行悬停高亮、表头固定、单双击事件、列宽拖拽、分页
+ * @example
+ * <BaseTable :columns="columns" :data="list" :total="total" @rowClick="onRowClick" />
+ */
 import { computed, ref, watch, reactive, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import type { TableColumn } from '@/types';
+import type { TableColumn, BaseTableExposed } from '@/types';
 import TableSkeleton from '@/components/TableSkeleton';
+
+const tableRef = ref<any>(null);
 
 interface Props<T = any> {
   columns: TableColumn<T>[];
@@ -25,7 +33,7 @@ interface Props<T = any> {
   columnDraggable?: boolean;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props<any>>(), {
   data: () => [],
   loading: false,
   total: 0,
@@ -174,12 +182,65 @@ onBeforeUnmount(() => {
   window.removeEventListener('mouseup', handleMouseUp);
 });
 
-defineExpose({
-  clearSelection: () => (selection.value = []),
-  toggleRowSelection: (row: any, selected?: boolean) => {
-    // 通过 ref 暴露可扩展
-  },
-  selection,
+/** 清空选择 */
+const clearSelection = () => {
+  selection.value = [];
+  tableRef.value?.clearSelection?.();
+};
+
+/** 切换某行选中状态 */
+const toggleRowSelection = (row: any, selected?: boolean) => {
+  tableRef.value?.toggleRowSelection?.(row, selected);
+};
+
+/** 全选/全不选 */
+const toggleAllSelection = () => {
+  tableRef.value?.toggleAllSelection?.();
+};
+
+/** 设置当前选中行 */
+const setCurrentRow = (row: any | null) => {
+  tableRef.value?.setCurrentRow?.(row);
+};
+
+/** 清空排序 */
+const clearSort = () => {
+  tableRef.value?.clearSort?.();
+};
+
+/** 清空筛选 */
+const clearFilter = (columnKeys?: string[]) => {
+  tableRef.value?.clearFilter?.(columnKeys);
+};
+
+/** 重新布局 */
+const doLayout = () => {
+  nextTick(() => tableRef.value?.doLayout?.());
+};
+
+/** 手动排序 */
+const sort = (prop: string, order: 'ascending' | 'descending' | null) => {
+  tableRef.value?.sort?.(prop, order);
+};
+
+const rowStyle = ({ rowIndex }: { rowIndex: number }) => ({
+  background: rowIndex % 2 === 0 ? '#ffffff' : '#fafafa',
+});
+
+/** 获取已选中的行 */
+const getSelection = (): any[] => selection.value;
+
+defineExpose<BaseTableExposed<any>>({
+  clearSelection,
+  toggleRowSelection,
+  toggleAllSelection,
+  setCurrentRow,
+  clearSort,
+  clearFilter,
+  doLayout,
+  sort,
+  selection: selection.value,
+  getSelection,
 });
 </script>
 
@@ -189,6 +250,7 @@ defineExpose({
       <TableSkeleton :columns="columns.length + (showIndex ? 1 : 0) + (showSelection ? 1 : 0)" :rows="skeletonRows" />
     </div>
     <el-table
+      ref="tableRef"
       :data="data"
       :border="border"
       :stripe="stripe"
@@ -199,6 +261,7 @@ defineExpose({
       :highlight-current-row="highlightCurrentRow"
       :show-summary="showSummary"
       :header-cell-style="{ background: 'transparent' }"
+      :row-style="rowStyle"
       @row-click="handleRowClick"
       @row-dblclick="handleRowDblClick"
       @selection-change="handleSelectionChange"
@@ -264,7 +327,7 @@ defineExpose({
       </div>
       <el-pagination
         background
-        layout="prev, pager, next, jumper"
+        layout="prev, pager, next, jumper, sizes"
         :current-page="currentPage"
         :page-sizes="pageSizes"
         :page-size="currentSize"
@@ -287,6 +350,20 @@ defineExpose({
 
 .base-table {
   width: 100%;
+}
+
+:deep(.el-table__row.current-row) {
+  background-color: #e8f4ff !important;
+  > td {
+    background-color: #e8f4ff !important;
+  }
+}
+
+:deep(.el-table__row:hover) {
+  background-color: rgba(22, 119, 255, 0.06) !important;
+  > td {
+    background-color: rgba(22, 119, 255, 0.06) !important;
+  }
 }
 
 .skeleton-mask {
@@ -385,3 +462,4 @@ defineExpose({
   }
 }
 </style>
+
