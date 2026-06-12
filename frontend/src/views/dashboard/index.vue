@@ -4,6 +4,7 @@ import { useUserStore } from '@/store';
 import * as echarts from 'echarts';
 import { userApi } from '@/api';
 import { useAppStore } from '@/store';
+import { buildMockDashboardData, type DashboardData, type TrendPoint, type RoleDistribution } from '@/mock/dashboard';
 
 const userStore = useUserStore();
 const appStore = useAppStore();
@@ -21,8 +22,16 @@ let lineChart: echarts.ECharts | null = null;
 let pieChart: echarts.ECharts | null = null;
 
 const loading = ref(true);
+const mockData = ref<DashboardData | null>(null);
 
-const renderCharts = () => {
+const applyStats = (d: DashboardData) => {
+  stats.value[0].value = d.stats.totalUsers;
+  stats.value[1].value = d.stats.todayActive;
+  stats.value[2].value = d.stats.totalTasks;
+  stats.value[3].value = d.stats.completionRate;
+};
+
+const renderCharts = (trend: TrendPoint[], roles: RoleDistribution[]) => {
   if (chartRef.value) {
     lineChart = echarts.init(chartRef.value);
     lineChart.setOption({
@@ -31,7 +40,7 @@ const renderCharts = () => {
       grid: { left: 40, right: 20, top: 40, bottom: 30 },
       xAxis: {
         type: 'category',
-        data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+        data: trend.map((t) => t.date),
         axisLine: { lineStyle: { color: '#e5e6eb' } },
       },
       yAxis: { type: 'value', splitLine: { lineStyle: { color: '#f2f3f5' } } },
@@ -40,7 +49,7 @@ const renderCharts = () => {
           name: '新增用户',
           type: 'line',
           smooth: true,
-          data: [12, 19, 8, 15, 22, 28, 18],
+          data: trend.map((t) => t.newUsers),
           symbolSize: 6,
           lineStyle: { color: '#1677ff', width: 3 },
           itemStyle: { color: '#1677ff' },
@@ -55,7 +64,7 @@ const renderCharts = () => {
           name: '活跃用户',
           type: 'line',
           smooth: true,
-          data: [35, 42, 28, 48, 55, 60, 45],
+          data: trend.map((t) => t.activeUsers),
           symbolSize: 6,
           lineStyle: { color: '#52c41a', width: 3 },
           itemStyle: { color: '#52c41a' },
@@ -76,12 +85,11 @@ const renderCharts = () => {
           avoidLabelOverlap: true,
           itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
           label: { show: false },
-          data: [
-            { value: 1048, name: '管理员', itemStyle: { color: '#1677ff' } },
-            { value: 735, name: '标注员', itemStyle: { color: '#52c41a' } },
-            { value: 580, name: '审核员', itemStyle: { color: '#faad14' } },
-            { value: 484, name: '访客', itemStyle: { color: '#722ed1' } },
-          ],
+          data: roles.map((r) => ({
+            value: r.value,
+            name: r.name,
+            itemStyle: { color: r.color },
+          })),
         },
       ],
     });
@@ -94,24 +102,22 @@ const handleResize = () => {
 };
 
 onMounted(async () => {
+  let totalUsers = 0;
   try {
     const res = await userApi.list({ page: 1, pageSize: 1 });
-    if (res.code === 0 && res.data) {
-      stats.value[0].value = res.data.total;
-      stats.value[1].value = Math.floor(res.data.total * 0.35);
-      stats.value[2].value = res.data.total * 12;
-      stats.value[3].value = `${65 + (res.data.total % 30)}%`;
-    }
+    totalUsers = (res.code === 0 && res.data) ? res.data.total : 0;
   } catch {
-    stats.value[0].value = 1;
-    stats.value[1].value = 1;
-    stats.value[2].value = 12;
-    stats.value[3].value = '68%';
-  } finally {
-    loading.value = false;
-    setTimeout(renderCharts, 50);
-    window.addEventListener('resize', handleResize);
+    totalUsers = 0;
   }
+
+  mockData.value = buildMockDashboardData(totalUsers);
+  applyStats(mockData.value);
+  loading.value = false;
+
+  setTimeout(() => {
+    renderCharts(mockData.value!.trend, mockData.value!.roles);
+    window.addEventListener('resize', handleResize);
+  }, 50);
 });
 
 onBeforeUnmount(() => {

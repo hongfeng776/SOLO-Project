@@ -229,16 +229,23 @@ defineExpose({
           :formatter="col.formatter as any"
           :show-overflow-tooltip="col.ellipsis !== false"
           resizable
-          draggable
           :class-name="dropTarget === idx ? 'drop-target' : ''"
-          @dragstart="(e: any) => handleDragStart(e, idx)"
-          @dragover="(e: any) => handleDragOver(e, idx)"
-          @drop="(e: any) => handleDrop(e, idx)"
-          @dragend="handleDragEnd"
         >
           <template #header>
-            <div class="col-header" @mousedown="(e) => handleResizeStart(e, col)">
-              <span>{{ col.label }}</span>
+            <div
+              class="col-header"
+              :class="{ 'is-drag-over': dropTarget === idx, 'is-dragging': draggingCol === idx }"
+              draggable="true"
+              @mousedown="(e) => handleResizeStart(e, col)"
+              @dragstart="(e: DragEvent) => handleDragStart(e, idx)"
+              @dragover="(e: DragEvent) => handleDragOver(e, idx)"
+              @drop="(e: DragEvent) => handleDrop(e, idx)"
+              @dragend="handleDragEnd"
+            >
+              <span class="col-title" @mousedown.stop>
+                <el-icon v-if="columnDraggable" class="drag-handle" :size="14"><Rank /></el-icon>
+                {{ col.label }}
+              </span>
               <span v-if="columnDraggable" class="col-resizer" @mousedown.stop="(e) => handleResizeStart(e, col)" />
             </div>
           </template>
@@ -295,13 +302,37 @@ defineExpose({
   justify-content: space-between;
   position: relative;
   user-select: none;
-  cursor: grab;
-  &:active {
-    cursor: grabbing;
+  cursor: default;
+  width: 100%;
+  padding: 0 4px;
+
+  &.is-dragging {
+    opacity: 0.4;
+    .col-title {
+      color: $color-primary;
+    }
   }
-  span {
+  &.is-drag-over {
+    background: rgba(22, 119, 255, 0.08);
+    outline: 2px dashed $color-primary;
+    outline-offset: -4px;
+    border-radius: $radius-xs;
+  }
+
+  .col-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     flex: 1;
     min-width: 0;
+    cursor: grab;
+    &:active {
+      cursor: grabbing;
+    }
+  }
+  .drag-handle {
+    color: $color-text-placeholder;
+    flex-shrink: 0;
   }
 }
 

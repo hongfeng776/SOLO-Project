@@ -29,6 +29,8 @@ const rules: FormRules = {
 };
 
 const submitDisabled = ref(false);
+const rememberHint = ref(true);
+
 const handleSubmit = async () => {
   if (submitDisabled.value) return;
   const valid = await formRef.value?.validate().catch(() => false);
@@ -84,7 +86,7 @@ const gotoRegister = () => router.push('/register');
         </el-form-item>
         <div class="login-actions">
           <label class="remember-me">
-            <el-checkbox v-model="form.username" style="visibility: hidden; width: 0" />
+            <el-checkbox v-model="rememberHint" />
             <span>默认账号: admin / admin123</span>
           </label>
           <a class="forgot-link" href="javascript:;">忘记密码？</a>

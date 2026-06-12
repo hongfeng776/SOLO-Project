@@ -26,11 +26,6 @@ const handleSelect = (key: string) => {
   vueRouter.push(key);
 };
 
-const resolveIcon = (icon?: string) => {
-  if (!icon) return undefined;
-  const allIcons = (import.meta as any).globEager?.('@element-plus/icons-vue') ?? {};
-  return (allIcons as any)[icon] || icon;
-};
 </script>
 
 <template>
@@ -60,16 +55,16 @@ const resolveIcon = (icon?: string) => {
         <template v-for="menu in menus" :key="menu.path">
           <el-sub-menu v-if="menu.children && menu.children.length" :index="menu.path">
             <template #title>
-              <el-icon v-if="menu.icon"><component :is="resolveIcon(menu.icon)" /></el-icon>
+              <el-icon v-if="menu.icon"><component :is="menu.icon" /></el-icon>
               <span>{{ menu.title }}</span>
             </template>
             <el-menu-item v-for="sub in menu.children" :key="sub.path" :index="sub.path">
-              <el-icon v-if="sub.icon"><component :is="resolveIcon(sub.icon)" /></el-icon>
+              <el-icon v-if="sub.icon"><component :is="sub.icon" /></el-icon>
               <template #title>{{ sub.title }}</template>
             </el-menu-item>
           </el-sub-menu>
           <el-menu-item v-else :index="menu.path">
-            <el-icon v-if="menu.icon"><component :is="resolveIcon(menu.icon)" /></el-icon>
+            <el-icon v-if="menu.icon"><component :is="menu.icon" /></el-icon>
             <template #title>{{ menu.title }}</template>
           </el-menu-item>
         </template>
