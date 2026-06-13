@@ -1,11 +1,12 @@
 const jwt = require('jsonwebtoken');
-const { unauthorized } = require('../utils/response');
+const { businessError } = require('../utils/response');
+const { ErrorCode } = require('../constants/errorCode');
 
 function authMiddleware(req, res, next) {
   const token = req.headers.authorization?.replace('Bearer ', '');
 
   if (!token) {
-    return res.status(401).json(unauthorized('请先登录'));
+    return res.status(401).json(businessError(ErrorCode.USER_NOT_LOGIN));
   }
 
   try {
@@ -14,9 +15,9 @@ function authMiddleware(req, res, next) {
     next();
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
-      return res.status(401).json(unauthorized('Token已过期，请重新登录'));
+      return res.status(401).json(businessError(ErrorCode.USER_TOKEN_EXPIRED));
     }
-    return res.status(401).json(unauthorized('Token无效，请重新登录'));
+    return res.status(401).json(businessError(ErrorCode.USER_TOKEN_INVALID));
   }
 }
 

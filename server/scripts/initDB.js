@@ -1,6 +1,7 @@
 require('dotenv').config();
 const sequelize = require('../config/database');
 const User = require('../models/User');
+const OperationLog = require('../models/OperationLog');
 
 async function initDB() {
   try {
@@ -13,7 +14,7 @@ async function initDB() {
     console.log('数据表同步完成');
 
     console.log('正在创建默认管理员账号...');
-    const admin = await User.create({
+    await User.create({
       username: 'admin',
       password: 'admin123',
       nickname: '超级管理员',

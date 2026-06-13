@@ -19,6 +19,12 @@ const routes: RouteRecordRaw[] = [
         name: 'Dashboard',
         component: () => import('@/views/dashboard/index.vue'),
         meta: { title: '工作台', icon: 'HomeFilled', requiresAuth: true }
+      },
+      {
+        path: 'logs',
+        name: 'Logs',
+        component: () => import('@/views/logs/index.vue'),
+        meta: { title: '操作日志', icon: 'Document', requiresAuth: true }
       }
     ]
   },

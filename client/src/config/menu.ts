@@ -6,5 +6,11 @@ export const menuList: MenuItem[] = [
     name: 'Dashboard',
     title: '工作台',
     icon: 'HomeFilled'
+  },
+  {
+    path: '/logs',
+    name: 'Logs',
+    title: '操作日志',
+    icon: 'Document'
   }
 ];

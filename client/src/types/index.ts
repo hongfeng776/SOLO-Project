@@ -30,3 +30,40 @@ export interface MenuItem {
   icon?: string;
   children?: MenuItem[];
 }
+
+export interface OperationLogItem {
+  id: number;
+  user_id: number;
+  username: string;
+  module: string;
+  operation: string;
+  method: string;
+  path: string;
+  params: string;
+  ip: string;
+  user_agent: string;
+  status: number;
+  error_msg: string;
+  cost_time: number;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OperationLogQuery {
+  page?: number;
+  pageSize?: number;
+  username?: string;
+  module?: string;
+  operation?: string;
+  status?: number | '';
+  startTime?: string;
+  endTime?: string;
+}
+
+export interface PageResult<T> {
+  list: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}

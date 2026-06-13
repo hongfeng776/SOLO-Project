@@ -1,47 +1,47 @@
-function success(data = null, message = '操作成功') {
+const { ErrorCode, ErrorMessage } = require('../constants/errorCode');
+
+function success(data = null, message = ErrorMessage[ErrorCode.SUCCESS]) {
   return {
-    code: 200,
+    code: ErrorCode.SUCCESS,
     message,
     data
   };
 }
 
-function error(message = '操作失败', code = 400) {
+function fail(code = ErrorCode.BAD_REQUEST, message) {
   return {
     code,
-    message,
+    message: message || ErrorMessage[code] || ErrorMessage[ErrorCode.BAD_REQUEST],
     data: null
   };
 }
 
-function unauthorized(message = '未授权访问') {
-  return {
-    code: 401,
-    message,
-    data: null
-  };
+function error(message = ErrorMessage[ErrorCode.BAD_REQUEST], code = ErrorCode.BAD_REQUEST) {
+  return fail(code, message);
 }
 
-function forbidden(message = '无权限访问') {
-  return {
-    code: 403,
-    message,
-    data: null
-  };
+function unauthorized(message) {
+  return fail(ErrorCode.UNAUTHORIZED, message);
 }
 
-function notFound(message = '资源不存在') {
-  return {
-    code: 404,
-    message,
-    data: null
-  };
+function forbidden(message) {
+  return fail(ErrorCode.FORBIDDEN, message);
+}
+
+function notFound(message) {
+  return fail(ErrorCode.NOT_FOUND, message);
+}
+
+function businessError(code, message) {
+  return fail(code, message);
 }
 
 module.exports = {
   success,
   error,
+  fail,
   unauthorized,
   forbidden,
-  notFound
+  notFound,
+  businessError
 };

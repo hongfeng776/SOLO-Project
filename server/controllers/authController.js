@@ -1,27 +1,28 @@
 ﻿const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { success, error, unauthorized } = require('../utils/response');
+const { success, businessError } = require('../utils/response');
+const { ErrorCode } = require('../constants/errorCode');
 
 async function login(req, res, next) {
   try {
     const { username, password } = req.body;
 
     if (!username || !password) {
-      return res.status(400).json(error('用户名和密码不能为空'));
+      return res.status(400).json(businessError(ErrorCode.PARAM_MISSING, '用户名和密码不能为空'));
     }
 
     const user = await User.findOne({ where: { username } });
     if (!user) {
-      return res.status(401).json(unauthorized('用户名或密码错误'));
+      return res.status(401).json(businessError(ErrorCode.USER_PASSWORD_ERROR));
     }
 
     if (user.status !== 1) {
-      return res.status(403).json(error('账号已被禁用'));
+      return res.status(403).json(businessError(ErrorCode.USER_DISABLED));
     }
 
     const isValid = await user.comparePassword(password);
     if (!isValid) {
-      return res.status(401).json(unauthorized('用户名或密码错误'));
+      return res.status(401).json(businessError(ErrorCode.USER_PASSWORD_ERROR));
     }
 
     const token = jwt.sign(
@@ -54,7 +55,10 @@ async function getProfile(req, res, next) {
     const user = await User.findByPk(req.user.id, {
       attributes: ['id', 'username', 'nickname', 'avatar', 'role', 'created_at']
     });
-    res.json(success(user ? user.toJSON() : null));
+    if (!user) {
+      return res.status(404).json(businessError(ErrorCode.USER_NOT_EXIST));
+    }
+    res.json(success(user.toJSON()));
   } catch (err) {
     next(err);
   }
