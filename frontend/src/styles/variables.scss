@@ -1,0 +1,50 @@
+$primary-color: #409EFF;
+$success-color: #67C23A;
+$warning-color: #E6A23C;
+$danger-color: #F56C6C;
+$info-color: #909399;
+
+$primary-light: #ecf5ff;
+$success-light: #f0f9eb;
+$warning-light: #fdf6ec;
+$danger-light: #fef0f0;
+$info-light: #f4f4f5;
+
+$border-radius: 6px;
+$border-radius-small: 4px;
+$border-radius-large: 8px;
+
+$border-color: #dcdfe6;
+$border-color-light: #e4e7ed;
+$border-color-lighter: #ebeef5;
+
+$text-primary: #303133;
+$text-regular: #606266;
+$text-secondary: #909399;
+$text-placeholder: #c0c4cc;
+
+$bg-color: #f5f7fa;
+$bg-color-page: #f0f2f5;
+$bg-color-white: #ffffff;
+
+$header-height: 60px;
+$sidebar-width: 220px;
+$sidebar-collapsed-width: 64px;
+
+$transition-base: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+$transition-fade: opacity 0.3s ease;
+$transition-transform: transform 0.3s ease;
+
+$font-size-base: 14px;
+$font-size-small: 12px;
+$font-size-large: 16px;
+
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+
+$shadow-base: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+$shadow-light: 0 2px 8px rgba(0, 0, 0, 0.06);
+$shadow-dark: 0 2px 16px rgba(0, 0, 0, 0.12);
