@@ -116,6 +116,8 @@ export interface BaseTableExposed<T = any> {
   sort: (prop: string, order: 'ascending' | 'descending' | null) => void;
   selection: T[];
   getSelection: () => T[];
+  getColumnWidths: () => Record<string, number>;
+  getSortState: () => { prop: string; order: 'ascending' | 'descending' | null };
 }
 
 export interface BaseModalExposed {

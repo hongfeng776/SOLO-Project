@@ -73,6 +73,44 @@ const selection = ref<any[]>([]);
 const currentPage = ref(props.page);
 const currentSize = ref(props.pageSize);
 const skeletonRows = computed(() => Math.min(currentSize.value, 8));
+const sortState = ref<{ prop: string; order: 'ascending' | 'descending' | null }>({ prop: '', order: null });
+
+const storageKey = computed(() => (props.tableKey ? `table:${props.tableKey}` : null));
+
+const loadPersistedState = () => {
+  if (!storageKey.value) return;
+  try {
+    const raw = localStorage.getItem(storageKey.value);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data.colWidths) {
+      internalCols.forEach((c) => {
+        if (data.colWidths[c.prop] !== undefined) {
+          c._width = data.colWidths[c.prop];
+        }
+      });
+    }
+    if (data.sort) {
+      sortState.value = data.sort;
+    }
+  } catch {
+    /* ignore */
+  }
+};
+
+const savePersistedState = () => {
+  if (!storageKey.value) return;
+  const widths: Record<string, number> = {};
+  internalCols.forEach((c) => {
+    if (c._width !== undefined) widths[c.prop] = c._width;
+  });
+  const data = {
+    colWidths: widths,
+    sort: sortState.value.prop ? sortState.value : undefined,
+  };
+  localStorage.setItem(storageKey.value, JSON.stringify(data));
+  emit('columnWidthChange', widths);
+};
 
 watch(
   () => props.columns,
@@ -80,6 +118,14 @@ watch(
     internalCols.length = 0;
     cols.forEach((c, idx) => {
       internalCols.push({ ...c, _width: (c as any)._width ?? (typeof c.width === 'number' ? c.width : undefined), _order: idx });
+    });
+    nextTick(() => {
+      loadPersistedState();
+      if (sortState.value.prop) {
+        nextTick(() => {
+          tableRef.value?.sort?.(sortState.value.prop, sortState.value.order);
+        });
+      }
     });
   },
   { immediate: true, deep: true },
@@ -239,6 +285,18 @@ const rowStyle = ({ rowIndex }: { rowIndex: number }) => ({
 /** 获取已选中的行 */
 const getSelection = (): any[] => selection.value;
 
+/** 获取当前列宽配置 */
+const getColumnWidths = (): Record<string, number> => {
+  const widths: Record<string, number> = {};
+  internalCols.forEach((c) => {
+    if (c._width !== undefined) widths[c.prop] = c._width;
+  });
+  return widths;
+};
+
+/** 获取当前排序状态 */
+const getSortState = () => sortState.value;
+
 defineExpose<BaseTableExposed<any>>({
   clearSelection,
   toggleRowSelection,
@@ -250,6 +308,8 @@ defineExpose<BaseTableExposed<any>>({
   sort,
   selection: selection.value,
   getSelection,
+  getColumnWidths,
+  getSortState,
 });
 </script>
 

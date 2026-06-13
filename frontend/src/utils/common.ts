@@ -160,3 +160,10 @@ export function copyToClipboard(text: string): Promise<boolean> {
     }
   });
 }
+
+export function formatThousand(num: number | string | null | undefined): string {
+  if (num === null || num === undefined || num === '') return '0';
+  const n = typeof num === 'string' ? parseFloat(num) : num;
+  if (isNaN(n)) return '0';
+  return n.toLocaleString('zh-CN');
+}

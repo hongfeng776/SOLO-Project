@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, computed, onBeforeUnmount } from 'vue';
 import { userApi } from '@/api';
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules, type FormItemProp } from 'element-plus';
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import BaseTable from '@/components/BaseTable';
 import BaseModal from '@/components/BaseModal';
 import type { UserInfo, TableColumn, PaginatedData, ApiResponse } from '@/types';
-import { sleep } from '@/utils/common';
+import { sleep, formatThousand } from '@/utils/common';
 
 const tableRef = ref<InstanceType<typeof BaseTable>>();
 const formRef = ref<FormInstance>();
@@ -15,12 +15,12 @@ const list = ref<UserInfo[]>([]);
 const total = ref(0);
 const page = ref(1);
 const pageSize = ref(10);
-const searchKeyword = ref('');
 const searchUsername = ref('');
 const searchNickname = ref('');
 const searchError = ref('');
 const searchShake = ref(false);
 const selected = ref<UserInfo[]>([]);
+const showBackTop = ref(false);
 
 const modalVisible = ref(false);
 const modalMode = ref<'create' | 'edit'>('create');
@@ -60,14 +60,31 @@ const rules: FormRules = {
 };
 
 const columns: TableColumn<UserInfo>[] = [
-  { prop: 'username', label: '账号', width: 140, ellipsis: true },
-  { prop: 'nickname', label: '昵称', width: 140 },
-  { prop: 'phone', label: '手机号', width: 140 },
+  { prop: 'username', label: '账号', width: 140, ellipsis: true, sortable: true },
+  { prop: 'nickname', label: '昵称', width: 140, sortable: true },
+  { prop: 'phone', label: '手机号', width: 140, sortable: true },
+  {
+    prop: 'fansCount',
+    label: '粉丝数',
+    width: 120,
+    align: 'right',
+    sortable: true,
+    formatter: (_r, _c, val) => formatThousand(val),
+  },
+  {
+    prop: 'visits',
+    label: '访问量',
+    width: 120,
+    align: 'right',
+    sortable: true,
+    formatter: (_r, _c, val) => formatThousand(val),
+  },
   {
     prop: 'role',
     label: '用户类型',
     width: 120,
     align: 'center',
+    sortable: true,
     slot: 'role',
   },
   {
@@ -75,6 +92,7 @@ const columns: TableColumn<UserInfo>[] = [
     label: '注册时间',
     width: 180,
     align: 'center',
+    sortable: true,
     formatter: (_r, _c, val) => (val ? new Date(val).toLocaleString('zh-CN') : '-'),
   },
   {
@@ -94,7 +112,6 @@ const fetchData = async () => {
       page: page.value,
       pageSize: pageSize.value,
     };
-    if (searchKeyword.value) params.keyword = searchKeyword.value;
     if (searchUsername.value) params.username = searchUsername.value;
     if (searchNickname.value) params.nickname = searchNickname.value;
 
@@ -103,6 +120,8 @@ const fetchData = async () => {
       list.value = res.data.list;
       total.value = res.data.total;
     }
+  } catch {
+    /* error handled by axios interceptor */
   } finally {
     loading.value = false;
   }
@@ -132,7 +151,6 @@ const handleSearch = () => {
 };
 
 const handleSearchReset = () => {
-  searchKeyword.value = '';
   searchUsername.value = '';
   searchNickname.value = '';
   searchError.value = '';
@@ -148,6 +166,18 @@ const handlePageChange = (p: number, s: number) => {
 
 const handleRowSelect = (rows: UserInfo[]) => {
   selected.value = rows;
+};
+
+const handleRowDblClick = (row: UserInfo) => {
+  openEdit(row);
+};
+
+const handleScroll = () => {
+  showBackTop.value = window.scrollY > 500;
+};
+
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
 const openCreate = () => {
@@ -201,6 +231,8 @@ const handleModalOk = async () => {
       modalVisible.value = false;
       fetchData();
     }
+  } catch {
+    /* error handled by axios interceptor */
   } finally {
     await sleep(300);
     submitDisabled.value = false;
@@ -228,7 +260,7 @@ const handleDelete = async (row: UserInfo) => {
 
 const handleBatchDelete = async () => {
   if (selected.value.length === 0) {
-    ElMessage.warning('请先选择要删除的行');
+    ElMessage.warning('请先选择要删除的用户');
     return;
   }
   try {
@@ -244,6 +276,7 @@ const handleBatchDelete = async () => {
     await Promise.all(selected.value.map((r) => userApi.remove(r.id)));
     ElMessage.success(`成功删除 ${selected.value.length} 个用户`);
     tableRef.value?.clearSelection?.();
+    selected.value = [];
     fetchData();
   } catch {
     /* cancel */
@@ -258,7 +291,14 @@ const roleTagType = computed(() => (row: UserInfo) => {
   return row.role === 'admin' ? 'primary' : 'success';
 });
 
-onMounted(fetchData);
+onMounted(() => {
+  fetchData();
+  window.addEventListener('scroll', handleScroll, { passive: true });
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', handleScroll);
+});
 </script>
 
 <template>
@@ -322,8 +362,10 @@ onMounted(fetchData);
         v-model:page-size="pageSize"
         :show-selection="true"
         :highlight-current-row="true"
+        table-key="sys-users"
         @pageChange="handlePageChange"
         @selectionChange="handleRowSelect"
+        @rowDoubleClick="handleRowDblClick"
       >
         <template #role="{ row }">
           <el-tag :type="roleTagType(row)" size="small" effect="light">
@@ -405,6 +447,12 @@ onMounted(fetchData);
         </el-button>
       </template>
     </BaseModal>
+
+    <transition name="fade">
+      <div v-show="showBackTop" class="back-to-top" @click="scrollToTop" title="返回顶部">
+        <el-icon :size="22"><Top /></el-icon>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -486,5 +534,47 @@ onMounted(fetchData);
     background: #1677ff !important;
     border-color: #1677ff !important;
   }
+}
+
+.back-to-top {
+  position: fixed;
+  right: 40px;
+  bottom: 60px;
+  width: 48px;
+  height: 48px;
+  background: #fff;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #606266;
+  cursor: pointer;
+  transition:
+    all $duration-fast $ease-in-out,
+    color $duration-fast $ease-in-out;
+  z-index: $z-index-backtop;
+  &:hover {
+    color: $color-primary;
+    border-color: $color-primary;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(22, 119, 255, 0.2);
+  }
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition:
+    opacity $duration-base $ease-in-out,
+    transform $duration-base $ease-in-out;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 </style>
