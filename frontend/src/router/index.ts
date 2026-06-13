@@ -37,10 +37,11 @@ export const constantRoutes: RouteRecordRaw[] = [
           {
             path: 'user',
             name: 'User',
-            component: () => import('@/views/dashboard/Dashboard.vue'),
+            component: () => import('@/views/system/user/index.vue'),
             meta: {
               title: '用户管理',
-              icon: 'User'
+              icon: 'User',
+              permissions: ['system:user:list']
             }
           },
           {
@@ -49,7 +50,8 @@ export const constantRoutes: RouteRecordRaw[] = [
             component: () => import('@/views/dashboard/Dashboard.vue'),
             meta: {
               title: '角色管理',
-              icon: 'UserFilled'
+              icon: 'UserFilled',
+              permissions: ['system:role:list']
             }
           }
         ]

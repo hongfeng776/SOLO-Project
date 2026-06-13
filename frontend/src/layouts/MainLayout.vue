@@ -6,7 +6,7 @@
     <el-container>
       <el-header class="header-container">
         <div class="header-left">
-          <el-icon class="collapse-btn" @click="toggleCollapse">
+          <el-icon class="collapse-btn" v-ripple @click="toggleCollapse">
             <component :is="isCollapse ? iconComponents.Expand : iconComponents.Fold" />
           </el-icon>
           <el-breadcrumb separator="/">
@@ -17,7 +17,7 @@
         </div>
         <div class="header-right">
           <el-dropdown trigger="click" @command="handleCommand">
-            <div class="user-info">
+            <div class="user-info" v-ripple>
               <el-avatar :size="32">
                 {{ userStore.userInfo?.nickname?.charAt(0) || 'U' }}
               </el-avatar>
@@ -26,11 +26,11 @@
             </div>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="profile">
+                <el-dropdown-item command="profile" v-ripple>
                   <el-icon><User /></el-icon>
                   个人中心
                 </el-dropdown-item>
-                <el-dropdown-item divided command="logout">
+                <el-dropdown-item divided command="logout" v-ripple>
                   <el-icon><SwitchButton /></el-icon>
                   退出登录
                 </el-dropdown-item>
@@ -40,18 +40,22 @@
         </div>
       </el-header>
       <el-main class="main-container">
-        <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" />
+        <router-view v-slot="{ Component, route }">
+          <transition :name="transitionName" mode="out-in">
+            <component :is="Component" :key="route.fullPath" v-if="!route.meta?.keepAlive" />
+            <keep-alive v-else>
+              <component :is="Component" :key="route.fullPath" />
+            </keep-alive>
           </transition>
         </router-view>
       </el-main>
     </el-container>
+    <BackToTop />
   </el-container>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import {
@@ -63,6 +67,7 @@ import { Fold, Expand } from '@element-plus/icons-vue'
 
 const iconComponents = { Fold, Expand }
 import Sidebar from '@/components/Sidebar.vue'
+import BackToTop from '@/components/BackToTop/index.vue'
 import { useUserStore } from '@/store/modules/user'
 
 const route = useRoute()
@@ -70,10 +75,27 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const isCollapse = ref(false)
+const transitionName = ref('fade')
 
 const breadcrumbs = computed(() => {
   return route.matched.filter((item) => item.meta && item.meta.title)
 })
+
+watch(
+  () => route.fullPath,
+  (to, from) => {
+    const toDepth = to.split('/').filter(Boolean).length
+    const fromDepth = from ? from.split('/').filter(Boolean).length : 0
+
+    if (toDepth > fromDepth) {
+      transitionName.value = 'slide-left'
+    } else if (toDepth < fromDepth) {
+      transitionName.value = 'slide-right'
+    } else {
+      transitionName.value = 'fade'
+    }
+  }
+)
 
 function toggleCollapse() {
   isCollapse.value = !isCollapse.value

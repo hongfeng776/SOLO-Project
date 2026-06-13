@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
-const User = require('../models/User');
+const { User, Role, Permission } = require('../models');
 const jwtConfig = require('../config/jwt');
 const { success, badRequest, unauthorized, sendSuccess } = require('../utils/response');
 
@@ -16,6 +16,52 @@ const generateToken = (user) => {
   );
 };
 
+const getUserRolesAndPermissions = async (userId) => {
+  const user = await User.findByPk(userId, {
+    include: [
+      {
+        model: Role,
+        as: 'roles',
+        where: { status: 1 },
+        required: false,
+        attributes: ['id', 'name', 'code'],
+        through: { attributes: [] },
+        include: [
+          {
+            model: Permission,
+            as: 'permissions',
+            required: false,
+            attributes: ['id', 'name', 'code', 'type', 'path', 'component', 'icon', 'sort', 'parent_id'],
+            through: { attributes: [] }
+          }
+        ]
+      }
+    ]
+  });
+
+  if (!user) {
+    return { roles: [], permissions: [], permissionCodes: [] };
+  }
+
+  const roles = user.roles || [];
+  const permissions = [];
+  const permissionCodes = [];
+
+  roles.forEach(role => {
+    if (role.permissions) {
+      role.permissions.forEach(permission => {
+        if (!permissionCodes.includes(permission.code)) {
+          permissions.push(permission);
+          permissionCodes.push(permission.code);
+        }
+      });
+      delete role.dataValues.permissions;
+    }
+  });
+
+  return { roles, permissions, permissionCodes };
+};
+
 const login = asyncHandler(async (req, res) => {
   const { username, password } = req.body;
 
@@ -25,7 +71,7 @@ const login = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({
     where: { username },
-    attributes: ['id', 'username', 'password', 'nickname', 'role', 'status']
+    attributes: ['id', 'username', 'password', 'nickname', 'email', 'role', 'status']
   });
 
   if (!user) {
@@ -42,12 +88,17 @@ const login = asyncHandler(async (req, res) => {
   }
 
   const token = generateToken(user);
+  const { roles, permissions, permissionCodes } = await getUserRolesAndPermissions(user.id);
 
   const userInfo = {
     id: user.id,
     username: user.username,
     nickname: user.nickname,
-    role: user.role
+    email: user.email,
+    role: user.role,
+    roles,
+    permissions,
+    permissionCodes
   };
 
   sendSuccess(res, {
@@ -114,12 +165,17 @@ const refreshToken = asyncHandler(async (req, res) => {
   }
 
   const token = generateToken(user);
+  const { roles, permissions, permissionCodes } = await getUserRolesAndPermissions(user.id);
 
   const userInfo = {
     id: user.id,
     username: user.username,
     nickname: user.nickname,
-    role: user.role
+    email: user.email,
+    role: user.role,
+    roles,
+    permissions,
+    permissionCodes
   };
 
   sendSuccess(res, {
@@ -137,7 +193,16 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     return res.status(404).json(unauthorized('用户不存在'));
   }
 
-  sendSuccess(res, user, '获取用户信息成功');
+  const { roles, permissions, permissionCodes } = await getUserRolesAndPermissions(user.id);
+
+  const userInfo = {
+    ...user.toJSON(),
+    roles,
+    permissions,
+    permissionCodes
+  };
+
+  sendSuccess(res, userInfo, '获取用户信息成功');
 });
 
 module.exports = {

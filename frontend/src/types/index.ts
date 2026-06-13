@@ -3,6 +3,8 @@ export interface UserInfo {
   username: string
   nickname: string
   role: string
+  roles?: string[]
+  permissions?: string[]
   email?: string
   status?: number
   created_at?: string
@@ -16,6 +18,48 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string
   user: UserInfo
+  roles: string[]
+  permissions: string[]
+}
+
+export interface Role {
+  id: number
+  name: string
+  code: string
+  description?: string
+  status?: number
+  created_at?: string
+}
+
+export interface Permission {
+  id: number
+  name: string
+  code: string
+  type: 'menu' | 'button' | 'api'
+  parent_id?: number
+  path?: string
+  component?: string
+  icon?: string
+  sort?: number
+  status?: number
+  created_at?: string
+}
+
+export interface Menu {
+  path: string
+  name: string
+  icon?: string
+  component?: any
+  redirect?: string
+  children?: Menu[]
+  hidden?: boolean
+  meta?: {
+    title: string
+    icon?: string
+    roles?: string[]
+    permissions?: string[]
+    keepAlive?: boolean
+  }
 }
 
 export interface MenuItem {
@@ -30,6 +74,8 @@ export interface MenuItem {
     title: string
     icon?: string
     roles?: string[]
+    permissions?: string[]
+    keepAlive?: boolean
   }
 }
 
@@ -49,4 +95,43 @@ export interface PaginationResult<T> {
   total: number
   page: number
   pageSize: number
+}
+
+export interface TableColumn {
+  prop: string
+  label: string
+  width?: number | string
+  minWidth?: number | string
+  fixed?: 'left' | 'right' | boolean
+  align?: 'left' | 'center' | 'right'
+  sortable?: boolean
+  formatter?: (row: any, column: any, value: any, index: number) => string
+  slot?: string
+}
+
+export interface PaginationConfig {
+  page: number
+  pageSize: number
+  pageSizes?: number[]
+  layout?: string
+}
+
+export interface ValidationRule {
+  required?: boolean
+  message?: string
+  min?: number
+  max?: number
+  pattern?: RegExp
+  validator?: (value: any) => boolean | string | Promise<boolean | string>
+  trigger?: 'blur' | 'change'
+}
+
+export interface UserFormData {
+  id?: number
+  username: string
+  nickname: string
+  email: string
+  password?: string
+  status: number
+  role_ids?: number[]
 }

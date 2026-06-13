@@ -6,6 +6,9 @@ const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const { success } = require('./utils/response');
 
 const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/user');
+const roleRoutes = require('./routes/role');
+const permissionRoutes = require('./routes/permission');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,6 +27,9 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/roles', roleRoutes);
+app.use('/api/permissions', permissionRoutes);
 
 app.use(notFoundHandler);
 
