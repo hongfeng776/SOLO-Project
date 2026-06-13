@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+﻿const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { success, error, unauthorized } = require('../utils/response');
 
@@ -54,7 +54,7 @@ async function getProfile(req, res, next) {
     const user = await User.findByPk(req.user.id, {
       attributes: ['id', 'username', 'nickname', 'avatar', 'role', 'created_at']
     });
-    res.json(success(user));
+    res.json(success(user ? user.toJSON() : null));
   } catch (err) {
     next(err);
   }

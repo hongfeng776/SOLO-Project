@@ -18,7 +18,7 @@ const routes: RouteRecordRaw[] = [
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('@/views/dashboard/index.vue'),
-        meta: { title: '工作台', icon: 'HomeFilled' }
+        meta: { title: '工作台', icon: 'HomeFilled', requiresAuth: true }
       }
     ]
   },
@@ -26,7 +26,7 @@ const routes: RouteRecordRaw[] = [
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/views/error/404.vue'),
-    meta: { title: '404' }
+    meta: { title: '404', requiresAuth: false }
   }
 ];
 
@@ -42,16 +42,20 @@ router.beforeEach((to, from, next) => {
     document.title = `${title} - 影集视觉素材管理平台`;
   }
 
-  if (to.meta?.requiresAuth !== false && to.path !== '/login') {
+  const requiresAuth = to.meta?.requiresAuth;
+
+  if (requiresAuth === false) {
+    if (to.name === 'Login' && userStore.token) {
+      next('/');
+    } else {
+      next();
+    }
+  } else {
     if (!userStore.token) {
       next({ path: '/login', query: { redirect: to.fullPath } });
     } else {
       next();
     }
-  } else if (to.path === '/login' && userStore.token) {
-    next('/');
-  } else {
-    next();
   }
 });
 
