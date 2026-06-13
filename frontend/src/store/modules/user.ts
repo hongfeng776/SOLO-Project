@@ -51,6 +51,7 @@ export const useUserStore = defineStore(
     function clearUserState() {
       token.value = ''
       userInfo.value = null
+      localStorage.removeItem('hongjing-user-store')
     }
 
     return {

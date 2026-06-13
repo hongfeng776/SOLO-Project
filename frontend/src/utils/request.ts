@@ -41,7 +41,8 @@ service.interceptors.response.use(
       switch (status) {
         case 401:
           ElMessage.error(data?.message || '登录已过期，请重新登录')
-          userStore.logout()
+          userStore.clearUserState()
+          localStorage.removeItem('hongjing-user-store')
           router.push('/login')
           break
         case 403:

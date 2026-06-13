@@ -26,8 +26,9 @@ router.beforeEach(async (to, _from, next) => {
         next()
       } catch (error) {
         console.error('Get user info error:', error)
-        ElMessage.error('获取用户信息失败，请重新登录')
+        ElMessage.error('登录已过期，请重新登录')
         userStore.clearUserState()
+        localStorage.removeItem('hongjing-user-store')
         next(`/login?redirect=${to.path}`)
         NProgress.done()
       }
