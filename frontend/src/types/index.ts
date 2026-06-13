@@ -28,6 +28,8 @@ export interface UserInfo {
   avatar?: string;
   role: string;
   status: number;
+  fansCount: number;
+  visits: number;
   lastLoginAt?: string;
   createdAt: string;
   updatedAt: string;

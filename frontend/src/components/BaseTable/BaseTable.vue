@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 /**
  * 通用表格组件
  * @description 内置隔行变色、行悬停高亮、表头固定、单双击事件、列宽拖拽、分页
@@ -31,6 +31,7 @@ interface Props<T = any> {
   emptyText?: string;
   highlightCurrentRow?: boolean;
   columnDraggable?: boolean;
+  tableKey?: string;
 }
 
 const props = withDefaults(defineProps<Props<any>>(), {
@@ -52,6 +53,7 @@ const props = withDefaults(defineProps<Props<any>>(), {
   emptyText: '暂无数据',
   highlightCurrentRow: true,
   columnDraggable: true,
+  tableKey: '',
 });
 
 const emit = defineEmits<{
@@ -63,6 +65,7 @@ const emit = defineEmits<{
   (e: 'selectionChange', rows: any[]): void;
   (e: 'currentChange', row: any | null, oldRow: any | null): void;
   (e: 'sortChange', data: { prop: string; order: string | null }): void;
+  (e: 'columnWidthChange', widths: Record<string, number>): void;
 }>();
 
 const internalCols = reactive<(TableColumn & { _width?: number; _order: number })[]>([]);
@@ -116,7 +119,11 @@ const handleSelectionChange = (rows: any[]) => {
   emit('selectionChange', rows);
 };
 const handleCurrent = (row: any, old: any) => emit('currentChange', row, old);
-const handleSort = ({ prop, order }: { prop: string; order: string | null }) => emit('sortChange', { prop, order });
+const handleSort = ({ prop, order }: { prop: string; order: string | null }) => {
+  sortState.value = { prop, order: order as 'ascending' | 'descending' | null };
+  savePersistedState();
+  emit('sortChange', { prop, order });
+};
 
 const draggingCol = ref<number | null>(null);
 const dropTarget = ref<number | null>(null);
@@ -154,7 +161,6 @@ const colWidths = reactive<Record<string, number>>({});
 const resizing = ref<{ key: string; startX: number; startWidth: number } | null>(null);
 
 const handleResizeStart = (e: MouseEvent, col: (typeof internalCols)[number]) => {
-  if (!props.columnDraggable) return;
   e.preventDefault();
   e.stopPropagation();
   const key = col.prop;
@@ -170,6 +176,9 @@ const handleMouseMove = (e: MouseEvent) => {
   if (col) col._width = newWidth;
 };
 const handleMouseUp = () => {
+  if (resizing.value) {
+    savePersistedState();
+  }
   resizing.value = null;
 };
 
@@ -291,7 +300,6 @@ defineExpose<BaseTableExposed<any>>({
           :sortable="col.sortable || false"
           :formatter="col.formatter as any"
           :show-overflow-tooltip="col.ellipsis !== false"
-          resizable
           :class-name="dropTarget === idx ? 'drop-target' : ''"
         >
           <template #header>
@@ -299,7 +307,6 @@ defineExpose<BaseTableExposed<any>>({
               class="col-header"
               :class="{ 'is-drag-over': dropTarget === idx, 'is-dragging': draggingCol === idx }"
               draggable="true"
-              @mousedown="(e) => handleResizeStart(e, col)"
               @dragstart="(e: DragEvent) => handleDragStart(e, idx)"
               @dragover="(e: DragEvent) => handleDragOver(e, idx)"
               @drop="(e: DragEvent) => handleDrop(e, idx)"
@@ -309,7 +316,7 @@ defineExpose<BaseTableExposed<any>>({
                 <el-icon v-if="columnDraggable" class="drag-handle" :size="14"><Rank /></el-icon>
                 {{ col.label }}
               </span>
-              <span v-if="columnDraggable" class="col-resizer" @mousedown.stop="(e) => handleResizeStart(e, col)" />
+              <span class="col-resizer" @mousedown.stop="(e) => handleResizeStart(e, col)" />
             </div>
           </template>
           <template v-if="col.slot" #default="scope">

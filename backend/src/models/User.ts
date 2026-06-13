@@ -10,17 +10,21 @@ export interface UserAttributes {
   avatar?: string;
   role: string;
   status: number;
+  fansCount: number;
+  visits: number;
   lastLoginAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface UserCreationAttributes extends Omit<UserAttributes, 'id' | 'createdAt' | 'updatedAt' | 'lastLoginAt' | 'avatar' | 'phone' | 'email' | 'role' | 'status'> {
+export interface UserCreationAttributes extends Omit<UserAttributes, 'id' | 'createdAt' | 'updatedAt' | 'lastLoginAt' | 'avatar' | 'phone' | 'email' | 'role' | 'status' | 'fansCount' | 'visits'> {
   email?: string;
   phone?: string;
   avatar?: string;
   role?: string;
   status?: number;
+  fansCount?: number;
+  visits?: number;
 }
 
 @Table({ tableName: 'sys_user' })
@@ -56,6 +60,14 @@ export default class User extends Model<UserAttributes, UserCreationAttributes> 
   @Default(1)
   @Column({ type: DataType.TINYINT, allowNull: false, comment: '状态: 1启用 0禁用' })
   status!: number;
+
+  @Default(0)
+  @Column({ type: DataType.INTEGER, allowNull: false, comment: '粉丝数' })
+  fansCount!: number;
+
+  @Default(0)
+  @Column({ type: DataType.INTEGER, allowNull: false, comment: '访问量' })
+  visits!: number;
 
   @Column({ type: DataType.DATE, comment: '最后登录时间' })
   lastLoginAt?: Date;

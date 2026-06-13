@@ -108,23 +108,13 @@ export const userController = {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = parseInt(req.query.pageSize as string) || 10;
-      const keyword = req.query.keyword as string || '';
       const username = req.query.username as string || '';
       const nickname = req.query.nickname as string || '';
       const phone = req.query.phone as string || '';
       const offset = (page - 1) * pageSize;
 
       const where: any = {};
-      const orConditions: any[] = [];
 
-      if (keyword) {
-        orConditions.push(
-          { username: { [Op.like as any]: `%${keyword}%` } },
-          { nickname: { [Op.like as any]: `%${keyword}%` } },
-          { email: { [Op.like as any]: `%${keyword}%` } },
-          { phone: { [Op.like as any]: `%${keyword}%` } },
-        );
-      }
       if (username) {
         where.username = { [Op.like as any]: `%${username}%` };
       }
@@ -133,9 +123,6 @@ export const userController = {
       }
       if (phone) {
         where.phone = { [Op.like as any]: `%${phone}%` };
-      }
-      if (orConditions.length > 0) {
-        where[Op.or as any] = orConditions;
       }
 
       const options: FindOptions = {
@@ -156,7 +143,7 @@ export const userController = {
 
   async create(req: Request, res: Response): Promise<void> {
     try {
-      const { username, password, nickname, email, phone, role, status } = req.body;
+      const { username, password, nickname, email, phone, role, status, createdAt, fansCount, visits } = req.body;
       if (!username || !password || !nickname) {
         responseUtil.badRequest(res, '用户名、密码、昵称不能为空');
         return;
@@ -169,7 +156,7 @@ export const userController = {
       }
 
       const hashedPassword = await hashPassword(password);
-      const user = await User.create({
+      const createData: Record<string, any> = {
         username,
         password: hashedPassword,
         nickname,
@@ -177,7 +164,11 @@ export const userController = {
         phone,
         role: role || 'user',
         status: status ?? 1,
-      });
+        fansCount: fansCount ?? Math.floor(Math.random() * 50000),
+        visits: visits ?? Math.floor(Math.random() * 100000),
+      };
+      if (createdAt) createData.createdAt = createdAt;
+      const user = await User.create(createData as any);
 
       responseUtil.success(res, user.toJSON(), '创建成功', 201);
     } catch (error) {
