@@ -3,6 +3,35 @@ import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/store/modules/user'
 import router from '@/router'
 
+const PENDING_REQUEST_INTERVAL = 300
+const pendingRequest = new Map<string, number>()
+
+function generateRequestKey(config: AxiosRequestConfig): string {
+  const { method, url, params, data } = config
+  return [
+    method?.toUpperCase() || '',
+    url || '',
+    params ? JSON.stringify(params) : '',
+    data ? JSON.stringify(data) : ''
+  ].join('&')
+}
+
+function checkDuplicateRequest(config: InternalAxiosRequestConfig): boolean {
+  const key = generateRequestKey(config)
+  const now = Date.now()
+  const lastTime = pendingRequest.get(key)
+  if (lastTime && now - lastTime < PENDING_REQUEST_INTERVAL) {
+    return true
+  }
+  pendingRequest.set(key, now)
+  return false
+}
+
+function cleanPendingRequest(config: AxiosRequestConfig | InternalAxiosRequestConfig) {
+  const key = generateRequestKey(config)
+  pendingRequest.delete(key)
+}
+
 const service: AxiosInstance = axios.create({
   baseURL: '/api',
   timeout: 10000
@@ -10,6 +39,10 @@ const service: AxiosInstance = axios.create({
 
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    if (checkDuplicateRequest(config)) {
+      ElMessage.warning('请勿重复提交')
+      return Promise.reject(new Error('请勿重复提交'))
+    }
     const userStore = useUserStore()
     if (userStore.token) {
       config.headers.Authorization = `Bearer ${userStore.token}`
@@ -17,12 +50,18 @@ service.interceptors.request.use(
     return config
   },
   (error) => {
+    if (error.config) {
+      cleanPendingRequest(error.config)
+    }
     return Promise.reject(error)
   }
 )
 
 service.interceptors.response.use(
   (response: AxiosResponse) => {
+    if (response.config) {
+      cleanPendingRequest(response.config)
+    }
     const res = response.data
     if (res.code !== 200) {
       ElMessage.error(res.message || '请求失败')
@@ -36,6 +75,9 @@ service.interceptors.response.use(
     return res
   },
   (error) => {
+    if (error.config) {
+      cleanPendingRequest(error.config)
+    }
     if (error.response) {
       const { status } = error.response
       if (status === 401) {

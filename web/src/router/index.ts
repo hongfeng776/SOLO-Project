@@ -50,6 +50,38 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/biz',
+    component: () => import('@/layout/index.vue'),
+    redirect: '/biz/vocabulary',
+    meta: { title: '词汇业务', icon: 'Reading' },
+    children: [
+      {
+        path: 'vocabulary',
+        name: 'Vocabulary',
+        component: () => import('@/views/biz/vocabulary/index.vue'),
+        meta: { title: '词汇管理', icon: 'Notebook' }
+      },
+      {
+        path: 'material',
+        name: 'Material',
+        component: () => import('@/views/biz/material/index.vue'),
+        meta: { title: '素材管理', icon: 'Document' }
+      },
+      {
+        path: 'comment',
+        name: 'Comment',
+        component: () => import('@/views/biz/comment/index.vue'),
+        meta: { title: '评论管理', icon: 'ChatDotRound' }
+      },
+      {
+        path: 'violation',
+        name: 'Violation',
+        component: () => import('@/views/biz/violation/index.vue'),
+        meta: { title: '违规管理', icon: 'Warning' }
+      }
+    ]
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/views/error/404.vue'),

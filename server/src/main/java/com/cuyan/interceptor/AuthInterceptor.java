@@ -5,12 +5,17 @@ import com.cuyan.common.ResultCode;
 import com.cuyan.common.UserContext;
 import com.cuyan.config.JwtConfig;
 import com.cuyan.util.JwtUtil;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+
+import java.util.Date;
 
 @Component
 @RequiredArgsConstructor
@@ -32,12 +37,21 @@ public class AuthInterceptor implements HandlerInterceptor {
             token = token.substring(jwtConfig.getPrefix().length() + 1);
         }
 
-        if (!jwtUtil.validateToken(token)) {
+        Claims claims;
+        try {
+            claims = jwtUtil.parseToken(token);
+        } catch (ExpiredJwtException e) {
+            throw new BusinessException(ResultCode.TOKEN_EXPIRED);
+        } catch (JwtException e) {
+            throw new BusinessException(ResultCode.TOKEN_INVALID);
+        }
+
+        if (claims.getExpiration().before(new Date())) {
             throw new BusinessException(ResultCode.TOKEN_EXPIRED);
         }
 
-        Long userId = jwtUtil.getUserIdFromToken(token);
-        String username = jwtUtil.getUsernameFromToken(token);
+        Long userId = claims.get("userId", Long.class);
+        String username = claims.get("username", String.class);
 
         String redisToken = redisTemplate.opsForValue().get("login:token:" + userId);
         if (redisToken == null || !redisToken.equals(token)) {

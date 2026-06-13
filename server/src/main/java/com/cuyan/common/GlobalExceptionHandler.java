@@ -1,5 +1,7 @@
 package com.cuyan.common;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +48,18 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining(", "));
         log.warn("约束校验失败: {}", message);
         return Result.error(ResultCode.BAD_REQUEST.getCode(), message);
+    }
+
+    @ExceptionHandler(ExpiredJwtException.class)
+    public Result<Void> handleExpiredJwtException(ExpiredJwtException e) {
+        log.warn("令牌已过期: {}", e.getMessage());
+        return Result.error(ResultCode.TOKEN_EXPIRED);
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public Result<Void> handleJwtException(JwtException e) {
+        log.warn("令牌无效: {}", e.getMessage());
+        return Result.error(ResultCode.TOKEN_INVALID);
     }
 
     @ExceptionHandler(Exception.class)
