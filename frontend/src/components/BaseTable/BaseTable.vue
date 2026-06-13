@@ -66,6 +66,7 @@ const emit = defineEmits<{
   (e: 'currentChange', row: any | null, oldRow: any | null): void;
   (e: 'sortChange', data: { prop: string; order: string | null }): void;
   (e: 'columnWidthChange', widths: Record<string, number>): void;
+  (e: 'sortStateChange', sort: { prop: string; order: 'ascending' | 'descending' | null }): void;
 }>();
 
 const internalCols = reactive<(TableColumn & { _width?: number; _order: number })[]>([]);
@@ -74,6 +75,7 @@ const currentPage = ref(props.page);
 const currentSize = ref(props.pageSize);
 const skeletonRows = computed(() => Math.min(currentSize.value, 8));
 const sortState = ref<{ prop: string; order: 'ascending' | 'descending' | null }>({ prop: '', order: null });
+const _restoring = ref(false);
 
 const storageKey = computed(() => (props.tableKey ? `table:${props.tableKey}` : null));
 
@@ -92,9 +94,19 @@ const loadPersistedState = () => {
     }
     if (data.sort) {
       sortState.value = data.sort;
+      if (sortState.value.prop) {
+        _restoring.value = true;
+        nextTick(() => {
+          tableRef.value?.sort?.(sortState.value.prop, sortState.value.order);
+          setTimeout(() => {
+            _restoring.value = false;
+          }, 50);
+        });
+      }
     }
   } catch {
     /* ignore */
+    _restoring.value = false;
   }
 };
 
@@ -110,6 +122,7 @@ const savePersistedState = () => {
   };
   localStorage.setItem(storageKey.value, JSON.stringify(data));
   emit('columnWidthChange', widths);
+  emit('sortStateChange', sortState.value);
 };
 
 watch(
@@ -121,11 +134,6 @@ watch(
     });
     nextTick(() => {
       loadPersistedState();
-      if (sortState.value.prop) {
-        nextTick(() => {
-          tableRef.value?.sort?.(sortState.value.prop, sortState.value.order);
-        });
-      }
     });
   },
   { immediate: true, deep: true },
@@ -167,7 +175,9 @@ const handleSelectionChange = (rows: any[]) => {
 const handleCurrent = (row: any, old: any) => emit('currentChange', row, old);
 const handleSort = ({ prop, order }: { prop: string; order: string | null }) => {
   sortState.value = { prop, order: order as 'ascending' | 'descending' | null };
-  savePersistedState();
+  if (!_restoring.value) {
+    savePersistedState();
+  }
   emit('sortChange', { prop, order });
 };
 
@@ -203,7 +213,6 @@ const handleDragEnd = () => {
   dropTarget.value = null;
 };
 
-const colWidths = reactive<Record<string, number>>({});
 const resizing = ref<{ key: string; startX: number; startWidth: number } | null>(null);
 
 const handleResizeStart = (e: MouseEvent, col: (typeof internalCols)[number]) => {

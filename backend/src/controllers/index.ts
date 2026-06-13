@@ -111,6 +111,8 @@ export const userController = {
       const username = req.query.username as string || '';
       const nickname = req.query.nickname as string || '';
       const phone = req.query.phone as string || '';
+      const orderBy = req.query.orderBy as string || 'createdAt';
+      const orderDir = (req.query.orderDir as string || 'DESC').toUpperCase();
       const offset = (page - 1) * pageSize;
 
       const where: any = {};
@@ -125,11 +127,24 @@ export const userController = {
         where.phone = { [Op.like as any]: `%${phone}%` };
       }
 
+      const sortableFields = new Set(['id', 'username', 'nickname', 'phone', 'role', 'status', 'fansCount', 'visits', 'createdAt', 'updatedAt', 'lastLoginAt']);
+      const validOrderDirs = new Set(['ASC', 'DESC']);
+      const safeField = sortableFields.has(orderBy) ? orderBy : 'createdAt';
+      const safeDir = validOrderDirs.has(orderDir) ? orderDir : 'DESC';
+      const fieldToColumn: Record<string, string> = {
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
+        lastLoginAt: 'last_login_at',
+        fansCount: 'fans_count',
+        visits: 'visits',
+      };
+      const colName = fieldToColumn[safeField] ?? safeField;
+
       const options: FindOptions = {
         where,
         offset,
         limit: pageSize,
-        order: [['created_at', 'DESC']],
+        order: [[colName, safeDir]],
       };
 
       const { rows, count } = await User.findAndCountAll(options);

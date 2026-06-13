@@ -114,6 +114,11 @@ const fetchData = async () => {
     };
     if (searchUsername.value) params.username = searchUsername.value;
     if (searchNickname.value) params.nickname = searchNickname.value;
+    const sort = tableRef.value?.getSortState?.() || { prop: '', order: null };
+    if (sort.prop && sort.order) {
+      params.orderBy = sort.prop;
+      params.orderDir = sort.order === 'ascending' ? 'ASC' : 'DESC';
+    }
 
     const res = await userApi.list(params);
     if (res.code === 0 && res.data) {
@@ -170,6 +175,10 @@ const handleRowSelect = (rows: UserInfo[]) => {
 
 const handleRowDblClick = (row: UserInfo) => {
   openEdit(row);
+};
+
+const handleSortChange = () => {
+  fetchData();
 };
 
 const handleScroll = () => {
@@ -366,6 +375,7 @@ onBeforeUnmount(() => {
         @pageChange="handlePageChange"
         @selectionChange="handleRowSelect"
         @rowDoubleClick="handleRowDblClick"
+        @sortChange="handleSortChange"
       >
         <template #role="{ row }">
           <el-tag :type="roleTagType(row)" size="small" effect="light">
