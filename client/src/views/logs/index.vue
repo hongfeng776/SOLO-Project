@@ -131,7 +131,8 @@
     </div>
 
     <el-dialog v-model="detailVisible" title="日志详情" width="720px">
-      <el-descriptions v-if="currentLog" :column="2" border>
+      <div v-loading="detailLoading">
+        <el-descriptions v-if="currentLog" :column="2" border>
         <el-descriptions-item label="日志ID">{{ currentLog.id }}</el-descriptions-item>
         <el-descriptions-item label="操作人">{{ currentLog.username }}</el-descriptions-item>
         <el-descriptions-item label="模块">{{ currentLog.module }}</el-descriptions-item>
@@ -161,7 +162,8 @@
         <el-descriptions-item label="User-Agent" :span="2">
           <EllipsisText :text="currentLog.user_agent" :width="600" />
         </el-descriptions-item>
-      </el-descriptions>
+        </el-descriptions>
+      </div>
     </el-dialog>
   </div>
 </template>
@@ -173,7 +175,7 @@ import { ElMessage } from 'element-plus';
 import FormattedDate from '@/components/FormattedDate.vue';
 import FormattedNumber from '@/components/FormattedNumber.vue';
 import EllipsisText from '@/components/EllipsisText.vue';
-import { getOperationLogList } from '@/api/log';
+import { getOperationLogList, getOperationLogDetail } from '@/api/log';
 import type { OperationLogItem, OperationLogQuery } from '@/types';
 
 const loading = ref(false);
@@ -181,6 +183,7 @@ const tableData = ref<OperationLogItem[]>([]);
 const total = ref(0);
 const dateRange = ref<string[]>([]);
 const detailVisible = ref(false);
+const detailLoading = ref(false);
 const currentLog = ref<OperationLogItem | null>(null);
 
 const queryForm = reactive<OperationLogQuery>({
@@ -225,9 +228,18 @@ function handleReset() {
   fetchList();
 }
 
-function handleView(row: OperationLogItem) {
-  currentLog.value = row;
+async function handleView(row: OperationLogItem) {
   detailVisible.value = true;
+  detailLoading.value = true;
+  currentLog.value = null;
+  try {
+    const res = await getOperationLogDetail(row.id);
+    currentLog.value = res;
+  } catch (e) {
+    // 错误已在拦截器处理
+  } finally {
+    detailLoading.value = false;
+  }
 }
 
 function operationText(op: string) {

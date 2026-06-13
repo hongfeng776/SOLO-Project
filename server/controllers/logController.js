@@ -3,6 +3,24 @@ const OperationLog = require('../models/OperationLog');
 const { success } = require('../utils/response');
 const { ErrorCode, ErrorMessage } = require('../constants/errorCode');
 
+async function getModuleList(req, res, next) {
+  try {
+    const modules = await OperationLog.findAll({
+      attributes: ['module'],
+      group: 'module',
+      where: {
+        module: { [Op.ne]: null }
+      },
+      order: [['module', 'ASC']],
+      raw: true
+    });
+    const list = modules.map(m => m.module).filter(Boolean);
+    res.json(success(list));
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function getLogList(req, res, next) {
   try {
     const {
