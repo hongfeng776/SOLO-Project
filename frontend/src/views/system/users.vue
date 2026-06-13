@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { userApi } from '@/api';
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules, type FormItemProp } from 'element-plus';
 import BaseTable from '@/components/BaseTable';
 import BaseModal from '@/components/BaseModal';
 import type { UserInfo, TableColumn, PaginatedData, ApiResponse } from '@/types';
+import { sleep } from '@/utils/common';
 
 const tableRef = ref<InstanceType<typeof BaseTable>>();
 const formRef = ref<FormInstance>();
@@ -14,75 +15,72 @@ const list = ref<UserInfo[]>([]);
 const total = ref(0);
 const page = ref(1);
 const pageSize = ref(10);
-const keyword = ref('');
+const searchKeyword = ref('');
+const searchUsername = ref('');
+const searchNickname = ref('');
+const searchError = ref('');
+const searchShake = ref(false);
 const selected = ref<UserInfo[]>([]);
 
 const modalVisible = ref(false);
 const modalMode = ref<'create' | 'edit'>('create');
 const editingId = ref<number | null>(null);
 const modalLoading = ref(false);
+const submitDisabled = ref(false);
 
 const form = reactive({
   username: '',
   nickname: '',
   password: '',
-  email: '',
   phone: '',
   role: 'user',
-  status: 1,
+  createdAt: '',
 });
 
 const rules: FormRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '3-20 字符', trigger: 'blur' },
+    { required: true, message: '请输入账号', trigger: 'blur' },
+    { min: 3, max: 20, message: '账号 3-20 个字符', trigger: 'blur' },
+    { pattern: /^[a-zA-Z0-9_]+$/, message: '账号只能包含字母、数字、下划线', trigger: 'blur' },
   ],
   nickname: [
     { required: true, message: '请输入昵称', trigger: 'blur' },
-    { max: 20, message: '最多 20 字符', trigger: 'blur' },
+    { max: 20, message: '昵称最多 20 字符', trigger: 'blur' },
   ],
   password: [
     { required: () => modalMode.value === 'create', message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 32, message: '6-32 字符', trigger: 'blur' },
-  ],
-  email: [
-    { type: 'email', message: '邮箱格式错误', trigger: 'blur' },
+    { min: 6, max: 32, message: '密码 6-32 个字符', trigger: 'blur' },
   ],
   phone: [
     { pattern: /^1[3-9]\d{9}$|^$/, message: '手机号格式错误', trigger: 'blur' },
   ],
+  role: [
+    { required: true, message: '请选择用户类型', trigger: 'change' },
+  ],
 };
 
 const columns: TableColumn<UserInfo>[] = [
-  { prop: 'username', label: '用户名', width: 140, ellipsis: true },
-  { prop: 'nickname', label: '昵称', width: 120 },
-  { prop: 'email', label: '邮箱', minWidth: 180, ellipsis: true },
+  { prop: 'username', label: '账号', width: 140, ellipsis: true },
+  { prop: 'nickname', label: '昵称', width: 140 },
   { prop: 'phone', label: '手机号', width: 140 },
   {
     prop: 'role',
-    label: '角色',
-    width: 110,
+    label: '用户类型',
+    width: 120,
     align: 'center',
     slot: 'role',
   },
   {
-    prop: 'status',
-    label: '状态',
-    width: 90,
-    align: 'center',
-    slot: 'status',
-  },
-  {
     prop: 'createdAt',
-    label: '创建时间',
-    width: 170,
+    label: '注册时间',
+    width: 180,
     align: 'center',
     formatter: (_r, _c, val) => (val ? new Date(val).toLocaleString('zh-CN') : '-'),
   },
   {
     prop: 'actions',
     label: '操作',
-    width: 180,
+    width: 160,
     fixed: 'right',
     align: 'center',
     slot: 'actions',
@@ -92,7 +90,15 @@ const columns: TableColumn<UserInfo>[] = [
 const fetchData = async () => {
   loading.value = true;
   try {
-    const res = await userApi.list({ page: page.value, pageSize: pageSize.value, keyword: keyword.value });
+    const params: Record<string, any> = {
+      page: page.value,
+      pageSize: pageSize.value,
+    };
+    if (searchKeyword.value) params.keyword = searchKeyword.value;
+    if (searchUsername.value) params.username = searchUsername.value;
+    if (searchNickname.value) params.nickname = searchNickname.value;
+
+    const res = await userApi.list(params);
     if (res.code === 0 && res.data) {
       list.value = res.data.list;
       total.value = res.data.total;
@@ -102,7 +108,34 @@ const fetchData = async () => {
   }
 };
 
+const validateSearch = (): boolean => {
+  if (searchUsername.value && !/^[a-zA-Z0-9_]{1,20}$/.test(searchUsername.value)) {
+    searchError.value = '账号格式不正确（字母、数字、下划线，1-20字符）';
+    searchShake.value = true;
+    setTimeout(() => (searchShake.value = false), 300);
+    return false;
+  }
+  if (searchNickname.value && searchNickname.value.length > 20) {
+    searchError.value = '昵称长度不能超过 20 字符';
+    searchShake.value = true;
+    setTimeout(() => (searchShake.value = false), 300);
+    return false;
+  }
+  searchError.value = '';
+  return true;
+};
+
 const handleSearch = () => {
+  if (!validateSearch()) return;
+  page.value = 1;
+  fetchData();
+};
+
+const handleSearchReset = () => {
+  searchKeyword.value = '';
+  searchUsername.value = '';
+  searchNickname.value = '';
+  searchError.value = '';
   page.value = 1;
   fetchData();
 };
@@ -124,10 +157,9 @@ const openCreate = () => {
     username: '',
     nickname: '',
     password: '',
-    email: '',
     phone: '',
     role: 'user',
-    status: 1,
+    createdAt: new Date().toISOString().slice(0, 10),
   });
   modalVisible.value = true;
 };
@@ -139,10 +171,9 @@ const openEdit = (row: UserInfo) => {
     username: row.username,
     nickname: row.nickname,
     password: '',
-    email: row.email || '',
     phone: row.phone || '',
     role: row.role,
-    status: row.status,
+    createdAt: row.createdAt ? new Date(row.createdAt).toISOString().slice(0, 10) : '',
   });
   modalVisible.value = true;
 };
@@ -150,6 +181,8 @@ const openEdit = (row: UserInfo) => {
 const handleModalOk = async () => {
   const valid = await formRef.value?.validate().catch(() => false);
   if (!valid) return;
+
+  submitDisabled.value = true;
   modalLoading.value = true;
   try {
     let res: ApiResponse<UserInfo>;
@@ -158,22 +191,30 @@ const handleModalOk = async () => {
     if (modalMode.value === 'create') {
       res = await userApi.create({ ...payload, password: form.password });
     } else if (editingId.value) {
+      delete payload.username;
+      delete payload.createdAt;
       res = await userApi.update(editingId.value, payload);
     } else return;
+
     if (res.code === 0) {
       ElMessage.success(modalMode.value === 'create' ? '创建成功' : '更新成功');
       modalVisible.value = false;
       fetchData();
     }
   } finally {
+    await sleep(300);
+    submitDisabled.value = false;
     modalLoading.value = false;
   }
 };
 
 const handleDelete = async (row: UserInfo) => {
   try {
-    await ElMessageBox.confirm(`确定删除用户 "${row.nickname}" 吗？`, '删除确认', {
+    await ElMessageBox.confirm(`确定删除用户 "${row.nickname}"（${row.username}）吗？`, '删除确认', {
+      confirmButtonText: '确定删除',
+      cancelButtonText: '取消',
       type: 'warning',
+      customClass: 'confirm-dialog',
     });
     const res = await userApi.remove(row.id);
     if (res.code === 0) {
@@ -191,9 +232,17 @@ const handleBatchDelete = async () => {
     return;
   }
   try {
-    await ElMessageBox.confirm(`确定删除选中的 ${selected.value.length} 个用户吗？`, '批量删除', { type: 'warning' });
+    await ElMessageBox.confirm(
+      `确定删除选中的 ${selected.value.length} 个用户吗？\n此操作不可恢复！`,
+      '批量删除确认',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+      },
+    );
     await Promise.all(selected.value.map((r) => userApi.remove(r.id)));
-    ElMessage.success('批量删除成功');
+    ElMessage.success(`成功删除 ${selected.value.length} 个用户`);
     tableRef.value?.clearSelection?.();
     fetchData();
   } catch {
@@ -201,14 +250,13 @@ const handleBatchDelete = async () => {
   }
 };
 
-const toggleStatus = async (row: UserInfo) => {
-  const newStatus = row.status === 1 ? 0 : 1;
-  const res = await userApi.update(row.id, { status: newStatus });
-  if (res.code === 0) {
-    ElMessage.success(newStatus === 1 ? '已启用' : '已禁用');
-    fetchData();
-  }
-};
+const roleLabel = computed(() => (row: UserInfo) => {
+  return row.role === 'admin' ? '管理员' : '普通用户';
+});
+
+const roleTagType = computed(() => (row: UserInfo) => {
+  return row.role === 'admin' ? 'primary' : 'success';
+});
 
 onMounted(fetchData);
 </script>
@@ -216,21 +264,39 @@ onMounted(fetchData);
 <template>
   <div class="page-wrap">
     <el-card class="filter-card" shadow="never">
-      <div class="filter-row">
-        <el-input
-          v-model="keyword"
-          placeholder="搜索用户名/昵称/邮箱"
-          clearable
-          style="width: 280px"
-          @keyup.enter="handleSearch"
-          @clear="handleSearch"
-        >
-          <template #prefix><el-icon><Search /></el-icon></template>
-        </el-input>
+      <div class="filter-row" :class="{ shake: searchShake }">
+        <div class="filter-item">
+          <el-input
+            v-model="searchUsername"
+            placeholder="请输入用户账号"
+            clearable
+            class="filter-input"
+            :class="{ 'is-search-error': !!searchError }"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          >
+            <template #prefix><el-icon><User /></el-icon></template>
+          </el-input>
+        </div>
+        <div class="filter-item">
+          <el-input
+            v-model="searchNickname"
+            placeholder="请输入用户昵称"
+            clearable
+            class="filter-input"
+            :class="{ 'is-search-error': !!searchError }"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          >
+            <template #prefix><el-icon><Avatar /></el-icon></template>
+          </el-input>
+        </div>
         <el-button type="primary" @click="handleSearch">
           <el-icon><Search /></el-icon>查询
         </el-button>
-        <el-button @click="keyword = ''; handleSearch()">重置</el-button>
+        <el-button @click="handleSearchReset">
+          <el-icon><RefreshRight /></el-icon>重置
+        </el-button>
         <div class="spacer" />
         <el-button type="success" plain @click="openCreate">
           <el-icon><Plus /></el-icon>新增用户
@@ -238,6 +304,10 @@ onMounted(fetchData);
         <el-button type="danger" plain :disabled="selected.length === 0" @click="handleBatchDelete">
           <el-icon><Delete /></el-icon>批量删除
         </el-button>
+      </div>
+      <div v-if="searchError" class="search-error-tip">
+        <el-icon><WarningFilled /></el-icon>
+        <span>{{ searchError }}</span>
       </div>
     </el-card>
 
@@ -256,22 +326,19 @@ onMounted(fetchData);
         @selectionChange="handleRowSelect"
       >
         <template #role="{ row }">
-          <el-tag :type="row.role === 'admin' ? 'primary' : 'success'" size="small" effect="light">
-            {{ row.role === 'admin' ? '管理员' : '普通用户' }}
+          <el-tag :type="roleTagType(row)" size="small" effect="light">
+            {{ roleLabel(row) }}
           </el-tag>
         </template>
-        <template #status="{ row }">
-          <el-switch
-            :model-value="row.status === 1"
-            size="small"
-            active-text="启用"
-            inactive-text="禁用"
-            @change="() => toggleStatus(row)"
-          />
-        </template>
         <template #actions="{ row }">
-          <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
-          <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+          <div class="row-actions">
+            <el-button link type="primary" size="small" @click="openEdit(row)">
+              <el-icon><Edit /></el-icon>编辑
+            </el-button>
+            <el-button link type="danger" size="small" @click="handleDelete(row)">
+              <el-icon><Delete /></el-icon>删除
+            </el-button>
+          </div>
         </template>
       </BaseTable>
     </el-card>
@@ -279,51 +346,64 @@ onMounted(fetchData);
     <BaseModal
       v-model:visible="modalVisible"
       :title="modalMode === 'create' ? '新增用户' : '编辑用户'"
-      width="560px"
-      :confirm-loading="modalLoading"
+      width="580px"
+      :confirm-loading="modalLoading || submitDisabled"
       @ok="handleModalOk"
     >
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="86px" label-position="right">
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" :disabled="modalMode === 'edit'" placeholder="请输入用户名" />
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="90px" label-position="right">
+        <el-form-item label="账号" prop="username">
+          <el-input v-model="form.username" :disabled="modalMode === 'edit'" placeholder="请输入账号（字母、数字、下划线）" />
         </el-form-item>
         <el-form-item label="昵称" prop="nickname">
           <el-input v-model="form.nickname" placeholder="请输入昵称" />
         </el-form-item>
-        <el-form-item :label="modalMode === 'create' ? '密码' : '新密码'" prop="password">
-          <el-input v-model="form.password" type="password" show-password :placeholder="modalMode === 'create' ? '请输入密码' : '留空不修改'" />
-        </el-form-item>
         <el-row :gutter="12">
-          <el-col :span="12">
-            <el-form-item label="邮箱" prop="email">
-              <el-input v-model="form.email" placeholder="选填" />
-            </el-form-item>
-          </el-col>
           <el-col :span="12">
             <el-form-item label="手机号" prop="phone">
-              <el-input v-model="form.phone" placeholder="选填" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="12">
-          <el-col :span="12">
-            <el-form-item label="角色" prop="role">
-              <el-select v-model="form.role">
-                <el-option label="普通用户" value="user" />
-                <el-option label="管理员" value="admin" />
-              </el-select>
+              <el-input v-model="form.phone" placeholder="选填，11位手机号" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="状态" prop="status">
-              <el-radio-group v-model="form.status">
-                <el-radio :value="1">启用</el-radio>
-                <el-radio :value="0">禁用</el-radio>
-              </el-radio-group>
+            <el-form-item label="注册时间" prop="createdAt">
+              <el-date-picker
+                v-model="form.createdAt"
+                type="date"
+                placeholder="选择注册日期"
+                style="width: 100%"
+                :disabled="modalMode === 'edit'"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+              />
             </el-form-item>
           </el-col>
         </el-row>
+        <el-form-item label="用户类型" prop="role">
+          <el-radio-group v-model="form.role">
+            <el-radio value="user">普通用户</el-radio>
+            <el-radio value="admin">管理员</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item :label="modalMode === 'create' ? '登录密码' : '重置密码'" prop="password">
+          <el-input
+            v-model="form.password"
+            type="password"
+            show-password
+            :placeholder="modalMode === 'create' ? '请输入密码，6-32字符' : '留空不修改密码'"
+          />
+        </el-form-item>
       </el-form>
+      <template #footer="{ ok, cancel, loading }">
+        <el-button @click="cancel">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="loading"
+          :disabled="loading || submitDisabled"
+          @click="ok"
+          class="submit-btn"
+        >
+          {{ modalMode === 'create' ? '确认新增' : '保存修改' }}
+        </el-button>
+      </template>
     </BaseModal>
   </div>
 </template>
@@ -334,21 +414,77 @@ onMounted(fetchData);
   flex-direction: column;
   gap: $spacing-md;
 }
+
 .filter-card {
   padding: $spacing-md $spacing-lg !important;
   border-radius: $radius-lg;
 }
+
 .filter-row {
   display: flex;
   align-items: center;
   gap: $spacing-sm;
   flex-wrap: wrap;
+  &.shake {
+    animation: shake-animation $duration-base $ease-in-out;
+  }
 }
+
+.filter-item {
+  display: flex;
+  align-items: center;
+}
+
+.filter-input {
+  width: 220px;
+  transition:
+    box-shadow $duration-fast $ease-in-out,
+    transform $duration-fast $ease-in-out;
+  :deep(.el-input__wrapper.is-focus) {
+    box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.18) !important;
+    transform: scale(1.018);
+    border-color: #1677ff !important;
+  }
+  &.is-search-error :deep(.el-input__wrapper) {
+    animation: shake-animation $duration-base $ease-in-out;
+    box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.18) !important;
+    border-color: #ff4d4f !important;
+  }
+}
+
+.search-error-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: $spacing-sm;
+  padding: 8px 12px;
+  background: rgba(255, 77, 79, 0.08);
+  border: 1px solid rgba(255, 77, 79, 0.3);
+  border-radius: $radius-md;
+  color: #ff4d4f;
+  font-size: $font-size-sm;
+  animation: shake-animation $duration-base $ease-in-out;
+}
+
 .spacer {
   flex: 1;
 }
+
 .table-card {
   padding: $spacing-md !important;
   border-radius: $radius-lg;
+}
+
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.submit-btn {
+  &:active:not(:disabled) {
+    background: #1677ff !important;
+    border-color: #1677ff !important;
+  }
 }
 </style>

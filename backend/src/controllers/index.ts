@@ -109,15 +109,33 @@ export const userController = {
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = parseInt(req.query.pageSize as string) || 10;
       const keyword = req.query.keyword as string || '';
+      const username = req.query.username as string || '';
+      const nickname = req.query.nickname as string || '';
+      const phone = req.query.phone as string || '';
       const offset = (page - 1) * pageSize;
 
       const where: any = {};
+      const orConditions: any[] = [];
+
       if (keyword) {
-        where[Op.or as any] = [
+        orConditions.push(
           { username: { [Op.like as any]: `%${keyword}%` } },
           { nickname: { [Op.like as any]: `%${keyword}%` } },
           { email: { [Op.like as any]: `%${keyword}%` } },
-        ];
+          { phone: { [Op.like as any]: `%${keyword}%` } },
+        );
+      }
+      if (username) {
+        where.username = { [Op.like as any]: `%${username}%` };
+      }
+      if (nickname) {
+        where.nickname = { [Op.like as any]: `%${nickname}%` };
+      }
+      if (phone) {
+        where.phone = { [Op.like as any]: `%${phone}%` };
+      }
+      if (orConditions.length > 0) {
+        where[Op.or as any] = orConditions;
       }
 
       const options: FindOptions = {
