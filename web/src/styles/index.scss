@@ -1,0 +1,7 @@
+@import './reset.scss';
+@import './common.scss';
+
+#nprogress .bar {
+  background: $primary-color !important;
+  height: 3px !important;
+}
