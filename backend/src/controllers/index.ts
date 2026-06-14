@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import path from 'path';
+import fs from 'fs';
 import User from '@/models/User';
 import SystemConfig from '@/models/SystemConfig';
 import Category from '@/models/Category';
@@ -496,6 +498,8 @@ export const contentController = {
       const categoryId = req.query.categoryId as string || '';
       const startDate = req.query.startDate as string || '';
       const endDate = req.query.endDate as string || '';
+      const orderBy = req.query.orderBy as string || 'publishTime';
+      const orderDir = (req.query.orderDir as string || 'DESC').toUpperCase();
       const offset = (page - 1) * pageSize;
 
       const where: any = {};
@@ -521,11 +525,27 @@ export const contentController = {
         }
       }
 
+      const sortableFields = new Set(['id', 'title', 'status', 'views', 'publishTime', 'createdAt', 'updatedAt']);
+      const validOrderDirs = new Set(['ASC', 'DESC']);
+      const safeField = sortableFields.has(orderBy) ? orderBy : 'publishTime';
+      const safeDir = validOrderDirs.has(orderDir) ? orderDir : 'DESC';
+      const fieldToColumn: Record<string, string> = {
+        publishTime: 'publish_time',
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
+      };
+      const colName = fieldToColumn[safeField] ?? safeField;
+
+      const orderClause: [string, string][] = [[colName, safeDir]];
+      if (safeField !== 'id') {
+        orderClause.push(['id', 'DESC']);
+      }
+
       const options: FindOptions = {
         where,
         offset,
         limit: pageSize,
-        order: [['publish_time', 'DESC'], ['id', 'DESC']],
+        order: orderClause,
         include: [
           {
             model: Category,
@@ -701,6 +721,34 @@ export const contentController = {
       responseUtil.success(res, null, '删除成功');
     } catch (error) {
       console.error('[Content Delete]:', error);
+      responseUtil.internalError(res);
+    }
+  },
+};
+
+export const uploadController = {
+  async image(req: Request, res: Response): Promise<void> {
+    try {
+      const file = req.file;
+      if (!file) {
+        responseUtil.badRequest(res, '请选择要上传的文件');
+        return;
+      }
+      const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedMimes.includes(file.mimetype)) {
+        fs.unlinkSync(file.path);
+        responseUtil.badRequest(res, '只支持 JPG、PNG、GIF、WebP 格式的图片');
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        fs.unlinkSync(file.path);
+        responseUtil.badRequest(res, '图片大小不能超过 2MB');
+        return;
+      }
+      const url = `/uploads/${file.filename}`;
+      responseUtil.success(res, { url, filename: file.originalname }, '上传成功');
+    } catch (error) {
+      console.error('[Upload Image]:', error);
       responseUtil.internalError(res);
     }
   },

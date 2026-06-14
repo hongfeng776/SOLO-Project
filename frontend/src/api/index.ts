@@ -1,5 +1,6 @@
 import { get, post, put, del } from '@/utils/request';
 import type { ApiResponse, LoginParams, LoginResult, UserInfo, SystemConfig, PaginatedData, PaginationParams, CategoryInfo, TagInfo, ContentInfo, ContentListParams } from '@/types';
+import service from '@/utils/request';
 
 export const authApi = {
   login: (data: LoginParams) => post<ApiResponse<LoginResult>>('/auth/login', data),
@@ -43,4 +44,14 @@ export const contentApi = {
   remove: (id: number) => del<ApiResponse<null>>(`/contents/${id}`),
 };
 
-export default { authApi, userApi, configApi, categoryApi, tagApi, contentApi };
+export const uploadApi = {
+  image: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return service.post<ApiResponse<{ url: string; filename: string }>>('/upload/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+};
+
+export default { authApi, userApi, configApi, categoryApi, tagApi, contentApi, uploadApi };

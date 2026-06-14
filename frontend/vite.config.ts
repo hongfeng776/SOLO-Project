@@ -51,6 +51,10 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (p) => p,
         },
+        '/uploads': {
+          target: env.VITE_API_TARGET || 'http://localhost:3001',
+          changeOrigin: true,
+        },
       },
     },
     build: {

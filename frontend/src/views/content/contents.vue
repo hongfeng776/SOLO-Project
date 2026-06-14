@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed, onBeforeUnmount } from 'vue';
-import { contentApi, categoryApi, tagApi } from '@/api';
+import { ref, reactive, onMounted, computed, onBeforeUnmount, nextTick } from 'vue';
+import { contentApi, categoryApi, tagApi, uploadApi } from '@/api';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules, type UploadProps } from 'element-plus';
 import BaseTable from '@/components/BaseTable';
 import BaseModal from '@/components/BaseModal';
@@ -142,6 +142,11 @@ const fetchData = async () => {
       params.startDate = searchDateRange.value[0];
       params.endDate = searchDateRange.value[1];
     }
+    const sort = tableRef.value?.getSortState?.() || { prop: '', order: null };
+    if (sort.prop && sort.order) {
+      params.orderBy = sort.prop;
+      params.orderDir = sort.order === 'ascending' ? 'ASC' : 'DESC';
+    }
 
     const res = await contentApi.list(params);
     if (res.code === 0 && res.data) {
@@ -209,7 +214,7 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-const openCreate = () => {
+const openCreate = async () => {
   modalMode.value = 'create';
   editingId.value = null;
   Object.assign(form, {
@@ -221,12 +226,14 @@ const openCreate = () => {
     tagIds: [],
     publishTime: new Date().toISOString().slice(0, 10),
   });
+  await fetchCategoryAndTag();
   modalVisible.value = true;
 };
 
 const openEdit = async (row: ContentInfo) => {
   modalMode.value = 'edit';
   editingId.value = row.id;
+  await fetchCategoryAndTag();
   Object.assign(form, {
     title: row.title,
     content: row.content,
@@ -314,6 +321,7 @@ const handleBatchDelete = async () => {
     ElMessage.success(`成功删除 ${selected.value.length} 条内容`);
     tableRef.value?.clearSelection?.();
     selected.value = [];
+    await nextTick();
     fetchData();
   } catch {
     /* cancel */
@@ -334,9 +342,23 @@ const beforeCoverUpload: UploadProps['beforeUpload'] = (rawFile) => {
   return true;
 };
 
-const handleCoverChange: UploadProps['onChange'] = (file: any) => {
-  if (file.raw) {
-    form.coverImage = URL.createObjectURL(file.raw);
+const coverUploading = ref(false);
+
+const handleCoverChange: UploadProps['onChange'] = async (uploadFile: any) => {
+  if (!uploadFile.raw) return;
+  const valid = beforeCoverUpload(uploadFile.raw);
+  if (!valid) return;
+  coverUploading.value = true;
+  try {
+    const res = await uploadApi.image(uploadFile.raw) as any;
+    if (res.code === 0 && res.data) {
+      form.coverImage = res.data.url;
+      ElMessage.success('上传成功');
+    }
+  } catch {
+    ElMessage.error('封面上传失败');
+  } finally {
+    coverUploading.value = false;
   }
 };
 
@@ -469,7 +491,11 @@ onBeforeUnmount(() => {
               :preview-teleported="true"
               fit="cover"
               class="cover-img"
-            />
+            >
+              <template #error>
+                <span class="no-cover">-</span>
+              </template>
+            </el-image>
           </div>
           <span v-else class="no-cover">-</span>
         </template>
@@ -580,12 +606,16 @@ onBeforeUnmount(() => {
             <el-upload
               class="cover-uploader"
               :show-file-list="false"
-              :before-upload="beforeCoverUpload"
               :on-change="handleCoverChange"
               :auto-upload="false"
+              :disabled="coverUploading"
               accept="image/*"
             >
-              <div v-if="form.coverImage" class="cover-preview-wrap">
+              <div v-if="coverUploading" class="cover-upload-tip">
+                <el-icon :size="28" class="is-loading"><Loading /></el-icon>
+                <div class="upload-text">上传中...</div>
+              </div>
+              <div v-else-if="form.coverImage" class="cover-preview-wrap">
                 <el-image :src="form.coverImage" fit="cover" class="cover-preview-img" />
               </div>
               <div v-else class="cover-upload-tip">
