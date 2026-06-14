@@ -92,6 +92,7 @@ const toggleSortTab = (key: SortTabKey) => {
     activeSortTab.value = key;
     sortTabDir.value = 'DESC';
   }
+  tableRef.value?.clearSort?.();
   sortAnimating.value = true;
   page.value = 1;
   if (listWrapEl.value) {
@@ -304,7 +305,7 @@ const openEdit = async (row: ContentInfo) => {
 };
 
 const createRipple = (evt: MouseEvent) => {
-  const target = evt.currentTarget as HTMLElement;
+  const target = evt?.currentTarget as HTMLElement | null | undefined;
   if (!target) return;
   const rect = target.getBoundingClientRect();
   const diameter = Math.max(rect.width, rect.height);
@@ -318,8 +319,7 @@ const createRipple = (evt: MouseEvent) => {
   setTimeout(() => span.remove(), 700);
 };
 
-const handleModalOk = async (evt?: MouseEvent) => {
-  if (evt) createRipple(evt);
+const handleModalOk = async () => {
   const valid = await formRef.value?.validate().catch(() => false);
   if (!valid) return;
 
@@ -805,7 +805,7 @@ onBeforeUnmount(() => {
           type="primary"
           :loading="loading"
           :disabled="loading || submitDisabled"
-          @click="ok"
+          @click="(e: MouseEvent) => { createRipple(e); ok(); }"
           class="submit-btn ripple-btn"
         >
           {{ modalMode === 'create' ? '确认新增' : '保存修改' }}
