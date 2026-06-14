@@ -62,3 +62,14 @@ export function showWarning(message = '注意') {
 export function showInfo(message = '提示') {
   ElMessage.info(message);
 }
+
+const IMG_BASE_URL = (import.meta as any).env?.VITE_IMG_BASE_URL || '';
+
+export function getImageUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  if (/^https?:\/\//.test(url)) return url;
+  if (url.startsWith('//')) return url;
+  if (url.startsWith('data:')) return url;
+  if (url.startsWith('/')) return IMG_BASE_URL + url;
+  return IMG_BASE_URL + '/' + url;
+}

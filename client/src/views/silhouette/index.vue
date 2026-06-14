@@ -49,8 +49,8 @@
         <template #default="{ row }">
           <el-image
             v-if="row.cover"
-            :src="row.cover"
-            :preview-src-list="[row.cover]"
+            :src="getImageUrl(row.cover)"
+            :preview-src-list="[getImageUrl(row.cover)]"
             fit="cover"
             style="width: 60px; height: 60px; border-radius: 4px"
             preview-teleported
@@ -175,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, nextTick } from 'vue';
 import { Search, Refresh, Plus, Delete, Top, Bottom } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import type { FormInstance, FormRules, UploadFile } from 'element-plus';
@@ -191,7 +191,7 @@ import {
   batchUpdateSilhouetteStatus
 } from '@/api/silhouette';
 import type { SilhouetteMaterialItem, SilhouetteMaterialQuery } from '@/types';
-import { confirmDialog, showSuccess } from '@/utils';
+import { confirmDialog, showSuccess, getImageUrl } from '@/utils';
 
 const loading = ref(false);
 const tableData = ref<SilhouetteMaterialItem[]>([]);
@@ -272,6 +272,9 @@ function handleAdd() {
   isEdit.value = false;
   editId.value = 0;
   dialogVisible.value = true;
+  nextTick(() => {
+    formRef.value?.clearValidate();
+  });
 }
 
 function handleEdit(row: SilhouetteMaterialItem) {
@@ -284,9 +287,12 @@ function handleEdit(row: SilhouetteMaterialItem) {
   formData.scene = row.scene || '';
   formData.category = row.category || '';
   formData.status = row.status;
-  coverPreview.value = row.cover || '';
+  coverPreview.value = getImageUrl(row.cover) || '';
   coverFile.value = null;
   dialogVisible.value = true;
+  nextTick(() => {
+    formRef.value?.clearValidate();
+  });
 }
 
 function handleCoverChange(file: UploadFile) {
@@ -322,7 +328,11 @@ async function handleSubmit() {
     if (formData.scene) fd.append('scene', formData.scene);
     if (formData.category) fd.append('category', formData.category);
     fd.append('status', String(formData.status));
-    if (coverFile.value) fd.append('cover', coverFile.value);
+    if (coverFile.value) {
+      fd.append('cover', coverFile.value);
+    } else if (isEdit.value && formData.cover) {
+      fd.append('cover', formData.cover);
+    }
 
     if (isEdit.value) {
       await updateSilhouette(editId.value, fd);
