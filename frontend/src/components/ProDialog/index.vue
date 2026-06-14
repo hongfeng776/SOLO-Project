@@ -6,6 +6,7 @@
     :fullscreen="fullscreen"
     :close-on-click-modal="closeOnClickModal"
     :modal="modal"
+    custom-class="pro-dialog"
     v-bind="$attrs"
     @update:model-value="handleUpdateVisible"
     @close="handleClose"
@@ -85,3 +86,33 @@ function handleOpen() {
   emit('open')
 }
 </script>
+
+<style lang="scss">
+.dialog-fade-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.dialog-fade-leave-active {
+  transition: all 0.3s ease-in;
+}
+
+.dialog-fade-enter-from .pro-dialog {
+  transform: scale(0.9);
+  opacity: 0;
+}
+
+.dialog-fade-enter-to .pro-dialog {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.dialog-fade-leave-from .pro-dialog {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.dialog-fade-leave-to .pro-dialog {
+  transform: scale(1.05);
+  opacity: 0;
+}
+</style>

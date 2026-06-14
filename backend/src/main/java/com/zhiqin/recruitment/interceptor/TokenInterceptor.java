@@ -10,6 +10,8 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class TokenInterceptor implements HandlerInterceptor {
@@ -21,9 +23,21 @@ public class TokenInterceptor implements HandlerInterceptor {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
+    private static final List<String> GET_WHITELIST_PREFIXES = Arrays.asList(
+            "/api/enterprise/",
+            "/api/seeker/",
+            "/api/position/",
+            "/api/resume/",
+            "/api/violation/"
+    );
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+
+        if ("GET".equalsIgnoreCase(request.getMethod()) && isGetWhitelisted(request)) {
             return true;
         }
 
@@ -65,6 +79,16 @@ public class TokenInterceptor implements HandlerInterceptor {
         response.setContentType("application/json;charset=UTF-8");
         Result<?> result = Result.fail(resultCode);
         response.getWriter().write(objectMapper.writeValueAsString(result));
+    }
+
+    private boolean isGetWhitelisted(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        for (String prefix : GET_WHITELIST_PREFIXES) {
+            if (uri.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

@@ -8,6 +8,7 @@ import App from './App.vue'
 import router from './router'
 import './router/permission'
 import './styles/index.scss'
+import { setupDirectives } from './directives'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -20,4 +21,5 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 app.use(pinia)
 app.use(router)
 app.use(ElementPlus, { locale: zhCn })
+setupDirectives(app)
 app.mount('#app')

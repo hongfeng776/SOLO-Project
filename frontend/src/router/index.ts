@@ -26,6 +26,36 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: 'Dashboard',
         component: () => import('@/views/dashboard/index.vue'),
         meta: { title: '工作台', icon: 'DataAnalysis' }
+      },
+      {
+        path: 'enterprise',
+        name: 'Enterprise',
+        component: () => import('@/views/enterprise/index.vue'),
+        meta: { title: '企业管理', icon: 'OfficeBuilding' }
+      },
+      {
+        path: 'seeker',
+        name: 'Seeker',
+        component: () => import('@/views/seeker/index.vue'),
+        meta: { title: '求职者管理', icon: 'UserFilled' }
+      },
+      {
+        path: 'position',
+        name: 'Position',
+        component: () => import('@/views/position/index.vue'),
+        meta: { title: '岗位管理', icon: 'Briefcase' }
+      },
+      {
+        path: 'resume',
+        name: 'Resume',
+        component: () => import('@/views/resume/index.vue'),
+        meta: { title: '简历管理', icon: 'Document' }
+      },
+      {
+        path: 'violation',
+        name: 'Violation',
+        component: () => import('@/views/violation/index.vue'),
+        meta: { title: '违规管理', icon: 'Warning' }
       }
     ]
   }
