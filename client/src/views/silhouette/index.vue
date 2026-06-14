@@ -122,11 +122,11 @@
             <el-button type="primary" link @click="handleViewDetail(row)">详情</el-button>
             <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
             <el-button
-              :type="row.status === 1 ? 'warning' : 'success'"
+              :type="toggleStatusBtnType(row.status)"
               link
               @click="handleToggleStatus(row)"
             >
-              {{ row.status === 1 ? '下架' : '上架' }}
+              {{ toggleStatusBtnText(row.status) }}
             </el-button>
             <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
           </template>
@@ -231,7 +231,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, nextTick, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { Search, Refresh, Plus, Delete, Top, Bottom, Download } from '@element-plus/icons-vue';
 import type { FormInstance, FormRules, UploadFile } from 'element-plus';
 import FormattedDate from '@/components/FormattedDate.vue';
@@ -252,6 +252,7 @@ import type { SilhouetteMaterialItem, SilhouetteMaterialQuery } from '@/types';
 import { confirmDialog, showSuccess, getImageUrl } from '@/utils';
 import * as XLSX from 'xlsx';
 
+const route = useRoute();
 const router = useRouter();
 
 const loading = ref(false);
@@ -331,6 +332,22 @@ function statusTagType(status: number) {
     2: 'warning'
   };
   return map[status] || 'info';
+}
+
+const statusNextMap: Record<number, number> = { 2: 1, 1: 0, 0: 2 };
+const statusNextLabelMap: Record<number, string> = { 2: '上架', 1: '下架', 0: '待审核' };
+const statusNextBtnTypeMap: Record<number, 'success' | 'warning' | 'primary'> = {
+  2: 'success',
+  1: 'warning',
+  0: 'primary'
+};
+
+function toggleStatusBtnText(status: number) {
+  return statusNextLabelMap[status] ?? '上架';
+}
+
+function toggleStatusBtnType(status: number) {
+  return statusNextBtnTypeMap[status] ?? 'success';
 }
 
 async function fetchList() {
@@ -488,13 +505,13 @@ async function handleBatchDelete() {
 }
 
 async function handleToggleStatus(row: SilhouetteMaterialItem) {
-  const newStatus = row.status === 1 ? 0 : 1;
-  const label = newStatus === 1 ? '上架' : '下架';
-  const confirmed = await confirmDialog(`确定要将素材「${row.name}」${label}吗？`, `${label}确认`);
+  const newStatus = statusNextMap[row.status] ?? 1;
+  const label = statusNextLabelMap[row.status] ?? '上架';
+  const confirmed = await confirmDialog(`确定要将素材「${row.name}」设为「${label}」吗？`, `状态变更确认`);
   if (!confirmed) return;
   try {
     await updateSilhouetteStatus(row.id, newStatus);
-    showSuccess(`${label}成功`);
+    showSuccess(`已设为「${label}」`);
     fetchList();
   } catch {
     // handled by interceptor
@@ -577,6 +594,10 @@ async function handleExport() {
     exportTipText.value = '导出完成！';
 
     showSuccess('导出成功');
+
+    setTimeout(() => {
+      exportDialogVisible.value = false;
+    }, 1500);
   } catch {
     exportTipText.value = '导出失败';
     exportProgress.value = 0;
@@ -585,9 +606,26 @@ async function handleExport() {
   }
 }
 
-onMounted(() => {
-  fetchList();
-  fetchCategories();
+async function checkAndOpenEditFromQuery() {
+  const editIdParam = route.query.editId;
+  if (!editIdParam) return;
+  const id = Number(editIdParam);
+  if (!id) return;
+
+  if (tableData.value.length === 0) {
+    await fetchList();
+  }
+  const row = tableData.value.find(r => r.id === id);
+  if (row) {
+    handleEdit(row);
+    router.replace({ path: '/silhouettes', query: {} });
+  }
+}
+
+onMounted(async () => {
+  await fetchList();
+  await fetchCategories();
+  await checkAndOpenEditFromQuery();
 });
 </script>
 

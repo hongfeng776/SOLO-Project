@@ -56,8 +56,8 @@
 
           <div class="detail-actions">
             <el-button type="primary" :icon="Edit" @click="handleEdit">编辑素材</el-button>
-            <el-button :type="detail.status === 1 ? 'warning' : 'success'" :icon="SwitchButton" @click="handleToggleStatus">
-              {{ detail.status === 1 ? '下架' : '上架' }}
+            <el-button :type="toggleStatusBtnType" :icon="SwitchButton" @click="handleToggleStatus">
+              {{ toggleStatusBtnText }}
             </el-button>
             <el-button type="danger" :icon="Delete" @click="handleDelete">删除素材</el-button>
           </div>
@@ -96,6 +96,26 @@ const statusTagType = computed(() => {
   return map[detail.value?.status ?? -1] || 'info';
 });
 
+const statusNextMap: Record<number, number> = { 2: 1, 1: 0, 0: 2 };
+
+const statusNextLabelMap: Record<number, string> = { 2: '上架', 1: '下架', 0: '待审核' };
+
+const statusNextBtnTypeMap: Record<number, 'success' | 'warning' | 'primary'> = {
+  2: 'success',
+  1: 'warning',
+  0: 'primary'
+};
+
+const toggleStatusBtnText = computed(() => {
+  const cur = detail.value?.status ?? 1;
+  return statusNextLabelMap[cur] ?? '上架';
+});
+
+const toggleStatusBtnType = computed(() => {
+  const cur = detail.value?.status ?? 1;
+  return statusNextBtnTypeMap[cur] ?? 'success';
+});
+
 async function fetchDetail() {
   const id = Number(route.params.id);
   if (!id) return;
@@ -120,13 +140,14 @@ function handleEdit() {
 
 async function handleToggleStatus() {
   if (!detail.value) return;
-  const newStatus = detail.value.status === 1 ? 0 : 1;
-  const label = newStatus === 1 ? '上架' : '下架';
-  const confirmed = await confirmDialog(`确定要将素材「${detail.value.name}」${label}吗？`, `${label}确认`);
+  const cur = detail.value.status;
+  const newStatus = statusNextMap[cur] ?? 1;
+  const label = statusNextLabelMap[cur] ?? '上架';
+  const confirmed = await confirmDialog(`确定要将素材「${detail.value.name}」设为「${label}」吗？`, `状态变更确认`);
   if (!confirmed) return;
   try {
     await updateSilhouetteStatus(detail.value.id, newStatus);
-    showSuccess(`${label}成功`);
+    showSuccess(`已设为「${label}」`);
     detail.value.status = newStatus;
   } catch {
     // handled by interceptor
