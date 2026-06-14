@@ -300,7 +300,7 @@ const queryParams = reactive({
   pageSize: 10,
   name: '',
   industry: '',
-  status: '' as number | string,
+  status: undefined as number | undefined,
   entryTimeStart: '',
   entryTimeEnd: ''
 })
@@ -352,7 +352,7 @@ function handleQuery() {
 function handleReset() {
   queryParams.name = ''
   queryParams.industry = ''
-  queryParams.status = ''
+  queryParams.status = undefined
   queryParams.entryTimeStart = ''
   queryParams.entryTimeEnd = ''
   entryTimeRange.value = null
@@ -456,11 +456,20 @@ function handleAdd() {
   dialogVisible.value = true
 }
 
+const enterpriseFormKeys = [
+  'id', 'name', 'unifiedCode', 'contactName', 'contactPhone', 'email', 'address',
+  'industry', 'scale', 'licenseNo', 'licenseType', 'legalPerson', 'registeredCapital',
+  'establishedDate', 'businessScope', 'qualificationName', 'qualificationNo',
+  'qualificationExpiry', 'status'
+] as const
+
 async function handleEdit(row: EnterpriseRecord) {
   isEdit.value = true
   try {
     const detail = await getEnterpriseDetail(row.id)
-    Object.assign(formData, detail)
+    enterpriseFormKeys.forEach((key) => {
+      ;(formData as any)[key] = (detail as any)[key]
+    })
     dialogVisible.value = true
   } catch {}
 }

@@ -5,7 +5,7 @@ export interface EnterpriseQuery {
   pageSize: number
   name?: string
   industry?: string
-  status?: number | string
+  status?: number
   entryTimeStart?: string
   entryTimeEnd?: string
 }

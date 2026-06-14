@@ -371,9 +371,18 @@ const formRules = reactive<FormRules>({
   email: [{ validator: emailValidator, trigger: 'blur' }]
 })
 
+const enterpriseFormKeys = [
+  'id', 'name', 'unifiedCode', 'contactName', 'contactPhone', 'email', 'address',
+  'industry', 'scale', 'licenseNo', 'licenseType', 'legalPerson', 'registeredCapital',
+  'establishedDate', 'businessScope', 'qualificationName', 'qualificationNo',
+  'qualificationExpiry', 'status'
+] as const
+
 function handleEdit() {
   if (!detail.value) return
-  Object.assign(formData, detail.value)
+  enterpriseFormKeys.forEach((key) => {
+    ;(formData as any)[key] = (detail.value as any)[key]
+  })
   dialogVisible.value = true
 }
 
@@ -405,6 +414,7 @@ async function handleBan() {
   try {
     await batchUpdateStatus([detail.value.id], 0)
     success('封禁成功')
+    detail.value.status = 0
     fetchDetail()
   } catch {
     error('封禁失败，请稍后重试')
@@ -420,6 +430,7 @@ async function handleUnban() {
   try {
     await batchUpdateStatus([detail.value.id], 1)
     success('解封成功')
+    detail.value.status = 1
     fetchDetail()
   } catch {
     error('解封失败，请稍后重试')
