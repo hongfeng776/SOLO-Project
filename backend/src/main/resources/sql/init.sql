@@ -26,6 +26,7 @@ DROP TABLE IF EXISTS enterprise;
 CREATE TABLE enterprise (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     name VARCHAR(128) NOT NULL COMMENT '企业名称',
+    unified_code VARCHAR(18) DEFAULT NULL COMMENT '统一社会信用代码',
     contact_name VARCHAR(64) DEFAULT NULL COMMENT '联系人姓名',
     contact_phone VARCHAR(20) DEFAULT NULL COMMENT '联系电话',
     email VARCHAR(128) DEFAULT NULL COMMENT '邮箱',
@@ -33,18 +34,27 @@ CREATE TABLE enterprise (
     industry VARCHAR(64) DEFAULT NULL COMMENT '行业',
     scale VARCHAR(32) DEFAULT NULL COMMENT '企业规模',
     license_no VARCHAR(64) DEFAULT NULL COMMENT '营业执照号',
+    license_type VARCHAR(32) DEFAULT NULL COMMENT '执照类型',
+    legal_person VARCHAR(64) DEFAULT NULL COMMENT '法定代表人',
+    registered_capital VARCHAR(32) DEFAULT NULL COMMENT '注册资本',
+    established_date DATE DEFAULT NULL COMMENT '成立日期',
+    business_scope VARCHAR(500) DEFAULT NULL COMMENT '经营范围',
+    qualification_name VARCHAR(128) DEFAULT NULL COMMENT '资质名称',
+    qualification_no VARCHAR(64) DEFAULT NULL COMMENT '资质编号',
+    qualification_expiry DATE DEFAULT NULL COMMENT '资质到期日',
     status TINYINT DEFAULT 1 COMMENT '状态: 0-禁用, 1-正常, 2-审核中',
+    entry_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '入驻时间',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='企业表';
 
-INSERT INTO enterprise (name, contact_name, contact_phone, email, address, industry, scale, license_no, status) VALUES
-('职擎科技有限公司', '张伟', '13800138001', 'zhangwei@zhiqin.com', '北京市海淀区中关村大街1号', '互联网', '500-1000人', '91110108MA01ABCDEF', 1),
-('星河数据科技', '李娜', '13800138002', 'lina@xinghe.com', '上海市浦东新区陆家嘴环路100号', '大数据', '100-500人', '91310115MA01BGHJKL', 1),
-('云帆智能科技', '王磊', '13800138003', 'wanglei@yunfan.com', '深圳市南山区科技园南路8号', '人工智能', '50-100人', '91440300MA01CMNPQR', 2),
-('博雅教育集团', '赵敏', '13800138004', 'zhaomin@boya.com', '广州市天河区珠江新城华夏路20号', '教育', '1000-5000人', '91440106MA01DSTUVW', 1),
-('锦程金融服务', '陈浩', '13800138005', 'chenhao@jincheng.com', '杭州市西湖区文三路90号', '金融', '500-1000人', '91330106MA01EWXYZA', 0);
+INSERT INTO enterprise (name, unified_code, contact_name, contact_phone, email, address, industry, scale, license_no, license_type, legal_person, registered_capital, established_date, business_scope, qualification_name, qualification_no, qualification_expiry, status, entry_time) VALUES
+('职擎科技有限公司', '91110108MA01ABCDEF', '张伟', '13800138001', 'zhangwei@zhiqin.com', '北京市海淀区中关村大街1号', '互联网', '500-1000人', '91110108MA01ABCDEF', '多证合一营业执照', '职擎', '5000', '2018-06-15', '技术开发、技术咨询、技术服务、技术转让；计算机系统服务；基础软件服务；应用软件服务；软件开发；软件咨询；产品设计；模型设计；包装装潢设计；教育咨询；经济贸易咨询；文化咨询；体育咨询；公共关系服务；会议服务；工艺美术设计；电脑动画设计；企业策划、设计；设计、制作、代理、发布广告；市场调查；企业管理咨询；组织文化艺术交流活动；文艺创作；承办展览展示活动；会议服务。', '高新技术企业证书', 'GR202311001234', '2026-12-31', 1, '2023-03-15 10:30:00'),
+('星河数据科技', '91310115MA01BGHJKL', '李娜', '13800138002', 'lina@xinghe.com', '上海市浦东新区陆家嘴环路100号', '金融', '100-500人', '91310115MA01BGHJKL', '多证合一营业执照', '星河', '3000', '2019-02-20', '数据处理、存储服务；计算机技术开发、技术服务；信息技术咨询服务；软件开发；信息系统集成服务；企业管理咨询服务；投资咨询服务；市场调研服务；商品信息咨询服务。', 'CMMI3级认证', 'CMMI3-2023-SH-0567', '2026-09-30', 1, '2023-04-20 14:15:00'),
+('云帆智能科技', '91440300MA01CMNPQR', '王磊', '13800138003', 'wanglei@yunfan.com', '深圳市南山区科技园南路8号', '互联网', '50-100人', '91440300MA01CMNPQR', '普通营业执照', '云帆', '1000', '2020-09-08', '智能产品的技术开发与销售；人工智能算法研发与技术服务；机器人开发与销售；计算机软硬件、网络设备的技术开发、销售、租赁及技术服务；国内贸易；经营进出口业务。', 'ISO27001认证', 'ISO27001-2023-SZ-0890', '2026-06-15', 2, '2023-05-10 09:45:00'),
+('博雅教育集团', '91440106MA01DSTUVW', '赵敏', '13800138004', 'zhaomin@boya.com', '广州市天河区珠江新城华夏路20号', '教育', '1000-5000人', '91440106MA01DSTUVW', '多证合一营业执照', '博雅', '8000', '2015-11-12', '教育咨询服务；职业技能培训；语言培训；计算机技术培训；美术培训；音乐培训；舞蹈培训；企业管理培训；会议及展览服务；组织文化艺术交流活动；图书出版策划；音像制品制作；电子出版物制作。', '办学许可证', '教民144010070001234', '2028-03-31', 1, '2023-02-28 16:20:00'),
+('锦程金融服务', '91330106MA01EWXYZA', '陈浩', '13800138005', 'chenhao@jincheng.com', '杭州市西湖区文三路90号', '金融', '500-1000人', '91330106MA01EWXYZA', '普通营业执照', '锦程', '6000', '2017-04-25', '接受金融机构委托从事金融信息技术外包；接受金融机构委托从事金融业务流程外包；接受金融机构委托从事金融知识流程外包；金融信息咨询；投资管理；资产管理；股权投资；创业投资。', '金融信息服务资质', '金资证2023-HZ-0045', '2025-12-31', 0, '2023-01-15 11:00:00');
 
 -- ----------------------------
 -- 求职者表

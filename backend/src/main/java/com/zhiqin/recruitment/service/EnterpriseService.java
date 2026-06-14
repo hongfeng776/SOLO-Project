@@ -6,6 +6,6 @@ import com.zhiqin.recruitment.entity.Enterprise;
 
 public interface EnterpriseService extends IService<Enterprise> {
 
-    IPage<Enterprise> pageList(String name, Integer status, Integer pageNum, Integer pageSize);
+    IPage<Enterprise> pageList(String name, String industry, String entryTimeStart, String entryTimeEnd, Integer pageNum, Integer pageSize);
 
 }

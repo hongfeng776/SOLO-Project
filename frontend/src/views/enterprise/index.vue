@@ -44,8 +44,8 @@
           v-else
           :data="tableData"
           :total="total"
-          :current-page="queryParams.pageNum"
-          :page-size="queryParams.pageSize"
+          v-model:current-page="queryParams.pageNum"
+          v-model:page-size="queryParams.pageSize"
           show-index
           @pagination-change="handlePaginationChange"
           @row-dblclick="handleRowDblclick"
@@ -235,7 +235,7 @@ import {
 } from '@/api/enterprise'
 import type { FormInstance, FormRules } from 'element-plus'
 
-const { confirmDelete, success } = useConfirm()
+const { confirmDelete, success, error } = useConfirm()
 
 const industryOptions = ['互联网', '金融', '教育', '医疗', '制造', '房地产', '零售', '物流', '其他']
 const scaleOptions = ['0-50人', '50-150人', '150-500人', '500-1000人', '1000人以上']
@@ -398,9 +398,13 @@ function handleRowDblclick(row: EnterpriseRecord) {
 function handleDelete(row: EnterpriseRecord) {
   confirmDelete(`确定要删除企业「${row.name}」吗？`).then(async (ok: boolean) => {
     if (ok) {
-      await removeEnterprise(row.id)
-      success('删除成功')
-      fetchList()
+      try {
+        await removeEnterprise(row.id)
+        success('删除成功')
+        fetchList()
+      } catch {
+        error('删除失败，请稍后重试')
+      }
     }
   })
 }

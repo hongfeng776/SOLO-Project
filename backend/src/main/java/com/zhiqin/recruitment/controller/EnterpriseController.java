@@ -7,6 +7,8 @@ import com.zhiqin.recruitment.service.EnterpriseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+
 @RestController
 @RequestMapping("/api/enterprise")
 public class EnterpriseController {
@@ -17,10 +19,12 @@ public class EnterpriseController {
     @GetMapping("/list")
     public Result<IPage<Enterprise>> list(
             @RequestParam(required = false) String name,
-            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) String industry,
+            @RequestParam(required = false) String entryTimeStart,
+            @RequestParam(required = false) String entryTimeEnd,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        IPage<Enterprise> page = enterpriseService.pageList(name, status, pageNum, pageSize);
+        IPage<Enterprise> page = enterpriseService.pageList(name, industry, entryTimeStart, entryTimeEnd, pageNum, pageSize);
         return Result.success(page);
     }
 
@@ -32,6 +36,7 @@ public class EnterpriseController {
 
     @PostMapping
     public Result<Void> add(@RequestBody Enterprise enterprise) {
+        enterprise.setEntryTime(LocalDateTime.now());
         enterpriseService.save(enterprise);
         return Result.success();
     }

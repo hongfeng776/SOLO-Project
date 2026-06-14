@@ -88,7 +88,7 @@ export function createEnterprise(data: EnterpriseForm) {
 
 export function updateEnterprise(data: EnterpriseForm) {
   return request<void>({
-    url: '/enterprise',
+    url: `/enterprise/${data.id}`,
     method: 'put',
     data
   })

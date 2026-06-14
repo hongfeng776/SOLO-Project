@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, watch, computed } from 'vue'
 import type { TableColumnCtx } from 'element-plus'
 import type { DefaultRow } from 'element-plus/es/components/table/src/table/defaults'
 
@@ -104,13 +104,34 @@ const emit = defineEmits<{
 }>()
 
 const tableData = computed(() => props.data)
-const innerCurrentPage = computed({
-  get: () => props.currentPage,
-  set: (val: number) => emit('update:currentPage', val)
+
+const innerCurrentPage = ref(props.currentPage)
+const innerPageSize = ref(props.pageSize)
+
+watch(
+  () => props.currentPage,
+  (val) => {
+    if (val !== innerCurrentPage.value) {
+      innerCurrentPage.value = val
+    }
+  }
+)
+
+watch(
+  () => props.pageSize,
+  (val) => {
+    if (val !== innerPageSize.value) {
+      innerPageSize.value = val
+    }
+  }
+)
+
+watch(innerCurrentPage, (val) => {
+  emit('update:currentPage', val)
 })
-const innerPageSize = computed({
-  get: () => props.pageSize,
-  set: (val: number) => emit('update:pageSize', val)
+
+watch(innerPageSize, (val) => {
+  emit('update:pageSize', val)
 })
 
 function handleSelectionChange(selection: any[]) {

@@ -9,15 +9,27 @@ import com.zhiqin.recruitment.mapper.EnterpriseMapper;
 import com.zhiqin.recruitment.service.EnterpriseService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+
 @Service
 public class EnterpriseServiceImpl extends ServiceImpl<EnterpriseMapper, Enterprise> implements EnterpriseService {
 
     @Override
-    public IPage<Enterprise> pageList(String name, Integer status, Integer pageNum, Integer pageSize) {
+    public IPage<Enterprise> pageList(String name, String industry, String entryTimeStart, String entryTimeEnd, Integer pageNum, Integer pageSize) {
         Page<Enterprise> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Enterprise> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.like(name != null && !name.isEmpty(), Enterprise::getName, name);
-        queryWrapper.eq(status != null, Enterprise::getStatus, status);
+        queryWrapper.like(industry != null && !industry.isEmpty(), Enterprise::getIndustry, industry);
+        if (entryTimeStart != null && !entryTimeStart.isEmpty()) {
+            LocalDateTime start = LocalDateTime.of(LocalDate.parse(entryTimeStart), LocalTime.MIN);
+            queryWrapper.ge(Enterprise::getEntryTime, start);
+        }
+        if (entryTimeEnd != null && !entryTimeEnd.isEmpty()) {
+            LocalDateTime end = LocalDateTime.of(LocalDate.parse(entryTimeEnd), LocalTime.MAX);
+            queryWrapper.le(Enterprise::getEntryTime, end);
+        }
         queryWrapper.orderByDesc(Enterprise::getCreateTime);
         return this.page(page, queryWrapper);
     }
