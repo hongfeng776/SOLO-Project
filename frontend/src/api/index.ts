@@ -1,5 +1,5 @@
 import { get, post, put, del } from '@/utils/request';
-import type { ApiResponse, LoginParams, LoginResult, UserInfo, SystemConfig, PaginatedData, PaginationParams } from '@/types';
+import type { ApiResponse, LoginParams, LoginResult, UserInfo, SystemConfig, PaginatedData, PaginationParams, CategoryInfo, TagInfo, ContentInfo, ContentListParams } from '@/types';
 
 export const authApi = {
   login: (data: LoginParams) => post<ApiResponse<LoginResult>>('/auth/login', data),
@@ -21,4 +21,26 @@ export const configApi = {
   remove: (id: number) => del<ApiResponse<null>>(`/configs/${id}`),
 };
 
-export default { authApi, userApi, configApi };
+export const categoryApi = {
+  list: () => get<ApiResponse<PaginatedData<CategoryInfo>>>('/categories'),
+  create: (data: Partial<CategoryInfo>) => post<ApiResponse<CategoryInfo>>('/categories', data),
+  update: (id: number, data: Partial<CategoryInfo>) => put<ApiResponse<CategoryInfo>>(`/categories/${id}`, data),
+  remove: (id: number) => del<ApiResponse<null>>(`/categories/${id}`),
+};
+
+export const tagApi = {
+  list: () => get<ApiResponse<PaginatedData<TagInfo>>>('/tags'),
+  create: (data: Partial<TagInfo>) => post<ApiResponse<TagInfo>>('/tags', data),
+  update: (id: number, data: Partial<TagInfo>) => put<ApiResponse<TagInfo>>(`/tags/${id}`, data),
+  remove: (id: number) => del<ApiResponse<null>>(`/tags/${id}`),
+};
+
+export const contentApi = {
+  list: (params: ContentListParams) => get<ApiResponse<PaginatedData<ContentInfo>>>('/contents', params),
+  detail: (id: number) => get<ApiResponse<ContentInfo>>(`/contents/${id}`),
+  create: (data: Partial<ContentInfo> & { tagIds?: number[] }) => post<ApiResponse<ContentInfo>>('/contents', data),
+  update: (id: number, data: Partial<ContentInfo> & { tagIds?: number[] }) => put<ApiResponse<ContentInfo>>(`/contents/${id}`, data),
+  remove: (id: number) => del<ApiResponse<null>>(`/contents/${id}`),
+};
+
+export default { authApi, userApi, configApi, categoryApi, tagApi, contentApi };

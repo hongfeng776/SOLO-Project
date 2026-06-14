@@ -2,6 +2,10 @@ import { Sequelize } from 'sequelize-typescript';
 import config from '@/config';
 import User from '@/models/User';
 import SystemConfig from '@/models/SystemConfig';
+import Category from '@/models/Category';
+import Tag from '@/models/Tag';
+import Content from '@/models/Content';
+import ContentTag from '@/models/ContentTag';
 
 class Database {
   public sequelize: Sequelize;
@@ -14,7 +18,7 @@ class Database {
       username: config.db.user,
       password: config.db.password,
       database: config.db.name,
-      models: [User, SystemConfig],
+      models: [User, SystemConfig, Category, Tag, Content, ContentTag],
       logging: config.env === 'development' ? console.log : false,
       timezone: '+08:00',
       pool: {

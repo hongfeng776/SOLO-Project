@@ -54,6 +54,50 @@ export interface SystemConfig {
   updatedAt: string;
 }
 
+export interface CategoryInfo {
+  id: number;
+  name: string;
+  description?: string;
+  sort: number;
+  status: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TagInfo {
+  id: number;
+  name: string;
+  color?: string;
+  status: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ContentStatus = 'draft' | 'pending' | 'published' | 'offline';
+
+export interface ContentInfo {
+  id: number;
+  title: string;
+  content: string;
+  coverImage?: string;
+  status: ContentStatus;
+  views: number;
+  categoryId?: number;
+  category?: CategoryInfo;
+  tags?: TagInfo[];
+  publishTime?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContentListParams extends PaginationParams {
+  keyword?: string;
+  status?: string;
+  categoryId?: number;
+  startDate?: string;
+  endDate?: string;
+}
+
 export type TableRowAction<T = any> = (row: T, index: number) => void;
 
 export interface TableColumn<T = any> {

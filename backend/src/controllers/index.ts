@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import User from '@/models/User';
 import SystemConfig from '@/models/SystemConfig';
+import Category from '@/models/Category';
+import Tag from '@/models/Tag';
+import Content from '@/models/Content';
 import { responseUtil, PaginatedData } from '@/utils/response';
 import { signToken, AuthRequest } from '@/middleware/auth';
 import config from '@/config';
@@ -319,6 +322,385 @@ export const configController = {
       responseUtil.success(res, null, '删除成功');
     } catch (error) {
       console.error('[Config Delete]:', error);
+      responseUtil.internalError(res);
+    }
+  },
+};
+
+export const categoryController = {
+  async list(req: Request, res: Response): Promise<void> {
+    try {
+      const { rows, count } = await Category.findAndCountAll({
+        where: { status: 1 },
+        order: [['sort', 'ASC'], ['id', 'DESC']],
+      });
+      responseUtil.paginate(res, rows, count, 1, count);
+    } catch (error) {
+      console.error('[Category List]:', error);
+      responseUtil.internalError(res);
+    }
+  },
+
+  async create(req: Request, res: Response): Promise<void> {
+    try {
+      const { name, description, sort, status } = req.body;
+      if (!name) {
+        responseUtil.badRequest(res, '分类名称不能为空');
+        return;
+      }
+      const exists = await Category.findOne({ where: { name } });
+      if (exists) {
+        responseUtil.fail(res, '分类名称已存在');
+        return;
+      }
+      const item = await Category.create({ name, description, sort: sort || 0, status: status ?? 1 });
+      responseUtil.success(res, item, '创建成功', 201);
+    } catch (error) {
+      console.error('[Category Create]:', error);
+      responseUtil.internalError(res);
+    }
+  },
+
+  async update(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { name, description, sort, status } = req.body;
+      const item = await Category.findByPk(parseInt(id));
+      if (!item) {
+        responseUtil.notFound(res, '分类不存在');
+        return;
+      }
+      if (name && name !== item.name) {
+        const exists = await Category.findOne({ where: { name } });
+        if (exists) {
+          responseUtil.fail(res, '分类名称已存在');
+          return;
+        }
+      }
+      const updateData: Record<string, any> = { name, description, sort, status };
+      Object.keys(updateData).forEach(k => updateData[k] === undefined && delete updateData[k]);
+      await item.update(updateData);
+      responseUtil.success(res, item, '更新成功');
+    } catch (error) {
+      console.error('[Category Update]:', error);
+      responseUtil.internalError(res);
+    }
+  },
+
+  async remove(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const item = await Category.findByPk(parseInt(id));
+      if (!item) {
+        responseUtil.notFound(res, '分类不存在');
+        return;
+      }
+      const contentCount = await Content.count({ where: { categoryId: item.id } });
+      if (contentCount > 0) {
+        responseUtil.fail(res, '该分类下存在内容，无法删除');
+        return;
+      }
+      await item.destroy();
+      responseUtil.success(res, null, '删除成功');
+    } catch (error) {
+      console.error('[Category Delete]:', error);
+      responseUtil.internalError(res);
+    }
+  },
+};
+
+export const tagController = {
+  async list(req: Request, res: Response): Promise<void> {
+    try {
+      const { rows, count } = await Tag.findAndCountAll({
+        where: { status: 1 },
+        order: [['id', 'DESC']],
+      });
+      responseUtil.paginate(res, rows, count, 1, count);
+    } catch (error) {
+      console.error('[Tag List]:', error);
+      responseUtil.internalError(res);
+    }
+  },
+
+  async create(req: Request, res: Response): Promise<void> {
+    try {
+      const { name, color, status } = req.body;
+      if (!name) {
+        responseUtil.badRequest(res, '标签名称不能为空');
+        return;
+      }
+      const exists = await Tag.findOne({ where: { name } });
+      if (exists) {
+        responseUtil.fail(res, '标签名称已存在');
+        return;
+      }
+      const item = await Tag.create({ name, color, status: status ?? 1 });
+      responseUtil.success(res, item, '创建成功', 201);
+    } catch (error) {
+      console.error('[Tag Create]:', error);
+      responseUtil.internalError(res);
+    }
+  },
+
+  async update(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { name, color, status } = req.body;
+      const item = await Tag.findByPk(parseInt(id));
+      if (!item) {
+        responseUtil.notFound(res, '标签不存在');
+        return;
+      }
+      if (name && name !== item.name) {
+        const exists = await Tag.findOne({ where: { name } });
+        if (exists) {
+          responseUtil.fail(res, '标签名称已存在');
+          return;
+        }
+      }
+      const updateData: Record<string, any> = { name, color, status };
+      Object.keys(updateData).forEach(k => updateData[k] === undefined && delete updateData[k]);
+      await item.update(updateData);
+      responseUtil.success(res, item, '更新成功');
+    } catch (error) {
+      console.error('[Tag Update]:', error);
+      responseUtil.internalError(res);
+    }
+  },
+
+  async remove(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const item = await Tag.findByPk(parseInt(id));
+      if (!item) {
+        responseUtil.notFound(res, '标签不存在');
+        return;
+      }
+      await item.destroy();
+      responseUtil.success(res, null, '删除成功');
+    } catch (error) {
+      console.error('[Tag Delete]:', error);
+      responseUtil.internalError(res);
+    }
+  },
+};
+
+export const contentController = {
+  async list(req: Request, res: Response): Promise<void> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const pageSize = parseInt(req.query.pageSize as string) || 10;
+      const keyword = req.query.keyword as string || '';
+      const status = req.query.status as string || '';
+      const categoryId = req.query.categoryId as string || '';
+      const startDate = req.query.startDate as string || '';
+      const endDate = req.query.endDate as string || '';
+      const offset = (page - 1) * pageSize;
+
+      const where: any = {};
+
+      if (keyword) {
+        where.title = { [Op.like as any]: `%${keyword}%` };
+      }
+      if (status) {
+        where.status = status;
+      }
+      if (categoryId) {
+        where.categoryId = parseInt(categoryId);
+      }
+      if (startDate || endDate) {
+        where.publishTime = {} as any;
+        if (startDate) {
+          where.publishTime[Op.gte as any] = new Date(startDate);
+        }
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          where.publishTime[Op.lte as any] = end;
+        }
+      }
+
+      const options: FindOptions = {
+        where,
+        offset,
+        limit: pageSize,
+        order: [['publish_time', 'DESC'], ['id', 'DESC']],
+        include: [
+          {
+            model: Category,
+            as: 'category',
+            attributes: ['id', 'name'],
+            required: false,
+          },
+          {
+            model: Tag,
+            as: 'tags',
+            attributes: ['id', 'name', 'color'],
+            through: { attributes: [] },
+          },
+        ],
+      };
+
+      const { rows, count } = await Content.findAndCountAll(options);
+      responseUtil.paginate(res, rows, count, page, pageSize);
+    } catch (error) {
+      console.error('[Content List]:', error);
+      responseUtil.internalError(res);
+    }
+  },
+
+  async detail(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const item = await Content.findByPk(parseInt(id), {
+        include: [
+          {
+            model: Category,
+            as: 'category',
+            attributes: ['id', 'name'],
+            required: false,
+          },
+          {
+            model: Tag,
+            as: 'tags',
+            attributes: ['id', 'name', 'color'],
+            through: { attributes: [] },
+          },
+        ],
+      });
+      if (!item) {
+        responseUtil.notFound(res, '内容不存在');
+        return;
+      }
+      responseUtil.success(res, item);
+    } catch (error) {
+      console.error('[Content Detail]:', error);
+      responseUtil.internalError(res);
+    }
+  },
+
+  async create(req: Request, res: Response): Promise<void> {
+    try {
+      const { title, content, coverImage, status, categoryId, tagIds, publishTime } = req.body;
+      if (!title || !content) {
+        responseUtil.badRequest(res, '标题和内容不能为空');
+        return;
+      }
+
+      const createData: Record<string, any> = {
+        title,
+        content,
+        coverImage,
+        status: status || 'pending',
+        categoryId: categoryId || null,
+        publishTime: publishTime ? new Date(publishTime) : new Date(),
+      };
+
+      const item = await Content.create(createData as any);
+
+      if (tagIds && tagIds.length > 0) {
+        const tags = await Tag.findAll({ where: { id: { [Op.in as any]: tagIds } } });
+        await item.$set('tags', tags);
+      }
+
+      const result = await Content.findByPk(item.id, {
+        include: [
+          {
+            model: Category,
+            as: 'category',
+            attributes: ['id', 'name'],
+            required: false,
+          },
+          {
+            model: Tag,
+            as: 'tags',
+            attributes: ['id', 'name', 'color'],
+            through: { attributes: [] },
+          },
+        ],
+      });
+
+      responseUtil.success(res, result, '创建成功', 201);
+    } catch (error) {
+      console.error('[Content Create]:', error);
+      responseUtil.internalError(res);
+    }
+  },
+
+  async update(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { title, content, coverImage, status, categoryId, tagIds, publishTime } = req.body;
+      const item = await Content.findByPk(parseInt(id));
+
+      if (!item) {
+        responseUtil.notFound(res, '内容不存在');
+        return;
+      }
+
+      const updateData: Record<string, any> = {
+        title,
+        content,
+        coverImage,
+        status,
+        categoryId: categoryId || null,
+      };
+      if (publishTime) updateData.publishTime = new Date(publishTime);
+      Object.keys(updateData).forEach(k => updateData[k] === undefined && delete updateData[k]);
+
+      await item.update(updateData);
+
+      if (tagIds !== undefined) {
+        if (tagIds.length > 0) {
+          const tags = await Tag.findAll({ where: { id: { [Op.in as any]: tagIds } } });
+          await item.$set('tags', tags);
+        } else {
+          await item.$set('tags', []);
+        }
+      }
+
+      const result = await Content.findByPk(item.id, {
+        include: [
+          {
+            model: Category,
+            as: 'category',
+            attributes: ['id', 'name'],
+            required: false,
+          },
+          {
+            model: Tag,
+            as: 'tags',
+            attributes: ['id', 'name', 'color'],
+            through: { attributes: [] },
+          },
+        ],
+      });
+
+      responseUtil.success(res, result, '更新成功');
+    } catch (error) {
+      console.error('[Content Update]:', error);
+      responseUtil.internalError(res);
+    }
+  },
+
+  async remove(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const item = await Content.findByPk(parseInt(id));
+      if (!item) {
+        responseUtil.notFound(res, '内容不存在');
+        return;
+      }
+      if (item.status === 'published') {
+        responseUtil.fail(res, '已发布内容不能删除，请先下线');
+        return;
+      }
+      await item.$set('tags', []);
+      await item.destroy();
+      responseUtil.success(res, null, '删除成功');
+    } catch (error) {
+      console.error('[Content Delete]:', error);
       responseUtil.internalError(res);
     }
   },

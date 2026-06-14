@@ -30,6 +30,20 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '仪表盘', icon: 'Odometer', order: 1, keepAlive: true },
       },
       {
+        path: 'content',
+        name: 'Content',
+        redirect: '/content/contents',
+        meta: { title: '内容管理', icon: 'Document', order: 20 },
+        children: [
+          {
+            path: 'contents',
+            name: 'ContentManage',
+            component: () => import('@/views/content/contents.vue'),
+            meta: { title: '内容列表', icon: 'List', order: 1 },
+          },
+        ],
+      },
+      {
         path: 'system',
         name: 'System',
         redirect: '/system/users',
