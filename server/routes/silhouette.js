@@ -7,6 +7,9 @@ const { logMeta } = require('../middleware/operationLog');
 
 router.get('/', authMiddleware, silhouetteController.getSilhouetteList);
 router.get('/categories', authMiddleware, silhouetteController.getCategoryList);
+router.get('/check-name', authMiddleware, silhouetteController.checkNameUnique);
+router.get('/export', authMiddleware, silhouetteController.exportSilhouette);
+router.get('/:id', authMiddleware, silhouetteController.getSilhouetteDetail);
 router.post(
   '/',
   authMiddleware,

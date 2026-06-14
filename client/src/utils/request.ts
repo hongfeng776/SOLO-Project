@@ -167,4 +167,4 @@ export function request<T = any>(config: AxiosRequestConfig): Promise<T> {
   return service(config) as unknown as Promise<T>;
 }
 
-export default service;
+export default request;

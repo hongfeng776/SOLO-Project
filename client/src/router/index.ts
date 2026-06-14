@@ -30,7 +30,13 @@ const routes: RouteRecordRaw[] = [
         path: 'silhouettes',
         name: 'Silhouettes',
         component: () => import('@/views/silhouette/index.vue'),
-        meta: { title: '剪影素材', icon: 'PictureFilled', requiresAuth: true }
+        meta: { title: '剪影素材', icon: 'PictureFilled', requiresAuth: true, level: 1 }
+      },
+      {
+        path: 'silhouettes/:id',
+        name: 'SilhouetteDetail',
+        component: () => import('@/views/silhouette/detail.vue'),
+        meta: { title: '素材详情', requiresAuth: true, level: 2 }
       }
     ]
   },

@@ -79,8 +79,8 @@
 
       <el-main class="main-content">
         <router-view v-slot="{ Component }">
-          <transition name="slide-fade" mode="out-in">
-            <component :is="Component" />
+          <transition :name="transitionName" mode="out-in">
+            <component :is="Component" :key="route.fullPath" />
           </transition>
         </router-view>
       </el-main>
@@ -101,6 +101,23 @@ const router = useRouter();
 const userStore = useUserStore();
 
 const isCollapse = ref(false);
+const transitionName = ref('slide-fade');
+
+let previousLevel = 0;
+
+router.beforeEach((to, from, next) => {
+  const toLevel = (to.meta?.level as number) || 1;
+  const fromLevel = (from.meta?.level as number) || 1;
+  if (toLevel > fromLevel) {
+    transitionName.value = 'slide-right';
+  } else if (toLevel < fromLevel) {
+    transitionName.value = 'slide-left';
+  } else {
+    transitionName.value = 'slide-fade';
+  }
+  previousLevel = toLevel;
+  next();
+});
 
 const userInfo = computed(() => userStore.userInfo);
 

@@ -39,8 +39,13 @@ const SilhouetteMaterial = sequelize.define('SilhouetteMaterial', {
   },
   status: {
     type: DataTypes.TINYINT,
-    defaultValue: 1,
-    comment: '状态 1-上架 0-下架'
+    defaultValue: 2,
+    comment: '状态 0-下架 1-上架 2-待审核'
+  },
+  use_count: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: '使用次数'
   }
 }, {
   tableName: 'silhouette_materials',

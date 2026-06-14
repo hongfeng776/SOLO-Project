@@ -64,3 +64,26 @@ export function batchUpdateSilhouetteStatus(ids: number[], status: number) {
     data: { ids, status }
   });
 }
+
+export function getSilhouetteDetail(id: number) {
+  return request<SilhouetteMaterialItem>({
+    url: `/silhouettes/${id}`,
+    method: 'get'
+  });
+}
+
+export function checkNameUnique(name: string, excludeId?: number) {
+  return request<{ unique: boolean }>({
+    url: '/silhouettes/check-name',
+    method: 'get',
+    params: { name, excludeId }
+  });
+}
+
+export function exportSilhouette(params: SilhouetteMaterialQuery) {
+  return request<SilhouetteMaterialItem[]>({
+    url: '/silhouettes/export',
+    method: 'get',
+    params
+  });
+}

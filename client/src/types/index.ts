@@ -77,6 +77,7 @@ export interface SilhouetteMaterialItem {
   scene: string | null;
   category: string | null;
   status: number;
+  use_count: number;
   created_at: string;
   updated_at: string;
 }
