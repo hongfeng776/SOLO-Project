@@ -25,6 +25,12 @@ const routes: RouteRecordRaw[] = [
         name: 'Logs',
         component: () => import('@/views/logs/index.vue'),
         meta: { title: '操作日志', icon: 'Document', requiresAuth: true }
+      },
+      {
+        path: 'silhouettes',
+        name: 'Silhouettes',
+        component: () => import('@/views/silhouette/index.vue'),
+        meta: { title: '剪影素材', icon: 'PictureFilled', requiresAuth: true }
       }
     ]
   },

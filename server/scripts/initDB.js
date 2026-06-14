@@ -2,6 +2,7 @@ require('dotenv').config();
 const sequelize = require('../config/database');
 const User = require('../models/User');
 const OperationLog = require('../models/OperationLog');
+const SilhouetteMaterial = require('../models/SilhouetteMaterial');
 
 async function initDB() {
   try {

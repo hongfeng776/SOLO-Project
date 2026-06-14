@@ -67,3 +67,35 @@ export interface PageResult<T> {
   page: number;
   pageSize: number;
 }
+
+export interface SilhouetteMaterialItem {
+  id: number;
+  name: string;
+  cover: string | null;
+  width: number | null;
+  height: number | null;
+  scene: string | null;
+  category: string | null;
+  status: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SilhouetteMaterialQuery {
+  page?: number;
+  pageSize?: number;
+  name?: string;
+  category?: string;
+  status?: number | '';
+  scene?: string;
+}
+
+export interface SilhouetteMaterialForm {
+  name: string;
+  cover?: File | null;
+  width?: number | null;
+  height?: number | null;
+  scene?: string;
+  category?: string;
+  status?: number;
+}

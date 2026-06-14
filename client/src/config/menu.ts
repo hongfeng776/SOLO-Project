@@ -8,6 +8,12 @@ export const menuList: MenuItem[] = [
     icon: 'HomeFilled'
   },
   {
+    path: '/silhouettes',
+    name: 'Silhouettes',
+    title: '剪影素材',
+    icon: 'PictureFilled'
+  },
+  {
     path: '/logs',
     name: 'Logs',
     title: '操作日志',
