@@ -45,11 +45,17 @@ export const contentApi = {
 };
 
 export const uploadApi = {
-  image: (file: File) => {
+  image: (file: File, onProgress?: (percent: number) => void) => {
     const formData = new FormData();
     formData.append('file', file);
     return service.post<ApiResponse<{ url: string; filename: string }>>('/upload/image', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (evt) => {
+        if (evt && evt.total && onProgress) {
+          const percent = Math.min(100, Math.round((evt.loaded * 100) / evt.total));
+          onProgress(percent);
+        }
+      },
     });
   },
 };

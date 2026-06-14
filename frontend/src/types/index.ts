@@ -82,6 +82,7 @@ export interface ContentInfo {
   coverImage?: string;
   status: ContentStatus;
   views: number;
+  likes: number;
   categoryId?: number;
   category?: CategoryInfo;
   tags?: TagInfo[];

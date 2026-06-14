@@ -41,6 +41,12 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/views/content/contents.vue'),
             meta: { title: '内容列表', icon: 'List', order: 1 },
           },
+          {
+            path: 'contents/:id',
+            name: 'ContentDetail',
+            component: () => import('@/views/content/content-detail.vue'),
+            meta: { title: '内容详情', icon: 'Document', hidden: true, order: 2 },
+          },
         ],
       },
       {

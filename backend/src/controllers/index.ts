@@ -525,7 +525,7 @@ export const contentController = {
         }
       }
 
-      const sortableFields = new Set(['id', 'title', 'status', 'views', 'publishTime', 'createdAt', 'updatedAt']);
+      const sortableFields = new Set(['id', 'title', 'status', 'views', 'likes', 'publishTime', 'createdAt', 'updatedAt']);
       const validOrderDirs = new Set(['ASC', 'DESC']);
       const safeField = sortableFields.has(orderBy) ? orderBy : 'publishTime';
       const safeDir = validOrderDirs.has(orderDir) ? orderDir : 'DESC';

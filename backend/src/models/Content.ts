@@ -12,14 +12,16 @@ export interface ContentAttributes {
   coverImage?: string;
   status: ContentStatus;
   views: number;
+  likes: number;
   categoryId?: number;
   publishTime?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface ContentCreationAttributes extends Omit<ContentAttributes, 'id' | 'createdAt' | 'updatedAt' | 'views'> {
+export interface ContentCreationAttributes extends Omit<ContentAttributes, 'id' | 'createdAt' | 'updatedAt' | 'views' | 'likes'> {
   views?: number;
+  likes?: number;
   tagIds?: number[];
 }
 
@@ -46,6 +48,10 @@ export default class Content extends Model<ContentAttributes, ContentCreationAtt
   @Default(0)
   @Column({ type: DataType.INTEGER, allowNull: false, comment: '浏览量' })
   views!: number;
+
+  @Default(0)
+  @Column({ type: DataType.INTEGER, allowNull: false, comment: '点赞量' })
+  likes!: number;
 
   @ForeignKey(() => Category)
   @Column({ type: DataType.INTEGER, comment: '分类ID' })
