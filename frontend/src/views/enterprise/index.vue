@@ -13,6 +13,13 @@
           <el-option v-for="item in industryOptions" :key="item" :label="item" :value="item" />
         </el-select>
       </el-form-item>
+      <el-form-item label="账号状态">
+        <el-select v-model="queryParams.status" placeholder="全部状态" clearable class="status-select">
+          <el-option label="正常" :value="1" />
+          <el-option label="已封禁" :value="0" />
+          <el-option label="待审核" :value="2" />
+        </el-select>
+      </el-form-item>
       <el-form-item label="入驻时间">
         <el-date-picker
           v-model="entryTimeRange"
@@ -34,6 +41,17 @@
     <div class="table-toolbar">
       <div class="table-toolbar-left">
         <el-button type="primary" v-debounce="handleAdd">新增企业</el-button>
+        <el-button type="warning" :disabled="selectedIds.length === 0" :loading="batchBanLoading" @click="handleBatchBan">
+          批量封禁
+        </el-button>
+        <el-button type="success" :disabled="selectedIds.length === 0" :loading="batchUnbanLoading" @click="handleBatchUnban">
+          批量解封
+        </el-button>
+      </div>
+      <div class="table-toolbar-right">
+        <span class="selected-tip" v-show="selectedIds.length > 0">
+          已选择 <em>{{ selectedIds.length }}</em> 项
+        </span>
       </div>
     </div>
 
@@ -46,27 +64,50 @@
           :total="total"
           v-model:current-page="queryParams.pageNum"
           v-model:page-size="queryParams.pageSize"
+          show-selection
           show-index
+          :row-class-name="getRowClassName"
+          @selection-change="handleSelectionChange"
           @pagination-change="handlePaginationChange"
           @row-dblclick="handleRowDblclick"
         >
-          <el-table-column prop="name" label="企业名称" min-width="160" show-overflow-tooltip resizable />
-          <el-table-column prop="industry" label="行业" width="110" resizable />
-          <el-table-column prop="scale" label="规模" width="120" resizable />
-          <el-table-column prop="contactName" label="联系人" width="100" resizable />
-          <el-table-column prop="contactPhone" label="联系电话" width="130" resizable />
+          <el-table-column prop="name" label="企业名称" min-width="180" show-overflow-tooltip resizable />
+          <el-table-column prop="industry" label="行业" width="100" resizable />
+          <el-table-column prop="scale" label="规模" width="110" resizable />
+          <el-table-column prop="contactName" label="联系人" width="90" resizable />
+          <el-table-column prop="contactPhone" label="联系电话" width="120" resizable />
           <el-table-column prop="entryTime" label="入驻时间" width="170" resizable />
-          <el-table-column prop="status" label="状态" width="80" align="center" resizable>
+          <el-table-column prop="status" label="状态" width="90" align="center" resizable>
             <template #default="{ row }">
-              <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
-                {{ row.status === 1 ? '启用' : '禁用' }}
+              <el-tag :type="getStatusTagType(row.status)" size="small">
+                {{ getStatusLabel(row.status) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="150" align="center">
+          <el-table-column label="操作" width="200" align="center" fixed="right">
             <template #default="{ row }">
+              <el-button type="primary" link size="small" @click="goDetail(row)">详情</el-button>
               <el-button type="primary" link size="small" v-debounce="() => handleEdit(row)">编辑</el-button>
-              <el-button type="danger" link size="small" v-debounce="() => handleDelete(row)">删除</el-button>
+              <el-button
+                v-if="row.status === 1"
+                type="warning"
+                link
+                size="small"
+                :disabled="rowBanLoading[row.id]"
+                @click="() => handleBanSingle(row)"
+              >
+                封禁
+              </el-button>
+              <el-button
+                v-else
+                type="success"
+                link
+                size="small"
+                :disabled="rowBanLoading[row.id]"
+                @click="() => handleUnbanSingle(row)"
+              >
+                解封
+              </el-button>
             </template>
           </el-table-column>
         </ProTable>
@@ -138,8 +179,9 @@
           <el-col :span="12">
             <el-form-item label="状态" prop="status">
               <el-select v-model="formData.status" placeholder="请选择状态" style="width: 100%">
-                <el-option label="启用" :value="1" />
-                <el-option label="禁用" :value="0" />
+                <el-option label="正常" :value="1" />
+                <el-option label="封禁" :value="0" />
+                <el-option label="待审核" :value="2" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -223,6 +265,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { ProTable, ProDialog, ProSkeleton, ProEmpty, useConfirm } from '@/components'
 import {
   getEnterpriseList,
@@ -230,12 +273,14 @@ import {
   createEnterprise,
   updateEnterprise,
   removeEnterprise,
+  batchUpdateStatus,
   type EnterpriseForm,
   type EnterpriseRecord
 } from '@/api/enterprise'
 import type { FormInstance, FormRules } from 'element-plus'
 
-const { confirmDelete, success, error } = useConfirm()
+const router = useRouter()
+const { confirmDelete, confirm, success, error } = useConfirm()
 
 const industryOptions = ['互联网', '金融', '教育', '医疗', '制造', '房地产', '零售', '物流', '其他']
 const scaleOptions = ['0-50人', '50-150人', '150-500人', '500-1000人', '1000人以上']
@@ -245,15 +290,34 @@ const loading = ref(false)
 const tableData = ref<EnterpriseRecord[]>([])
 const total = ref(0)
 const entryTimeRange = ref<[string, string] | null>(null)
+const selectedIds = ref<number[]>([])
+const batchBanLoading = ref(false)
+const batchUnbanLoading = ref(false)
+const rowBanLoading = reactive<Record<number, boolean>>({})
 
 const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
   name: '',
   industry: '',
+  status: '' as number | string,
   entryTimeStart: '',
   entryTimeEnd: ''
 })
+
+function getStatusLabel(status: number) {
+  const map: Record<number, string> = { 1: '正常', 0: '已封禁', 2: '待审核' }
+  return map[status] ?? '未知'
+}
+
+function getStatusTagType(status: number): 'success' | 'danger' | 'warning' | 'info' {
+  const map: Record<number, 'success' | 'danger' | 'warning' | 'info'> = { 1: 'success', 0: 'danger', 2: 'warning' }
+  return map[status] ?? 'info'
+}
+
+function getRowClassName({ row }: { row: EnterpriseRecord }) {
+  return row.status === 0 ? 'row-banned' : ''
+}
 
 function handleDateRangeChange(val: [string, string] | null) {
   if (val) {
@@ -267,6 +331,7 @@ function handleDateRangeChange(val: [string, string] | null) {
 
 async function fetchList() {
   loading.value = true
+  selectedIds.value = []
   try {
     const res = await getEnterpriseList(queryParams)
     tableData.value = res.records
@@ -287,6 +352,7 @@ function handleQuery() {
 function handleReset() {
   queryParams.name = ''
   queryParams.industry = ''
+  queryParams.status = ''
   queryParams.entryTimeStart = ''
   queryParams.entryTimeEnd = ''
   entryTimeRange.value = null
@@ -297,6 +363,14 @@ function handlePaginationChange({ page, pageSize }: { page: number; pageSize: nu
   queryParams.pageNum = page
   queryParams.pageSize = pageSize
   fetchList()
+}
+
+function handleSelectionChange(selection: EnterpriseRecord[]) {
+  selectedIds.value = selection.map((item) => item.id)
+}
+
+function goDetail(row: EnterpriseRecord) {
+  router.push(`/enterprise/detail/${row.id}`)
 }
 
 const dialogVisible = ref(false)
@@ -409,6 +483,81 @@ function handleDelete(row: EnterpriseRecord) {
   })
 }
 
+async function handleBanSingle(row: EnterpriseRecord) {
+  const ok = await confirm(`确定要封禁企业「${row.name}」吗？封禁后该企业发布的岗位将全部下架。`, '封禁确认', { type: 'warning' })
+  if (!ok) return
+  rowBanLoading[row.id] = true
+  try {
+    await batchUpdateStatus([row.id], 0)
+    success('封禁成功')
+    fetchList()
+  } catch {
+    error('封禁失败，请稍后重试')
+  } finally {
+    setTimeout(() => {
+      rowBanLoading[row.id] = false
+    }, 300)
+  }
+}
+
+async function handleUnbanSingle(row: EnterpriseRecord) {
+  const ok = await confirm(`确定要解封企业「${row.name}」吗？`, '解封确认', { type: 'success' })
+  if (!ok) return
+  rowBanLoading[row.id] = true
+  try {
+    await batchUpdateStatus([row.id], 1)
+    success('解封成功')
+    fetchList()
+  } catch {
+    error('解封失败，请稍后重试')
+  } finally {
+    setTimeout(() => {
+      rowBanLoading[row.id] = false
+    }, 300)
+  }
+}
+
+async function handleBatchBan() {
+  if (selectedIds.value.length === 0) return
+  const ok = await confirm(`确定要封禁选中的 ${selectedIds.value.length} 家企业吗？封禁后这些企业发布的岗位将全部下架。`, '批量封禁确认', {
+    type: 'warning',
+    confirmButtonClass: 'el-button--warning'
+  })
+  if (!ok) return
+  batchBanLoading.value = true
+  try {
+    await batchUpdateStatus(selectedIds.value, 0)
+    success('批量封禁成功')
+    fetchList()
+  } catch {
+    error('批量封禁失败，请稍后重试')
+  } finally {
+    setTimeout(() => {
+      batchBanLoading.value = false
+    }, 300)
+  }
+}
+
+async function handleBatchUnban() {
+  if (selectedIds.value.length === 0) return
+  const ok = await confirm(`确定要解封选中的 ${selectedIds.value.length} 家企业吗？`, '批量解封确认', {
+    type: 'success'
+  })
+  if (!ok) return
+  batchUnbanLoading.value = true
+  try {
+    await batchUpdateStatus(selectedIds.value, 1)
+    success('批量解封成功')
+    fetchList()
+  } catch {
+    error('批量解封失败，请稍后重试')
+  } finally {
+    setTimeout(() => {
+      batchUnbanLoading.value = false
+    }, 300)
+  }
+}
+
 async function handleSubmit() {
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
@@ -435,3 +584,32 @@ function handleDialogCancel() {
 
 fetchList()
 </script>
+
+<style lang="scss" scoped>
+.selected-tip {
+  font-size: 14px;
+  color: #606266;
+
+  em {
+    color: #409eff;
+    font-style: normal;
+    font-weight: 600;
+    margin: 0 2px;
+  }
+}
+
+:deep(.row-banned) {
+  background-color: #fff2f2;
+
+  &:hover > td {
+    background-color: #ffe6e6 !important;
+    box-shadow: inset 0 0 0 9999px rgba(255, 242, 242, 0.5);
+  }
+}
+
+:deep(.status-select) {
+  .el-select__wrapper {
+    transition: all 0.3s ease;
+  }
+}
+</style>

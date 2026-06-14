@@ -34,6 +34,12 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: { title: '企业管理', icon: 'OfficeBuilding' }
       },
       {
+        path: 'enterprise/detail/:id',
+        name: 'EnterpriseDetail',
+        component: () => import('@/views/enterprise/detail.vue'),
+        meta: { title: '企业详情', icon: 'OfficeBuilding', hidden: true }
+      },
+      {
         path: 'seeker',
         name: 'Seeker',
         component: () => import('@/views/seeker/index.vue'),
