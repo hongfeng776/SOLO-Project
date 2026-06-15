@@ -79,3 +79,11 @@ export function checkTemplateNameUnique(name: string, excludeId?: number) {
     params: { name, excludeId }
   });
 }
+
+export function exportVisualTemplate(params: VisualTemplateQuery) {
+  return request<VisualTemplateItem[]>({
+    url: '/visual-templates/export',
+    method: 'get',
+    params
+  });
+}

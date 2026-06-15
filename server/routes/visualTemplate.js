@@ -8,6 +8,7 @@ const { logMeta } = require('../middleware/operationLog');
 router.get('/', authMiddleware, visualTemplateController.getTemplateList);
 router.get('/style-types', authMiddleware, visualTemplateController.getStyleTypeList);
 router.get('/check-name', authMiddleware, visualTemplateController.checkNameUnique);
+router.get('/export', authMiddleware, visualTemplateController.exportTemplate);
 router.get('/:id', authMiddleware, visualTemplateController.getTemplateDetail);
 router.post(
   '/',

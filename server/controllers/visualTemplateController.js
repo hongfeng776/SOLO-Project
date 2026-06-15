@@ -13,7 +13,11 @@ async function getTemplateList(req, res, next) {
       name,
       style_type,
       scene,
-      status
+      status,
+      start_time,
+      end_time,
+      use_count_min,
+      use_count_max
     } = req.query;
 
     const where = {};
@@ -29,6 +33,20 @@ async function getTemplateList(req, res, next) {
     }
     if (status !== undefined && status !== '') {
       where.status = Number(status);
+    }
+    if (start_time) {
+      where.created_at = { [Op.gte]: start_time };
+    }
+    if (end_time) {
+      where.created_at = where.created_at || {};
+      where.created_at[Op.lte] = end_time;
+    }
+    if (use_count_min !== undefined && use_count_min !== '') {
+      where.use_count = { [Op.gte]: Number(use_count_min) };
+    }
+    if (use_count_max !== undefined && use_count_max !== '') {
+      where.use_count = where.use_count || {};
+      where.use_count[Op.lte] = Number(use_count_max);
     }
 
     const { count, rows } = await VisualTemplate.findAndCountAll({
@@ -127,6 +145,7 @@ async function updateTemplate(req, res, next) {
 
     const { name, style_type, scene, status, cover: bodyCover } = req.body;
     const updateData = {};
+    const oldStyleType = template.style_type;
 
     if (name !== undefined) {
       const existing = await VisualTemplate.findOne({
@@ -137,7 +156,7 @@ async function updateTemplate(req, res, next) {
       }
       updateData.name = name;
     }
-    if (style_type !== undefined) updateData.style_type = style_type;
+    if (style_type !== undefined) updateData.style_type = style_type || null;
     if (scene !== undefined) updateData.scene = scene;
     if (status !== undefined) updateData.status = Number(status);
 
@@ -154,9 +173,23 @@ async function updateTemplate(req, res, next) {
     }
 
     await template.update(updateData);
+
+    // 风格类型变更后，检查旧风格类型是否还有模板使用
+    if (style_type !== undefined && oldStyleType && oldStyleType !== style_type) {
+      await cleanupEmptyStyleType(oldStyleType);
+    }
+
     res.json(success(template.toJSON(), '更新成功'));
   } catch (err) {
     next(err);
+  }
+}
+
+async function cleanupEmptyStyleType(styleType) {
+  if (!styleType) return;
+  const count = await VisualTemplate.count({ where: { style_type: styleType } });
+  if (count === 0) {
+    // 该风格类型下已无模板，自然从列表中消失（无需额外表）
   }
 }
 
@@ -172,6 +205,8 @@ async function deleteTemplate(req, res, next) {
       });
     }
 
+    const deletedStyleType = template.style_type;
+
     if (template.cover) {
       const filePath = path.join(__dirname, '..', '..', template.cover.replace(/^\//, ''));
       if (fs.existsSync(filePath)) {
@@ -180,6 +215,7 @@ async function deleteTemplate(req, res, next) {
     }
 
     await template.destroy();
+    await cleanupEmptyStyleType(deletedStyleType);
     res.json(success(null, '删除成功'));
   } catch (err) {
     next(err);
@@ -194,6 +230,7 @@ async function batchDeleteTemplate(req, res, next) {
     }
 
     const templates = await VisualTemplate.findAll({ where: { id: { [Op.in]: ids } } });
+    const styleTypes = templates.map(t => t.style_type).filter(Boolean);
 
     for (const template of templates) {
       if (template.cover) {
@@ -205,6 +242,10 @@ async function batchDeleteTemplate(req, res, next) {
     }
 
     await VisualTemplate.destroy({ where: { id: { [Op.in]: ids } } });
+
+    for (const st of [...new Set(styleTypes)]) {
+      await cleanupEmptyStyleType(st);
+    }
 
     res.json(success(null, '批量删除成功'));
   } catch (err) {
@@ -279,6 +320,48 @@ async function getStyleTypeList(req, res, next) {
   }
 }
 
+async function exportTemplate(req, res, next) {
+  try {
+    const {
+      name,
+      style_type,
+      scene,
+      status,
+      start_time,
+      end_time,
+      use_count_min,
+      use_count_max
+    } = req.query;
+
+    const where = {};
+    if (name) where.name = { [Op.like]: `%${name}%` };
+    if (style_type) where.style_type = style_type;
+    if (scene) where.scene = { [Op.like]: `%${scene}%` };
+    if (status !== undefined && status !== '') where.status = Number(status);
+    if (start_time) where.created_at = { [Op.gte]: start_time };
+    if (end_time) {
+      where.created_at = where.created_at || {};
+      where.created_at[Op.lte] = end_time;
+    }
+    if (use_count_min !== undefined && use_count_min !== '') {
+      where.use_count = { [Op.gte]: Number(use_count_min) };
+    }
+    if (use_count_max !== undefined && use_count_max !== '') {
+      where.use_count = where.use_count || {};
+      where.use_count[Op.lte] = Number(use_count_max);
+    }
+
+    const list = await VisualTemplate.findAll({
+      where,
+      order: [['created_at', 'DESC']]
+    });
+
+    res.json(success(list.map(r => r.toJSON())));
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getTemplateList,
   getTemplateDetail,
@@ -289,5 +372,6 @@ module.exports = {
   batchDeleteTemplate,
   updateStatus,
   batchUpdateStatus,
-  getStyleTypeList
+  getStyleTypeList,
+  exportTemplate
 };

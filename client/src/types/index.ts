@@ -120,6 +120,10 @@ export interface VisualTemplateQuery {
   style_type?: string;
   scene?: string;
   status?: number | '';
+  start_time?: string;
+  end_time?: string;
+  use_count_min?: number | '';
+  use_count_max?: number | '';
 }
 
 export interface VisualTemplateForm {
