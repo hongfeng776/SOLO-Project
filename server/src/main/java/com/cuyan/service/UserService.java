@@ -35,4 +35,6 @@ public interface UserService extends IService<User> {
     void updateStatus(Long id, Integer status);
 
     void batchUpdateStatus(BatchStatusDTO batchStatusDTO);
+
+    List<UserVO> queryForExport(UserQueryDTO queryDTO);
 }

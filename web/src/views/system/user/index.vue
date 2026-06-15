@@ -1,7 +1,19 @@
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Search, RefreshLeft, Plus, Edit, Delete, Check } from '@element-plus/icons-vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  Search,
+  RefreshLeft,
+  Plus,
+  Edit,
+  Delete,
+  Download,
+  Lock,
+  Unlock,
+  ArrowUp,
+  Filter,
+  Close
+} from '@element-plus/icons-vue'
 import { useTable } from '@/composables/useTable'
 import { useModal } from '@/composables/useModal'
 import { useConfirm } from '@/components/ConfirmDialog'
@@ -14,15 +26,25 @@ import {
   deleteUser,
   updateUserStatus,
   batchUpdateUserStatus,
+  exportUserList,
   type UserQuery
 } from '@/api/user'
+
+type DateRange = [string, string] | null | undefined
 
 const { confirm, confirmDelete } = useConfirm()
 
 const initialQuery: Partial<UserQuery> = {
   username: '',
   status: undefined,
-  keyword: ''
+  keyword: '',
+  createTimeStart: undefined,
+  createTimeEnd: undefined,
+  learnedWordsMin: undefined,
+  learnedWordsMax: undefined,
+  studyDaysMin: undefined,
+  studyDaysMax: undefined,
+  activityLevel: undefined
 }
 
 const {
@@ -34,11 +56,162 @@ const {
   queryForm,
   selectedIds,
   handleSearch,
-  handleReset,
+  handleReset: originalReset,
   handleRefresh,
   handlePageChange,
   handleSelectionChange
 } = useTable<UserVO, UserQuery>(getUserList, initialQuery)
+
+const createTimeRange = ref<DateRange>()
+const showAdvancedFilter = ref(false)
+const showBackTop = ref(false)
+const pageContainerRef = ref<HTMLElement>()
+
+function onScroll(e: Event) {
+  const target = e.target as HTMLElement
+  showBackTop.value = target.scrollTop > 500
+}
+
+function scrollToTop() {
+  if (pageContainerRef.value) {
+    pageContainerRef.value.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+function toggleAdvancedFilter() {
+  showAdvancedFilter.value = !showAdvancedFilter.value
+}
+
+function applyAdvancedSearch() {
+  if (createTimeRange.value && createTimeRange.value.length === 2) {
+    const [start, end] = createTimeRange.value
+    queryForm.createTimeStart = start ? new Date(start).toISOString() : undefined
+    queryForm.createTimeEnd = end ? new Date(end).toISOString() : undefined
+  } else {
+    queryForm.createTimeStart = undefined
+    queryForm.createTimeEnd = undefined
+  }
+  handleSearch()
+}
+
+function handleReset() {
+  createTimeRange.value = undefined
+  originalReset()
+}
+
+const batchModal = reactive({
+  visible: false,
+  action: 'freeze' as 'freeze' | 'unfreeze',
+  count: 0
+})
+
+function openBatchFreeze() {
+  if (selectedIds.value.length === 0) {
+    ElMessage.warning('请先选择用户')
+    return
+  }
+  batchModal.action = 'freeze'
+  batchModal.count = selectedIds.value.length
+  batchModal.visible = true
+}
+
+function openBatchUnfreeze() {
+  if (selectedIds.value.length === 0) {
+    ElMessage.warning('请先选择用户')
+    return
+  }
+  batchModal.action = 'unfreeze'
+  batchModal.count = selectedIds.value.length
+  batchModal.visible = true
+}
+
+async function confirmBatchAction() {
+  const status = batchModal.action === 'freeze' ? 0 : 1
+  const actionText = batchModal.action === 'freeze' ? '冻结' : '解封'
+  try {
+    await batchUpdateUserStatus(selectedIds.value, status)
+    ElMessage.success(`批量${actionText}成功`)
+    batchModal.visible = false
+    handleRefresh()
+  } catch {
+    // error handled
+  }
+}
+
+const exportState = reactive({
+  visible: false,
+  progress: 0,
+  percent: 0,
+  exporting: false
+})
+
+function openExportDialog() {
+  exportState.visible = true
+  exportState.progress = 0
+  exportState.percent = 0
+  exportState.exporting = false
+}
+
+function closeExportDialog() {
+  if (exportState.exporting) {
+    ElMessageBox.confirm('正在导出中，确定要取消吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(() => {
+      exportState.visible = false
+    }).catch(() => {})
+    return
+  }
+  exportState.visible = false
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  window.URL.revokeObjectURL(url)
+}
+
+async function startExport() {
+  exportState.exporting = true
+  exportState.progress = 0
+  exportState.percent = 0
+
+  const exportParams: UserQuery = { ...queryForm }
+  delete (exportParams as any).pageNum
+  delete (exportParams as any).pageSize
+
+  try {
+    const blob = await exportUserList(exportParams, (loaded, total) => {
+      if (total > 0) {
+        exportState.progress = (loaded / total) * 100
+        exportState.percent = Math.min(Math.round(exportState.progress), 99)
+      } else {
+        exportState.progress = Math.min(exportState.progress + 10, 90)
+        exportState.percent = Math.round(exportState.progress)
+      }
+    })
+    exportState.progress = 100
+    exportState.percent = 100
+    const timestamp = new Date()
+    const filename = `用户数据_${timestamp.getFullYear()}${String(timestamp.getMonth() + 1).padStart(2, '0')}${String(timestamp.getDate()).padStart(2, '0')}_${String(timestamp.getHours()).padStart(2, '0')}${String(timestamp.getMinutes()).padStart(2, '0')}${String(timestamp.getSeconds()).padStart(2, '0')}.xlsx`
+    downloadBlob(blob, filename)
+    ElMessage.success('导出成功')
+    setTimeout(() => {
+      exportState.visible = false
+      exportState.exporting = false
+    }, 800)
+  } catch (e: any) {
+    ElMessage.error(e.message || '导出失败')
+  } finally {
+    exportState.exporting = false
+  }
+}
 
 const modal = useModal<{
   id?: number
@@ -255,16 +428,6 @@ async function handleStatusChange(row: UserVO, status: number) {
   handleRefresh()
 }
 
-async function handleBatchStatus(status: number) {
-  if (selectedIds.value.length === 0) return
-  const action = status === 1 ? '启用' : '禁用'
-  const ok = await confirm(`确定要${action}选中的 ${selectedIds.value.length} 个用户吗？`, '批量操作确认')
-  if (!ok) return
-  await batchUpdateUserStatus(selectedIds.value, status)
-  ElMessage.success(`批量${action}成功`)
-  handleRefresh()
-}
-
 function formatStudyTime(minutes: number): string {
   if (!minutes) return '0分钟'
   const hours = Math.floor(minutes / 60)
@@ -276,19 +439,30 @@ function formatStudyTime(minutes: number): string {
 }
 
 const tableHeight = computed(() => {
-  return 'calc(100vh - 320px)'
+  return 'calc(100vh - 360px)'
 })
+
+const activityOptions = [
+  { label: '低活跃 (< 5天)', value: 1 },
+  { label: '中低活跃 (5-14天)', value: 2 },
+  { label: '中高活跃 (15-29天)', value: 3 },
+  { label: '高活跃 (≥ 30天)', value: 4 }
+]
 </script>
 
 <template>
-  <div class="page-container user-management">
+  <div
+    ref="pageContainerRef"
+    class="page-container user-management"
+    @scroll="onScroll"
+  >
     <el-card shadow="never" class="search-card">
       <el-form
         :model="queryForm"
         label-width="80px"
         inline
         class="search-form"
-        @submit.prevent="handleSearch"
+        @submit.prevent="applyAdvancedSearch"
       >
         <el-form-item label="账号">
           <el-input
@@ -305,8 +479,8 @@ const tableHeight = computed(() => {
             clearable
             style="width: 160px"
           >
-            <el-option label="启用" :value="1" />
-            <el-option label="禁用" :value="0" />
+            <el-option label="正常" :value="1" />
+            <el-option label="已冻结" :value="0" />
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
@@ -318,13 +492,95 @@ const tableHeight = computed(() => {
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">
+          <el-button type="primary" @click="applyAdvancedSearch">
             <el-icon><Search /></el-icon>筛选
           </el-button>
           <el-button @click="handleReset">
             <el-icon><RefreshLeft /></el-icon>重置
           </el-button>
+          <el-button @click="toggleAdvancedFilter" :type="showAdvancedFilter ? 'primary' : 'default'">
+            <el-icon><Filter /></el-icon>高级筛选
+          </el-button>
         </el-form-item>
+
+        <div v-show="showAdvancedFilter" class="advanced-filter">
+          <el-row :gutter="16" style="width: 100%">
+            <el-col :span="8">
+              <el-form-item label="注册时间">
+                <el-date-picker
+                  v-model="createTimeRange"
+                  type="daterange"
+                  range-separator="至"
+                  start-placeholder="开始日期"
+                  end-placeholder="结束日期"
+                  value-format="YYYY-MM-DD"
+                  style="width: 100%"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="累计背词">
+                <div style="display: flex; gap: 8px; width: 100%">
+                  <el-input-number
+                    v-model="queryForm.learnedWordsMin"
+                    :min="0"
+                    placeholder="最小"
+                    controls-position="right"
+                    style="flex: 1"
+                  />
+                  <span style="padding: 0 4px; align-self: center">-</span>
+                  <el-input-number
+                    v-model="queryForm.learnedWordsMax"
+                    :min="0"
+                    placeholder="最大"
+                    controls-position="right"
+                    style="flex: 1"
+                  />
+                </div>
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="活跃度">
+                <el-select
+                  v-model="queryForm.activityLevel"
+                  placeholder="选择活跃度等级"
+                  clearable
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="opt in activityOptions"
+                    :key="opt.value"
+                    :label="opt.label"
+                    :value="opt.value"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="16" style="width: 100%">
+            <el-col :span="8">
+              <el-form-item label="学习天数">
+                <div style="display: flex; gap: 8px; width: 100%">
+                  <el-input-number
+                    v-model="queryForm.studyDaysMin"
+                    :min="0"
+                    placeholder="最小"
+                    controls-position="right"
+                    style="flex: 1"
+                  />
+                  <span style="padding: 0 4px; align-self: center">-</span>
+                  <el-input-number
+                    v-model="queryForm.studyDaysMax"
+                    :min="0"
+                    placeholder="最大"
+                    controls-position="right"
+                    style="flex: 1"
+                  />
+                </div>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
       </el-form>
     </el-card>
 
@@ -335,8 +591,11 @@ const tableHeight = computed(() => {
           <span class="table-total">共 {{ total }} 条记录</span>
         </div>
         <div class="toolbar-right">
-          <el-button type="primary" @click="handleAdd">
-            <el-icon><Plus /></el-icon>新增用户
+          <el-button type="success" :icon="Download" @click="openExportDialog">
+            导出数据
+          </el-button>
+          <el-button type="primary" :icon="Plus" @click="handleAdd">
+            新增用户
           </el-button>
         </div>
       </div>
@@ -346,11 +605,11 @@ const tableHeight = computed(() => {
         :selected-count="selectedIds.length"
         :total-count="total"
       >
-        <el-button type="primary" plain @click="handleBatchStatus(1)">
-          批量启用
+        <el-button type="success" plain :icon="Unlock" @click="openBatchUnfreeze">
+          批量解封
         </el-button>
-        <el-button type="warning" plain @click="handleBatchStatus(0)">
-          批量禁用
+        <el-button type="warning" plain :icon="Lock" @click="openBatchFreeze">
+          批量冻结
         </el-button>
         <el-button type="danger" plain class="delete-btn" @click="handleBatchDelete">
           批量删除
@@ -371,7 +630,7 @@ const tableHeight = computed(() => {
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" width="55" :reserve-selection="false" />
-            <el-table-column prop="id" label="ID" width="70" />
+            <el-table-column prop="id" label="ID" width="70" fixed />
             <el-table-column prop="nickname" label="昵称" width="120" show-overflow-tooltip />
             <el-table-column prop="username" label="账号" width="140" show-overflow-tooltip />
             <el-table-column prop="phone" label="手机号" width="140" />
@@ -409,11 +668,11 @@ const tableHeight = computed(() => {
                   effect="light"
                   round
                 >
-                  {{ (row as UserVO).status === 1 ? '启用' : '禁用' }}
+                  {{ (row as UserVO).status === 1 ? '正常' : '已冻结' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="180" fixed="right">
+            <el-table-column label="操作" width="200" fixed="right">
               <template #default="{ row }">
                 <el-button type="primary" link :icon="Edit" @click="handleEdit(row as UserVO)">
                   编辑
@@ -421,9 +680,10 @@ const tableHeight = computed(() => {
                 <el-button
                   :type="(row as UserVO).status === 1 ? 'warning' : 'success'"
                   link
+                  :icon="(row as UserVO).status === 1 ? Lock : Unlock"
                   @click="handleStatusChange(row as UserVO, (row as UserVO).status === 1 ? 0 : 1)"
                 >
-                  {{ (row as UserVO).status === 1 ? '禁用' : '启用' }}
+                  {{ (row as UserVO).status === 1 ? '冻结' : '解封' }}
                 </el-button>
                 <el-button
                   type="danger"
@@ -447,6 +707,17 @@ const tableHeight = computed(() => {
         />
       </template>
     </el-card>
+
+    <transition name="backtop-fade">
+      <div
+        v-show="showBackTop"
+        class="back-to-top"
+        @click="scrollToTop"
+        title="返回顶部"
+      >
+        <el-icon :size="20"><ArrowUp /></el-icon>
+      </div>
+    </transition>
 
     <ModalDialog
       v-model="modal.visible"
@@ -562,19 +833,103 @@ const tableHeight = computed(() => {
           <el-col :span="24">
             <el-form-item label="账号状态">
               <el-radio-group v-model="modal.formData.status">
-                <el-radio :value="1">启用</el-radio>
-                <el-radio :value="0">禁用</el-radio>
+                <el-radio :value="1">正常</el-radio>
+                <el-radio :value="0">已冻结</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
         </el-row>
       </el-form>
     </ModalDialog>
+
+    <el-dialog
+      v-model="batchModal.visible"
+      :title="batchModal.action === 'freeze' ? '批量冻结账号' : '批量解封账号'"
+      width="440px"
+      :close-on-click-modal="false"
+      custom-class="batch-status-dialog"
+      append-to-body
+    >
+      <div class="batch-dialog-content">
+        <el-alert
+          :title="batchModal.action === 'freeze'
+            ? `确定要冻结选中的 ${batchModal.count} 个用户账号吗？`
+            : `确定要解封选中的 ${batchModal.count} 个用户账号吗？`"
+          :type="batchModal.action === 'freeze' ? 'warning' : 'info'"
+          :closable="false"
+          show-icon
+        />
+        <div v-if="batchModal.action === 'freeze'" class="batch-tips">
+          <p><strong>冻结后将产生以下影响：</strong></p>
+          <ul>
+            <li>用户无法登录系统</li>
+            <li>用户发布的内容将被隐藏</li>
+            <li>可后续执行「解封」操作恢复</li>
+          </ul>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="batchModal.visible = false">取消</el-button>
+        <el-button
+          :type="batchModal.action === 'freeze' ? 'warning' : 'success'"
+          @click="confirmBatchAction"
+        >
+          确认{{ batchModal.action === 'freeze' ? '冻结' : '解封' }}
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="exportState.visible"
+      title="导出用户数据"
+      width="480px"
+      :close-on-click-modal="false"
+      custom-class="export-dialog"
+      append-to-body
+      @close="closeExportDialog"
+    >
+      <div class="export-content">
+        <div class="export-info">
+          <el-icon :size="40" color="#409eff"><Download /></el-icon>
+          <div class="export-desc">
+            <h4>导出当前筛选结果</h4>
+            <p>将导出符合当前筛选条件的全部用户数据为 Excel 文件</p>
+          </div>
+        </div>
+        <div v-if="exportState.exporting" class="progress-wrapper">
+          <el-progress
+            :percentage="exportState.percent"
+            :stroke-width="12"
+            :text-inside="true"
+            status="success"
+          />
+          <p class="progress-hint">
+            {{ exportState.percent < 100 ? '正在导出，请稍候...' : '导出完成！' }}
+          </p>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="closeExportDialog" :disabled="exportState.exporting">
+          {{ exportState.exporting ? '导出中...' : '取消' }}
+        </el-button>
+        <el-button
+          type="primary"
+          :icon="Download"
+          :loading="exportState.exporting"
+          :disabled="exportState.exporting"
+          @click="startExport"
+        >
+          {{ exportState.exporting ? '导出中' : '开始导出' }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .user-management {
+  position: relative;
+
   .search-card {
     border-radius: 8px;
   }
@@ -582,6 +937,21 @@ const tableHeight = computed(() => {
   .table-card {
     margin-top: 16px;
     border-radius: 8px;
+  }
+
+  .advanced-filter {
+    width: 100%;
+    padding-top: 12px;
+    border-top: 1px dashed #e4e7ed;
+    margin-top: 4px;
+
+    :deep(.el-form-item) {
+      margin-bottom: 12px;
+    }
+
+    :deep(.el-form-item__label) {
+      width: 80px !important;
+    }
   }
 
   .table-toolbar {
@@ -605,6 +975,11 @@ const tableHeight = computed(() => {
         font-size: 13px;
         color: #909399;
       }
+    }
+
+    .toolbar-right {
+      display: flex;
+      gap: 8px;
     }
   }
 
@@ -687,6 +1062,132 @@ const tableHeight = computed(() => {
         box-shadow: none;
       }
     }
+  }
+
+  .back-to-top {
+    position: fixed;
+    right: 30px;
+    bottom: 50px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #409eff;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    border: 1px solid #ebeef5;
+
+    &:hover {
+      background: #409eff;
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(64, 158, 255, 0.4);
+    }
+  }
+
+  .backtop-fade-enter-active,
+  .backtop-fade-leave-active {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .backtop-fade-enter-from,
+  .backtop-fade-leave-to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  .batch-dialog-content {
+    padding: 10px 0;
+
+    .batch-tips {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: #fafafa;
+      border-radius: 6px;
+
+      p {
+        margin: 0 0 8px 0;
+        font-size: 13px;
+        color: #606266;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 18px;
+        font-size: 13px;
+        color: #606266;
+
+        li {
+          line-height: 1.8;
+        }
+      }
+    }
+  }
+
+  .export-content {
+    padding: 10px 0;
+
+    .export-info {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 12px;
+      background: #f5f7fa;
+      border-radius: 8px;
+
+      .export-desc {
+        flex: 1;
+
+        h4 {
+          margin: 0 0 6px 0;
+          font-size: 15px;
+          color: #303133;
+          font-weight: 600;
+        }
+
+        p {
+          margin: 0;
+          font-size: 13px;
+          color: #606266;
+          line-height: 1.6;
+        }
+      }
+    }
+
+    .progress-wrapper {
+      margin-top: 20px;
+
+      .progress-hint {
+        text-align: center;
+        margin: 10px 0 0 0;
+        font-size: 13px;
+        color: #909399;
+      }
+    }
+  }
+}
+
+:deep(.batch-status-dialog) {
+  animation: zoomFadeIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:deep(.export-dialog) {
+  animation: zoomFadeIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes zoomFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 </style>

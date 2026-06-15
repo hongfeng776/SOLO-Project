@@ -104,14 +104,38 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return userInfoVO;
     }
 
-    @Override
-    public Page<UserVO> pageQuery(UserQueryDTO queryDTO) {
-        Page<User> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
+    private LambdaQueryWrapper<User> buildQueryWrapper(UserQueryDTO queryDTO) {
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(StringUtils.hasText(queryDTO.getUsername()), User::getUsername, queryDTO.getUsername())
                 .eq(queryDTO.getStatus() != null, User::getStatus, queryDTO.getStatus())
-                .like(StringUtils.hasText(queryDTO.getKeyword()), User::getUsername, queryDTO.getKeyword())
-                .orderByDesc(User::getCreateTime);
+                .and(StringUtils.hasText(queryDTO.getKeyword()), w -> w
+                        .like(User::getNickname, queryDTO.getKeyword())
+                        .or().like(User::getPhone, queryDTO.getKeyword())
+                        .or().like(User::getUsername, queryDTO.getKeyword()))
+                .ge(queryDTO.getCreateTimeStart() != null, User::getCreateTime, queryDTO.getCreateTimeStart())
+                .le(queryDTO.getCreateTimeEnd() != null, User::getCreateTime, queryDTO.getCreateTimeEnd())
+                .ge(queryDTO.getLearnedWordsMin() != null, User::getLearnedWords, queryDTO.getLearnedWordsMin())
+                .le(queryDTO.getLearnedWordsMax() != null, User::getLearnedWords, queryDTO.getLearnedWordsMax())
+                .ge(queryDTO.getStudyDaysMin() != null, User::getStudyDays, queryDTO.getStudyDaysMin())
+                .le(queryDTO.getStudyDaysMax() != null, User::getStudyDays, queryDTO.getStudyDaysMax());
+
+        if (queryDTO.getActivityLevel() != null) {
+            switch (queryDTO.getActivityLevel()) {
+                case 1 -> wrapper.lt(User::getStudyDays, 5);
+                case 2 -> wrapper.ge(User::getStudyDays, 5).lt(User::getStudyDays, 15);
+                case 3 -> wrapper.ge(User::getStudyDays, 15).lt(User::getStudyDays, 30);
+                case 4 -> wrapper.ge(User::getStudyDays, 30);
+                default -> {}
+            }
+        }
+        wrapper.orderByDesc(User::getCreateTime);
+        return wrapper;
+    }
+
+    @Override
+    public Page<UserVO> pageQuery(UserQueryDTO queryDTO) {
+        Page<User> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
+        LambdaQueryWrapper<User> wrapper = buildQueryWrapper(queryDTO);
         Page<User> userPage = page(page, wrapper);
         Page<UserVO> voPage = new Page<>(userPage.getCurrent(), userPage.getSize(), userPage.getTotal());
         List<UserVO> voList = userPage.getRecords().stream().map(user -> {
@@ -122,6 +146,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }).collect(Collectors.toList());
         voPage.setRecords(voList);
         return voPage;
+    }
+
+    @Override
+    public List<UserVO> queryForExport(UserQueryDTO queryDTO) {
+        LambdaQueryWrapper<User> wrapper = buildQueryWrapper(queryDTO);
+        List<User> users = list(wrapper);
+        return users.stream().map(user -> {
+            UserVO vo = new UserVO();
+            BeanUtils.copyProperties(user, vo);
+            vo.setPublishCount(getPublishCount(user.getId()));
+            return vo;
+        }).collect(Collectors.toList());
     }
 
     @Override

@@ -1,1 +1,0 @@
-import{_ as c,o as r,c as _,b as t,w as n,a as l,r as o}from"./index-Dn26EOnB.js";const d={},p={class:"page-container"};function i(m,e){const s=o("el-empty"),a=o("el-card");return r(),_("div",p,[t(a,null,{header:n(()=>[...e[0]||(e[0]=[l("span",null,"角色管理",-1)])]),default:n(()=>[t(s,{description:"角色管理模块开发中..."})]),_:1})])}const u=c(d,[["render",i]]);export{u as default};
