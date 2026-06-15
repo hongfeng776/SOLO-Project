@@ -39,7 +39,7 @@ async function getSilhouetteList(req, res, next) {
     });
 
     res.json(success({
-      list: rows,
+      list: rows.map(r => r.toJSON()),
       total: count,
       page: Number(page),
       pageSize: Number(pageSize)
@@ -60,7 +60,7 @@ async function getSilhouetteDetail(req, res, next) {
         data: null
       });
     }
-    res.json(success(material));
+    res.json(success(material.toJSON()));
   } catch (err) {
     next(err);
   }
@@ -109,7 +109,7 @@ async function createSilhouette(req, res, next) {
       status: status !== undefined ? Number(status) : 2
     });
 
-    res.json(success(material, '创建成功'));
+    res.json(success(material.toJSON(), '创建成功'));
   } catch (err) {
     next(err);
   }
@@ -127,7 +127,7 @@ async function updateSilhouette(req, res, next) {
       });
     }
 
-    const { name, width, height, scene, category, status } = req.body;
+    const { name, width, height, scene, category, status, cover: bodyCover } = req.body;
     const updateData = {};
 
     if (name !== undefined) {
@@ -153,10 +153,12 @@ async function updateSilhouette(req, res, next) {
         }
       }
       updateData.cover = `/uploads/${path.relative(path.join(__dirname, '..', '..'), req.file.path).replace(/\\/g, '/')}`;
+    } else if (bodyCover !== undefined && bodyCover !== '') {
+      updateData.cover = bodyCover;
     }
 
     await material.update(updateData);
-    res.json(success(material, '更新成功'));
+    res.json(success(material.toJSON(), '更新成功'));
   } catch (err) {
     next(err);
   }
@@ -250,7 +252,7 @@ async function updateStatus(req, res, next) {
 
     await material.update({ status: Number(status) });
     const statusMap = { 0: '下架成功', 1: '上架成功', 2: '设为待审核成功' };
-    res.json(success(material, statusMap[status] || '状态更新成功'));
+    res.json(success(material.toJSON(), statusMap[status] || '状态更新成功'));
   } catch (err) {
     next(err);
   }
@@ -312,7 +314,7 @@ async function exportSilhouette(req, res, next) {
       order: [['created_at', 'DESC']]
     });
 
-    res.json(success(list));
+    res.json(success(list.map(r => r.toJSON())));
   } catch (err) {
     next(err);
   }

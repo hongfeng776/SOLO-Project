@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { Picture } from '@element-plus/icons-vue';
+import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import { computed } from 'vue';
 
 const props = withDefaults(defineProps<{
@@ -43,8 +43,8 @@ defineEmits<{
 }>();
 
 const iconComponent = computed(() => {
-  const icons: Record<string, any> = { Picture };
-  return icons[props.icon] || Picture;
+  const icons: Record<string, any> = ElementPlusIconsVue;
+  return icons[props.icon] || icons.Picture;
 });
 </script>
 

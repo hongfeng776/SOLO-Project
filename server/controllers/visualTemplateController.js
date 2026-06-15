@@ -39,7 +39,7 @@ async function getTemplateList(req, res, next) {
     });
 
     res.json(success({
-      list: rows,
+      list: rows.map(r => r.toJSON()),
       total: count,
       page: Number(page),
       pageSize: Number(pageSize)
@@ -60,7 +60,7 @@ async function getTemplateDetail(req, res, next) {
         data: null
       });
     }
-    res.json(success(template));
+    res.json(success(template.toJSON()));
   } catch (err) {
     next(err);
   }
@@ -107,7 +107,7 @@ async function createTemplate(req, res, next) {
       status: status !== undefined ? Number(status) : 1
     });
 
-    res.json(success(template, '创建成功'));
+    res.json(success(template.toJSON(), '创建成功'));
   } catch (err) {
     next(err);
   }
@@ -125,7 +125,7 @@ async function updateTemplate(req, res, next) {
       });
     }
 
-    const { name, style_type, scene, status } = req.body;
+    const { name, style_type, scene, status, cover: bodyCover } = req.body;
     const updateData = {};
 
     if (name !== undefined) {
@@ -149,10 +149,12 @@ async function updateTemplate(req, res, next) {
         }
       }
       updateData.cover = `/uploads/${path.relative(path.join(__dirname, '..', '..'), req.file.path).replace(/\\/g, '/')}`;
+    } else if (bodyCover !== undefined && bodyCover !== '') {
+      updateData.cover = bodyCover;
     }
 
     await template.update(updateData);
-    res.json(success(template, '更新成功'));
+    res.json(success(template.toJSON(), '更新成功'));
   } catch (err) {
     next(err);
   }
@@ -230,7 +232,7 @@ async function updateStatus(req, res, next) {
 
     await template.update({ status: Number(status) });
     const statusMap = { 0: '停用成功', 1: '启用成功' };
-    res.json(success(template, statusMap[status] || '状态更新成功'));
+    res.json(success(template.toJSON(), statusMap[status] || '状态更新成功'));
   } catch (err) {
     next(err);
   }
