@@ -19,5 +19,9 @@ public class VocabularyUpdateDTO {
 
     private String translation;
 
+    private Integer difficulty;
+
+    private String bookName;
+
     private Integer status;
 }

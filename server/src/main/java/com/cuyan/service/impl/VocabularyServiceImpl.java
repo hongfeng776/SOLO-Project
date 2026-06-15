@@ -47,7 +47,11 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
                 .eq(StringUtils.hasText(queryDTO.getPartOfSpeech()), Vocabulary::getPartOfSpeech, queryDTO.getPartOfSpeech())
                 .eq(queryDTO.getStatus() != null, Vocabulary::getStatus, queryDTO.getStatus())
                 .eq(queryDTO.getCreatorId() != null, Vocabulary::getCreatorId, queryDTO.getCreatorId())
+                .eq(queryDTO.getDifficulty() != null, Vocabulary::getDifficulty, queryDTO.getDifficulty())
+                .like(StringUtils.hasText(queryDTO.getBookName()), Vocabulary::getBookName, queryDTO.getBookName())
                 .like(StringUtils.hasText(queryDTO.getKeyword()), Vocabulary::getWord, queryDTO.getKeyword())
+                .ge(StringUtils.hasText(queryDTO.getStartTime()), Vocabulary::getCreateTime, queryDTO.getStartTime())
+                .le(StringUtils.hasText(queryDTO.getEndTime()), Vocabulary::getCreateTime, queryDTO.getEndTime())
                 .orderByDesc(Vocabulary::getCreateTime);
         Page<Vocabulary> vocabularyPage = page(page, wrapper);
         return convertToVOPage(vocabularyPage);

@@ -96,7 +96,7 @@ function handleCancel() {
     :modal="modal"
     :append-to-body="appendToBody"
     :lock-scroll="lockScroll"
-    :custom-class="customClass"
+    :custom-class="`modal-dialog ${customClass || ''}`"
     :close-on-click-modal="closeOnClickModal"
     :close-on-press-escape="closeOnPressEscape"
     :show-close="showClose"

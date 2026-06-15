@@ -57,6 +57,8 @@ export interface VocabularyVO {
   definition: string
   example: string
   translation: string
+  difficulty: number
+  bookName: string
   creatorId: number
   creatorName: string
   status: number

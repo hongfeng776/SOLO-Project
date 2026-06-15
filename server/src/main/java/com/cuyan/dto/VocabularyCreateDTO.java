@@ -21,5 +21,9 @@ public class VocabularyCreateDTO {
     @NotBlank(message = "翻译不能为空")
     private String translation;
 
+    private Integer difficulty;
+
+    private String bookName;
+
     private Integer status;
 }

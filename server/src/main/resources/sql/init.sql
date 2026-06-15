@@ -37,6 +37,8 @@ CREATE TABLE biz_vocabulary (
     definition TEXT COMMENT '英文释义',
     example TEXT COMMENT '例句',
     translation TEXT COMMENT '中文翻译',
+    difficulty INT DEFAULT 2 COMMENT '难度 1-5',
+    book_name VARCHAR(200) COMMENT '所属词书',
     creator_id BIGINT NOT NULL COMMENT '创建人ID',
     status TINYINT DEFAULT 1 COMMENT '状态 0-下架 1-上架',
     deleted TINYINT DEFAULT 0 COMMENT '逻辑删除',
@@ -44,18 +46,20 @@ CREATE TABLE biz_vocabulary (
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_word (word),
     INDEX idx_creator (creator_id),
-    INDEX idx_status (status)
+    INDEX idx_status (status),
+    INDEX idx_difficulty (difficulty),
+    INDEX idx_book_name (book_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='词汇表';
 
-INSERT INTO biz_vocabulary (id, word, phonetic, part_of_speech, definition, example, translation, creator_id, status) VALUES
-(1, 'ubiquitous', '/juːˈbɪkwɪtəs/', 'adj.', 'present, appearing, or found everywhere', 'Smartphones have become ubiquitous in modern society.', '无处不在的；普遍存在的', 1, 1),
-(2, 'serendipity', '/ˌserənˈdɪpəti/', 'n.', 'the occurrence of events by chance in a happy or beneficial way', 'Finding that book was pure serendipity.', '意外发现美好事物的运气；机缘巧合', 1, 1),
-(3, 'ephemeral', '/ɪˈfemərəl/', 'adj.', 'lasting for a very short time', 'The beauty of cherry blossoms is ephemeral.', '短暂的；瞬息的', 2, 1),
-(4, 'eloquent', '/ˈeləkwənt/', 'adj.', 'fluent or persuasive in speaking or writing', 'She gave an eloquent speech about climate change.', '雄辩的；有说服力的', 2, 1),
-(5, 'resilience', '/rɪˈzɪliəns/', 'n.', 'the capacity to recover quickly from difficulties', 'Her resilience in the face of adversity was admirable.', '恢复力；韧性', 3, 1),
-(6, 'meticulous', '/məˈtɪkjələs/', 'adj.', 'showing great attention to detail; very careful and precise', 'He is meticulous about keeping records.', '一丝不苟的；细致的', 3, 1),
-(7, 'pragmatic', '/præɡˈmætɪk/', 'adj.', 'dealing with things sensibly and realistically', 'We need a pragmatic approach to this problem.', '务实的；实用主义的', 1, 1),
-(8, 'ambiguous', '/æmˈbɪɡjuəs/', 'adj.', 'open to more than one interpretation', 'His response was deliberately ambiguous.', '模棱两可的；含糊不清的', 1, 0);
+INSERT INTO biz_vocabulary (id, word, phonetic, part_of_speech, definition, example, translation, difficulty, book_name, creator_id, status) VALUES
+(1, 'ubiquitous', '/juːˈbɪkwɪtəs/', 'adj.', 'present, appearing, or found everywhere', 'Smartphones have become ubiquitous in modern society.', '无处不在的；普遍存在的', 3, 'GRE核心词汇', 1, 1),
+(2, 'serendipity', '/ˌserənˈdɪpəti/', 'n.', 'the occurrence of events by chance in a happy or beneficial way', 'Finding that book was pure serendipity.', '意外发现美好事物的运气；机缘巧合', 4, '托福高阶词汇', 1, 1),
+(3, 'ephemeral', '/ɪˈfemərəl/', 'adj.', 'lasting for a very short time', 'The beauty of cherry blossoms is ephemeral.', '短暂的；瞬息的', 3, '雅思核心词汇', 2, 1),
+(4, 'eloquent', '/ˈeləkwənt/', 'adj.', 'fluent or persuasive in speaking or writing', 'She gave an eloquent speech about climate change.', '雄辩的；有说服力的', 2, '四级核心词汇', 2, 1),
+(5, 'resilience', '/rɪˈzɪliəns/', 'n.', 'the capacity to recover quickly from difficulties', 'Her resilience in the face of adversity was admirable.', '恢复力；韧性', 3, '六级进阶词汇', 3, 1),
+(6, 'meticulous', '/məˈtɪkjələs/', 'adj.', 'showing great attention to detail; very careful and precise', 'He is meticulous about keeping records.', '一丝不苟的；细致的', 3, 'GRE核心词汇', 3, 1),
+(7, 'pragmatic', '/præɡˈmætɪk/', 'adj.', 'dealing with things sensibly and realistically', 'We need a pragmatic approach to this problem.', '务实的；实用主义的', 2, '托福基础词汇', 1, 1),
+(8, 'ambiguous', '/æmˈbɪɡjuəs/', 'adj.', 'open to more than one interpretation', 'His response was deliberately ambiguous.', '模棱两可的；含糊不清的', 2, '四级核心词汇', 1, 0);
 
 -- ==================== 素材表 ====================
 DROP TABLE IF EXISTS biz_material;

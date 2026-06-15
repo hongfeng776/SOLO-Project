@@ -28,6 +28,10 @@ public class Vocabulary {
 
     private String translation;
 
+    private Integer difficulty;
+
+    private String bookName;
+
     private Long creatorId;
 
     private Integer status;

@@ -114,3 +114,69 @@
   padding: 20px;
   border-radius: 4px;
 }
+
+// ========== 输入框聚焦效果 ==========
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select .el-input__wrapper,
+.el-date-editor .el-input__wrapper {
+  transition: all 0.3s ease-in-out !important;
+
+  &.is-focus,
+  &:focus {
+    box-shadow: 0 0 0 1px #4080FF inset !important;
+    transform: scale(1.02);
+  }
+}
+
+.el-input__inner:focus {
+  box-shadow: none !important;
+}
+
+// ========== 弹窗动画 ==========
+.dialog-fade-enter-active {
+  animation: dialogZoomIn 0.3s ease-in-out;
+}
+
+.dialog-fade-leave-active {
+  animation: dialogSlideOut 0.3s ease-in-out;
+}
+
+@keyframes dialogZoomIn {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes dialogSlideOut {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -30%) scale(0.95);
+  }
+}
+
+// 遮罩层淡入淡出
+.v-modal-enter-active,
+.v-modal-leave-active {
+  transition: opacity 0.3s ease-in-out !important;
+}
+
+// ========== 表格隔行变色 ==========
+.el-table--striped {
+  .el-table__body tr.el-table__row--striped td.el-table__cell {
+    background-color: #fafbfc;
+  }
+
+  .el-table__body tr:hover > td.el-table__cell {
+    background-color: #ecf5ff !important;
+  }
+}

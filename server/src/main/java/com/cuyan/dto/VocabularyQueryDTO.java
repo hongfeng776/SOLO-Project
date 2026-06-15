@@ -15,4 +15,12 @@ public class VocabularyQueryDTO extends PageQuery {
     private Integer status;
 
     private Long creatorId;
+
+    private Integer difficulty;
+
+    private String bookName;
+
+    private String startTime;
+
+    private String endTime;
 }
