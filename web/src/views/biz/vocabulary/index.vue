@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useTable } from '@/composables/useTable'
 import { useModal } from '@/composables/useModal'
@@ -8,18 +9,23 @@ import type { VocabularyVO } from '@/types/api'
 import type { FormInstance, FormRules } from 'element-plus'
 import {
   getVocabularyList,
+  getVocabularyDetail,
   createVocabulary,
   updateVocabulary,
   removeVocabulary,
+  updateVocabularyStatus,
+  batchUpdateVocabularyStatus,
   type VocabularyQuery
 } from '@/api/vocabulary'
 
-const { confirm } = useConfirm()
+const router = useRouter()
+const { confirm, confirmDelete } = useConfirm()
 
 const initialQuery: Partial<VocabularyQuery> = {
   word: '',
   difficulty: undefined,
   bookName: '',
+  status: undefined,
   startTime: '',
   endTime: ''
 }
@@ -31,10 +37,12 @@ const {
   pageSize,
   total,
   queryForm,
+  selectedIds,
   handleSearch,
   handleReset,
   handleRefresh,
-  handlePageChange
+  handlePageChange,
+  handleSelectionChange
 } = useTable<VocabularyVO, VocabularyQuery>(getVocabularyList, initialQuery)
 
 const modal = useModal<{
@@ -68,6 +76,12 @@ const formRules: FormRules = {
 
 const submitLoading = ref(false)
 
+const statusOptions = [
+  { label: '已上架', value: 1, type: 'success' },
+  { label: '待审核', value: 2, type: 'warning' },
+  { label: '已下架', value: 0, type: 'info' }
+]
+
 const difficultyOptions = [
   { label: '★ 入门', value: 1 },
   { label: '★★ 简单', value: 2 },
@@ -85,6 +99,16 @@ const bookOptions = [
   { label: 'GRE核心词汇', value: 'GRE核心词汇' }
 ]
 
+const selectedCountText = computed(() => {
+  if (selectedIds.value.length === 0) return ''
+  return `已选择 ${selectedIds.value.length} 项`
+})
+
+function getStatusInfo(status: number) {
+  const item = statusOptions.find((o) => o.value === status)
+  return item || { label: '未知', type: 'info' }
+}
+
 function getDifficultyText(level: number) {
   const item = difficultyOptions.find((o) => o.value === level)
   return item ? item.label : '未知'
@@ -99,6 +123,12 @@ function getDifficultyTagType(level: number): 'primary' | 'success' | 'warning' 
     5: 'info'
   }
   return types[level] || 'info'
+}
+
+function getRowClassName(row: VocabularyVO) {
+  if (row.status === 0) return 'row-offline'
+  if (row.status === 2) return 'row-pending'
+  return ''
 }
 
 function handleAdd() {
@@ -123,6 +153,13 @@ function handleRowDblclick(row: VocabularyVO) {
   handleEdit(row)
 }
 
+function handleViewDetail(row: VocabularyVO) {
+  router.push({
+    path: '/biz/vocabulary/detail',
+    query: { id: row.id }
+  })
+}
+
 async function handleSubmit() {
   if (!formRef.value) return
   await formRef.value.validate(async (valid) => {
@@ -134,7 +171,7 @@ async function handleSubmit() {
         ElMessage.success('修改成功')
       } else {
         await createVocabulary(modal.formData)
-        ElMessage.success('新增成功')
+        ElMessage.success('新增成功，已进入待审核状态')
       }
       modal.close()
       handleRefresh()
@@ -145,15 +182,56 @@ async function handleSubmit() {
 }
 
 async function handleDelete(row: VocabularyVO) {
-  const ok = await confirm({
-    title: '删除确认',
-    message: `确定要删除词汇「${row.word}」吗？此操作不可恢复。`,
-    type: 'warning',
-    confirmButtonText: '确认删除'
-  })
+  const ok = await confirmDelete(`确定要删除词汇「${row.word}」吗？此操作不可恢复。`)
   if (!ok) return
   await removeVocabulary([row.id])
   ElMessage.success('删除成功')
+  handleRefresh()
+}
+
+async function handleBatchDelete() {
+  if (selectedIds.value.length === 0) return
+  const ok = await confirmDelete(`确定要删除选中的 ${selectedIds.value.length} 条词汇吗？此操作不可恢复。`)
+  if (!ok) return
+  await removeVocabulary(selectedIds.value)
+  ElMessage.success('批量删除成功')
+  handleRefresh()
+}
+
+async function handleStatusChange(row: VocabularyVO, status: number) {
+  if (row.status === status) return
+  const statusInfo = getStatusInfo(status)
+  const ok = await confirm(`确定要将词汇「${row.word}」${statusInfo.label}吗？`, '状态确认')
+  if (!ok) return
+  await updateVocabularyStatus(row.id, status)
+  ElMessage.success(`${statusInfo.label}成功`)
+  handleRefresh()
+}
+
+async function handleBatchOnline() {
+  if (selectedIds.value.length === 0) return
+  const ok = await confirm(`确定要将选中的 ${selectedIds.value.length} 条词汇上架吗？`, '批量上架确认')
+  if (!ok) return
+  await batchUpdateVocabularyStatus(selectedIds.value, 1)
+  ElMessage.success('批量上架成功')
+  handleRefresh()
+}
+
+async function handleBatchOffline() {
+  if (selectedIds.value.length === 0) return
+  const ok = await confirm(`确定要将选中的 ${selectedIds.value.length} 条词汇下架吗？`, '批量下架确认')
+  if (!ok) return
+  await batchUpdateVocabularyStatus(selectedIds.value, 0)
+  ElMessage.success('批量下架成功')
+  handleRefresh()
+}
+
+async function handleBatchPending() {
+  if (selectedIds.value.length === 0) return
+  const ok = await confirm(`确定要将选中的 ${selectedIds.value.length} 条词汇置为待审核吗？`, '批量操作确认')
+  if (!ok) return
+  await batchUpdateVocabularyStatus(selectedIds.value, 2)
+  ElMessage.success('操作成功')
   handleRefresh()
 }
 
@@ -180,6 +258,21 @@ function formatDate(dateStr: string) {
             clearable
             class="search-input"
           />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select
+            v-model="queryForm.status"
+            placeholder="请选择状态"
+            clearable
+            class="search-select"
+          >
+            <el-option
+              v-for="opt in statusOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="难度">
           <el-select
@@ -242,26 +335,53 @@ function formatDate(dateStr: string) {
 
     <el-card shadow="never" class="table-card">
       <div class="table-toolbar">
-        <h3 class="table-title">词汇资源台账</h3>
-        <el-button type="primary" @click="handleAdd">
-          <el-icon><Plus /></el-icon>新增词汇
-        </el-button>
+        <div class="toolbar-left">
+          <h3 class="table-title">词汇资源台账</h3>
+          <span v-if="selectedCountText" class="selected-count">{{ selectedCountText }}</span>
+        </div>
+        <div class="toolbar-right">
+          <el-button type="primary" @click="handleAdd">
+            <el-icon><Plus /></el-icon>新增词汇
+          </el-button>
+        </div>
       </div>
 
-      <TableSkeleton v-if="loading" :row-count="8" :col-count="8" />
+      <BatchToolbar
+        v-if="selectedIds.length > 0"
+        :selected-count="selectedIds.length"
+        :total-count="total"
+      >
+        <el-button type="success" @click="handleBatchOnline">
+          <el-icon><Top /></el-icon>批量上架
+        </el-button>
+        <el-button type="warning" @click="handleBatchPending">
+          <el-icon><Clock /></el-icon>批量待审核
+        </el-button>
+        <el-button type="info" @click="handleBatchOffline">
+          <el-icon><Bottom /></el-icon>批量下架
+        </el-button>
+        <el-button type="danger" @click="handleBatchDelete">
+          <el-icon><Delete /></el-icon>批量删除
+        </el-button>
+      </BatchToolbar>
+
+      <TableSkeleton v-if="loading" :row-count="8" :col-count="10" />
       <template v-else>
         <EmptyState v-if="list.length === 0" />
         <el-table
           v-else
           :data="list"
           stripe
+          :row-class-name="({ row }) => getRowClassName(row as VocabularyVO)"
           class="vocabulary-table"
+          @selection-change="handleSelectionChange"
           @row-dblclick="handleRowDblclick"
         >
+          <el-table-column type="selection" width="55" />
           <el-table-column prop="id" label="ID" width="70" align="center" />
-          <el-table-column prop="word" label="单词" width="160">
+          <el-table-column label="单词" width="160">
             <template #default="{ row }">
-              <span class="word-text">{{ row.word }}</span>
+              <span class="word-text" @click.stop="handleViewDetail(row as VocabularyVO)">{{ row.word }}</span>
             </template>
           </el-table-column>
           <el-table-column prop="phonetic" label="音标" width="160">
@@ -270,7 +390,7 @@ function formatDate(dateStr: string) {
             </template>
           </el-table-column>
           <el-table-column prop="definition" label="释义" min-width="220" show-overflow-tooltip />
-          <el-table-column prop="example" label="例句" min-width="240" show-overflow-tooltip>
+          <el-table-column prop="example" label="例句" min-width="200" show-overflow-tooltip>
             <template #default="{ row }">
               <span class="example-text">{{ row.example || '-' }}</span>
             </template>
@@ -287,13 +407,47 @@ function formatDate(dateStr: string) {
               <span class="book-name">{{ row.bookName || '-' }}</span>
             </template>
           </el-table-column>
+          <el-table-column label="状态" width="110" align="center">
+            <template #default="{ row }">
+              <el-tag
+                :type="getStatusInfo(row.status).type as any"
+                size="small"
+                effect="light"
+                class="status-tag"
+              >
+                {{ getStatusInfo(row.status).label }}
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column prop="createTime" label="创建时间" width="180" align="center">
             <template #default="{ row }">
               <span class="create-time">{{ formatDate(row.createTime) }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="150" fixed="right" align="center">
+          <el-table-column label="操作" width="240" fixed="right" align="center">
             <template #default="{ row }">
+              <el-button type="primary" link @click="handleViewDetail(row as VocabularyVO)">详情</el-button>
+              <el-dropdown
+                trigger="click"
+                @command="(cmd: number) => handleStatusChange(row as VocabularyVO, cmd)"
+              >
+                <el-button type="primary" link>
+                  状态
+                  <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item
+                      v-for="opt in statusOptions"
+                      :key="opt.value"
+                      :command="opt.value"
+                      :disabled="(row as VocabularyVO).status === opt.value"
+                    >
+                      <span :class="`text-${opt.type}`">{{ opt.label }}</span>
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
               <el-button type="primary" link @click="handleEdit(row as VocabularyVO)">编辑</el-button>
               <el-button type="danger" link @click="handleDelete(row as VocabularyVO)">删除</el-button>
             </template>
@@ -407,7 +561,7 @@ function formatDate(dateStr: string) {
     }
 
     .search-select {
-      width: 160px;
+      width: 140px;
 
       &.book-select {
         width: 180px;
@@ -442,25 +596,71 @@ function formatDate(dateStr: string) {
     align-items: center;
     margin-bottom: 16px;
 
-    .table-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #303133;
-      margin: 0;
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .table-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #303133;
+        margin: 0;
+      }
+
+      .selected-count {
+        font-size: 13px;
+        color: #409eff;
+        background: #ecf5ff;
+        padding: 2px 10px;
+        border-radius: 12px;
+      }
     }
   }
 
   .vocabulary-table {
     :deep(.el-table__row) {
       cursor: pointer;
-      transition: background-color 0.2s ease;
+      transition: all 0.25s ease;
 
-      &:hover {
-        background-color: #ecf5ff !important;
+      &.row-offline {
+        :deep(.el-table__cell) {
+          color: #c0c4cc !important;
+        }
+
+        &:hover {
+          :deep(.el-table__cell) {
+            background-color: #f5f7fa !important;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.03);
+          }
+        }
+      }
+
+      &.row-pending {
+        :deep(.el-table__cell) {
+          background-color: #fdf6ec;
+        }
+
+        &:hover {
+          :deep(.el-table__cell) {
+            background-color: #faecd8 !important;
+          }
+        }
+      }
+
+      &:not(.row-offline):not(.row-pending):hover {
+        :deep(.el-table__cell) {
+          background-color: #ecf5ff !important;
+        }
       }
 
       &.el-table__row--striped {
-        background-color: #fafafa;
+        &.row-offline :deep(.el-table__cell) {
+          background-color: #fafafa;
+        }
+        &.row-pending :deep(.el-table__cell) {
+          background-color: #fdf6ec;
+        }
       }
     }
 
@@ -469,12 +669,22 @@ function formatDate(dateStr: string) {
       font-weight: 600;
       color: #303133;
     }
+
+    .status-tag {
+      min-width: 70px;
+    }
   }
 
   .word-text {
     font-weight: 600;
-    color: #303133;
-    font-size: 14px;
+    color: #409eff;
+    cursor: pointer;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #66b1ff;
+      text-decoration: underline;
+    }
   }
 
   .phonetic-text {
@@ -494,6 +704,22 @@ function formatDate(dateStr: string) {
   .create-time {
     color: #909399;
     font-size: 13px;
+  }
+
+  .text-success {
+    color: #67c23a;
+  }
+
+  .text-warning {
+    color: #e6a23c;
+  }
+
+  .text-info {
+    color: #909399;
+  }
+
+  .text-danger {
+    color: #f56c6c;
   }
 }
 

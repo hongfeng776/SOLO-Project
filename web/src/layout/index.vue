@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
@@ -9,6 +9,35 @@ const collapse = ref(false)
 const router = useRouter()
 const route = useRoute()
 
+const transitionName = ref('fade')
+const previousPath = ref('')
+
+watch(
+  () => route.fullPath,
+  (newPath, oldPath) => {
+    const from = (oldPath as string) || ''
+    const to = newPath || ''
+    if (from && from !== to) {
+      previousPath.value = from
+    }
+    if (isVocabularyDetail(to) && isVocabularyList(previousPath.value)) {
+      transitionName.value = 'slide-right'
+    } else if (isVocabularyList(to) && isVocabularyDetail(previousPath.value)) {
+      transitionName.value = 'slide-left'
+    } else {
+      transitionName.value = 'fade'
+    }
+  }
+)
+
+function isVocabularyList(path: string) {
+  return path.startsWith('/biz/vocabulary') && !path.includes('/detail')
+}
+
+function isVocabularyDetail(path: string) {
+  return path.startsWith('/biz/vocabulary/detail')
+}
+
 const sidebarWidth = computed(() => (collapse.value ? '64px' : '220px'))
 
 const menuRoutes = computed(() => {
@@ -17,7 +46,12 @@ const menuRoutes = computed(() => {
   })
 })
 
-const activeMenu = computed(() => route.path)
+const activeMenu = computed(() => {
+  if (route.path.startsWith('/biz/vocabulary')) {
+    return '/biz/vocabulary'
+  }
+  return route.path
+})
 
 function handleCollapse() {
   collapse.value = !collapse.value
@@ -36,7 +70,7 @@ function handleCollapse() {
       <Header :collapse="collapse" @collapse="handleCollapse" />
       <div class="content-wrapper">
         <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
+          <transition :name="transitionName" mode="out-in">
             <component :is="Component" />
           </transition>
         </router-view>
@@ -71,6 +105,36 @@ function handleCollapse() {
 
 .fade-enter-from,
 .fade-leave-to {
+  opacity: 0;
+}
+
+.slide-right-enter-active,
+.slide-right-leave-active,
+.slide-left-enter-active,
+.slide-left-leave-active {
+  transition: transform 0.35s ease, opacity 0.35s ease;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.slide-right-enter-from {
+  transform: translateX(30px);
+  opacity: 0;
+}
+
+.slide-right-leave-to {
+  transform: translateX(-30px);
+  opacity: 0;
+}
+
+.slide-left-enter-from {
+  transform: translateX(-30px);
+  opacity: 0;
+}
+
+.slide-left-leave-to {
+  transform: translateX(30px);
   opacity: 0;
 }
 </style>

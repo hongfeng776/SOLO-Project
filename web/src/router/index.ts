@@ -62,6 +62,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '词汇管理', icon: 'Notebook' }
       },
       {
+        path: 'vocabulary/detail',
+        name: 'VocabularyDetail',
+        component: () => import('@/views/biz/vocabulary/detail.vue'),
+        meta: { title: '词汇详情', hidden: true }
+      },
+      {
         path: 'material',
         name: 'Material',
         component: () => import('@/views/biz/material/index.vue'),

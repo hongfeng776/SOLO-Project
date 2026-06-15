@@ -59,7 +59,9 @@ INSERT INTO biz_vocabulary (id, word, phonetic, part_of_speech, definition, exam
 (5, 'resilience', '/rɪˈzɪliəns/', 'n.', 'the capacity to recover quickly from difficulties', 'Her resilience in the face of adversity was admirable.', '恢复力；韧性', 3, '六级进阶词汇', 3, 1),
 (6, 'meticulous', '/məˈtɪkjələs/', 'adj.', 'showing great attention to detail; very careful and precise', 'He is meticulous about keeping records.', '一丝不苟的；细致的', 3, 'GRE核心词汇', 3, 1),
 (7, 'pragmatic', '/præɡˈmætɪk/', 'adj.', 'dealing with things sensibly and realistically', 'We need a pragmatic approach to this problem.', '务实的；实用主义的', 2, '托福基础词汇', 1, 1),
-(8, 'ambiguous', '/æmˈbɪɡjuəs/', 'adj.', 'open to more than one interpretation', 'His response was deliberately ambiguous.', '模棱两可的；含糊不清的', 2, '四级核心词汇', 1, 0);
+(8, 'ambiguous', '/æmˈbɪɡjuəs/', 'adj.', 'open to more than one interpretation', 'His response was deliberately ambiguous.', '模棱两可的；含糊不清的', 2, '四级核心词汇', 1, 0),
+(9, 'paradigm', '/ˈpærədaɪm/', 'n.', 'a typical example or pattern of something', 'This discovery represents a paradigm shift in physics.', '范式；典范', 4, 'GRE核心词汇', 2, 2),
+(10, 'melancholy', '/ˈmelənkɒli/', 'n./adj.', 'a feeling of pensive sadness, typically with no obvious cause', 'A melancholy mood descended on the group.', '忧郁；悲伤', 3, '托福高阶词汇', 3, 2);
 
 -- ==================== 素材表 ====================
 DROP TABLE IF EXISTS biz_material;
@@ -148,3 +150,23 @@ INSERT INTO biz_violation (id, user_id, target_type, target_id, reason, descript
 (1, 1, 'comment', 11, '内容与词条无关', '评论内容涉及无关的备考广告，不符合评论区规范。', 1, 1, '已隐藏该评论，对用户进行警告提醒。'),
 (2, 3, 'vocabulary', 8, '低质量词条', '词条解释不完整，缺少必要的使用场景和例句。', 0, NULL, NULL),
 (3, 2, 'material', 6, '引用格式不规范', '文中引用内容缺少来源标注，不符合版权规范要求。', 1, 1, '已通知用户补全来源信息，审核通过后重新上架。');
+
+-- ==================== 词汇操作日志表 ====================
+DROP TABLE IF EXISTS biz_vocabulary_log;
+CREATE TABLE biz_vocabulary_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '日志ID',
+    vocabulary_id BIGINT NOT NULL COMMENT '词汇ID',
+    vocabulary_word VARCHAR(100) NOT NULL COMMENT '词汇单词',
+    operation_type VARCHAR(20) NOT NULL COMMENT '操作类型 create/update/delete/status',
+    old_status TINYINT COMMENT '变更前状态',
+    new_status TINYINT COMMENT '变更后状态',
+    operator_id BIGINT NOT NULL COMMENT '操作人ID',
+    operator_name VARCHAR(50) COMMENT '操作人名称',
+    remark VARCHAR(500) COMMENT '操作备注',
+    deleted TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_vocabulary (vocabulary_id),
+    INDEX idx_operator (operator_id),
+    INDEX idx_operation (operation_type),
+    INDEX idx_create_time (create_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='词汇操作日志表';

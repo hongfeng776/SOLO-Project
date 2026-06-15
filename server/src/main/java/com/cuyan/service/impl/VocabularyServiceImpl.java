@@ -18,6 +18,7 @@ import com.cuyan.mapper.CommentMapper;
 import com.cuyan.mapper.MaterialMapper;
 import com.cuyan.mapper.UserMapper;
 import com.cuyan.mapper.VocabularyMapper;
+import com.cuyan.service.VocabularyLogService;
 import com.cuyan.service.VocabularyService;
 import com.cuyan.vo.VocabularyVO;
 import lombok.RequiredArgsConstructor;
@@ -38,9 +39,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabulary> implements VocabularyService {
 
+    public static final int STATUS_OFFLINE = 0;
+    public static final int STATUS_ONLINE = 1;
+    public static final int STATUS_PENDING = 2;
+
     private final UserMapper userMapper;
     private final MaterialMapper materialMapper;
     private final CommentMapper commentMapper;
+    private final VocabularyLogService vocabularyLogService;
 
     @Override
     public Page<VocabularyVO> pageQuery(VocabularyQueryDTO queryDTO) {
@@ -92,9 +98,18 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         BeanUtils.copyProperties(createDTO, vocabulary);
         vocabulary.setCreatorId(UserContext.getUserId());
         if (vocabulary.getStatus() == null) {
-            vocabulary.setStatus(1);
+            vocabulary.setStatus(STATUS_PENDING);
         }
         save(vocabulary);
+        if (vocabulary.getStatus() != null) {
+            vocabularyLogService.logStatusChange(
+                    vocabulary.getId(),
+                    vocabulary.getWord(),
+                    null,
+                    vocabulary.getStatus(),
+                    "创建词汇，初始状态"
+            );
+        }
     }
 
     @Override
@@ -104,6 +119,7 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         if (vocabulary == null) {
             throw new BusinessException("词汇不存在");
         }
+        Integer oldStatus = vocabulary.getStatus();
         if (StringUtils.hasText(updateDTO.getWord())) {
             vocabulary.setWord(updateDTO.getWord());
         }
@@ -132,6 +148,15 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
             vocabulary.setStatus(updateDTO.getStatus());
         }
         updateById(vocabulary);
+        if (updateDTO.getStatus() != null && !updateDTO.getStatus().equals(oldStatus)) {
+            vocabularyLogService.logStatusChange(
+                    vocabulary.getId(),
+                    vocabulary.getWord(),
+                    oldStatus,
+                    updateDTO.getStatus(),
+                    "编辑词汇时变更状态"
+            );
+        }
     }
 
     @Override
@@ -156,17 +181,59 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         if (vocabulary == null) {
             throw new BusinessException("词汇不存在");
         }
+        Integer oldStatus = vocabulary.getStatus();
+        if (oldStatus != null && oldStatus.equals(status)) {
+            return;
+        }
         vocabulary.setStatus(status);
         updateById(vocabulary);
+        vocabularyLogService.logStatusChange(
+                vocabulary.getId(),
+                vocabulary.getWord(),
+                oldStatus,
+                status,
+                getStatusChangeRemark(oldStatus, status)
+        );
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchUpdateStatus(BatchStatusDTO batchStatusDTO) {
+        List<Long> ids = batchStatusDTO.getIds();
+        Integer status = batchStatusDTO.getStatus();
+        List<Vocabulary> vocabularies = listByIds(ids);
+        for (Vocabulary vocab : vocabularies) {
+            Integer oldStatus = vocab.getStatus();
+            if (oldStatus != null && !oldStatus.equals(status)) {
+                vocabularyLogService.logStatusChange(
+                        vocab.getId(),
+                        vocab.getWord(),
+                        oldStatus,
+                        status,
+                        "批量操作：" + getStatusChangeRemark(oldStatus, status)
+                );
+            }
+        }
         LambdaUpdateWrapper<Vocabulary> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.in(Vocabulary::getId, batchStatusDTO.getIds())
-                .set(Vocabulary::getStatus, batchStatusDTO.getStatus());
+        wrapper.in(Vocabulary::getId, ids)
+                .set(Vocabulary::getStatus, status);
         update(wrapper);
+    }
+
+    private String getStatusChangeRemark(Integer oldStatus, Integer newStatus) {
+        String oldText = getStatusText(oldStatus);
+        String newText = getStatusText(newStatus);
+        return oldText + " → " + newText;
+    }
+
+    private String getStatusText(Integer status) {
+        if (status == null) return "未知";
+        return switch (status) {
+            case STATUS_OFFLINE -> "已下架";
+            case STATUS_ONLINE -> "已上架";
+            case STATUS_PENDING -> "待审核";
+            default -> "未知(" + status + ")";
+        };
     }
 
     private Page<VocabularyVO> convertToVOPage(Page<Vocabulary> page) {
