@@ -105,6 +105,7 @@ export interface TableColumn {
   fixed?: 'left' | 'right' | boolean
   align?: 'left' | 'center' | 'right'
   sortable?: boolean
+  showOverflowTooltip?: boolean
   formatter?: (row: any, column: any, value: any, index: number) => string
   slot?: string
 }

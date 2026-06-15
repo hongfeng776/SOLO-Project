@@ -70,8 +70,8 @@
             <el-col :span="12">
               <el-form-item label="账号状态" prop="status">
                 <el-radio-group v-model="formData.status">
-                  <el-radio :value="1">启用</el-radio>
-                  <el-radio :value="0">禁用</el-radio>
+                  <el-radio :value="1">正常</el-radio>
+                  <el-radio :value="0">已封禁</el-radio>
                 </el-radio-group>
               </el-form-item>
             </el-col>
@@ -103,15 +103,29 @@
       <div class="placeholder-height"></div>
     </div>
 
+    <Teleport to="body">
+      <Transition name="toast-slide">
+        <div v-if="toastVisible" class="success-toast">
+          <div class="toast-icon">
+            <el-icon :size="24"><CircleCheckFilled /></el-icon>
+          </div>
+          <div class="toast-content">
+            <div class="toast-title">操作成功</div>
+            <div class="toast-message">{{ toastMessage }}</div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
     <BackToTop />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, type FormInstance } from 'element-plus'
-import { ArrowLeft, Check, UserFilled, InfoFilled } from '@element-plus/icons-vue'
+import { ArrowLeft, Check, UserFilled, InfoFilled, CircleCheckFilled } from '@element-plus/icons-vue'
 import type { UserFormData, ValidationRule } from '@/types'
 import type { UserItem } from '@/api/user'
 import HInput from '@/components/HInput/index.vue'
@@ -123,6 +137,20 @@ const router = useRouter()
 const loading = ref(false)
 const submitLoading = ref(false)
 const formRef = ref<FormInstance>()
+const toastVisible = ref(false)
+const toastMessage = ref('')
+let toastTimer: ReturnType<typeof setTimeout> | null = null
+
+function showSuccessToast(message: string) {
+  toastMessage.value = message
+  toastVisible.value = true
+  if (toastTimer) {
+    clearTimeout(toastTimer)
+  }
+  toastTimer = setTimeout(() => {
+    toastVisible.value = false
+  }, 3000)
+}
 
 const mockData: UserItem[] = [
   { id: 1, username: 'admin', nickname: '系统管理员', email: 'admin@hongjing.com', status: 1, role: 'admin', created_at: '2026-06-01 10:00:00' },
@@ -266,8 +294,10 @@ async function handleSave() {
       }
     }
     
-    ElMessage.success('保存成功')
-    router.back()
+    showSuccessToast('保存用户信息成功')
+    setTimeout(() => {
+      router.back()
+    }, 800)
   } catch (error) {
     console.error('Save user error:', error)
     ElMessage.error('保存失败')
@@ -278,6 +308,12 @@ async function handleSave() {
 
 onMounted(() => {
   loadDetail()
+})
+
+onBeforeUnmount(() => {
+  if (toastTimer) {
+    clearTimeout(toastTimer)
+  }
 })
 </script>
 
@@ -337,5 +373,71 @@ onMounted(() => {
   .placeholder-height {
     height: 400px;
   }
+}
+
+.success-toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #00B42A 0%, #00A870 100%);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 180, 42, 0.35);
+  color: #fff;
+  min-width: 300px;
+  max-width: 480px;
+
+  .toast-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toast-content {
+    flex: 1;
+    overflow: hidden;
+
+    .toast-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .toast-message {
+      font-size: 13px;
+      opacity: 0.95;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+.toast-slide-enter-active {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-slide-enter-from {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-20px);
+}
+
+.toast-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-10px);
 }
 </style>
