@@ -56,6 +56,7 @@ router.put('/configs/:id', authMiddleware(true), configController.update);
 router.delete('/configs/:id', authMiddleware(true), configController.remove);
 
 router.get('/categories', authMiddleware(true), categoryController.list);
+router.get('/categories/:id', authMiddleware(true), categoryController.detail);
 router.post('/categories', authMiddleware(true), categoryController.create);
 router.put('/categories/:id', authMiddleware(true), categoryController.update);
 router.delete('/categories/:id', authMiddleware(true), categoryController.remove);

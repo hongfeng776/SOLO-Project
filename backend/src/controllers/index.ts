@@ -372,6 +372,25 @@ export const categoryController = {
     }
   },
 
+  async detail(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const item = await Category.findByPk(parseInt(id));
+      if (!item) {
+        responseUtil.notFound(res, '分类不存在');
+        return;
+      }
+      const contentCount = await Content.count({ where: { categoryId: item.id } });
+      responseUtil.success(res, {
+        ...item.toJSON(),
+        contentCount,
+      });
+    } catch (error) {
+      console.error('[Category Detail]:', error);
+      responseUtil.internalError(res);
+    }
+  },
+
   async create(req: Request, res: Response): Promise<void> {
     try {
       const { name, description, sort, status } = req.body;
