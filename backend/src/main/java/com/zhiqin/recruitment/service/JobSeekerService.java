@@ -12,4 +12,8 @@ public interface JobSeekerService extends IService<JobSeeker> {
 
     void batchDelete(List<Long> ids);
 
+    void batchUpdateStatus(List<Long> ids, Integer status);
+
+    List<JobSeeker> listByConditions(String name, Integer gender, String education, Integer status, String startTime, String endTime);
+
 }

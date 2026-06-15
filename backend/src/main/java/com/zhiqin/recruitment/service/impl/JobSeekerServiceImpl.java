@@ -1,6 +1,7 @@
 package com.zhiqin.recruitment.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -41,6 +42,33 @@ public class JobSeekerServiceImpl extends ServiceImpl<JobSeekerMapper, JobSeeker
     @Override
     public void batchDelete(List<Long> ids) {
         this.removeByIds(ids);
+    }
+
+    @Override
+    public void batchUpdateStatus(List<Long> ids, Integer status) {
+        LambdaUpdateWrapper<JobSeeker> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.in(JobSeeker::getId, ids);
+        wrapper.set(JobSeeker::getStatus, status);
+        this.update(wrapper);
+    }
+
+    @Override
+    public List<JobSeeker> listByConditions(String name, Integer gender, String education, Integer status, String startTime, String endTime) {
+        LambdaQueryWrapper<JobSeeker> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.like(StringUtils.hasText(name), JobSeeker::getName, name);
+        queryWrapper.eq(gender != null, JobSeeker::getGender, gender);
+        queryWrapper.eq(StringUtils.hasText(education), JobSeeker::getEducation, education);
+        queryWrapper.eq(status != null, JobSeeker::getStatus, status);
+        if (StringUtils.hasText(startTime)) {
+            LocalDateTime start = LocalDate.parse(startTime).atStartOfDay();
+            queryWrapper.ge(JobSeeker::getCreateTime, start);
+        }
+        if (StringUtils.hasText(endTime)) {
+            LocalDateTime end = LocalDate.parse(endTime).atTime(LocalTime.MAX);
+            queryWrapper.le(JobSeeker::getCreateTime, end);
+        }
+        queryWrapper.orderByDesc(JobSeeker::getCreateTime);
+        return this.list(queryWrapper);
     }
 
 }

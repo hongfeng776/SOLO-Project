@@ -96,3 +96,20 @@ export function batchRemoveSeeker(ids: number[]) {
     data: { ids }
   })
 }
+
+export function batchUpdateStatus(ids: number[], status: number) {
+  return request<void>({
+    url: '/seeker/batch-status',
+    method: 'put',
+    data: { ids, status }
+  })
+}
+
+export function exportSeeker(params: SeekerQuery) {
+  return request<Blob>({
+    url: '/seeker/export',
+    method: 'get',
+    params,
+    responseType: 'blob'
+  })
+}

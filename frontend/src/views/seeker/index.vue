@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container" ref="pageContainerRef">
     <div class="page-header">
       <div class="page-header-title">求职者管理</div>
       <div class="page-header-subtitle">平台求职者账号基础信息的统一管控</div>
@@ -50,8 +50,20 @@
           <el-icon style="margin-right: 4px"><Plus /></el-icon>
           新增求职者
         </el-button>
+        <el-button type="warning" :disabled="selectedIds.length === 0" :loading="batchBanLoading" @click="handleBatchBan">
+          <el-icon style="margin-right: 4px"><Lock /></el-icon>
+          批量冻结
+        </el-button>
+        <el-button type="success" :disabled="selectedIds.length === 0" :loading="batchUnbanLoading" @click="handleBatchUnban">
+          <el-icon style="margin-right: 4px"><Unlock /></el-icon>
+          批量解封
+        </el-button>
         <el-button type="danger" :disabled="selectedIds.length === 0" :loading="batchDeleteLoading" @click="handleBatchDelete">
           批量删除
+        </el-button>
+        <el-button type="info" :loading="exportLoading" @click="handleExport">
+          <el-icon style="margin-right: 4px"><Download /></el-icon>
+          导出数据
         </el-button>
       </div>
       <div class="table-toolbar-right">
@@ -101,15 +113,93 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="180" align="center" fixed="right">
+          <el-table-column label="操作" width="240" align="center" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" link size="small" v-debounce="() => handleEdit(row)">编辑</el-button>
+              <el-button
+                v-if="row.status === 1"
+                type="warning"
+                link
+                size="small"
+                :disabled="rowBanLoading[row.id]"
+                @click="() => handleBanSingle(row)"
+              >
+                冻结
+              </el-button>
+              <el-button
+                v-else
+                type="success"
+                link
+                size="small"
+                :disabled="rowBanLoading[row.id]"
+                @click="() => handleUnbanSingle(row)"
+              >
+                解封
+              </el-button>
               <el-button type="danger" link size="small" v-debounce="() => handleDelete(row)">删除</el-button>
             </template>
           </el-table-column>
         </ProTable>
       </template>
     </ProSkeleton>
+
+    <transition name="zoom-center">
+      <div class="batch-confirm-mask" v-if="batchConfirmVisible" @click.self="closeBatchConfirm">
+        <div class="batch-confirm-dialog">
+          <div class="batch-confirm-header">
+            <div class="batch-confirm-title">{{ batchConfirmTitle }}</div>
+            <el-icon class="batch-confirm-close" @click="closeBatchConfirm"><Close /></el-icon>
+          </div>
+          <div class="batch-confirm-body">
+            <el-icon class="batch-confirm-icon" :class="batchConfirmType">
+              <component :is="batchConfirmIcon" />
+            </el-icon>
+            <div class="batch-confirm-content">
+              <div class="batch-confirm-message">{{ batchConfirmMessage }}</div>
+              <div class="batch-confirm-count">
+                本次操作共涉及 <em>{{ selectedIds.length }}</em> 位求职者
+              </div>
+            </div>
+          </div>
+          <div class="batch-confirm-footer">
+            <el-button @click="closeBatchConfirm">取消</el-button>
+            <el-button :type="batchConfirmType" :loading="batchActionLoading" @click="confirmBatchAction">
+              确认{{ batchConfirmActionText }}
+            </el-button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <transition name="zoom-center">
+      <div class="export-progress-mask" v-if="exportProgressVisible">
+        <div class="export-progress-dialog">
+          <div class="export-progress-header">
+            <div class="export-progress-title">数据导出</div>
+            <el-icon class="export-progress-close" @click="closeExportProgress"><Close /></el-icon>
+          </div>
+          <div class="export-progress-body">
+            <el-icon class="export-progress-icon"><Document /></el-icon>
+            <div class="export-progress-info">
+              <div class="export-progress-text">{{ exportProgressText }}</div>
+              <el-progress
+                :percentage="exportProgress"
+                :stroke-width="8"
+                :show-text="false"
+                class="export-progress-bar"
+              />
+              <div class="export-progress-percent">{{ exportProgress }}%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <transition name="fade-up">
+      <div class="back-to-top" v-show="showBackToTop" @click="scrollToTop">
+        <el-icon><Top /></el-icon>
+      </div>
+    </transition>
 
     <ProDialog
       v-model:visible="dialogVisible"
@@ -210,8 +300,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
-import { Plus } from '@element-plus/icons-vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, shallowRef } from 'vue'
+import { Plus, Lock, Unlock, Download, Close, Document, Top, Warning, SuccessFilled } from '@element-plus/icons-vue'
 import { ProTable, ProDialog, ProSkeleton, ProEmpty, useConfirm } from '@/components'
 import {
   getSeekerList,
@@ -220,6 +310,8 @@ import {
   updateSeeker,
   removeSeeker,
   batchRemoveSeeker,
+  batchUpdateStatus,
+  exportSeeker,
   type SeekerForm,
   type SeekerRecord
 } from '@/api/seeker'
@@ -248,12 +340,16 @@ function getStatusTagType(status: number): 'success' | 'danger' | 'warning' | 'i
   return map[status] ?? 'info'
 }
 
+const pageContainerRef = shallowRef<HTMLElement>()
 const loading = ref(false)
 const tableData = ref<SeekerRecord[]>([])
 const total = ref(0)
 const registerTimeRange = ref<[string, string] | null>(null)
 const selectedIds = ref<number[]>([])
 const batchDeleteLoading = ref(false)
+const batchBanLoading = ref(false)
+const batchUnbanLoading = ref(false)
+const rowBanLoading = reactive<Record<number, boolean>>({})
 
 const queryParams = reactive({
   pageNum: 1,
@@ -454,6 +550,228 @@ async function handleBatchDelete() {
   }
 }
 
+const batchConfirmVisible = ref(false)
+const batchConfirmType = ref<'warning' | 'success'>('warning')
+const batchConfirmTitle = ref('')
+const batchConfirmMessage = ref('')
+const batchConfirmActionText = ref('')
+const batchConfirmIcon = ref(Warning)
+const batchActionLoading = ref(false)
+const pendingBatchAction = ref<(() => Promise<void>) | null>(null)
+
+function openBatchConfirm(options: {
+  type: 'warning' | 'success'
+  title: string
+  message: string
+  actionText: string
+  icon: any
+  action: () => Promise<void>
+}) {
+  batchConfirmType.value = options.type
+  batchConfirmTitle.value = options.title
+  batchConfirmMessage.value = options.message
+  batchConfirmActionText.value = options.actionText
+  batchConfirmIcon.value = options.icon
+  pendingBatchAction.value = options.action
+  batchConfirmVisible.value = true
+}
+
+function closeBatchConfirm() {
+  batchConfirmVisible.value = false
+  pendingBatchAction.value = null
+}
+
+async function confirmBatchAction() {
+  if (!pendingBatchAction.value) return
+  batchActionLoading.value = true
+  try {
+    await pendingBatchAction.value()
+    closeBatchConfirm()
+  } finally {
+    batchActionLoading.value = false
+  }
+}
+
+async function handleBanSingle(row: SeekerRecord) {
+  const ok = await confirm(`确定要冻结求职者「${row.name}」吗？冻结后该账号将无法登录。`, '冻结确认', { type: 'warning' })
+  if (!ok) return
+  rowBanLoading[row.id] = true
+  try {
+    await batchUpdateStatus([row.id], 0)
+    success('冻结成功')
+    fetchList()
+  } catch {
+    error('冻结失败，请稍后重试')
+  } finally {
+    setTimeout(() => {
+      rowBanLoading[row.id] = false
+    }, 300)
+  }
+}
+
+async function handleUnbanSingle(row: SeekerRecord) {
+  const ok = await confirm(`确定要解封求职者「${row.name}」吗？`, '解封确认', { type: 'success' })
+  if (!ok) return
+  rowBanLoading[row.id] = true
+  try {
+    await batchUpdateStatus([row.id], 1)
+    success('解封成功')
+    fetchList()
+  } catch {
+    error('解封失败，请稍后重试')
+  } finally {
+    setTimeout(() => {
+      rowBanLoading[row.id] = false
+    }, 300)
+  }
+}
+
+function handleBatchBan() {
+  if (selectedIds.value.length === 0) return
+  openBatchConfirm({
+    type: 'warning',
+    title: '批量冻结确认',
+    message: `确定要冻结选中的 ${selectedIds.value.length} 位求职者吗？冻结后这些账号将无法登录。`,
+    actionText: '冻结',
+    icon: Warning,
+    action: async () => {
+      batchBanLoading.value = true
+      try {
+        await batchUpdateStatus(selectedIds.value, 0)
+        success('批量冻结成功')
+        fetchList()
+      } catch {
+        error('批量冻结失败，请稍后重试')
+      } finally {
+        setTimeout(() => {
+          batchBanLoading.value = false
+        }, 300)
+      }
+    }
+  })
+}
+
+function handleBatchUnban() {
+  if (selectedIds.value.length === 0) return
+  openBatchConfirm({
+    type: 'success',
+    title: '批量解封确认',
+    message: `确定要解封选中的 ${selectedIds.value.length} 位求职者吗？`,
+    actionText: '解封',
+    icon: SuccessFilled,
+    action: async () => {
+      batchUnbanLoading.value = true
+      try {
+        await batchUpdateStatus(selectedIds.value, 1)
+        success('批量解封成功')
+        fetchList()
+      } catch {
+        error('批量解封失败，请稍后重试')
+      } finally {
+        setTimeout(() => {
+          batchUnbanLoading.value = false
+        }, 300)
+      }
+    }
+  })
+}
+
+const exportLoading = ref(false)
+const exportProgressVisible = ref(false)
+const exportProgress = ref(0)
+const exportProgressText = ref('正在准备导出数据...')
+const exportProgressTimer = ref<number | null>(null)
+
+function startExportProgress() {
+  exportProgress.value = 0
+  exportProgressText.value = '正在准备导出数据...'
+  exportProgressVisible.value = true
+  exportProgressTimer.value = window.setInterval(() => {
+    if (exportProgress.value < 90) {
+      exportProgress.value += Math.floor(Math.random() * 8) + 3
+      if (exportProgress.value > 90) exportProgress.value = 90
+      if (exportProgress.value < 30) {
+        exportProgressText.value = '正在查询筛选后的数据...'
+      } else if (exportProgress.value < 60) {
+        exportProgressText.value = '正在生成 Excel 文件...'
+      } else if (exportProgress.value < 90) {
+        exportProgressText.value = '正在处理文件下载...'
+      }
+    }
+  }, 200)
+}
+
+function stopExportProgress() {
+  if (exportProgressTimer.value) {
+    clearInterval(exportProgressTimer.value)
+    exportProgressTimer.value = null
+  }
+  exportProgress.value = 100
+  exportProgressText.value = '导出完成，正在下载文件...'
+  setTimeout(() => {
+    exportProgressVisible.value = false
+  }, 800)
+}
+
+function closeExportProgress() {
+  if (exportProgress.value >= 100) {
+    exportProgressVisible.value = false
+  }
+}
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+async function handleExport() {
+  exportLoading.value = true
+  startExportProgress()
+  try {
+    const blob = await exportSeeker(queryParams)
+    const now = new Date()
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
+    const fileName = `求职者数据_${dateStr}.xlsx`
+    downloadBlob(blob, fileName)
+    stopExportProgress()
+    success('导出成功')
+  } catch {
+    stopExportProgress()
+    error('导出失败，请稍后重试')
+  } finally {
+    exportLoading.value = false
+  }
+}
+
+const showBackToTop = ref(false)
+
+function handleScroll() {
+  if (!pageContainerRef.value) return
+  const container = pageContainerRef.value
+  showBackToTop.value = container.scrollTop > 500
+}
+
+function scrollToTop() {
+  pageContainerRef.value?.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+onMounted(() => {
+  pageContainerRef.value?.addEventListener('scroll', handleScroll)
+})
+
+onBeforeUnmount(() => {
+  pageContainerRef.value?.removeEventListener('scroll', handleScroll)
+  if (exportProgressTimer.value) {
+    clearInterval(exportProgressTimer.value)
+  }
+})
+
 async function handleSubmit() {
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
@@ -482,6 +800,12 @@ fetchList()
 </script>
 
 <style lang="scss" scoped>
+.page-container {
+  height: 100%;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
 .page-header-subtitle {
   font-size: 13px;
   color: #909399;
@@ -503,5 +827,217 @@ fetchList()
 :deep(.el-divider__text) {
   font-weight: 600;
   color: #303133;
+}
+
+.batch-confirm-mask,
+.export-progress-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+}
+
+.batch-confirm-dialog,
+.export-progress-dialog {
+  background: #fff;
+  border-radius: 8px;
+  width: 420px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.batch-confirm-header,
+.export-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.batch-confirm-title,
+.export-progress-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.batch-confirm-close,
+.export-progress-close {
+  font-size: 18px;
+  color: #909399;
+  cursor: pointer;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #409eff;
+  }
+}
+
+.batch-confirm-body {
+  padding: 24px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.batch-confirm-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+
+  &.warning {
+    background: #fdf6ec;
+    color: #e6a23c;
+  }
+
+  &.success {
+    background: #f0f9eb;
+    color: #67c23a;
+  }
+}
+
+.batch-confirm-content {
+  flex: 1;
+}
+
+.batch-confirm-message {
+  font-size: 14px;
+  color: #606266;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.batch-confirm-count {
+  font-size: 13px;
+  color: #909399;
+
+  em {
+    color: #409eff;
+    font-style: normal;
+    font-weight: 600;
+    margin: 0 2px;
+  }
+}
+
+.batch-confirm-footer {
+  padding: 12px 20px;
+  border-top: 1px solid #ebeef5;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.export-progress-body {
+  padding: 28px 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.export-progress-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: #ecf5ff;
+  color: #409eff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.export-progress-info {
+  flex: 1;
+}
+
+.export-progress-text {
+  font-size: 14px;
+  color: #303133;
+  margin-bottom: 12px;
+}
+
+.export-progress-bar {
+  margin-bottom: 8px;
+}
+
+.export-progress-percent {
+  font-size: 12px;
+  color: #909399;
+  text-align: right;
+}
+
+.back-to-top {
+  position: fixed;
+  right: 40px;
+  bottom: 60px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2000;
+  transition: all 0.3s;
+  color: #606266;
+  font-size: 18px;
+
+  &:hover {
+    background: #409eff;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(64, 158, 255, 0.3);
+  }
+}
+
+.zoom-center-enter-active,
+.zoom-center-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.zoom-center-enter-from,
+.zoom-center-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.zoom-center-enter-active .batch-confirm-dialog,
+.zoom-center-enter-active .export-progress-dialog,
+.zoom-center-leave-active .batch-confirm-dialog,
+.zoom-center-leave-active .export-progress-dialog {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.zoom-center-enter-from .batch-confirm-dialog,
+.zoom-center-enter-from .export-progress-dialog,
+.zoom-center-leave-to .batch-confirm-dialog,
+.zoom-center-leave-to .export-progress-dialog {
+  transform: scale(0.9) translateY(-20px);
+}
+
+.fade-up-enter-active,
+.fade-up-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-up-enter-from,
+.fade-up-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 </style>
