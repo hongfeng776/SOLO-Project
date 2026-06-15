@@ -150,6 +150,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (user.getStatus() == null) {
             user.setStatus(1);
         }
+        if (user.getStudyMinutes() == null) {
+            user.setStudyMinutes(0);
+        }
+        if (user.getLearnedWords() == null) {
+            user.setLearnedWords(0);
+        }
+        if (user.getStudyDays() == null) {
+            user.setStudyDays(0);
+        }
+        if (user.getAccuracy() == null) {
+            user.setAccuracy(0);
+        }
         save(user);
     }
 

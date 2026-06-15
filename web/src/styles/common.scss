@@ -180,3 +180,71 @@
     background-color: #ecf5ff !important;
   }
 }
+
+// ========== 按钮统一 8px 圆角 ==========
+.el-button {
+  border-radius: 8px !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+// ========== 输入框验证样式 ==========
+.el-form-item.is-error {
+  .el-input__wrapper {
+    box-shadow: 0 0 0 1px #F53F3F inset !important;
+    animation: shake 0.5s ease-in-out;
+  }
+
+  .el-input__inner {
+    color: #F53F3F;
+  }
+
+  .el-form-item__error {
+    color: #F53F3F;
+  }
+}
+
+.el-form-item.is-success {
+  .el-input__wrapper {
+    box-shadow: 0 0 0 1px #00B42A inset !important;
+  }
+
+  .el-input__inner {
+    color: #00B42A;
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+// ========== 删除按钮悬停效果 ==========
+.delete-btn {
+  &:hover {
+    border-color: #F53F3F !important;
+    box-shadow: 0 0 8px rgba(245, 63, 63, 0.6) !important;
+    transform: scale(1.05);
+  }
+}
+
+// ========== 表格表头置顶 ==========
+.sticky-header-table {
+  .el-table__header-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+}
+
+// ========== 输入框成功状态图标 ==========
+.input-success-icon {
+  color: #00B42A;
+  font-size: 16px;
+}

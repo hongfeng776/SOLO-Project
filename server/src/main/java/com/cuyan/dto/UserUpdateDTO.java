@@ -14,4 +14,12 @@ public class UserUpdateDTO {
     private String email;
 
     private Integer status;
+
+    private Integer studyMinutes;
+
+    private Integer learnedWords;
+
+    private Integer studyDays;
+
+    private Integer accuracy;
 }

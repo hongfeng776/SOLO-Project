@@ -46,6 +46,10 @@ export interface UserVO {
   email: string
   status: number
   publishCount?: number
+  studyMinutes: number
+  learnedWords: number
+  studyDays: number
+  accuracy: number
   createTime: string
 }
 

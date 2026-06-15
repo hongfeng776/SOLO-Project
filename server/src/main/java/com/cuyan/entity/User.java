@@ -29,6 +29,14 @@ public class User {
 
     private Integer status;
 
+    private Integer studyMinutes;
+
+    private Integer learnedWords;
+
+    private Integer studyDays;
+
+    private Integer accuracy;
+
     @TableLogic
     private Integer deleted;
 

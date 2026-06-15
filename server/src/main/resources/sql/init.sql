@@ -13,6 +13,10 @@ CREATE TABLE sys_user (
     phone VARCHAR(20) COMMENT '手机号',
     email VARCHAR(100) COMMENT '邮箱',
     status TINYINT DEFAULT 1 COMMENT '状态 0-禁用 1-启用',
+    study_minutes INT DEFAULT 0 COMMENT '学习时长（分钟）',
+    learned_words INT DEFAULT 0 COMMENT '已学单词数',
+    study_days INT DEFAULT 0 COMMENT '学习天数',
+    accuracy INT DEFAULT 0 COMMENT '正确率（百分比）',
     deleted TINYINT DEFAULT 0 COMMENT '逻辑删除 0-未删除 1-已删除',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -21,11 +25,11 @@ CREATE TABLE sys_user (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统用户表';
 
 -- 默认密码 123456 (BCrypt)
-INSERT INTO sys_user (id, username, password, nickname, avatar, phone, email, status) VALUES
-(1, 'admin', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '系统管理员', 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png', '13800138000', 'admin@cuyan.com', 1),
-(2, 'editor01', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '内容编辑', 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png', '13800138001', 'editor01@cuyan.com', 1),
-(3, 'user01', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '普通用户', 'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png', '13800138002', 'user01@cuyan.com', 1),
-(4, 'user02', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '测试用户', 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png', '13800138003', 'user02@cuyan.com', 0);
+INSERT INTO sys_user (id, username, password, nickname, avatar, phone, email, status, study_minutes, learned_words, study_days, accuracy) VALUES
+(1, 'admin', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '系统管理员', 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png', '13800138000', 'admin@cuyan.com', 1, 1200, 350, 25, 85),
+(2, 'editor01', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '内容编辑', 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png', '13800138001', 'editor01@cuyan.com', 1, 800, 280, 18, 78),
+(3, 'user01', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '普通用户', 'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png', '13800138002', 'user01@cuyan.com', 1, 450, 150, 12, 72),
+(4, 'user02', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '测试用户', 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png', '13800138003', 'user02@cuyan.com', 0, 50, 20, 3, 60);
 
 -- ==================== 词汇表 ====================
 DROP TABLE IF EXISTS biz_vocabulary;

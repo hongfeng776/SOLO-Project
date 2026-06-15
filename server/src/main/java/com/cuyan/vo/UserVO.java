@@ -23,6 +23,14 @@ public class UserVO {
 
     private Integer publishCount;
 
+    private Integer studyMinutes;
+
+    private Integer learnedWords;
+
+    private Integer studyDays;
+
+    private Integer accuracy;
+
     private LocalDateTime createTime;
 
     private LocalDateTime updateTime;
