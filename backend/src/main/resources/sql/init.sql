@@ -70,18 +70,25 @@ CREATE TABLE job_seeker (
     education VARCHAR(32) DEFAULT NULL COMMENT '学历',
     work_years INT DEFAULT NULL COMMENT '工作年限',
     job_intention VARCHAR(128) DEFAULT NULL COMMENT '求职意向',
+    expected_salary VARCHAR(32) DEFAULT NULL COMMENT '期望薪资',
+    expected_city VARCHAR(64) DEFAULT NULL COMMENT '期望城市',
     status TINYINT DEFAULT 1 COMMENT '状态: 0-禁用, 1-正常',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='求职者表';
 
-INSERT INTO job_seeker (name, gender, age, phone, email, education, work_years, job_intention, status) VALUES
-('刘思远', 1, 28, '13900139001', 'liusiyuan@qq.com', '本科', 5, 'Java后端开发', 1),
-('陈雨晴', 0, 25, '13900139002', 'chenyuqing@qq.com', '硕士', 2, '数据分析师', 1),
-('王浩然', 1, 32, '13900139003', 'wanghaoran@qq.com', '本科', 8, '技术经理', 1),
-('李晓婷', 0, 23, '13900139004', 'lixiaoting@qq.com', '本科', 0, '前端开发', 1),
-('张明辉', 1, 30, '13900139005', 'zhangminghui@qq.com', '博士', 6, '算法工程师', 0);
+INSERT INTO job_seeker (name, gender, age, phone, email, education, work_years, job_intention, expected_salary, expected_city, status) VALUES
+('刘思远', 1, 28, '13900139001', 'liusiyuan@qq.com', '本科', 5, 'Java后端开发', '20-30K', '北京', 1),
+('陈雨晴', 0, 25, '13900139002', 'chenyuqing@qq.com', '硕士', 2, '数据分析师', '15-25K', '上海', 1),
+('王浩然', 1, 32, '13900139003', 'wanghaoran@qq.com', '本科', 8, '技术经理', '30-50K', '北京', 1),
+('李晓婷', 0, 23, '13900139004', 'lixiaoting@qq.com', '本科', 0, '前端开发', '10-15K', '广州', 1),
+('张明辉', 1, 30, '13900139005', 'zhangminghui@qq.com', '博士', 6, '算法工程师', '40-60K', '深圳', 0),
+('赵子轩', 1, 27, '13900139006', 'zhaozixuan@qq.com', '本科', 4, '产品经理', '18-28K', '杭州', 1),
+('孙雅琪', 0, 26, '13900139007', 'sunyaqi@qq.com', '硕士', 3, 'UI设计师', '12-20K', '成都', 1),
+('周建国', 1, 35, '13900139008', 'zhoujianguo@qq.com', '大专', 10, '运维工程师', '15-25K', '深圳', 1),
+('吴梦琪', 0, 24, '13900139009', 'wumengqi@qq.com', '本科', 1, '测试工程师', '8-12K', '武汉', 1),
+('郑宇航', 1, 29, '13900139010', 'zhengyuhang@qq.com', '硕士', 5, '全栈开发', '25-35K', '北京', 1);
 
 -- ----------------------------
 -- 岗位表

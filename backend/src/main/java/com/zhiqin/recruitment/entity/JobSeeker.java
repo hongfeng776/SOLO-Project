@@ -43,6 +43,12 @@ public class JobSeeker implements Serializable {
     @TableField("job_intention")
     private String jobIntention;
 
+    @TableField("expected_salary")
+    private String expectedSalary;
+
+    @TableField("expected_city")
+    private String expectedCity;
+
     @TableField("status")
     private Integer status;
 

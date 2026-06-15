@@ -7,6 +7,8 @@ export interface SeekerQuery {
   gender?: number | string
   education?: string
   status?: number | string
+  startTime?: string
+  endTime?: string
 }
 
 export interface SeekerForm {
@@ -19,6 +21,8 @@ export interface SeekerForm {
   education?: string
   workYears?: number
   jobIntention?: string
+  expectedSalary?: string
+  expectedCity?: string
   status?: number | string
 }
 
@@ -32,8 +36,11 @@ export interface SeekerRecord {
   education: string
   workYears: number
   jobIntention: string
+  expectedSalary: string
+  expectedCity: string
   status: number
   createTime: string
+  updateTime: string
 }
 
 export interface PageResult<T> {
@@ -69,7 +76,7 @@ export function createSeeker(data: SeekerForm) {
 
 export function updateSeeker(data: SeekerForm) {
   return request<void>({
-    url: '/seeker',
+    url: `/seeker/${data.id}`,
     method: 'put',
     data
   })
@@ -79,5 +86,13 @@ export function removeSeeker(id: number) {
   return request<void>({
     url: `/seeker/${id}`,
     method: 'delete'
+  })
+}
+
+export function batchRemoveSeeker(ids: number[]) {
+  return request<void>({
+    url: '/seeker/batch',
+    method: 'delete',
+    data: { ids }
   })
 }

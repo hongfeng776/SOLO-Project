@@ -7,6 +7,9 @@ import com.zhiqin.recruitment.service.JobSeekerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/seeker")
 public class JobSeekerController {
@@ -20,9 +23,11 @@ public class JobSeekerController {
             @RequestParam(required = false) Integer gender,
             @RequestParam(required = false) String education,
             @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        IPage<JobSeeker> page = jobSeekerService.pageList(name, gender, education, status, pageNum, pageSize);
+        IPage<JobSeeker> page = jobSeekerService.pageList(name, gender, education, status, startTime, endTime, pageNum, pageSize);
         return Result.success(page);
     }
 
@@ -48,6 +53,15 @@ public class JobSeekerController {
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         jobSeekerService.removeById(id);
+        return Result.success();
+    }
+
+    @DeleteMapping("/batch")
+    public Result<Void> batchDelete(@RequestBody Map<String, List<Long>> params) {
+        List<Long> ids = params.get("ids");
+        if (ids != null && !ids.isEmpty()) {
+            jobSeekerService.batchDelete(ids);
+        }
         return Result.success();
     }
 

@@ -6,6 +6,8 @@ import com.zhiqin.recruitment.entity.JobSeeker;
 
 public interface JobSeekerService extends IService<JobSeeker> {
 
-    IPage<JobSeeker> pageList(String name, Integer gender, String education, Integer status, Integer pageNum, Integer pageSize);
+    IPage<JobSeeker> pageList(String name, Integer gender, String education, Integer status, String startTime, String endTime, Integer pageNum, Integer pageSize);
+
+    void batchDelete(List<Long> ids);
 
 }
