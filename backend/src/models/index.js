@@ -5,6 +5,7 @@ const Role = require('./Role');
 const Permission = require('./Permission');
 const UserRole = require('./UserRole');
 const RolePermission = require('./RolePermission');
+const Work = require('./Work');
 
 User.belongsToMany(Role, {
   through: UserRole,
@@ -34,11 +35,22 @@ Permission.belongsToMany(Role, {
   as: 'roles'
 });
 
+User.hasMany(Work, {
+  foreignKey: 'author_id',
+  as: 'works'
+});
+
+Work.belongsTo(User, {
+  foreignKey: 'author_id',
+  as: 'author'
+});
+
 module.exports = {
   sequelize,
   User,
   Role,
   Permission,
   UserRole,
-  RolePermission
+  RolePermission,
+  Work
 };

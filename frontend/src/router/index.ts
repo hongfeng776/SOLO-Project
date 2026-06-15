@@ -26,6 +26,27 @@ export const constantRoutes: RouteRecordRaw[] = [
         }
       },
       {
+        path: 'content',
+        name: 'Content',
+        redirect: '/content/work',
+        meta: {
+          title: '内容管理',
+          icon: 'Document'
+        },
+        children: [
+          {
+            path: 'work',
+            name: 'Work',
+            component: () => import('@/views/content/work/index.vue'),
+            meta: {
+              title: '作品管理',
+              icon: 'Picture',
+              permissions: ['content:work:list']
+            }
+          }
+        ]
+      },
+      {
         path: 'system',
         name: 'System',
         redirect: '/system/user',

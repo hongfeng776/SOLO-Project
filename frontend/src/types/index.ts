@@ -135,3 +135,14 @@ export interface UserFormData {
   status: number
   role_ids?: number[]
 }
+
+export interface WorkFormData {
+  id?: number
+  title: string
+  description: string
+  cover_image: string
+  author_id: number
+  author_nickname: string
+  category: string
+  status: number
+}
