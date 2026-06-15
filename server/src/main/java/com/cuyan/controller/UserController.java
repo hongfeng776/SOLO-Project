@@ -53,4 +53,10 @@ public class UserController {
         userService.updateStatus(id, status);
         return Result.success();
     }
+
+    @PutMapping("/batch-status")
+    public Result<Void> batchUpdateStatus(@Valid @RequestBody BatchStatusDTO batchStatusDTO) {
+        userService.batchUpdateStatus(batchStatusDTO);
+        return Result.success();
+    }
 }

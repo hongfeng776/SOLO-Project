@@ -26,6 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,10 +54,26 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
                 .like(StringUtils.hasText(queryDTO.getBookName()), Vocabulary::getBookName, queryDTO.getBookName())
                 .like(StringUtils.hasText(queryDTO.getKeyword()), Vocabulary::getWord, queryDTO.getKeyword())
                 .ge(StringUtils.hasText(queryDTO.getStartTime()), Vocabulary::getCreateTime, queryDTO.getStartTime())
-                .le(StringUtils.hasText(queryDTO.getEndTime()), Vocabulary::getCreateTime, queryDTO.getEndTime())
+                .lt(StringUtils.hasText(queryDTO.getEndTime()), Vocabulary::getCreateTime, getEndDateTime(queryDTO.getEndTime()))
                 .orderByDesc(Vocabulary::getCreateTime);
         Page<Vocabulary> vocabularyPage = page(page, wrapper);
         return convertToVOPage(vocabularyPage);
+    }
+
+    private LocalDateTime getEndDateTime(String endTime) {
+        if (!StringUtils.hasText(endTime)) {
+            return null;
+        }
+        try {
+            if (endTime.length() == 10) {
+                LocalDate date = LocalDate.parse(endTime, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                return date.plusDays(1).atStartOfDay();
+            } else {
+                return LocalDateTime.parse(endTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            }
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @Override
@@ -85,7 +104,33 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         if (vocabulary == null) {
             throw new BusinessException("词汇不存在");
         }
-        BeanUtils.copyProperties(updateDTO, vocabulary);
+        if (StringUtils.hasText(updateDTO.getWord())) {
+            vocabulary.setWord(updateDTO.getWord());
+        }
+        if (updateDTO.getPhonetic() != null) {
+            vocabulary.setPhonetic(updateDTO.getPhonetic());
+        }
+        if (updateDTO.getPartOfSpeech() != null) {
+            vocabulary.setPartOfSpeech(updateDTO.getPartOfSpeech());
+        }
+        if (updateDTO.getDefinition() != null) {
+            vocabulary.setDefinition(updateDTO.getDefinition());
+        }
+        if (updateDTO.getExample() != null) {
+            vocabulary.setExample(updateDTO.getExample());
+        }
+        if (updateDTO.getTranslation() != null) {
+            vocabulary.setTranslation(updateDTO.getTranslation());
+        }
+        if (updateDTO.getDifficulty() != null) {
+            vocabulary.setDifficulty(updateDTO.getDifficulty());
+        }
+        if (updateDTO.getBookName() != null) {
+            vocabulary.setBookName(updateDTO.getBookName());
+        }
+        if (updateDTO.getStatus() != null) {
+            vocabulary.setStatus(updateDTO.getStatus());
+        }
         updateById(vocabulary);
     }
 
