@@ -169,12 +169,12 @@
     </el-card>
 
     <Teleport to="body">
-      <Transition :name="dialogTransitionName">
+      <Transition name="work-modal-scale">
         <div v-if="dialogVisible" class="work-modal-overlay" @click.self="handleOverlayClick">
           <div class="work-modal-wrapper" :style="{ width: dialogWidth }">
             <div class="work-modal-header">
               <span class="work-modal-title">{{ dialogTitle }}</span>
-              <span class="work-modal-close" @click="handleCancel">
+              <span class="work-modal-close" @click.stop="handleCancel">
                 <el-icon :size="20"><Close /></el-icon>
               </span>
             </div>
@@ -244,8 +244,8 @@
               </el-form>
             </div>
             <div class="work-modal-footer">
-              <el-button v-ripple @click="handleCancel">{{ isView ? '关闭' : '取消' }}</el-button>
-              <el-button v-if="!isView" type="primary" v-ripple @click="handleSubmit">确定</el-button>
+              <el-button v-ripple @click.stop="handleCancel">{{ isView ? '关闭' : '取消' }}</el-button>
+              <el-button v-if="!isView" type="primary" v-ripple @click.stop="handleSubmit">确定</el-button>
             </div>
           </div>
         </div>
@@ -277,7 +277,6 @@ const isView = ref(false)
 const isEdit = ref(false)
 const formRef = ref<FormInstance>()
 const editId = ref<number | null>(null)
-const dialogTransitionName = ref('work-modal-scale')
 
 const searchForm = reactive<SearchForm>({
   title: '',
@@ -403,7 +402,6 @@ function resetForm() {
 
 function handleAdd() {
   dialogTitle.value = '新增作品'
-  dialogTransitionName.value = 'work-modal-scale'
   isView.value = false
   isEdit.value = false
   editId.value = null
@@ -413,7 +411,6 @@ function handleAdd() {
 
 function handleEdit(row: WorkItem) {
   dialogTitle.value = '编辑作品'
-  dialogTransitionName.value = 'work-modal-scale'
   isView.value = false
   isEdit.value = true
   editId.value = row.id
@@ -434,7 +431,6 @@ function handleOverlayClick() {
 }
 
 function handleCancel() {
-  dialogTransitionName.value = 'work-modal-slide-down'
   dialogVisible.value = false
 }
 

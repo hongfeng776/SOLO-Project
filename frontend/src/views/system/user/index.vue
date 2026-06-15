@@ -250,12 +250,39 @@ const mockData: UserItem[] = [
   { id: 10, username: 'user009', nickname: '郑十一', email: 'zheng11@hongjing.com', status: 1, role: 'user', created_at: '2026-06-10 11:55:00' }
 ]
 
+function getFilteredData() {
+  let result = [...mockData]
+  
+  if (searchForm.username) {
+    result = result.filter(item => 
+      item.username.toLowerCase().includes(searchForm.username.toLowerCase())
+    )
+  }
+  
+  if (searchForm.nickname) {
+    result = result.filter(item => 
+      item.nickname.toLowerCase().includes(searchForm.nickname.toLowerCase())
+    )
+  }
+  
+  if (searchForm.status !== null) {
+    result = result.filter(item => item.status === searchForm.status)
+  }
+  
+  return result
+}
+
 async function loadData() {
   loading.value = true
   try {
     await new Promise(resolve => setTimeout(resolve, 500))
-    tableData.value = mockData
-    total.value = mockData.length
+    
+    const filteredData = getFilteredData()
+    const start = (pagination.page - 1) * pagination.pageSize
+    const end = start + pagination.pageSize
+    
+    tableData.value = filteredData.slice(start, end)
+    total.value = filteredData.length
   } catch (error) {
     console.error('Load user list error:', error)
     ElMessage.error('加载用户列表失败')
