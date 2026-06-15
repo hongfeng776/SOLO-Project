@@ -23,7 +23,7 @@ export const configApi = {
 };
 
 export const categoryApi = {
-  list: () => get<ApiResponse<PaginatedData<CategoryInfo>>>('/categories'),
+  list: (params?: PaginationParams) => get<ApiResponse<PaginatedData<CategoryInfo>>>('/categories', params),
   create: (data: Partial<CategoryInfo>) => post<ApiResponse<CategoryInfo>>('/categories', data),
   update: (id: number, data: Partial<CategoryInfo>) => put<ApiResponse<CategoryInfo>>(`/categories/${id}`, data),
   remove: (id: number) => del<ApiResponse<null>>(`/categories/${id}`),

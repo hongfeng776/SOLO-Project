@@ -332,8 +332,13 @@ export const configController = {
 export const categoryController = {
   async list(req: Request, res: Response): Promise<void> {
     try {
+      const keyword = req.query.keyword as string || '';
+      const where: any = {};
+      if (keyword) {
+        where.name = { [Op.like as any]: `%${keyword}%` };
+      }
       const { rows, count } = await Category.findAndCountAll({
-        where: { status: 1 },
+        where,
         order: [['sort', 'ASC'], ['id', 'DESC']],
       });
       responseUtil.paginate(res, rows, count, 1, count);
