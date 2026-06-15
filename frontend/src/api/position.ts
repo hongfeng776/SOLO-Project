@@ -4,6 +4,8 @@ export interface PositionQuery {
   pageNum: number
   pageSize: number
   title?: string
+  enterpriseId?: number | string
+  category?: string
   city?: string
   status?: number | string
 }
@@ -12,12 +14,14 @@ export interface PositionForm {
   id?: number
   title: string
   enterpriseId: number | string
+  category: string
   salaryMin: number
   salaryMax: number
   city: string
   education?: string
   experience?: string
-  description?: string
+  responsibility?: string
+  requirement?: string
   status?: number | string
 }
 
@@ -26,14 +30,17 @@ export interface PositionRecord {
   title: string
   enterpriseId: number
   enterpriseName: string
+  category: string
   salaryMin: number
   salaryMax: number
   city: string
   education: string
   experience: string
-  description: string
+  responsibility: string
+  requirement: string
   status: number
   createTime: string
+  updateTime: string
 }
 
 export interface PageResult<T> {
@@ -69,7 +76,7 @@ export function createPosition(data: PositionForm) {
 
 export function updatePosition(data: PositionForm) {
   return request<void>({
-    url: '/position',
+    url: `/position/${data.id}`,
     method: 'put',
     data
   })
@@ -79,5 +86,13 @@ export function removePosition(id: number) {
   return request<void>({
     url: `/position/${id}`,
     method: 'delete'
+  })
+}
+
+export function removePositionBatch(ids: number[]) {
+  return request<void>({
+    url: '/position/batch',
+    method: 'delete',
+    data: { ids }
   })
 }

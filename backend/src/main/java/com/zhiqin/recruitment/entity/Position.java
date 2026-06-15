@@ -28,6 +28,9 @@ public class Position implements Serializable {
     @TableField("enterprise_name")
     private String enterpriseName;
 
+    @TableField("category")
+    private String category;
+
     @TableField("salary_min")
     private Integer salaryMin;
 
@@ -43,18 +46,21 @@ public class Position implements Serializable {
     @TableField("experience")
     private String experience;
 
-    @TableField("description")
-    private String description;
+    @TableField("responsibility")
+    private String responsibility;
+
+    @TableField("requirement")
+    private String requirement;
 
     @TableField("status")
     private Integer status;
 
     @TableField("create_time")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime createTime;
 
     @TableField("update_time")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime updateTime;
 
 }

@@ -99,24 +99,31 @@ CREATE TABLE position (
     title VARCHAR(128) NOT NULL COMMENT '岗位名称',
     enterprise_id BIGINT DEFAULT NULL COMMENT '企业ID',
     enterprise_name VARCHAR(128) DEFAULT NULL COMMENT '企业名称',
+    category VARCHAR(64) DEFAULT NULL COMMENT '岗位分类',
     salary_min INT DEFAULT NULL COMMENT '最低薪资(K)',
     salary_max INT DEFAULT NULL COMMENT '最高薪资(K)',
-    city VARCHAR(64) DEFAULT NULL COMMENT '城市',
+    city VARCHAR(64) DEFAULT NULL COMMENT '工作地点',
     education VARCHAR(32) DEFAULT NULL COMMENT '学历要求',
     experience VARCHAR(32) DEFAULT NULL COMMENT '经验要求',
-    description TEXT DEFAULT NULL COMMENT '岗位描述',
+    responsibility TEXT DEFAULT NULL COMMENT '岗位职责',
+    requirement TEXT DEFAULT NULL COMMENT '任职要求',
     status TINYINT DEFAULT 1 COMMENT '状态: 0-关闭, 1-招聘中, 2-暂停',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间/发布时间',
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='岗位表';
 
-INSERT INTO position (title, enterprise_id, enterprise_name, salary_min, salary_max, city, education, experience, description, status) VALUES
-('Java高级工程师', 1, '职擎科技有限公司', 20, 35, '北京', '本科', '3-5年', '负责公司核心业务系统的设计与开发，参与系统架构优化和技术方案评审。', 1),
-('数据分析师', 2, '星河数据科技', 15, 25, '上海', '硕士', '1-3年', '负责业务数据分析与挖掘，产出数据报告，支撑业务决策。', 1),
-('AI算法工程师', 3, '云帆智能科技', 30, 50, '深圳', '博士', '3-5年', '负责NLP/CV算法研究与落地，推动AI产品迭代优化。', 2),
-('产品经理', 1, '职擎科技有限公司', 18, 30, '北京', '本科', '3-5年', '负责招聘平台产品规划与设计，推动产品功能迭代与用户体验优化。', 1),
-('前端开发工程师', 4, '博雅教育集团', 12, 20, '广州', '本科', '1-3年', '负责教育平台前端开发，使用Vue.js技术栈。', 0);
+INSERT INTO position (title, enterprise_id, enterprise_name, category, salary_min, salary_max, city, education, experience, responsibility, requirement, status) VALUES
+('Java高级工程师', 1, '职擎科技有限公司', '技术开发', 20, 35, '北京', '本科', '3-5年', '1. 负责公司核心业务系统的设计与开发；\n2. 参与系统架构优化和技术方案评审；\n3. 解决项目中遇到的关键技术问题。', '1. 本科及以上学历，计算机相关专业；\n2. 3年以上Java开发经验；\n3. 熟练掌握Spring Boot、MyBatis等主流框架；\n4. 熟悉MySQL、Redis等数据库。', 1),
+('数据分析师', 2, '星河数据科技', '数据分析', 15, 25, '上海', '硕士', '1-3年', '1. 负责业务数据分析与挖掘，产出数据报告；\n2. 构建数据指标体系，监控业务运行状况；\n3. 参与数据平台建设，推动数据产品化。', '1. 硕士及以上学历，统计学、数学相关专业；\n2. 熟练掌握SQL、Python数据分析工具；\n3. 具备良好的数据敏感度和业务理解能力。', 1),
+('AI算法工程师', 3, '云帆智能科技', '技术开发', 30, 50, '深圳', '博士', '3-5年', '1. 负责NLP/CV算法研究与落地；\n2. 推动AI产品迭代优化；\n3. 发表前沿技术论文，沉淀技术专利。', '1. 博士学历，计算机、人工智能相关专业；\n2. 在顶会发表过相关论文者优先；\n3. 熟练掌握PyTorch/TensorFlow框架。', 2),
+('产品经理', 1, '职擎科技有限公司', '产品运营', 18, 30, '北京', '本科', '3-5年', '1. 负责招聘平台产品规划与设计；\n2. 推动产品功能迭代与用户体验优化；\n3. 协调研发、运营、设计团队高效协作。', '1. 本科及以上学历；\n2. 3年以上互联网产品经验，熟悉招聘行业优先；\n3. 具备优秀的逻辑思维和沟通协调能力。', 1),
+('前端开发工程师', 4, '博雅教育集团', '技术开发', 12, 20, '广州', '本科', '1-3年', '1. 负责教育平台前端开发；\n2. 参与前端技术架构设计；\n3. 与后端、产品团队紧密协作。', '1. 本科及以上学历，计算机相关专业；\n2. 熟悉Vue.js、React等前端框架；\n3. 有良好的代码规范和工程化意识。', 0),
+('销售经理', 5, '锦程金融服务', '市场营销', 15, 30, '杭州', '本科', '3-5年', '1. 负责金融产品的市场推广与销售；\n2. 开拓并维护客户关系；\n3. 完成团队销售目标。', '1. 本科及以上学历，金融、市场营销相关专业优先；\n2. 3年以上金融行业销售经验；\n3. 具备优秀的客户资源和谈判能力。', 2),
+('算法实习生', 3, '云帆智能科技', '技术开发', 5, 8, '深圳', '硕士', '不限', '1. 参与AI算法模型训练与优化；\n2. 协助完成数据清洗与标注工作；\n3. 参与技术文档撰写。', '1. 硕士在读，计算机、人工智能相关专业；\n2. 熟悉Python编程，了解常用深度学习框架；\n3. 每周可实习4天以上，持续3个月以上。', 1),
+('UI设计师', 4, '博雅教育集团', '设计创意', 10, 18, '广州', '本科', '1-3年', '1. 负责教育平台UI设计与交互优化；\n2. 参与设计规范制定与维护；\n3. 与产品、前端团队紧密协作。', '1. 本科及以上学历，设计相关专业；\n2. 熟练使用Figma、Sketch等设计工具；\n3. 有完整的移动端/PC端项目设计经验。', 1),
+('测试工程师', 1, '职擎科技有限公司', '技术开发', 10, 18, '北京', '本科', '1-3年', '1. 负责招聘平台功能测试与自动化测试；\n2. 编写测试用例，执行测试并跟踪缺陷；\n3. 参与测试流程优化与质量体系建设。', '1. 本科及以上学历，计算机相关专业；\n2. 熟悉软件测试流程，掌握主流测试工具；\n3. 有自动化测试经验优先。', 1),
+('运营专员', 2, '星河数据科技', '产品运营', 8, 15, '上海', '本科', '1-3年', '1. 负责平台日常运营与活动策划；\n2. 分析运营数据，优化运营策略；\n3. 维护用户社群，提升用户活跃度。', '1. 本科及以上学历；\n2. 1年以上互联网运营经验；\n3. 具备良好的文案能力和数据分析能力。', 1);
 
 -- ----------------------------
 -- 简历表

@@ -15,11 +15,13 @@
     <slot />
     <template #footer>
       <slot name="footer">
-        <el-button @click="handleCancel">{{ cancelText }}</el-button>
+        <el-button v-if="showCancel" @click="handleCancel">{{ cancelText }}</el-button>
         <el-button
+          v-if="showConfirm"
           :type="confirmType"
           :loading="confirmLoading"
           :disabled="confirmDisabled"
+          v-ripple
           @click="handleConfirm"
         >
           {{ confirmText }}
@@ -37,6 +39,8 @@ interface ProDialogProps {
   fullscreen?: boolean
   closeOnClickModal?: boolean
   modal?: boolean
+  showCancel?: boolean
+  showConfirm?: boolean
   cancelText?: string
   confirmText?: string
   confirmType?: 'primary' | 'success' | 'warning' | 'danger' | 'info'
@@ -50,6 +54,8 @@ const props = withDefaults(defineProps<ProDialogProps>(), {
   fullscreen: false,
   closeOnClickModal: false,
   modal: true,
+  showCancel: true,
+  showConfirm: true,
   cancelText: '取消',
   confirmText: '确定',
   confirmType: 'primary',
