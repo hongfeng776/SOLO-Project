@@ -4,19 +4,22 @@ import { tagApi } from '@/api';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import BaseTable from '@/components/BaseTable';
 import BaseModal from '@/components/BaseModal';
+import TableSkeleton from '@/components/TableSkeleton';
 import type { TagInfo, TableColumn, ApiResponse } from '@/types';
-import { sleep } from '@/utils/common';
+import { sleep, formatThousand } from '@/utils/common';
 
 const tableRef = ref<InstanceType<typeof BaseTable>>();
 const formRef = ref<FormInstance>();
 
 const loading = ref(false);
+const batchLoading = ref(false);
 const list = ref<TagInfo[]>([]);
 const total = ref(0);
 const page = ref(1);
 const pageSize = ref(10);
 
 const searchKeyword = ref('');
+const statusFilter = ref('');
 const selected = ref<TagInfo[]>([]);
 
 const modalVisible = ref(false);
@@ -25,6 +28,10 @@ const editingId = ref<number | null>(null);
 const modalLoading = ref(false);
 const submitDisabled = ref(false);
 const createBtnDisabled = ref(false);
+
+const detailVisible = ref(false);
+const detailLoading = ref(false);
+const detailInfo = ref<(TagInfo & { contentCount?: number }) | null>(null);
 
 const form = reactive({
   name: '',
@@ -36,6 +43,13 @@ const form = reactive({
 const nameChecking = ref(false);
 const sortShake = ref(false);
 const sortError = ref('');
+const switchingStatusIds = ref<Set<number>>(new Set());
+
+const statusFilterOptions = [
+  { value: '', label: '全部' },
+  { value: '1', label: '启用' },
+  { value: '0', label: '禁用' },
+];
 
 const validateName = async (_rule: any, value: string, callback: (error?: Error) => void) => {
   if (!value || !value.trim()) {
@@ -121,7 +135,7 @@ const columns: TableColumn<TagInfo>[] = [
   {
     prop: 'status',
     label: '状态',
-    width: 100,
+    width: 130,
     align: 'center',
     slot: 'status',
   },
@@ -150,7 +164,7 @@ const columns: TableColumn<TagInfo>[] = [
   {
     prop: 'actions',
     label: '操作',
-    width: 160,
+    width: 220,
     fixed: 'right',
     align: 'center',
     slot: 'actions',
@@ -165,6 +179,7 @@ const fetchData = async () => {
       pageSize: pageSize.value,
     };
     if (searchKeyword.value) params.keyword = searchKeyword.value;
+    if (statusFilter.value !== '') params.status = statusFilter.value;
     const sort = tableRef.value?.getSortState?.() || { prop: '', order: null };
     if (sort.prop && sort.order) {
       params.orderBy = sort.prop;
@@ -189,6 +204,13 @@ const handleSearch = () => {
 
 const handleSearchReset = () => {
   searchKeyword.value = '';
+  statusFilter.value = '';
+  page.value = 1;
+  fetchData();
+};
+
+const handleStatusFilterChange = (val: string) => {
+  statusFilter.value = val;
   page.value = 1;
   fetchData();
 };
@@ -274,18 +296,54 @@ const handleModalOk = async () => {
   }
 };
 
+const handleStatusChange = async (row: TagInfo, newStatus: number) => {
+  if (switchingStatusIds.value.has(row.id)) return;
+  const oldStatus = row.status;
+  switchingStatusIds.value.add(row.id);
+  try {
+    const res = await tagApi.update(row.id, { status: newStatus });
+    if (res.code === 0) {
+      ElMessage.success(`已${newStatus === 1 ? '启用' : '禁用'}标签：${row.name}`);
+      const target = list.value.find(t => t.id === row.id);
+      if (target) target.status = newStatus;
+    } else {
+      row.status = oldStatus;
+    }
+  } catch {
+    row.status = oldStatus;
+  } finally {
+    switchingStatusIds.value.delete(row.id);
+  }
+};
+
 const handleDelete = async (row: TagInfo) => {
   try {
-    await ElMessageBox.confirm(
-      `确定删除标签 "${row.name}" 吗？\n删除后不可恢复！`,
-      '删除确认',
-      {
-        confirmButtonText: '确定删除',
-        cancelButtonText: '取消',
-        type: 'warning',
-        customClass: 'confirm-dialog',
-      },
-    );
+    const detailRes = await tagApi.detail(row.id);
+    const boundCount = detailRes.code === 0 && detailRes.data ? (detailRes.data as any).contentCount || 0 : 0;
+    if (boundCount > 0) {
+      ElMessageBox.alert(
+        `标签 "${row.name}" 下关联了 ${formatThousand(boundCount)} 条内容，删除将自动解除关联关系。`,
+        '删除提示',
+        {
+          confirmButtonText: '继续删除',
+          cancelButtonText: '取消',
+          type: 'warning',
+          customClass: 'confirm-dialog',
+          showCancelButton: true,
+        },
+      );
+    } else {
+      await ElMessageBox.confirm(
+        `确定删除标签 "${row.name}" 吗？\n删除后不可恢复！`,
+        '删除确认',
+        {
+          confirmButtonText: '确定删除',
+          cancelButtonText: '取消',
+          type: 'warning',
+          customClass: 'confirm-dialog',
+        },
+      );
+    }
     const res = await tagApi.remove(row.id);
     if (res.code === 0) {
       ElMessage.success('删除成功');
@@ -314,6 +372,8 @@ const handleBatchDelete = async () => {
         type: 'warning',
       },
     );
+    batchLoading.value = true;
+    await sleep(500);
     await Promise.all(selected.value.map((r) => tagApi.remove(r.id)));
     ElMessage.success(`成功删除 ${selected.value.length} 个标签`);
     tableRef.value?.clearSelection?.();
@@ -324,7 +384,78 @@ const handleBatchDelete = async () => {
       ElMessage.error(err.message);
     }
     /* cancel */
+  } finally {
+    batchLoading.value = false;
   }
+};
+
+const handleBatchEnable = async () => {
+  if (selected.value.length === 0) {
+    ElMessage.warning('请先选择要启用的标签');
+    return;
+  }
+  try {
+    batchLoading.value = true;
+    await sleep(300);
+    await Promise.all(selected.value.map((r) => tagApi.update(r.id, { status: 1 })));
+    ElMessage.success(`成功启用 ${selected.value.length} 个标签`);
+    tableRef.value?.clearSelection?.();
+    selected.value = [];
+    fetchData();
+  } catch {
+    /* error handled */
+  } finally {
+    batchLoading.value = false;
+  }
+};
+
+const handleBatchDisable = async () => {
+  if (selected.value.length === 0) {
+    ElMessage.warning('请先选择要禁用的标签');
+    return;
+  }
+  try {
+    batchLoading.value = true;
+    await sleep(300);
+    await Promise.all(selected.value.map((r) => tagApi.update(r.id, { status: 0 })));
+    ElMessage.success(`成功禁用 ${selected.value.length} 个标签`);
+    tableRef.value?.clearSelection?.();
+    selected.value = [];
+    fetchData();
+  } catch {
+    /* error handled */
+  } finally {
+    batchLoading.value = false;
+  }
+};
+
+const openDetail = async (row: TagInfo) => {
+  detailVisible.value = true;
+  detailLoading.value = true;
+  detailInfo.value = null;
+  try {
+    const res = await tagApi.detail(row.id);
+    if (res.code === 0 && res.data) {
+      detailInfo.value = res.data;
+    }
+  } catch {
+    /* error handled */
+  } finally {
+    detailLoading.value = false;
+  }
+};
+
+const formatDate = (val: string | Date | undefined) => {
+  if (!val) return '-';
+  return new Date(val).toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
 };
 
 onMounted(() => {
@@ -348,6 +479,17 @@ onMounted(() => {
             <template #prefix><el-icon><Search /></el-icon></template>
           </el-input>
         </div>
+        <div class="status-filter-wrap">
+          <div
+            v-for="opt in statusFilterOptions"
+            :key="opt.value"
+            class="status-filter-tag"
+            :class="{ active: statusFilter === opt.value }"
+            @click="handleStatusFilterChange(opt.value)"
+          >
+            {{ opt.label }}
+          </div>
+        </div>
         <el-button type="primary" @click="handleSearch">
           <el-icon><Search /></el-icon>查询
         </el-button>
@@ -358,13 +500,36 @@ onMounted(() => {
         <el-button type="success" plain :disabled="createBtnDisabled" @click="openCreate">
           <el-icon><Plus /></el-icon>新增标签
         </el-button>
-        <el-button type="danger" plain :disabled="selected.length === 0" @click="handleBatchDelete">
-          <el-icon><Delete /></el-icon>批量删除
-        </el-button>
       </div>
+
+      <transition name="slide-down">
+        <div v-if="selected.length > 0" class="batch-bar">
+          <div class="batch-info">
+            <el-icon class="check-icon"><CircleCheckFilled /></el-icon>
+            <span>已选中 <strong>{{ selected.length }}</strong> 项</span>
+          </div>
+          <div class="batch-actions">
+            <el-button type="success" plain :loading="batchLoading" @click="handleBatchEnable">
+              <el-icon><CircleCheck /></el-icon>批量启用
+            </el-button>
+            <el-button type="info" plain :loading="batchLoading" @click="handleBatchDisable">
+              <el-icon><CircleClose /></el-icon>批量禁用
+            </el-button>
+            <el-button type="danger" plain :loading="batchLoading" @click="handleBatchDelete">
+              <el-icon><Delete /></el-icon>批量删除
+            </el-button>
+            <el-button link @click="tableRef?.clearSelection?.()">
+              取消选择
+            </el-button>
+          </div>
+        </div>
+      </transition>
     </el-card>
 
     <el-card class="table-card" shadow="never">
+      <div v-if="batchLoading" class="skeleton-overlay">
+        <TableSkeleton :columns="8" :rows="8" />
+      </div>
       <BaseTable
         ref="tableRef"
         :columns="columns"
@@ -383,12 +548,25 @@ onMounted(() => {
         class="tag-table"
       >
         <template #status="{ row }">
-          <el-tag :type="statusTagType(row.status)" effect="light">
-            {{ statusLabel(row.status) }}
-          </el-tag>
+          <div class="status-cell">
+            <el-switch
+              :model-value="row.status === 1"
+              :loading="switchingStatusIds.has(row.id)"
+              :disabled="switchingStatusIds.has(row.id)"
+              inline-prompt
+              active-text="启用"
+              inactive-text="禁用"
+              :before-change="() => !switchingStatusIds.has(row.id)"
+              @change="(v: boolean) => handleStatusChange(row, v ? 1 : 0)"
+              class="status-switch"
+            />
+          </div>
         </template>
         <template #actions="{ row }">
           <div class="row-actions">
+            <el-button link type="primary" size="small" @click="openDetail(row)">
+              <el-icon><View /></el-icon>详情
+            </el-button>
             <el-button link type="primary" size="small" @click="openEdit(row)">
               <el-icon><Edit /></el-icon>编辑
             </el-button>
@@ -475,6 +653,74 @@ onMounted(() => {
         </el-button>
       </template>
     </BaseModal>
+
+    <BaseModal
+      v-model:visible="detailVisible"
+      title="标签详情"
+      width="520px"
+      :show-footer="false"
+    >
+      <div v-if="detailLoading" class="detail-loading">
+        <el-icon class="is-loading" :size="32"><Loading /></el-icon>
+        <span>加载中...</span>
+      </div>
+      <div v-else-if="detailInfo" class="detail-wrap">
+        <div class="detail-header">
+          <div class="detail-title">
+            <el-icon :size="22" class="title-icon"><PriceTag /></el-icon>
+            <span>{{ detailInfo.name }}</span>
+          </div>
+          <el-tag
+            :type="statusTagType(detailInfo.status)"
+            effect="light"
+            class="status-tag"
+          >
+            {{ statusLabel(detailInfo.status) }}
+          </el-tag>
+        </div>
+
+        <div class="detail-metrics">
+          <div class="metric-card highlight">
+            <div class="metric-value primary">
+              {{ formatThousand((detailInfo as any).contentCount ?? 0) }}
+            </div>
+            <div class="metric-label">关联内容数</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value">{{ detailInfo.sort }}</div>
+            <div class="metric-label">排序权重</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value" :class="detailInfo.status === 1 ? 'success' : 'muted'">
+              {{ detailInfo.status === 1 ? '✓' : '✕' }}
+            </div>
+            <div class="metric-label">状态</div>
+          </div>
+        </div>
+
+        <el-descriptions :column="1" border class="detail-desc">
+          <el-descriptions-item label="标签 ID">
+            #{{ detailInfo.id }}
+          </el-descriptions-item>
+          <el-descriptions-item label="标签备注">
+            <span v-if="detailInfo.remark">{{ detailInfo.remark }}</span>
+            <span v-else class="empty-val">-</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="创建时间">
+            <span class="date-text">
+              <el-icon><Calendar /></el-icon>
+              {{ formatDate(detailInfo.createdAt) }}
+            </span>
+          </el-descriptions-item>
+          <el-descriptions-item label="最后更新">
+            <span class="date-text">
+              <el-icon><Clock /></el-icon>
+              {{ formatDate(detailInfo.updatedAt) }}
+            </span>
+          </el-descriptions-item>
+        </el-descriptions>
+      </div>
+    </BaseModal>
   </div>
 </template>
 
@@ -514,13 +760,101 @@ onMounted(() => {
   }
 }
 
+.status-filter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 $spacing-xs;
+}
+
+.status-filter-tag {
+  padding: 4px 16px;
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  background: $color-border-light;
+  cursor: pointer;
+  transition: all $duration-fast $ease-in-out;
+  border: 1px solid transparent;
+
+  &:hover {
+    color: $color-primary;
+    background: rgba(22, 119, 255, 0.08);
+  }
+
+  &.active {
+    color: #fff;
+    background: $color-primary;
+    border-color: $color-primary;
+    font-weight: 500;
+  }
+}
+
 .spacer {
   flex: 1;
+}
+
+.batch-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: $spacing-md;
+  padding: $spacing-sm $spacing-md;
+  background: linear-gradient(135deg, #e8f4ff 0%, #f0f7ff 100%);
+  border: 1px solid rgba(22, 119, 255, 0.2);
+  border-radius: $radius-md;
+}
+
+.batch-info {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  color: $color-text-regular;
+  font-size: $font-size-sm;
+
+  .check-icon {
+    color: $color-primary;
+    font-size: 18px;
+  }
+
+  strong {
+    color: $color-primary;
+    font-size: $font-size-md;
+    margin: 0 2px;
+  }
+}
+
+.batch-actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all $duration-base $ease-in-out;
+}
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+  max-height: 0;
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .table-card {
   padding: $spacing-md !important;
   border-radius: $radius-lg;
+  position: relative;
+}
+
+.skeleton-overlay {
+  position: relative;
+  z-index: 10;
+  padding: 0 $spacing-sm $spacing-sm;
+  background: #fff;
 }
 
 .tag-table {
@@ -534,6 +868,30 @@ onMounted(() => {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     z-index: 1;
     position: relative;
+  }
+}
+
+.status-cell {
+  display: flex;
+  justify-content: center;
+}
+
+.status-switch {
+  --el-switch-on-color: #52c41a;
+  --el-switch-off-color: #c0c4cc;
+  transition:
+    background-color 0.3s $ease-in-out,
+    transform 0.2s $ease-in-out;
+  :deep(.el-switch__core) {
+    transition: background-color 0.3s $ease-in-out;
+  }
+  :deep(.el-switch__action) {
+    transition:
+      left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.2s $ease-in-out;
+  }
+  &:hover :deep(.el-switch__core) {
+    filter: brightness(1.05);
   }
 }
 
@@ -600,6 +958,124 @@ onMounted(() => {
     background: #1677ff !important;
     border-color: #1677ff !important;
   }
+}
+
+.detail-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  padding: $spacing-xxl 0;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+}
+
+.detail-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: $spacing-md;
+  border-bottom: 1px solid $color-border-light;
+}
+
+.detail-title {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  font-size: $font-size-xl;
+  font-weight: 600;
+  color: $color-text-primary;
+  .title-icon {
+    color: $color-primary;
+  }
+}
+
+.status-tag {
+  font-size: $font-size-sm;
+}
+
+.detail-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-sm;
+}
+
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: $spacing-md $spacing-sm;
+  background: linear-gradient(135deg, #f7faff 0%, #ffffff 100%);
+  border: 1px solid $color-border-light;
+  border-radius: $radius-md;
+  transition: all 0.25s $ease-in-out;
+
+  &.highlight {
+    background: linear-gradient(135deg, #e6f4ff 0%, #f0f7ff 100%);
+    border-color: rgba(22, 119, 255, 0.3);
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(22, 119, 255, 0.12);
+    border-color: rgba(22, 119, 255, 0.3);
+  }
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: $color-text-primary;
+  font-variant-numeric: tabular-nums;
+  &.primary {
+    color: $color-primary;
+  }
+  &.success {
+    color: $color-success;
+  }
+  &.muted {
+    color: $color-text-placeholder;
+  }
+}
+
+.metric-label {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.detail-desc {
+  :deep(.el-descriptions__label) {
+    width: 110px;
+    background: #fafbfc;
+    color: $color-text-secondary;
+    font-weight: 500;
+  }
+  :deep(.el-descriptions__content) {
+    color: $color-text-primary;
+  }
+}
+
+.date-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  :deep(svg) {
+    color: $color-primary;
+    flex-shrink: 0;
+  }
+}
+
+.empty-val {
+  color: $color-text-placeholder;
 }
 
 @keyframes shake-animation {

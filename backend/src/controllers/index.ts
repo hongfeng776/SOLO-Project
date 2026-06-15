@@ -7,6 +7,7 @@ import SystemConfig from '@/models/SystemConfig';
 import Category from '@/models/Category';
 import Tag from '@/models/Tag';
 import Content from '@/models/Content';
+import ContentTag from '@/models/ContentTag';
 import { responseUtil, PaginatedData } from '@/utils/response';
 import { signToken, AuthRequest } from '@/middleware/auth';
 import config from '@/config';
@@ -465,6 +466,7 @@ export const tagController = {
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = parseInt(req.query.pageSize as string) || 10;
       const keyword = req.query.keyword as string || '';
+      const status = req.query.status as string || '';
       const orderBy = req.query.orderBy as string || 'sort';
       const orderDir = (req.query.orderDir as string || 'ASC').toUpperCase();
       const offset = (page - 1) * pageSize;
@@ -472,6 +474,9 @@ export const tagController = {
       const where: any = {};
       if (keyword) {
         where.name = { [Op.like as any]: `%${keyword}%` };
+      }
+      if (status !== '') {
+        where.status = parseInt(status);
       }
 
       const sortableFields = new Set(['id', 'name', 'sort', 'status', 'createdAt', 'updatedAt']);
@@ -498,6 +503,25 @@ export const tagController = {
       responseUtil.paginate(res, rows, count, page, pageSize);
     } catch (error) {
       console.error('[Tag List]:', error);
+      responseUtil.internalError(res);
+    }
+  },
+
+  async detail(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const item = await Tag.findByPk(parseInt(id));
+      if (!item) {
+        responseUtil.notFound(res, '标签不存在');
+        return;
+      }
+      const contentCount = await ContentTag.count({ where: { tagId: item.id } });
+      responseUtil.success(res, {
+        ...item.toJSON(),
+        contentCount,
+      });
+    } catch (error) {
+      console.error('[Tag Detail]:', error);
       responseUtil.internalError(res);
     }
   },

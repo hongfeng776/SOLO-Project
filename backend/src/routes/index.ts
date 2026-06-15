@@ -62,6 +62,7 @@ router.put('/categories/:id', authMiddleware(true), categoryController.update);
 router.delete('/categories/:id', authMiddleware(true), categoryController.remove);
 
 router.get('/tags', authMiddleware(true), tagController.list);
+router.get('/tags/:id', authMiddleware(true), tagController.detail);
 router.post('/tags', authMiddleware(true), tagController.create);
 router.put('/tags/:id', authMiddleware(true), tagController.update);
 router.delete('/tags/:id', authMiddleware(true), tagController.remove);
