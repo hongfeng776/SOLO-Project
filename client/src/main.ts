@@ -1,4 +1,4 @@
-import { createApp } from 'vue';
+import { createApp, type Directive } from 'vue';
 import { createPinia } from 'pinia';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
@@ -13,6 +13,32 @@ import EllipsisText from '@/components/EllipsisText.vue';
 import EmptyState from '@/components/EmptyState.vue';
 
 const app = createApp(App);
+
+const vRipple: Directive<HTMLElement> = {
+  mounted(el, binding) {
+    el.addEventListener('click', (e: Event) => {
+      const evt = e as MouseEvent;
+      const rect = el.getBoundingClientRect();
+      const ripple = document.createElement('span');
+      const size = Math.max(rect.width, rect.height);
+      const x = evt.clientX - rect.left - size / 2;
+      const y = evt.clientY - rect.top - size / 2;
+
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = x + 'px';
+      ripple.style.top = y + 'px';
+      ripple.className = 'ripple-effect';
+
+      el.appendChild(ripple);
+
+      setTimeout(() => {
+        ripple.remove();
+      }, 600);
+    });
+  }
+};
+
+app.directive('ripple', vRipple);
 
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component);

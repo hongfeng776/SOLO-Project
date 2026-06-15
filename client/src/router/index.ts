@@ -43,6 +43,12 @@ const routes: RouteRecordRaw[] = [
         name: 'VisualTemplates',
         component: () => import('@/views/visual-template/index.vue'),
         meta: { title: '视觉模板', icon: 'Grid', requiresAuth: true, level: 1 }
+      },
+      {
+        path: 'user-works',
+        name: 'UserWorks',
+        component: () => import('@/views/user-work/index.vue'),
+        meta: { title: '用户作品', icon: 'MagicStick', requiresAuth: true, level: 1 }
       }
     ]
   },

@@ -133,3 +133,72 @@ export interface VisualTemplateForm {
   scene?: string;
   status?: number;
 }
+
+export type UserWorkAuditStatus = 0 | 1 | 2 | 3;
+
+export interface UserWorkItem {
+  id: number;
+  name: string;
+  cover: string | null;
+  user_id: number;
+  username: string;
+  user_avatar: string | null;
+  like_count: number;
+  audit_status: UserWorkAuditStatus;
+  audit_reason: string | null;
+  audit_remark: string | null;
+  is_top: number;
+  top_expire_at: string | null;
+  top_remark: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserWorkQuery {
+  page?: number;
+  pageSize?: number;
+  name?: string;
+  username?: string;
+  audit_status?: UserWorkAuditStatus | '';
+  is_top?: number | '';
+  start_time?: string;
+  end_time?: string;
+  like_min?: number | '';
+  like_max?: number | '';
+}
+
+export interface UserWorkAuditForm {
+  audit_status: UserWorkAuditStatus;
+  audit_reason?: string;
+  audit_remark?: string;
+}
+
+export interface UserWorkTopForm {
+  is_top: number;
+  top_duration?: number;
+  top_remark?: string;
+}
+
+export const AUDIT_STATUS_MAP: Record<UserWorkAuditStatus, { text: string; type: 'warning' | 'success' | 'danger' | 'info' }> = {
+  0: { text: '待审核', type: 'warning' },
+  1: { text: '已通过', type: 'success' },
+  2: { text: '已驳回', type: 'danger' },
+  3: { text: '已下架', type: 'info' }
+};
+
+export const AUDIT_REJECT_REASONS = [
+  '内容违规',
+  '版权问题',
+  '质量不达标',
+  '涉及敏感信息',
+  '其他原因'
+];
+
+export const TOP_DURATION_OPTIONS = [
+  { label: '1天', value: 1 },
+  { label: '3天', value: 3 },
+  { label: '7天', value: 7 },
+  { label: '15天', value: 15 },
+  { label: '30天', value: 30 },
+  { label: '永久', value: 0 }
+];

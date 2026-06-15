@@ -8,6 +8,12 @@ export const menuList: MenuItem[] = [
     icon: 'HomeFilled'
   },
   {
+    path: '/user-works',
+    name: 'UserWorks',
+    title: '用户作品',
+    icon: 'MagicStick'
+  },
+  {
     path: '/visual-templates',
     name: 'VisualTemplates',
     title: '视觉模板',
