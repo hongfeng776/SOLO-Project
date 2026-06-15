@@ -15,6 +15,20 @@
       </div>
     </div>
 
+    <div class="quick-filter-bar">
+      <div
+        v-for="tab in quickFilterTabs"
+        :key="tab.key"
+        class="quick-filter-tab"
+        :class="{ 'is-active': activeQuickFilter === tab.key }"
+        @click="handleQuickFilter(tab.key)"
+      >
+        <el-icon v-if="tab.icon" :size="14"><component :is="tab.icon" /></el-icon>
+        <span>{{ tab.label }}</span>
+        <b v-if="tab.count !== undefined" class="tab-count">{{ tab.count }}</b>
+      </div>
+    </div>
+
     <el-form :inline="true" :model="queryForm" class="filter-bar" @submit.prevent>
       <el-form-item label="作品名称">
         <el-input
@@ -172,7 +186,8 @@
           ref="tableRef"
           :data="tableData"
           border
-          height="calc(100vh - 430px)"
+          stripe
+          height="calc(100vh - 470px)"
           style="width: 100%"
           :row-class-name="rowClassName"
           @selection-change="handleSelectionChange"
@@ -180,10 +195,10 @@
           highlight-current-row
         >
           <el-table-column type="selection" width="50" align="center" fixed="left" />
-          <el-table-column prop="id" label="ID" width="70" align="center" fixed="left" />
-          <el-table-column label="封面" width="100" align="center" fixed="left">
+          <el-table-column prop="id" label="ID" width="70" align="center" fixed="left" :resizable="true" />
+          <el-table-column label="封面" width="100" align="center" fixed="left" :resizable="true">
             <template #default="{ row }">
-              <div class="cover-cell">
+              <div class="cover-cell" :class="{ 'has-top': row.is_top }">
                 <el-image
                   v-if="row.cover"
                   :src="getImageUrl(row.cover)"
@@ -194,16 +209,19 @@
                   @click.stop
                 />
                 <span v-else class="no-cover">暂无</span>
-                <el-tag v-if="row.is_top" type="danger" size="small" class="top-badge">置顶</el-tag>
+                <span v-if="row.is_top" class="top-badge-row">
+                  <el-icon :size="10"><Top /></el-icon>
+                  置顶
+                </span>
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="name" label="作品名称" min-width="180" show-overflow-tooltip>
+          <el-table-column prop="name" label="作品名称" min-width="180" show-overflow-tooltip :resizable="true">
             <template #default="{ row }">
-              <span class="work-name">{{ row.name }}</span>
+              <span class="work-name" @click.stop="openDetailDrawer(row)">{{ row.name }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="创作用户" width="150" align="center">
+          <el-table-column label="创作用户" width="150" align="center" :resizable="true">
             <template #default="{ row }">
               <div class="user-cell">
                 <el-avatar :src="getImageUrl(row.user_avatar)" :size="28" class="user-avatar">
@@ -213,12 +231,12 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="created_at" label="创作时间" width="160" align="center">
+          <el-table-column prop="created_at" label="创作时间" width="160" align="center" :resizable="true">
             <template #default="{ row }">
               <FormattedDate :value="row.created_at" format="YYYY-MM-DD HH:mm" />
             </template>
           </el-table-column>
-          <el-table-column prop="like_count" label="点赞量" width="100" align="center">
+          <el-table-column prop="like_count" label="点赞量" width="100" align="center" :resizable="true">
             <template #default="{ row }">
               <span class="like-count">
                 <el-icon :size="14" class="like-icon"><Star /></el-icon>
@@ -226,14 +244,14 @@
               </span>
             </template>
           </el-table-column>
-          <el-table-column label="审核状态" width="110" align="center">
+          <el-table-column label="审核状态" width="110" align="center" :resizable="true">
             <template #default="{ row }">
               <el-tag :type="auditStatusType(row.audit_status)" size="small" round>
                 {{ auditStatusText(row.audit_status) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="置顶状态" width="130" align="center">
+          <el-table-column label="置顶状态" width="140" align="center" :resizable="true">
             <template #default="{ row }">
               <template v-if="row.is_top">
                 <el-tag type="danger" size="small" effect="dark">
@@ -247,10 +265,11 @@
               <span v-else style="color: #c0c4cc">未置顶</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="300" align="center" fixed="right">
+          <el-table-column label="操作" width="310" align="center" fixed="right">
             <template #default="{ row }">
+              <el-button type="primary" link v-ripple @click="openDetailDrawer(row)">详情</el-button>
               <template v-if="row.audit_status === 0">
-                <el-button type="success" link v-ripple @click="handleSingleAudit(row, 1)">通过</el-button>
+                <el-button type="success" link v-ripple :loading="singleAuditLoading[row.id]" @click="handleSingleAudit(row, 1)">通过</el-button>
                 <el-button type="danger" link v-ripple @click="openSingleAuditDialog(row, 2)">驳回</el-button>
               </template>
               <template v-else>
@@ -262,11 +281,12 @@
                 :type="row.is_top ? 'info' : 'warning'"
                 link
                 v-ripple
+                :loading="singleTopLoading[row.id]"
                 @click="openSingleTopDialog(row)"
               >
                 {{ row.is_top ? '取消置顶' : '置顶' }}
               </el-button>
-              <el-button type="danger" link v-ripple @click="handleDelete(row)">删除</el-button>
+              <el-button type="danger" link v-ripple :loading="singleDeleteLoading[row.id]" @click="handleDelete(row)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -274,7 +294,7 @@
 
       <EmptyState
         v-else
-        description="暂无用户作品"
+        description="暂无用户作品数据"
         icon="PictureFilled"
       />
     </div>
@@ -321,7 +341,7 @@
                 </div>
                 <div v-if="auditTarget?.audit_remark" class="detail-item">
                   <span class="detail-label">审核备注</span>
-                  <span class="detail-value">{{ auditTarget.audit_remark }}</span>
+                  <EllipsisText :text="auditTarget.audit_remark" :lines="2" />
                 </div>
               </div>
 
@@ -514,6 +534,141 @@
         </div>
       </transition>
     </Teleport>
+
+    <el-drawer
+      v-model="detailDrawerVisible"
+      title="作品详情"
+      size="560px"
+      :destroy-on-close="true"
+      class="detail-drawer"
+    >
+      <template v-if="detailData">
+        <div class="detail-section detail-cover-section">
+          <el-image
+            v-if="detailData.cover"
+            :src="getImageUrl(detailData.cover)"
+            :preview-src-list="[getImageUrl(detailData.cover)]"
+            fit="contain"
+            class="detail-original-image"
+            preview-teleported
+          />
+          <div v-else class="detail-no-cover">暂无封面</div>
+        </div>
+
+        <div class="detail-section">
+          <h4 class="section-title">基本信息</h4>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">作品名称</span>
+              <span class="info-value">{{ detailData.name }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">作品ID</span>
+              <span class="info-value">{{ detailData.id }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">作品尺寸</span>
+              <span class="info-value">{{ detailData.width && detailData.height ? `${detailData.width} × ${detailData.height}` : '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">创作时间</span>
+              <span class="info-value"><FormattedDate :value="detailData.created_at" format="YYYY-MM-DD HH:mm" /></span>
+            </div>
+            <div class="info-item full-width" v-if="detailData.description">
+              <span class="info-label">作品描述</span>
+              <EllipsisText :text="detailData.description" :lines="3" />
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4 class="section-title">创作者信息</h4>
+          <div class="creator-card">
+            <el-avatar :src="getImageUrl(detailData.user_avatar)" :size="44" class="creator-avatar">
+              {{ detailData.username?.charAt(0)?.toUpperCase() }}
+            </el-avatar>
+            <div class="creator-info">
+              <p class="creator-name">{{ detailData.username }}</p>
+              <p class="creator-id">用户ID：{{ detailData.user_id }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4 class="section-title">互动数据</h4>
+          <div class="interact-grid">
+            <div class="interact-item">
+              <el-icon :size="22" color="#f56c6c"><Star /></el-icon>
+              <b class="interact-num">{{ detailData.like_count }}</b>
+              <span class="interact-label">点赞</span>
+            </div>
+            <div class="interact-item">
+              <el-icon :size="22" color="#409eff"><ChatDotRound /></el-icon>
+              <b class="interact-num">{{ detailData.comment_count }}</b>
+              <span class="interact-label">评论</span>
+            </div>
+            <div class="interact-item">
+              <el-icon :size="22" color="#67c23a"><View /></el-icon>
+              <b class="interact-num">{{ detailData.view_count }}</b>
+              <span class="interact-label">浏览</span>
+            </div>
+            <div class="interact-item">
+              <el-icon :size="22" color="#e6a23c"><Share /></el-icon>
+              <b class="interact-num">{{ detailData.share_count }}</b>
+              <span class="interact-label">分享</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4 class="section-title">审核记录</h4>
+          <div v-if="detailData.audit_records && detailData.audit_records.length" class="audit-timeline">
+            <div
+              v-for="(record, idx) in detailData.audit_records"
+              :key="idx"
+              class="audit-record-item"
+            >
+              <div class="record-dot" :class="`record-dot-${auditStatusType(record.audit_status)}`"></div>
+              <div class="record-content">
+                <div class="record-header">
+                  <el-tag :type="auditStatusType(record.audit_status)" size="small" round>
+                    {{ auditStatusText(record.audit_status) }}
+                  </el-tag>
+                  <span class="record-time">{{ formatDate(record.audited_at, 'YYYY-MM-DD HH:mm') }}</span>
+                </div>
+                <div v-if="record.audit_reason" class="record-reason">
+                  驳回原因：<b>{{ record.audit_reason }}</b>
+                </div>
+                <div v-if="record.audit_remark" class="record-remark">
+                  <EllipsisText :text="record.audit_remark" :lines="2" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="no-record">暂无审核记录</div>
+        </div>
+
+        <div class="detail-section" v-if="detailData.is_top || detailData.top_remark">
+          <h4 class="section-title">置顶信息</h4>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">置顶状态</span>
+              <el-tag :type="detailData.is_top ? 'danger' : 'info'" size="small" effect="dark">
+                {{ detailData.is_top ? '置顶中' : '未置顶' }}
+              </el-tag>
+            </div>
+            <div class="info-item" v-if="detailData.top_expire_at">
+              <span class="info-label">到期时间</span>
+              <span class="info-value"><FormattedDate :value="detailData.top_expire_at" format="YYYY-MM-DD HH:mm" /></span>
+            </div>
+            <div class="info-item full-width" v-if="detailData.top_remark">
+              <span class="info-label">置顶备注</span>
+              <EllipsisText :text="detailData.top_remark" :lines="2" />
+            </div>
+          </div>
+        </div>
+      </template>
+    </el-drawer>
   </div>
 </template>
 
@@ -528,13 +683,20 @@ import {
   Close,
   CircleCheck,
   CircleClose,
-  Star
+  Star,
+  ChatDotRound,
+  View,
+  Share,
+  Clock,
+  Warning
 } from '@element-plus/icons-vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import FormattedDate from '@/components/FormattedDate.vue';
+import EllipsisText from '@/components/EllipsisText.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import {
   getUserWorkList,
+  getUserWorkDetail,
   auditUserWork,
   batchAuditUserWork,
   setUserWorkTop,
@@ -567,6 +729,20 @@ const pendingCount = ref(0);
 const passedCount = ref(0);
 const toppingCount = ref(0);
 
+const singleAuditLoading = ref<Record<number, boolean>>({});
+const singleTopLoading = ref<Record<number, boolean>>({});
+const singleDeleteLoading = ref<Record<number, boolean>>({});
+
+const activeQuickFilter = ref('all');
+
+const quickFilterTabs = computed(() => [
+  { key: 'all', label: '全部', icon: null, count: total.value },
+  { key: 'pending', label: '待审核', icon: 'Clock', count: pendingCount.value },
+  { key: 'passed', label: '已通过', icon: 'CircleCheck', count: passedCount.value },
+  { key: 'rejected', label: '已驳回', icon: 'CircleClose' },
+  { key: 'topping', label: '已置顶', icon: 'Top', count: toppingCount.value }
+]);
+
 const dateRange = ref<string[]>([]);
 
 const queryForm = reactive<UserWorkQuery>({
@@ -581,6 +757,10 @@ const queryForm = reactive<UserWorkQuery>({
   like_min: '',
   like_max: ''
 });
+
+const detailDrawerVisible = ref(false);
+const detailData = ref<UserWorkItem | null>(null);
+const detailLoading = ref(false);
 
 const auditDialogVisible = ref(false);
 const auditMode = ref<'view' | 'edit'>('edit');
@@ -669,7 +849,32 @@ function auditStatusType(status: UserWorkAuditStatus) {
 }
 
 function rowClassName({ row }: { row: UserWorkItem }) {
-  return currentRowId.value === row.id ? 'row-highlight' : '';
+  const classes: string[] = [];
+  if (currentRowId.value === row.id) classes.push('row-highlight');
+  if (row.is_top) classes.push('row-is-top');
+  return classes.join(' ');
+}
+
+function handleQuickFilter(key: string) {
+  activeQuickFilter.value = key;
+  queryForm.audit_status = '';
+  queryForm.is_top = '';
+  switch (key) {
+    case 'pending':
+      queryForm.audit_status = 0;
+      break;
+    case 'passed':
+      queryForm.audit_status = 1;
+      break;
+    case 'rejected':
+      queryForm.audit_status = 2;
+      break;
+    case 'topping':
+      queryForm.is_top = 1;
+      break;
+  }
+  queryForm.page = 1;
+  fetchList();
 }
 
 function buildQueryParams(): UserWorkQuery {
@@ -700,6 +905,7 @@ async function fetchList() {
 
 function handleSearch() {
   queryForm.page = 1;
+  activeQuickFilter.value = 'all';
   fetchList();
 }
 
@@ -714,6 +920,7 @@ function handleReset() {
   queryForm.like_max = '';
   queryForm.page = 1;
   dateRange.value = [];
+  activeQuickFilter.value = 'all';
   fetchList();
 }
 
@@ -724,6 +931,19 @@ function handleSelectionChange(rows: UserWorkItem[]) {
 
 function handleRowClick(row: UserWorkItem) {
   currentRowId.value = row.id;
+}
+
+async function openDetailDrawer(row: UserWorkItem) {
+  detailDrawerVisible.value = true;
+  detailLoading.value = true;
+  try {
+    const res = await getUserWorkDetail(row.id);
+    detailData.value = res;
+  } catch {
+    detailData.value = row;
+  } finally {
+    detailLoading.value = false;
+  }
 }
 
 function resetAuditForm() {
@@ -748,15 +968,22 @@ function openSingleAuditDialog(row: UserWorkItem, status: UserWorkAuditStatus) {
   auditDialogVisible.value = true;
 }
 
-function handleSingleAudit(row: UserWorkItem, status: UserWorkAuditStatus) {
+async function handleSingleAudit(row: UserWorkItem, status: UserWorkAuditStatus) {
   if (status === 1) {
-    confirmDialog(
+    const confirmed = await confirmDialog(
       `确定要通过作品「${row.name}」的审核吗？`,
       '审核通过确认'
-    ).then(confirmed => {
-      if (!confirmed) return;
-      submitAudit([row.id], { audit_status: 1 });
-    });
+    );
+    if (!confirmed) return;
+    singleAuditLoading.value[row.id] = true;
+    try {
+      await auditUserWork(row.id, { audit_status: 1 });
+      showSuccess('审核通过成功');
+      fetchList();
+    } catch {
+    } finally {
+      singleAuditLoading.value[row.id] = false;
+    }
   } else {
     openSingleAuditDialog(row, status);
   }
@@ -777,24 +1004,27 @@ function openBatchAuditDialog(status: UserWorkAuditStatus) {
   auditDialogVisible.value = true;
 }
 
-function handleBatchAudit(status: UserWorkAuditStatus) {
+async function handleBatchAudit(status: UserWorkAuditStatus) {
   const pendingRows = selectedRows.value.filter(r => r.audit_status === 0);
   if (pendingRows.length === 0) {
     showWarning('请选择待审核的作品');
     return;
   }
   if (status === 1) {
-    confirmDialog(
+    const confirmed = await confirmDialog(
       `确定要通过选中的 ${pendingRows.length} 条作品的审核吗？`,
       '批量审核通过确认'
-    ).then(confirmed => {
-      if (!confirmed) return;
-      submitAudit(
-        pendingRows.map(r => r.id),
-        { audit_status: 1 },
-        true
-      );
-    });
+    );
+    if (!confirmed) return;
+    batchAuditLoading.value = true;
+    try {
+      await batchAuditUserWork(pendingRows.map(r => r.id), { audit_status: 1 });
+      showSuccess('批量通过成功');
+      fetchList();
+    } catch {
+    } finally {
+      batchAuditLoading.value = false;
+    }
   } else {
     openBatchAuditDialog(status);
   }
@@ -931,11 +1161,14 @@ async function handleDelete(row: UserWorkItem) {
     { type: 'error', confirmButtonClass: 'el-button--danger' }
   );
   if (!confirmed) return;
+  singleDeleteLoading.value[row.id] = true;
   try {
     await deleteUserWork(row.id);
     showSuccess('删除成功');
     fetchList();
   } catch {
+  } finally {
+    singleDeleteLoading.value[row.id] = false;
   }
 }
 
@@ -1003,6 +1236,56 @@ watch(
   margin-left: 4px;
 }
 
+.quick-filter-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding: 4px;
+  background: #f5f7fa;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.quick-filter-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #606266;
+  transition: all 0.25s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.quick-filter-tab:hover {
+  background: #e8eaed;
+  color: #303133;
+}
+
+.quick-filter-tab.is-active {
+  background: #fff;
+  color: var(--color-primary, #1677FF);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.tab-count {
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 6px;
+  border-radius: 10px;
+  color: #909399;
+  font-weight: 500;
+}
+
+.quick-filter-tab.is-active .tab-count {
+  background: rgba(22, 119, 255, 0.1);
+  color: var(--color-primary, #1677FF);
+}
+
 .like-count-range {
   display: flex;
   align-items: center;
@@ -1059,6 +1342,25 @@ watch(
   background-color: var(--highlight-bg) !important;
 }
 
+:deep(.el-table .row-is-top) {
+  position: relative;
+}
+
+:deep(.el-table .row-is-top td:first-child) {
+  position: relative;
+}
+
+:deep(.el-table .row-is-top td:first-child::before) {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #f56c6c, #e6a23c);
+  border-radius: 0 2px 2px 0;
+}
+
 .cover-cell {
   position: relative;
   display: inline-block;
@@ -1083,19 +1385,32 @@ watch(
   font-size: 12px;
 }
 
-.top-badge {
+.top-badge-row {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  font-size: 10px;
-  padding: 0 4px;
-  height: 16px;
-  line-height: 16px;
+  top: -2px;
+  right: -2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  background: linear-gradient(135deg, #f56c6c, #e6a23c);
+  color: #fff;
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 0 4px 0 6px;
+  line-height: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .work-name {
   font-weight: 500;
   color: #303133;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.work-name:hover {
+  color: var(--color-primary, #1677FF);
 }
 
 .user-cell {
@@ -1419,14 +1734,249 @@ watch(
   display: flex;
   align-items: center;
 }
+
+.detail-drawer :deep(.el-drawer__header) {
+  margin-bottom: 0;
+  padding: 16px 24px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.detail-drawer :deep(.el-drawer__body) {
+  padding: 0;
+}
+
+.detail-section {
+  padding: 20px 24px;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.detail-section:last-child {
+  border-bottom: none;
+}
+
+.detail-cover-section {
+  text-align: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8eaed 100%);
+}
+
+.detail-original-image {
+  max-width: 100%;
+  max-height: 360px;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  cursor: zoom-in;
+}
+
+.detail-no-cover {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c0c4cc;
+  font-size: 14px;
+}
+
+.section-title {
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  padding-left: 10px;
+  border-left: 3px solid var(--color-primary, #1677FF);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 24px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.info-label {
+  font-size: 12px;
+  color: #909399;
+}
+
+.info-value {
+  font-size: 14px;
+  color: #303133;
+}
+
+.creator-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: linear-gradient(135deg, #f5f9ff 0%, #eef6ff 100%);
+  border-radius: 8px;
+}
+
+.creator-avatar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.creator-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.creator-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.creator-id {
+  margin: 0;
+  font-size: 12px;
+  color: #909399;
+}
+
+.interact-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.interact-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  background: #f9fafc;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.interact-item:hover {
+  background: #f0f2f5;
+}
+
+.interact-num {
+  font-size: 18px;
+  font-weight: 700;
+  color: #303133;
+}
+
+.interact-label {
+  font-size: 12px;
+  color: #909399;
+}
+
+.audit-timeline {
+  position: relative;
+  padding-left: 20px;
+}
+
+.audit-timeline::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: #ebeef5;
+}
+
+.audit-record-item {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+
+.audit-record-item:last-child {
+  padding-bottom: 0;
+}
+
+.record-dot {
+  position: absolute;
+  left: -20px;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #ebeef5;
+}
+
+.record-dot-warning {
+  background: #e6a23c;
+  box-shadow: 0 0 0 2px #e6a23c33;
+}
+
+.record-dot-success {
+  background: #67c23a;
+  box-shadow: 0 0 0 2px #67c23a33;
+}
+
+.record-dot-danger {
+  background: #f56c6c;
+  box-shadow: 0 0 0 2px #f56c6c33;
+}
+
+.record-dot-info {
+  background: #909399;
+  box-shadow: 0 0 0 2px #90939933;
+}
+
+.record-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.record-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.record-time {
+  font-size: 12px;
+  color: #909399;
+}
+
+.record-reason {
+  font-size: 13px;
+  color: #606266;
+  margin-bottom: 4px;
+}
+
+.record-reason b {
+  color: #f56c6c;
+}
+
+.record-remark {
+  font-size: 13px;
+  color: #909399;
+}
+
+.no-record {
+  text-align: center;
+  color: #c0c4cc;
+  font-size: 13px;
+  padding: 20px 0;
+}
 </style>
 
 <style>
-.v-ripple {
-  position: relative;
-  overflow: hidden;
-}
-
 .ripple-effect {
   position: absolute;
   border-radius: 50%;

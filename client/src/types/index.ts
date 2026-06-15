@@ -136,17 +136,31 @@ export interface VisualTemplateForm {
 
 export type UserWorkAuditStatus = 0 | 1 | 2 | 3;
 
+export interface UserWorkAuditRecord {
+  audit_status: UserWorkAuditStatus;
+  audit_reason: string | null;
+  audit_remark: string | null;
+  audited_at: string;
+}
+
 export interface UserWorkItem {
   id: number;
   name: string;
   cover: string | null;
+  description: string | null;
+  width: number | null;
+  height: number | null;
   user_id: number;
   username: string;
   user_avatar: string | null;
   like_count: number;
+  comment_count: number;
+  view_count: number;
+  share_count: number;
   audit_status: UserWorkAuditStatus;
   audit_reason: string | null;
   audit_remark: string | null;
+  audit_records: UserWorkAuditRecord[];
   is_top: number;
   top_expire_at: string | null;
   top_remark: string | null;
