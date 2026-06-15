@@ -37,6 +37,12 @@ const routes: RouteRecordRaw[] = [
         name: 'SilhouetteDetail',
         component: () => import('@/views/silhouette/detail.vue'),
         meta: { title: '素材详情', requiresAuth: true, level: 2 }
+      },
+      {
+        path: 'visual-templates',
+        name: 'VisualTemplates',
+        component: () => import('@/views/visual-template/index.vue'),
+        meta: { title: '视觉模板', icon: 'Grid', requiresAuth: true, level: 1 }
       }
     ]
   },

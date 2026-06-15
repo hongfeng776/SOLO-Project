@@ -100,3 +100,32 @@ export interface SilhouetteMaterialForm {
   category?: string;
   status?: number;
 }
+
+export interface VisualTemplateItem {
+  id: number;
+  name: string;
+  cover: string | null;
+  style_type: string | null;
+  scene: string | null;
+  status: number;
+  use_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VisualTemplateQuery {
+  page?: number;
+  pageSize?: number;
+  name?: string;
+  style_type?: string;
+  scene?: string;
+  status?: number | '';
+}
+
+export interface VisualTemplateForm {
+  name: string;
+  cover?: File | null;
+  style_type?: string;
+  scene?: string;
+  status?: number;
+}

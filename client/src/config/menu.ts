@@ -8,6 +8,12 @@ export const menuList: MenuItem[] = [
     icon: 'HomeFilled'
   },
   {
+    path: '/visual-templates',
+    name: 'VisualTemplates',
+    title: '视觉模板',
+    icon: 'Grid'
+  },
+  {
     path: '/silhouettes',
     name: 'Silhouettes',
     title: '剪影素材',

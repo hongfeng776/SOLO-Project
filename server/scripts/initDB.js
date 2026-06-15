@@ -3,6 +3,7 @@ const sequelize = require('../config/database');
 const User = require('../models/User');
 const OperationLog = require('../models/OperationLog');
 const SilhouetteMaterial = require('../models/SilhouetteMaterial');
+const VisualTemplate = require('../models/VisualTemplate');
 
 async function initDB() {
   try {
