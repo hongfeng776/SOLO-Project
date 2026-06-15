@@ -5,13 +5,17 @@ import ContentTag from './ContentTag';
 export interface TagAttributes {
   id: number;
   name: string;
+  remark?: string;
+  sort: number;
   color?: string;
   status: number;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface TagCreationAttributes extends Omit<TagAttributes, 'id' | 'createdAt' | 'updatedAt' | 'color' | 'status'> {
+export interface TagCreationAttributes extends Omit<TagAttributes, 'id' | 'createdAt' | 'updatedAt' | 'remark' | 'sort' | 'color' | 'status'> {
+  remark?: string;
+  sort?: number;
   color?: string;
   status?: number;
 }
@@ -26,6 +30,13 @@ export default class Tag extends Model<TagAttributes, TagCreationAttributes> {
   @Unique
   @Column({ type: DataType.STRING(30), allowNull: false, comment: '标签名称' })
   name!: string;
+
+  @Column({ type: DataType.STRING(200), comment: '标签备注' })
+  remark?: string;
+
+  @Default(0)
+  @Column({ type: DataType.INTEGER, allowNull: false, comment: '排序权重' })
+  sort!: number;
 
   @Column({ type: DataType.STRING(20), comment: '标签颜色' })
   color?: string;

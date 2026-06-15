@@ -31,7 +31,7 @@ export const categoryApi = {
 };
 
 export const tagApi = {
-  list: () => get<ApiResponse<PaginatedData<TagInfo>>>('/tags'),
+  list: (params?: PaginationParams) => get<ApiResponse<PaginatedData<TagInfo>>>('/tags', params),
   create: (data: Partial<TagInfo>) => post<ApiResponse<TagInfo>>('/tags', data),
   update: (id: number, data: Partial<TagInfo>) => put<ApiResponse<TagInfo>>(`/tags/${id}`, data),
   remove: (id: number) => del<ApiResponse<null>>(`/tags/${id}`),

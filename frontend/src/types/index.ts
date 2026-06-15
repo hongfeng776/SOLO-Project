@@ -67,6 +67,8 @@ export interface CategoryInfo {
 export interface TagInfo {
   id: number;
   name: string;
+  remark?: string;
+  sort: number;
   color?: string;
   status: number;
   createdAt: string;

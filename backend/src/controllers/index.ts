@@ -462,11 +462,40 @@ export const categoryController = {
 export const tagController = {
   async list(req: Request, res: Response): Promise<void> {
     try {
+      const page = parseInt(req.query.page as string) || 1;
+      const pageSize = parseInt(req.query.pageSize as string) || 10;
+      const keyword = req.query.keyword as string || '';
+      const orderBy = req.query.orderBy as string || 'sort';
+      const orderDir = (req.query.orderDir as string || 'ASC').toUpperCase();
+      const offset = (page - 1) * pageSize;
+
+      const where: any = {};
+      if (keyword) {
+        where.name = { [Op.like as any]: `%${keyword}%` };
+      }
+
+      const sortableFields = new Set(['id', 'name', 'sort', 'status', 'createdAt', 'updatedAt']);
+      const validOrderDirs = new Set(['ASC', 'DESC']);
+      const safeField = sortableFields.has(orderBy) ? orderBy : 'sort';
+      const safeDir = validOrderDirs.has(orderDir) ? orderDir : 'ASC';
+      const fieldToColumn: Record<string, string> = {
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
+      };
+      const colName = fieldToColumn[safeField] ?? safeField;
+
+      const orderClause: [string, string][] = [[colName, safeDir]];
+      if (safeField !== 'id') {
+        orderClause.push(['id', 'DESC']);
+      }
+
       const { rows, count } = await Tag.findAndCountAll({
-        where: { status: 1 },
-        order: [['id', 'DESC']],
+        where,
+        offset,
+        limit: pageSize,
+        order: orderClause,
       });
-      responseUtil.paginate(res, rows, count, 1, count);
+      responseUtil.paginate(res, rows, count, page, pageSize);
     } catch (error) {
       console.error('[Tag List]:', error);
       responseUtil.internalError(res);
@@ -475,17 +504,24 @@ export const tagController = {
 
   async create(req: Request, res: Response): Promise<void> {
     try {
-      const { name, color, status } = req.body;
-      if (!name) {
+      const { name, remark, sort, color, status } = req.body;
+      if (!name || !name.trim()) {
         responseUtil.badRequest(res, '标签名称不能为空');
         return;
       }
-      const exists = await Tag.findOne({ where: { name } });
+      const trimmedName = name.trim();
+      const exists = await Tag.findOne({ where: { name: trimmedName } });
       if (exists) {
         responseUtil.fail(res, '标签名称已存在');
         return;
       }
-      const item = await Tag.create({ name, color, status: status ?? 1 });
+      const item = await Tag.create({
+        name: trimmedName,
+        remark,
+        sort: sort ?? 0,
+        color,
+        status: status ?? 1,
+      });
       responseUtil.success(res, item, '创建成功', 201);
     } catch (error) {
       console.error('[Tag Create]:', error);
@@ -496,20 +532,26 @@ export const tagController = {
   async update(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { name, color, status } = req.body;
+      const { name, remark, sort, color, status } = req.body;
       const item = await Tag.findByPk(parseInt(id));
       if (!item) {
         responseUtil.notFound(res, '标签不存在');
         return;
       }
-      if (name && name !== item.name) {
-        const exists = await Tag.findOne({ where: { name } });
+      if (name && name.trim() && name.trim() !== item.name) {
+        const exists = await Tag.findOne({ where: { name: name.trim() } });
         if (exists) {
           responseUtil.fail(res, '标签名称已存在');
           return;
         }
       }
-      const updateData: Record<string, any> = { name, color, status };
+      const updateData: Record<string, any> = {
+        name: name ? name.trim() : undefined,
+        remark,
+        sort,
+        color,
+        status,
+      };
       Object.keys(updateData).forEach(k => updateData[k] === undefined && delete updateData[k]);
       await item.update(updateData);
       responseUtil.success(res, item, '更新成功');
@@ -527,6 +569,7 @@ export const tagController = {
         responseUtil.notFound(res, '标签不存在');
         return;
       }
+      await item.$set('contents', []);
       await item.destroy();
       responseUtil.success(res, null, '删除成功');
     } catch (error) {

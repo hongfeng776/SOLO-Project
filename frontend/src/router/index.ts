@@ -48,10 +48,16 @@ const routes: RouteRecordRaw[] = [
             meta: { title: '分类管理', icon: 'Menu', order: 2 },
           },
           {
+            path: 'tags',
+            name: 'TagManage',
+            component: () => import('@/views/content/tags.vue'),
+            meta: { title: '标签管理', icon: 'PriceTag', order: 3 },
+          },
+          {
             path: 'contents/:id',
             name: 'ContentDetail',
             component: () => import('@/views/content/content-detail.vue'),
-            meta: { title: '内容详情', icon: 'Document', hidden: true, order: 3 },
+            meta: { title: '内容详情', icon: 'Document', hidden: true, order: 4 },
           },
         ],
       },
