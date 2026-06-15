@@ -4,9 +4,9 @@ export interface SeekerQuery {
   pageNum: number
   pageSize: number
   name?: string
-  gender?: number | string
+  gender?: number
   education?: string
-  status?: number | string
+  status?: number
   startTime?: string
   endTime?: string
 }

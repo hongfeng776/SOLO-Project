@@ -10,7 +10,7 @@
         <el-input v-model="queryParams.name" placeholder="请输入姓名" clearable style="width: 160px" />
       </el-form-item>
       <el-form-item label="性别">
-        <el-select v-model="queryParams.gender" placeholder="请选择性别" clearable style="width: 120px">
+        <el-select v-model="queryParams.gender" placeholder="请选择性别" clearable style="width: 120px" @clear="handleGenderClear">
           <el-option label="男" :value="1" />
           <el-option label="女" :value="0" />
         </el-select>
@@ -21,7 +21,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="状态">
-        <el-select v-model="queryParams.status" placeholder="全部状态" clearable style="width: 120px">
+        <el-select v-model="queryParams.status" placeholder="全部状态" clearable style="width: 120px" @clear="handleStatusClear">
           <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
@@ -259,9 +259,9 @@ const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
   name: '',
-  gender: '' as number | string,
+  gender: undefined as number | undefined,
   education: '',
-  status: '' as number | string,
+  status: undefined as number | undefined,
   startTime: '',
   endTime: ''
 })
@@ -296,11 +296,19 @@ function handleQuery() {
   fetchList()
 }
 
+function handleGenderClear() {
+  queryParams.gender = undefined
+}
+
+function handleStatusClear() {
+  queryParams.status = undefined
+}
+
 function handleReset() {
   queryParams.name = ''
-  queryParams.gender = ''
+  queryParams.gender = undefined
   queryParams.education = ''
-  queryParams.status = ''
+  queryParams.status = undefined
   queryParams.startTime = ''
   queryParams.endTime = ''
   registerTimeRange.value = null

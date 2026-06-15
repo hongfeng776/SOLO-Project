@@ -1,14 +1,12 @@
 package com.zhiqin.recruitment.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.zhiqin.recruitment.common.BatchIdsDTO;
 import com.zhiqin.recruitment.common.Result;
 import com.zhiqin.recruitment.entity.JobSeeker;
 import com.zhiqin.recruitment.service.JobSeekerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/seeker")
@@ -57,10 +55,9 @@ public class JobSeekerController {
     }
 
     @DeleteMapping("/batch")
-    public Result<Void> batchDelete(@RequestBody Map<String, List<Long>> params) {
-        List<Long> ids = params.get("ids");
-        if (ids != null && !ids.isEmpty()) {
-            jobSeekerService.batchDelete(ids);
+    public Result<Void> batchDelete(@RequestBody BatchIdsDTO dto) {
+        if (dto.getIds() != null && !dto.getIds().isEmpty()) {
+            jobSeekerService.batchDelete(dto.getIds());
         }
         return Result.success();
     }

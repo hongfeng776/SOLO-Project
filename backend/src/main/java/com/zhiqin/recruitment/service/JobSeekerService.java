@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zhiqin.recruitment.entity.JobSeeker;
 
+import java.util.List;
+
 public interface JobSeekerService extends IService<JobSeeker> {
 
     IPage<JobSeeker> pageList(String name, Integer gender, String education, Integer status, String startTime, String endTime, Integer pageNum, Integer pageSize);
