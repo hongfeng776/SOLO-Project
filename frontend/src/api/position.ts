@@ -22,6 +22,7 @@ export interface PositionForm {
   experience?: string
   responsibility?: string
   requirement?: string
+  expireTime?: string
   status?: number | string
 }
 
@@ -38,9 +39,28 @@ export interface PositionRecord {
   experience: string
   responsibility: string
   requirement: string
+  viewCount: number
+  applyCount: number
   status: number
+  expireTime: string
   createTime: string
   updateTime: string
+}
+
+export interface ResumeRecordVO {
+  id: number
+  seekerId: number
+  seekerName: string
+  positionTitle: string
+  enterpriseName: string
+  status: number
+  statusText: string
+  remark: string
+  applyTime: string
+}
+
+export interface PositionDetailVO extends PositionRecord {
+  resumeList: ResumeRecordVO[]
 }
 
 export interface PageResult<T> {
@@ -62,6 +82,13 @@ export function getPositionList(params: PositionQuery) {
 export function getPositionDetail(id: number) {
   return request<PositionRecord>({
     url: `/position/${id}`,
+    method: 'get'
+  })
+}
+
+export function getPositionDetailVO(id: number) {
+  return request<PositionDetailVO>({
+    url: `/position/detail/${id}`,
     method: 'get'
   })
 }
@@ -94,5 +121,27 @@ export function removePositionBatch(ids: number[]) {
     url: '/position/batch',
     method: 'delete',
     data: { ids }
+  })
+}
+
+export function updatePositionStatus(ids: number[], status: number) {
+  return request<void>({
+    url: '/position/status',
+    method: 'put',
+    data: { ids, status }
+  })
+}
+
+export function onlinePosition(id: number) {
+  return request<void>({
+    url: `/position/online/${id}`,
+    method: 'put'
+  })
+}
+
+export function offlinePosition(id: number) {
+  return request<void>({
+    url: `/position/offline/${id}`,
+    method: 'put'
   })
 }

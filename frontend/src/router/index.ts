@@ -52,6 +52,12 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: { title: '岗位管理', icon: 'Briefcase' }
       },
       {
+        path: 'position/detail/:id',
+        name: 'PositionDetail',
+        component: () => import('@/views/position/detail.vue'),
+        meta: { title: '岗位详情', icon: 'Briefcase', hidden: true }
+      },
+      {
         path: 'resume',
         name: 'Resume',
         component: () => import('@/views/resume/index.vue'),

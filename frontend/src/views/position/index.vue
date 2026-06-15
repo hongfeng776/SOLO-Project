@@ -5,6 +5,14 @@
       <div class="page-header-sub">共 {{ total }} 条岗位记录</div>
     </div>
 
+    <el-tabs v-model="activeTab" class="status-tabs" @tab-change="handleTabChange">
+      <el-tab-pane label="全部" name="" />
+      <el-tab-pane :label="`招聘中(${statusCounts[1] || 0})`" name="1" />
+      <el-tab-pane :label="`已下架(${statusCounts[0] || 0})`" name="0" />
+      <el-tab-pane :label="`已过期(${statusCounts[4] || 0})`" name="4" />
+      <el-tab-pane :label="`待审核(${statusCounts[3] || 0})`" name="3" />
+    </el-tabs>
+
     <el-form :model="queryParams" inline class="search-form">
       <el-form-item label="岗位名称">
         <el-input v-model="queryParams.title" placeholder="请输入岗位名称" clearable style="width: 200px" />
@@ -47,7 +55,8 @@
         <el-button
           type="danger"
           v-ripple
-          :disabled="selectedIds.length === 0"
+          :disabled="selectedIds.length === 0 || actionLoading.batchDelete"
+          :loading="actionLoading.batchDelete"
           @click="handleBatchDelete"
         >
           <el-icon style="margin-right: 4px"><Delete /></el-icon>
@@ -84,14 +93,15 @@
             prop="title"
             label="岗位名称"
             min-width="180"
-            show-overflow-tooltip
             resizable
             fixed="left"
           >
             <template #default="{ row }">
-              <span class="position-title" :class="{ 'is-closed': row.status === 0 }">
-                {{ row.title }}
-              </span>
+              <el-tooltip :content="row.title" placement="top" :disabled="!row.title || row.title.length <= 10">
+                <span class="position-title" :class="{ 'is-closed': row.status === 0 }">
+                  {{ row.title }}
+                </span>
+              </el-tooltip>
               <el-tag v-if="row.category" size="small" class="category-tag" effect="plain">
                 {{ row.category }}
               </el-tag>
@@ -101,9 +111,14 @@
             prop="enterpriseName"
             label="所属企业"
             min-width="160"
-            show-overflow-tooltip
             resizable
-          />
+          >
+            <template #default="{ row }">
+              <el-tooltip :content="row.enterpriseName" placement="top" :disabled="!row.enterpriseName || row.enterpriseName.length <= 10">
+                <span>{{ row.enterpriseName }}</span>
+              </el-tooltip>
+            </template>
+          </el-table-column>
           <el-table-column
             label="薪资范围(K)"
             width="130"
@@ -137,6 +152,30 @@
             resizable
           />
           <el-table-column
+            prop="viewCount"
+            label="浏览量"
+            width="90"
+            align="center"
+            resizable
+            sortable
+          />
+          <el-table-column
+            prop="applyCount"
+            label="投递量"
+            width="90"
+            align="center"
+            resizable
+            sortable
+          />
+          <el-table-column
+            prop="expireTime"
+            label="过期时间"
+            width="160"
+            align="center"
+            resizable
+            sortable
+          />
+          <el-table-column
             prop="status"
             label="状态"
             width="100"
@@ -144,7 +183,12 @@
             resizable
           >
             <template #default="{ row }">
-              <el-tag :type="getPositionStatusType(row.status)" size="small" effect="light">
+              <el-tag
+                :type="getPositionStatusType(row.status)"
+                size="small"
+                effect="light"
+                :style="row.status === 3 ? 'background: #f0e6ff; color: #722ed1; border-color: #d3adf7' : ''"
+              >
                 {{ getPositionStatusLabel(row.status) }}
               </el-tag>
             </template>
@@ -159,14 +203,56 @@
           />
           <el-table-column
             label="操作"
-            width="180"
+            width="220"
             align="center"
             fixed="right"
           >
             <template #default="{ row }">
-              <el-button type="primary" link size="small" v-debounce="() => handleEdit(row as PositionRecord)">编辑</el-button>
-              <el-button type="info" link size="small" @click="handleView(row as PositionRecord)">详情</el-button>
-              <el-button type="danger" link size="small" v-debounce="() => handleDelete(row as PositionRecord)">删除</el-button>
+              <el-button type="primary" link size="small" @click="handleView(row as PositionRecord)">详情</el-button>
+              <el-button
+                type="info"
+                link
+                size="small"
+                :loading="actionLoading.edit === row.id"
+                :disabled="actionLoading.edit === row.id"
+                v-debounce="() => handleEdit(row as PositionRecord)"
+              >
+                编辑
+              </el-button>
+              <template v-if="canShowOnlineButton(row.status)">
+                <el-button
+                  type="success"
+                  link
+                  size="small"
+                  :loading="actionLoading.online === row.id"
+                  :disabled="actionLoading.online === row.id"
+                  v-debounce="() => handleOnline(row as PositionRecord)"
+                >
+                  上架
+                </el-button>
+              </template>
+              <template v-if="canShowOfflineButton(row.status)">
+                <el-button
+                  type="warning"
+                  link
+                  size="small"
+                  :loading="actionLoading.offline === row.id"
+                  :disabled="actionLoading.offline === row.id"
+                  v-debounce="() => handleOffline(row as PositionRecord)"
+                >
+                  下架
+                </el-button>
+              </template>
+              <el-button
+                type="danger"
+                link
+                size="small"
+                :loading="actionLoading.delete === row.id"
+                :disabled="actionLoading.delete === row.id"
+                v-debounce="() => handleDelete(row as PositionRecord)"
+              >
+                删除
+              </el-button>
             </template>
           </el-table-column>
         </ProTable>
@@ -177,7 +263,7 @@
       v-model:visible="dialogVisible"
       :title="dialogTitle"
       width="720px"
-      :confirm-loading="submitLoading"
+      :confirm-loading="actionLoading.submit"
       @confirm="handleSubmit"
       @cancel="handleDialogCancel"
     >
@@ -270,6 +356,17 @@
               </el-radio-group>
             </el-form-item>
           </el-col>
+          <el-col :span="12">
+            <el-form-item label="过期时间" prop="expireTime">
+              <el-date-picker
+                v-model="formData.expireTime"
+                type="datetime"
+                placeholder="请选择过期时间"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
         </el-row>
         <el-divider content-position="left">岗位详情</el-divider>
         <el-row :gutter="16">
@@ -313,7 +410,12 @@
       <div class="position-detail" v-if="detailData">
         <div class="detail-header">
           <h3 class="detail-title">{{ detailData.title }}</h3>
-          <el-tag :type="getPositionStatusType(detailData.status)" size="large" effect="light">
+          <el-tag
+            :type="getPositionStatusType(detailData.status)"
+            size="large"
+            effect="light"
+            :style="detailData.status === 3 ? 'background: #f0e6ff; color: #722ed1; border-color: #d3adf7' : ''"
+          >
             {{ getPositionStatusLabel(detailData.status) }}
           </el-tag>
         </div>
@@ -326,7 +428,10 @@
           <span class="meta-item" v-if="detailData.category"><el-icon><Collection /></el-icon> {{ detailData.category }}</span>
         </div>
         <el-descriptions :column="2" border size="default" class="detail-desc">
+          <el-descriptions-item label="浏览量">{{ detailData.viewCount || 0 }}</el-descriptions-item>
+          <el-descriptions-item label="投递量">{{ detailData.applyCount || 0 }}</el-descriptions-item>
           <el-descriptions-item label="发布时间">{{ detailData.createTime }}</el-descriptions-item>
+          <el-descriptions-item label="过期时间">{{ detailData.expireTime || '-' }}</el-descriptions-item>
           <el-descriptions-item label="更新时间">{{ detailData.updateTime || '-' }}</el-descriptions-item>
         </el-descriptions>
         <div class="detail-section">
@@ -348,6 +453,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   Plus,
   Delete,
@@ -368,12 +474,17 @@ import {
   updatePosition,
   removePosition,
   removePositionBatch,
+  onlinePosition,
+  offlinePosition,
+  updatePositionStatus,
   type PositionForm,
   type PositionRecord
 } from '@/api/position'
 import { getEnterpriseList, type EnterpriseRecord } from '@/api/enterprise'
 import type { FormInstance, FormRules } from 'element-plus'
+import type { TabPaneName } from 'element-plus'
 
+const router = useRouter()
 const { confirmDelete, confirm, success, error } = useConfirm()
 
 const categoryOptions = ['技术开发', '产品运营', '市场营销', '设计创意', '数据分析', '人力资源', '财务金融', '行政支持', '其他']
@@ -381,15 +492,19 @@ const educationOptions = ['不限', '高中', '大专', '本科', '硕士', '博
 const experienceOptions = ['不限', '应届生', '1-3年', '3-5年', '5-10年', '10年以上']
 const statusOptions = [
   { label: '招聘中', value: 1 },
+  { label: '已下架', value: 0 },
   { label: '已暂停', value: 2 },
-  { label: '已关闭', value: 0 }
+  { label: '待审核', value: 3 },
+  { label: '已过期', value: 4 }
 ]
 
-function getPositionStatusType(status: number): 'success' | 'warning' | 'info' | 'danger' {
-  const map: Record<number, 'success' | 'warning' | 'info' | 'danger'> = {
+function getPositionStatusType(status: number): 'success' | 'warning' | 'info' | 'danger' | undefined {
+  const map: Record<number, 'success' | 'warning' | 'info' | 'danger' | undefined> = {
     1: 'success',
+    0: 'info',
     2: 'warning',
-    0: 'info'
+    3: undefined,
+    4: 'info'
   }
   return map[status] ?? 'info'
 }
@@ -397,10 +512,20 @@ function getPositionStatusType(status: number): 'success' | 'warning' | 'info' |
 function getPositionStatusLabel(status: number) {
   const map: Record<number, string> = {
     1: '招聘中',
+    0: '已下架',
     2: '已暂停',
-    0: '已关闭'
+    3: '待审核',
+    4: '已过期'
   }
   return map[status] ?? '未知'
+}
+
+function canShowOnlineButton(status: number): boolean {
+  return [0, 2, 3, 4].includes(status)
+}
+
+function canShowOfflineButton(status: number): boolean {
+  return [1, 2, 3].includes(status)
 }
 
 function getRowClassName({ row }: { row: PositionRecord }) {
@@ -412,6 +537,17 @@ const tableData = ref<PositionRecord[]>([])
 const total = ref(0)
 const enterpriseList = ref<EnterpriseRecord[]>([])
 const selectedIds = ref<number[]>([])
+const activeTab = ref('')
+const statusCounts = reactive<Record<number, number>>({})
+
+const actionLoading = reactive({
+  online: null as number | null,
+  offline: null as number | null,
+  delete: null as number | null,
+  batchDelete: false,
+  edit: null as number | null,
+  submit: false
+})
 
 const queryParams = reactive({
   pageNum: 1,
@@ -430,12 +566,24 @@ async function fetchList() {
     const res = await getPositionList(queryParams)
     tableData.value = res.records
     total.value = res.total
+    calculateStatusCounts()
   } catch {
     tableData.value = []
     total.value = 0
   } finally {
     loading.value = false
   }
+}
+
+async function calculateStatusCounts() {
+  try {
+    const countRes = await getPositionList({ pageNum: 1, pageSize: 1000 })
+    const counts: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 }
+    countRes.records.forEach((r) => {
+      counts[r.status] = (counts[r.status] || 0) + 1
+    })
+    Object.assign(statusCounts, counts)
+  } catch {}
 }
 
 async function fetchEnterpriseList() {
@@ -447,8 +595,15 @@ async function fetchEnterpriseList() {
   }
 }
 
+function handleTabChange(tabName: TabPaneName) {
+  queryParams.status = tabName as number | string
+  queryParams.pageNum = 1
+  fetchList()
+}
+
 function handleQuery() {
   queryParams.pageNum = 1
+  activeTab.value = String(queryParams.status || '')
   fetchList()
 }
 
@@ -458,6 +613,7 @@ function handleReset() {
   queryParams.enterpriseId = ''
   queryParams.city = ''
   queryParams.status = ''
+  activeTab.value = ''
   handleQuery()
 }
 
@@ -473,7 +629,6 @@ function handleSelectionChange(selection: PositionRecord[]) {
 
 const dialogVisible = ref(false)
 const isEdit = ref(false)
-const submitLoading = ref(false)
 const formRef = ref<FormInstance>()
 
 const dialogTitle = computed(() => (isEdit.value ? '编辑岗位' : '新增岗位'))
@@ -489,7 +644,8 @@ const initFormData = (): PositionForm => ({
   experience: '不限',
   responsibility: '',
   requirement: '',
-  status: 1
+  status: 1,
+  expireTime: ''
 })
 
 const formData = reactive<PositionForm>(initFormData())
@@ -540,11 +696,12 @@ function handleAdd() {
 
 const positionFormKeys = [
   'id', 'title', 'enterpriseId', 'category', 'salaryMin', 'salaryMax',
-  'city', 'education', 'experience', 'responsibility', 'requirement', 'status'
+  'city', 'education', 'experience', 'responsibility', 'requirement', 'status', 'expireTime'
 ] as const
 
 async function handleEdit(row: PositionRecord) {
   isEdit.value = true
+  actionLoading.edit = row.id
   if (enterpriseList.value.length === 0) {
     await fetchEnterpriseList()
   }
@@ -554,7 +711,10 @@ async function handleEdit(row: PositionRecord) {
       ;(formData as any)[key] = (detail as any)[key]
     })
     dialogVisible.value = true
-  } catch {}
+  } catch {
+  } finally {
+    actionLoading.edit = null
+  }
 }
 
 async function handleDelete(row: PositionRecord) {
@@ -563,12 +723,15 @@ async function handleDelete(row: PositionRecord) {
     '删除确认'
   )
   if (ok) {
+    actionLoading.delete = row.id
     try {
       await removePosition(row.id)
       success('删除成功')
       fetchList()
     } catch {
       error('删除失败，请稍后重试')
+    } finally {
+      actionLoading.delete = null
     }
   }
 }
@@ -581,12 +744,53 @@ async function handleBatchDelete() {
     { type: 'warning', confirmButtonText: '确认删除', cancelButtonText: '取消' }
   )
   if (!ok) return
+  actionLoading.batchDelete = true
   try {
     await removePositionBatch(selectedIds.value)
     success('批量删除成功')
     fetchList()
   } catch {
     error('批量删除失败，请稍后重试')
+  } finally {
+    actionLoading.batchDelete = false
+  }
+}
+
+async function handleOnline(row: PositionRecord) {
+  const ok = await confirm(
+    `确定要上架岗位「${row.title}」吗？`,
+    '上架确认',
+    { type: 'info', confirmButtonText: '确认上架', cancelButtonText: '取消' }
+  )
+  if (!ok) return
+  actionLoading.online = row.id
+  try {
+    await onlinePosition(row.id)
+    success('上架成功')
+    fetchList()
+  } catch {
+    error('上架失败，请稍后重试')
+  } finally {
+    actionLoading.online = null
+  }
+}
+
+async function handleOffline(row: PositionRecord) {
+  const ok = await confirm(
+    `确定要下架岗位「${row.title}」吗？`,
+    '下架确认',
+    { type: 'warning', confirmButtonText: '确认下架', cancelButtonText: '取消' }
+  )
+  if (!ok) return
+  actionLoading.offline = row.id
+  try {
+    await offlinePosition(row.id)
+    success('下架成功')
+    fetchList()
+  } catch {
+    error('下架失败，请稍后重试')
+  } finally {
+    actionLoading.offline = null
   }
 }
 
@@ -594,7 +798,7 @@ async function handleSubmit() {
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
 
-  submitLoading.value = true
+  actionLoading.submit = true
   try {
     if (isEdit.value) {
       await updatePosition(formData)
@@ -609,7 +813,7 @@ async function handleSubmit() {
     error(isEdit.value ? '编辑失败，请稍后重试' : '新增失败，请稍后重试')
   } finally {
     setTimeout(() => {
-      submitLoading.value = false
+      actionLoading.submit = false
     }, 300)
   }
 }
@@ -622,11 +826,7 @@ const detailVisible = ref(false)
 const detailData = ref<PositionRecord | null>(null)
 
 async function handleView(row: PositionRecord) {
-  try {
-    const detail = await getPositionDetail(row.id)
-    detailData.value = detail
-    detailVisible.value = true
-  } catch {}
+  router.push(`/position/detail/${row.id}`)
 }
 
 onMounted(() => {
@@ -645,6 +845,14 @@ onMounted(() => {
     &-sub {
       font-size: 13px;
       color: $text-secondary;
+    }
+  }
+
+  .status-tabs {
+    margin-bottom: 16px;
+
+    :deep(.el-tabs__nav-wrap::after) {
+      height: 1px;
     }
   }
 

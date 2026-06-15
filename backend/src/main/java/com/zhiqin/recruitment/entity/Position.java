@@ -52,6 +52,16 @@ public class Position implements Serializable {
     @TableField("requirement")
     private String requirement;
 
+    @TableField("view_count")
+    private Integer viewCount;
+
+    @TableField("apply_count")
+    private Integer applyCount;
+
+    @TableField("expire_time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
+    private LocalDateTime expireTime;
+
     @TableField("status")
     private Integer status;
 

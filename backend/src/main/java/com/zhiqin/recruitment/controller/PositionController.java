@@ -2,6 +2,8 @@ package com.zhiqin.recruitment.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.zhiqin.recruitment.common.BatchIdsDTO;
+import com.zhiqin.recruitment.common.PositionDetailVO;
+import com.zhiqin.recruitment.common.PositionStatusDTO;
 import com.zhiqin.recruitment.common.Result;
 import com.zhiqin.recruitment.entity.Position;
 import com.zhiqin.recruitment.service.PositionService;
@@ -24,7 +26,7 @@ public class PositionController {
             @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        IPage<Position> page = positionService.pageList(title, enterpriseId, category, city, status, pageNum, pageSize);
+        IPage<Position> page = positionService.pageListWithExpireCheck(title, enterpriseId, category, city, status, pageNum, pageSize);
         return Result.success(page);
     }
 
@@ -32,6 +34,12 @@ public class PositionController {
     public Result<Position> getById(@PathVariable Long id) {
         Position position = positionService.getById(id);
         return Result.success(position);
+    }
+
+    @GetMapping("/detail/{id}")
+    public Result<PositionDetailVO> getDetail(@PathVariable Long id) {
+        PositionDetailVO detail = positionService.getDetail(id);
+        return Result.success(detail);
     }
 
     @PostMapping
@@ -56,6 +64,24 @@ public class PositionController {
     @DeleteMapping("/batch")
     public Result<Void> deleteBatch(@RequestBody BatchIdsDTO batchIdsDTO) {
         positionService.deleteBatch(batchIdsDTO.getIds());
+        return Result.success();
+    }
+
+    @PutMapping("/status")
+    public Result<Void> updateStatus(@RequestBody PositionStatusDTO statusDTO) {
+        positionService.updateStatus(statusDTO.getIds(), statusDTO.getStatus());
+        return Result.success();
+    }
+
+    @PutMapping("/online/{id}")
+    public Result<Void> online(@PathVariable Long id) {
+        positionService.online(id);
+        return Result.success();
+    }
+
+    @PutMapping("/offline/{id}")
+    public Result<Void> offline(@PathVariable Long id) {
+        positionService.offline(id);
         return Result.success();
     }
 
