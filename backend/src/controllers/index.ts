@@ -332,16 +332,40 @@ export const configController = {
 export const categoryController = {
   async list(req: Request, res: Response): Promise<void> {
     try {
+      const page = parseInt(req.query.page as string) || 1;
+      const pageSize = parseInt(req.query.pageSize as string) || 10;
       const keyword = req.query.keyword as string || '';
+      const orderBy = req.query.orderBy as string || 'sort';
+      const orderDir = (req.query.orderDir as string || 'ASC').toUpperCase();
+      const offset = (page - 1) * pageSize;
+
       const where: any = {};
       if (keyword) {
         where.name = { [Op.like as any]: `%${keyword}%` };
       }
+
+      const sortableFields = new Set(['id', 'name', 'sort', 'status', 'createdAt', 'updatedAt']);
+      const validOrderDirs = new Set(['ASC', 'DESC']);
+      const safeField = sortableFields.has(orderBy) ? orderBy : 'sort';
+      const safeDir = validOrderDirs.has(orderDir) ? orderDir : 'ASC';
+      const fieldToColumn: Record<string, string> = {
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
+      };
+      const colName = fieldToColumn[safeField] ?? safeField;
+
+      const orderClause: [string, string][] = [[colName, safeDir]];
+      if (safeField !== 'id') {
+        orderClause.push(['id', 'DESC']);
+      }
+
       const { rows, count } = await Category.findAndCountAll({
         where,
-        order: [['sort', 'ASC'], ['id', 'DESC']],
+        offset,
+        limit: pageSize,
+        order: orderClause,
       });
-      responseUtil.paginate(res, rows, count, 1, count);
+      responseUtil.paginate(res, rows, count, page, pageSize);
     } catch (error) {
       console.error('[Category List]:', error);
       responseUtil.internalError(res);
