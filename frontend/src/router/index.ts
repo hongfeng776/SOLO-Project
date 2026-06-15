@@ -76,6 +76,16 @@ export const constantRoutes: RouteRecordRaw[] = [
             }
           },
           {
+            path: 'user/:id',
+            name: 'UserEdit',
+            component: () => import('@/views/system/user/edit.vue'),
+            meta: {
+              title: '编辑用户',
+              hidden: true,
+              permissions: ['system:user:edit']
+            }
+          },
+          {
             path: 'role',
             name: 'Role',
             component: () => import('@/views/dashboard/Dashboard.vue'),

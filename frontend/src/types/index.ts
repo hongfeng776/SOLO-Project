@@ -134,6 +134,8 @@ export interface UserFormData {
   password?: string
   status: number
   role_ids?: number[]
+  role?: string
+  created_at?: string
 }
 
 export interface WorkFormData {

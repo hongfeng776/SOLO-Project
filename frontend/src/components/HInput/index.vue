@@ -179,9 +179,9 @@ defineExpose({ focus, blur })
   }
 
   &.is-focused {
-    border-color: #409eff;
-    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
-    transform: scale(1.01);
+    border-color: #4080FF;
+    box-shadow: 0 0 0 2px rgba(64, 128, 255, 0.2);
+    transform: scale(1.02);
   }
 
   &.is-error {

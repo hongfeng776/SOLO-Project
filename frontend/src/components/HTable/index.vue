@@ -1,12 +1,15 @@
 <template>
   <div class="h-table-wrapper">
     <el-table
+      ref="tableRef"
       v-loading="loading"
       :data="data"
       :stripe="true"
       :border="true"
       :highlight-current-row="true"
+      :row-class-name="handleRowClassName"
       @row-click="handleRowClick"
+      @row-dblclick="handleRowDblclick"
       @selection-change="handleSelectionChange"
       element-loading-text="加载中..."
       element-loading-background="rgba(255, 255, 255, 0.8)"
@@ -85,22 +88,28 @@ interface Props {
   showSelection?: boolean
   showIndex?: boolean
   showPagination?: boolean
+  rowClassName?: (row: any, rowIndex: number) => string
+  selectedRowId?: number | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
   showSelection: false,
   showIndex: true,
-  showPagination: true
+  showPagination: true,
+  rowClassName: undefined,
+  selectedRowId: null
 })
 
 const emit = defineEmits<{
   'page-change': [page: number]
   'size-change': [size: number]
   'row-click': [row: any, column: any, event: MouseEvent]
+  'row-dblclick': [row: any, column: any, event: MouseEvent]
   'selection-change': [selection: any[]]
 }>()
 
+const tableRef = ref()
 const internalPage = ref(props.pagination.page)
 const internalPageSize = ref(props.pagination.pageSize)
 
@@ -124,9 +133,31 @@ function handleRowClick(row: any, column: any, event: MouseEvent) {
   emit('row-click', row, column, event)
 }
 
+function handleRowDblclick(row: any, column: any, event: MouseEvent) {
+  emit('row-dblclick', row, column, event)
+}
+
+function handleRowClassName({ row, rowIndex }: { row: any; rowIndex: number }) {
+  let className = ''
+  if (props.selectedRowId !== null && row.id === props.selectedRowId) {
+    className = 'h-table-row-selected'
+  }
+  if (props.rowClassName) {
+    const customClass = props.rowClassName(row, rowIndex)
+    className = className ? `${className} ${customClass}` : customClass
+  }
+  return className
+}
+
 function handleSelectionChange(selection: any[]) {
   emit('selection-change', selection)
 }
+
+function clearSelection() {
+  tableRef.value?.clearSelection()
+}
+
+defineExpose({ clearSelection, tableRef })
 </script>
 
 <style scoped lang="scss">
@@ -145,12 +176,30 @@ function handleSelectionChange(selection: any[]) {
       font-weight: 600;
     }
 
-    tr.el-table__row:hover > td {
-      background-color: #f5f7fa;
+    tr.el-table__row {
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:hover > td {
+        background-color: #f5f7fa;
+      }
+
+      &.current-row > td {
+        background-color: #E8F3FF !important;
+      }
     }
 
     .el-table__row--striped td {
       background-color: #fafafa;
+    }
+
+    .el-table__row--striped.current-row td,
+    .el-table__row--striped:hover td {
+      background-color: #E8F3FF !important;
+    }
+
+    tr.h-table-row-selected > td {
+      background-color: #D6E8FF !important;
     }
 
     .el-table__empty-block {

@@ -8,6 +8,7 @@
             placeholder="请输入用户名"
             clearable
             style="width: 200px"
+            @keyup.enter="handleSearch"
           />
         </el-form-item>
         <el-form-item label="昵称">
@@ -16,12 +17,13 @@
             placeholder="请输入昵称"
             clearable
             style="width: 200px"
+            @keyup.enter="handleSearch"
           />
         </el-form-item>
         <el-form-item label="状态">
           <el-select
             v-model="searchForm.status"
-            placeholder="请选择状态"
+            placeholder="全部状态"
             clearable
             style="width: 150px"
           >
@@ -41,135 +43,154 @@
         <el-button
           type="primary"
           v-ripple
-          v-permission="'system:user:add'"
           @click="handleAdd"
+          class="action-btn"
         >
           <el-icon><Plus /></el-icon>
           新增用户
         </el-button>
-        <el-button
-          type="danger"
-          v-ripple
-          v-permission="'system:user:delete'"
-          :disabled="selectedRows.length === 0"
-          @click="handleBatchDelete"
-        >
-          <el-icon><Delete /></el-icon>
-          批量删除
-        </el-button>
       </div>
 
-      <HTable
-        :columns="columns"
-        :data="tableData"
-        :loading="loading"
-        :pagination="pagination"
-        :total="total"
-        :show-selection="true"
-        @page-change="handlePageChange"
-        @size-change="handleSizeChange"
-        @selection-change="handleSelectionChange"
-      >
-        <template #status="{ row }">
-          <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
-            {{ row.status === 1 ? '启用' : '禁用' }}
-          </el-tag>
-        </template>
-        <template #action="{ row }">
-          <el-button
-            link
-            type="primary"
-            v-ripple
-            v-permission="'system:user:view'"
-            @click="handleView(row)"
-          >
-            查看
-          </el-button>
-          <el-button
-            link
-            type="primary"
-            v-ripple
-            v-permission="'system:user:edit'"
-            @click="handleEdit(row)"
-          >
-            编辑
-          </el-button>
-          <el-button
-            link
-            type="danger"
-            v-ripple
-            v-permission="'system:user:delete'"
-            @click="handleDelete(row)"
-          >
-            删除
-          </el-button>
-        </template>
-      </HTable>
+      <div v-if="loading" class="skeleton-wrapper">
+        <div class="skeleton-table">
+          <div class="skeleton-header">
+            <div v-for="i in 7" :key="i" class="skeleton-header-item"></div>
+          </div>
+          <div v-for="i in 5" :key="i" class="skeleton-row">
+            <div v-for="j in 7" :key="j" class="skeleton-cell"></div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="table-container">
+        <HTable
+          ref="tableRef"
+          :columns="columns"
+          :data="tableData"
+          :loading="loading"
+          :pagination="pagination"
+          :total="total"
+          :show-selection="true"
+          :selected-row-id="selectedRowId"
+          @page-change="handlePageChange"
+          @size-change="handleSizeChange"
+          @selection-change="handleSelectionChange"
+          @row-dblclick="handleRowDblclick"
+          @row-click="handleRowClick"
+        >
+          <template #status="{ row }">
+            <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small" effect="light">
+              {{ row.status === 1 ? '启用' : '禁用' }}
+            </el-tag>
+          </template>
+          <template #action="{ row }">
+            <el-button
+              link
+              type="primary"
+              v-ripple
+              @click="handleEdit(row)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              link
+              type="danger"
+              v-ripple
+              @mousedown="handleDeleteBtnMouseDown(row.id)"
+              @mouseup="handleDeleteBtnMouseUp"
+              @mouseleave="handleDeleteBtnMouseUp"
+              @touchstart="handleDeleteBtnMouseDown(row.id)"
+              @touchend="handleDeleteBtnMouseUp"
+              :class="{ 'delete-btn-active': deleteBtnActiveId === row.id }"
+              @click.stop="handleDelete(row)"
+            >
+              删除
+            </el-button>
+          </template>
+        </HTable>
+      </div>
     </el-card>
 
-    <HModal
-      v-model:visible="dialogVisible"
-      :title="dialogTitle"
-      width="600px"
-      @confirm="handleSubmit"
-    >
-      <el-form
-        ref="formRef"
-        :model="formData"
-        label-width="80px"
-        class="user-form"
-      >
-        <el-form-item label="用户名" prop="username">
-          <HInput
-            v-model="formData.username"
-            placeholder="请输入用户名"
-            :rules="formRules.username"
-            :disabled="isView"
-          />
-        </el-form-item>
-        <el-form-item label="昵称" prop="nickname">
-          <HInput
-            v-model="formData.nickname"
-            placeholder="请输入昵称"
-            :rules="formRules.nickname"
-            :disabled="isView"
-          />
-        </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <HInput
-            v-model="formData.email"
-            type="email"
-            placeholder="请输入邮箱"
-            :rules="formRules.email"
-            :disabled="isView"
-          />
-        </el-form-item>
-        <el-form-item v-if="!isEdit" label="密码" prop="password">
-          <HInput
-            v-model="formData.password"
-            type="password"
-            placeholder="请输入密码"
-            :rules="formRules.password"
-            :disabled="isView"
-          />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="formData.status" :disabled="isView">
-            <el-radio :value="1">启用</el-radio>
-            <el-radio :value="0">禁用</el-radio>
-          </el-radio-group>
-        </el-form-item>
-      </el-form>
-    </HModal>
+    <Teleport to="body">
+      <Transition name="user-modal-scale">
+        <div v-if="dialogVisible" class="user-modal-overlay" @click.self="handleOverlayClick">
+          <div class="user-modal-wrapper" :style="{ width: dialogWidth }">
+            <div class="user-modal-header">
+              <span class="user-modal-title">{{ dialogTitle }}</span>
+              <span class="user-modal-close" @click.stop="handleCancel">
+                <el-icon :size="20"><Close /></el-icon>
+              </span>
+            </div>
+            <div class="user-modal-body">
+              <el-form
+                ref="formRef"
+                :model="formData"
+                label-width="80px"
+                class="user-form"
+              >
+                <el-form-item label="账号" prop="username">
+                  <HInput
+                    v-model="formData.username"
+                    placeholder="请输入账号"
+                    :rules="formRules.username"
+                  />
+                </el-form-item>
+                <el-form-item label="昵称" prop="nickname">
+                  <HInput
+                    v-model="formData.nickname"
+                    placeholder="请输入昵称"
+                    :rules="formRules.nickname"
+                  />
+                </el-form-item>
+                <el-form-item label="邮箱" prop="email">
+                  <HInput
+                    v-model="formData.email"
+                    type="email"
+                    placeholder="请输入邮箱"
+                    :rules="formRules.email"
+                  />
+                </el-form-item>
+                <el-form-item v-if="!isEdit" label="密码" prop="password">
+                  <HInput
+                    v-model="formData.password"
+                    type="password"
+                    placeholder="请输入密码"
+                    :rules="formRules.password"
+                  />
+                </el-form-item>
+                <el-form-item label="状态" prop="status">
+                  <el-radio-group v-model="formData.status">
+                    <el-radio :value="1">启用</el-radio>
+                    <el-radio :value="0">禁用</el-radio>
+                  </el-radio-group>
+                </el-form-item>
+              </el-form>
+            </div>
+            <div class="user-modal-footer">
+              <el-button v-ripple @click.stop="handleCancel">取消</el-button>
+              <el-button type="primary" v-ripple @click.stop="handleSubmit">确定</el-button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <BackToTop />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
-import { Plus, Delete } from '@element-plus/icons-vue'
+import { Plus, Close, Delete } from '@element-plus/icons-vue'
 import type { TableColumn, PaginationConfig, ValidationRule, UserFormData } from '@/types'
 import type { UserItem } from '@/api/user'
+import HInput from '@/components/HInput/index.vue'
+import HTable from '@/components/HTable/index.vue'
+import BackToTop from '@/components/BackToTop/index.vue'
+
+const router = useRouter()
 
 interface SearchForm {
   username: string
@@ -178,15 +199,18 @@ interface SearchForm {
 }
 
 const loading = ref(false)
+const tableRef = ref()
 const tableData = ref<UserItem[]>([])
 const total = ref(0)
 const selectedRows = ref<UserItem[]>([])
 const dialogVisible = ref(false)
 const dialogTitle = ref('新增用户')
-const isView = ref(false)
+const dialogWidth = ref('520px')
 const isEdit = ref(false)
 const formRef = ref<FormInstance>()
 const editId = ref<number | null>(null)
+const deleteBtnActiveId = ref<number | null>(null)
+const selectedRowId = ref<number | null>(null)
 
 const searchForm = reactive<SearchForm>({
   username: '',
@@ -202,12 +226,12 @@ const pagination = reactive<PaginationConfig>({
 
 const columns: TableColumn[] = [
   { prop: 'id', label: 'ID', width: 80, align: 'center' },
-  { prop: 'username', label: '用户名', minWidth: 120 },
+  { prop: 'username', label: '账号', minWidth: 120 },
   { prop: 'nickname', label: '昵称', minWidth: 120 },
-  { prop: 'email', label: '邮箱', minWidth: 180 },
+  { prop: 'email', label: '邮箱', minWidth: 180, showOverflowTooltip: true },
   { prop: 'status', label: '状态', width: 100, align: 'center', slot: 'status' },
-  { prop: 'created_at', label: '创建时间', minWidth: 180 },
-  { prop: 'action', label: '操作', width: 200, fixed: 'right', slot: 'action' }
+  { prop: 'created_at', label: '创建时间', width: 180, align: 'center' },
+  { prop: 'action', label: '操作', width: 160, fixed: 'right', slot: 'action' }
 ]
 
 const formData = reactive<UserFormData>({
@@ -220,8 +244,8 @@ const formData = reactive<UserFormData>({
 
 const formRules: Record<string, ValidationRule[]> = {
   username: [
-    { required: true, message: '请输入用户名' },
-    { min: 2, max: 20, message: '用户名长度在 2 到 20 个字符' }
+    { required: true, message: '请输入账号' },
+    { min: 2, max: 20, message: '账号长度在 2 到 20 个字符' }
   ],
   nickname: [
     { required: true, message: '请输入昵称' },
@@ -247,7 +271,9 @@ const mockData: UserItem[] = [
   { id: 7, username: 'user006', nickname: '孙八', email: 'sunba@hongjing.com', status: 1, role: 'user', created_at: '2026-06-07 13:10:00' },
   { id: 8, username: 'user007', nickname: '周九', email: 'zhoujiu@hongjing.com', status: 0, role: 'user', created_at: '2026-06-08 17:00:00' },
   { id: 9, username: 'user008', nickname: '吴十', email: 'wushi@hongjing.com', status: 1, role: 'user', created_at: '2026-06-09 10:25:00' },
-  { id: 10, username: 'user009', nickname: '郑十一', email: 'zheng11@hongjing.com', status: 1, role: 'user', created_at: '2026-06-10 11:55:00' }
+  { id: 10, username: 'user009', nickname: '郑十一', email: 'zheng11@hongjing.com', status: 1, role: 'user', created_at: '2026-06-10 11:55:00' },
+  { id: 11, username: 'user010', nickname: '王十二', email: 'wang12@hongjing.com', status: 1, role: 'user', created_at: '2026-06-11 09:00:00' },
+  { id: 12, username: 'user011', nickname: '李十三', email: 'li13@hongjing.com', status: 0, role: 'user', created_at: '2026-06-12 14:30:00' }
 ]
 
 function getFilteredData() {
@@ -275,7 +301,7 @@ function getFilteredData() {
 async function loadData() {
   loading.value = true
   try {
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await new Promise(resolve => setTimeout(resolve, 600))
     
     const filteredData = getFilteredData()
     const start = (pagination.page - 1) * pagination.pageSize
@@ -318,6 +344,15 @@ function handleSelectionChange(selection: any[]) {
   selectedRows.value = selection
 }
 
+function handleRowClick(row: UserItem) {
+  selectedRowId.value = row.id
+}
+
+function handleRowDblclick(row: UserItem) {
+  selectedRowId.value = row.id
+  router.push(`/system/user/${row.id}`)
+}
+
 function resetForm() {
   formData.username = ''
   formData.nickname = ''
@@ -328,41 +363,22 @@ function resetForm() {
 
 function handleAdd() {
   dialogTitle.value = '新增用户'
-  isView.value = false
   isEdit.value = false
   editId.value = null
   resetForm()
   dialogVisible.value = true
 }
 
-function handleView(row: UserItem) {
-  dialogTitle.value = '查看用户'
-  isView.value = true
-  isEdit.value = false
-  editId.value = row.id
-  Object.assign(formData, {
-    username: row.username,
-    nickname: row.nickname,
-    email: row.email,
-    password: '',
-    status: row.status
-  })
-  dialogVisible.value = true
+function handleEdit(row: UserItem) {
+  router.push(`/system/user/${row.id}`)
 }
 
-function handleEdit(row: UserItem) {
-  dialogTitle.value = '编辑用户'
-  isView.value = false
-  isEdit.value = true
-  editId.value = row.id
-  Object.assign(formData, {
-    username: row.username,
-    nickname: row.nickname,
-    email: row.email,
-    password: '',
-    status: row.status
-  })
-  dialogVisible.value = true
+function handleDeleteBtnMouseDown(id: number) {
+  deleteBtnActiveId.value = id
+}
+
+function handleDeleteBtnMouseUp() {
+  deleteBtnActiveId.value = null
 }
 
 async function handleDelete(row: UserItem) {
@@ -372,41 +388,99 @@ async function handleDelete(row: UserItem) {
       cancelButtonText: '取消',
       type: 'warning'
     })
+    
+    const index = mockData.findIndex(item => item.id === row.id)
+    if (index > -1) {
+      mockData.splice(index, 1)
+    }
+    
     ElMessage.success('删除成功')
     loadData()
   } catch {
+    deleteBtnActiveId.value = null
   }
 }
 
-async function handleBatchDelete() {
-  try {
-    await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedRows.value.length} 个用户吗？`,
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
+function handleOverlayClick() {
+  handleCancel()
+}
+
+function handleCancel() {
+  dialogVisible.value = false
+}
+
+function validateForm(): boolean {
+  let isValid = true
+  
+  for (const key of Object.keys(formRules)) {
+    if (isEdit.value && key === 'password') continue
+    
+    const value = (formData as any)[key]
+    const rules = formRules[key]
+    
+    for (const rule of rules) {
+      if (rule.required && !value) {
+        ElMessage.error(rule.message || '请填写必填项')
+        isValid = false
+        break
       }
-    )
-    ElMessage.success('批量删除成功')
-    loadData()
-  } catch {
+      
+      if (value && rule.min !== undefined && String(value).length < rule.min) {
+        ElMessage.error(rule.message || `最少输入 ${rule.min} 个字符`)
+        isValid = false
+        break
+      }
+      
+      if (value && rule.max !== undefined && String(value).length > rule.max) {
+        ElMessage.error(rule.message || `最多输入 ${rule.max} 个字符`)
+        isValid = false
+        break
+      }
+      
+      if (value && rule.pattern && !rule.pattern.test(String(value))) {
+        ElMessage.error(rule.message || '格式不正确')
+        isValid = false
+        break
+      }
+    }
+    
+    if (!isValid) break
   }
+  
+  return isValid
 }
 
 async function handleSubmit() {
-  if (isView.value) {
-    dialogVisible.value = false
+  if (!validateForm()) {
     return
   }
 
   try {
     await new Promise(resolve => setTimeout(resolve, 500))
     
-    if (isEdit.value) {
+    if (isEdit.value && editId.value) {
+      const index = mockData.findIndex(item => item.id === editId.value)
+      if (index > -1) {
+        mockData[index] = {
+          ...mockData[index],
+          nickname: formData.nickname,
+          email: formData.email,
+          status: formData.status
+        }
+      }
       ElMessage.success('编辑成功')
     } else {
+      const newId = Math.max(...mockData.map(item => item.id)) + 1
+      const now = new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-')
+      mockData.unshift({
+        id: newId,
+        username: formData.username,
+        nickname: formData.nickname,
+        email: formData.email,
+        status: formData.status,
+        role: 'user',
+        created_at: now
+      })
       ElMessage.success('新增成功')
     }
     
@@ -440,6 +514,197 @@ onMounted(() => {
       gap: 12px;
       margin-bottom: 16px;
     }
+  }
+
+  .skeleton-wrapper {
+    width: 100%;
+  }
+
+  .skeleton-table {
+    width: 100%;
+    border: 1px solid #ebeef5;
+    border-radius: 4px;
+    overflow: hidden;
+
+    .skeleton-header {
+      display: flex;
+      background-color: #fafafa;
+
+      .skeleton-header-item {
+        flex: 1;
+        height: 48px;
+        position: relative;
+
+        &::after {
+          content: '';
+          position: absolute;
+          top: 14px;
+          left: 12px;
+          right: 12px;
+          height: 16px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: skeleton-loading 1.5s infinite;
+          border-radius: 2px;
+        }
+      }
+    }
+
+    .skeleton-row {
+      display: flex;
+      border-top: 1px solid #ebeef5;
+
+      .skeleton-cell {
+        flex: 1;
+        height: 48px;
+        position: relative;
+
+        &::after {
+          content: '';
+          position: absolute;
+          top: 14px;
+          left: 12px;
+          right: 12px;
+          height: 16px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: skeleton-loading 1.5s infinite;
+          border-radius: 2px;
+        }
+      }
+    }
+  }
+
+  .table-container {
+    width: 100%;
+
+    :deep(.el-table) {
+      width: 100%;
+
+      th.el-table__cell {
+        background-color: #fafafa;
+        color: #303133;
+        font-weight: 600;
+      }
+
+      tr.el-table__row:hover > td {
+        background-color: #E8F3FF !important;
+      }
+
+      tr.el-table__row--striped td {
+        background-color: #fafafa;
+      }
+
+      tr.el-table__row--striped:hover > td {
+        background-color: #E8F3FF !important;
+      }
+
+      .el-table__empty-block {
+        min-height: 200px;
+      }
+    }
+
+    :deep(.el-button--text.delete-btn-active) {
+      transform: translateY(2px);
+      color: #E5E6EB !important;
+    }
+  }
+
+  :deep(.el-button--text) {
+    transition: all 0.1s ease;
+  }
+}
+
+.user-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.user-modal-wrapper {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid #ebeef5;
+  background-color: #fff;
+
+  .user-modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #303133;
+  }
+
+  .user-modal-close {
+    cursor: pointer;
+    color: #909399;
+    transition: color 0.3s;
+    line-height: 1;
+
+    &:hover {
+      color: #4080FF;
+    }
+  }
+}
+
+.user-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.user-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 24px;
+  border-top: 1px solid #ebeef5;
+  background-color: #fff;
+}
+
+.user-modal-scale-enter-active,
+.user-modal-scale-leave-active {
+  transition: opacity 0.3s ease;
+
+  .user-modal-wrapper {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+}
+
+.user-modal-scale-enter-from,
+.user-modal-scale-leave-to {
+  opacity: 0;
+
+  .user-modal-wrapper {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }
 </style>
