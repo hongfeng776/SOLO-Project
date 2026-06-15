@@ -43,6 +43,16 @@ export const constantRoutes: RouteRecordRaw[] = [
               icon: 'Picture',
               permissions: ['content:work:list']
             }
+          },
+          {
+            path: 'work/:id',
+            name: 'WorkDetail',
+            component: () => import('@/views/content/work/detail.vue'),
+            meta: {
+              title: '作品详情',
+              hidden: true,
+              permissions: ['content:work:view']
+            }
           }
         ]
       },

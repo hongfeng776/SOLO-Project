@@ -48,3 +48,19 @@ export function deleteWork(id: number): Promise<ApiResponse<null>> {
 export function batchDeleteWork(ids: number[]): Promise<ApiResponse<null>> {
   return post<null>('/works/batch-delete', { ids })
 }
+
+export function publishWork(id: number): Promise<ApiResponse<WorkItem>> {
+  return put<WorkItem>(`/works/${id}/publish`, {})
+}
+
+export function offlineWork(id: number): Promise<ApiResponse<WorkItem>> {
+  return put<WorkItem>(`/works/${id}/offline`, {})
+}
+
+export function batchPublishWork(ids: number[]): Promise<ApiResponse<null>> {
+  return post<null>('/works/batch-publish', { ids })
+}
+
+export function batchOfflineWork(ids: number[]): Promise<ApiResponse<null>> {
+  return post<null>('/works/batch-offline', { ids })
+}

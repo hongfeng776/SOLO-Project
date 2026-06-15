@@ -20,6 +20,17 @@
             @keyup.enter="handleSearch"
           />
         </el-form-item>
+        <el-form-item label="状态">
+          <el-select
+            v-model="searchForm.status"
+            placeholder="全部状态"
+            clearable
+            style="width: 150px"
+          >
+            <el-option label="已公开" :value="1" />
+            <el-option label="已下架" :value="0" />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" v-ripple @click="handleSearch">搜索</el-button>
           <el-button v-ripple @click="handleReset">重置</el-button>
@@ -39,25 +50,73 @@
         </el-button>
       </div>
 
+      <Transition name="batch-bar-slide">
+        <div v-if="selectedRows.length > 0" class="batch-action-bar">
+          <div class="batch-info">
+            已选择 <span class="batch-count">{{ selectedRows.length }}</span> 项
+          </div>
+          <div class="batch-actions">
+            <el-button
+              type="success"
+              v-ripple
+              :disabled="batchActionLoading"
+              @click="handleBatchPublish"
+            >
+              <el-icon><Top /></el-icon>
+              批量上架
+            </el-button>
+            <el-button
+              type="warning"
+              v-ripple
+              :disabled="batchActionLoading"
+              @click="handleBatchOffline"
+            >
+              <el-icon><Bottom /></el-icon>
+              批量下架
+            </el-button>
+            <el-button
+              type="danger"
+              v-ripple
+              :disabled="batchActionLoading"
+              @click="handleBatchDelete"
+            >
+              <el-icon><Delete /></el-icon>
+              批量删除
+            </el-button>
+            <el-button v-ripple @click="handleClearSelection">
+              取消选择
+            </el-button>
+          </div>
+        </div>
+      </Transition>
+
       <div v-if="loading" class="skeleton-wrapper">
         <div class="skeleton-table">
           <div class="skeleton-header">
-            <div v-for="i in 6" :key="i" class="skeleton-header-item"></div>
+            <div v-for="i in 7" :key="i" class="skeleton-header-item"></div>
           </div>
           <div v-for="i in 5" :key="i" class="skeleton-row">
-            <div v-for="j in 6" :key="j" class="skeleton-cell"></div>
+            <div v-for="j in 7" :key="j" class="skeleton-cell"></div>
           </div>
         </div>
       </div>
 
       <div v-else class="table-container">
         <el-table
+          ref="tableRef"
           :data="tableData"
           :stripe="true"
           :border="true"
           :highlight-current-row="true"
           height="500"
+          :row-class-name="getRowClassName"
+          @selection-change="handleSelectionChange"
         >
+          <el-table-column
+            type="selection"
+            width="55"
+            fixed="left"
+          />
           <el-table-column
             type="index"
             label="序号"
@@ -87,7 +146,11 @@
             label="分类"
             width="120"
             align="center"
-          />
+          >
+            <template #default="{ row }">
+              {{ getCategoryName(row.category) }}
+            </template>
+          </el-table-column>
           <el-table-column
             prop="status"
             label="状态"
@@ -95,8 +158,8 @@
             align="center"
           >
             <template #default="{ row }">
-              <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
-                {{ row.status === 1 ? '已发布' : '草稿' }}
+              <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small" effect="light">
+                {{ row.status === 1 ? '已公开' : '已下架' }}
               </el-tag>
             </template>
           </el-table-column>
@@ -120,7 +183,7 @@
           />
           <el-table-column
             label="操作"
-            width="160"
+            width="260"
             fixed="right"
             align="center"
           >
@@ -129,9 +192,37 @@
                 link
                 type="primary"
                 v-ripple
+                @click="handleView(row)"
+              >
+                详情
+              </el-button>
+              <el-button
+                link
+                type="primary"
+                v-ripple
                 @click="handleEdit(row)"
               >
                 编辑
+              </el-button>
+              <el-button
+                v-if="row.status === 1"
+                link
+                type="warning"
+                v-ripple
+                :disabled="statusLoadingIds.includes(row.id)"
+                @click="handleOffline(row)"
+              >
+                下架
+              </el-button>
+              <el-button
+                v-else
+                link
+                type="success"
+                v-ripple
+                :disabled="statusLoadingIds.includes(row.id)"
+                @click="handlePublish(row)"
+              >
+                上架
               </el-button>
               <el-button
                 link
@@ -237,8 +328,8 @@
                 </el-form-item>
                 <el-form-item label="作品状态" prop="status">
                   <el-radio-group v-model="formData.status" :disabled="isView">
-                    <el-radio :value="1">已发布</el-radio>
-                    <el-radio :value="0">草稿</el-radio>
+                    <el-radio :value="1">已公开</el-radio>
+                    <el-radio :value="0">已下架</el-radio>
                   </el-radio-group>
                 </el-form-item>
               </el-form>
@@ -251,25 +342,68 @@
         </div>
       </Transition>
     </Teleport>
+
+    <Teleport to="body">
+      <Transition name="batch-modal-scale">
+        <div v-if="batchDialogVisible" class="work-modal-overlay" @click.self="handleBatchDialogCancel">
+          <div class="batch-modal-wrapper">
+            <div class="work-modal-header">
+              <span class="work-modal-title">{{ batchDialogTitle }}</span>
+              <span class="work-modal-close" @click.stop="handleBatchDialogCancel">
+                <el-icon :size="20"><Close /></el-icon>
+              </span>
+            </div>
+            <div class="batch-modal-body">
+              <div class="batch-modal-icon" :class="batchDialogType">
+                <el-icon :size="48">
+                  <component :is="batchDialogType === 'delete' ? 'Warning' : (batchDialogType === 'publish' ? 'Top' : 'Bottom')" />
+                </el-icon>
+              </div>
+              <div class="batch-modal-content">
+                <p class="batch-modal-text">{{ batchDialogMessage }}</p>
+                <p class="batch-modal-count">共 <span>{{ selectedRows.length }}</span> 条数据</p>
+              </div>
+            </div>
+            <div class="work-modal-footer">
+              <el-button v-ripple @click.stop="handleBatchDialogCancel" :disabled="batchActionLoading">取消</el-button>
+              <el-button
+                :type="batchDialogType === 'delete' ? 'danger' : (batchDialogType === 'publish' ? 'success' : 'warning')"
+                v-ripple
+                @click.stop="handleBatchConfirm"
+                :loading="batchActionLoading"
+              >
+                确定
+              </el-button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
-import { Plus, Close, Document } from '@element-plus/icons-vue'
+import { Plus, Close, Document, Top, Bottom, Delete } from '@element-plus/icons-vue'
 import type { PaginationConfig, ValidationRule, WorkFormData } from '@/types'
 import type { WorkItem } from '@/api/work'
 import HInput from '@/components/HInput/index.vue'
 
+const router = useRouter()
+
 interface SearchForm {
   title: string
   author_nickname: string
+  status: number | null
 }
 
 const loading = ref(false)
+const tableRef = ref()
 const tableData = ref<WorkItem[]>([])
 const total = ref(0)
+const selectedRows = ref<WorkItem[]>([])
 const dialogVisible = ref(false)
 const dialogTitle = ref('新增作品')
 const dialogWidth = ref('600px')
@@ -277,10 +411,17 @@ const isView = ref(false)
 const isEdit = ref(false)
 const formRef = ref<FormInstance>()
 const editId = ref<number | null>(null)
+const statusLoadingIds = ref<number[]>([])
+const batchActionLoading = ref(false)
+const batchDialogVisible = ref(false)
+const batchDialogTitle = ref('')
+const batchDialogType = ref<'publish' | 'offline' | 'delete'>('publish')
+const batchDialogMessage = ref('')
 
 const searchForm = reactive<SearchForm>({
   title: '',
-  author_nickname: ''
+  author_nickname: '',
+  status: null
 })
 
 const pagination = reactive<PaginationConfig>({
@@ -317,19 +458,33 @@ const formRules: Record<string, ValidationRule[]> = {
 }
 
 const mockData: WorkItem[] = [
-  { id: 1, title: '晨曦中的森林', description: '一幅描绘清晨森林的插画作品', cover_image: '/images/work1.jpg', author_id: 2, author_nickname: '张三', category: 'illustration', status: 1, view_count: 1256, like_count: 328, comment_count: 45, created_at: '2026-06-01 10:00:00', updated_at: '2026-06-01 10:00:00' },
-  { id: 2, title: '星际旅行者', description: '科幻题材的短篇漫画', cover_image: '/images/work2.jpg', author_id: 3, author_nickname: '李四', category: 'comic', status: 1, view_count: 2341, like_count: 567, comment_count: 89, created_at: '2026-06-02 11:30:00', updated_at: '2026-06-03 09:15:00' },
-  { id: 3, title: '像素冒险', description: '复古风格的像素游戏', cover_image: '/images/work3.jpg', author_id: 4, author_nickname: '王五', category: 'game', status: 0, view_count: 876, like_count: 234, comment_count: 32, created_at: '2026-06-03 09:15:00', updated_at: '2026-06-03 09:15:00' },
-  { id: 4, title: '城市夜景', description: '都市夜景摄影作品集', cover_image: '/images/work4.jpg', author_id: 5, author_nickname: '赵六', category: 'photography', status: 1, view_count: 3456, like_count: 890, comment_count: 156, created_at: '2026-06-04 14:20:00', updated_at: '2026-06-05 16:45:00' },
-  { id: 5, title: '梦境守护者', description: '奇幻动画短片', cover_image: '/images/work5.jpg', author_id: 2, author_nickname: '张三', category: 'animation', status: 1, view_count: 5678, like_count: 1234, comment_count: 234, created_at: '2026-06-05 16:45:00', updated_at: '2026-06-06 08:30:00' },
-  { id: 6, title: '玄幻之巅', description: '长篇玄幻小说', cover_image: '/images/work6.jpg', author_id: 6, author_nickname: '钱七', category: 'novel', status: 1, view_count: 8901, like_count: 2345, comment_count: 456, created_at: '2026-06-06 08:30:00', updated_at: '2026-06-07 13:10:00' },
-  { id: 7, title: '海底世界', description: '深海探索插画系列', cover_image: '/images/work7.jpg', author_id: 7, author_nickname: '孙八', category: 'illustration', status: 0, view_count: 456, like_count: 123, comment_count: 18, created_at: '2026-06-07 13:10:00', updated_at: '2026-06-07 13:10:00' },
-  { id: 8, title: '机械纪元', description: '蒸汽朋克风格漫画', cover_image: '/images/work8.jpg', author_id: 3, author_nickname: '李四', category: 'comic', status: 1, view_count: 2134, like_count: 567, comment_count: 78, created_at: '2026-06-08 17:00:00', updated_at: '2026-06-09 10:25:00' },
-  { id: 9, title: '和风物语', description: '日式风格的休闲游戏', cover_image: '/images/work9.jpg', author_id: 8, author_nickname: '周九', category: 'game', status: 1, view_count: 1567, like_count: 345, comment_count: 56, created_at: '2026-06-09 10:25:00', updated_at: '2026-06-10 11:55:00' },
-  { id: 10, title: '山水之间', description: '中国风山水画摄影', cover_image: '/images/work10.jpg', author_id: 9, author_nickname: '吴十', category: 'photography', status: 1, view_count: 4321, like_count: 987, comment_count: 123, created_at: '2026-06-10 11:55:00', updated_at: '2026-06-11 09:00:00' },
-  { id: 11, title: '魔法学院', description: '校园魔法题材动画', cover_image: '/images/work11.jpg', author_id: 5, author_nickname: '赵六', category: 'animation', status: 0, view_count: 234, like_count: 67, comment_count: 12, created_at: '2026-06-11 09:00:00', updated_at: '2026-06-11 09:00:00' },
-  { id: 12, title: '末世求生', description: '末日题材网络小说', cover_image: '/images/work12.jpg', author_id: 6, author_nickname: '钱七', category: 'novel', status: 1, view_count: 6789, like_count: 1567, comment_count: 345, created_at: '2026-06-12 14:30:00', updated_at: '2026-06-13 16:20:00' }
+  { id: 1, title: '晨曦中的森林', description: '一幅描绘清晨森林的插画作品', cover_image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=%E6%99%A8%E6%9B%A6%E4%B8%AD%E7%9A%84%E6%A3%AE%E6%9E%97%20%E6%8F%92%E7%94%BB%20%E8%87%AA%E7%84%B6%E9%A3%8E%E5%85%89&image_size=landscape_16_9', author_id: 2, author_nickname: '张三', category: 'illustration', status: 1, view_count: 1256, like_count: 328, comment_count: 45, created_at: '2026-06-01 10:00:00', updated_at: '2026-06-01 10:00:00' },
+  { id: 2, title: '星际旅行者', description: '科幻题材的短篇漫画', cover_image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=%E6%98%9F%E9%99%85%E6%97%85%E8%A1%8C%E8%80%85%20%E7%A7%91%E5%B9%BB%20%E5%AE%87%E8%88%AA%E5%91%98%20%E6%BC%AB%E7%94%BB&image_size=landscape_16_9', author_id: 3, author_nickname: '李四', category: 'comic', status: 1, view_count: 2341, like_count: 567, comment_count: 89, created_at: '2026-06-02 11:30:00', updated_at: '2026-06-03 09:15:00' },
+  { id: 3, title: '像素冒险', description: '复古风格的像素游戏', cover_image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=%E5%83%8F%E7%B4%A0%E5%86%92%E9%99%A9%20%E5%A4%8D%E5%8F%A4%E9%A3%8E%E6%A0%BC%20%E6%B8%B8%E6%88%8F&image_size=landscape_16_9', author_id: 4, author_nickname: '王五', category: 'game', status: 0, view_count: 876, like_count: 234, comment_count: 32, created_at: '2026-06-03 09:15:00', updated_at: '2026-06-03 09:15:00' },
+  { id: 4, title: '城市夜景', description: '都市夜景摄影作品集', cover_image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=%E5%9F%8E%E5%B8%82%E5%A4%9C%E6%99%AF%20%E6%91%84%E5%BD%B1%20%E9%83%BD%E5%B8%82%E7%B3%9A%E7%82%8A&image_size=landscape_16_9', author_id: 5, author_nickname: '赵六', category: 'photography', status: 1, view_count: 3456, like_count: 890, comment_count: 156, created_at: '2026-06-04 14:20:00', updated_at: '2026-06-05 16:45:00' },
+  { id: 5, title: '梦境守护者', description: '奇幻动画短片', cover_image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=%E6%A2%A6%E5%A2%83%E5%AE%88%E6%8A%A4%E8%80%85%20%E5%A5%87%E5%B9%BB%20%E5%8A%A8%E7%94%BB%20%E7%B2%BE%E7%81%B5&image_size=landscape_16_9', author_id: 2, author_nickname: '张三', category: 'animation', status: 1, view_count: 5678, like_count: 1234, comment_count: 234, created_at: '2026-06-05 16:45:00', updated_at: '2026-06-06 08:30:00' },
+  { id: 6, title: '玄幻之巅', description: '长篇玄幻小说', cover_image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=%E7%8E%84%E5%B9%BB%E4%B9%8B%E5%B7%85%20%E5%B0%8F%E8%AF%B4%20%E4%BF%AE%E7%82%BC%20%E5%B0%91%E5%B9%B4&image_size=landscape_16_9', author_id: 6, author_nickname: '钱七', category: 'novel', status: 1, view_count: 8901, like_count: 2345, comment_count: 456, created_at: '2026-06-06 08:30:00', updated_at: '2026-06-07 13:10:00' },
+  { id: 7, title: '海底世界', description: '深海探索插画系列', cover_image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=%E6%B5%B7%E5%BA%95%E4%B8%96%E7%95%8C%20%E6%B7%B1%E6%B5%B7%20%E6%8F%92%E7%94%BB%20%E7%94%9F%E7%89%A9&image_size=landscape_16_9', author_id: 7, author_nickname: '孙八', category: 'illustration', status: 0, view_count: 456, like_count: 123, comment_count: 18, created_at: '2026-06-07 13:10:00', updated_at: '2026-06-07 13:10:00' },
+  { id: 8, title: '机械纪元', description: '蒸汽朋克风格漫画', cover_image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=%E6%9C%BA%E6%A2%B0%E7%BA%AA%E5%85%83%20%E8%92%B8%E6%B1%BD%E6%9C%8B%E5%85%8B%20%E6%BC%AB%E7%94%BB%20%E6%9C%BA%E6%A2%B0&image_size=landscape_16_9', author_id: 3, author_nickname: '李四', category: 'comic', status: 1, view_count: 2134, like_count: 567, comment_count: 78, created_at: '2026-06-08 17:00:00', updated_at: '2026-06-09 10:25:00' },
+  { id: 9, title: '和风物语', description: '日式风格的休闲游戏', cover_image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=%E5%92%8C%E9%A3%8E%E7%89%A9%E8%AF%AD%20%E6%97%A5%E5%BC%8F%E9%A3%8E%E6%A0%BC%20%E4%BC%91%E9%97%B2%E6%B8%B8%E6%88%8F&image_size=landscape_16_9', author_id: 8, author_nickname: '周九', category: 'game', status: 1, view_count: 1567, like_count: 345, comment_count: 56, created_at: '2026-06-09 10:25:00', updated_at: '2026-06-10 11:55:00' },
+  { id: 10, title: '山水之间', description: '中国风山水画摄影', cover_image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=%E5%B1%B1%E6%B0%B4%E4%B9%8B%E9%97%B4%20%E4%B8%AD%E5%9B%BD%E9%A3%8E%20%E5%B1%B1%E6%B0%B4%E7%94%BB%20%E6%91%84%E5%BD%B1&image_size=landscape_16_9', author_id: 9, author_nickname: '吴十', category: 'photography', status: 1, view_count: 4321, like_count: 987, comment_count: 123, created_at: '2026-06-10 11:55:00', updated_at: '2026-06-11 09:00:00' },
+  { id: 11, title: '魔法学院', description: '校园魔法题材动画', cover_image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=%E9%AD%94%E6%B3%95%E5%AD%A6%E9%99%A2%20%E6%A0%A1%E5%9B%AD%20%E5%8A%A8%E7%94%BB%20%E9%AD%94%E6%B3%95&image_size=landscape_16_9', author_id: 5, author_nickname: '赵六', category: 'animation', status: 0, view_count: 234, like_count: 67, comment_count: 12, created_at: '2026-06-11 09:00:00', updated_at: '2026-06-11 09:00:00' },
+  { id: 12, title: '末世求生', description: '末日题材网络小说', cover_image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=%E6%9C%AB%E4%B8%96%E6%B1%82%E7%94%9F%20%E6%9C%AB%E6%97%A5%20%E5%B0%8F%E8%AF%B4%20%E4%BA%BA%E7%B1%BB&image_size=landscape_16_9', author_id: 6, author_nickname: '钱七', category: 'novel', status: 1, view_count: 6789, like_count: 1567, comment_count: 345, created_at: '2026-06-12 14:30:00', updated_at: '2026-06-13 16:20:00' }
 ]
+
+const categoryMap: Record<string, string> = {
+  illustration: '插画',
+  comic: '漫画',
+  animation: '动画',
+  game: '游戏',
+  novel: '小说',
+  photography: '摄影'
+}
+
+function getCategoryName(key?: string) {
+  if (!key) return '-'
+  return categoryMap[key] || key
+}
 
 function getFilteredData() {
   let result = [...mockData]
@@ -345,8 +500,16 @@ function getFilteredData() {
       item.author_nickname.toLowerCase().includes(searchForm.author_nickname.toLowerCase())
     )
   }
+
+  if (searchForm.status !== null) {
+    result = result.filter(item => item.status === searchForm.status)
+  }
   
   return result
+}
+
+function getRowClassName({ row }: { row: WorkItem }) {
+  return row.status === 0 ? 'work-row-offline' : ''
 }
 
 async function loadData() {
@@ -376,6 +539,7 @@ function handleSearch() {
 function handleReset() {
   searchForm.title = ''
   searchForm.author_nickname = ''
+  searchForm.status = null
   handleSearch()
 }
 
@@ -388,6 +552,14 @@ function handleSizeChange(size: number) {
   pagination.pageSize = size
   pagination.page = 1
   loadData()
+}
+
+function handleSelectionChange(selection: WorkItem[]) {
+  selectedRows.value = selection
+}
+
+function handleClearSelection() {
+  tableRef.value?.clearSelection()
 }
 
 function resetForm() {
@@ -407,6 +579,10 @@ function handleAdd() {
   editId.value = null
   resetForm()
   dialogVisible.value = true
+}
+
+function handleView(row: WorkItem) {
+  router.push(`/content/work/${row.id}`)
 }
 
 function handleEdit(row: WorkItem) {
@@ -434,6 +610,64 @@ function handleCancel() {
   dialogVisible.value = false
 }
 
+async function handlePublish(row: WorkItem) {
+  if (statusLoadingIds.value.includes(row.id)) return
+  try {
+    await ElMessageBox.confirm(`确定要上架作品 "${row.title}" 吗？`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    statusLoadingIds.value.push(row.id)
+    
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    const index = mockData.findIndex(item => item.id === row.id)
+    if (index > -1) {
+      mockData[index].status = 1
+    }
+    
+    ElMessage.success('上架成功')
+    loadData()
+    
+    setTimeout(() => {
+      statusLoadingIds.value = statusLoadingIds.value.filter(id => id !== row.id)
+    }, 300)
+  } catch {
+    statusLoadingIds.value = statusLoadingIds.value.filter(id => id !== row.id)
+  }
+}
+
+async function handleOffline(row: WorkItem) {
+  if (statusLoadingIds.value.includes(row.id)) return
+  try {
+    await ElMessageBox.confirm(`确定要下架作品 "${row.title}" 吗？`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    statusLoadingIds.value.push(row.id)
+    
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    const index = mockData.findIndex(item => item.id === row.id)
+    if (index > -1) {
+      mockData[index].status = 0
+    }
+    
+    ElMessage.success('下架成功')
+    loadData()
+    
+    setTimeout(() => {
+      statusLoadingIds.value = statusLoadingIds.value.filter(id => id !== row.id)
+    }, 300)
+  } catch {
+    statusLoadingIds.value = statusLoadingIds.value.filter(id => id !== row.id)
+  }
+}
+
 async function handleDelete(row: WorkItem) {
   try {
     await ElMessageBox.confirm(`确定要删除作品 "${row.title}" 吗？`, '提示', {
@@ -450,6 +684,70 @@ async function handleDelete(row: WorkItem) {
     ElMessage.success('删除成功')
     loadData()
   } catch {
+  }
+}
+
+function handleBatchPublish() {
+  batchDialogType.value = 'publish'
+  batchDialogTitle.value = '批量上架'
+  batchDialogMessage.value = '确定要将选中的作品批量上架吗？'
+  batchDialogVisible.value = true
+}
+
+function handleBatchOffline() {
+  batchDialogType.value = 'offline'
+  batchDialogTitle.value = '批量下架'
+  batchDialogMessage.value = '确定要将选中的作品批量下架吗？'
+  batchDialogVisible.value = true
+}
+
+function handleBatchDelete() {
+  batchDialogType.value = 'delete'
+  batchDialogTitle.value = '批量删除'
+  batchDialogMessage.value = '确定要删除选中的作品吗？此操作不可恢复！'
+  batchDialogVisible.value = true
+}
+
+function handleBatchDialogCancel() {
+  batchDialogVisible.value = false
+}
+
+async function handleBatchConfirm() {
+  batchActionLoading.value = true
+  try {
+    await new Promise(resolve => setTimeout(resolve, 600))
+    
+    const ids = selectedRows.value.map(item => item.id)
+    
+    if (batchDialogType.value === 'publish') {
+      ids.forEach(id => {
+        const index = mockData.findIndex(item => item.id === id)
+        if (index > -1) mockData[index].status = 1
+      })
+      ElMessage.success(`成功上架 ${ids.length} 个作品`)
+    } else if (batchDialogType.value === 'offline') {
+      ids.forEach(id => {
+        const index = mockData.findIndex(item => item.id === id)
+        if (index > -1) mockData[index].status = 0
+      })
+      ElMessage.success(`成功下架 ${ids.length} 个作品`)
+    } else if (batchDialogType.value === 'delete') {
+      for (let i = mockData.length - 1; i >= 0; i--) {
+        if (ids.includes(mockData[i].id)) {
+          mockData.splice(i, 1)
+        }
+      }
+      ElMessage.success(`成功删除 ${ids.length} 个作品`)
+    }
+    
+    batchDialogVisible.value = false
+    handleClearSelection()
+    loadData()
+  } catch (error) {
+    console.error('Batch action error:', error)
+    ElMessage.error('操作失败')
+  } finally {
+    batchActionLoading.value = false
   }
 }
 
@@ -556,6 +854,34 @@ onMounted(() => {
     }
   }
 
+  .batch-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    background: linear-gradient(90deg, #ECF5FF 0%, #F0F7FF 100%);
+    border-radius: 6px;
+    border: 1px solid #D9ECFF;
+
+    .batch-info {
+      font-size: 14px;
+      color: #606266;
+
+      .batch-count {
+        font-size: 18px;
+        font-weight: 600;
+        color: #409EFF;
+        margin: 0 4px;
+      }
+    }
+
+    .batch-actions {
+      display: flex;
+      gap: 8px;
+    }
+  }
+
   .skeleton-wrapper {
     width: 100%;
   }
@@ -631,6 +957,11 @@ onMounted(() => {
         background-color: #f5f7fa;
       }
 
+      tr.work-row-offline:hover > td {
+        background: linear-gradient(90deg, rgba(240, 247, 255, 0.6) 0%, rgba(236, 245, 255, 0.6) 100%) !important;
+        box-shadow: inset 0 0 12px rgba(64, 158, 255, 0.1);
+      }
+
       .el-table__row--striped td {
         background-color: #fafafa;
       }
@@ -647,6 +978,17 @@ onMounted(() => {
     padding: 16px 0 0 0;
     background-color: #fff;
   }
+}
+
+.batch-bar-slide-enter-active,
+.batch-bar-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.batch-bar-slide-enter-from,
+.batch-bar-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 .work-modal-overlay {
@@ -668,6 +1010,16 @@ onMounted(() => {
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.batch-modal-wrapper {
+  width: 440px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -704,6 +1056,61 @@ onMounted(() => {
   flex: 1;
 }
 
+.batch-modal-body {
+  padding: 32px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  .batch-modal-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    &.publish {
+      background: #F0F9EB;
+      color: #67C23A;
+    }
+
+    &.offline {
+      background: #FDF6EC;
+      color: #E6A23C;
+    }
+
+    &.delete {
+      background: #FEF0F0;
+      color: #F56C6C;
+    }
+  }
+
+  .batch-modal-content {
+    flex: 1;
+
+    .batch-modal-text {
+      font-size: 15px;
+      color: #303133;
+      margin: 0 0 8px 0;
+      line-height: 1.6;
+    }
+
+    .batch-modal-count {
+      font-size: 14px;
+      color: #909399;
+      margin: 0;
+
+      span {
+        color: #409EFF;
+        font-weight: 600;
+        font-size: 16px;
+      }
+    }
+  }
+}
+
 .work-modal-footer {
   display: flex;
   align-items: center;
@@ -718,7 +1125,8 @@ onMounted(() => {
 .work-modal-scale-leave-active {
   transition: opacity 0.3s ease;
 
-  .work-modal-wrapper {
+  .work-modal-wrapper,
+  .batch-modal-wrapper {
     transition: transform 0.3s ease, opacity 0.3s ease;
   }
 }
@@ -727,27 +1135,28 @@ onMounted(() => {
 .work-modal-scale-leave-to {
   opacity: 0;
 
-  .work-modal-wrapper {
+  .work-modal-wrapper,
+  .batch-modal-wrapper {
     transform: scale(0.9);
     opacity: 0;
   }
 }
 
-.work-modal-slide-down-enter-active,
-.work-modal-slide-down-leave-active {
+.batch-modal-scale-enter-active,
+.batch-modal-scale-leave-active {
   transition: opacity 0.3s ease;
 
-  .work-modal-wrapper {
+  .batch-modal-wrapper {
     transition: transform 0.3s ease, opacity 0.3s ease;
   }
 }
 
-.work-modal-slide-down-enter-from,
-.work-modal-slide-down-leave-to {
+.batch-modal-scale-enter-from,
+.batch-modal-scale-leave-to {
   opacity: 0;
 
-  .work-modal-wrapper {
-    transform: translateY(30px);
+  .batch-modal-wrapper {
+    transform: scale(0.85);
     opacity: 0;
   }
 }

@@ -119,11 +119,83 @@ const batchDeleteWork = asyncHandler(async (req, res) => {
   sendSuccess(res, null, `成功删除 ${ids.length} 个作品`);
 });
 
+const publishWork = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const work = await Work.findByPk(id);
+  if (!work) {
+    return res.status(404).json(notFound('作品不存在'));
+  }
+
+  await work.update({ status: 1 });
+
+  sendSuccess(res, work, '上架成功');
+});
+
+const offlineWork = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const work = await Work.findByPk(id);
+  if (!work) {
+    return res.status(404).json(notFound('作品不存在'));
+  }
+
+  await work.update({ status: 0 });
+
+  sendSuccess(res, work, '下架成功');
+});
+
+const batchPublishWork = asyncHandler(async (req, res) => {
+  const { ids } = req.body;
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json(badRequest('请选择要上架的作品'));
+  }
+
+  await Work.update(
+    { status: 1 },
+    {
+      where: {
+        id: {
+          [Op.in]: ids
+        }
+      }
+    }
+  );
+
+  sendSuccess(res, null, `成功上架 ${ids.length} 个作品`);
+});
+
+const batchOfflineWork = asyncHandler(async (req, res) => {
+  const { ids } = req.body;
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json(badRequest('请选择要下架的作品'));
+  }
+
+  await Work.update(
+    { status: 0 },
+    {
+      where: {
+        id: {
+          [Op.in]: ids
+        }
+      }
+    }
+  );
+
+  sendSuccess(res, null, `成功下架 ${ids.length} 个作品`);
+});
+
 module.exports = {
   getWorks,
   getWorkById,
   createWork,
   updateWork,
   deleteWork,
-  batchDeleteWork
+  batchDeleteWork,
+  publishWork,
+  offlineWork,
+  batchPublishWork,
+  batchOfflineWork
 };
