@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import routes from './routes';
 import { errorMiddleware, notFoundMiddleware } from './middleware/error.middleware';
+import { auditLog } from './middleware/audit.middleware';
 import Logger from './utils/logger';
 
 const createApp = (): Application => {
@@ -21,6 +22,8 @@ const createApp = (): Application => {
     Logger.info(`${req.method} ${req.path}`);
     next();
   });
+
+  app.use(auditLog);
 
   app.use('/api', routes);
 

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { commissionService } from '../services';
+import commissionEngineService from '../services/CommissionEngine.service';
 import ResponseUtils from '../utils/response';
 import { CommissionCreationAttributes, CommissionAttributes } from '../models/Commission.model';
 
@@ -84,6 +85,16 @@ class CommissionController {
       const { ids } = req.body;
       await commissionService.settle(ids);
       ResponseUtils.success(res, null, '批量结算成功');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async deduct(req: Request, res: Response): Promise<void> {
+    try {
+      const { orderId, reason } = req.body;
+      await commissionEngineService.deductFromOrder(orderId, reason);
+      ResponseUtils.success(res, null, '佣金扣减成功');
     } catch (err: any) {
       ResponseUtils.error(res, err.message, err.code);
     }

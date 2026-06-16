@@ -9,6 +9,8 @@ import marketingRoutes from './marketing.routes';
 import withdrawRoutes from './withdraw.routes';
 import roleRoutes from './role.routes';
 import permissionRoutes from './permission.routes';
+import operationLogRoutes from './operation-log.routes';
+import commissionRuleRoutes from './commission-rule.routes';
 import ResponseUtils from '../utils/response';
 
 const router = Router();
@@ -27,5 +29,7 @@ router.use('/marketings', marketingRoutes);
 router.use('/withdraws', withdrawRoutes);
 router.use('/roles', roleRoutes);
 router.use('/permissions', permissionRoutes);
+router.use('/operation-logs', operationLogRoutes);
+router.use('/commission-rules', commissionRuleRoutes);
 
 export default router;

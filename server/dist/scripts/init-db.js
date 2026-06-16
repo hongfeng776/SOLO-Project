@@ -8,6 +8,9 @@ const database_1 = require("../config/database");
 const models_1 = require("../models");
 const enum_1 = require("../constants/enum");
 const logger_1 = __importDefault(require("../utils/logger"));
+require("../models/OperationLog.model");
+require("../models/ChannelExtension.model");
+require("../models/CommissionRule.model");
 const initDatabase = async () => {
     try {
         logger_1.default.info('Starting database initialization...');
@@ -64,6 +67,8 @@ const initDatabase = async () => {
             { code: 'permission', name: '权限管理', type: enum_1.PermissionType.MENU, parentId: undefined, path: '/permission', icon: 'Lock', sort: 8 },
             { code: 'permission:role', name: '角色管理', type: enum_1.PermissionType.MENU, parentId: undefined, path: '/permission/role', icon: 'UserFilled', sort: 1 },
             { code: 'permission:menu', name: '权限菜单', type: enum_1.PermissionType.MENU, parentId: undefined, path: '/permission/menu', icon: 'Menu', sort: 2 },
+            { code: 'log', name: '操作日志', type: enum_1.PermissionType.MENU, parentId: undefined, path: '/log', icon: 'Document', sort: 9 },
+            { code: 'log:list', name: '日志列表', type: enum_1.PermissionType.BUTTON, parentId: undefined, sort: 1 },
         ];
         for (const perm of permissions) {
             await models_1.Permission.findOrCreate({

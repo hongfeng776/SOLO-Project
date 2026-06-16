@@ -99,6 +99,18 @@ class OrderController {
             response_1.default.error(res, err.message, err.code);
         }
     }
+    async updateStatus(req, res) {
+        try {
+            const { id } = req.params;
+            const { status } = req.body;
+            const userId = req.user?.id;
+            await services_1.orderService.updateStatus(id, status, userId);
+            response_1.default.success(res, null, '订单状态更新成功');
+        }
+        catch (err) {
+            response_1.default.error(res, err.message, err.code);
+        }
+    }
 }
 exports.default = new OrderController();
 //# sourceMappingURL=Order.controller.js.map

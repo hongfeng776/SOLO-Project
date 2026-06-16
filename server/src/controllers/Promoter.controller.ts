@@ -84,6 +84,39 @@ class PromoterController {
       ResponseUtils.error(res, err.message, err.code);
     }
   }
+
+  public async batchUpdateStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const { ids, status } = req.body;
+      await promoterService.batchUpdateStatus(ids, status);
+      ResponseUtils.success(res, null, '批量状态更新成功');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async approve(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const auditUserId = (req as any).user?.id || '';
+      await promoterService.approve(id, auditUserId);
+      ResponseUtils.success(res, null, '审核通过成功');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async reject(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const auditUserId = (req as any).user?.id || '';
+      const { reason } = req.body;
+      await promoterService.reject(id, auditUserId, reason);
+      ResponseUtils.success(res, null, '审核拒绝成功');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
 }
 
 export default new PromoterController();

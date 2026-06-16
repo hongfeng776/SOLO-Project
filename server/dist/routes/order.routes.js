@@ -15,5 +15,6 @@ router.get('/:id', controllers_1.orderController.findById);
 router.put('/:id', controllers_1.orderController.update);
 router.delete('/:id', controllers_1.orderController.delete);
 router.post('/bulk-update', controllers_1.orderController.bulkUpdate);
+router.put('/:id/status', controllers_1.orderController.updateStatus);
 exports.default = router;
 //# sourceMappingURL=order.routes.js.map

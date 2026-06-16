@@ -4,6 +4,8 @@ import { PaginationParams, PaginationResult } from '../types';
 import { BusinessCode } from '../constants/statusCode';
 import { AppError } from '../middleware/error.middleware';
 import { WithdrawStatus } from '../constants/enum';
+import MoneyUtils from '../utils/money';
+import riskControlService from './RiskControl.service';
 
 interface WithdrawQueryParams extends PaginationParams {
   promoterId?: string;
@@ -79,14 +81,15 @@ class WithdrawService {
     }
     const available = Number(promoter.availableCommission || 0);
     const amount = Number(data.amount || 0);
-    if (amount <= 0) {
+    if (!MoneyUtils.isGreater(amount, 0)) {
       throw new AppError('提现金额必须大于0', BusinessCode.PARAM_ERROR);
     }
-    if (amount > available) {
+    if (MoneyUtils.isGreater(amount, available)) {
       throw new AppError('可用佣金不足', BusinessCode.ERROR);
     }
+    await riskControlService.checkWithdraw(data.promoterId, amount);
     const fee = Number(data.fee || 0);
-    const actualAmount = amount - fee;
+    const actualAmount = MoneyUtils.subtract(amount, fee);
     return this.create({
       ...data,
       actualAmount,
@@ -119,8 +122,8 @@ class WithdrawService {
         const amount = Number(withdraw.amount || 0);
         await promoterDao.update(
           {
-            frozenCommission: Math.max(0, frozen - amount),
-            availableCommission: available + amount,
+            frozenCommission: MoneyUtils.subtract(frozen, amount),
+            availableCommission: MoneyUtils.add(available, amount),
           } as any,
           { where: { id: withdraw.promoterId } }
         );
@@ -150,7 +153,7 @@ class WithdrawService {
       const amount = Number(withdraw.amount || 0);
       await promoterDao.update(
         {
-          frozenCommission: Math.max(0, frozen - amount),
+          frozenCommission: MoneyUtils.subtract(frozen, amount),
         } as any,
         { where: { id: withdraw.promoterId } }
       );

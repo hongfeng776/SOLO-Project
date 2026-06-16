@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.permissionService = exports.roleService = exports.withdrawService = exports.marketingService = exports.commissionService = exports.orderService = exports.promoterService = exports.channelService = exports.userService = exports.authService = void 0;
+exports.commissionRuleService = exports.riskControlService = exports.operationLogService = exports.permissionService = exports.roleService = exports.withdrawService = exports.marketingService = exports.commissionEngineService = exports.commissionService = exports.orderService = exports.promoterService = exports.channelService = exports.userService = exports.authService = void 0;
 const Auth_service_1 = __importDefault(require("./Auth.service"));
 exports.authService = Auth_service_1.default;
 const User_service_1 = __importDefault(require("./User.service"));
@@ -16,6 +16,8 @@ const Order_service_1 = __importDefault(require("./Order.service"));
 exports.orderService = Order_service_1.default;
 const Commission_service_1 = __importDefault(require("./Commission.service"));
 exports.commissionService = Commission_service_1.default;
+const CommissionEngine_service_1 = __importDefault(require("./CommissionEngine.service"));
+exports.commissionEngineService = CommissionEngine_service_1.default;
 const Marketing_service_1 = __importDefault(require("./Marketing.service"));
 exports.marketingService = Marketing_service_1.default;
 const Withdraw_service_1 = __importDefault(require("./Withdraw.service"));
@@ -24,4 +26,10 @@ const Role_service_1 = __importDefault(require("./Role.service"));
 exports.roleService = Role_service_1.default;
 const Permission_service_1 = __importDefault(require("./Permission.service"));
 exports.permissionService = Permission_service_1.default;
+const OperationLog_service_1 = __importDefault(require("./OperationLog.service"));
+exports.operationLogService = OperationLog_service_1.default;
+const RiskControl_service_1 = __importDefault(require("./RiskControl.service"));
+exports.riskControlService = RiskControl_service_1.default;
+const CommissionRule_service_1 = __importDefault(require("./CommissionRule.service"));
+exports.commissionRuleService = CommissionRule_service_1.default;
 //# sourceMappingURL=index.js.map

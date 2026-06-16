@@ -12,6 +12,7 @@ router.post('/', controllers_1.commissionController.create);
 router.get('/', controllers_1.commissionController.findAll);
 router.get('/summary', controllers_1.commissionController.summary);
 router.post('/settle', controllers_1.commissionController.settle);
+router.post('/deduct', controllers_1.commissionController.deduct);
 router.get('/:id', controllers_1.commissionController.findById);
 router.put('/:id', controllers_1.commissionController.update);
 router.delete('/:id', controllers_1.commissionController.delete);

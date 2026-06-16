@@ -55,6 +55,24 @@
         <BaseConfirm title="确定删除选中数据吗？" @confirm="handleBatchDelete">
           <el-button type="danger" size="small" :icon="Delete">批量删除</el-button>
         </BaseConfirm>
+        <el-button
+          type="primary"
+          size="small"
+          :icon="Switch"
+          :disabled="selectedIds.length === 0"
+          @click="handleBatchStatus(1)"
+        >
+          批量启用
+        </el-button>
+        <el-button
+          type="warning"
+          size="small"
+          :icon="Switch"
+          :disabled="selectedIds.length === 0"
+          @click="handleBatchStatus(0)"
+        >
+          批量禁用
+        </el-button>
       </BaseBatchOperation>
 
       <BaseTable
@@ -186,8 +204,8 @@
 
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue'
-import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { Search, RefreshRight, Plus, Edit, Delete, Download } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { Search, RefreshRight, Plus, Edit, Delete, Download, Switch } from '@element-plus/icons-vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import BaseConfirm from '@/components/common/BaseConfirm.vue'
@@ -202,6 +220,7 @@ import {
   updateChannel,
   deleteChannel,
   batchDeleteChannels,
+  batchUpdateChannelStatus,
   type ChannelItem,
   type ChannelQueryParams,
   type ChannelType,
@@ -222,6 +241,7 @@ const {
   handleDelete: doDelete,
   handleBatchDelete: doBatchDelete,
   clearSelection,
+  fetchData,
 } = useTable<ChannelItem, ChannelQueryParams>({
   fetchApi: getChannelList,
   deleteApi: deleteChannel,
@@ -294,6 +314,36 @@ function handleDelete(id: string | number) {
 
 function handleBatchDelete() {
   doBatchDelete()
+}
+
+async function handleBatchStatus(status: number) {
+  if (selectedIds.value.length === 0) return
+  try {
+    await ElMessageBox.confirm(
+      `确定要将选中的 ${selectedIds.value.length} 条数据状态修改为【${STATUS_MAP[status]?.label}】吗？`,
+      '批量状态确认',
+      { type: 'warning' }
+    )
+    const loadingInstance = ElMessage({
+      message: `正在批量更新 ${selectedIds.value.length} 条数据状态...`,
+      type: 'info',
+      duration: 0,
+    })
+    try {
+      await batchUpdateChannelStatus(selectedIds.value, status as any)
+      loadingInstance.close()
+      ElMessage.success('批量状态修改成功')
+      selectedIds.value = []
+      fetchData()
+    } catch (error) {
+      loadingInstance.close()
+      throw error
+    }
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      console.error(error)
+    }
+  }
 }
 
 function handleExport() {

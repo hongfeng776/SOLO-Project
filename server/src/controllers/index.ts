@@ -8,6 +8,8 @@ import marketingController from './Marketing.controller';
 import withdrawController from './Withdraw.controller';
 import roleController from './Role.controller';
 import permissionController from './Permission.controller';
+import operationLogController from './OperationLog.controller';
+import commissionRuleController from './CommissionRule.controller';
 
 export {
   authController,
@@ -20,4 +22,6 @@ export {
   withdrawController,
   roleController,
   permissionController,
+  operationLogController,
+  commissionRuleController,
 };

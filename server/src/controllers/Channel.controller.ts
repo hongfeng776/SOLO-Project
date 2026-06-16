@@ -83,6 +83,16 @@ class ChannelController {
       ResponseUtils.error(res, err.message, err.code);
     }
   }
+
+  public async batchUpdateStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const { ids, status } = req.body;
+      await channelService.batchUpdateStatus(ids, status);
+      ResponseUtils.success(res, null, '批量状态更新成功');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
 }
 
 export default new ChannelController();

@@ -3,6 +3,9 @@ import { sequelize } from '../config/database';
 import { User, Role, Permission, UserRole, RolePermission } from '../models';
 import { UserRole as UserRoleEnum, UserStatus, PermissionType } from '../constants/enum';
 import Logger from '../utils/logger';
+import '../models/OperationLog.model';
+import '../models/ChannelExtension.model';
+import '../models/CommissionRule.model';
 
 const initDatabase = async (): Promise<void> => {
   try {
@@ -66,6 +69,8 @@ const initDatabase = async (): Promise<void> => {
       { code: 'permission', name: '权限管理', type: PermissionType.MENU, parentId: undefined, path: '/permission', icon: 'Lock', sort: 8 },
       { code: 'permission:role', name: '角色管理', type: PermissionType.MENU, parentId: undefined, path: '/permission/role', icon: 'UserFilled', sort: 1 },
       { code: 'permission:menu', name: '权限菜单', type: PermissionType.MENU, parentId: undefined, path: '/permission/menu', icon: 'Menu', sort: 2 },
+      { code: 'log', name: '操作日志', type: PermissionType.MENU, parentId: undefined, path: '/log', icon: 'Document', sort: 9 },
+      { code: 'log:list', name: '日志列表', type: PermissionType.BUTTON, parentId: undefined, sort: 1 },
     ];
 
     for (const perm of permissions) {

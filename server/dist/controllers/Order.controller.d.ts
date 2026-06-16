@@ -7,6 +7,7 @@ declare class OrderController {
     delete(req: Request, res: Response): Promise<void>;
     bulkUpdate(req: Request, res: Response): Promise<void>;
     export(req: Request, res: Response): Promise<void>;
+    updateStatus(req: Request, res: Response): Promise<void>;
 }
 declare const _default: OrderController;
 export default _default;

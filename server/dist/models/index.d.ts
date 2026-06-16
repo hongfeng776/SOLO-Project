@@ -9,6 +9,9 @@ import Role from './Role.model';
 import Permission from './Permission.model';
 import RolePermission from './RolePermission.model';
 import UserRole from './UserRole.model';
+import OperationLog from './OperationLog.model';
+import ChannelExtension from './ChannelExtension.model';
+import CommissionRule from './CommissionRule.model';
 declare const models: {
     User: typeof User;
     Channel: typeof Channel;
@@ -21,9 +24,12 @@ declare const models: {
     Permission: typeof Permission;
     RolePermission: typeof RolePermission;
     UserRole: typeof UserRole;
+    OperationLog: typeof OperationLog;
+    ChannelExtension: typeof ChannelExtension;
+    CommissionRule: typeof CommissionRule;
 };
 declare const associate: () => void;
 export { associate };
-export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole };
+export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule };
 export default models;
 //# sourceMappingURL=index.d.ts.map

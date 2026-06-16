@@ -14,6 +14,9 @@ router.get('/:id', controllers_1.promoterController.findById);
 router.put('/:id', controllers_1.promoterController.update);
 router.delete('/:id', controllers_1.promoterController.delete);
 router.post('/bulk-delete', controllers_1.promoterController.bulkDelete);
+router.post('/batch-status', controllers_1.promoterController.batchUpdateStatus);
 router.patch('/:id/status', controllers_1.promoterController.updateStatus);
+router.put('/:id/approve', controllers_1.promoterController.approve);
+router.put('/:id/reject', controllers_1.promoterController.reject);
 exports.default = router;
 //# sourceMappingURL=promoter.routes.js.map

@@ -60,3 +60,7 @@ export function deleteMarketing(id: string | number): Promise<null> {
 export function updateMarketingStatus(id: string | number, status: Status): Promise<null> {
   return put<null>(`/marketings/${id}/status`, { status })
 }
+
+export function batchUpdateMarketingStatus(ids: (string | number)[], status: Status): Promise<null> {
+  return post<null>('/marketings/batch-status', { ids, status })
+}

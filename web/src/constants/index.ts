@@ -27,14 +27,18 @@ export const PROMOTER_LEVEL_MAP: Record<number, { label: string; type: 'primary'
 
 export const PROMOTER_STATUS_OPTIONS = [
   { label: '正常', value: 1, type: 'success' },
+  { label: '审核中', value: 2, type: 'primary' },
   { label: '冻结', value: 0, type: 'warning' },
   { label: '注销', value: -1, type: 'danger' },
+  { label: '已拒绝', value: -2, type: 'danger' },
 ] as const
 
-export const PROMOTER_STATUS_MAP: Record<number, { label: string; type: 'success' | 'warning' | 'danger' | 'info' }> = {
+export const PROMOTER_STATUS_MAP: Record<number, { label: string; type: 'success' | 'warning' | 'danger' | 'info' | 'primary' }> = {
   1: { label: '正常', type: 'success' },
+  2: { label: '审核中', type: 'primary' },
   0: { label: '冻结', type: 'warning' },
   '-1': { label: '注销', type: 'danger' },
+  '-2': { label: '已拒绝', type: 'danger' },
 }
 
 export const ORDER_STATUS_OPTIONS = [

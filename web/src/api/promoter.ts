@@ -58,3 +58,15 @@ export function batchDeletePromoters(ids: (string | number)[]): Promise<null> {
 export function updatePromoterStatus(id: string | number, status: Status): Promise<null> {
   return put<null>(`/promoters/${id}/status`, { status })
 }
+
+export function batchUpdatePromoterStatus(ids: (string | number)[], status: Status): Promise<null> {
+  return post<null>('/promoters/batch-status', { ids, status })
+}
+
+export function approvePromoter(id: string | number): Promise<null> {
+  return put<null>(`/promoters/${id}/approve`)
+}
+
+export function rejectPromoter(id: string | number, reason: string): Promise<null> {
+  return put<null>(`/promoters/${id}/reject`, { reason })
+}

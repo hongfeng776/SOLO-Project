@@ -96,6 +96,18 @@ class OrderController {
       ResponseUtils.error(res, err.message, err.code);
     }
   }
+
+  public async updateStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const userId = (req as any).user?.id;
+      await orderService.updateStatus(id, status, userId);
+      ResponseUtils.success(res, null, '订单状态更新成功');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
 }
 
 export default new OrderController();

@@ -69,6 +69,14 @@ Commission.init({
         type: sequelize_1.DataTypes.TEXT,
         allowNull: true,
     },
+    calcRule: {
+        type: sequelize_1.DataTypes.JSON,
+        allowNull: true,
+    },
+    sourceType: {
+        type: sequelize_1.DataTypes.STRING(30),
+        allowNull: true,
+    },
     createdAt: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: false,

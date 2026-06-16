@@ -7,6 +7,7 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const routes_1 = __importDefault(require("./routes"));
 const error_middleware_1 = require("./middleware/error.middleware");
+const audit_middleware_1 = require("./middleware/audit.middleware");
 const logger_1 = __importDefault(require("./utils/logger"));
 const createApp = () => {
     const app = (0, express_1.default)();
@@ -22,6 +23,7 @@ const createApp = () => {
         logger_1.default.info(`${req.method} ${req.path}`);
         next();
     });
+    app.use(audit_middleware_1.auditLog);
     app.use('/api', routes_1.default);
     app.use(error_middleware_1.notFoundMiddleware);
     app.use(error_middleware_1.errorMiddleware);

@@ -37,6 +37,8 @@ declare class CommissionDao {
     softDelete(id: string): Promise<number>;
     bulkSoftDelete(ids: string[]): Promise<number>;
     summary(params: Partial<CommissionQueryParams>): Promise<CommissionSummary>;
+    findByOrderId(orderId: string): Promise<Commission[]>;
+    findByOrderIds(orderIds: string[]): Promise<Commission[]>;
     bulkUpdate(ids: string[], data: Partial<CommissionAttributes>): Promise<[number, Commission[]]>;
 }
 declare const _default: CommissionDao;

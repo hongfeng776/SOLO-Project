@@ -13,5 +13,6 @@ router.get('/:id', orderController.findById);
 router.put('/:id', orderController.update);
 router.delete('/:id', orderController.delete);
 router.post('/bulk-update', orderController.bulkUpdate);
+router.put('/:id/status', orderController.updateStatus);
 
 export default router;

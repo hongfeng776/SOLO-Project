@@ -7,6 +7,7 @@ import marketingDao from './Marketing.dao';
 import withdrawDao from './Withdraw.dao';
 import roleDao from './Role.dao';
 import permissionDao from './Permission.dao';
+import operationLogDao from './OperationLog.dao';
 
 export {
   userDao,
@@ -18,4 +19,5 @@ export {
   withdrawDao,
   roleDao,
   permissionDao,
+  operationLogDao,
 };

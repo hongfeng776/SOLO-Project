@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.permissionController = exports.roleController = exports.withdrawController = exports.marketingController = exports.commissionController = exports.orderController = exports.promoterController = exports.channelController = exports.userController = exports.authController = void 0;
+exports.commissionRuleController = exports.operationLogController = exports.permissionController = exports.roleController = exports.withdrawController = exports.marketingController = exports.commissionController = exports.orderController = exports.promoterController = exports.channelController = exports.userController = exports.authController = void 0;
 const Auth_controller_1 = __importDefault(require("./Auth.controller"));
 exports.authController = Auth_controller_1.default;
 const User_controller_1 = __importDefault(require("./User.controller"));
@@ -24,4 +24,8 @@ const Role_controller_1 = __importDefault(require("./Role.controller"));
 exports.roleController = Role_controller_1.default;
 const Permission_controller_1 = __importDefault(require("./Permission.controller"));
 exports.permissionController = Permission_controller_1.default;
+const OperationLog_controller_1 = __importDefault(require("./OperationLog.controller"));
+exports.operationLogController = OperationLog_controller_1.default;
+const CommissionRule_controller_1 = __importDefault(require("./CommissionRule.controller"));
+exports.commissionRuleController = CommissionRule_controller_1.default;
 //# sourceMappingURL=index.js.map

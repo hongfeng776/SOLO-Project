@@ -43,8 +43,10 @@ var PromoterLevel;
 var PromoterStatus;
 (function (PromoterStatus) {
     PromoterStatus[PromoterStatus["NORMAL"] = 1] = "NORMAL";
+    PromoterStatus[PromoterStatus["PENDING"] = 2] = "PENDING";
     PromoterStatus[PromoterStatus["FROZEN"] = 0] = "FROZEN";
     PromoterStatus[PromoterStatus["CANCELLED"] = -1] = "CANCELLED";
+    PromoterStatus[PromoterStatus["REJECTED"] = -2] = "REJECTED";
 })(PromoterStatus || (exports.PromoterStatus = PromoterStatus = {}));
 var OrderStatus;
 (function (OrderStatus) {

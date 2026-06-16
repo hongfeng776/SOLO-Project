@@ -244,9 +244,9 @@ import { getChannelList } from '@/api/channel'
 import { getPromoterList } from '@/api/promoter'
 import {
   getOrderList,
-  updateOrder,
   exportOrders,
   batchUpdateOrders,
+  updateOrderStatus,
   getOrder,
   type OrderItem,
   type OrderQueryParams,
@@ -332,14 +332,40 @@ async function handleDetail(row: OrderItem) {
   }
 }
 
+const STATUS_TRANSITION_MAP: Record<number, number[]> = {
+  0: [1, 4],
+  1: [2, 4, 5],
+  2: [3, 5],
+  3: [5],
+  5: [6, 3],
+  4: [],
+  6: [],
+}
+
 async function handleStatusChange(row: OrderItem, status: number) {
-  try {
-    await ElMessageBox.confirm(
-      `确定要将订单【${row.orderNo}】状态修改为【${ORDER_STATUS_MAP[status]?.label}】吗？`,
-      '状态确认',
-      { type: 'warning' }
+  const currentStatus = Number(row.status)
+  const allowed = STATUS_TRANSITION_MAP[currentStatus] || []
+
+  if (!allowed.includes(status)) {
+    ElMessage.warning(
+      `订单状态不能从【${ORDER_STATUS_MAP[currentStatus]?.label}】变更为【${ORDER_STATUS_MAP[status]?.label}】`
     )
-    await updateOrder(row.id, { status: status as any })
+    return
+  }
+
+  let confirmMsg = `确定要将订单【${row.orderNo}】状态修改为【${ORDER_STATUS_MAP[status]?.label}】吗？`
+
+  if (status === 1) {
+    confirmMsg = `订单支付后将自动核算推客佣金，确定要将订单【${row.orderNo}】标记为已支付吗？`
+  } else if (status === 3) {
+    confirmMsg = `订单完成后将自动结算关联佣金，确定要将订单【${row.orderNo}】标记为已完成吗？`
+  } else if (status === 4 || status === 6) {
+    confirmMsg = `订单取消/退款后将自动扣减关联佣金，确定要将订单【${row.orderNo}】状态修改为【${ORDER_STATUS_MAP[status]?.label}】吗？`
+  }
+
+  try {
+    await ElMessageBox.confirm(confirmMsg, '状态确认', { type: 'warning' })
+    await updateOrderStatus(row.id, status)
     ElMessage.success('状态修改成功')
     fetchData()
   } catch (error: any) {

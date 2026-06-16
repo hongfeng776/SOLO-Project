@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const Promoter_model_1 = __importDefault(require("../models/Promoter.model"));
+const models_1 = require("../models");
 class PromoterDao {
     async create(data, options) {
         return Promoter_model_1.default.create(data, options);
@@ -59,6 +60,14 @@ class PromoterDao {
             offset,
             limit: pageSize,
             order: [['createdAt', 'DESC']],
+            include: [
+                {
+                    model: models_1.Channel,
+                    as: 'channel',
+                    attributes: ['id', 'name'],
+                    required: false,
+                },
+            ],
         });
     }
     async softDelete(id) {
@@ -74,6 +83,17 @@ class PromoterDao {
     async existsByCodeAndId(code, excludeId) {
         const count = await this.count({ where: { code, id: { [sequelize_1.Op.ne]: excludeId } } });
         return count > 0;
+    }
+    async findByChannelId(channelId) {
+        return this.findAll({ where: { channelId } });
+    }
+    async updateCommission(promoterId, totalDelta, availableDelta) {
+        const promoter = await this.findById(promoterId);
+        if (!promoter)
+            return [0, []];
+        const totalCommission = Number(promoter.totalCommission || 0) + totalDelta;
+        const availableCommission = Number(promoter.availableCommission || 0) + availableDelta;
+        return this.update({ totalCommission, availableCommission }, { where: { id: promoterId } });
     }
     async getTodayCount() {
         const today = new Date();

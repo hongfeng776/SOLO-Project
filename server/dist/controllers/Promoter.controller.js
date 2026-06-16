@@ -87,6 +87,39 @@ class PromoterController {
             response_1.default.error(res, err.message, err.code);
         }
     }
+    async batchUpdateStatus(req, res) {
+        try {
+            const { ids, status } = req.body;
+            await services_1.promoterService.batchUpdateStatus(ids, status);
+            response_1.default.success(res, null, '批量状态更新成功');
+        }
+        catch (err) {
+            response_1.default.error(res, err.message, err.code);
+        }
+    }
+    async approve(req, res) {
+        try {
+            const { id } = req.params;
+            const auditUserId = req.user?.id || '';
+            await services_1.promoterService.approve(id, auditUserId);
+            response_1.default.success(res, null, '审核通过成功');
+        }
+        catch (err) {
+            response_1.default.error(res, err.message, err.code);
+        }
+    }
+    async reject(req, res) {
+        try {
+            const { id } = req.params;
+            const auditUserId = req.user?.id || '';
+            const { reason } = req.body;
+            await services_1.promoterService.reject(id, auditUserId, reason);
+            response_1.default.success(res, null, '审核拒绝成功');
+        }
+        catch (err) {
+            response_1.default.error(res, err.message, err.code);
+        }
+    }
 }
 exports.default = new PromoterController();
 //# sourceMappingURL=Promoter.controller.js.map

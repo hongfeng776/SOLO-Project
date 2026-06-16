@@ -29,6 +29,8 @@ declare class PromoterDao {
     bulkSoftDelete(ids: string[]): Promise<number>;
     existsByCode(code: string): Promise<boolean>;
     existsByCodeAndId(code: string, excludeId: string): Promise<boolean>;
+    findByChannelId(channelId: string): Promise<Promoter[]>;
+    updateCommission(promoterId: string, totalDelta: number, availableDelta: number): Promise<[number, Promoter[]]>;
     getTodayCount(): Promise<number>;
 }
 declare const _default: PromoterDao;

@@ -9,7 +9,8 @@ export declare enum HttpStatus {
     CONFLICT = 409,
     UNPROCESSABLE_ENTITY = 422,
     INTERNAL_SERVER_ERROR = 500,
-    SERVICE_UNAVAILABLE = 503
+    SERVICE_UNAVAILABLE = 503,
+    GATEWAY_TIMEOUT = 504
 }
 export declare enum BusinessCode {
     SUCCESS = 0,

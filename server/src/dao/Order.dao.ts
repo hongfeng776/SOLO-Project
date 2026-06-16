@@ -1,5 +1,6 @@
 import { FindOptions, CreateOptions, UpdateOptions, DestroyOptions, CountOptions, Op } from 'sequelize';
 import Order, { OrderAttributes, OrderCreationAttributes } from '../models/Order.model';
+import { Channel, Promoter } from '../models';
 
 interface OrderQueryParams {
   page: number;
@@ -85,6 +86,20 @@ class OrderDao {
       offset,
       limit: pageSize,
       order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: Channel,
+          as: 'channel',
+          attributes: ['id', 'name'],
+          required: false,
+        },
+        {
+          model: Promoter,
+          as: 'promoter',
+          attributes: ['id', 'name', 'code'],
+          required: false,
+        },
+      ],
     });
   }
 

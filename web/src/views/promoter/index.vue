@@ -157,10 +157,16 @@
             {{ formatDateTime((row as PromoterItem).createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right" align="center">
+        <el-table-column label="操作" width="340" fixed="right" align="center">
           <template #default="{ row }">
             <el-button type="primary" link :icon="View" @click="handleDetail(row as PromoterItem)">详情</el-button>
             <el-button type="primary" link :icon="Edit" @click="handleEdit(row as PromoterItem)">编辑</el-button>
+            <el-button
+              v-if="(row as PromoterItem).status === 2"
+              type="success"
+              link
+              @click="handleApprove(row as PromoterItem)"
+            >审核</el-button>
             <el-dropdown
               v-if="(row as PromoterItem).status !== -1"
               trigger="click"
@@ -320,6 +326,9 @@ import {
   deletePromoter,
   batchDeletePromoters,
   updatePromoterStatus,
+  batchUpdatePromoterStatus,
+  approvePromoter,
+  rejectPromoter,
   getPromoter,
   type PromoterItem,
   type PromoterQueryParams,
@@ -465,6 +474,43 @@ async function handleStatusChange(row: PromoterItem, status: number) {
   }
 }
 
+async function handleApprove(row: PromoterItem) {
+  try {
+    await ElMessageBox.confirm(
+      `请选择对推客【${row.name}】的审核结果`,
+      '推客审核',
+      {
+        distinguishCancelAndClose: true,
+        confirmButtonText: '审核通过',
+        cancelButtonText: '审核拒绝',
+        type: 'warning',
+      }
+    )
+    await approvePromoter(row.id)
+    ElMessage.success('审核通过成功')
+    fetchData()
+  } catch (action: any) {
+    if (action === 'cancel') {
+      try {
+        const { value } = await ElMessageBox.prompt('请输入拒绝原因', '审核拒绝', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          inputValidator: (val: string) => (val ? true : '请输入拒绝原因'),
+        })
+        await rejectPromoter(row.id, value)
+        ElMessage.success('审核拒绝成功')
+        fetchData()
+      } catch (innerError: any) {
+        if (innerError !== 'cancel' && innerError !== 'close') {
+          console.error(innerError)
+        }
+      }
+    } else if (action !== 'close') {
+      console.error(action)
+    }
+  }
+}
+
 async function handleBatchStatus(status: number) {
   if (selectedIds.value.length === 0) return
   try {
@@ -473,12 +519,21 @@ async function handleBatchStatus(status: number) {
       '批量状态确认',
       { type: 'warning' }
     )
-    await Promise.all(
-      selectedIds.value.map((id) => updatePromoterStatus(id, status as any))
-    )
-    ElMessage.success('批量状态修改成功')
-    selectedIds.value = []
-    fetchData()
+    const loadingInstance = ElMessage({
+      message: `正在批量更新 ${selectedIds.value.length} 条数据状态...`,
+      type: 'info',
+      duration: 0,
+    })
+    try {
+      await batchUpdatePromoterStatus(selectedIds.value, status as any)
+      loadingInstance.close()
+      ElMessage.success('批量状态修改成功')
+      selectedIds.value = []
+      fetchData()
+    } catch (error) {
+      loadingInstance.close()
+      throw error
+    }
   } catch (error: any) {
     if (error !== 'cancel') {
       console.error(error)

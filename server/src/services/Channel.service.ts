@@ -4,6 +4,7 @@ import { PaginationParams, PaginationResult } from '../types';
 import { BusinessCode } from '../constants/statusCode';
 import { AppError } from '../middleware/error.middleware';
 import CacheUtils, { CacheKey, CacheTTL } from '../utils/cache';
+import { Op } from 'sequelize';
 
 interface ChannelQueryParams extends PaginationParams {
   keyword?: string;
@@ -110,6 +111,17 @@ class ChannelService {
     await channelDao.update({ status: status as any }, { where: { id } });
 
     await CacheUtils.del(`${CacheKey.CHANNEL_DETAIL}${id}`);
+    await CacheUtils.delPattern(`${CacheKey.CHANNEL_LIST}*`);
+  }
+
+  public async batchUpdateStatus(ids: string[], status: number): Promise<void> {
+    if (!ids || ids.length === 0) {
+      throw new AppError('请选择要操作的记录', BusinessCode.PARAM_ERROR);
+    }
+    await channelDao.update({ status: status as any }, { where: { id: { [Op.in]: ids } } });
+    for (const id of ids) {
+      await CacheUtils.del(`${CacheKey.CHANNEL_DETAIL}${id}`);
+    }
     await CacheUtils.delPattern(`${CacheKey.CHANNEL_LIST}*`);
   }
 }

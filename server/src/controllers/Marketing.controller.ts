@@ -83,6 +83,25 @@ class MarketingController {
       ResponseUtils.error(res, err.message, err.code);
     }
   }
+
+  public async batchUpdateStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const { ids, status } = req.body;
+      await marketingService.batchUpdateStatus(ids, status);
+      ResponseUtils.success(res, null, '批量状态更新成功');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async autoEnd(req: Request, res: Response): Promise<void> {
+    try {
+      const count = await marketingService.checkAndAutoEnd();
+      ResponseUtils.success(res, { count }, `自动结束${count}个已过期活动`);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
 }
 
 export default new MarketingController();

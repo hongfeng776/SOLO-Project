@@ -13,6 +13,7 @@ declare class ChannelService {
     delete(id: string): Promise<void>;
     bulkDelete(ids: string[]): Promise<void>;
     updateStatus(id: string, status: number): Promise<void>;
+    batchUpdateStatus(ids: string[], status: number): Promise<void>;
 }
 declare const _default: ChannelService;
 export default _default;

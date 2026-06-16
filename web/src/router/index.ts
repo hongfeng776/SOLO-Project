@@ -85,6 +85,12 @@ const routes: RouteRecordRaw[] = [
           },
         ],
       },
+      {
+        path: 'log',
+        name: 'OperationLog',
+        component: () => import('@/views/log/operation.vue'),
+        meta: { title: '操作日志', icon: 'Document' },
+      },
     ],
   },
   {

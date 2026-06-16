@@ -39,8 +39,10 @@ export enum PromoterLevel {
 
 export enum PromoterStatus {
   NORMAL = 1,
+  PENDING = 2,
   FROZEN = 0,
   CANCELLED = -1,
+  REJECTED = -2,
 }
 
 export enum OrderStatus {

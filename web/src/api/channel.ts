@@ -53,3 +53,7 @@ export function batchDeleteChannels(ids: (string | number)[]): Promise<null> {
 export function updateChannelStatus(id: string | number, status: ChannelStatus): Promise<null> {
   return put<null>(`/channels/${id}/status`, { status })
 }
+
+export function batchUpdateChannelStatus(ids: (string | number)[], status: ChannelStatus): Promise<null> {
+  return post<null>('/channels/batch-status', { ids, status })
+}

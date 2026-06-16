@@ -15,12 +15,7 @@ class AppError extends Error {
   }
 }
 
-const errorMiddleware = (
-  err: Error | AppError,
-  req: Request,
-  res: Response,
-  _next: NextFunction
-): void => {
+const errorMiddleware = (err: Error | AppError, req: Request, res: Response, _next: NextFunction): void => {
   Logger.error(`Error: ${err.message}`, err.stack);
 
   if (err instanceof AppError) {
@@ -28,8 +23,28 @@ const errorMiddleware = (
     return;
   }
 
-  if (err.name === 'ValidationError') {
+  if (err.name === 'ValidationError' || err.name === 'SequelizeValidationError') {
     ResponseUtils.error(res, err.message, BusinessCode.PARAM_ERROR, HttpStatus.BAD_REQUEST);
+    return;
+  }
+
+  if (err.name === 'SequelizeDatabaseError') {
+    ResponseUtils.error(res, '数据库操作异常', BusinessCode.DATABASE_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
+    return;
+  }
+
+  if (err.name === 'SyntaxError' && (err as any).status === 400 && 'body' in (err as any)) {
+    ResponseUtils.error(res, '请求数据格式错误', BusinessCode.PARAM_ERROR, HttpStatus.BAD_REQUEST);
+    return;
+  }
+
+  if (err.name === 'PayloadTooLargeError' || (err as any).type === 'entity.too.large') {
+    ResponseUtils.error(res, '请求数据过大', BusinessCode.PARAM_ERROR, HttpStatus.BAD_REQUEST);
+    return;
+  }
+
+  if ((err as any).code === 'ETIMEDOUT' || (err as any).code === 'ESOCKETTIMEDOUT') {
+    ResponseUtils.error(res, '请求超时', BusinessCode.SERVER_ERROR, HttpStatus.GATEWAY_TIMEOUT);
     return;
   }
 

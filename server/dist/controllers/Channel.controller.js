@@ -86,6 +86,16 @@ class ChannelController {
             response_1.default.error(res, err.message, err.code);
         }
     }
+    async batchUpdateStatus(req, res) {
+        try {
+            const { ids, status } = req.body;
+            await services_1.channelService.batchUpdateStatus(ids, status);
+            response_1.default.success(res, null, '批量状态更新成功');
+        }
+        catch (err) {
+            response_1.default.error(res, err.message, err.code);
+        }
+    }
 }
 exports.default = new ChannelController();
 //# sourceMappingURL=Channel.controller.js.map

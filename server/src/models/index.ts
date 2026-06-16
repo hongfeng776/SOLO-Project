@@ -9,6 +9,9 @@ import Role from './Role.model';
 import Permission from './Permission.model';
 import RolePermission from './RolePermission.model';
 import UserRole from './UserRole.model';
+import OperationLog from './OperationLog.model';
+import ChannelExtension from './ChannelExtension.model';
+import CommissionRule from './CommissionRule.model';
 
 const models = {
   User,
@@ -22,11 +25,17 @@ const models = {
   Permission,
   RolePermission,
   UserRole,
+  OperationLog,
+  ChannelExtension,
+  CommissionRule,
 };
 
 const associate = (): void => {
   Channel.hasMany(Promoter, { foreignKey: 'channelId', as: 'promoters' });
   Channel.hasMany(Order, { foreignKey: 'channelId', as: 'orders' });
+  Channel.hasMany(ChannelExtension, { foreignKey: 'channelId', as: 'extensions' });
+
+  ChannelExtension.belongsTo(Channel, { foreignKey: 'channelId', as: 'channel' });
 
   Promoter.belongsTo(Channel, { foreignKey: 'channelId', as: 'channel' });
   Promoter.hasMany(Order, { foreignKey: 'promoterId', as: 'orders' });
@@ -52,5 +61,5 @@ const associate = (): void => {
 };
 
 export { associate };
-export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole };
+export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule };
 export default models;

@@ -1,5 +1,6 @@
 import { FindOptions, CreateOptions, UpdateOptions, DestroyOptions, CountOptions, Op } from 'sequelize';
 import Promoter, { PromoterAttributes, PromoterCreationAttributes } from '../models/Promoter.model';
+import { Channel } from '../models';
 
 interface PromoterQueryParams {
   page: number;
@@ -75,6 +76,14 @@ class PromoterDao {
       offset,
       limit: pageSize,
       order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: Channel,
+          as: 'channel',
+          attributes: ['id', 'name'],
+          required: false,
+        },
+      ],
     });
   }
 
@@ -94,6 +103,21 @@ class PromoterDao {
   public async existsByCodeAndId(code: string, excludeId: string): Promise<boolean> {
     const count = await this.count({ where: { code, id: { [Op.ne]: excludeId } } });
     return count > 0;
+  }
+
+  public async findByChannelId(channelId: string): Promise<Promoter[]> {
+    return this.findAll({ where: { channelId } });
+  }
+
+  public async updateCommission(promoterId: string, totalDelta: number, availableDelta: number): Promise<[number, Promoter[]]> {
+    const promoter = await this.findById(promoterId);
+    if (!promoter) return [0, []];
+    const totalCommission = Number(promoter.totalCommission || 0) + totalDelta;
+    const availableCommission = Number(promoter.availableCommission || 0) + availableDelta;
+    return this.update(
+      { totalCommission, availableCommission } as any,
+      { where: { id: promoterId } }
+    );
   }
 
   public async getTodayCount(): Promise<number> {

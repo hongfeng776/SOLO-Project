@@ -14,6 +14,8 @@ router.get('/:id', controllers_1.marketingController.findById);
 router.put('/:id', controllers_1.marketingController.update);
 router.delete('/:id', controllers_1.marketingController.delete);
 router.post('/bulk-delete', controllers_1.marketingController.bulkDelete);
+router.post('/batch-status', controllers_1.marketingController.batchUpdateStatus);
+router.post('/auto-end', controllers_1.marketingController.autoEnd);
 router.patch('/:id/status', controllers_1.marketingController.updateStatus);
 exports.default = router;
 //# sourceMappingURL=marketing.routes.js.map

@@ -37,6 +37,7 @@ const dao_1 = require("../dao");
 const statusCode_1 = require("../constants/statusCode");
 const error_middleware_1 = require("../middleware/error.middleware");
 const cache_1 = __importStar(require("../utils/cache"));
+const sequelize_1 = require("sequelize");
 class ChannelService {
     async create(data) {
         const exists = await dao_1.channelDao.existsByCode(data.code);
@@ -121,6 +122,16 @@ class ChannelService {
         }
         await dao_1.channelDao.update({ status: status }, { where: { id } });
         await cache_1.default.del(`${cache_1.CacheKey.CHANNEL_DETAIL}${id}`);
+        await cache_1.default.delPattern(`${cache_1.CacheKey.CHANNEL_LIST}*`);
+    }
+    async batchUpdateStatus(ids, status) {
+        if (!ids || ids.length === 0) {
+            throw new error_middleware_1.AppError('请选择要操作的记录', statusCode_1.BusinessCode.PARAM_ERROR);
+        }
+        await dao_1.channelDao.update({ status: status }, { where: { id: { [sequelize_1.Op.in]: ids } } });
+        for (const id of ids) {
+            await cache_1.default.del(`${cache_1.CacheKey.CHANNEL_DETAIL}${id}`);
+        }
         await cache_1.default.delPattern(`${cache_1.CacheKey.CHANNEL_LIST}*`);
     }
 }

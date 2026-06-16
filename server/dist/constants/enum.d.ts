@@ -33,8 +33,10 @@ export declare enum PromoterLevel {
 }
 export declare enum PromoterStatus {
     NORMAL = 1,
+    PENDING = 2,
     FROZEN = 0,
-    CANCELLED = -1
+    CANCELLED = -1,
+    REJECTED = -2
 }
 export declare enum OrderStatus {
     PENDING_PAY = 0,

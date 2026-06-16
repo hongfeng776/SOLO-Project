@@ -7,6 +7,7 @@ declare class CommissionController {
     delete(req: Request, res: Response): Promise<void>;
     summary(req: Request, res: Response): Promise<void>;
     settle(req: Request, res: Response): Promise<void>;
+    deduct(req: Request, res: Response): Promise<void>;
 }
 declare const _default: CommissionController;
 export default _default;

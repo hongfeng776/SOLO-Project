@@ -15,6 +15,8 @@ interface CommissionAttributes {
   status: CommissionStatus;
   settleTime?: Date;
   remark?: string;
+  calcRule?: object;
+  sourceType?: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
@@ -34,6 +36,8 @@ class Commission extends Model<CommissionAttributes, CommissionCreationAttribute
   public status!: CommissionStatus;
   public settleTime?: Date;
   public remark?: string;
+  public calcRule?: object;
+  public sourceType?: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
   public readonly deletedAt?: Date;
@@ -99,6 +103,14 @@ Commission.init(
     },
     remark: {
       type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    calcRule: {
+      type: DataTypes.JSON,
+      allowNull: true,
+    },
+    sourceType: {
+      type: DataTypes.STRING(30),
       allowNull: true,
     },
     createdAt: {

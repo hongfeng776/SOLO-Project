@@ -65,3 +65,7 @@ export function exportOrders(params: OrderQueryParams): Promise<{ url: string }>
 export function batchUpdateOrders(ids: (string | number)[], data: OrderUpdateParams): Promise<null> {
   return put<null>('/orders/batch', { ids, ...data })
 }
+
+export function updateOrderStatus(id: string | number, status: number): Promise<null> {
+  return put<null>(`/orders/${id}/status`, { status })
+}

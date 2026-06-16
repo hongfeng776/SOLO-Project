@@ -8,5 +8,7 @@ import marketingController from './Marketing.controller';
 import withdrawController from './Withdraw.controller';
 import roleController from './Role.controller';
 import permissionController from './Permission.controller';
-export { authController, userController, channelController, promoterController, orderController, commissionController, marketingController, withdrawController, roleController, permissionController, };
+import operationLogController from './OperationLog.controller';
+import commissionRuleController from './CommissionRule.controller';
+export { authController, userController, channelController, promoterController, orderController, commissionController, marketingController, withdrawController, roleController, permissionController, operationLogController, commissionRuleController, };
 //# sourceMappingURL=index.d.ts.map

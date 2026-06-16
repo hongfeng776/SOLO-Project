@@ -14,6 +14,7 @@ router.get('/:id', controllers_1.channelController.findById);
 router.put('/:id', controllers_1.channelController.update);
 router.delete('/:id', controllers_1.channelController.delete);
 router.post('/bulk-delete', controllers_1.channelController.bulkDelete);
+router.post('/batch-status', controllers_1.channelController.batchUpdateStatus);
 router.patch('/:id/status', controllers_1.channelController.updateStatus);
 exports.default = router;
 //# sourceMappingURL=channel.routes.js.map

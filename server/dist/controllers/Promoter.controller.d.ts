@@ -7,6 +7,9 @@ declare class PromoterController {
     delete(req: Request, res: Response): Promise<void>;
     bulkDelete(req: Request, res: Response): Promise<void>;
     updateStatus(req: Request, res: Response): Promise<void>;
+    batchUpdateStatus(req: Request, res: Response): Promise<void>;
+    approve(req: Request, res: Response): Promise<void>;
+    reject(req: Request, res: Response): Promise<void>;
 }
 declare const _default: PromoterController;
 export default _default;

@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const services_1 = require("../services");
+const CommissionEngine_service_1 = __importDefault(require("../services/CommissionEngine.service"));
 const response_1 = __importDefault(require("../utils/response"));
 class CommissionController {
     async create(req, res) {
@@ -86,6 +87,16 @@ class CommissionController {
             const { ids } = req.body;
             await services_1.commissionService.settle(ids);
             response_1.default.success(res, null, '批量结算成功');
+        }
+        catch (err) {
+            response_1.default.error(res, err.message, err.code);
+        }
+    }
+    async deduct(req, res) {
+        try {
+            const { orderId, reason } = req.body;
+            await CommissionEngine_service_1.default.deductFromOrder(orderId, reason);
+            response_1.default.success(res, null, '佣金扣减成功');
         }
         catch (err) {
             response_1.default.error(res, err.message, err.code);

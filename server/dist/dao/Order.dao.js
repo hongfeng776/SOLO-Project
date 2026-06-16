@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const Order_model_1 = __importDefault(require("../models/Order.model"));
+const models_1 = require("../models");
 class OrderDao {
     async create(data, options) {
         return Order_model_1.default.create(data, options);
@@ -66,6 +67,20 @@ class OrderDao {
             offset,
             limit: pageSize,
             order: [['createdAt', 'DESC']],
+            include: [
+                {
+                    model: models_1.Channel,
+                    as: 'channel',
+                    attributes: ['id', 'name'],
+                    required: false,
+                },
+                {
+                    model: models_1.Promoter,
+                    as: 'promoter',
+                    attributes: ['id', 'name', 'code'],
+                    required: false,
+                },
+            ],
         });
     }
     async findByOrderNo(orderNo) {

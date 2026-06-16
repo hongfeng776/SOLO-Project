@@ -1,9 +1,14 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const dao_1 = require("../dao");
 const statusCode_1 = require("../constants/statusCode");
 const error_middleware_1 = require("../middleware/error.middleware");
 const enum_1 = require("../constants/enum");
+const money_1 = __importDefault(require("../utils/money"));
+const RiskControl_service_1 = __importDefault(require("./RiskControl.service"));
 class WithdrawService {
     async create(data) {
         const withdrawNo = await this.generateWithdrawNo();
@@ -67,14 +72,15 @@ class WithdrawService {
         }
         const available = Number(promoter.availableCommission || 0);
         const amount = Number(data.amount || 0);
-        if (amount <= 0) {
+        if (!money_1.default.isGreater(amount, 0)) {
             throw new error_middleware_1.AppError('提现金额必须大于0', statusCode_1.BusinessCode.PARAM_ERROR);
         }
-        if (amount > available) {
+        if (money_1.default.isGreater(amount, available)) {
             throw new error_middleware_1.AppError('可用佣金不足', statusCode_1.BusinessCode.ERROR);
         }
+        await RiskControl_service_1.default.checkWithdraw(data.promoterId, amount);
         const fee = Number(data.fee || 0);
-        const actualAmount = amount - fee;
+        const actualAmount = money_1.default.subtract(amount, fee);
         return this.create({
             ...data,
             actualAmount,
@@ -102,8 +108,8 @@ class WithdrawService {
                 const available = Number(promoter.availableCommission || 0);
                 const amount = Number(withdraw.amount || 0);
                 await dao_1.promoterDao.update({
-                    frozenCommission: Math.max(0, frozen - amount),
-                    availableCommission: available + amount,
+                    frozenCommission: money_1.default.subtract(frozen, amount),
+                    availableCommission: money_1.default.add(available, amount),
                 }, { where: { id: withdraw.promoterId } });
             }
         }
@@ -126,7 +132,7 @@ class WithdrawService {
             const frozen = Number(promoter.frozenCommission || 0);
             const amount = Number(withdraw.amount || 0);
             await dao_1.promoterDao.update({
-                frozenCommission: Math.max(0, frozen - amount),
+                frozenCommission: money_1.default.subtract(frozen, amount),
             }, { where: { id: withdraw.promoterId } });
         }
     }

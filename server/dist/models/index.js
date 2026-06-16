@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserRole = exports.RolePermission = exports.Permission = exports.Role = exports.Withdraw = exports.Marketing = exports.Commission = exports.Order = exports.Promoter = exports.Channel = exports.User = exports.associate = void 0;
+exports.CommissionRule = exports.ChannelExtension = exports.OperationLog = exports.UserRole = exports.RolePermission = exports.Permission = exports.Role = exports.Withdraw = exports.Marketing = exports.Commission = exports.Order = exports.Promoter = exports.Channel = exports.User = exports.associate = void 0;
 const User_model_1 = __importDefault(require("./User.model"));
 exports.User = User_model_1.default;
 const Channel_model_1 = __importDefault(require("./Channel.model"));
@@ -26,6 +26,12 @@ const RolePermission_model_1 = __importDefault(require("./RolePermission.model")
 exports.RolePermission = RolePermission_model_1.default;
 const UserRole_model_1 = __importDefault(require("./UserRole.model"));
 exports.UserRole = UserRole_model_1.default;
+const OperationLog_model_1 = __importDefault(require("./OperationLog.model"));
+exports.OperationLog = OperationLog_model_1.default;
+const ChannelExtension_model_1 = __importDefault(require("./ChannelExtension.model"));
+exports.ChannelExtension = ChannelExtension_model_1.default;
+const CommissionRule_model_1 = __importDefault(require("./CommissionRule.model"));
+exports.CommissionRule = CommissionRule_model_1.default;
 const models = {
     User: User_model_1.default,
     Channel: Channel_model_1.default,
@@ -38,10 +44,15 @@ const models = {
     Permission: Permission_model_1.default,
     RolePermission: RolePermission_model_1.default,
     UserRole: UserRole_model_1.default,
+    OperationLog: OperationLog_model_1.default,
+    ChannelExtension: ChannelExtension_model_1.default,
+    CommissionRule: CommissionRule_model_1.default,
 };
 const associate = () => {
     Channel_model_1.default.hasMany(Promoter_model_1.default, { foreignKey: 'channelId', as: 'promoters' });
     Channel_model_1.default.hasMany(Order_model_1.default, { foreignKey: 'channelId', as: 'orders' });
+    Channel_model_1.default.hasMany(ChannelExtension_model_1.default, { foreignKey: 'channelId', as: 'extensions' });
+    ChannelExtension_model_1.default.belongsTo(Channel_model_1.default, { foreignKey: 'channelId', as: 'channel' });
     Promoter_model_1.default.belongsTo(Channel_model_1.default, { foreignKey: 'channelId', as: 'channel' });
     Promoter_model_1.default.hasMany(Order_model_1.default, { foreignKey: 'promoterId', as: 'orders' });
     Promoter_model_1.default.hasMany(Commission_model_1.default, { foreignKey: 'promoterId', as: 'commissions' });

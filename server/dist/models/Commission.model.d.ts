@@ -12,6 +12,8 @@ interface CommissionAttributes {
     status: CommissionStatus;
     settleTime?: Date;
     remark?: string;
+    calcRule?: object;
+    sourceType?: string;
     createdAt: Date;
     updatedAt: Date;
     deletedAt?: Date;
@@ -30,6 +32,8 @@ declare class Commission extends Model<CommissionAttributes, CommissionCreationA
     status: CommissionStatus;
     settleTime?: Date;
     remark?: string;
+    calcRule?: object;
+    sourceType?: string;
     readonly createdAt: Date;
     readonly updatedAt: Date;
     readonly deletedAt?: Date;

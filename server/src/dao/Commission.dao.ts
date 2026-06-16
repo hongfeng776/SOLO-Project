@@ -1,5 +1,7 @@
-import { FindOptions, CreateOptions, UpdateOptions, DestroyOptions, CountOptions, Op, fn, col } from 'sequelize';
+import { FindOptions, CreateOptions, UpdateOptions, DestroyOptions, CountOptions, Op, fn, col, literal } from 'sequelize';
 import Commission, { CommissionAttributes, CommissionCreationAttributes } from '../models/Commission.model';
+import { Promoter } from '../models';
+import { Channel } from '../models';
 
 interface CommissionQueryParams {
   page: number;
@@ -88,6 +90,20 @@ class CommissionDao {
       offset,
       limit: pageSize,
       order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: Promoter,
+          as: 'promoter',
+          attributes: ['id', 'name', 'code'],
+          required: false,
+        },
+        {
+          model: Channel,
+          as: 'channel',
+          attributes: ['id', 'name'],
+          required: false,
+        },
+      ],
     });
   }
 
@@ -118,43 +134,35 @@ class CommissionDao {
       }
     }
 
-    const [totalResult, pendingResult, settledResult, withdrawnResult, deductedResult, countResult] = await Promise.all([
-      Commission.findAll({
-        attributes: [[fn('IFNULL', fn('SUM', col('amount')), 0), 'total']],
-        where,
-        raw: true,
-      }) as any,
-      Commission.findAll({
-        attributes: [[fn('IFNULL', fn('SUM', col('amount')), 0), 'total']],
-        where: { ...where, status: 0 },
-        raw: true,
-      }) as any,
-      Commission.findAll({
-        attributes: [[fn('IFNULL', fn('SUM', col('amount')), 0), 'total']],
-        where: { ...where, status: 2 },
-        raw: true,
-      }) as any,
-      Commission.findAll({
-        attributes: [[fn('IFNULL', fn('SUM', col('amount')), 0), 'total']],
-        where: { ...where, status: 3 },
-        raw: true,
-      }) as any,
-      Commission.findAll({
-        attributes: [[fn('IFNULL', fn('SUM', col('amount')), 0), 'total']],
-        where: { ...where, status: 4 },
-        raw: true,
-      }) as any,
-      this.count({ where }),
-    ]);
+    const result = await Commission.findAll({
+      attributes: [
+        [fn('IFNULL', fn('SUM', col('amount')), 0), 'totalAmount'],
+        [fn('IFNULL', fn('SUM', literal('CASE WHEN status = 0 THEN amount ELSE 0 END')), 0), 'pendingAmount'],
+        [fn('IFNULL', fn('SUM', literal('CASE WHEN status = 2 THEN amount ELSE 0 END')), 0), 'settledAmount'],
+        [fn('IFNULL', fn('SUM', literal('CASE WHEN status = 3 THEN amount ELSE 0 END')), 0), 'withdrawnAmount'],
+        [fn('IFNULL', fn('SUM', literal('CASE WHEN status = 4 THEN amount ELSE 0 END')), 0), 'deductedAmount'],
+        [fn('COUNT', col('id')), 'totalCount'],
+      ],
+      where,
+      raw: true,
+    }) as any;
 
     return {
-      totalAmount: parseFloat(totalResult[0]?.total || 0),
-      pendingAmount: parseFloat(pendingResult[0]?.total || 0),
-      settledAmount: parseFloat(settledResult[0]?.total || 0),
-      withdrawnAmount: parseFloat(withdrawnResult[0]?.total || 0),
-      deductedAmount: parseFloat(deductedResult[0]?.total || 0),
-      totalCount: countResult,
+      totalAmount: parseFloat(result[0]?.totalAmount || 0),
+      pendingAmount: parseFloat(result[0]?.pendingAmount || 0),
+      settledAmount: parseFloat(result[0]?.settledAmount || 0),
+      withdrawnAmount: parseFloat(result[0]?.withdrawnAmount || 0),
+      deductedAmount: parseFloat(result[0]?.deductedAmount || 0),
+      totalCount: parseInt(result[0]?.totalCount || 0, 10),
     };
+  }
+
+  public async findByOrderId(orderId: string): Promise<Commission[]> {
+    return this.findAll({ where: { orderId } });
+  }
+
+  public async findByOrderIds(orderIds: string[]): Promise<Commission[]> {
+    return this.findAll({ where: { orderId: { [Op.in]: orderIds } } });
   }
 
   public async bulkUpdate(ids: string[], data: Partial<CommissionAttributes>): Promise<[number, Commission[]]> {
