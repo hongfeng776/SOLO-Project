@@ -1,0 +1,106 @@
+@use 'sass:math';
+@use 'variables' as *;
+
+@mixin ellipsis($lines: 1) {
+  @if $lines == 1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  } @else {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: $lines;
+    overflow: hidden;
+  }
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin scrollbar($width: 6px, $thumb-color: rgba(144, 147, 153, 0.3), $track-color: transparent) {
+  &::-webkit-scrollbar {
+    width: $width;
+    height: $width;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: $thumb-color;
+    border-radius: math.div($width, 2);
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(144, 147, 153, 0.5);
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: $track-color;
+  }
+}
+
+@mixin responsive($breakpoint) {
+  @if $breakpoint == sm {
+    @media (max-width: 576px) { @content; }
+  } @else if $breakpoint == md {
+    @media (max-width: 768px) { @content; }
+  } @else if $breakpoint == lg {
+    @media (max-width: 992px) { @content; }
+  } @else if $breakpoint == xl {
+    @media (max-width: 1200px) { @content; }
+  }
+}
+
+@mixin fin-card {
+  background-color: #FFFFFF;
+  border-radius: 4px;
+  border: 1px solid $fin-border;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  padding: 20px;
+}
+
+@mixin fin-table {
+  .el-table {
+    --el-table-border-color: #{$fin-border};
+    --el-table-header-bg-color: #F8FAFC;
+    --el-table-row-hover-bg-color: #F0F5FF;
+
+    th.el-table__cell {
+      font-weight: 600;
+      color: $fin-text-primary;
+      background-color: #F8FAFC;
+    }
+
+    td.el-table__cell {
+      color: $fin-text-regular;
+    }
+  }
+}
+
+@mixin fin-form {
+  .el-form-item__label {
+    color: $fin-text-primary;
+    font-weight: 500;
+  }
+
+  .el-input__wrapper,
+  .el-textarea__inner {
+    border-color: $fin-border;
+
+    &:hover {
+      border-color: $fin-primary-light;
+    }
+
+    &.is-focus {
+      border-color: $fin-primary;
+      box-shadow: 0 0 0 1px $fin-primary;
+    }
+  }
+}

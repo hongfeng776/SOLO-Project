@@ -1,0 +1,36 @@
+import { sequelize } from '../config/database';
+import User from './User';
+import Role from './Role';
+import Permission from './Permission';
+import UserRole from './UserRole';
+import RolePermission from './RolePermission';
+import StockQuote from './StockQuote';
+import AssetProduct from './AssetProduct';
+import CustomerAsset from './CustomerAsset';
+import FundFlow from './FundFlow';
+import ComplianceAudit from './ComplianceAudit';
+
+const db = {
+  sequelize,
+  User,
+  Role,
+  Permission,
+  UserRole,
+  RolePermission,
+  StockQuote,
+  AssetProduct,
+  CustomerAsset,
+  FundFlow,
+  ComplianceAudit,
+};
+
+const setupAssociations = () => {
+  User.belongsToMany(Role, { through: UserRole, foreignKey: 'user_id', otherKey: 'role_id', as: 'roles' });
+  Role.belongsToMany(User, { through: UserRole, foreignKey: 'role_id', otherKey: 'user_id', as: 'users' });
+  Role.belongsToMany(Permission, { through: RolePermission, foreignKey: 'role_id', otherKey: 'perm_id', as: 'permissions' });
+  Permission.belongsToMany(Role, { through: RolePermission, foreignKey: 'perm_id', otherKey: 'role_id', as: 'roles' });
+};
+
+setupAssociations();
+
+export { db };
