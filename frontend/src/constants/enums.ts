@@ -1,0 +1,104 @@
+export const CONTENT_AUDIT_STATUS = {
+  PENDING: { value: 0, label: '待审核', color: '#E6A23C', type: 'warning' },
+  REVIEWING: { value: 1, label: '审核中', color: '#409EFF', type: 'primary' },
+  APPROVED: { value: 2, label: '审核通过', color: '#67C23A', type: 'success' },
+  REJECTED: { value: 3, label: '审核驳回', color: '#F56C6C', type: 'danger' },
+  OFFLINE: { value: 4, label: '已下架', color: '#909399', type: 'info' },
+} as const
+
+export const COPYRIGHT_TYPE = {
+  EXCLUSIVE: { value: 1, label: '独家版权', color: '#409EFF', type: 'primary' },
+  NON_EXCLUSIVE: { value: 2, label: '非独家版权', color: '#67C23A', type: 'success' },
+  AGENCY: { value: 3, label: '代理版权', color: '#E6A23C', type: 'warning' },
+  PUBLIC: { value: 4, label: '公共版权', color: '#909399', type: 'info' },
+} as const
+
+export const MEMBER_LEVEL = {
+  NORMAL: { value: 0, label: '普通用户', color: '#909399', type: 'info' },
+  VIP: { value: 1, label: 'VIP会员', color: '#E6A23C', type: 'warning' },
+  SVIP: { value: 2, label: 'SVIP会员', color: '#F56C6C', type: 'danger' },
+  YEAR_VIP: { value: 3, label: '年度VIP', color: '#409EFF', type: 'primary' },
+  LIFETIME: { value: 4, label: '终身会员', color: '#67C23A', type: 'success' },
+} as const
+
+export const CONTENT_CATEGORY = {
+  MOVIE: { value: 1, label: '电影' },
+  TV_SERIES: { value: 2, label: '电视剧' },
+  VARIETY: { value: 3, label: '综艺' },
+  ANIME: { value: 4, label: '动漫' },
+  DOCUMENTARY: { value: 5, label: '纪录片' },
+  SHORT_VIDEO: { value: 6, label: '短视频' },
+  LIVE: { value: 7, label: '直播' },
+} as const
+
+export const AD_STATUS = {
+  DRAFT: { value: 0, label: '草稿', color: '#909399', type: 'info' },
+  PENDING: { value: 1, label: '待投放', color: '#E6A23C', type: 'warning' },
+  RUNNING: { value: 2, label: '投放中', color: '#67C23A', type: 'success' },
+  PAUSED: { value: 3, label: '已暂停', color: '#F56C6C', type: 'danger' },
+  ENDED: { value: 4, label: '已结束', color: '#409EFF', type: 'primary' },
+} as const
+
+export const AD_TYPE = {
+  BANNER: { value: 1, label: '首页Banner' },
+  SPLASH: { value: 2, label: '开屏广告' },
+  INTERSTITIAL: { value: 3, label: '插屏广告' },
+  NATIVE: { value: 4, label: '信息流广告' },
+  REWARD: { value: 5, label: '激励视频' },
+} as const
+
+export const ACTIVITY_STATUS = {
+  DRAFT: { value: 0, label: '草稿', color: '#909399', type: 'info' },
+  PUBLISHED: { value: 1, label: '已发布', color: '#67C23A', type: 'success' },
+  ONGOING: { value: 2, label: '进行中', color: '#409EFF', type: 'primary' },
+  ENDED: { value: 3, label: '已结束', color: '#E6A23C', type: 'warning' },
+  CANCELLED: { value: 4, label: '已取消', color: '#F56C6C', type: 'danger' },
+} as const
+
+export const ACTIVITY_TYPE = {
+  DISCOUNT: { value: 1, label: '优惠活动' },
+  LUCKY_DRAW: { value: 2, label: '抽奖活动' },
+  SIGN_IN: { value: 3, label: '签到活动' },
+  SEASONAL: { value: 4, label: '节日活动' },
+  MEMBER_PROMOTION: { value: 5, label: '会员促销' },
+} as const
+
+export const USER_STATUS = {
+  ACTIVE: { value: 1, label: '正常', color: '#67C23A', type: 'success' },
+  DISABLED: { value: 0, label: '禁用', color: '#F56C6C', type: 'danger' },
+  LOCKED: { value: 2, label: '锁定', color: '#E6A23C', type: 'warning' },
+} as const
+
+export const ROLE_CODE = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  ADMIN: 'ADMIN',
+  CONTENT_AUDITOR: 'CONTENT_AUDITOR',
+  COPYRIGHT_MANAGER: 'COPYRIGHT_MANAGER',
+  AD_MANAGER: 'AD_MANAGER',
+  ACTIVITY_MANAGER: 'ACTIVITY_MANAGER',
+  VIEWER: 'VIEWER',
+} as const
+
+export const DATE_FORMAT = {
+  FULL: 'YYYY-MM-DD HH:mm:ss',
+  DATE: 'YYYY-MM-DD',
+  TIME: 'HH:mm:ss',
+  MONTH: 'YYYY-MM',
+} as const
+
+export type EnumObjType = Record<string, { value: number | string; label: string; color?: string; type?: string }>
+
+export function getEnumOptions<T extends EnumObjType>(enumObj: T): Array<T[keyof T]> {
+  return Object.values(enumObj) as Array<T[keyof T]>
+}
+
+export function getEnumLabel<T extends EnumObjType>(enumObj: T, value: number | string): string {
+  const item = Object.values(enumObj).find((e) => e.value === value)
+  return item ? item.label : '未知'
+}
+
+export function getEnumItem<T extends EnumObjType>(enumObj: T, value: number | string) {
+  return Object.values(enumObj).find((e) => e.value === value) || null
+}
+
+export const DATE_FORMAT_STRING = DATE_FORMAT
