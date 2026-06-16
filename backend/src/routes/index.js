@@ -11,5 +11,10 @@ router.use(`${config.apiPrefix}/copyrights`, require('./copyright'));
 router.use(`${config.apiPrefix}/advertisements`, require('./advertisement'));
 router.use(`${config.apiPrefix}/activities`, require('./activity'));
 router.use(`${config.apiPrefix}/common`, require('./common'));
+router.use(`${config.apiPrefix}/comments`, require('./comment'));
+router.use(`${config.apiPrefix}/members`, require('./member'));
+router.use(`${config.apiPrefix}/messages`, require('./message'));
+router.use(`${config.apiPrefix}/operation-logs`, require('./operationLog'));
+router.use(`${config.apiPrefix}/dashboard`, require('./dashboard'));
 
 module.exports = router;

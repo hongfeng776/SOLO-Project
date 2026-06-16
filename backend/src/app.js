@@ -9,9 +9,11 @@ const rateLimit = require('express-rate-limit');
 
 const config = require('./config');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
+const { recordOperation } = require('./middleware/operationLog');
 const { testConnection, syncDatabase } = require('./config/database');
 const { initRedis } = require('./config/redis');
 const routes = require('./routes');
+const schedulerService = require('./services/SchedulerService');
 
 const app = express();
 
@@ -49,6 +51,8 @@ const limiter = rateLimit({
 });
 app.use(config.apiPrefix, limiter);
 
+app.use(recordOperation);
+
 app.use(routes);
 
 app.use(notFoundHandler);
@@ -69,6 +73,8 @@ const startServer = async () => {
       console.log(`[Server] API Base URL: http://localhost:${config.port}${config.apiPrefix}`);
       console.log(`[Server] Environment: ${config.env}`);
       console.log('\n========================================\n');
+
+      schedulerService.start();
     });
   } catch (error) {
     console.error('[Server] Failed to start server:', error);

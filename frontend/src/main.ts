@@ -8,6 +8,7 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import 'element-plus/dist/index.css'
 import './styles/index.scss'
 import './styles/nprogress.scss'
+import { registerLazyLoadDirectives } from '@/directives/lazyLoad'
 
 const app = createApp(App)
 
@@ -21,5 +22,7 @@ app.use(ElementPlus, {
   locale: zhCn,
   size: 'default',
 })
+
+registerLazyLoadDirectives(app)
 
 app.mount('#app')

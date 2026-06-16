@@ -15,6 +15,13 @@ router.get('/enums', (req, res) => {
     activityStatus: enums.getEnumOptions(enums.ACTIVITY_STATUS),
     activityType: enums.getEnumOptions(enums.ACTIVITY_TYPE),
     userStatus: enums.getEnumOptions(enums.USER_STATUS),
+    commentStatus: enums.getEnumOptions(enums.COMMENT_STATUS),
+    memberStatus: enums.getEnumOptions(enums.MEMBER_STATUS),
+    messageType: enums.getEnumOptions(enums.MESSAGE_TYPE),
+    operationType: enums.getEnumOptions(enums.OPERATION_TYPE),
+    violationLevel: enums.getEnumOptions(enums.VIOLATION_LEVEL),
+    messagePriority: enums.getEnumOptions(enums.MESSAGE_PRIORITY),
+    operationModule: enums.getEnumOptions(enums.OPERATION_MODULE),
     roleCode: Object.keys(enums.ROLE_CODE).map((k) => ({ value: enums.ROLE_CODE[k], label: k })),
   };
   return success(res, data);

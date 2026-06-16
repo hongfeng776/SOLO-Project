@@ -1,7 +1,8 @@
 const { Content, Copyright } = require('../models');
 const { Op } = require('../config/database');
-const { NotFoundError, BadRequestError } = require('../utils/errors');
+const { NotFoundError, BadRequestError, ForbiddenError } = require('../utils/errors');
 const { parsePagination, parseSort, parseSearch } = require('../utils/helpers');
+const cacheService = require('./CacheService');
 
 class ContentService {
   async getContentList(query) {
@@ -142,6 +143,7 @@ class ContentService {
       remark: data.remark,
       created_by: operatorId,
     });
+    await cacheService.invalidateContent(content.id);
     return content.id;
   }
 
@@ -178,6 +180,7 @@ class ContentService {
       remark: data.remark,
       updated_by: operatorId,
     }, { where: { id } });
+    await cacheService.invalidateContent(id);
     return true;
   }
 
@@ -187,6 +190,7 @@ class ContentService {
       throw new NotFoundError('内容不存在');
     }
     await content.destroy();
+    await cacheService.invalidateContent(id);
     return true;
   }
 
@@ -195,6 +199,9 @@ class ContentService {
       throw new BadRequestError('请选择要删除的内容');
     }
     await Content.destroy({ where: { id: { [Op.in]: ids } } });
+    for (const id of ids) {
+      await cacheService.invalidateContent(id);
+    }
     return true;
   }
 
@@ -203,12 +210,29 @@ class ContentService {
     if (!content) {
       throw new NotFoundError('内容不存在');
     }
+    const currentStatus = content.audit_status;
+    const validTransitions = {
+      0: [1, 2, 3],
+      1: [2, 3],
+      2: [4],
+      3: [0],
+    };
+    if (!validTransitions[currentStatus] || !validTransitions[currentStatus].includes(auditStatus)) {
+      throw new BadRequestError(`审核状态不能从${currentStatus}转换为${auditStatus}`);
+    }
+    if (auditStatus === 2 && content.copyright_id) {
+      const copyright = await Copyright.findByPk(content.copyright_id);
+      if (copyright && copyright.status === 0) {
+        throw new ForbiddenError('关联版权已失效，无法审核通过');
+      }
+    }
     await Content.update({
       audit_status: auditStatus,
       audit_remark: auditRemark,
       auditor_id: auditorId,
       audit_time: new Date(),
     }, { where: { id } });
+    await cacheService.invalidateContent(id);
     return true;
   }
 
@@ -216,12 +240,22 @@ class ContentService {
     if (!ids || ids.length === 0) {
       throw new BadRequestError('请选择要审核的内容');
     }
+    const contents = await Content.findAll({ where: { id: { [Op.in]: ids } } });
+    const invalidIds = contents
+      .filter(c => [2, 4].includes(c.audit_status))
+      .map(c => c.id);
+    if (invalidIds.length > 0) {
+      throw new BadRequestError(`以下内容已审核通过或已下架，不可重复审核: ${invalidIds.join(',')}`);
+    }
     await Content.update({
       audit_status: auditStatus,
       audit_remark: auditRemark,
       auditor_id: auditorId,
       audit_time: new Date(),
     }, { where: { id: { [Op.in]: ids } } });
+    for (const id of ids) {
+      await cacheService.invalidateContent(id);
+    }
     return true;
   }
 }

@@ -101,4 +101,67 @@ export function getEnumItem<T extends EnumObjType>(enumObj: T, value: number | s
   return Object.values(enumObj).find((e) => e.value === value) || null
 }
 
+export const COMMENT_STATUS = {
+  PENDING: { value: 0, label: '待审核', color: '#E6A23C', type: 'warning' },
+  NORMAL: { value: 1, label: '正常', color: '#67C23A', type: 'success' },
+  HIDDEN: { value: 2, label: '已隐藏', color: '#909399', type: 'info' },
+  DELETED: { value: 3, label: '违规删除', color: '#F56C6C', type: 'danger' },
+} as const
+
+export const MEMBER_STATUS = {
+  EXPIRED: { value: 0, label: '已过期', color: '#909399', type: 'info' },
+  ACTIVE: { value: 1, label: '正常', color: '#67C23A', type: 'success' },
+  FROZEN: { value: 2, label: '已冻结', color: '#F56C6C', type: 'danger' },
+  PENDING: { value: 3, label: '待激活', color: '#E6A23C', type: 'warning' },
+} as const
+
+export const MESSAGE_TYPE = {
+  SYSTEM: { value: 1, label: '系统通知' },
+  AUDIT: { value: 2, label: '审核通知' },
+  COPYRIGHT_WARNING: { value: 3, label: '版权预警' },
+  ACTIVITY: { value: 4, label: '活动通知' },
+  COMMENT_REPLY: { value: 5, label: '评论回复' },
+  MEMBER: { value: 6, label: '会员通知' },
+  AD: { value: 7, label: '广告通知' },
+} as const
+
+export const OPERATION_TYPE = {
+  CREATE: { value: 'CREATE', label: '新增' },
+  UPDATE: { value: 'UPDATE', label: '修改' },
+  DELETE: { value: 'DELETE', label: '删除' },
+  AUDIT: { value: 'AUDIT', label: '审核' },
+  BATCH_DELETE: { value: 'BATCH_DELETE', label: '批量删除' },
+  EXPORT: { value: 'EXPORT', label: '导出' },
+  LOGIN: { value: 'LOGIN', label: '登录' },
+  LOGOUT: { value: 'LOGOUT', label: '退出' },
+  CHANGE_STATUS: { value: 'CHANGE_STATUS', label: '状态变更' },
+  CHANGE_PASSWORD: { value: 'CHANGE_PASSWORD', label: '修改密码' },
+} as const
+
+export const VIOLATION_LEVEL = {
+  NONE: { value: 0, label: '无违规', color: '#67C23A', type: 'success' },
+  LOW: { value: 1, label: '低风险', color: '#E6A23C', type: 'warning' },
+  MEDIUM: { value: 2, label: '中风险', color: '#F56C6C', type: 'danger' },
+  HIGH: { value: 3, label: '高风险', color: '#F56C6C', type: 'danger' },
+} as const
+
+export const MESSAGE_PRIORITY = {
+  NORMAL: { value: 0, label: '普通' },
+  IMPORTANT: { value: 1, label: '重要' },
+  URGENT: { value: 2, label: '紧急' },
+} as const
+
+export const OPERATION_MODULE = {
+  CONTENT: { value: 'content', label: '内容管理' },
+  COPYRIGHT: { value: 'copyright', label: '版权管理' },
+  ADVERTISEMENT: { value: 'advertisement', label: '广告管理' },
+  ACTIVITY: { value: 'activity', label: '活动管理' },
+  USER: { value: 'user', label: '用户管理' },
+  ROLE: { value: 'role', label: '角色管理' },
+  COMMENT: { value: 'comment', label: '评论管理' },
+  MEMBER: { value: 'member', label: '会员管理' },
+  AUTH: { value: 'auth', label: '认证授权' },
+  SYSTEM: { value: 'system', label: '系统管理' },
+} as const
+
 export const DATE_FORMAT_STRING = DATE_FORMAT

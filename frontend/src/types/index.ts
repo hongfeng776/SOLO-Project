@@ -223,3 +223,169 @@ export interface ActivityItem {
   remark?: string
   createdAt?: string
 }
+
+export interface CommentItem {
+  id: number
+  contentId: number
+  userId: number
+  parentId?: number
+  replyToUserId?: number
+  commentContent: string
+  commentImages: string[]
+  likeCount: number
+  replyCount: number
+  isTop: number
+  isHot: number
+  commentStatus: number
+  violationLevel: number
+  violationType?: string
+  filterResult?: Record<string, any>
+  auditStatus: number
+  auditRemark?: string
+  auditorId?: number
+  auditTime?: string
+  ipAddress?: string
+  source: string
+  content?: { id: number; title: string }
+  commentUser?: { id: number; username: string; avatar?: string }
+  replies?: CommentItem[]
+  createdAt?: string
+}
+
+export interface MemberItem {
+  id: number
+  userId: number
+  memberNo: string
+  memberLevel: number
+  memberStatus: number
+  startDate?: string
+  expireDate?: string
+  autoRenew: number
+  balance: number
+  totalSpent: number
+  points: number
+  totalPoints: number
+  couponCount: number
+  currentPlan?: string
+  planPrice: number
+  planDuration: number
+  privileges: string[]
+  lastActiveAt?: string
+  remark?: string
+  user?: { id: number; username: string; realName?: string; avatar?: string; phone?: string }
+  createdAt?: string
+}
+
+export interface MessageItem {
+  id: number
+  messageType: number
+  title: string
+  content?: string
+  senderId?: number
+  receiverId?: number
+  isBroadcast: number
+  isRead: number
+  readTime?: string
+  linkType?: string
+  linkId?: number
+  linkUrl?: string
+  priority: number
+  extraData?: Record<string, any>
+  pushChannel?: string
+  pushStatus: number
+  scheduledTime?: string
+  createdAt?: string
+}
+
+export interface OperationLogItem {
+  id: number
+  operatorId?: number
+  operatorName?: string
+  operationType: string
+  operationModule: string
+  operationDesc?: string
+  targetType?: string
+  targetId?: string
+  targetName?: string
+  beforeData?: Record<string, any>
+  afterData?: Record<string, any>
+  requestMethod?: string
+  requestUrl?: string
+  requestParams?: Record<string, any>
+  responseCode?: number
+  ipAddress?: string
+  userAgent?: string
+  duration?: number
+  isSuccess: number
+  errorMessage?: string
+  createdAt?: string
+}
+
+export interface DashboardStats {
+  contentStats: {
+    total: number
+    todayNew: number
+    byCategory: Array<{ category: number; count: number }>
+    byAuditStatus: Array<{ auditStatus: number; count: number }>
+  }
+  userStats: {
+    total: number
+    activeCount: number
+    todayNew: number
+  }
+  adStats: {
+    totalBudget: number
+    totalSpent: number
+    totalImpression: number
+    totalClick: number
+    avgCtr: number
+  }
+  activityStats: {
+    totalBudget: number
+    totalSpent: number
+    totalParticipant: number
+  }
+  copyrightStats: {
+    activeCount: number
+    expiringCount: number
+    expiredCount: number
+  }
+  memberStats: Array<{ level: number; count: number }>
+}
+
+export interface PlayTrendItem {
+  date: string
+  playCount: number
+}
+
+export interface AuditEfficiencyItem {
+  date: string
+  totalAudited: number
+  approvedCount: number
+  approvalRate: number
+  avgDuration: number
+}
+
+export interface RevenueOverviewItem {
+  date: string
+  adRevenue: number
+  memberRevenue: number
+  totalRevenue: number
+}
+
+export interface UnreadCountResult {
+  total: number
+  byType: Array<{ messageType: number; count: number }>
+}
+
+export interface MemberStatsResult {
+  byLevel: Array<{ level: number; count: number }>
+  totalSpent: number
+  totalPoints: number
+}
+
+export interface CommentStatsResult {
+  total: number
+  byStatus: Array<{ status: number; count: number }>
+  violationCount: number
+}

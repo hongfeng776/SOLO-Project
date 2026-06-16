@@ -55,6 +55,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '活动运营', icon: 'Present', roles: ['activity:view'] },
       },
       {
+        path: 'comments',
+        name: 'Comments',
+        component: () => import('@/views/comment/index.vue'),
+        meta: { title: '评论管理', icon: 'ChatDotRound', roles: ['comment:view'] },
+      },
+      {
+        path: 'messages',
+        name: 'Messages',
+        component: () => import('@/views/message/index.vue'),
+        meta: { title: '消息中心', icon: 'Bell', roles: ['*'] },
+      },
+      {
         path: 'system',
         meta: { title: '系统管理', icon: 'Setting' },
         children: [
@@ -69,6 +81,18 @@ const routes: RouteRecordRaw[] = [
             name: 'Roles',
             component: () => import('@/views/system/role/index.vue'),
             meta: { title: '角色管理', icon: 'UserFilled', roles: ['role:view'] },
+          },
+          {
+            path: 'members',
+            name: 'Members',
+            component: () => import('@/views/member/index.vue'),
+            meta: { title: '会员管理', icon: 'Medal', roles: ['member:view'] },
+          },
+          {
+            path: 'logs',
+            name: 'OperationLogs',
+            component: () => import('@/views/system/log/index.vue'),
+            meta: { title: '操作日志', icon: 'List', roles: ['log:view'] },
           },
         ],
       },

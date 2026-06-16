@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore, useUserStore } from '@/stores'
 import { changePasswordApi } from '@/api/auth'
+import { getUnreadCountApi } from '@/api/message'
+import type { UnreadCountResult } from '@/types'
+import { Bell } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const appStore = useAppStore()
@@ -11,6 +14,28 @@ const userStore = useUserStore()
 const userDropdown = ref<InstanceType<any>>()
 const passwordDialogVisible = ref(false)
 const passwordLoading = ref(false)
+const unreadCount = ref<number>(0)
+
+let unreadTimer: ReturnType<typeof setInterval> | null = null
+
+const fetchUnreadCount = async () => {
+  try {
+    const result = await getUnreadCountApi()
+    unreadCount.value = result.total
+  } catch {}
+}
+
+onMounted(() => {
+  fetchUnreadCount()
+  unreadTimer = setInterval(fetchUnreadCount, 60000)
+})
+
+onUnmounted(() => {
+  if (unreadTimer) {
+    clearInterval(unreadTimer)
+    unreadTimer = null
+  }
+})
 
 const passwordFormRef = ref()
 const passwordForm = reactive({
@@ -109,6 +134,9 @@ watch(passwordDialogVisible, (val) => {
     </div>
 
     <div class="header-right">
+      <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99">
+        <el-button :icon="Bell" circle @click="$router.push('/messages')" />
+      </el-badge>
       <el-tooltip content="全屏">
         <el-icon class="header-icon"><FullScreen /></el-icon>
       </el-tooltip>
