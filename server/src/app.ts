@@ -7,6 +7,7 @@ import { appConfig } from '@config/index';
 import { errorHandler } from '@middlewares/errorHandler';
 import { validationErrorHandler } from '@middlewares/validate';
 import { apiLimiter } from '@middlewares/rateLimiter';
+import { operationLogger } from '@middlewares/operationLog';
 import routes from '@routes/index';
 import { IApiResponse } from '@typings/index';
 
@@ -31,6 +32,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.use(apiLimiter);
+app.use(operationLogger);
 
 app.get('/health', (_req, res) => {
   const response: IApiResponse<{ status: string; uptime: number }> = {

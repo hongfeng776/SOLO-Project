@@ -1,4 +1,4 @@
-import { MarketType, RiskLevel, ProductType, ProductStatus, CustomerType, CustomerStatus, FlowType, FlowStatus, FlowChannel, AuditType, AuditStatus, TargetType, PermType, UserStatus, RoleStatus, PermissionStatus } from '@/enums'
+import { MarketType, RiskLevel, ProductType, ProductStatus, CustomerType, CustomerStatus, FlowType, FlowStatus, FlowChannel, AuditType, AuditStatus, TargetType, PermType, UserStatus, RoleStatus, PermissionStatus, TradeType, TradeStatus, AlertType, AlertLevel, AlertStatus, LogStatus, LogModule, LogAction } from '@/enums'
 
 export const MARKET_LABELS: Record<MarketType, string> = {
   [MarketType.SH]: '沪市',
@@ -114,6 +114,9 @@ export const TARGET_TYPE_LABELS: Record<TargetType, string> = {
   [TargetType.CUSTOMER]: '客户',
   [TargetType.TRADE]: '交易',
   [TargetType.PRODUCT]: '产品',
+  [TargetType.USER]: '用户',
+  [TargetType.ROLE]: '角色',
+  [TargetType.PERMISSION]: '权限',
 }
 
 export const PERM_TYPE_LABELS: Record<PermType, string> = {
@@ -150,4 +153,103 @@ export const PERMISSION_STATUS_LABELS: Record<PermissionStatus, string> = {
 export const PERMISSION_STATUS_COLORS: Record<PermissionStatus, string> = {
   [PermissionStatus.DISABLED]: 'danger',
   [PermissionStatus.ENABLED]: 'success',
+}
+
+export const TRADE_TYPE_LABELS: Record<TradeType, string> = {
+  [TradeType.BUY]: '买入',
+  [TradeType.SELL]: '卖出',
+}
+
+export const TRADE_TYPE_COLORS: Record<TradeType, 'danger' | 'success'> = {
+  [TradeType.BUY]: 'danger',
+  [TradeType.SELL]: 'success',
+}
+
+export const TRADE_STATUS_LABELS: Record<TradeStatus, string> = {
+  [TradeStatus.PENDING]: '待处理',
+  [TradeStatus.AUDITING]: '审核中',
+  [TradeStatus.APPROVED]: '已通过',
+  [TradeStatus.REJECTED]: '已拒绝',
+  [TradeStatus.DEALED]: '已成交',
+  [TradeStatus.CANCELLED]: '已撤销',
+  [TradeStatus.FAILED]: '失败',
+}
+
+export const TRADE_STATUS_COLORS: Record<TradeStatus, string> = {
+  [TradeStatus.PENDING]: 'warning',
+  [TradeStatus.AUDITING]: 'primary',
+  [TradeStatus.APPROVED]: 'success',
+  [TradeStatus.REJECTED]: 'danger',
+  [TradeStatus.DEALED]: 'success',
+  [TradeStatus.CANCELLED]: 'info',
+  [TradeStatus.FAILED]: 'danger',
+}
+
+export const ALERT_TYPE_LABELS: Record<AlertType, string> = {
+  [AlertType.POSITION]: '持仓告警',
+  [AlertType.TRADE]: '交易告警',
+  [AlertType.RISK]: '风险告警',
+  [AlertType.COMPLIANCE]: '合规告警',
+  [AlertType.SYSTEM]: '系统告警',
+}
+
+export const ALERT_LEVEL_LABELS: Record<AlertLevel, string> = {
+  [AlertLevel.LOW]: '低',
+  [AlertLevel.MEDIUM]: '中',
+  [AlertLevel.HIGH]: '高',
+  [AlertLevel.CRITICAL]: '严重',
+}
+
+export const ALERT_LEVEL_COLORS: Record<AlertLevel, string> = {
+  [AlertLevel.LOW]: '#909399',
+  [AlertLevel.MEDIUM]: '#E6A23C',
+  [AlertLevel.HIGH]: '#F56C6C',
+  [AlertLevel.CRITICAL]: '#C45656',
+}
+
+export const ALERT_STATUS_LABELS: Record<AlertStatus, string> = {
+  [AlertStatus.PENDING]: '待处理',
+  [AlertStatus.CONFIRMED]: '已确认',
+  [AlertStatus.RESOLVED]: '已处理',
+  [AlertStatus.IGNORED]: '已忽略',
+}
+
+export const ALERT_STATUS_COLORS: Record<AlertStatus, string> = {
+  [AlertStatus.PENDING]: 'danger',
+  [AlertStatus.CONFIRMED]: 'warning',
+  [AlertStatus.RESOLVED]: 'success',
+  [AlertStatus.IGNORED]: 'info',
+}
+
+export const LOG_STATUS_LABELS: Record<LogStatus, string> = {
+  [LogStatus.SUCCESS]: '成功',
+  [LogStatus.FAILED]: '失败',
+}
+
+export const LOG_STATUS_COLORS: Record<LogStatus, string> = {
+  [LogStatus.SUCCESS]: 'success',
+  [LogStatus.FAILED]: 'danger',
+}
+
+export const LOG_MODULE_LABELS: Record<LogModule, string> = {
+  [LogModule.AUTH]: '认证',
+  [LogModule.USER]: '用户管理',
+  [LogModule.ROLE]: '角色管理',
+  [LogModule.PERMISSION]: '权限管理',
+  [LogModule.CUSTOMER]: '客户管理',
+  [LogModule.TRADE]: '交易管理',
+  [LogModule.PRODUCT]: '产品管理',
+  [LogModule.STOCK]: '行情管理',
+  [LogModule.SYSTEM]: '系统管理',
+}
+
+export const LOG_ACTION_LABELS: Record<LogAction, string> = {
+  [LogAction.LOGIN]: '登录',
+  [LogAction.LOGOUT]: '登出',
+  [LogAction.CREATE]: '创建',
+  [LogAction.UPDATE]: '更新',
+  [LogAction.DELETE]: '删除',
+  [LogAction.EXPORT]: '导出',
+  [LogAction.IMPORT]: '导入',
+  [LogAction.AUDIT]: '审核',
 }

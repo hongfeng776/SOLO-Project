@@ -11,20 +11,20 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@views/login/index.vue'),
-    meta: { title: '登录', requiresAuth: false, hidden: true }
+    component: () => import(/* @vite-ignore *//* webpackChunkName: "common" */ '@views/login/index.vue'),
+    meta: { title: '登录', requiresAuth: false, hidden: true, keepAlive: false }
   },
   {
     path: '/403',
     name: '403',
-    component: () => import('@views/error/403.vue'),
-    meta: { title: '403 权限不足', requiresAuth: false, hidden: true }
+    component: () => import(/* @vite-ignore *//* webpackChunkName: "common" */ '@views/error/403.vue'),
+    meta: { title: '403 权限不足', requiresAuth: false, hidden: true, keepAlive: false }
   },
   {
     path: '/404',
     name: '404',
-    component: () => import('@views/error/404.vue'),
-    meta: { title: '404 页面不存在', requiresAuth: false, hidden: true }
+    component: () => import(/* @vite-ignore *//* webpackChunkName: "common" */ '@views/error/404.vue'),
+    meta: { title: '404 页面不存在', requiresAuth: false, hidden: true, keepAlive: false }
   },
   {
     path: '/',
@@ -35,56 +35,80 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'dashboard',
         name: 'Dashboard',
-        component: () => import('@views/dashboard/index.vue'),
-        meta: { title: '工作台', icon: 'DataAnalysis' }
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/dashboard/index.vue'),
+        meta: { title: '工作台', icon: 'DataAnalysis', keepAlive: true }
       },
       {
         path: 'stock',
         name: 'Stock',
-        component: () => import('@views/stock/index.vue'),
-        meta: { title: '行情管理', icon: 'TrendCharts' }
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/stock/index.vue'),
+        meta: { title: '行情管理', icon: 'TrendCharts', keepAlive: true }
       },
       {
         path: 'product',
         name: 'Product',
-        component: () => import('@views/product/index.vue'),
-        meta: { title: '产品管理', icon: 'Goods' }
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/product/index.vue'),
+        meta: { title: '产品管理', icon: 'Goods', keepAlive: true }
       },
       {
         path: 'customer',
         name: 'Customer',
-        component: () => import('@views/customer/index.vue'),
-        meta: { title: '客户资产', icon: 'User' }
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/customer/index.vue'),
+        meta: { title: '客户资产', icon: 'User', keepAlive: true }
+      },
+      {
+        path: 'trade',
+        name: 'Trade',
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/trade/index.vue'),
+        meta: { title: '交易管理', icon: 'Money', keepAlive: true }
+      },
+      {
+        path: 'holding',
+        name: 'Holding',
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/holding/index.vue'),
+        meta: { title: '客户持仓', icon: 'Goods', keepAlive: true }
       },
       {
         path: 'fund-flow',
         name: 'FundFlow',
-        component: () => import('@views/fund-flow/index.vue'),
-        meta: { title: '资金流水', icon: 'Money' }
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/fund-flow/index.vue'),
+        meta: { title: '资金流水', icon: 'Money', keepAlive: true }
+      },
+      {
+        path: 'alert',
+        name: 'Alert',
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/alert/index.vue'),
+        meta: { title: '风险告警', icon: 'Warning', keepAlive: true }
       },
       {
         path: 'compliance',
         name: 'Compliance',
-        component: () => import('@views/compliance/index.vue'),
-        meta: { title: '合规审计', icon: 'Document' }
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/compliance/index.vue'),
+        meta: { title: '合规审计', icon: 'Document', keepAlive: false }
       },
       {
         path: 'system/user',
         name: 'SystemUser',
-        component: () => import('@views/system/user/index.vue'),
-        meta: { title: '用户管理', icon: 'User' }
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "system" */ '@views/system/user/index.vue'),
+        meta: { title: '用户管理', icon: 'User', keepAlive: false }
       },
       {
         path: 'system/role',
         name: 'SystemRole',
-        component: () => import('@views/system/role/index.vue'),
-        meta: { title: '角色管理', icon: 'User' }
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "system" */ '@views/system/role/index.vue'),
+        meta: { title: '角色管理', icon: 'User', keepAlive: false }
       },
       {
         path: 'system/permission',
         name: 'SystemPermission',
-        component: () => import('@views/system/permission/index.vue'),
-        meta: { title: '权限管理', icon: 'Setting' }
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "system" */ '@views/system/permission/index.vue'),
+        meta: { title: '权限管理', icon: 'Setting', keepAlive: false }
+      },
+      {
+        path: 'system/log',
+        name: 'SystemLog',
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "system" */ '@views/system/log/index.vue'),
+        meta: { title: '操作日志', icon: 'Document', keepAlive: false }
       }
     ]
   },

@@ -9,6 +9,10 @@ import AssetProduct from './AssetProduct';
 import CustomerAsset from './CustomerAsset';
 import FundFlow from './FundFlow';
 import ComplianceAudit from './ComplianceAudit';
+import Trade from './Trade';
+import CustomerHolding from './CustomerHolding';
+import RiskAlert from './RiskAlert';
+import OperationLog from './OperationLog';
 
 const db = {
   sequelize,
@@ -22,6 +26,10 @@ const db = {
   CustomerAsset,
   FundFlow,
   ComplianceAudit,
+  Trade,
+  CustomerHolding,
+  RiskAlert,
+  OperationLog,
 };
 
 const setupAssociations = () => {

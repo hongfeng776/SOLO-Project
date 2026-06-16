@@ -20,7 +20,7 @@ export enum AuditType { KYC = 'kyc', TRADE = 'trade', RISK = 'risk', COMPLIANCE 
 
 export enum AuditStatus { PENDING = 'pending', APPROVED = 'approved', REJECTED = 'rejected' }
 
-export enum TargetType { CUSTOMER = 'customer', TRADE = 'trade', PRODUCT = 'product' }
+export enum TargetType { CUSTOMER = 'customer', TRADE = 'trade', PRODUCT = 'product', USER = 'user', ROLE = 'role', PERMISSION = 'permission' }
 
 export enum PermType { MENU = 'menu', BUTTON = 'button', API = 'api' }
 
@@ -29,3 +29,19 @@ export enum UserStatus { DISABLED = 0, ENABLED = 1 }
 export enum RoleStatus { DISABLED = 0, ENABLED = 1 }
 
 export enum PermissionStatus { DISABLED = 0, ENABLED = 1 }
+
+export enum TradeType { BUY = 'buy', SELL = 'sell' }
+
+export enum TradeStatus { PENDING = 'pending', AUDITING = 'auditing', APPROVED = 'approved', REJECTED = 'rejected', DEALED = 'dealed', CANCELLED = 'cancelled', FAILED = 'failed' }
+
+export enum AlertType { POSITION = 'position', TRADE = 'trade', RISK = 'risk', COMPLIANCE = 'compliance', SYSTEM = 'system' }
+
+export enum AlertLevel { LOW = 'low', MEDIUM = 'medium', HIGH = 'high', CRITICAL = 'critical' }
+
+export enum AlertStatus { PENDING = 'pending', CONFIRMED = 'confirmed', RESOLVED = 'resolved', IGNORED = 'ignored' }
+
+export enum LogStatus { SUCCESS = 'success', FAILED = 'failed' }
+
+export enum LogModule { AUTH = 'auth', USER = 'user', ROLE = 'role', PERMISSION = 'permission', CUSTOMER = 'customer', TRADE = 'trade', PRODUCT = 'product', STOCK = 'stock', SYSTEM = 'system' }
+
+export enum LogAction { LOGIN = 'login', LOGOUT = 'logout', CREATE = 'create', UPDATE = 'update', DELETE = 'delete', EXPORT = 'export', IMPORT = 'import', AUDIT = 'audit' }

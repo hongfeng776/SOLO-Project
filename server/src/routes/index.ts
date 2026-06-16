@@ -8,6 +8,11 @@ import assetProductRoutes from './assetProduct';
 import customerAssetRoutes from './customerAsset';
 import fundFlowRoutes from './fundFlow';
 import complianceAuditRoutes from './complianceAudit';
+import tradeRoutes from './trade';
+import holdingRoutes from './holding';
+import riskAlertRoutes from './riskAlert';
+import operationLogRoutes from './operationLog';
+import dashboardRoutes from './dashboard';
 
 const router = Router();
 
@@ -20,5 +25,10 @@ router.use('/products', assetProductRoutes);
 router.use('/customers', customerAssetRoutes);
 router.use('/fund-flows', fundFlowRoutes);
 router.use('/compliance-audits', complianceAuditRoutes);
+router.use('/trades', tradeRoutes);
+router.use('/holdings', holdingRoutes);
+router.use('/risk-alerts', riskAlertRoutes);
+router.use('/operation-logs', operationLogRoutes);
+router.use('/dashboard', dashboardRoutes);
 
 export default router;

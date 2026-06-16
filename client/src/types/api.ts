@@ -152,3 +152,138 @@ export interface IPageParams {
   page: number
   pageSize: number
 }
+
+export interface ITrade {
+  id: number
+  tradeNo: string
+  customerId: number
+  customerName?: string
+  stockId: number
+  stockCode: string
+  stockName: string
+  tradeType: string
+  tradePrice: number
+  tradeQuantity: number
+  tradeAmount: number
+  commission: number
+  stampTax: number
+  totalFee: number
+  tradeStatus: string
+  auditRequired: boolean
+  auditorId: number | null
+  auditOpinion: string
+  auditAt: string | null
+  orderAt: string
+  dealAt: string | null
+  remark: string
+  createdAt: string
+}
+
+export interface ICustomerHolding {
+  id: number
+  customerId: number
+  customerName?: string
+  stockId: number
+  stockCode: string
+  stockName: string
+  totalQuantity: number
+  availableQuantity: number
+  frozenQuantity: number
+  costPrice: number
+  totalCost: number
+  currentPrice: number
+  marketValue: number
+  floatingProfit: number
+  floatingProfitRate: number
+  firstBuyDate: string
+  lastTradeDate: string | null
+}
+
+export interface IRiskAlert {
+  id: number
+  alertNo: string
+  alertType: string
+  alertLevel: string
+  alertStatus: string
+  customerId: number | null
+  customerName?: string
+  stockId: number | null
+  stockCode?: string
+  stockName?: string
+  tradeId: number | null
+  title: string
+  content: string
+  riskScore: number
+  relatedData?: Record<string, any>
+  handlerId: number | null
+  handleOpinion: string
+  handleAt: string | null
+  createdAt: string
+}
+
+export interface IOperationLog {
+  id: number
+  logType: string
+  userId: number | null
+  username: string
+  module: string
+  action: string
+  targetType: string | null
+  targetId: number | null
+  requestParams?: Record<string, any>
+  responseData?: Record<string, any>
+  ipAddress: string
+  userAgent: string
+  status: string
+  errorMessage: string
+  durationMs: number
+  createdAt: string
+}
+
+export interface IDashboardStats {
+  totalAsset: number
+  todayTradeAmount: number
+  customerCount: number
+  productCount: number
+  pendingAuditCount: number
+  pendingAlertCount: number
+}
+
+export interface IAssetTrend {
+  date: string
+  totalAsset: number
+  tradeAmount: number
+  customerCount: number
+}
+
+export interface ITradeCreateParams {
+  customerId: number
+  stockId: number
+  tradeType: string
+  tradePrice: number
+  tradeQuantity: number
+  remark?: string
+}
+
+export interface ICustomer {
+  id: number
+  customerName: string
+  customerCode?: string
+  phone?: string
+  status?: string
+}
+
+export interface IHoldingDetail {
+  id: number
+  holdingId: number
+  tradeId: number | null
+  tradeNo?: string
+  tradeType: string
+  tradePrice: number
+  tradeQuantity: number
+  tradeAmount: number
+  balanceQuantity: number
+  costPriceAfter: number
+  tradeAt: string
+  createdAt: string
+}

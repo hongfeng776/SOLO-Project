@@ -1,20 +1,11 @@
 import { get } from '@utils/request'
-import type { IApiResponse, IFundFlow, IComplianceAudit } from '@/types/api'
-
-export interface IDashboardStats {
-  totalAsset: number
-  todayTransaction: number
-  customerCount: number
-  productCount: number
-  pendingAuditCount: number
-  riskWarningCount: number
-}
+import type { IApiResponse, IDashboardStats, IAssetTrend, IFundFlow, IRiskAlert } from '@/types/api'
 
 export interface IRecentFlow extends IFundFlow {
   customerName: string
 }
 
-export interface IRecentAudit extends IComplianceAudit {
+export interface IRecentAlert extends IRiskAlert {
   targetName: string
 }
 
@@ -26,6 +17,10 @@ export function getRecentFlows(limit = 10): Promise<IApiResponse<IRecentFlow[]>>
   return get<IRecentFlow[]>('/api/dashboard/recent-flows', { limit })
 }
 
-export function getRecentAudits(limit = 10): Promise<IApiResponse<IRecentAudit[]>> {
-  return get<IRecentAudit[]>('/api/dashboard/recent-audits', { limit })
+export function getRecentAlerts(limit = 10): Promise<IApiResponse<IRecentAlert[]>> {
+  return get<IRecentAlert[]>('/api/dashboard/recent-alerts', { limit })
+}
+
+export function getAssetTrend(days = 7): Promise<IApiResponse<IAssetTrend[]>> {
+  return get<IAssetTrend[]>('/api/dashboard/asset-trend', { days })
 }

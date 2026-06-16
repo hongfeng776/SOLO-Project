@@ -2,7 +2,7 @@ import { sequelize } from '@config/database';
 import { db } from '@models/index';
 import bcrypt from 'bcryptjs';
 
-const { User, Role, Permission, UserRole, RolePermission, StockQuote, AssetProduct, CustomerAsset, FundFlow, ComplianceAudit } = db;
+const { User, Role, Permission, UserRole, RolePermission, StockQuote, AssetProduct, CustomerAsset, FundFlow, ComplianceAudit, Trade, CustomerHolding, RiskAlert, OperationLog } = db;
 
 async function seedPermissions() {
   const modules = [
@@ -29,15 +29,29 @@ async function seedPermissions() {
       { name: '审计查看', code: 'compliance:view', type: 'button', sortOrder: 1 },
       { name: '审计管理', code: 'compliance:manage', type: 'button', sortOrder: 2 },
     ]},
-    { name: '用户管理', code: 'user', path: '/users', icon: 'TeamOutlined', sortOrder: 7, children: [
+    { name: '证券交易', code: 'trade', path: '/trades', icon: 'SwapOutlined', sortOrder: 7, children: [
+      { name: '交易查看', code: 'trade:view', type: 'button', sortOrder: 1 },
+      { name: '交易管理', code: 'trade:manage', type: 'button', sortOrder: 2 },
+    ]},
+    { name: '客户持仓', code: 'holding', path: '/holdings', icon: 'PieChartOutlined', sortOrder: 8, children: [
+      { name: '持仓查看', code: 'holding:view', type: 'button', sortOrder: 1 },
+    ]},
+    { name: '风险告警', code: 'alert', path: '/alerts', icon: 'WarningOutlined', sortOrder: 9, children: [
+      { name: '告警查看', code: 'alert:view', type: 'button', sortOrder: 1 },
+      { name: '告警管理', code: 'alert:manage', type: 'button', sortOrder: 2 },
+    ]},
+    { name: '操作日志', code: 'log', path: '/logs', icon: 'FileTextOutlined', sortOrder: 10, children: [
+      { name: '日志查看', code: 'log:view', type: 'button', sortOrder: 1 },
+    ]},
+    { name: '用户管理', code: 'user', path: '/users', icon: 'TeamOutlined', sortOrder: 11, children: [
       { name: '用户查看', code: 'user:view', type: 'button', sortOrder: 1 },
       { name: '用户管理', code: 'user:manage', type: 'button', sortOrder: 2 },
     ]},
-    { name: '角色管理', code: 'role', path: '/roles', icon: 'SafetyOutlined', sortOrder: 8, children: [
+    { name: '角色管理', code: 'role', path: '/roles', icon: 'SafetyOutlined', sortOrder: 12, children: [
       { name: '角色查看', code: 'role:view', type: 'button', sortOrder: 1 },
       { name: '角色管理', code: 'role:manage', type: 'button', sortOrder: 2 },
     ]},
-    { name: '权限管理', code: 'permission', path: '/permissions', icon: 'KeyOutlined', sortOrder: 9, children: [
+    { name: '权限管理', code: 'permission', path: '/permissions', icon: 'KeyOutlined', sortOrder: 13, children: [
       { name: '权限查看', code: 'permission:view', type: 'button', sortOrder: 1 },
       { name: '权限管理', code: 'permission:manage', type: 'button', sortOrder: 2 },
     ]},
@@ -110,13 +124,13 @@ async function seedRoles(allPermissions: InstanceType<typeof Permission>[]) {
     .map((p) => p.id);
   await RolePermission.bulkCreate(adminPermCodes.map((perm_id) => ({ role_id: admin.id, perm_id } as any)));
 
-  const analystPermCodes = ['dashboard', 'dashboard:view', 'stock', 'stock:view', 'product', 'product:view', 'customer', 'customer:view'];
+  const analystPermCodes = ['dashboard', 'dashboard:view', 'stock', 'stock:view', 'product', 'product:view', 'customer', 'customer:view', 'holding', 'holding:view', 'alert', 'alert:view'];
   const analystPermIds = allPermissions
     .filter((p) => analystPermCodes.includes(p.perm_code))
     .map((p) => p.id);
   await RolePermission.bulkCreate(analystPermIds.map((perm_id) => ({ role_id: analyst.id, perm_id } as any)));
 
-  const auditorPermCodes = ['dashboard', 'dashboard:view', 'stock', 'stock:view', 'product', 'product:view', 'customer', 'customer:view', 'fund-flow', 'fund-flow:view', 'compliance', 'compliance:view', 'compliance:manage'];
+  const auditorPermCodes = ['dashboard', 'dashboard:view', 'stock', 'stock:view', 'product', 'product:view', 'customer', 'customer:view', 'fund-flow', 'fund-flow:view', 'compliance', 'compliance:view', 'compliance:manage', 'trade', 'trade:view', 'holding', 'holding:view', 'alert', 'alert:view', 'alert:manage', 'log', 'log:view'];
   const auditorPermIds = allPermissions
     .filter((p) => auditorPermCodes.includes(p.perm_code))
     .map((p) => p.id);
@@ -349,6 +363,259 @@ async function seedComplianceAudits() {
   await ComplianceAudit.bulkCreate(audits as any);
 }
 
+async function seedTrades() {
+  const trades = [
+    {
+      trade_no: 'T20260615001', customer_id: 1, stock_id: 1, stock_code: '600519', stock_name: '贵州茅台',
+      trade_type: 'buy', trade_price: 1685.00, trade_quantity: 100, trade_amount: 168500.00,
+      trade_status: 'success', commission: 84.25, tax: 0, net_amount: 168584.25,
+      audit_required: false, auditor_id: null, audit_opinion: null, audit_at: null,
+      order_at: new Date('2026-06-15T09:35:00'), deal_at: new Date('2026-06-15T09:35:12'),
+    },
+    {
+      trade_no: 'T20260615002', customer_id: 2, stock_id: 3, stock_code: '601318', stock_name: '中国平安',
+      trade_type: 'buy', trade_price: 48.50, trade_quantity: 1000, trade_amount: 48500.00,
+      trade_status: 'success', commission: 24.25, tax: 0, net_amount: 48524.25,
+      audit_required: false, auditor_id: null, audit_opinion: null, audit_at: null,
+      order_at: new Date('2026-06-15T10:15:00'), deal_at: new Date('2026-06-15T10:15:30'),
+    },
+    {
+      trade_no: 'T20260615003', customer_id: 1, stock_id: 2, stock_code: '000858', stock_name: '五粮液',
+      trade_type: 'sell', trade_price: 157.00, trade_quantity: 200, trade_amount: 31400.00,
+      trade_status: 'success', commission: 15.70, tax: 31.40, net_amount: 31352.90,
+      audit_required: false, auditor_id: null, audit_opinion: null, audit_at: null,
+      order_at: new Date('2026-06-15T11:05:00'), deal_at: new Date('2026-06-15T11:05:45'),
+    },
+    {
+      trade_no: 'T20260615004', customer_id: 5, stock_id: 4, stock_code: '300750', stock_name: '宁德时代',
+      trade_type: 'buy', trade_price: 218.00, trade_quantity: 5000, trade_amount: 1090000.00,
+      trade_status: 'auditing', commission: 545.00, tax: 0, net_amount: 1090545.00,
+      audit_required: true, auditor_id: null, audit_opinion: null, audit_at: null,
+      order_at: new Date('2026-06-15T13:20:00'), deal_at: null,
+    },
+    {
+      trade_no: 'T20260614005', customer_id: 2, stock_id: 5, stock_code: '002594', stock_name: '比亚迪',
+      trade_type: 'buy', trade_price: 288.00, trade_quantity: 500, trade_amount: 144000.00,
+      trade_status: 'success', commission: 72.00, tax: 0, net_amount: 144072.00,
+      audit_required: false, auditor_id: null, audit_opinion: null, audit_at: null,
+      order_at: new Date('2026-06-14T10:00:00'), deal_at: new Date('2026-06-14T10:00:35'),
+    },
+    {
+      trade_no: 'T20260614006', customer_id: 3, stock_id: 1, stock_code: '600519', stock_name: '贵州茅台',
+      trade_type: 'buy', trade_price: 1678.00, trade_quantity: 500, trade_amount: 839000.00,
+      trade_status: 'success', commission: 419.50, tax: 0, net_amount: 839419.50,
+      audit_required: true, auditor_id: 3, audit_opinion: '机构客户大额买入，已通过审核', audit_at: new Date('2026-06-14T14:30:00'),
+      order_at: new Date('2026-06-14T14:00:00'), deal_at: new Date('2026-06-14T14:35:00'),
+    },
+    {
+      trade_no: 'T20260613007', customer_id: 4, stock_id: 3, stock_code: '601318', stock_name: '中国平安',
+      trade_type: 'buy', trade_price: 48.20, trade_quantity: 100, trade_amount: 4820.00,
+      trade_status: 'success', commission: 5.00, tax: 0, net_amount: 4825.00,
+      audit_required: false, auditor_id: null, audit_opinion: null, audit_at: null,
+      order_at: new Date('2026-06-13T09:50:00'), deal_at: new Date('2026-06-13T09:50:20'),
+    },
+    {
+      trade_no: 'T20260613008', customer_id: 1, stock_id: 1, stock_code: '600519', stock_name: '贵州茅台',
+      trade_type: 'sell', trade_price: 1690.00, trade_quantity: 50, trade_amount: 84500.00,
+      trade_status: 'pending', commission: 42.25, tax: 84.50, net_amount: 84373.25,
+      audit_required: false, auditor_id: null, audit_opinion: null, audit_at: null,
+      order_at: new Date('2026-06-13T15:00:00'), deal_at: null,
+    },
+    {
+      trade_no: 'T20260612009', customer_id: 5, stock_id: 2, stock_code: '000858', stock_name: '五粮液',
+      trade_type: 'sell', trade_price: 160.00, trade_quantity: 10000, trade_amount: 1600000.00,
+      trade_status: 'failed', commission: 800.00, tax: 1600.00, net_amount: 1597600.00,
+      audit_required: true, auditor_id: 3, audit_opinion: '卖出数量过大，可能涉及市场操纵，拒绝交易', audit_at: new Date('2026-06-12T11:20:00'),
+      order_at: new Date('2026-06-12T11:00:00'), deal_at: null,
+    },
+    {
+      trade_no: 'T20260611010', customer_id: 3, stock_id: 4, stock_code: '300750', stock_name: '宁德时代',
+      trade_type: 'sell', trade_price: 215.00, trade_quantity: 2000, trade_amount: 430000.00,
+      trade_status: 'cancelled', commission: 215.00, tax: 430.00, net_amount: 429355.00,
+      audit_required: false, auditor_id: null, audit_opinion: null, audit_at: null,
+      order_at: new Date('2026-06-11T14:10:00'), deal_at: null,
+    },
+  ];
+
+  await Trade.bulkCreate(trades as any);
+}
+
+async function seedCustomerHoldings() {
+  const holdings = [
+    {
+      customer_id: 1, stock_id: 1, stock_code: '600519', stock_name: '贵州茅台',
+      holding_quantity: 500, available_quantity: 450, frozen_quantity: 50,
+      cost_price: 1620.50, current_price: 1689.00, market_value: 844500.00,
+      floating_profit: 34250.00, floating_profit_rate: 0.0422, last_trade_date: new Date('2026-06-15'),
+    },
+    {
+      customer_id: 1, stock_id: 2, stock_code: '000858', stock_name: '五粮液',
+      holding_quantity: 300, available_quantity: 300, frozen_quantity: 0,
+      cost_price: 145.80, current_price: 156.30, market_value: 46890.00,
+      floating_profit: 3150.00, floating_profit_rate: 0.0720, last_trade_date: new Date('2026-06-15'),
+    },
+    {
+      customer_id: 2, stock_id: 3, stock_code: '601318', stock_name: '中国平安',
+      holding_quantity: 3000, available_quantity: 3000, frozen_quantity: 0,
+      cost_price: 45.20, current_price: 48.65, market_value: 145950.00,
+      floating_profit: 10350.00, floating_profit_rate: 0.0763, last_trade_date: new Date('2026-06-15'),
+    },
+    {
+      customer_id: 2, stock_id: 5, stock_code: '002594', stock_name: '比亚迪',
+      holding_quantity: 500, available_quantity: 500, frozen_quantity: 0,
+      cost_price: 265.00, current_price: 286.40, market_value: 143200.00,
+      floating_profit: 10700.00, floating_profit_rate: 0.0808, last_trade_date: new Date('2026-06-14'),
+    },
+    {
+      customer_id: 3, stock_id: 1, stock_code: '600519', stock_name: '贵州茅台',
+      holding_quantity: 2000, available_quantity: 2000, frozen_quantity: 0,
+      cost_price: 1650.00, current_price: 1689.00, market_value: 3378000.00,
+      floating_profit: 78000.00, floating_profit_rate: 0.0236, last_trade_date: new Date('2026-06-14'),
+    },
+  ];
+
+  await CustomerHolding.bulkCreate(holdings as any);
+}
+
+async function seedRiskAlerts() {
+  const alerts = [
+    {
+      alert_no: 'RA20260615001', alert_type: 'trade_abnormal', alert_level: 'high', alert_status: 'pending',
+      customer_id: 5, stock_id: 2, trade_id: 9,
+      alert_title: '异常大额卖出交易', alert_content: '客户鼎盛资产在短时间内大量卖出五粮液股票，数量达10000股，可能存在市场操纵风险。',
+      risk_score: 82.50, related_data: { trade_amount: 1600000, trade_quantity: 10000, stock_code: '000858' },
+      resolver_id: null, resolve_opinion: null, resolve_at: null,
+    },
+    {
+      alert_no: 'RA20260615002', alert_type: 'position_concentration', alert_level: 'medium', alert_status: 'confirmed',
+      customer_id: 3, stock_id: 1, trade_id: null,
+      alert_title: '持仓集中度超标', alert_content: '客户中科创新科技贵州茅台持仓占总资产比例达21.38%，超过单一股票持仓20%的风险阈值。',
+      risk_score: 55.20, related_data: { holding_ratio: 0.2138, threshold: 0.20, stock_code: '600519' },
+      resolver_id: 3, resolve_opinion: '已确认，属于机构客户正常策略配置，持续监控', resolve_at: new Date('2026-06-15T15:00:00'),
+    },
+    {
+      alert_no: 'RA20260614003', alert_type: 'price_abnormal', alert_level: 'low', alert_status: 'resolved',
+      customer_id: null, stock_id: 4, trade_id: null,
+      alert_title: '宁德时代股价波动异常', alert_content: '宁德时代当日涨幅达2.72%，成交量明显放大，需关注后续走势。',
+      risk_score: 25.80, related_data: { change_rate: 0.0272, volume_ratio: 1.85, stock_code: '300750' },
+      resolver_id: 2, resolve_opinion: '行业板块整体上涨，属正常波动，已解决', resolve_at: new Date('2026-06-14T17:30:00'),
+    },
+    {
+      alert_no: 'RA20260613004', alert_type: 'risk_level_mismatch', alert_level: 'critical', alert_status: 'pending',
+      customer_id: 4, stock_id: null, trade_id: null,
+      alert_title: '客户风险等级与投资产品不匹配', alert_content: '客户陈雅琳风险等级为R2，但近期频繁申请购买R4级别的高风险产品，存在风险承受能力不匹配问题。',
+      risk_score: 88.00, related_data: { customer_risk_level: 'R2', product_risk_level: 'R4', product_count: 3 },
+      resolver_id: null, resolve_opinion: null, resolve_at: null,
+    },
+    {
+      alert_no: 'RA20260612005', alert_type: 'capital_abnormal', alert_level: 'high', alert_status: 'ignored',
+      customer_id: 5, stock_id: null, trade_id: null,
+      alert_title: '资金流水异常', alert_content: '客户鼎盛资产连续多日大额资金进出，3日内累计转入2000万、转出1500万，资金流向异常。',
+      risk_score: 72.30, related_data: { total_in: 20000000, total_out: 15000000, days: 3 },
+      resolver_id: 3, resolve_opinion: '客户解释为正常资金调度，忽略此告警', resolve_at: new Date('2026-06-12T16:00:00'),
+    },
+  ];
+
+  await RiskAlert.bulkCreate(alerts as any);
+}
+
+async function seedOperationLogs() {
+  const logs = [
+    {
+      log_type: 'login', user_id: 1, username: 'admin', module: 'auth', action: 'login',
+      target_type: null, target_id: null,
+      request_params: { username: 'admin' }, response_data: { code: 200, message: '登录成功' },
+      ip_address: '192.168.1.100', user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      status: 'success', error_message: null,
+      request_time: new Date('2026-06-15T09:00:00'), response_time: new Date('2026-06-15T09:00:02'), duration_ms: 1850,
+      created_at: new Date('2026-06-15T09:00:02'),
+    },
+    {
+      log_type: 'login', user_id: 2, username: 'analyst', module: 'auth', action: 'login',
+      target_type: null, target_id: null,
+      request_params: { username: 'analyst' }, response_data: { code: 200, message: '登录成功' },
+      ip_address: '192.168.1.101', user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+      status: 'success', error_message: null,
+      request_time: new Date('2026-06-15T09:15:00'), response_time: new Date('2026-06-15T09:15:01'), duration_ms: 1200,
+      created_at: new Date('2026-06-15T09:15:01'),
+    },
+    {
+      log_type: 'create', user_id: 1, username: 'admin', module: 'customer', action: 'create',
+      target_type: 'customer_asset', target_id: 6,
+      request_params: { customer_name: '测试客户', id_card: '110101199001010001' }, response_data: { code: 200, data: { id: 6 } },
+      ip_address: '192.168.1.100', user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      status: 'success', error_message: null,
+      request_time: new Date('2026-06-15T10:00:00'), response_time: new Date('2026-06-15T10:00:03'), duration_ms: 2800,
+      created_at: new Date('2026-06-15T10:00:03'),
+    },
+    {
+      log_type: 'update', user_id: 1, username: 'admin', module: 'product', action: 'update',
+      target_type: 'asset_product', target_id: 1,
+      request_params: { id: 1, daily_yield: 0.0015 }, response_data: { code: 200, message: '更新成功' },
+      ip_address: '192.168.1.100', user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      status: 'success', error_message: null,
+      request_time: new Date('2026-06-15T10:30:00'), response_time: new Date('2026-06-15T10:30:02'), duration_ms: 1500,
+      created_at: new Date('2026-06-15T10:30:02'),
+    },
+    {
+      log_type: 'audit', user_id: 3, username: 'auditor', module: 'trade', action: 'audit',
+      target_type: 'trade', target_id: 6,
+      request_params: { trade_id: 6, audit_opinion: '机构客户大额买入，已通过审核', audit_result: 'approved' }, response_data: { code: 200, message: '审核完成' },
+      ip_address: '192.168.1.102', user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      status: 'success', error_message: null,
+      request_time: new Date('2026-06-14T14:30:00'), response_time: new Date('2026-06-14T14:30:05'), duration_ms: 4200,
+      created_at: new Date('2026-06-14T14:30:05'),
+    },
+    {
+      log_type: 'trade', user_id: 1, username: 'admin', module: 'trade', action: 'execute',
+      target_type: 'trade', target_id: 1,
+      request_params: { trade_no: 'T20260615001' }, response_data: { code: 200, message: '交易执行成功' },
+      ip_address: '192.168.1.100', user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      status: 'success', error_message: null,
+      request_time: new Date('2026-06-15T09:35:00'), response_time: new Date('2026-06-15T09:35:12'), duration_ms: 12000,
+      created_at: new Date('2026-06-15T09:35:12'),
+    },
+    {
+      log_type: 'export', user_id: 2, username: 'analyst', module: 'customer', action: 'export',
+      target_type: 'customer_asset', target_id: null,
+      request_params: { format: 'xlsx', risk_level: 'R3' }, response_data: { code: 200, data: { file_url: '/exports/customers.xlsx' } },
+      ip_address: '192.168.1.101', user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+      status: 'success', error_message: null,
+      request_time: new Date('2026-06-15T14:00:00'), response_time: new Date('2026-06-15T14:00:25'), duration_ms: 25000,
+      created_at: new Date('2026-06-15T14:00:25'),
+    },
+    {
+      log_type: 'delete', user_id: 1, username: 'admin', module: 'user', action: 'delete',
+      target_type: 'user', target_id: 99,
+      request_params: { id: 99 }, response_data: { code: 404, message: '用户不存在' },
+      ip_address: '192.168.1.100', user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      status: 'failed', error_message: 'User with id 99 not found',
+      request_time: new Date('2026-06-15T11:20:00'), response_time: new Date('2026-06-15T11:20:01'), duration_ms: 800,
+      created_at: new Date('2026-06-15T11:20:01'),
+    },
+    {
+      log_type: 'logout', user_id: 2, username: 'analyst', module: 'auth', action: 'logout',
+      target_type: null, target_id: null,
+      request_params: null, response_data: { code: 200, message: '退出成功' },
+      ip_address: '192.168.1.101', user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+      status: 'success', error_message: null,
+      request_time: new Date('2026-06-15T18:00:00'), response_time: new Date('2026-06-15T18:00:01'), duration_ms: 500,
+      created_at: new Date('2026-06-15T18:00:01'),
+    },
+    {
+      log_type: 'audit', user_id: 3, username: 'auditor', module: 'alert', action: 'resolve',
+      target_type: 'risk_alert', target_id: 2,
+      request_params: { alert_id: 2, resolve_opinion: '已确认，属于机构客户正常策略配置，持续监控' }, response_data: { code: 200, message: '告警已处理' },
+      ip_address: '192.168.1.102', user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      status: 'success', error_message: null,
+      request_time: new Date('2026-06-15T15:00:00'), response_time: new Date('2026-06-15T15:00:03'), duration_ms: 3000,
+      created_at: new Date('2026-06-15T15:00:03'),
+    },
+  ];
+
+  await OperationLog.bulkCreate(logs as any);
+}
+
 async function seed() {
   try {
     await sequelize.sync({ force: false, alter: true });
@@ -377,6 +644,18 @@ async function seed() {
 
     await seedComplianceAudits();
     console.log('Seeded 5 compliance audits');
+
+    await seedTrades();
+    console.log('Seeded 10 trades');
+
+    await seedCustomerHoldings();
+    console.log('Seeded 5 customer holdings');
+
+    await seedRiskAlerts();
+    console.log('Seeded 5 risk alerts');
+
+    await seedOperationLogs();
+    console.log('Seeded 10 operation logs');
 
     console.log('All seed data inserted successfully');
     process.exit(0);

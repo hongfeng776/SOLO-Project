@@ -41,6 +41,10 @@ export class CacheUtil {
     }
   }
 
+  static async deleteByPattern(pattern: string): Promise<void> {
+    return CacheUtil.delByPattern(pattern);
+  }
+
   static async flush(): Promise<void> {
     const client = await getRedisClient();
     await client.flushDb();
@@ -55,5 +59,27 @@ export class CacheUtil {
   static async ttl(key: string): Promise<number> {
     const client = await getRedisClient();
     return client.ttl(key);
+  }
+
+  static async getOrSet<T>(key: string, ttlSeconds: number, fn: () => Promise<T>): Promise<T> {
+    const cached = await CacheUtil.get<T>(key);
+    if (cached !== null) {
+      return cached;
+    }
+
+    const value = await fn();
+    await CacheUtil.set(key, value, ttlSeconds);
+    return value;
+  }
+
+  static async increment(key: string, delta: number = 1, ttlSeconds?: number): Promise<number> {
+    const client = await getRedisClient();
+    const value = await client.incrBy(key, delta);
+
+    if (ttlSeconds && ttlSeconds > 0 && value === delta) {
+      await client.expire(key, ttlSeconds);
+    }
+
+    return value;
   }
 }

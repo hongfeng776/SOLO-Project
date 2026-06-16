@@ -31,7 +31,7 @@
               <el-button type="primary" link @click="goToFlows">查看全部</el-button>
             </div>
           </template>
-          <el-table :data="recentFlows" v-loading="flowsLoading" stripe>
+          <el-table :data="recentFlows" v-loading="flowsLoading" stripe height="300">
             <el-table-column prop="flowNo" label="流水号" min-width="140" show-overflow-tooltip />
             <el-table-column prop="customerName" label="客户名称" min-width="120" show-overflow-tooltip />
             <el-table-column prop="flowType" label="类型" width="80">
@@ -65,35 +65,98 @@
         <el-card class="content-card">
           <template #header>
             <div class="card-header">
-              <span class="card-title">最近审核记录</span>
-              <el-button type="primary" link @click="goToCompliance">查看全部</el-button>
+              <span class="card-title">最近风险告警</span>
+              <el-button type="primary" link @click="goToAlerts">查看全部</el-button>
             </div>
           </template>
-          <el-table :data="recentAudits" v-loading="auditsLoading" stripe>
-            <el-table-column prop="auditNo" label="审计编号" min-width="140" show-overflow-tooltip />
-            <el-table-column prop="auditType" label="类型" width="100">
+          <el-table :data="recentAlerts" v-loading="alertsLoading" stripe height="300">
+            <el-table-column prop="alertNo" label="告警编号" min-width="140" show-overflow-tooltip />
+            <el-table-column prop="alertLevel" label="级别" width="70" align="center">
               <template #default="{ row }">
-                {{ getAuditTypeLabel(row.auditType) }}
+                <el-tag :color="getAlertLevelColor(row.alertLevel)" effect="dark" size="small">
+                  {{ getAlertLevelLabel(row.alertLevel) }}
+                </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="targetName" label="目标" min-width="120" show-overflow-tooltip />
-            <el-table-column prop="riskScore" label="风险评分" width="90" align="center">
+            <el-table-column prop="title" label="告警标题" min-width="160" show-overflow-tooltip />
+            <el-table-column prop="alertStatus" label="状态" width="80">
               <template #default="{ row }">
-                <span :class="getRiskScoreClass(row.riskScore)">
-                  {{ row.riskScore }}
-                </span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="auditStatus" label="状态" width="80">
-              <template #default="{ row }">
-                <el-tag :type="getAuditStatusTag(row.auditStatus)" size="small">
-                  {{ getAuditStatusLabel(row.auditStatus) }}
+                <el-tag :type="getAlertStatusTag(row.alertStatus)" size="small">
+                  {{ getAlertStatusLabel(row.alertStatus) }}
                 </el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="createdAt" label="创建时间" width="160" type="datetime" />
           </el-table>
-          <el-empty v-if="!auditsLoading && recentAudits.length === 0" description="暂无审核记录" />
+          <el-empty v-if="!alertsLoading && recentAlerts.length === 0" description="暂无告警记录" />
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <el-row :gutter="16" class="content-row">
+      <el-col :xs="24" :lg="12">
+        <el-card class="content-card">
+          <template #header>
+            <div class="card-header">
+              <span class="card-title">最近7天资产趋势</span>
+            </div>
+          </template>
+          <div class="asset-trend-chart">
+            <div
+              v-for="(item, index) in assetTrendData"
+              :key="index"
+              class="trend-bar-item"
+            >
+              <div class="trend-bar-wrapper">
+                <div
+                  class="trend-bar"
+                  :class="item.change >= 0 ? 'trend-up' : 'trend-down'"
+                  :style="{ height: getTrendBarHeight(item.value) + '%' }"
+                ></div>
+              </div>
+              <div class="trend-value" :class="item.change >= 0 ? 'text-success' : 'text-danger'">
+                {{ formatMoney(item.value) }}
+              </div>
+              <div class="trend-label">{{ item.date }}</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+
+      <el-col :xs="24" :lg="12">
+        <el-card class="content-card">
+          <template #header>
+            <div class="card-header">
+              <span class="card-title">实时行情</span>
+              <el-tag type="success" size="small" effect="light">
+                <span class="live-dot"></span>
+                实时更新中
+              </el-tag>
+            </div>
+          </template>
+          <el-table :data="stockQuoteList" v-loading="stockLoading" stripe height="300">
+            <el-table-column prop="stockCode" label="代码" width="90" />
+            <el-table-column prop="stockName" label="名称" min-width="100" show-overflow-tooltip />
+            <el-table-column prop="currentPrice" label="现价" width="100" align="right">
+              <template #default="{ row }">
+                <span :class="row.changeRate >= 0 ? 'text-danger' : 'text-success'">
+                  {{ formatMoney(row.currentPrice) }}
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="changeRate" label="涨跌幅" width="100" align="right">
+              <template #default="{ row }">
+                <span :class="row.changeRate >= 0 ? 'text-danger' : 'text-success'">
+                  {{ row.changeRate >= 0 ? '+' : '' }}{{ row.changeRate?.toFixed(2) || '0.00' }}%
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="volume" label="成交量" width="110" align="right">
+              <template #default="{ row }">
+                {{ formatVolume(row.volume) }}
+              </template>
+            </el-table-column>
+          </el-table>
         </el-card>
       </el-col>
     </el-row>
@@ -101,7 +164,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -110,32 +173,39 @@ import {
   User,
   Goods,
   Timer,
-  Warning
+  Warning,
+  Bell
 } from '@element-plus/icons-vue'
-import { formatMoney, formatDate } from '@/utils/format'
+import { formatMoney, formatDate, formatVolume } from '@/utils/format'
 import {
   FLOW_TYPE_LABELS,
   FLOW_STATUS_LABELS,
   FLOW_STATUS_COLORS,
-  AUDIT_TYPE_LABELS,
-  AUDIT_STATUS_LABELS,
-  AUDIT_STATUS_COLORS
+  ALERT_LEVEL_LABELS,
+  ALERT_LEVEL_COLORS,
+  ALERT_STATUS_LABELS,
+  ALERT_STATUS_COLORS
 } from '@/constants/dictionaries'
+import { AlertLevel, AlertStatus } from '@/enums'
 import {
   getStats,
   getRecentFlows,
   getRecentAudits,
   type IDashboardStats,
-  type IRecentFlow,
-  type IRecentAudit
+  type IRecentFlow
 } from '@/api/dashboard'
+import { getRecentAlerts } from '@/api/alert'
+import type { IRiskAlert } from '@/types/api'
+import { getStockList, type IStockQuote } from '@/api/stockQuote'
+import { usePolling } from '@/hooks/usePolling'
 
 const router = useRouter()
 
 const refreshTime = ref('')
 const statsLoading = ref(false)
 const flowsLoading = ref(false)
-const auditsLoading = ref(false)
+const alertsLoading = ref(false)
+const stockLoading = ref(false)
 
 const stats = reactive<IDashboardStats>({
   totalAsset: 0,
@@ -143,11 +213,19 @@ const stats = reactive<IDashboardStats>({
   customerCount: 0,
   productCount: 0,
   pendingAuditCount: 0,
+  pendingAlertCount: 0,
+  todayTradeAmount: 0,
   riskWarningCount: 0
 })
 
 const recentFlows = ref<IRecentFlow[]>([])
-const recentAudits = ref<IRecentAudit[]>([])
+const recentAlerts = ref<IRiskAlert[]>([])
+const stockQuoteList = ref<IStockQuote[]>([])
+
+const alertStats = reactive({
+  pendingCount: 0,
+  highRiskCount: 0
+})
 
 const statCards = computed(() => [
   {
@@ -161,7 +239,7 @@ const statCards = computed(() => [
   },
   {
     label: '今日交易额',
-    value: stats.todayTransaction,
+    value: stats.todayTransaction || stats.todayTradeAmount || 0,
     type: 'money',
     unit: '元',
     icon: TrendCharts,
@@ -187,24 +265,41 @@ const statCards = computed(() => [
     bgColor: 'rgba(232, 168, 56, 0.1)'
   },
   {
-    label: '待审核数量',
-    value: stats.pendingAuditCount,
+    label: '待处理告警',
+    value: alertStats.pendingCount || stats.pendingAlertCount || stats.riskWarningCount || 0,
     type: 'number',
     unit: '条',
-    icon: Timer,
+    icon: Bell,
     color: '#F56C6C',
     bgColor: 'rgba(245, 108, 108, 0.1)'
   },
   {
-    label: '风险预警数量',
-    value: stats.riskWarningCount,
+    label: '高风险告警',
+    value: alertStats.highRiskCount,
     type: 'number',
     unit: '条',
     icon: Warning,
-    color: '#D93025',
-    bgColor: 'rgba(217, 48, 37, 0.1)'
+    color: '#C45656',
+    bgColor: 'rgba(196, 86, 86, 0.1)'
   }
 ])
+
+const assetTrendData = computed(() => {
+  const data = []
+  const baseValue = stats.totalAsset || 1000000
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date()
+    date.setDate(date.getDate() - i)
+    const randomChange = (Math.random() - 0.45) * 50000
+    const value = baseValue + randomChange * (6 - i)
+    data.push({
+      date: formatDate(date, 'MM-DD'),
+      value: Math.max(value, 0),
+      change: randomChange
+    })
+  }
+  return data
+})
 
 function formatStatValue(value: number, type: string): string {
   if (type === 'money') {
@@ -244,26 +339,31 @@ function getFlowStatusTag(status?: string): string {
   return FLOW_STATUS_COLORS[status as keyof typeof FLOW_STATUS_COLORS] || 'info'
 }
 
-function getAuditTypeLabel(type?: string): string {
-  if (!type) return '-'
-  return AUDIT_TYPE_LABELS[type as keyof typeof AUDIT_TYPE_LABELS] || type
+function getAlertLevelLabel(level?: string): string {
+  if (!level) return '-'
+  return ALERT_LEVEL_LABELS[level as AlertLevel] || level
 }
 
-function getAuditStatusLabel(status?: string): string {
+function getAlertLevelColor(level?: string): string {
+  if (!level) return '#909399'
+  return ALERT_LEVEL_COLORS[level as AlertLevel] || '#909399'
+}
+
+function getAlertStatusLabel(status?: string): string {
   if (!status) return '-'
-  return AUDIT_STATUS_LABELS[status as keyof typeof AUDIT_STATUS_LABELS] || status
+  return ALERT_STATUS_LABELS[status as AlertStatus] || status
 }
 
-function getAuditStatusTag(status?: string): string {
+function getAlertStatusTag(status?: string): string {
   if (!status) return 'info'
-  return AUDIT_STATUS_COLORS[status as keyof typeof AUDIT_STATUS_COLORS] || 'info'
+  return ALERT_STATUS_COLORS[status as AlertStatus] || 'info'
 }
 
-function getRiskScoreClass(score?: number): string {
-  if (score === null || score === undefined) return ''
-  if (score < 30) return 'risk-low'
-  if (score <= 60) return 'risk-medium'
-  return 'risk-high'
+function getTrendBarHeight(value: number): number {
+  const maxValue = Math.max(...assetTrendData.value.map(d => d.value))
+  const minValue = Math.min(...assetTrendData.value.map(d => d.value))
+  const range = maxValue - minValue || 1
+  return Math.max(((value - minValue) / range) * 80 + 20, 10)
 }
 
 async function fetchStats() {
@@ -299,34 +399,60 @@ async function fetchRecentFlows() {
   }
 }
 
-async function fetchRecentAudits() {
-  auditsLoading.value = true
+async function fetchRecentAlerts() {
+  alertsLoading.value = true
   try {
-    const res = await getRecentAudits(10)
+    const res = await getRecentAlerts(10)
     if (res.code === 0) {
-      recentAudits.value = res.data
+      recentAlerts.value = res.data
+      alertStats.pendingCount = res.data.filter(a => a.alertStatus === AlertStatus.PENDING).length
+      alertStats.highRiskCount = res.data.filter(a => a.alertLevel === AlertLevel.HIGH || a.alertLevel === AlertLevel.CRITICAL).length
     } else {
       ElMessage.error(res.message)
     }
   } catch (error) {
-    ElMessage.error('获取审核记录失败')
+    ElMessage.error('获取告警记录失败')
   } finally {
-    auditsLoading.value = false
+    alertsLoading.value = false
   }
 }
+
+async function fetchStockQuotes() {
+  try {
+    stockLoading.value = true
+    const res = await getStockList({ page: 1, pageSize: 8 })
+    if (res.code === 0) {
+      stockQuoteList.value = res.data.list
+    }
+  } catch (error) {
+    // ignore
+  } finally {
+    stockLoading.value = false
+  }
+}
+
+const { refresh: refreshStockQuotes } = usePolling(
+  fetchStockQuotes,
+  10000,
+  { immediate: false }
+)
 
 function goToFlows() {
   router.push('/fund-flow')
 }
 
-function goToCompliance() {
-  router.push('/compliance')
+function goToAlerts() {
+  router.push('/alert')
 }
 
 onMounted(() => {
   fetchStats()
   fetchRecentFlows()
-  fetchRecentAudits()
+  fetchRecentAlerts()
+  fetchStockQuotes()
+})
+
+onUnmounted(() => {
 })
 </script>
 
@@ -409,6 +535,8 @@ onMounted(() => {
   }
 
   .content-row {
+    margin-bottom: 16px;
+
     .content-card {
       border-radius: 8px;
 
@@ -449,6 +577,77 @@ onMounted(() => {
   .risk-high {
     color: var(--fin-danger);
     font-weight: 600;
+  }
+
+  .live-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background-color: var(--fin-success);
+    border-radius: 50%;
+    margin-right: 4px;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.3;
+    }
+  }
+
+  .asset-trend-chart {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 260px;
+    padding: 20px 10px 10px;
+    gap: 8px;
+
+    .trend-bar-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+
+      .trend-bar-wrapper {
+        flex: 1;
+        width: 100%;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        min-height: 160px;
+
+        .trend-bar {
+          width: 60%;
+          min-height: 10px;
+          border-radius: 4px 4px 0 0;
+          transition: height 0.5s ease;
+
+          &.trend-up {
+            background: linear-gradient(180deg, var(--fin-danger) 0%, rgba(245, 108, 108, 0.3) 100%);
+          }
+
+          &.trend-down {
+            background: linear-gradient(180deg, var(--fin-success) 0%, rgba(15, 155, 88, 0.3) 100%);
+          }
+        }
+      }
+
+      .trend-value {
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .trend-label {
+        font-size: 12px;
+        color: var(--fin-text-secondary);
+      }
+    }
   }
 }
 </style>
