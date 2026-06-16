@@ -2,6 +2,7 @@ const express = require('express');
 const { success } = require('../utils/result');
 const auth = require('../middleware/auth');
 const pagination = require('../middleware/pagination');
+const { checkOrderRisk, checkInventoryBeforeOrder } = require('../middleware/riskControl');
 
 const authController = require('../controllers/AuthController');
 const userController = require('../controllers/UserController');
@@ -12,6 +13,9 @@ const carController = require('../controllers/CarController');
 const ticketController = require('../controllers/TicketController');
 const orderController = require('../controllers/OrderController');
 const merchantController = require('../controllers/MerchantController');
+const businessTravelController = require('../controllers/BusinessTravelController');
+const couponController = require('../controllers/CouponController');
+const approvalController = require('../controllers/ApprovalController');
 
 const router = express.Router();
 
@@ -42,7 +46,36 @@ registerCrudRoutes('flights', flightController);
 registerCrudRoutes('hotels', hotelController);
 registerCrudRoutes('cars', carController);
 registerCrudRoutes('tickets', ticketController);
-registerCrudRoutes('orders', orderController);
-registerCrudRoutes('merchants', merchantController);
+
+router.get('/orders', auth(), pagination, orderController.list.bind(orderController));
+router.get('/orders/:id', auth(), orderController.get.bind(orderController));
+router.post('/orders', auth(), checkOrderRisk, checkInventoryBeforeOrder, orderController.create.bind(orderController));
+router.put('/orders/:id', auth(), orderController.update.bind(orderController));
+router.delete('/orders/:id', auth(), orderController.remove.bind(orderController));
+router.delete('/orders/batch', auth(), orderController.batchRemove.bind(orderController));
+router.get('/orders/:id/logs', auth(), orderController.getOrderLogs.bind(orderController));
+router.post('/orders/:id/cancel', auth(), orderController.cancelOrder.bind(orderController));
+router.post('/orders/:id/refund', auth(), orderController.refundOrder.bind(orderController));
+router.post('/orders/batch-export', auth(), orderController.batchExport.bind(orderController));
+
+router.post('/business-travel', auth(), businessTravelController.create.bind(businessTravelController));
+router.get('/business-travel', auth(), pagination, businessTravelController.list.bind(businessTravelController));
+router.get('/business-travel/:id', auth(), businessTravelController.get.bind(businessTravelController));
+router.put('/business-travel/:id', auth(), businessTravelController.update.bind(businessTravelController));
+router.post('/business-travel/:id/confirm', auth(), businessTravelController.confirm.bind(businessTravelController));
+router.post('/business-travel/:id/cancel', auth(), businessTravelController.cancel.bind(businessTravelController));
+
+registerCrudRoutes('coupons', couponController);
+router.post('/coupons/:id/issue', auth(), couponController.issue.bind(couponController));
+router.post('/coupons/batch-issue', auth(), couponController.batchIssue.bind(couponController));
+router.post('/coupons/:id/revoke', auth(), couponController.revoke.bind(couponController));
+
+registerCrudRoutes('approvals', approvalController);
+router.post('/approvals/:id/approve', auth(), approvalController.approve.bind(approvalController));
+router.post('/approvals/:id/reject', auth(), approvalController.reject.bind(approvalController));
+
+router.post('/merchants/:id/audit', auth(), merchantController.auditMerchant.bind(merchantController));
+router.get('/merchants/:id/orders', auth(), pagination, merchantController.getMerchantOrders.bind(merchantController));
+router.put('/merchants/:id/violation', auth(), merchantController.updateViolation.bind(merchantController));
 
 module.exports = router;

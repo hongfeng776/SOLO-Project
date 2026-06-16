@@ -41,6 +41,12 @@ export const routes = [
         name: 'RoleManage',
         component: () => import('@/views/system/Role.vue'),
         meta: { title: '角色管理', icon: 'UserFilled', roles: ['admin'] }
+      },
+      {
+        path: 'log',
+        name: 'SystemLog',
+        component: () => import('@/views/system/SystemLog.vue'),
+        meta: { title: '系统日志', icon: 'Document', roles: ['admin'] }
       }
     ]
   },
@@ -73,18 +79,32 @@ export const routes = [
         name: 'TicketManage',
         component: () => import('@/views/product/Ticket.vue'),
         meta: { title: '文旅票务', icon: 'Tickets', roles: ['admin', 'user'] }
+      },
+      {
+        path: 'business-travel',
+        name: 'BusinessTravelManage',
+        component: () => import('@/views/product/BusinessTravel.vue'),
+        meta: { title: '商旅定制', icon: 'Suitcase', roles: ['admin', 'user'] }
       }
     ]
   },
   {
     path: '/order',
     component: Layout,
+    redirect: '/order/index',
+    meta: { title: '订单管理', icon: 'List' },
     children: [
       {
         path: 'index',
         name: 'OrderManage',
         component: () => import('@/views/Order.vue'),
         meta: { title: '订单管理', icon: 'List', roles: ['admin', 'user'] }
+      },
+      {
+        path: 'flow',
+        name: 'OrderFlow',
+        component: () => import('@/views/order/OrderFlow.vue'),
+        meta: { title: '流转追踪', icon: 'Connection', roles: ['admin', 'user'] }
       }
     ]
   },
@@ -97,6 +117,44 @@ export const routes = [
         name: 'MerchantManage',
         component: () => import('@/views/Merchant.vue'),
         meta: { title: '商家管理', icon: 'Shop', roles: ['admin'] }
+      }
+    ]
+  },
+  {
+    path: '/marketing',
+    component: Layout,
+    redirect: '/marketing/coupon',
+    meta: { title: '权益营销', icon: 'Present' },
+    children: [
+      {
+        path: 'coupon',
+        name: 'CouponManage',
+        component: () => import('@/views/marketing/Coupon.vue'),
+        meta: { title: '优惠券管理', icon: 'Ticket', roles: ['admin'] }
+      }
+    ]
+  },
+  {
+    path: '/approval',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'ApprovalCenter',
+        component: () => import('@/views/approval/ApprovalList.vue'),
+        meta: { title: '审批中心', icon: 'Stamp', roles: ['admin'] }
+      }
+    ]
+  },
+  {
+    path: '/statistics',
+    component: Layout,
+    children: [
+      {
+        path: 'analysis',
+        name: 'DataAnalysis',
+        component: () => import('@/views/statistics/DataAnalysis.vue'),
+        meta: { title: '数据分析', icon: 'DataAnalysis', roles: ['admin'] }
       }
     ]
   },

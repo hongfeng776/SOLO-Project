@@ -8,7 +8,7 @@ class MerchantService extends BaseService {
 
   async getList(params = {}) {
     return super.getList(params, {
-      searchFields: ['name', 'contact', 'phone', 'address']
+      searchFields: ['name', 'contact', 'phone', 'address', 'email']
     });
   }
 }

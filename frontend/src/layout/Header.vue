@@ -21,6 +21,7 @@
           <FullScreen />
         </el-icon>
       </el-tooltip>
+      <NotificationCenter />
       <el-dropdown trigger="click" @command="handleCommand">
         <div class="user-info">
           <el-avatar :size="32" :src="userStore.avatar">
@@ -58,6 +59,7 @@ import {
   User,
   SwitchButton
 } from '@element-plus/icons-vue'
+import NotificationCenter from '@/components/NotificationCenter/index.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -119,7 +121,7 @@ const handleCommand = async (command) => {
   &-right {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 16px;
   }
 }
 

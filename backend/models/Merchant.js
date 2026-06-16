@@ -33,10 +33,47 @@ const Merchant = sequelize.define('Merchant', {
   businessLicense: {
     type: DataTypes.STRING(255),
     comment: '营业执照图片URL'
+  },
+  violationLevel: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '违规等级: 0-正常, 1-轻微, 2-一般, 3-严重'
+  },
+  violationCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: '违规次数'
+  },
+  lastViolationTime: {
+    type: DataTypes.DATE,
+    comment: '最近违规时间'
+  },
+  businessType: {
+    type: DataTypes.STRING(20),
+    comment: '业务类型: flight/hotel/car/ticket'
+  },
+  status: {
+    type: DataTypes.TINYINT,
+    defaultValue: 1,
+    comment: '状态: 0-禁用, 1-启用'
+  },
+  email: {
+    type: DataTypes.STRING(100),
+    comment: '邮箱'
+  },
+  scope: {
+    type: DataTypes.STRING(255),
+    comment: '经营范围'
+  },
+  settledAt: {
+    type: DataTypes.DATE,
+    comment: '入驻时间'
   }
 }, {
   tableName: 'merchants',
-  comment: '商家表'
+  comment: '商家表',
+  timestamps: true,
+  paranoid: true
 });
 
 module.exports = Merchant;

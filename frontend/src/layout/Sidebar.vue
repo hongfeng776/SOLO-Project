@@ -63,8 +63,15 @@ import {
   OfficeBuilding,
   Van,
   Tickets,
+  Suitcase,
   List,
-  Shop
+  Connection,
+  Shop,
+  Present,
+  Ticket,
+  Stamp,
+  DataAnalysis,
+  Document
 } from '@element-plus/icons-vue'
 
 const route = useRoute()

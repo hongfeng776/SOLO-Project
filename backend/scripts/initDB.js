@@ -11,6 +11,10 @@ const Car = require('../models/Car');
 const Ticket = require('../models/Ticket');
 const Order = require('../models/Order');
 const Merchant = require('../models/Merchant');
+const BusinessTravel = require('../models/BusinessTravel');
+const Coupon = require('../models/Coupon');
+const OrderLog = require('../models/OrderLog');
+const Approval = require('../models/Approval');
 
 const initDB = async () => {
   try {
@@ -47,7 +51,7 @@ const initDB = async () => {
     console.log('创建角色：商家');
 
     const hashedPassword = await encrypt('123456');
-    await User.create({
+    const admin = await User.create({
       username: 'admin',
       password: hashedPassword,
       nickname: '超级管理员',
@@ -57,15 +61,49 @@ const initDB = async () => {
     });
     console.log('创建默认管理员账户：admin/123456');
 
+    const normalUser = await User.create({
+      username: 'user1',
+      password: hashedPassword,
+      nickname: '测试用户',
+      roleId: userRole.id,
+      status: 1,
+      avatar: ''
+    });
+    console.log('创建测试用户：user1/123456');
+
     const merchant = await Merchant.create({
       name: '测试商家',
       contact: '张先生',
       phone: '13800138000',
       address: '北京市朝阳区',
       auditStatus: 1,
-      businessLicense: ''
+      businessLicense: 'https://example.com/license.jpg',
+      violationLevel: 0,
+      violationCount: 0,
+      businessType: 'flight',
+      status: 1,
+      email: 'merchant@example.com',
+      scope: '机票、酒店预订',
+      settledAt: new Date()
     });
     console.log('创建测试商家');
+
+    const merchant2 = await Merchant.create({
+      name: '租车服务商',
+      contact: '李女士',
+      phone: '13900139000',
+      address: '上海市浦东新区',
+      auditStatus: 1,
+      businessLicense: 'https://example.com/license2.jpg',
+      violationLevel: 0,
+      violationCount: 0,
+      businessType: 'car',
+      status: 1,
+      email: 'car@example.com',
+      scope: '自驾租车、商务用车',
+      settledAt: new Date()
+    });
+    console.log('创建租车商家');
 
     await Flight.bulkCreate([
       {
@@ -122,7 +160,7 @@ const initDB = async () => {
         plateNo: '京A12345',
         pricePerDay: 288.00,
         status: 1,
-        merchantId: merchant.id
+        merchantId: merchant2.id
       },
       {
         brand: '奔驰',
@@ -130,7 +168,7 @@ const initDB = async () => {
         plateNo: '京B67890',
         pricePerDay: 588.00,
         status: 1,
-        merchantId: merchant.id
+        merchantId: merchant2.id
       }
     ]);
     console.log('创建测试租车数据');
@@ -155,9 +193,158 @@ const initDB = async () => {
     ]);
     console.log('创建测试票务数据');
 
+    await Order.bulkCreate([
+      {
+        orderNo: 'ORD20240620001',
+        userId: normalUser.id,
+        category: 'flight',
+        productId: 1,
+        productName: 'CA1234 北京-上海',
+        amount: 680.00,
+        contactName: '测试用户',
+        contactPhone: '13800001111',
+        quantity: 1,
+        unitPrice: 680.00,
+        status: 1,
+        payTime: new Date(),
+        merchantId: merchant.id
+      },
+      {
+        orderNo: 'ORD20240620002',
+        userId: normalUser.id,
+        category: 'hotel',
+        productId: 1,
+        productName: '北京五星大酒店',
+        amount: 588.00,
+        contactName: '测试用户',
+        contactPhone: '13800001111',
+        quantity: 1,
+        unitPrice: 588.00,
+        status: 0,
+        merchantId: merchant.id
+      }
+    ]);
+    console.log('创建测试订单数据');
+
+    await BusinessTravel.bulkCreate([
+      {
+        title: '北京-上海商务出行方案',
+        userId: normalUser.id,
+        contactName: '测试用户',
+        contactPhone: '13800001111',
+        departureCity: '北京',
+        arrivalCity: '上海',
+        departureDate: new Date('2024-07-01'),
+        returnDate: new Date('2024-07-03'),
+        travelType: 1,
+        budget: 5000.00,
+        requirements: '需要往返机票+酒店住宿+接送机服务',
+        status: 1,
+        merchantId: merchant.id,
+        assignedManager: '王经理'
+      }
+    ]);
+    console.log('创建测试商旅定制数据');
+
+    const now = new Date();
+    await Coupon.bulkCreate([
+      {
+        name: '机票满减券',
+        code: 'CPNFLY100',
+        type: 1,
+        category: 'flight',
+        amount: 100.00,
+        minAmount: 500.00,
+        totalStock: 100,
+        usedStock: 0,
+        remainStock: 100,
+        startTime: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+        endTime: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+        status: 1
+      },
+      {
+        name: '酒店折扣券',
+        code: 'CPNHOTEL88',
+        type: 2,
+        category: 'hotel',
+        amount: 0.85,
+        minAmount: 300.00,
+        totalStock: 50,
+        usedStock: 0,
+        remainStock: 50,
+        startTime: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+        endTime: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+        status: 1
+      },
+      {
+        name: '租车立减券',
+        code: 'CPNCAR50',
+        type: 3,
+        category: 'car',
+        amount: 50.00,
+        minAmount: 0,
+        totalStock: 200,
+        usedStock: 0,
+        remainStock: 200,
+        startTime: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+        endTime: new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000),
+        status: 0
+      }
+    ]);
+    console.log('创建测试优惠券数据');
+
+    await OrderLog.bulkCreate([
+      {
+        orderId: 1,
+        orderNo: 'ORD20240620001',
+        action: 'create',
+        fromStatus: null,
+        toStatus: 0,
+        operatorId: normalUser.id,
+        operatorName: '测试用户',
+        remark: '用户下单'
+      },
+      {
+        orderId: 1,
+        orderNo: 'ORD20240620001',
+        action: 'pay',
+        fromStatus: 0,
+        toStatus: 1,
+        operatorId: normalUser.id,
+        operatorName: '测试用户',
+        remark: '支付成功'
+      }
+    ]);
+    console.log('创建测试订单日志数据');
+
+    await Approval.bulkCreate([
+      {
+        type: 'business_travel',
+        businessId: 1,
+        title: '商旅定制审批: 北京-上海商务出行方案',
+        applicantId: normalUser.id,
+        applicantName: '测试用户',
+        status: 0
+      },
+      {
+        type: 'merchant',
+        businessId: merchant.id,
+        title: '商家审核: 测试商家',
+        applicantId: null,
+        applicantName: '张先生',
+        status: 1,
+        approverId: admin.id,
+        approverName: '超级管理员',
+        approveRemark: '资质齐全，审核通过',
+        approveTime: new Date()
+      }
+    ]);
+    console.log('创建测试审批数据');
+
     console.log('\n========================================');
     console.log('数据库初始化完成！');
     console.log('默认管理员账户：admin / 123456');
+    console.log('测试用户账户：user1 / 123456');
     console.log('========================================\n');
 
     process.exit(0);
