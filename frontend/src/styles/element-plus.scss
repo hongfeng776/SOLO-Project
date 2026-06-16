@@ -1,0 +1,88 @@
+.el-button--primary {
+  --el-button-bg-color: $ccb-primary;
+  --el-button-border-color: $ccb-primary;
+  --el-button-hover-bg-color: $ccb-primary-light;
+  --el-button-hover-border-color: $ccb-primary-light;
+  --el-button-active-bg-color: $ccb-primary-dark;
+  --el-button-active-border-color: $ccb-primary-dark;
+}
+
+.el-menu {
+  --el-menu-bg-color: #001529;
+  --el-menu-text-color: rgba(255, 255, 255, 0.65);
+  --el-menu-active-color: #fff;
+  --el-menu-hover-bg-color: rgba(255, 255, 255, 0.08);
+  border-right: none;
+}
+
+.el-sub-menu {
+  .el-sub-menu__title:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+  }
+}
+
+.el-menu-item {
+  &.is-active {
+    background-color: $ccb-primary !important;
+  }
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+  }
+}
+
+.el-table {
+  --el-table-header-bg-color: $ccb-bg-light;
+  --el-table-header-text-color: $ccb-text-primary;
+  font-size: 14px;
+
+  th.el-table__cell {
+    font-weight: 600;
+  }
+}
+
+.el-pagination {
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+.el-card {
+  border-radius: $ccb-border-radius;
+}
+
+.el-dialog {
+  border-radius: $ccb-border-radius;
+}
+
+.el-tag {
+  border-radius: 2px;
+}
+
+.el-form-item {
+  margin-bottom: 20px;
+}
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper,
+.el-date-editor {
+  border-radius: $ccb-border-radius;
+}
+
+.ccb-search-form {
+  padding: 16px 20px 4px;
+  background-color: $ccb-bg-light;
+  border-radius: $ccb-border-radius;
+  margin-bottom: 16px;
+
+  .el-form-item {
+    margin-bottom: 16px;
+  }
+}
+
+.ccb-table-toolbar {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

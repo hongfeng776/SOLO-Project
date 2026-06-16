@@ -1,0 +1,20 @@
+{
+  "name": "ccb-admin-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "建行全渠道智慧业务运营管理后台 - Monorepo",
+  "scripts": {
+    "install:all": "cd frontend && npm install && cd ../backend && npm install",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "dev": "concurrently -n frontend,backend -c blue,green \"npm:dev:frontend\" \"npm:dev:backend\"",
+    "build:frontend": "cd frontend && npm run build:prod",
+    "build:backend": "cd backend && npm run build",
+    "build": "npm run build:frontend && npm run build:backend",
+    "seed": "cd backend && npm run seed",
+    "start": "cd backend && npm run start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
