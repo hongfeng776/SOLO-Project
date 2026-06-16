@@ -7,6 +7,13 @@ const capacityRouter = require('./capacity')
 const financeRouter = require('./finance')
 const systemRouter = require('./system')
 const dashboardRouter = require('./dashboard')
+const riskRouter = require('./risk')
+const ticketRouter = require('./ticket')
+const couponRouter = require('./coupon')
+const marketingRouter = require('./marketing')
+const notificationRouter = require('./notification')
+const analyticsRouter = require('./analytics')
+const monitorRouter = require('./monitor')
 
 module.exports = {
   auth: authRouter,
@@ -17,5 +24,12 @@ module.exports = {
   capacity: capacityRouter,
   finance: financeRouter,
   system: systemRouter,
-  dashboard: dashboardRouter
+  dashboard: dashboardRouter,
+  risk: riskRouter,
+  ticket: ticketRouter,
+  coupon: couponRouter,
+  marketing: marketingRouter,
+  notification: notificationRouter,
+  analytics: analyticsRouter,
+  monitor: monitorRouter
 }

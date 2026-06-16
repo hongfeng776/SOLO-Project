@@ -1,6 +1,10 @@
 const { Op } = require('sequelize')
 const { Order } = require('../models')
 const { success, pageResult, AppError } = require('../utils/response')
+const riskService = require('../services/riskService')
+const dispatchService = require('../services/dispatchService')
+const orderStateMachine = require('../services/orderStateMachine')
+const financeService = require('../services/financeService')
 
 const getList = async (req, res, next) => {
   try {
@@ -27,9 +31,14 @@ const getList = async (req, res, next) => {
       where.createTime = { [Op.between]: [startTime, endTime] }
     }
 
+    const orderConditions = []
+    if (where.status && where.createTime) {
+      orderConditions.push(['status', 'ASC'], ['createTime', 'DESC'])
+    }
+
     const { count, rows } = await Order.findAndCountAll({
       where,
-      order: [['createTime', 'DESC']],
+      order: orderConditions.length > 0 ? orderConditions : [['createTime', 'DESC']],
       offset: (page - 1) * pageSize,
       limit: parseInt(pageSize)
     })
@@ -59,6 +68,8 @@ const getDetail = async (req, res, next) => {
 const create = async (req, res, next) => {
   try {
     const data = req.body
+
+    await riskService.checkOrderRisk(data)
 
     if (!data.orderNo) {
       data.orderNo = 'DD' + Date.now() + Math.floor(Math.random() * 1000)
@@ -114,13 +125,7 @@ const updateStatus = async (req, res, next) => {
     const { id } = req.params
     const { status } = req.body
 
-    const order = await Order.findByPk(id)
-
-    if (!order) {
-      throw new AppError('订单不存在', 404, 404)
-    }
-
-    await order.update({ status })
+    await orderStateMachine.transitionOrder(id, status, req.body)
 
     res.json(success(null, '状态更新成功'))
   } catch (error) {
@@ -133,21 +138,7 @@ const dispatch = async (req, res, next) => {
     const { id } = req.params
     const { driverId } = req.body
 
-    const order = await Order.findByPk(id)
-
-    if (!order) {
-      throw new AppError('订单不存在', 404, 404)
-    }
-
-    if (order.status !== 1) {
-      throw new AppError('只有待接单状态的订单才能派单', 400, 400)
-    }
-
-    await order.update({
-      driverId,
-      status: 2,
-      acceptTime: new Date()
-    })
+    await dispatchService.dispatchOrder(id, driverId)
 
     res.json(success(null, '派单成功'))
   } catch (error) {
@@ -160,21 +151,7 @@ const cancel = async (req, res, next) => {
     const { id } = req.params
     const { reason } = req.body
 
-    const order = await Order.findByPk(id)
-
-    if (!order) {
-      throw new AppError('订单不存在', 404, 404)
-    }
-
-    if (order.status === 5 || order.status === 6) {
-      throw new AppError('订单已完成或已取消，无法再次取消', 400, 400)
-    }
-
-    await order.update({
-      status: 6,
-      cancelTime: new Date(),
-      cancelReason: reason || '后台取消'
-    })
+    await orderStateMachine.transitionOrder(id, 6, { cancelReason: reason })
 
     res.json(success(null, '取消成功'))
   } catch (error) {
@@ -211,6 +188,29 @@ const getStatistics = async (req, res, next) => {
   }
 }
 
+const completeOrder = async (req, res, next) => {
+  try {
+    const { id } = req.params
+
+    await orderStateMachine.transitionOrder(id, 5)
+    await financeService.autoSettleOnComplete(id)
+
+    res.json(success(null, '订单完成并自动结算成功'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchDispatch = async (req, res, next) => {
+  try {
+    const result = await dispatchService.batchDispatch(req.body.orderIds)
+
+    res.json(success(result, '批量派单完成'))
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   getList,
   getDetail,
@@ -220,5 +220,7 @@ module.exports = {
   updateStatus,
   dispatch,
   cancel,
-  getStatistics
+  getStatistics,
+  completeOrder,
+  batchDispatch
 }

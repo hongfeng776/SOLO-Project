@@ -11,5 +11,7 @@ router.delete('/:id', orderController.delete)
 router.put('/:id/status', orderController.updateStatus)
 router.put('/:id/dispatch', orderController.dispatch)
 router.put('/:id/cancel', orderController.cancel)
+router.put('/:id/complete', orderController.completeOrder)
+router.post('/batch-dispatch', orderController.batchDispatch)
 
 module.exports = router

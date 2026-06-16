@@ -7,7 +7,7 @@ const getStatistics = async (req, res, next) => {
     const todayStart = new Date(new Date().setHours(0, 0, 0, 0))
 
     const [todayOrders, totalDrivers, onlineDrivers, totalPassengers, todayRevenue] = await Promise.all([
-      Order.count({ where: { createTime: { [Op.gte]: todayStart } }),
+      Order.count({ where: { createTime: { [Op.gte]: todayStart } } }),
       Driver.count(),
       Driver.count({ where: { status: 1 } }),
       Passenger.count(),
@@ -16,7 +16,7 @@ const getStatistics = async (req, res, next) => {
           type: 1,
           createTime: { [Op.gte]: todayStart }
         }
-      }) || 0
+      })
     ])
 
     const orderStats = {

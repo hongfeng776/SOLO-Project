@@ -26,5 +26,18 @@ export default defineConfig({
         additionalData: `@use "@/styles/variables.scss" as *;`
       }
     }
+  },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vue-vendor': ['vue', 'vue-router', 'pinia'],
+          'element-plus': ['element-plus', '@element-plus/icons-vue'],
+          'echarts-vendor': ['echarts'],
+          'utils-vendor': ['axios', 'dayjs', 'js-cookie', 'nprogress']
+        }
+      }
+    }
   }
 })

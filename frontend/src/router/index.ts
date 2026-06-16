@@ -123,6 +123,94 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/risk',
+    component: () => import('@/layout/index.vue'),
+    redirect: '/risk/dashboard',
+    meta: { title: '风控管理', icon: 'Warning' },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'RiskDashboard',
+        component: () => import('@/views/risk/dashboard.vue'),
+        meta: { title: '风控面板', icon: 'Monitor' }
+      },
+      {
+        path: 'rule',
+        name: 'RiskRule',
+        component: () => import('@/views/risk/rule.vue'),
+        meta: { title: '风控规则', icon: 'Setting' }
+      },
+      {
+        path: 'record',
+        name: 'RiskRecord',
+        component: () => import('@/views/risk/record.vue'),
+        meta: { title: '风控记录', icon: 'Document' }
+      }
+    ]
+  },
+  {
+    path: '/ticket',
+    component: () => import('@/layout/index.vue'),
+    redirect: '/ticket/list',
+    meta: { title: '客服工单', icon: 'ChatDotRound' },
+    children: [
+      {
+        path: 'list',
+        name: 'TicketList',
+        component: () => import('@/views/ticket/index.vue'),
+        meta: { title: '工单列表', icon: 'ChatDotRound' }
+      }
+    ]
+  },
+  {
+    path: '/marketing',
+    component: () => import('@/layout/index.vue'),
+    redirect: '/marketing/coupon',
+    meta: { title: '营销管理', icon: 'Present' },
+    children: [
+      {
+        path: 'coupon',
+        name: 'CouponList',
+        component: () => import('@/views/marketing/coupon.vue'),
+        meta: { title: '优惠券管理', icon: 'Ticket' }
+      },
+      {
+        path: 'campaign',
+        name: 'CampaignList',
+        component: () => import('@/views/marketing/campaign.vue'),
+        meta: { title: '营销活动', icon: 'Present' }
+      }
+    ]
+  },
+  {
+    path: '/monitor',
+    component: () => import('@/layout/index.vue'),
+    redirect: '/monitor/index',
+    meta: { title: '运维监控', icon: 'Monitor' },
+    children: [
+      {
+        path: 'index',
+        name: 'MonitorIndex',
+        component: () => import('@/views/monitor/index.vue'),
+        meta: { title: '系统监控', icon: 'Monitor' }
+      }
+    ]
+  },
+  {
+    path: '/analytics',
+    component: () => import('@/layout/index.vue'),
+    redirect: '/analytics/index',
+    meta: { title: '数据分析', icon: 'DataAnalysis' },
+    children: [
+      {
+        path: 'index',
+        name: 'AnalyticsIndex',
+        component: () => import('@/views/analytics/index.vue'),
+        meta: { title: '数据分析', icon: 'DataAnalysis' }
+      }
+    ]
+  },
+  {
     path: '/finance',
     component: () => import('@/layout/index.vue'),
     redirect: '/finance/statement',

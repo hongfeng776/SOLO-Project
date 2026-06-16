@@ -1,6 +1,6 @@
 require('dotenv').config()
 const { sequelize } = require('../config/database')
-const { User, Role, CapacityType, Driver, Passenger, Vehicle, Order, FinanceStatement, FinanceSettlement } = require('../models')
+const { User, Role, CapacityType, Driver, Passenger, Vehicle, Order, FinanceStatement, FinanceSettlement, Coupon, RiskRule, MarketingCampaign, Notification, Ticket } = require('../models')
 const { hashPassword } = require('../utils/jwt')
 
 const initDB = async () => {
@@ -219,6 +219,247 @@ const initDB = async () => {
     }
     await FinanceSettlement.bulkCreate(settlements)
     console.log('结算单数据初始化完成')
+
+    await Coupon.bulkCreate([
+      {
+        id: 1,
+        name: '新用户立减10元',
+        code: 'NEWUSER10',
+        type: 3,
+        discount: 10.00,
+        minAmount: 0.01,
+        totalCount: 10000,
+        usedCount: 3256,
+        perLimit: 1,
+        startTime: new Date('2024-01-01'),
+        endTime: new Date('2025-12-31'),
+        status: 1,
+        description: '新用户注册即享立减10元优惠'
+      },
+      {
+        id: 2,
+        name: '满50减8',
+        code: 'FULL50OFF8',
+        type: 1,
+        discount: 8.00,
+        minAmount: 50.00,
+        totalCount: 5000,
+        usedCount: 1892,
+        perLimit: 3,
+        startTime: new Date('2024-06-01'),
+        endTime: new Date('2025-06-30'),
+        status: 1,
+        description: '满50元立减8元，可领3次'
+      },
+      {
+        id: 3,
+        name: '8折折扣券',
+        code: 'DISCOUNT80',
+        type: 2,
+        discount: 8.00,
+        minAmount: 20.00,
+        totalCount: 3000,
+        usedCount: 876,
+        perLimit: 2,
+        startTime: new Date('2024-03-01'),
+        endTime: new Date('2025-09-30'),
+        status: 1,
+        description: '乘车享8折优惠，最高减免15元'
+      }
+    ])
+    console.log('优惠券数据初始化完成')
+
+    await RiskRule.bulkCreate([
+      {
+        id: 1,
+        name: '高频下单检测',
+        code: 'HIGH_FREQ_ORDER',
+        type: 3,
+        category: 1,
+        condition: { timeWindow: 600, maxOrders: 5 },
+        threshold: 5,
+        action: 2,
+        severity: 3,
+        status: 1,
+        hitCount: 128,
+        description: '同一乘客10分钟内下单超过5次视为刷单风险'
+      },
+      {
+        id: 2,
+        name: '异常价格检测',
+        code: 'ABNORMAL_PRICE',
+        type: 1,
+        category: 5,
+        condition: { deviationRate: 0.5 },
+        threshold: 50,
+        action: 4,
+        severity: 2,
+        status: 1,
+        hitCount: 56,
+        description: '订单实际费用与预估偏差超过50%需人工审核'
+      },
+      {
+        id: 3,
+        name: '高频取消检测',
+        code: 'HIGH_FREQ_CANCEL',
+        type: 3,
+        category: 2,
+        condition: { timeWindow: 3600, maxCancels: 5, cancelRate: 0.8 },
+        threshold: 80,
+        action: 1,
+        severity: 2,
+        status: 1,
+        hitCount: 342,
+        description: '1小时内取消5次以上或取消率超过80%发出警告'
+      },
+      {
+        id: 4,
+        name: '低评分司机检测',
+        code: 'LOW_RATING_DRIVER',
+        type: 2,
+        category: 3,
+        condition: { minRating: 3.5, minOrders: 20 },
+        threshold: 3.5,
+        action: 4,
+        severity: 3,
+        status: 1,
+        hitCount: 23,
+        description: '评分低于3.5且订单数超过20的司机需人工审核'
+      }
+    ])
+    console.log('风控规则数据初始化完成')
+
+    await MarketingCampaign.bulkCreate([
+      {
+        id: 1,
+        name: '新用户首单优惠',
+        code: 'NEW_USER_FIRST',
+        type: 1,
+        couponId: 1,
+        subsidyAmount: 10.00,
+        budget: 100000.00,
+        usedBudget: 32560.00,
+        startTime: new Date('2024-01-01'),
+        endTime: new Date('2025-12-31'),
+        targetUser: 2,
+        rules: { firstOrderOnly: true, maxSubsidy: 10 },
+        status: 1,
+        participantCount: 3256,
+        orderCount: 3180,
+        description: '新用户首次下单立减10元'
+      },
+      {
+        id: 2,
+        name: '高峰期补贴',
+        code: 'PEAK_SUBSIDY',
+        type: 3,
+        couponId: null,
+        subsidyAmount: 5.00,
+        budget: 200000.00,
+        usedBudget: 89600.00,
+        startTime: new Date('2024-06-01'),
+        endTime: new Date('2025-06-30'),
+        targetUser: 1,
+        rules: { peakHours: ['07:00-09:00', '17:00-19:00'], subsidyRate: 0.2 },
+        status: 1,
+        participantCount: 15800,
+        orderCount: 42300,
+        description: '早晚高峰时段乘车享额外补贴'
+      }
+    ])
+    console.log('营销活动数据初始化完成')
+
+    await Notification.bulkCreate([
+      {
+        id: 1,
+        title: '系统升级通知',
+        content: '平台将于2024年12月20日23:00-次日02:00进行系统升级维护，届时部分功能暂不可用，请提前做好安排。',
+        type: 1,
+        targetType: 1,
+        targetId: null,
+        senderId: 1,
+        senderName: '超级管理员',
+        priority: 2,
+        isRead: 0,
+        bizType: 'system',
+        bizId: null
+      },
+      {
+        id: 2,
+        title: '风控告警：高频下单',
+        content: '乘客ID1003在10分钟内连续下单5次，已触发高频下单风控规则，系统已自动拦截后续下单请求。',
+        type: 3,
+        targetType: 2,
+        targetId: 2,
+        senderId: null,
+        senderName: '系统',
+        priority: 3,
+        isRead: 0,
+        bizType: 'risk',
+        bizId: 1
+      },
+      {
+        id: 3,
+        title: '结算单审批通知',
+        content: '司机张伟提交了本周结算单，金额¥2,580.00，请及时审批。',
+        type: 4,
+        targetType: 2,
+        targetId: 3,
+        senderId: null,
+        senderName: '系统',
+        priority: 2,
+        isRead: 0,
+        bizType: 'finance',
+        bizId: 1
+      }
+    ])
+    console.log('通知数据初始化完成')
+
+    await Ticket.bulkCreate([
+      {
+        id: 1,
+        ticketNo: `TK${Date.now()}0001`,
+        orderId: 1,
+        orderNo: orders[0]?.orderNo || '',
+        passengerId: 1,
+        passengerName: '小红',
+        passengerPhone: '13800000010',
+        driverId: 1,
+        driverName: '张伟',
+        type: 1,
+        priority: 3,
+        status: 1,
+        category: '服务投诉',
+        content: '司机态度恶劣，拒接电话且中途要求加价',
+        handleResult: null,
+        handlerId: null,
+        handlerName: null,
+        handleTime: null,
+        remark: null
+      },
+      {
+        id: 2,
+        ticketNo: `TK${Date.now()}0002`,
+        orderId: 2,
+        orderNo: orders[1]?.orderNo || '',
+        passengerId: 2,
+        passengerName: '小明',
+        passengerPhone: '13800000011',
+        driverId: null,
+        driverName: null,
+        type: 2,
+        priority: 2,
+        status: 2,
+        category: '费用争议',
+        content: '实际费用与预估费用差异过大，要求退还差价',
+        handleResult: null,
+        handlerId: 2,
+        handlerName: '运营管理员',
+        handleTime: null,
+        remark: '已联系司机核实路线'
+      }
+    ])
+    console.log('客服工单数据初始化完成')
 
     console.log('\n✅ 数据库初始化完成！')
     console.log('默认账号：admin / 123456')

@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard">
     <el-row :gutter="20" class="stat-cards">
-      <el-col :span="6">
+      <el-col :span="4">
         <el-card shadow="hover" class="stat-card order-card">
           <div class="stat-icon">
             <el-icon size="32"><Document /></el-icon>
@@ -12,7 +12,7 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="4">
         <el-card shadow="hover" class="stat-card driver-card">
           <div class="stat-icon">
             <el-icon size="32"><User /></el-icon>
@@ -23,7 +23,7 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="4">
         <el-card shadow="hover" class="stat-card money-card">
           <div class="stat-icon">
             <el-icon size="32"><Money /></el-icon>
@@ -34,7 +34,7 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="4">
         <el-card shadow="hover" class="stat-card user-card">
           <div class="stat-icon">
             <el-icon size="32"><UserFilled /></el-icon>
@@ -45,10 +45,70 @@
           </div>
         </el-card>
       </el-col>
+      <el-col :span="4">
+        <el-card shadow="hover" class="stat-card ticket-card">
+          <div class="stat-icon">
+            <el-icon size="32"><Tickets /></el-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ statistics.todayTickets || 0 }}</div>
+            <div class="stat-label">今日工单数</div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="4">
+        <el-card shadow="hover" class="stat-card alert-card">
+          <div class="stat-icon">
+            <el-icon size="32"><Warning /></el-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value">{{ statistics.riskAlerts || 0 }}</div>
+            <div class="stat-label">风控告警数</div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <el-row :gutter="20" class="realtime-row">
+      <el-col :span="6">
+        <el-card shadow="hover" class="metric-card">
+          <div class="metric-label">待派单数</div>
+          <div class="metric-value">
+            <el-tag type="warning" size="large">{{ realTimeMetrics.pendingDispatch }}</el-tag>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card shadow="hover" class="metric-card">
+          <div class="metric-label">进行中订单</div>
+          <div class="metric-value">
+            <el-tag type="primary" size="large">{{ realTimeMetrics.inProgressOrders }}</el-tag>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card shadow="hover" class="metric-card">
+          <div class="metric-label">高峰供需比</div>
+          <div class="metric-value">
+            <el-tag :type="realTimeMetrics.supplyDemandRatio > 1.5 ? 'danger' : 'success'" size="large">
+              {{ realTimeMetrics.supplyDemandRatio }}
+            </el-tag>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card shadow="hover" class="metric-card">
+          <div class="metric-label">平均响应时间</div>
+          <div class="metric-value">
+            <span class="metric-number">{{ realTimeMetrics.avgResponseTime }}</span>
+            <span class="metric-unit">秒</span>
+          </div>
+        </el-card>
+      </el-col>
     </el-row>
 
     <el-row :gutter="20" class="charts-row">
-      <el-col :span="16">
+      <el-col :span="8">
         <el-card class="chart-card">
           <template #header>
             <div class="card-header">
@@ -71,10 +131,18 @@
           <div ref="capacityChartRef" class="chart-container"></div>
         </el-card>
       </el-col>
+      <el-col :span="8">
+        <el-card class="chart-card">
+          <template #header>
+            <span>实时订单状态分布</span>
+          </template>
+          <div ref="orderStatusChartRef" class="chart-container"></div>
+        </el-card>
+      </el-col>
     </el-row>
 
     <el-row :gutter="20" class="bottom-row">
-      <el-col :span="12">
+      <el-col :span="8">
         <el-card class="list-card">
           <template #header>
             <div class="card-header">
@@ -83,8 +151,8 @@
             </div>
           </template>
           <el-table :data="recentOrders" size="small">
-            <el-table-column prop="orderNo" label="订单号" width="160" />
-            <el-table-column prop="passengerName" label="乘客" width="80" />
+            <el-table-column prop="orderNo" label="订单号" width="140" />
+            <el-table-column prop="passengerName" label="乘客" width="70" />
             <el-table-column prop="startAddress" label="起点" show-overflow-tooltip />
             <el-table-column prop="status" label="状态" width="80">
               <template #default="{ row }">
@@ -98,7 +166,7 @@
           </el-table>
         </el-card>
       </el-col>
-      <el-col :span="12">
+      <el-col :span="8">
         <el-card class="list-card">
           <template #header>
             <div class="card-header">
@@ -120,6 +188,26 @@
           </el-table>
         </el-card>
       </el-col>
+      <el-col :span="8">
+        <el-card class="list-card">
+          <template #header>
+            <div class="card-header">
+              <span>告警通知</span>
+            </div>
+          </template>
+          <el-table :data="alerts" size="small">
+            <el-table-column prop="type" label="类型" width="70">
+              <template #default="{ row }">
+                <el-tag :type="row.type === 'risk' ? 'danger' : 'warning'" size="small">
+                  {{ row.type === 'risk' ? '风控' : '系统' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="content" label="内容" show-overflow-tooltip />
+            <el-table-column prop="time" label="时间" width="90" />
+          </el-table>
+        </el-card>
+      </el-col>
     </el-row>
   </div>
 </template>
@@ -137,15 +225,26 @@ const router = useRouter()
 const chartType = ref('day')
 const orderChartRef = ref<HTMLDivElement>()
 const capacityChartRef = ref<HTMLDivElement>()
+const orderStatusChartRef = ref<HTMLDivElement>()
 
 let orderChart: echarts.ECharts | null = null
 let capacityChart: echarts.ECharts | null = null
+let orderStatusChart: echarts.ECharts | null = null
 
 const statistics = reactive({
   todayOrders: 128,
   onlineDrivers: 86,
   todayRevenue: 12580,
-  activeUsers: 356
+  activeUsers: 356,
+  todayTickets: 17,
+  riskAlerts: 5
+})
+
+const realTimeMetrics = reactive({
+  pendingDispatch: 12,
+  inProgressOrders: 38,
+  supplyDemandRatio: 1.8,
+  avgResponseTime: 23
 })
 
 const recentOrders = ref([
@@ -161,6 +260,23 @@ const todos = ref([
   { id: 2, title: '车辆资质审核', count: 8, type: 'vehicle-audit' },
   { id: 3, title: '待处理订单', count: 5, type: 'pending-order' },
   { id: 4, title: '财务待结算', count: 3, type: 'finance-settle' }
+])
+
+const alerts = ref([
+  { id: 1, type: 'risk', content: '乘客ID1003在10分钟内下单5次，触发高频下单规则', time: '2分钟前' },
+  { id: 2, type: 'risk', content: '司机张伟评分降至3.2，触发低评分司机告警', time: '15分钟前' },
+  { id: 3, type: 'system', content: '朝阳区运力不足，当前供需比2.3', time: '30分钟前' },
+  { id: 4, type: 'risk', content: '订单DD202401010008实际费用与预估偏差超过50%', time: '1小时前' },
+  { id: 5, type: 'system', content: '系统将于今晚23:00进行例行维护', time: '2小时前' }
+])
+
+const orderStatusData = ref([
+  { value: 12, name: '待接单' },
+  { value: 25, name: '已派单' },
+  { value: 18, name: '接驾中' },
+  { value: 35, name: '行程中' },
+  { value: 128, name: '已完成' },
+  { value: 8, name: '已取消' }
 ])
 
 const initCharts = () => {
@@ -226,6 +342,30 @@ const initCharts = () => {
     }
     capacityChart.setOption(option)
   }
+
+  if (orderStatusChartRef.value) {
+    orderStatusChart = echarts.init(orderStatusChartRef.value)
+    const option = {
+      tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+      legend: { bottom: '5%', left: 'center' },
+      color: ['#e6a23c', '#409eff', '#909399', '#67c23a', '#f56c6c', '#b1b3b8'],
+      series: [
+        {
+          name: '订单状态',
+          type: 'pie',
+          radius: ['35%', '65%'],
+          avoidLabelOverlap: false,
+          itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+          label: { show: false },
+          emphasis: {
+            label: { show: true, fontSize: 14, fontWeight: 'bold' }
+          },
+          data: orderStatusData.value
+        }
+      ]
+    }
+    orderStatusChart.setOption(option)
+  }
 }
 
 const goToOrderList = () => {
@@ -260,15 +400,64 @@ const loadStatistics = async () => {
   }
 }
 
+const loadRealTimeMetrics = async () => {
+  try {
+    const res = await fetch('/api/dashboard/realtime-metrics')
+    if (res.ok) {
+      const data = await res.json()
+      if (data.data) {
+        Object.assign(realTimeMetrics, data.data)
+      }
+    }
+  } catch (e) {
+    console.log('realtime metrics mock data')
+  }
+}
+
+const loadAlerts = async () => {
+  try {
+    const res = await fetch('/api/dashboard/alerts')
+    if (res.ok) {
+      const data = await res.json()
+      if (data.data) {
+        alerts.value = data.data
+      }
+    }
+  } catch (e) {
+    console.log('alerts mock data')
+  }
+}
+
+const loadOrderStatus = async () => {
+  try {
+    const res = await fetch('/api/dashboard/order-status')
+    if (res.ok) {
+      const data = await res.json()
+      if (data.data) {
+        orderStatusData.value = data.data
+        orderStatusChart?.setOption({
+          series: [{ data: data.data }]
+        })
+      }
+    }
+  } catch (e) {
+    console.log('order status mock data')
+  }
+}
+
 onMounted(() => {
   nextTick(() => {
     initCharts()
   })
   loadStatistics()
+  loadRealTimeMetrics()
+  loadAlerts()
+  loadOrderStatus()
 
   window.addEventListener('resize', () => {
     orderChart?.resize()
     capacityChart?.resize()
+    orderStatusChart?.resize()
   })
 })
 </script>
@@ -323,6 +512,47 @@ onMounted(() => {
 
     &.user-card .stat-icon {
       background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    &.ticket-card .stat-icon {
+      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+
+    &.alert-card .stat-icon {
+      background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+    }
+  }
+
+  .realtime-row {
+    margin-bottom: 20px;
+
+    .metric-card {
+      text-align: center;
+      padding: 15px 10px;
+
+      .metric-label {
+        font-size: 14px;
+        color: #909399;
+        margin-bottom: 10px;
+      }
+
+      .metric-value {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .metric-number {
+          font-size: 28px;
+          font-weight: bold;
+          color: #303133;
+        }
+
+        .metric-unit {
+          font-size: 14px;
+          color: #909399;
+          margin-left: 4px;
+        }
+      }
     }
   }
 
