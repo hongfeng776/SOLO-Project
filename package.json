@@ -1,0 +1,25 @@
+{
+  "name": "hongtu-admin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "红途内容生态管理后台",
+  "scripts": {
+    "install:all": "cd frontend && npm install && cd ../backend && npm install",
+    "dev": "concurrently \"npm:dev:frontend\" \"npm:dev:backend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "cd backend && npm start",
+    "lint": "cd frontend && npm run lint"
+  },
+  "keywords": [
+    "hongtu",
+    "admin",
+    "content-management"
+  ],
+  "author": "HongTu Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

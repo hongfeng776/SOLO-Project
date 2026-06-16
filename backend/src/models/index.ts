@@ -1,0 +1,18 @@
+import User from './user'
+import Role from './role'
+import Note from './note'
+import Tag from './tag'
+import Creator from './creator'
+import Activity from './activity'
+import Order from './order'
+
+const UserRole = User.sequelize!.define('sys_user_role', {}, { tableName: 'sys_user_role', timestamps: false })
+const NoteTag = Note.sequelize!.define('biz_note_tag', {}, { tableName: 'biz_note_tag', timestamps: false })
+
+User.belongsToMany(Role, { through: UserRole, as: 'roles', foreignKey: 'user_id' })
+Role.belongsToMany(User, { through: UserRole, as: 'users', foreignKey: 'role_id' })
+
+Note.belongsToMany(Tag, { through: NoteTag, as: 'tags', foreignKey: 'note_id' })
+Tag.belongsToMany(Note, { through: NoteTag, as: 'notes', foreignKey: 'tag_id' })
+
+export { User, Role, Note, Tag, Creator, Activity, Order, UserRole, NoteTag }

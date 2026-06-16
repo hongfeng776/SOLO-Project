@@ -1,0 +1,13 @@
+export enum CacheKey {
+  TOKEN_KEY = 'TOKEN',
+  USER_INFO_KEY = 'USER_INFO',
+  SIDEBAR_STATUS_KEY = 'SIDEBAR_STATUS',
+  THEME_KEY = 'THEME',
+  ROLES_KEY = 'ROLES',
+  PERMISSIONS_KEY = 'PERMISSIONS'
+}
+
+export const TOKEN_KEY = CacheKey.TOKEN_KEY
+export const USER_INFO_KEY = CacheKey.USER_INFO_KEY
+export const SIDEBAR_STATUS_KEY = CacheKey.SIDEBAR_STATUS_KEY
+export const THEME_KEY = CacheKey.THEME_KEY
