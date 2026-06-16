@@ -1,0 +1,184 @@
+import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/store/modules/user'
+import { ElMessage } from 'element-plus'
+
+const Layout = () => import('@/layout/Layout.vue')
+
+export const routes = [
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/views/Login.vue'),
+    meta: { title: '登录', hidden: true }
+  },
+  {
+    path: '/',
+    component: Layout,
+    redirect: '/dashboard',
+    children: [
+      {
+        path: 'dashboard',
+        name: 'Dashboard',
+        component: () => import('@/views/Dashboard.vue'),
+        meta: { title: '首页', icon: 'HomeFilled', roles: ['admin', 'user'] }
+      }
+    ]
+  },
+  {
+    path: '/system',
+    component: Layout,
+    redirect: '/system/user',
+    meta: { title: '系统管理', icon: 'Setting' },
+    children: [
+      {
+        path: 'user',
+        name: 'UserManage',
+        component: () => import('@/views/system/User.vue'),
+        meta: { title: '用户管理', icon: 'User', roles: ['admin'] }
+      },
+      {
+        path: 'role',
+        name: 'RoleManage',
+        component: () => import('@/views/system/Role.vue'),
+        meta: { title: '角色管理', icon: 'UserFilled', roles: ['admin'] }
+      }
+    ]
+  },
+  {
+    path: '/product',
+    component: Layout,
+    redirect: '/product/flight',
+    meta: { title: '产品管理', icon: 'Goods' },
+    children: [
+      {
+        path: 'flight',
+        name: 'FlightManage',
+        component: () => import('@/views/product/Flight.vue'),
+        meta: { title: '机票管理', icon: 'Promotion', roles: ['admin', 'user'] }
+      },
+      {
+        path: 'hotel',
+        name: 'HotelManage',
+        component: () => import('@/views/product/Hotel.vue'),
+        meta: { title: '酒店管理', icon: 'OfficeBuilding', roles: ['admin', 'user'] }
+      },
+      {
+        path: 'car',
+        name: 'CarManage',
+        component: () => import('@/views/product/Car.vue'),
+        meta: { title: '租车管理', icon: 'Van', roles: ['admin', 'user'] }
+      },
+      {
+        path: 'ticket',
+        name: 'TicketManage',
+        component: () => import('@/views/product/Ticket.vue'),
+        meta: { title: '文旅票务', icon: 'Tickets', roles: ['admin', 'user'] }
+      }
+    ]
+  },
+  {
+    path: '/order',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'OrderManage',
+        component: () => import('@/views/Order.vue'),
+        meta: { title: '订单管理', icon: 'List', roles: ['admin', 'user'] }
+      }
+    ]
+  },
+  {
+    path: '/merchant',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'MerchantManage',
+        component: () => import('@/views/Merchant.vue'),
+        meta: { title: '商家管理', icon: 'Shop', roles: ['admin'] }
+      }
+    ]
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('@/views/NotFound.vue'),
+    meta: { hidden: true }
+  }
+]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+  scrollBehavior: () => ({ top: 0 })
+})
+
+const whiteList = ['/login']
+
+router.beforeEach((to, from, next) => {
+  document.title = to.meta.title ? `${to.meta.title} - 文旅电商管理后台` : '文旅电商管理后台'
+
+  const userStore = useUserStore()
+
+  if (userStore.token) {
+    if (to.path === '/login') {
+      next('/')
+    } else {
+      if (userStore.roles.length === 0) {
+        userStore
+          .getUserInfo()
+          .then(() => {
+            const roles = userStore.roles
+            const accessRoutes = filterAsyncRoutes(routes, roles)
+            accessRoutes.forEach((route) => {
+              if (!router.hasRoute(route.name)) {
+                router.addRoute(route)
+              }
+            })
+            next({ ...to, replace: true })
+          })
+          .catch(() => {
+            userStore.logout()
+            next('/login')
+          })
+      } else {
+        if (hasPermission(userStore.roles, to)) {
+          next()
+        } else {
+          ElMessage.error('没有权限访问')
+          next('/')
+        }
+      }
+    }
+  } else {
+    if (whiteList.includes(to.path)) {
+      next()
+    } else {
+      next(`/login?redirect=${to.fullPath}`)
+    }
+  }
+})
+
+function hasPermission(roles, route) {
+  if (route.meta && route.meta.roles) {
+    return roles.some((role) => route.meta.roles.includes(role))
+  }
+  return true
+}
+
+function filterAsyncRoutes(routes, roles) {
+  const res = []
+  routes.forEach((route) => {
+    const tmp = { ...route }
+    if (hasPermission(roles, tmp)) {
+      if (tmp.children) {
+        tmp.children = filterAsyncRoutes(tmp.children, roles)
+      }
+      res.push(tmp)
+    }
+  })
+  return res
+}
+
+export default router

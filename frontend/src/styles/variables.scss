@@ -1,0 +1,57 @@
+$primary-color: #1890ff;
+$success-color: #52c41a;
+$warning-color: #faad14;
+$danger-color: #ff4d4f;
+$info-color: #1890ff;
+
+$text-color: #303133;
+$text-color-secondary: #606266;
+$text-color-placeholder: #c0c4cc;
+
+$border-color: #dcdfe6;
+$border-color-light: #e4e7ed;
+$border-color-lighter: #ebeef5;
+$border-color-extra-light: #f2f6fc;
+
+$background-color: #f5f7fa;
+$background-color-page: #f0f2f5;
+
+$header-height: 60px;
+$sidebar-width: 210px;
+$sidebar-collapsed-width: 64px;
+
+$transition-base: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+
+$font-size-base: 14px;
+$font-size-small: 12px;
+$font-size-large: 16px;
+
+$border-radius-base: 4px;
+$border-radius-small: 2px;
+$border-radius-large: 6px;
+
+$box-shadow-base: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+$box-shadow-light: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+@forward 'element-plus/theme-chalk/src/common/var.scss' with (
+  $colors: (
+    'primary': (
+      'base': #1890ff
+    ),
+    'success': (
+      'base': #52c41a
+    ),
+    'warning': (
+      'base': #faad14
+    ),
+    'danger': (
+      'base': #ff4d4f
+    ),
+    'error': (
+      'base': #ff4d4f
+    ),
+    'info': (
+      'base': #909399
+    )
+  )
+);
