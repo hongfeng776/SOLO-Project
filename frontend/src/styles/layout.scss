@@ -1,0 +1,118 @@
+@use './variables.scss' as *;
+
+.page-container {
+  padding: $spacing-base;
+  background-color: $bg-color;
+  min-height: calc(100vh - #{$header-height});
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-base;
+  padding: $spacing-base;
+  background: #fff;
+  border-radius: $radius-md;
+  box-shadow: $shadow-light;
+
+  .page-title {
+    font-size: $font-size-lg;
+    font-weight: 600;
+    color: $text-primary;
+  }
+}
+
+.page-content {
+  background: #fff;
+  border-radius: $radius-md;
+  padding: $spacing-base;
+  box-shadow: $shadow-light;
+}
+
+.search-bar {
+  margin-bottom: $spacing-base;
+  padding: $spacing-base;
+  background: #fff;
+  border-radius: $radius-md;
+  box-shadow: $shadow-light;
+
+  .el-form-item {
+    margin-bottom: 0;
+  }
+}
+
+.table-container {
+  background: #fff;
+  border-radius: $radius-md;
+  padding: $spacing-base;
+  box-shadow: $shadow-light;
+
+  .pagination-wrapper {
+    margin-top: $spacing-base;
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+.card-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: $spacing-base;
+  margin-bottom: $spacing-base;
+
+  .stat-card {
+    background: #fff;
+    border-radius: $radius-md;
+    padding: $spacing-xl;
+    box-shadow: $shadow-light;
+    transition: $transition-base;
+
+    &:hover {
+      box-shadow: $shadow-dark;
+      transform: translateY(-2px);
+    }
+
+    .stat-label {
+      font-size: $font-size-sm;
+      color: $text-secondary;
+      margin-bottom: $spacing-sm;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 600;
+      color: $text-primary;
+
+      &.primary {
+        color: $primary-color;
+      }
+
+      &.success {
+        color: $success-color;
+      }
+
+      &.warning {
+        color: $warning-color;
+      }
+
+      &.danger {
+        color: $danger-color;
+      }
+    }
+  }
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-base;
+
+  .toolbar-left,
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+}

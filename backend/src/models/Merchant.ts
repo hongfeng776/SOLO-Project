@@ -1,0 +1,60 @@
+import { Table, Column, Model, DataType, PrimaryKey, AutoIncrement, CreatedAt, UpdatedAt } from 'sequelize-typescript';
+
+@Table({
+  tableName: 'merchants',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
+})
+export class Merchant extends Model<Merchant> {
+  @PrimaryKey
+  @AutoIncrement
+  @Column({
+    type: DataType.BIGINT.UNSIGNED,
+  })
+  id!: number;
+
+  @Column({
+    type: DataType.STRING(255),
+    allowNull: false,
+    comment: '商家名称',
+  })
+  name!: string;
+
+  @Column({
+    type: DataType.STRING(50),
+    comment: '联系人',
+  })
+  contact?: string;
+
+  @Column({
+    type: DataType.STRING(20),
+    comment: '联系电话',
+  })
+  phone?: string;
+
+  @Column({
+    type: DataType.STRING(255),
+    comment: '地址',
+  })
+  address?: string;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 1,
+    comment: '状态：0-禁用 1-启用',
+  })
+  status?: number;
+
+  @CreatedAt
+  @Column({
+    type: DataType.DATE,
+  })
+  created_at!: Date;
+
+  @UpdatedAt
+  @Column({
+    type: DataType.DATE,
+  })
+  updated_at!: Date;
+}

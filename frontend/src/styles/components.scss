@@ -1,0 +1,102 @@
+@use './variables.scss' as *;
+
+.form-dialog {
+  .el-dialog__header {
+    border-bottom: 1px solid $border-color-lighter;
+    padding-bottom: $spacing-base;
+  }
+
+  .el-dialog__footer {
+    border-top: 1px solid $border-color-lighter;
+    padding-top: $spacing-base;
+  }
+}
+
+.batch-actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-base;
+  background: rgba(64, 158, 255, 0.1);
+  border-radius: $radius-base;
+  margin-bottom: $spacing-base;
+
+  .batch-info {
+    color: $primary-color;
+    font-size: $font-size-sm;
+  }
+}
+
+.empty-state {
+  padding: $spacing-xxl 0;
+  text-align: center;
+  color: $text-secondary;
+
+  .empty-icon {
+    font-size: 64px;
+    color: $border-color-light;
+    margin-bottom: $spacing-base;
+  }
+
+  .empty-text {
+    font-size: $font-size-base;
+  }
+}
+
+.status-tag {
+  display: inline-block;
+  padding: 2px $spacing-sm;
+  border-radius: $radius-base;
+  font-size: $font-size-xs;
+  line-height: 1.5;
+
+  &.success {
+    background: rgba(103, 194, 58, 0.1);
+    color: $success-color;
+  }
+
+  &.warning {
+    background: rgba(230, 162, 60, 0.1);
+    color: $warning-color;
+  }
+
+  &.danger {
+    background: rgba(245, 108, 108, 0.1);
+    color: $danger-color;
+  }
+
+  &.info {
+    background: rgba(144, 147, 153, 0.1);
+    color: $info-color;
+  }
+
+  &.primary {
+    background: rgba(64, 158, 255, 0.1);
+    color: $primary-color;
+  }
+}
+
+.amount-text {
+  font-weight: 600;
+  color: $danger-color;
+
+  &::before {
+    content: '¥';
+    font-size: $font-size-xs;
+    margin-right: 2px;
+  }
+}
+
+.link-btn {
+  color: $primary-color;
+  cursor: pointer;
+  font-size: $font-size-sm;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  + .link-btn {
+    margin-left: $spacing-sm;
+  }
+}
