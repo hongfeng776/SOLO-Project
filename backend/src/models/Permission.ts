@@ -5,6 +5,7 @@ import {
   PrimaryKey,
   DataType,
   BeforeCreate,
+  BeforeValidate,
   BelongsToMany,
   ForeignKey,
   HasMany
@@ -121,6 +122,7 @@ export class Permission extends Model<Permission> {
   @HasMany(() => Permission, { foreignKey: 'parent_id' })
   children?: Permission[];
 
+  @BeforeValidate
   @BeforeCreate
   static generateId(instance: Permission) {
     if (!instance.id) {

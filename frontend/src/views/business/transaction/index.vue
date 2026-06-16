@@ -57,6 +57,12 @@
       </el-form-item>
     </CcbSearchForm>
 
+    <CcbBatchOperation :selected-rows="selectedRows" @clear="handleClearSelection">
+      <el-button type="warning" size="small" @click="handleBatchCancel">批量撤销</el-button>
+      <el-button type="primary" size="small" @click="handleBatchFreeze">批量冻结</el-button>
+      <el-button type="danger" size="small" @click="handleBatchReverse">批量冲正</el-button>
+    </CcbBatchOperation>
+
     <div class="ccb-table-toolbar">
       <div class="ccb-table-toolbar-left">
         <el-button type="primary" :icon="Download" @click="handleExport">导出数据</el-button>
@@ -80,8 +86,20 @@
       @change="handlePageChange"
     >
       <el-table-column prop="orderNo" label="订单号" width="200" />
-      <el-table-column prop="channelName" label="渠道" width="100" />
+      <el-table-column label="渠道" width="100">
+        <template #default="{ row }">
+          {{ getChannelLabel(row.channelCode) }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="customerNo" label="客户编号" width="160" />
       <el-table-column prop="businessTypeName" label="业务类型" width="100" />
+      <el-table-column label="风险等级" width="100">
+        <template #default="{ row }">
+          <el-tag :type="getRiskLevelTagType(row.riskLevel)" effect="light" size="small">
+            {{ getRiskLevelLabel(row.riskLevel) }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column prop="amount" label="交易金额" width="140" align="right">
         <template #default="{ row }">
           <span class="ccb-amount" :class="row.amount >= 0 ? 'positive' : 'negative'">
@@ -141,9 +159,10 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { Download } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { maskPhone, formatDateTime, formatMoneyWithComma } from '@utils'
 import type { Transaction } from '@types/business'
+import { batchTransactionApi } from '@api/business'
 
 const loading = ref<boolean>(false)
 const tableData = ref<Transaction[]>([])
@@ -168,13 +187,14 @@ const totalAmount = computed<number>(() => {
   return tableData.value.reduce((sum, item) => sum + item.amount, 0)
 })
 
-const mockTransactions: Transaction[] = Array.from({ length: 25 }, (_, i) => ({
+const mockTransactions: (Transaction & { customerNo?: string; riskLevel?: number })[] = Array.from({ length: 25 }, (_, i) => ({
   id: i + 1,
   orderNo: `TXN${Date.now()}${String(i).padStart(4, '0')}`,
-  channelCode: ['counter', 'ebank', 'mobile', 'atm', 'phone'][i % 5],
-  channelName: ['柜面渠道', '网上银行', '手机银行', '自助终端', '电话银行'][i % 5],
-  businessType: i % 5 + 1,
-  businessTypeName: ['转账汇款', '活期存款', '定期存款', '理财产品', '贷款业务'][i % 5],
+  channelCode: ['counter', 'ebank', 'mobile', 'atm', 'smart'][i % 5],
+  channelName: ['柜面渠道', '网上银行', '手机银行', '自助终端', '智慧柜员机'][i % 5],
+  customerNo: `CUST2024000000${String((i % 10) + 1).padStart(2, '0')}`,
+  businessType: i % 8 + 1,
+  businessTypeName: ['转账汇款', '活期存款', '定期存款', '理财产品', '贷款业务', '缴费支付', '结售汇', '信用卡还款'][i % 8],
   amount: (i + 1) * 15680.58,
   payerAccount: `6222021000${String(1000000 + i).padStart(7, '0')}`,
   payeeAccount: `6227002000${String(2000000 + i).padStart(7, '0')}`,
@@ -184,6 +204,7 @@ const mockTransactions: Transaction[] = Array.from({ length: 25 }, (_, i) => ({
   statusName: ['待处理', '处理中', '成功', '失败', '已取消'][i % 5],
   auditStatus: i % 4,
   auditStatusName: ['待审核', '审核中', '审核通过', '审核驳回'][i % 4],
+  riskLevel: i % 6,
   auditorId: i % 4 === 2 ? 1 : undefined,
   auditorName: i % 4 === 2 ? '系统管理员' : undefined,
   auditTime: i % 4 === 2 ? '2024-06-16 10:00:00' : undefined,
@@ -232,6 +253,110 @@ const getAuditStatusLabel = (status: number): string => {
     3: '审核驳回'
   }
   return labels[status] || ''
+}
+
+const getChannelLabel = (channelCode: string): string => {
+  const labels: Record<string, string> = {
+    counter: '柜面渠道',
+    ebank: '网上银行',
+    mobile: '手机银行',
+    atm: '自助终端',
+    smart: '智慧柜员机',
+    phone: '电话银行'
+  }
+  return labels[channelCode] || channelCode
+}
+
+const getRiskLevelLabel = (riskLevel: number): string => {
+  const labels: Record<number, string> = {
+    0: '无风险',
+    1: '低风险',
+    2: '中低风险',
+    3: '中风险',
+    4: '中高风险',
+    5: '高风险'
+  }
+  return labels[riskLevel] || ''
+}
+
+const getRiskLevelTagType = (riskLevel: number): string => {
+  const types: Record<number, string> = {
+    0: 'success',
+    1: 'success',
+    2: 'info',
+    3: 'warning',
+    4: 'danger',
+    5: 'danger'
+  }
+  return types[riskLevel] || 'info'
+}
+
+const handleClearSelection = (): void => {
+  selectedRows.value = []
+}
+
+const handleBatchCancel = async (): Promise<void> => {
+  if (selectedRows.value.length === 0) return
+  try {
+    await ElMessageBox.confirm(
+      `确定要撤销选中的 ${selectedRows.value.length} 笔交易吗？`,
+      '批量撤销确认',
+      { type: 'warning' }
+    )
+    const ids = selectedRows.value.map(r => String(r.id))
+    await batchTransactionApi(ids, 'cancel')
+    ElMessage.success('批量撤销成功')
+    handleClearSelection()
+    fetchData()
+  } catch {
+    // 用户取消
+  }
+}
+
+const handleBatchFreeze = async (): Promise<void> => {
+  if (selectedRows.value.length === 0) return
+  try {
+    const { value: remark } = await ElMessageBox.prompt(
+      `确定要冻结选中的 ${selectedRows.value.length} 笔交易吗？请输入冻结原因（可选）：`,
+      '批量冻结确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputPlaceholder: '请输入冻结原因',
+        type: 'warning'
+      }
+    )
+    const ids = selectedRows.value.map(r => String(r.id))
+    await batchTransactionApi(ids, 'freeze', remark)
+    ElMessage.success('批量冻结成功')
+    handleClearSelection()
+    fetchData()
+  } catch {
+    // 用户取消
+  }
+}
+
+const handleBatchReverse = async (): Promise<void> => {
+  if (selectedRows.value.length === 0) return
+  try {
+    const { value: remark } = await ElMessageBox.prompt(
+      `确定要冲正选中的 ${selectedRows.value.length} 笔交易吗？请输入冲正原因（可选）：`,
+      '批量冲正确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputPlaceholder: '请输入冲正原因',
+        type: 'danger'
+      }
+    )
+    const ids = selectedRows.value.map(r => String(r.id))
+    await batchTransactionApi(ids, 'reverse', remark)
+    ElMessage.success('批量冲正成功')
+    handleClearSelection()
+    fetchData()
+  } catch {
+    // 用户取消
+  }
 }
 
 const fetchData = (): void => {

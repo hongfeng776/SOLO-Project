@@ -5,6 +5,7 @@ import {
   PrimaryKey,
   DataType,
   BeforeCreate,
+  BeforeValidate,
   ForeignKey,
   BelongsTo
 } from 'sequelize-typescript';
@@ -151,6 +152,7 @@ export class AuditRecord extends Model<AuditRecord> {
   @BelongsTo(() => User, 'auditor_id')
   auditor?: User;
 
+  @BeforeValidate
   @BeforeCreate
   static generateId(instance: AuditRecord) {
     if (!instance.id) {

@@ -7,3 +7,6 @@ export { TransactionController } from './TransactionController';
 export { ProductController } from './ProductController';
 export { AuditController } from './AuditController';
 export { LogController } from './LogController';
+export { DashboardController } from './DashboardController';
+export { CustomerController } from './CustomerController';
+export { RiskController } from './RiskController';

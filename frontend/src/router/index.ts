@@ -59,6 +59,8 @@ const asyncRoutes: RouteRecordRaw[] = [
           title: '运营概览',
           icon: 'DataAnalysis',
           affix: true,
+          componentName: 'Dashboard',
+          keepAlive: true,
           roles: ['admin', 'manager', 'operator', 'auditor']
         }
       }
@@ -77,6 +79,8 @@ const asyncRoutes: RouteRecordRaw[] = [
         meta: {
           title: '渠道业务',
           icon: 'Connection',
+          componentName: 'BusinessChannel',
+          keepAlive: true,
           roles: ['admin', 'manager', 'operator']
         }
       },
@@ -87,6 +91,8 @@ const asyncRoutes: RouteRecordRaw[] = [
         meta: {
           title: '交易流水',
           icon: 'List',
+          componentName: 'BusinessTransaction',
+          keepAlive: true,
           roles: ['admin', 'manager', 'operator', 'auditor']
         }
       },
@@ -97,6 +103,20 @@ const asyncRoutes: RouteRecordRaw[] = [
         meta: {
           title: '产品管理',
           icon: 'Goods',
+          componentName: 'BusinessProduct',
+          keepAlive: true,
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'customer',
+        name: 'BusinessCustomer',
+        component: () => import('@views/business/customer/index.vue'),
+        meta: {
+          title: '客户管理',
+          icon: 'User',
+          componentName: 'BusinessCustomer',
+          keepAlive: true,
           roles: ['admin', 'manager']
         }
       }
@@ -115,6 +135,8 @@ const asyncRoutes: RouteRecordRaw[] = [
         meta: {
           title: '待审核',
           icon: 'Clock',
+          componentName: 'AuditPending',
+          keepAlive: false,
           roles: ['admin', 'manager', 'auditor']
         }
       },
@@ -125,6 +147,8 @@ const asyncRoutes: RouteRecordRaw[] = [
         meta: {
           title: '审核历史',
           icon: 'Tickets',
+          componentName: 'AuditHistory',
+          keepAlive: true,
           roles: ['admin', 'manager', 'auditor']
         }
       },
@@ -135,7 +159,41 @@ const asyncRoutes: RouteRecordRaw[] = [
         meta: {
           title: '风控规则',
           icon: 'Setting',
+          componentName: 'AuditRule',
+          keepAlive: true,
           roles: ['admin', 'manager']
+        }
+      }
+    ]
+  },
+  {
+    path: '/risk',
+    component: () => import('@layouts/index.vue'),
+    redirect: '/risk/violation',
+    meta: { title: '风险管理', icon: 'Warning' },
+    children: [
+      {
+        path: 'violation',
+        name: 'RiskViolation',
+        component: () => import('@views/risk/violation/index.vue'),
+        meta: {
+          title: '违规台账',
+          icon: 'Warning',
+          componentName: 'RiskViolation',
+          keepAlive: true,
+          roles: ['admin', 'manager', 'auditor']
+        }
+      },
+      {
+        path: 'anomaly',
+        name: 'RiskAnomaly',
+        component: () => import('@views/risk/anomaly/index.vue'),
+        meta: {
+          title: '可疑交易',
+          icon: 'View',
+          componentName: 'RiskAnomaly',
+          keepAlive: true,
+          roles: ['admin', 'manager', 'auditor']
         }
       }
     ]
@@ -153,6 +211,8 @@ const asyncRoutes: RouteRecordRaw[] = [
         meta: {
           title: '用户管理',
           icon: 'User',
+          componentName: 'SystemUser',
+          keepAlive: true,
           roles: ['admin', 'manager']
         }
       },
@@ -163,6 +223,8 @@ const asyncRoutes: RouteRecordRaw[] = [
         meta: {
           title: '角色管理',
           icon: 'UserFilled',
+          componentName: 'SystemRole',
+          keepAlive: true,
           roles: ['admin']
         }
       },
@@ -173,6 +235,8 @@ const asyncRoutes: RouteRecordRaw[] = [
         meta: {
           title: '权限管理',
           icon: 'Key',
+          componentName: 'SystemPermission',
+          keepAlive: true,
           roles: ['admin']
         }
       },
@@ -183,6 +247,8 @@ const asyncRoutes: RouteRecordRaw[] = [
         meta: {
           title: '机构管理',
           icon: 'OfficeBuilding',
+          componentName: 'SystemOrg',
+          keepAlive: true,
           roles: ['admin', 'manager']
         }
       },
@@ -193,6 +259,8 @@ const asyncRoutes: RouteRecordRaw[] = [
         meta: {
           title: '操作日志',
           icon: 'Document',
+          componentName: 'SystemLog',
+          keepAlive: true,
           roles: ['admin', 'manager']
         }
       }

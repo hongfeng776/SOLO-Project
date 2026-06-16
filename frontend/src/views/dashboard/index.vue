@@ -136,8 +136,21 @@
 import { ref, reactive, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import { Money, List, Clock, User, Goods, Connection } from '@element-plus/icons-vue'
-import { formatMoneyWithComma } from '@utils'
-import type { DashboardStatistics, ChannelStatItem, BusinessTrendItem, AuditStatItem } from '@api/dashboard'
+import { formatMoneyWithComma, formatDateTime } from '@utils'
+import {
+  getOverviewApi,
+  getChannelApi,
+  getTrendApi,
+  getAuditApi,
+  getRiskApi
+} from '@api/dashboard'
+import type {
+  OverviewData,
+  ChannelItem,
+  TrendItem,
+  AuditItem,
+  RiskItem
+} from '@api/dashboard'
 
 const trendChartRef = ref<HTMLElement | null>(null)
 const channelChartRef = ref<HTMLElement | null>(null)
@@ -149,16 +162,26 @@ let auditChart: echarts.ECharts | null = null
 
 const trendDays = ref<number>(7)
 
-const statistics = reactive<DashboardStatistics>({
+const statistics = reactive<OverviewData>({
+  todayTransactionAmount: 0,
+  todayTransactionCount: 0,
+  pendingAuditCount: 0,
+  activeUserCount: 0,
+  totalProductCount: 0,
+  totalChannelCount: 0
+})
+
+const mockStatistics: OverviewData = {
   todayTransactionAmount: 12580600.00,
   todayTransactionCount: 3256,
   pendingAuditCount: 128,
   activeUserCount: 892,
   totalProductCount: 156,
   totalChannelCount: 5
-})
+}
 
-const mockChannelStats: ChannelStatItem[] = [
+const channelStats = ref<ChannelItem[]>([])
+const mockChannelStats: ChannelItem[] = [
   { channelCode: 'counter', channelName: '柜面渠道', amount: 5860000, count: 1256, percentage: 46.6 },
   { channelCode: 'mobile', channelName: '手机银行', amount: 4230000, count: 986, percentage: 33.6 },
   { channelCode: 'ebank', channelName: '网上银行', amount: 1580000, count: 520, percentage: 12.6 },
@@ -166,14 +189,16 @@ const mockChannelStats: ChannelStatItem[] = [
   { channelCode: 'phone', channelName: '电话银行', amount: 190600, count: 138, percentage: 1.5 }
 ]
 
-const mockAuditStats: AuditStatItem[] = [
+const auditStats = ref<AuditItem[]>([])
+const mockAuditStats: AuditItem[] = [
   { status: '待审核', count: 128, percentage: 35.6 },
   { status: '审核中', count: 64, percentage: 17.8 },
   { status: '审核通过', count: 142, percentage: 39.4 },
   { status: '审核驳回', count: 26, percentage: 7.2 }
 ]
 
-const mockTrendData: Record<number, BusinessTrendItem[]> = {
+const trendData = ref<TrendItem[]>([])
+const mockTrendData: Record<number, TrendItem[]> = {
   7: [
     { date: '06-10', amount: 8560000, count: 2356 },
     { date: '06-11', amount: 9230000, count: 2586 },
@@ -187,18 +212,77 @@ const mockTrendData: Record<number, BusinessTrendItem[]> = {
   90: []
 }
 
-const todoList = ref([
-  { time: '2024-06-16 10:30', type: 'warning', content: '有 28 笔大额转账业务待审核' },
-  { time: '2024-06-16 09:15', type: 'primary', content: '理财产品"稳盈系列A"额度即将售罄' },
-  { time: '2024-06-15 18:45', type: 'danger', content: '手机银行渠道交易异常告警' },
-  { time: '2024-06-15 16:20', type: 'success', content: '日终清算任务已完成' },
-  { time: '2024-06-15 14:00', type: 'info', content: '风控规则配置变更待审批' }
-])
+const riskStats = ref<RiskItem[]>([])
+const mockRiskStats: RiskItem[] = [
+  { riskLevel: '高风险', count: 12, percentage: 15.0 },
+  { riskLevel: '中风险', count: 28, percentage: 35.0 },
+  { riskLevel: '低风险', count: 40, percentage: 50.0 }
+]
+
+const todoList = ref<{ time: string; type: string; content: string }[]>([])
+
+interface TodoItem {
+  time: string
+  type: string
+  content: string
+}
+
+const buildTodoList = (stats: OverviewData, risks: RiskItem[], audits: AuditItem[]): TodoItem[] => {
+  const now = formatDateTime(new Date().toISOString())
+  const todos: TodoItem[] = []
+
+  if (stats.pendingAuditCount > 0) {
+    todos.push({
+      time: now,
+      type: 'warning',
+      content: `有 ${stats.pendingAuditCount} 笔业务待审核`
+    })
+  }
+
+  const highRisk = risks.find(r => r.riskLevel === '高风险')
+  if (highRisk && highRisk.count > 0) {
+    todos.push({
+      time: now,
+      type: 'danger',
+      content: `有 ${highRisk.count} 笔高风险违规待处理`
+    })
+  }
+
+  const pending = audits.find(a => a.status === '待审核')
+  if (pending && pending.count > 0) {
+    todos.push({
+      time: now,
+      type: 'primary',
+      content: `待审核业务 ${pending.count} 笔，请及时处理`
+    })
+  }
+
+  const rejected = audits.find(a => a.status === '审核驳回')
+  if (rejected && rejected.count > 0) {
+    todos.push({
+      time: now,
+      type: 'info',
+      content: `审核驳回 ${rejected.count} 笔，请关注复核`
+    })
+  }
+
+  if (todos.length === 0) {
+    todos.push({
+      time: now,
+      type: 'success',
+      content: '暂无待办事项，运营状态良好'
+    })
+  }
+
+  return todos
+}
 
 const initTrendChart = (): void => {
   if (!trendChartRef.value) return
-  trendChart = echarts.init(trendChartRef.value)
-  const data = mockTrendData[trendDays.value] || mockTrendData[7]
+  if (!trendChart) {
+    trendChart = echarts.init(trendChartRef.value)
+  }
+  const data = trendData.value.length > 0 ? trendData.value : (mockTrendData[trendDays.value] || mockTrendData[7])
 
   const option: echarts.EChartsOption = {
     tooltip: {
@@ -265,7 +349,10 @@ const initTrendChart = (): void => {
 
 const initChannelChart = (): void => {
   if (!channelChartRef.value) return
-  channelChart = echarts.init(channelChartRef.value)
+  if (!channelChart) {
+    channelChart = echarts.init(channelChartRef.value)
+  }
+  const data = channelStats.value.length > 0 ? channelStats.value : mockChannelStats
 
   const option: echarts.EChartsOption = {
     tooltip: {
@@ -299,11 +386,11 @@ const initChannelChart = (): void => {
             fontWeight: 'bold'
           }
         },
-        data: mockChannelStats.map((item, index) => ({
+        data: data.map((item, index) => ({
           value: item.percentage,
           name: item.channelName,
           itemStyle: {
-            color: ['#004098', '#1e63c4', '#c9a961', '#52c41a', '#faad14'][index]
+            color: ['#004098', '#1e63c4', '#c9a961', '#52c41a', '#faad14'][index % 5]
           }
         }))
       }
@@ -314,7 +401,10 @@ const initChannelChart = (): void => {
 
 const initAuditChart = (): void => {
   if (!auditChartRef.value) return
-  auditChart = echarts.init(auditChartRef.value)
+  if (!auditChart) {
+    auditChart = echarts.init(auditChartRef.value)
+  }
+  const data = auditStats.value.length > 0 ? auditStats.value : mockAuditStats
 
   const option: echarts.EChartsOption = {
     tooltip: {
@@ -329,7 +419,7 @@ const initAuditChart = (): void => {
     },
     xAxis: {
       type: 'category',
-      data: mockAuditStats.map((item) => item.status)
+      data: data.map((item) => item.status)
     },
     yAxis: {
       type: 'value'
@@ -339,10 +429,10 @@ const initAuditChart = (): void => {
         name: '数量',
         type: 'bar',
         barWidth: '50%',
-        data: mockAuditStats.map((item, index) => ({
+        data: data.map((item, index) => ({
           value: item.count,
           itemStyle: {
-            color: ['#faad14', '#1890ff', '#52c41a', '#f5222d'][index],
+            color: ['#faad14', '#1890ff', '#52c41a', '#f5222d'][index % 4],
             borderRadius: [4, 4, 0, 0]
           }
         })),
@@ -363,13 +453,91 @@ const handleResize = (): void => {
   auditChart?.resize()
 }
 
-watch(trendDays, () => {
+const fetchStatistics = async (): Promise<void> => {
+  try {
+    const res = await getOverviewApi()
+    if (res) {
+      Object.assign(statistics, res)
+    } else {
+      Object.assign(statistics, mockStatistics)
+    }
+  } catch {
+    Object.assign(statistics, mockStatistics)
+  }
+}
+
+const fetchChannelStats = async (): Promise<void> => {
+  try {
+    const res = await getChannelApi()
+    if (res && res.length > 0) {
+      channelStats.value = res
+    } else {
+      channelStats.value = mockChannelStats
+    }
+  } catch {
+    channelStats.value = mockChannelStats
+  }
+}
+
+const fetchTrendData = async (): Promise<void> => {
+  try {
+    const res = await getTrendApi(trendDays.value)
+    if (res && res.length > 0) {
+      trendData.value = res
+    } else {
+      trendData.value = mockTrendData[trendDays.value] || mockTrendData[7]
+    }
+  } catch {
+    trendData.value = mockTrendData[trendDays.value] || mockTrendData[7]
+  }
+}
+
+const fetchAuditStats = async (): Promise<void> => {
+  try {
+    const res = await getAuditApi()
+    if (res && res.length > 0) {
+      auditStats.value = res
+    } else {
+      auditStats.value = mockAuditStats
+    }
+  } catch {
+    auditStats.value = mockAuditStats
+  }
+}
+
+const fetchRiskStats = async (): Promise<void> => {
+  try {
+    const res = await getRiskApi()
+    if (res && res.length > 0) {
+      riskStats.value = res
+    } else {
+      riskStats.value = mockRiskStats
+    }
+  } catch {
+    riskStats.value = mockRiskStats
+  }
+}
+
+const fetchAllData = async (): Promise<void> => {
+  await Promise.all([
+    fetchStatistics(),
+    fetchChannelStats(),
+    fetchTrendData(),
+    fetchAuditStats(),
+    fetchRiskStats()
+  ])
+  todoList.value = buildTodoList(statistics, riskStats.value, auditStats.value)
+}
+
+watch(trendDays, async () => {
+  await fetchTrendData()
   nextTick(() => {
     initTrendChart()
   })
 })
 
-onMounted(() => {
+onMounted(async () => {
+  await fetchAllData()
   nextTick(() => {
     initTrendChart()
     initChannelChart()

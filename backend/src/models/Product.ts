@@ -5,6 +5,7 @@ import {
   PrimaryKey,
   DataType,
   BeforeCreate,
+  BeforeValidate,
   HasMany
 } from 'sequelize-typescript';
 import { v4 as uuidv4 } from 'uuid';
@@ -117,6 +118,7 @@ export class Product extends Model<Product> {
   @HasMany(() => Transaction, { foreignKey: 'product_id' })
   transactions?: Transaction[];
 
+  @BeforeValidate
   @BeforeCreate
   static generateId(instance: Product) {
     if (!instance.id) {

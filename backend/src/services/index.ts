@@ -7,3 +7,6 @@ export { TransactionService } from './TransactionService';
 export { ProductService } from './ProductService';
 export { AuditService } from './AuditService';
 export { LogService } from './LogService';
+export { DashboardService } from './DashboardService';
+export { RiskControlService } from './RiskControlService';
+export { CustomerService } from './CustomerService';

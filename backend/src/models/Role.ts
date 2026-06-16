@@ -5,6 +5,7 @@ import {
   PrimaryKey,
   DataType,
   BeforeCreate,
+  BeforeValidate,
   BelongsToMany
 } from 'sequelize-typescript';
 import { v4 as uuidv4 } from 'uuid';
@@ -78,6 +79,7 @@ export class Role extends Model<Role> {
   @BelongsToMany(() => Permission, () => RolePermission)
   permissions!: Permission[];
 
+  @BeforeValidate
   @BeforeCreate
   static generateId(instance: Role) {
     if (!instance.id) {

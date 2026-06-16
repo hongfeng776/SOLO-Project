@@ -59,7 +59,7 @@ export class AuditService {
     const result = await this.auditRecordRepository.findPaginated(
       { page, pageSize },
       where,
-      { sortBy: 'createdAt', sortOrder: 'DESC' },
+      { sortBy: 'created_at', sortOrder: 'DESC' },
       { include }
     );
 

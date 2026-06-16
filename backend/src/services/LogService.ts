@@ -25,7 +25,7 @@ export class LogService {
     const result = await this.operationLogRepository.findPaginated(
       { page, pageSize },
       where,
-      { sortBy: 'createdAt', sortOrder: 'DESC' },
+      { sortBy: 'created_at', sortOrder: 'DESC' },
       { include: [this.operationLogRepository.getOrganizationInclude()] }
     );
 

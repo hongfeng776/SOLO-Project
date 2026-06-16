@@ -7,6 +7,7 @@ import orgRoutes from './org';
 import businessRoutes from './business';
 import auditRoutes from './audit';
 import logRoutes from './log';
+import dashboardRoutes from './dashboard';
 import { sendSuccess } from '../utils/response';
 
 const router = Router();
@@ -32,5 +33,6 @@ router.use('/system/org', orgRoutes);
 router.use('/business', businessRoutes);
 router.use('/audit', auditRoutes);
 router.use('/system/log', logRoutes);
+router.use('/dashboard', dashboardRoutes);
 
 export default router;

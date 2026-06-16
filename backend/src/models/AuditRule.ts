@@ -4,7 +4,8 @@ import {
   Model,
   PrimaryKey,
   DataType,
-  BeforeCreate
+  BeforeCreate,
+  BeforeValidate
 } from 'sequelize-typescript';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -112,6 +113,7 @@ export class AuditRule extends Model<AuditRule> {
   })
   status!: number;
 
+  @BeforeValidate
   @BeforeCreate
   static generateId(instance: AuditRule) {
     if (!instance.id) {

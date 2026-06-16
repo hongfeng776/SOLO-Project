@@ -73,21 +73,21 @@ export abstract class BaseRepository<T extends Model> {
   }
 
   async update(id: string, data: any, options?: Omit<UpdateOptions, 'where'>): Promise<[number, T[]]> {
-    return await this.model.update(data, {
+    const result: any = await this.model.update(data, {
       where: { id },
-      returning: true,
       individualHooks: true,
       ...options
     });
+    return result as [number, T[]];
   }
 
   async updateByWhere(where: WhereOptions, data: any, options?: Omit<UpdateOptions, 'where'>): Promise<[number, T[]]> {
-    return await this.model.update(data, {
+    const result: any = await this.model.update(data, {
       where,
-      returning: true,
       individualHooks: true,
       ...options
     });
+    return result as [number, T[]];
   }
 
   async delete(id: string, options?: Omit<DestroyOptions, 'where'>): Promise<number> {

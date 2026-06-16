@@ -5,6 +5,7 @@ import {
   PrimaryKey,
   DataType,
   BeforeCreate,
+  BeforeValidate,
   ForeignKey,
   HasMany,
   BelongsTo
@@ -109,6 +110,7 @@ export class Organization extends Model<Organization> {
   @HasMany(() => User, { foreignKey: 'org_id' })
   users?: User[];
 
+  @BeforeValidate
   @BeforeCreate
   static generateId(instance: Organization) {
     if (!instance.id) {

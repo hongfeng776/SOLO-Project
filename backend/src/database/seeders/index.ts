@@ -1,6 +1,7 @@
-import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule } from '../../models';
+import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction } from '../../models';
 import { hashPasswordSync } from '../../utils/password';
 import { sequelize, syncDatabase } from '../../config/database';
+import { v4 as uuidv4 } from 'uuid';
 
 async function bulkCreateInBatches(model: any, records: any[], batchSize: number = 10): Promise<void> {
   for (let i = 0; i < records.length; i += batchSize) {
@@ -440,13 +441,790 @@ export async function seedAuditRules(): Promise<void> {
   console.log('[Seeder] Audit rules seeded successfully.');
 }
 
-export async function runAllSeeders(): Promise<void> {
+export async function seedProducts(): Promise<void> {
+  console.log('[Seeder] Seeding products...');
+
+  const existing = await Product.count();
+  if (existing > 0) {
+    console.log('[Seeder] Products already exist, skipping...');
+    return;
+  }
+
+  await bulkCreateInBatches(Product, [
+    {
+      id: 'prod000000000000000000000000000001',
+      name: '活期存款账户',
+      code: 'DEMAND_DEPOSIT',
+      category: '存款',
+      type: 'retail',
+      description: '个人活期存款产品',
+      risk_level: 1,
+      min_amount: 0,
+      max_amount: 0,
+      interest_rate: 0.3,
+      term_days: 0,
+      sort: 1,
+      status: 1
+    },
+    {
+      id: 'prod000000000000000000000000000002',
+      name: '一年定期存款',
+      code: 'TIME_DEPOSIT_1Y',
+      category: '存款',
+      type: 'retail',
+      description: '一年期定期存款',
+      risk_level: 1,
+      min_amount: 50,
+      max_amount: 0,
+      interest_rate: 1.65,
+      term_days: 365,
+      sort: 2,
+      status: 1
+    },
+    {
+      id: 'prod000000000000000000000000000003',
+      name: '稳健型理财',
+      code: 'FIN_WEALTH_STABLE',
+      category: '理财',
+      type: 'retail',
+      description: '稳健型理财产品，中低风险',
+      risk_level: 2,
+      min_amount: 10000,
+      max_amount: 0,
+      interest_rate: 3.85,
+      term_days: 180,
+      sort: 3,
+      status: 1
+    },
+    {
+      id: 'prod000000000000000000000000000004',
+      name: '个人经营性贷款',
+      code: 'LOAN_PERSONAL_BIZ',
+      category: '贷款',
+      type: 'retail',
+      description: '个人经营性贷款产品',
+      risk_level: 4,
+      min_amount: 100000,
+      max_amount: 5000000,
+      interest_rate: 4.85,
+      term_days: 1095,
+      sort: 4,
+      status: 1
+    },
+    {
+      id: 'prod000000000000000000000000000005',
+      name: '对公活期存款',
+      code: 'CORP_DEMAND_DEPOSIT',
+      category: '存款',
+      type: 'corporate',
+      description: '对公活期存款产品',
+      risk_level: 1,
+      min_amount: 0,
+      max_amount: 0,
+      interest_rate: 0.25,
+      term_days: 0,
+      sort: 5,
+      status: 1
+    }
+  ] as any);
+
+  console.log('[Seeder] Products seeded successfully.');
+}
+
+export async function seedCustomers(): Promise<void> {
+  console.log('[Seeder] Seeding customers...');
+
+  const existing = await Customer.count();
+  if (existing > 0) {
+    console.log('[Seeder] Customers already exist, skipping...');
+    return;
+  }
+
+  const orgIds = [
+    'org0000000000000000000000000000001',
+    'org0000000000000000000000000000002',
+    'org0000000000000000000000000000003',
+    'org0000000000000000000000000000004',
+    'org0000000000000000000000000000005'
+  ];
+
+  const customers = [
+    {
+      customer_no: 'CUST202400000001',
+      customer_name: '张伟',
+      id_card_no: '110101199001011234',
+      id_type: 1,
+      customer_type: 1,
+      customer_level: 1,
+      mobile: '13800000001',
+      address: '北京市西城区金融街1号',
+      risk_level: 0,
+      risk_tags: '',
+      status: 1,
+      org_id: orgIds[2],
+      open_date: new Date('2020-03-15')
+    },
+    {
+      customer_no: 'CUST202400000002',
+      customer_name: '李娜',
+      id_card_no: '310101199205052345',
+      id_type: 1,
+      customer_type: 1,
+      customer_level: 2,
+      mobile: '13800000002',
+      address: '上海市浦东新区陆家嘴88号',
+      risk_level: 1,
+      risk_tags: '',
+      status: 1,
+      org_id: orgIds[3],
+      open_date: new Date('2021-06-20')
+    },
+    {
+      customer_no: 'CUST202400000003',
+      customer_name: '王强',
+      id_card_no: '110108198503033456',
+      id_type: 1,
+      customer_type: 1,
+      customer_level: 3,
+      mobile: '13800000003',
+      address: '北京市朝阳区建国路88号',
+      risk_level: 2,
+      risk_tags: '异常金额',
+      status: 1,
+      org_id: orgIds[4],
+      open_date: new Date('2019-11-10')
+    },
+    {
+      customer_no: 'CUST202400000004',
+      customer_name: '赵敏',
+      id_card_no: '440101198808084567',
+      id_type: 1,
+      customer_type: 1,
+      customer_level: 4,
+      mobile: '13800000004',
+      address: '广东省深圳市南山区科技园1号',
+      risk_level: 3,
+      risk_tags: '频繁交易',
+      status: 1,
+      org_id: orgIds[1],
+      open_date: new Date('2018-05-25')
+    },
+    {
+      customer_no: 'CUST202400000005',
+      customer_name: '陈建国',
+      id_card_no: '110101197007075678',
+      id_type: 1,
+      customer_type: 1,
+      customer_level: 5,
+      mobile: '13800000005',
+      address: '北京市东城区王府井大街1号',
+      risk_level: 4,
+      risk_tags: '跨境交易,异常金额',
+      status: 1,
+      org_id: orgIds[0],
+      open_date: new Date('2015-01-08')
+    },
+    {
+      customer_no: 'CUST202400000006',
+      customer_name: '北京星辰科技有限公司',
+      id_card_no: '91110108MA01ABC123',
+      id_type: 4,
+      customer_type: 2,
+      customer_level: 3,
+      mobile: '010-88888888',
+      address: '北京市海淀区中关村大街1号',
+      risk_level: 1,
+      risk_tags: '',
+      status: 1,
+      org_id: orgIds[2],
+      open_date: new Date('2020-09-01')
+    },
+    {
+      customer_no: 'CUST202400000007',
+      customer_name: '上海瑞通贸易有限公司',
+      id_card_no: '91310115MA1HDEF456',
+      id_type: 4,
+      customer_type: 2,
+      customer_level: 4,
+      mobile: '021-66666666',
+      address: '上海市浦东新区张江高科技园区',
+      risk_level: 2,
+      risk_tags: '跨境交易',
+      status: 1,
+      org_id: orgIds[1],
+      open_date: new Date('2019-04-15')
+    },
+    {
+      customer_no: 'CUST202400000008',
+      customer_name: '北京华信金融投资集团',
+      id_card_no: '91110105MA02GHI789',
+      id_type: 4,
+      customer_type: 2,
+      customer_level: 5,
+      mobile: '010-66669999',
+      address: '北京市朝阳区国贸中心',
+      risk_level: 5,
+      risk_tags: '跨境交易,夜间交易,异常金额',
+      status: 1,
+      org_id: orgIds[0],
+      open_date: new Date('2016-12-20')
+    },
+    {
+      customer_no: 'CUST202400000009',
+      customer_name: '孙丽华',
+      id_card_no: '320102199512126789',
+      id_type: 1,
+      customer_type: 1,
+      customer_level: 2,
+      mobile: '13800000006',
+      address: '江苏省南京市鼓楼区中山路100号',
+      risk_level: 0,
+      risk_tags: '',
+      status: 1,
+      org_id: orgIds[1],
+      open_date: new Date('2022-02-28')
+    },
+    {
+      customer_no: 'CUST202400000010',
+      customer_name: '上海浦东智能制造有限公司',
+      id_card_no: '91310115MA1KJKL012',
+      id_type: 4,
+      customer_type: 2,
+      customer_level: 2,
+      mobile: '021-55556666',
+      address: '上海市浦东新区川沙经济园区',
+      risk_level: 3,
+      risk_tags: '频繁交易',
+      status: 1,
+      org_id: orgIds[3],
+      open_date: new Date('2021-08-11')
+    }
+  ];
+
+  const records = customers.map(c => ({
+    id: uuidv4().replace(/-/g, ''),
+    ...c
+  }));
+
+  await bulkCreateInBatches(Customer, records as any);
+  console.log('[Seeder] Customers seeded successfully.');
+}
+
+export async function seedViolationRecords(): Promise<void> {
+  console.log('[Seeder] Seeding violation records...');
+
+  const existing = await ViolationRecord.count();
+  if (existing > 0) {
+    console.log('[Seeder] Violation records already exist, skipping...');
+    return;
+  }
+
+  const customers = await Customer.findAll();
+  const customerMap = customers.reduce((acc: Record<string, Customer>, c) => {
+    acc[c.customer_no] = c;
+    return acc;
+  }, {});
+
+  const violationRecords = [
+    {
+      violation_no: 'VIO202406160001',
+      customer_no: 'CUST202400000004',
+      customer_id: customerMap['CUST202400000004']?.id,
+      biz_type: 'transaction',
+      violation_type: 1,
+      violation_level: 2,
+      description: '交易金额异常，单笔转账50万元超过客户日常交易水平',
+      rule_ref: 'RULE_AMOUNT_001',
+      status: 0,
+      discoverer_id: 'user000000000000000000000000000004',
+      discoverer_org_id: 'org0000000000000000000000000000001',
+      discover_time: new Date('2024-06-15T09:30:00')
+    },
+    {
+      violation_no: 'VIO202406160002',
+      customer_no: 'CUST202400000008',
+      customer_id: customerMap['CUST202400000008']?.id,
+      biz_type: 'customer',
+      violation_type: 5,
+      violation_level: 4,
+      description: '涉嫌反洗钱可疑交易，短期内多笔跨境大额资金往来',
+      rule_ref: 'RULE_AML_005',
+      status: 2,
+      discoverer_id: 'user000000000000000000000000000004',
+      discoverer_org_id: 'org0000000000000000000000000000001',
+      handler_id: 'user000000000000000000000000000001',
+      discover_time: new Date('2024-06-10T14:20:00'),
+      handle_time: new Date('2024-06-12T10:15:00'),
+      rectification: '已上报人行反洗钱监测中心，已冻结相关可疑账户，加强后续交易监控',
+      remark: '已按反洗钱流程处置完毕'
+    },
+    {
+      violation_no: 'VIO202406160003',
+      customer_no: 'CUST202400000003',
+      customer_id: customerMap['CUST202400000003']?.id,
+      biz_type: 'transaction',
+      violation_type: 3,
+      violation_level: 1,
+      description: '柜员操作违规，未按规定核验客户身份办理大额取款',
+      rule_ref: 'RULE_OPR_003',
+      status: 3,
+      discoverer_id: 'user000000000000000000000000000004',
+      discoverer_org_id: 'org0000000000000000000000000000005',
+      handler_id: 'user000000000000000000000000000002',
+      discover_time: new Date('2024-06-14T16:45:00'),
+      handle_time: new Date('2024-06-15T11:00:00'),
+      rectification: '',
+      remark: '整改措施不符合要求，已驳回重新处理'
+    }
+  ];
+
+  const records = violationRecords.map(v => ({
+    id: uuidv4().replace(/-/g, ''),
+    ...v
+  }));
+
+  await bulkCreateInBatches(ViolationRecord, records as any);
+  console.log('[Seeder] Violation records seeded successfully.');
+}
+
+export async function seedTransactions(): Promise<void> {
+  console.log('[Seeder] Seeding transactions...');
+
+  const existing = await Transaction.count();
+  if (existing > 0) {
+    console.log('[Seeder] Transactions already exist, skipping...');
+    return;
+  }
+
+  const customers = await Customer.findAll();
+  const customerMap = customers.reduce((acc: Record<string, Customer>, c) => {
+    acc[c.customer_no] = c;
+    return acc;
+  }, {});
+
+  const products = await Product.findAll();
+  const productMap = products.reduce((acc: Record<string, Product>, p) => {
+    acc[p.code] = p;
+    return acc;
+  }, {});
+
+  const orgIds = [
+    'org0000000000000000000000000000001',
+    'org0000000000000000000000000000002',
+    'org0000000000000000000000000000003',
+    'org0000000000000000000000000000004',
+    'org0000000000000000000000000000005'
+  ];
+
+  const channelCodes = ['counter', 'mobile', 'ebank', 'atm', 'smart'];
+  const businessLines = ['retail', 'retail', 'retail', 'corporate', 'retail'];
+  const operatorIds = [
+    'user000000000000000000000000000001',
+    'user000000000000000000000000000003',
+    'user000000000000000000000000000002',
+    null,
+    null
+  ];
+
+  const transactions = [
+    {
+      transaction_no: 'TXN2024061600000001',
+      channel_code: 'counter',
+      channel_terminal: 'CTR001',
+      type: 1,
+      business_line: 'retail',
+      amount: 10000,
+      currency: 'CNY',
+      customer_no: 'CUST202400000001',
+      customer_id: customerMap['CUST202400000001']?.id,
+      payer_account: '6222021000000001',
+      payer_name: '张伟',
+      payee_account: '',
+      payee_name: '',
+      product_id: productMap['DEMAND_DEPOSIT']?.id,
+      org_id: orgIds[2],
+      operator_id: 'user000000000000000000000000000003',
+      status: 2,
+      audit_status: 10,
+      risk_level: 0,
+      risk_tags: '',
+      remark: '',
+      transaction_time: new Date('2024-06-16T09:15:00'),
+      fee: 0
+    },
+    {
+      transaction_no: 'TXN2024061600000002',
+      channel_code: 'mobile',
+      channel_terminal: '',
+      type: 3,
+      business_line: 'retail',
+      amount: 50000,
+      currency: 'CNY',
+      customer_no: 'CUST202400000002',
+      customer_id: customerMap['CUST202400000002']?.id,
+      payer_account: '6222021000000002',
+      payer_name: '李娜',
+      payee_account: '6228480000000088',
+      payee_name: '刘洋',
+      product_id: null,
+      org_id: orgIds[3],
+      operator_id: null,
+      status: 2,
+      audit_status: 10,
+      risk_level: 1,
+      risk_tags: '',
+      remark: '',
+      transaction_time: new Date('2024-06-16T10:30:00'),
+      fee: 2
+    },
+    {
+      transaction_no: 'TXN2024061600000003',
+      channel_code: 'ebank',
+      channel_terminal: '',
+      type: 4,
+      business_line: 'retail',
+      amount: 200000,
+      currency: 'CNY',
+      customer_no: 'CUST202400000003',
+      customer_id: customerMap['CUST202400000003']?.id,
+      payer_account: '6222021000000003',
+      payer_name: '王强',
+      payee_account: '',
+      payee_name: '',
+      product_id: productMap['FIN_WEALTH_STABLE']?.id,
+      org_id: orgIds[4],
+      operator_id: null,
+      status: 0,
+      audit_status: 0,
+      risk_level: 2,
+      risk_tags: '异常金额',
+      remark: '购买稳健型理财',
+      transaction_time: new Date('2024-06-16T11:45:00'),
+      fee: 0
+    },
+    {
+      transaction_no: 'TXN2024061600000004',
+      channel_code: 'atm',
+      channel_terminal: 'ATM005',
+      type: 2,
+      business_line: 'retail',
+      amount: 3000,
+      currency: 'CNY',
+      customer_no: 'CUST202400000001',
+      customer_id: customerMap['CUST202400000001']?.id,
+      payer_account: '6222021000000001',
+      payer_name: '张伟',
+      payee_account: '',
+      payee_name: '',
+      product_id: productMap['DEMAND_DEPOSIT']?.id,
+      org_id: orgIds[2],
+      operator_id: null,
+      status: 2,
+      audit_status: 10,
+      risk_level: 0,
+      risk_tags: '',
+      remark: '',
+      transaction_time: new Date('2024-06-16T12:00:00'),
+      fee: 0
+    },
+    {
+      transaction_no: 'TXN2024061600000005',
+      channel_code: 'smart',
+      channel_terminal: 'STM002',
+      type: 8,
+      business_line: 'retail',
+      amount: 15000,
+      currency: 'CNY',
+      customer_no: 'CUST202400000004',
+      customer_id: customerMap['CUST202400000004']?.id,
+      payer_account: '6222021000000004',
+      payer_name: '赵敏',
+      payee_account: '4367480000000099',
+      payee_name: '',
+      product_id: null,
+      org_id: orgIds[1],
+      operator_id: null,
+      status: 2,
+      audit_status: 10,
+      risk_level: 1,
+      risk_tags: '',
+      remark: '信用卡还款',
+      transaction_time: new Date('2024-06-16T13:20:00'),
+      fee: 0
+    },
+    {
+      transaction_no: 'TXN2024061600000006',
+      channel_code: 'counter',
+      channel_terminal: 'CTR002',
+      type: 5,
+      business_line: 'retail',
+      amount: 800000,
+      currency: 'CNY',
+      customer_no: 'CUST202400000005',
+      customer_id: customerMap['CUST202400000005']?.id,
+      payer_account: '',
+      payer_name: '',
+      payee_account: '6222021000000005',
+      payee_name: '陈建国',
+      product_id: productMap['LOAN_PERSONAL_BIZ']?.id,
+      org_id: orgIds[0],
+      operator_id: 'user000000000000000000000000000001',
+      status: 1,
+      audit_status: 2,
+      risk_level: 4,
+      risk_tags: '异常金额',
+      remark: '经营性贷款发放',
+      transaction_time: new Date('2024-06-16T14:00:00'),
+      fee: 0
+    },
+    {
+      transaction_no: 'TXN2024061600000007',
+      channel_code: 'ebank',
+      channel_terminal: '',
+      type: 3,
+      business_line: 'corporate',
+      amount: 1500000,
+      currency: 'CNY',
+      customer_no: 'CUST202400000006',
+      customer_id: customerMap['CUST202400000006']?.id,
+      payer_account: '11001010500052500001',
+      payer_name: '北京星辰科技有限公司',
+      payee_account: '11001010500052500088',
+      payee_name: '上海供应商有限公司',
+      product_id: null,
+      org_id: orgIds[2],
+      operator_id: null,
+      status: 0,
+      audit_status: 1,
+      risk_level: 2,
+      risk_tags: '',
+      remark: '货款支付',
+      transaction_time: new Date('2024-06-16T14:30:00'),
+      fee: 15
+    },
+    {
+      transaction_no: 'TXN2024061600000008',
+      channel_code: 'counter',
+      channel_terminal: 'CTR003',
+      type: 1,
+      business_line: 'corporate',
+      amount: 5000000,
+      currency: 'CNY',
+      customer_no: 'CUST202400000007',
+      customer_id: customerMap['CUST202400000007']?.id,
+      payer_account: '',
+      payer_name: '',
+      payee_account: '31001510500052500002',
+      payee_name: '上海瑞通贸易有限公司',
+      product_id: productMap['CORP_DEMAND_DEPOSIT']?.id,
+      org_id: orgIds[1],
+      operator_id: 'user000000000000000000000000000002',
+      status: 2,
+      audit_status: 10,
+      risk_level: 3,
+      risk_tags: '异常金额,跨境交易',
+      remark: '大额跨境贸易回款',
+      transaction_time: new Date('2024-06-16T15:10:00'),
+      fee: 100
+    },
+    {
+      transaction_no: 'TXN2024061600000009',
+      channel_code: 'mobile',
+      channel_terminal: '',
+      type: 6,
+      business_line: 'retail',
+      amount: 200,
+      currency: 'CNY',
+      customer_no: 'CUST202400000009',
+      customer_id: customerMap['CUST202400000009']?.id,
+      payer_account: '6222021000000009',
+      payer_name: '孙丽华',
+      payee_account: '',
+      payee_name: '',
+      product_id: null,
+      org_id: orgIds[1],
+      operator_id: null,
+      status: 2,
+      audit_status: 10,
+      risk_level: 0,
+      risk_tags: '',
+      remark: '水费缴纳',
+      transaction_time: new Date('2024-06-16T15:45:00'),
+      fee: 0
+    },
+    {
+      transaction_no: 'TXN2024061600000010',
+      channel_code: 'smart',
+      channel_terminal: 'STM003',
+      type: 3,
+      business_line: 'retail',
+      amount: 8000,
+      currency: 'CNY',
+      customer_no: 'CUST202400000002',
+      customer_id: customerMap['CUST202400000002']?.id,
+      payer_account: '6222021000000002',
+      payer_name: '李娜',
+      payee_account: '6222021000000066',
+      payee_name: '王芳',
+      product_id: null,
+      org_id: orgIds[3],
+      operator_id: null,
+      status: 3,
+      audit_status: 11,
+      risk_level: 0,
+      risk_tags: '',
+      remark: '转账失败：收款账户不存在',
+      transaction_time: new Date('2024-06-16T16:00:00'),
+      fee: 0
+    },
+    {
+      transaction_no: 'TXN2024061600000011',
+      channel_code: 'ebank',
+      channel_terminal: '',
+      type: 7,
+      business_line: 'retail',
+      amount: 100000,
+      currency: 'USD',
+      customer_no: 'CUST202400000008',
+      customer_id: customerMap['CUST202400000008']?.id,
+      payer_account: '11001010500052500008',
+      payer_name: '北京华信金融投资集团',
+      payee_account: '',
+      payee_name: '',
+      product_id: null,
+      org_id: orgIds[0],
+      operator_id: null,
+      status: 0,
+      audit_status: 0,
+      risk_level: 5,
+      risk_tags: '跨境交易,夜间交易,异常金额',
+      remark: '美元结汇交易',
+      transaction_time: new Date('2024-06-16T23:50:00'),
+      fee: 500
+    },
+    {
+      transaction_no: 'TXN2024061600000012',
+      channel_code: 'atm',
+      channel_terminal: 'ATM008',
+      type: 2,
+      business_line: 'retail',
+      amount: 2000,
+      currency: 'CNY',
+      customer_no: 'CUST202400000003',
+      customer_id: customerMap['CUST202400000003']?.id,
+      payer_account: '6222021000000003',
+      payer_name: '王强',
+      payee_account: '',
+      payee_name: '',
+      product_id: productMap['DEMAND_DEPOSIT']?.id,
+      org_id: orgIds[4],
+      operator_id: null,
+      status: 2,
+      audit_status: 10,
+      risk_level: 1,
+      risk_tags: '',
+      remark: '',
+      transaction_time: new Date('2024-06-16T08:20:00'),
+      fee: 0
+    },
+    {
+      transaction_no: 'TXN2024061600000013',
+      channel_code: 'counter',
+      channel_terminal: 'CTR005',
+      type: 3,
+      business_line: 'corporate',
+      amount: 350000,
+      currency: 'CNY',
+      customer_no: 'CUST202400000010',
+      customer_id: customerMap['CUST202400000010']?.id,
+      payer_account: '31001510500052500010',
+      payer_name: '上海浦东智能制造有限公司',
+      payee_account: '31001510500052500099',
+      payee_name: '原材料供应商',
+      product_id: null,
+      org_id: orgIds[3],
+      operator_id: 'user000000000000000000000000000003',
+      status: 2,
+      audit_status: 10,
+      risk_level: 3,
+      risk_tags: '频繁交易',
+      remark: '原材料采购款',
+      transaction_time: new Date('2024-06-16T10:00:00'),
+      fee: 10.5
+    },
+    {
+      transaction_no: 'TXN2024061600000014',
+      channel_code: 'mobile',
+      channel_terminal: '',
+      type: 4,
+      business_line: 'retail',
+      amount: 50000,
+      currency: 'CNY',
+      customer_no: 'CUST202400000009',
+      customer_id: customerMap['CUST202400000009']?.id,
+      payer_account: '6222021000000009',
+      payer_name: '孙丽华',
+      payee_account: '',
+      payee_name: '',
+      product_id: productMap['FIN_WEALTH_STABLE']?.id,
+      org_id: orgIds[1],
+      operator_id: null,
+      status: 2,
+      audit_status: 10,
+      risk_level: 1,
+      risk_tags: '',
+      remark: '理财购买',
+      transaction_time: new Date('2024-06-16T09:00:00'),
+      fee: 0
+    },
+    {
+      transaction_no: 'TXN2024061600000015',
+      channel_code: 'counter',
+      channel_terminal: 'CTR007',
+      type: 1,
+      business_line: 'retail',
+      amount: 100,
+      currency: 'CNY',
+      customer_no: 'CUST202400000001',
+      customer_id: customerMap['CUST202400000001']?.id,
+      payer_account: '',
+      payer_name: '',
+      payee_account: '6222021000000001',
+      payee_name: '张伟',
+      product_id: productMap['DEMAND_DEPOSIT']?.id,
+      org_id: orgIds[2],
+      operator_id: 'user000000000000000000000000000003',
+      status: 2,
+      audit_status: 10,
+      risk_level: 0,
+      risk_tags: '',
+      remark: '小额现金存入',
+      transaction_time: new Date('2024-06-16T16:30:00'),
+      fee: 0
+    }
+  ];
+
+  const records = transactions.map(t => ({
+    id: uuidv4().replace(/-/g, ''),
+    ...t
+  }));
+
+  await bulkCreateInBatches(Transaction, records as any);
+  console.log('[Seeder] Transactions seeded successfully.');
+}
+
+export async function runAllSeeders(options?: { force?: boolean; closeOnFinish?: boolean }): Promise<void> {
+  const force = options?.force ?? false;
+  const closeOnFinish = options?.closeOnFinish ?? false;
+
   console.log('========================================');
   console.log('[Seeder] Starting database seeding...');
   console.log('========================================');
 
   try {
-    await syncDatabase(true);
+    if (force) {
+      await syncDatabase(true);
+    }
 
     await seedOrganizations();
     await seedRoles();
@@ -455,6 +1233,10 @@ export async function runAllSeeders(): Promise<void> {
     await seedUsers();
     await seedUserRoles();
     await seedAuditRules();
+    await seedProducts();
+    await seedCustomers();
+    await seedViolationRecords();
+    await seedTransactions();
 
     console.log('========================================');
     console.log('[Seeder] All seeders completed successfully!');
@@ -465,13 +1247,18 @@ export async function runAllSeeders(): Promise<void> {
     console.log('  - auditor / 123456 (审核员)');
     console.log('========================================');
 
-    await sequelize.close();
+    if (closeOnFinish) {
+      await sequelize.close();
+    }
   } catch (error) {
     console.error('[Seeder] Seeding failed:', error);
-    process.exit(1);
+    if (closeOnFinish) {
+      process.exit(1);
+    }
+    throw error;
   }
 }
 
 if (require.main === module) {
-  runAllSeeders();
+  runAllSeeders({ force: true, closeOnFinish: true });
 }

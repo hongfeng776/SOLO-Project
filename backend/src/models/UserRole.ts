@@ -5,7 +5,8 @@ import {
   PrimaryKey,
   DataType,
   ForeignKey,
-  BeforeCreate
+  BeforeCreate,
+  BeforeValidate
 } from 'sequelize-typescript';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from './User';
@@ -40,6 +41,7 @@ export class UserRole extends Model<UserRole> {
   })
   role_id!: string;
 
+  @BeforeValidate
   @BeforeCreate
   static generateId(instance: UserRole) {
     if (!instance.id) {

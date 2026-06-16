@@ -9,3 +9,5 @@ export { Product } from './Product';
 export { AuditRecord } from './AuditRecord';
 export { AuditRule } from './AuditRule';
 export { OperationLog } from './OperationLog';
+export { Customer } from './Customer';
+export { ViolationRecord } from './ViolationRecord';

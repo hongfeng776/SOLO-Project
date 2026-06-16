@@ -52,8 +52,8 @@ export function validatePartial<T = any>(
 
 export function isValidId(id: string): boolean {
   if (!id) return false;
-  const uuidRegex = /^[a-fA-F0-9]{32}$/;
-  return uuidRegex.test(id);
+  const idRegex = /^[a-zA-Z0-9_-]{1,64}$/;
+  return idRegex.test(id);
 }
 
 export function isValidEmail(email: string): boolean {

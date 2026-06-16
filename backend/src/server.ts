@@ -1,6 +1,7 @@
 import { app, testConnection } from './app';
 import { config } from './config';
 import { syncDatabase } from './config/database';
+import { runAllSeeders } from './database/seeders';
 
 async function startServer(): Promise<void> {
   try {
@@ -12,6 +13,8 @@ async function startServer(): Promise<void> {
     await testConnection();
 
     await syncDatabase(false);
+
+    await runAllSeeders();
 
     app.listen(config.port, () => {
       console.log('========================================');

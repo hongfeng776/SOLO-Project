@@ -5,6 +5,7 @@ import {
   PrimaryKey,
   DataType,
   BeforeCreate,
+  BeforeValidate,
   ForeignKey,
   BelongsTo
 } from 'sequelize-typescript';
@@ -142,6 +143,7 @@ export class OperationLog extends Model<OperationLog> {
   @BelongsTo(() => Organization)
   organization?: Organization;
 
+  @BeforeValidate
   @BeforeCreate
   static generateId(instance: OperationLog) {
     if (!instance.id) {

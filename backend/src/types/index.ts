@@ -8,3 +8,5 @@ export * from './transaction';
 export * from './product';
 export * from './audit';
 export * from './log';
+export * from './customer';
+export * from './violation';

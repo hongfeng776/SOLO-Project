@@ -29,3 +29,9 @@ export interface SortParams {
 }
 
 export type StatusType = 0 | 1;
+
+export interface BatchOperationRequest {
+  ids: string[];
+  operation: string;
+  remark?: string;
+}

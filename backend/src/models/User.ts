@@ -5,6 +5,7 @@ import {
   PrimaryKey,
   DataType,
   BeforeCreate,
+  BeforeValidate,
   BelongsToMany,
   BelongsTo,
   ForeignKey
@@ -115,6 +116,7 @@ export class User extends Model<User> {
   @BelongsTo(() => Organization)
   organization?: Organization;
 
+  @BeforeValidate
   @BeforeCreate
   static generateId(instance: User) {
     if (!instance.id) {

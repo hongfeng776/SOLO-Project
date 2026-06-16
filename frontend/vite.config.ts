@@ -74,9 +74,9 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
           manualChunks: {
             vue: ['vue', 'vue-router', 'pinia'],
-            elementPlus: ['element-plus', '@element-plus/icons-vue'],
             echarts: ['echarts'],
-            utils: ['axios', 'dayjs', 'decimal.js']
+            'element-plus': ['element-plus', '@element-plus/icons-vue'],
+            vendor: ['axios', 'dayjs', 'decimal.js']
           }
         }
       }

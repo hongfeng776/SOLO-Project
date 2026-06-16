@@ -44,7 +44,7 @@ export class UserService {
     const result = await this.userRepository.findPaginated(
       { page, pageSize },
       where,
-      { sortBy: 'createdAt', sortOrder: 'DESC' },
+      { sortBy: 'created_at', sortOrder: 'DESC' },
       { include }
     );
 

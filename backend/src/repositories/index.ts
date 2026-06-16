@@ -7,3 +7,5 @@ export { TransactionRepository } from './TransactionRepository';
 export { ProductRepository } from './ProductRepository';
 export { AuditRecordRepository, AuditRuleRepository } from './AuditRepository';
 export { OperationLogRepository } from './LogRepository';
+export { CustomerRepository } from './CustomerRepository';
+export { ViolationRepository } from './ViolationRepository';
