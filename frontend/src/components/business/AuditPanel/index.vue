@@ -1,12 +1,13 @@
 <template>
-  <div class="audit-panel">
-    <div class="audit-header">
-      <h3 class="title">审核面板</h3>
-      <el-tag :type="levelTagType" size="small">{{ auditLevelLabel }}</el-tag>
-    </div>
-
-    <div class="audit-content">
-      <div class="resource-info" v-if="resource">
+  <el-dialog
+    :model-value="visible"
+    title="智能审核面板"
+    width="640px"
+    :close-on-click-modal="false"
+    @close="handleClose"
+  >
+    <div class="audit-panel-body" v-loading="loading">
+      <div class="resource-preview" v-if="resource">
         <div class="resource-cover">
           <el-image
             :src="resource.coverUrl || resource.fileUrl"
@@ -16,105 +17,142 @@
         </div>
         <div class="resource-detail">
           <h4 class="resource-title text-ellipsis">{{ resource.title }}</h4>
-          <p class="resource-type">
+          <p class="resource-meta">
             <el-tag size="small" type="info">{{ fileTypeLabel }}</el-tag>
           </p>
           <p class="resource-author">提交者：{{ resource.authorName || '-' }}</p>
         </div>
       </div>
 
+      <el-alert
+        v-if="resource?.isBlocked"
+        title="风控拦截"
+        type="error"
+        :closable="false"
+        show-icon
+        class="risk-alert"
+      >
+        <template #default>
+          <span>该资源已被风控系统拦截，{{ resource.blockReason || '请谨慎审核' }}</span>
+        </template>
+      </el-alert>
+
+      <div v-if="(resource?.violationCount ?? 0) > 0" class="violation-history">
+        <el-alert
+          :title="`违规记录：累计 ${resource?.violationCount ?? 0} 次违规`"
+          type="warning"
+          :closable="false"
+          show-icon
+        />
+      </div>
+
       <el-divider />
 
-      <div class="audit-form">
-        <el-form :model="form" label-width="80px">
-          <el-form-item label="审核结果">
-            <el-radio-group v-model="form.result" :disabled="disabled">
-              <el-radio label="approved">通过</el-radio>
-              <el-radio label="rejected">拒绝</el-radio>
+      <el-form :model="form" label-width="80px">
+        <el-form-item label="审核层级">
+          <el-radio-group v-model="form.auditLevel">
+            <el-radio :value="1">一级审核</el-radio>
+            <el-radio :value="2">二级审核</el-radio>
+            <el-radio :value="3">三级审核</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
+        <el-form-item label="审核结果">
+          <el-radio-group v-model="form.result">
+            <el-radio value="approved">通过</el-radio>
+            <el-radio value="rejected">拒绝</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
+        <el-form-item label="审核意见">
+          <el-input
+            v-model="form.opinion"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入审核意见"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+
+        <template v-if="form.result === 'rejected'">
+          <el-form-item label="违规类型">
+            <el-select v-model="form.violationType" placeholder="请选择违规类型" style="width: 100%">
+              <el-option
+                v-for="(label, key) in ViolationTypeLabel"
+                :key="key"
+                :label="label"
+                :value="key"
+              />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="违规等级">
+            <el-radio-group v-model="form.violationLevel">
+              <el-radio
+                v-for="(label, key) in ViolationLevelLabel"
+                :key="key"
+                :value="key"
+              >
+                {{ label }}
+              </el-radio>
             </el-radio-group>
           </el-form-item>
+        </template>
+      </el-form>
+    </div>
 
-          <el-form-item label="审核意见">
-            <el-input
-              v-model="form.opinion"
-              type="textarea"
-              :rows="4"
-              placeholder="请输入审核意见"
-              :disabled="disabled"
-              maxlength="500"
-              show-word-limit
-            />
-          </el-form-item>
-
-          <el-form-item v-if="!disabled && quickOptions.length">
-            <div class="quick-options">
-              <span class="quick-label">快捷选项：</span>
-              <el-tag
-                v-for="(option, index) in quickOptions"
-                :key="index"
-                class="quick-tag"
-                effect="plain"
-                @click="applyQuickOption(option)"
-              >
-                {{ option }}
-              </el-tag>
-            </div>
-          </el-form-item>
-        </el-form>
+    <template #footer>
+      <div class="audit-footer">
+        <el-button @click="handleClose">取消</el-button>
+        <el-button type="success" :loading="loading" @click="handleQuickSubmit('approved')">
+          快捷通过
+        </el-button>
+        <el-button type="danger" :loading="loading" @click="handleQuickSubmit('rejected')">
+          快捷拒绝
+        </el-button>
+        <el-button type="primary" :loading="loading" :disabled="!canSubmit" @click="handleSubmit">
+          确认提交
+        </el-button>
       </div>
-    </div>
-
-    <div class="audit-footer">
-      <el-button @click="handleCancel" :disabled="disabled">取消</el-button>
-      <el-button type="primary" :loading="loading" :disabled="disabled || !canSubmit" @click="handleSubmit">
-        确认审核
-      </el-button>
-    </div>
-  </div>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { AuditLevelLabel, FileTypeLabel } from '@/constants'
+import { ViolationTypeLabel, ViolationLevelLabel, FileTypeLabel } from '@/constants'
 import type { ImageResource } from '@/types'
 
 interface Props {
+  visible: boolean
   resource?: ImageResource | null
-  auditLevel?: number
-  disabled?: boolean
   loading?: boolean
-  quickOptions?: string[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
   resource: null,
-  auditLevel: 1,
-  disabled: false,
-  loading: false,
-  quickOptions: () => ['内容合规', '质量达标', '信息完整', '涉嫌违规', '质量不达标', '信息缺失']
+  loading: false
 })
 
 const emit = defineEmits<{
-  'submit': [data: { result: string; opinion: string; level: number }]
-  'cancel': []
+  'update:visible': [value: boolean]
+  'submit': [data: {
+    result: string
+    opinion: string
+    auditLevel: number
+    violationType?: string
+    violationLevel?: string
+  }]
+  'close': []
 }>()
 
 const form = ref({
   result: 'approved',
-  opinion: ''
-})
-
-const auditLevelLabel = computed(() => {
-  return AuditLevelLabel[props.auditLevel as keyof typeof AuditLevelLabel] || '审核'
-})
-
-const levelTagType = computed(() => {
-  const types: Record<number, string> = {
-    1: 'info',
-    2: 'warning',
-    3: 'danger'
-  }
-  return types[props.auditLevel] || 'info'
+  opinion: '',
+  auditLevel: 1,
+  violationType: '',
+  violationLevel: ''
 })
 
 const fileTypeLabel = computed(() => {
@@ -123,127 +161,116 @@ const fileTypeLabel = computed(() => {
 })
 
 const canSubmit = computed(() => {
-  return form.value.result && (form.value.result === 'approved' || form.value.opinion.trim())
-})
-
-watch(() => props.resource, () => {
-  form.value = {
-    result: 'approved',
-    opinion: ''
+  if (!form.value.result) return false
+  if (form.value.result === 'rejected') {
+    return form.value.violationType && form.value.violationLevel
   }
+  return true
 })
 
-const applyQuickOption = (option: string) => {
-  if (props.disabled) return
-  form.value.opinion = option
-}
+watch(() => props.resource, (val) => {
+  if (val) {
+    form.value = {
+      result: 'approved',
+      opinion: '',
+      auditLevel: 1,
+      violationType: '',
+      violationLevel: ''
+    }
+  }
+}, { immediate: true })
 
 const handleSubmit = () => {
   if (!canSubmit.value) return
   emit('submit', {
     result: form.value.result,
     opinion: form.value.opinion,
-    level: props.auditLevel
+    auditLevel: form.value.auditLevel,
+    violationType: form.value.result === 'rejected' ? form.value.violationType : undefined,
+    violationLevel: form.value.result === 'rejected' ? form.value.violationLevel : undefined
   })
 }
 
-const handleCancel = () => {
-  emit('cancel')
+const handleQuickSubmit = (result: string) => {
+  form.value.result = result
+  if (result === 'approved') {
+    emit('submit', {
+      result: 'approved',
+      opinion: form.value.opinion || '审核通过',
+      auditLevel: form.value.auditLevel
+    })
+  } else {
+    if (form.value.violationType && form.value.violationLevel) {
+      emit('submit', {
+        result: 'rejected',
+        opinion: form.value.opinion || '审核拒绝',
+        auditLevel: form.value.auditLevel,
+        violationType: form.value.violationType,
+        violationLevel: form.value.violationLevel
+      })
+    }
+  }
 }
 
-defineExpose({
-  form
-})
+const handleClose = () => {
+  emit('update:visible', false)
+  emit('close')
+}
 </script>
 
 <style scoped lang="scss">
 @use '@/styles/variables.scss' as *;
 
-.audit-panel {
-  background: $bg-color-ffffff;
-  border-radius: $border-radius-large;
-  border: 1px solid $border-color-lighter;
-
-  .audit-header {
+.audit-panel-body {
+  .resource-preview {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid $border-color-extra-light;
+    gap: 16px;
+    padding: 12px;
+    background: $bg-color;
+    border-radius: $border-radius;
+    margin-bottom: 16px;
 
-    .title {
-      font-size: $font-size-medium;
-      font-weight: 600;
-      color: $text-primary;
+    .resource-cover {
+      width: 160px;
+      flex-shrink: 0;
+      border-radius: $border-radius;
+      overflow: hidden;
     }
-  }
 
-  .audit-content {
-    padding: 20px;
+    .resource-detail {
+      flex: 1;
+      min-width: 0;
 
-    .resource-info {
-      display: flex;
-      gap: 16px;
-
-      .resource-cover {
-        width: 160px;
-        flex-shrink: 0;
-        background: $bg-color;
-        border-radius: $border-radius;
-        overflow: hidden;
+      .resource-title {
+        font-size: $font-size-medium;
+        font-weight: 500;
+        color: $text-primary;
+        margin-bottom: 8px;
       }
 
-      .resource-detail {
-        flex: 1;
-        min-width: 0;
+      .resource-meta {
+        margin-bottom: 8px;
+      }
 
-        .resource-title {
-          font-size: $font-size-medium;
-          font-weight: 500;
-          color: $text-primary;
-          margin-bottom: 8px;
-        }
-
-        .resource-type {
-          margin-bottom: 8px;
-        }
-
-        .resource-author {
-          font-size: $font-size-small;
-          color: $text-secondary;
-        }
+      .resource-author {
+        font-size: $font-size-small;
+        color: $text-secondary;
       }
     }
   }
 
-  .quick-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-
-    .quick-label {
-      font-size: $font-size-small;
-      color: $text-secondary;
-    }
-
-    .quick-tag {
-      cursor: pointer;
-      transition: all 0.2s;
-
-      &:hover {
-        border-color: $primary-color;
-        color: $primary-color;
-      }
-    }
+  .risk-alert {
+    margin-bottom: 12px;
   }
 
-  .audit-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    padding: 16px 20px;
-    border-top: 1px solid $border-color-extra-light;
+  .violation-history {
+    margin-bottom: 12px;
   }
+}
+
+.audit-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 </style>

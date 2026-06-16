@@ -72,6 +72,24 @@ const routes: RouteRecordRaw[] = [
         ]
       },
       {
+        path: 'violation',
+        name: 'Violation',
+        component: () => import('@/views/violation/index.vue'),
+        meta: { title: '违规管理', icon: 'Warning', roles: ['super_admin', 'admin', 'auditor'] }
+      },
+      {
+        path: 'appeal',
+        name: 'Appeal',
+        component: () => import('@/views/appeal/index.vue'),
+        meta: { title: '申诉管理', icon: 'ChatDotRound', roles: ['super_admin', 'admin', 'auditor'] }
+      },
+      {
+        path: 'notification',
+        name: 'Notification',
+        component: () => import('@/views/notification/index.vue'),
+        meta: { title: '消息通知', icon: 'Bell' }
+      },
+      {
         path: 'users',
         name: 'Users',
         component: () => import('@/views/users/index.vue'),
@@ -96,6 +114,12 @@ const routes: RouteRecordRaw[] = [
         name: 'Settings',
         component: () => import('@/views/settings/index.vue'),
         meta: { title: '系统设置', icon: 'Setting', roles: ['super_admin', 'admin'] }
+      },
+      {
+        path: 'log',
+        name: 'OperationLog',
+        component: () => import('@/views/log/index.vue'),
+        meta: { title: '操作日志', icon: 'List', roles: ['super_admin', 'admin'] }
       }
     ]
   },

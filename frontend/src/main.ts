@@ -19,8 +19,11 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component as Component)
 }
 
+import lazyLoad from './utils/lazyLoad'
+
 app.use(pinia)
 app.use(router)
 app.use(ElementPlus, { locale: zhCn })
+app.directive('lazy-load', lazyLoad)
 
 app.mount('#app')

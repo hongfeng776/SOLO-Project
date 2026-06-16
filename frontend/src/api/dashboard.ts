@@ -1,31 +1,18 @@
 import request from '@/utils/request'
-
-export interface StatisticsData {
-  resourceCount: number
-  templateCount: number
-  userCount: number
-  memberCount: number
-  pendingAuditCount: number
-  todayResourceCount: number
-  todayUserCount: number
-}
-
-export interface ResourceStatsItem {
-  date: string
-  count: number
-}
-
-export interface StatusDistribution {
-  draft: number
-  pending: number
-  approved: number
-  rejected: number
-  published: number
-  offline: number
-}
+import type {
+  DashboardStatistics,
+  ResourceStatsItem,
+  HotRankItem,
+  UserActivityStats,
+  MemberStatsData,
+  CategoryStatsItem,
+  ViolationOverviewData,
+  OperationLogStatsData,
+  ConversionStatsData
+} from '@/types'
 
 export const getStatistics = () => {
-  return request.get<StatisticsData>('/dashboard/statistics')
+  return request.get<DashboardStatistics>('/dashboard/statistics')
 }
 
 export const getResourceStats = (days = 7) => {
@@ -33,7 +20,7 @@ export const getResourceStats = (days = 7) => {
 }
 
 export const getStatusDistribution = () => {
-  return request.get<StatusDistribution>('/dashboard/status-distribution')
+  return request.get<Record<string, number>>('/dashboard/status-distribution')
 }
 
 export const getRecentResources = (limit = 10) => {
@@ -42,4 +29,32 @@ export const getRecentResources = (limit = 10) => {
 
 export const getRecentAudits = (limit = 10) => {
   return request.get<any[]>('/dashboard/recent-audits', { limit })
+}
+
+export const getResourceHotRank = (limit = 10) => {
+  return request.get<HotRankItem[]>('/dashboard/hot-rank', { limit })
+}
+
+export const getUserActivityStats = (days = 7) => {
+  return request.get<UserActivityStats[]>('/dashboard/user-activity', { days })
+}
+
+export const getMemberStats = () => {
+  return request.get<MemberStatsData>('/dashboard/member-stats')
+}
+
+export const getCategoryStats = () => {
+  return request.get<CategoryStatsItem[]>('/dashboard/category-stats')
+}
+
+export const getViolationOverview = () => {
+  return request.get<ViolationOverviewData>('/dashboard/violation-overview')
+}
+
+export const getOperationLogStats = (days = 7) => {
+  return request.get<OperationLogStatsData>('/dashboard/log-stats', { days })
+}
+
+export const getConversionStats = (days = 7) => {
+  return request.get<ConversionStatsData>('/dashboard/conversion', { days })
 }

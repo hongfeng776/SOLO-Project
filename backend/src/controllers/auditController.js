@@ -47,6 +47,24 @@ class AuditController {
       next(error)
     }
   }
+
+  async getAuditStats(req, res, next) {
+    try {
+      const result = await auditService.getAuditStats()
+      res.json(ApiResponse.success(result))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async getViolationStats(req, res, next) {
+    try {
+      const result = await auditService.getViolationStats()
+      res.json(ApiResponse.success(result))
+    } catch (error) {
+      next(error)
+    }
+  }
 }
 
 module.exports = new AuditController()

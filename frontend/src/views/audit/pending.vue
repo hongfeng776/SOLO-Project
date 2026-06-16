@@ -10,6 +10,24 @@
             <el-option label="模板" value="template" />
           </el-select>
         </el-form-item>
+        <el-form-item label="风控拦截">
+          <el-select v-model="filterForm.isBlocked" placeholder="全部" clearable style="width: 140px">
+            <el-option label="全部" :value="undefined" />
+            <el-option label="已拦截" :value="true" />
+            <el-option label="未拦截" :value="false" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="审核层级">
+          <el-select v-model="filterForm.auditLevel" placeholder="全部" clearable style="width: 140px">
+            <el-option label="全部" :value="undefined" />
+            <el-option
+              v-for="(label, key) in auditLevelLabel"
+              :key="key"
+              :label="label"
+              :value="Number(key)"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
           <el-button :icon="Refresh" @click="handleReset">重置</el-button>
@@ -77,49 +95,59 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="风控状态" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag v-if="row.isBlocked" type="danger" size="small">风控拦截</el-tag>
+            <el-tag v-else type="success" size="small">正常</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="违规次数" width="90" align="center">
+          <template #default="{ row }">
+            <span :class="{ 'violation-highlight': row.violationCount > 0 }">{{ row.violationCount || 0 }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="createdAt" label="提交时间" width="160" align="center">
           <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="180" align="center" fixed="right">
+        <el-table-column label="操作" width="220" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="handlePreview(row)">预览</el-button>
-            <el-button type="success" link size="small" @click="handleAudit(row, 'approved')">通过</el-button>
-            <el-button type="danger" link size="small" @click="handleAudit(row, 'rejected')">拒绝</el-button>
+            <el-button type="primary" link size="small" @click="handleAudit(row)">审核</el-button>
+            <el-button type="success" link size="small" @click="handleQuickAudit(row, 'approved')">通过</el-button>
+            <el-button type="danger" link size="small" @click="handleQuickAudit(row, 'rejected')">拒绝</el-button>
+            <el-button
+              v-if="row.violationCount > 0"
+              type="warning"
+              link
+              size="small"
+              @click="handleViolationManage(row)"
+            >
+              处置违规
+            </el-button>
           </template>
         </el-table-column>
       </DataTable>
     </div>
 
-    <el-dialog
-      v-model="auditDialogVisible"
-      title="内容审核"
-      width="900px"
-      :close-on-click-modal="false"
-    >
-      <div class="audit-dialog-content">
-        <div class="audit-resource">
-          <ResourcePreview v-if="currentResource" :visible="true" :resource="currentResource" :show-download="false" />
-        </div>
-        <div class="audit-panel-wrapper">
-          <AuditPanel
-            :resource="currentResource"
-            :audit-level="currentAuditLevel"
-            :loading="auditLoading"
-            @submit="handleAuditSubmit"
-            @cancel="auditDialogVisible = false"
-          />
-        </div>
-      </div>
-    </el-dialog>
+    <AuditPanel
+      v-model:visible="auditDialogVisible"
+      :resource="currentResource"
+      :loading="auditLoading"
+      @submit="handleAuditSubmit"
+      @close="auditDialogVisible = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Search, Refresh, Check, Close } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { DataTable, ResourcePreview, AuditPanel } from '@/components/business'
+import { DataTable, AuditPanel } from '@/components/business'
 import { FileTypeLabel, AuditLevelLabel } from '@/constants'
+import { auditResource } from '@/api/audit'
+
+const router = useRouter()
 
 const loading = ref(false)
 const tableData = ref<any[]>([])
@@ -130,10 +158,11 @@ const selectedRows = ref<any[]>([])
 const auditDialogVisible = ref(false)
 const auditLoading = ref(false)
 const currentResource = ref<any>(null)
-const currentAuditLevel = ref(1)
 
 const filterForm = reactive({
-  resourceType: undefined as string | undefined
+  resourceType: undefined as string | undefined,
+  isBlocked: undefined as boolean | undefined,
+  auditLevel: undefined as number | undefined
 })
 
 const fileTypeLabel = FileTypeLabel as Record<string, string>
@@ -158,6 +187,8 @@ const handleSearch = () => {
 
 const handleReset = () => {
   filterForm.resourceType = undefined
+  filterForm.isBlocked = undefined
+  filterForm.auditLevel = undefined
   page.value = 1
   fetchList()
 }
@@ -170,15 +201,20 @@ const handlePreview = (row: any) => {
   currentResource.value = row
 }
 
-const handleAudit = (row: any, _result: string) => {
+const handleAudit = (row: any) => {
   currentResource.value = row
-  currentAuditLevel.value = row.auditLevel || 1
   auditDialogVisible.value = true
 }
 
-const handleAuditSubmit = async (_data: any) => {
+const handleQuickAudit = (row: any, _result: string) => {
+  currentResource.value = row
+  auditDialogVisible.value = true
+}
+
+const handleAuditSubmit = async (data: any) => {
   auditLoading.value = true
   try {
+    await auditResource(currentResource.value.id, data)
     ElMessage.success('审核成功')
     auditDialogVisible.value = false
     fetchList()
@@ -187,6 +223,10 @@ const handleAuditSubmit = async (_data: any) => {
   } finally {
     auditLoading.value = false
   }
+}
+
+const handleViolationManage = (row: any) => {
+  router.push({ name: 'ViolationManage', query: { resourceId: row.id } })
 }
 
 const handleBatchAudit = async (result: string) => {
@@ -251,19 +291,9 @@ onMounted(() => {
     }
   }
 
-  .audit-dialog-content {
-    display: flex;
-    gap: 20px;
-
-    .audit-resource {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .audit-panel-wrapper {
-      width: 360px;
-      flex-shrink: 0;
-    }
+  .violation-highlight {
+    color: $danger-color;
+    font-weight: 600;
   }
 }
 </style>

@@ -23,3 +23,11 @@ export const auditResource = (resourceId: number, data: { result: string; opinio
 export const batchAudit = (ids: number[], data: { result: string; opinion: string; level: number }) => {
   return request.post('/audit/batch', { ids, ...data })
 }
+
+export const getAuditStats = () => {
+  return request.get<{ totalCount: number; approvedCount: number; rejectedCount: number; todayCount: number }>('/audit/stats')
+}
+
+export const getViolationStats = () => {
+  return request.get<{ totalCount: number; minorCount: number; moderateCount: number; severeCount: number }>('/audit/violation-stats')
+}

@@ -122,6 +122,38 @@ const Resource = sequelize.define(
       type: DataTypes.STRING(500),
       allowNull: true,
       comment: '审核意见'
+    },
+    violationCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+      comment: '违规次数'
+    },
+    isBlocked: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
+      comment: '是否被风控拦截'
+    },
+    blockReason: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: '风控拦截原因'
+    },
+    publishedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '发布时间'
+    },
+    offlineAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '下架时间'
+    },
+    offlineReason: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: '下架原因'
     }
   },
   {
@@ -131,7 +163,10 @@ const Resource = sequelize.define(
       { fields: ['status'] },
       { fields: ['categoryId'] },
       { fields: ['fileType'] },
-      { fields: ['authorId'] }
+      { fields: ['authorId'] },
+      { fields: ['status', 'createdAt'] },
+      { fields: ['status', 'fileType'] },
+      { fields: ['authorId', 'status'] }
     ]
   }
 )
