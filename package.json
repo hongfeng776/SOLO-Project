@@ -1,0 +1,27 @@
+{
+  "name": "yingchuang-admin-project",
+  "version": "1.0.0",
+  "description": "影创智修后台管理系统 - 影像内容运营平台",
+  "private": true,
+  "scripts": {
+    "install:all": "cd frontend && npm install && cd ../backend && npm install",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "init:db": "cd backend && npm run init-db",
+    "start": "cd backend && npm run start"
+  },
+  "keywords": [
+    "vue3",
+    "nodejs",
+    "express",
+    "admin",
+    "image-platform"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
