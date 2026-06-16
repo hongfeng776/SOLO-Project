@@ -53,3 +53,37 @@ export const updateTag = (id: number, data: Partial<Tag>): Promise<{ id: number 
 export const deleteTag = (id: number): Promise<null> => {
   return del<null>(`/content/tags/${id}`)
 }
+
+export const batchChangeNoteStatus = (
+  ids: number[],
+  status: number
+): Promise<null> => {
+  return post<null>('/content/notes/batch-status', { ids, status })
+}
+
+export const getHotNoteList = (params: Record<string, unknown>): Promise<PageResult<Note>> => {
+  return get<PageResult<Note>>('/content/notes/hot', params)
+}
+
+export const getNoteStats = (): Promise<Record<string, number>> => {
+  return get<Record<string, number>>('/content/notes/stats')
+}
+
+export const getNoteTrend = (params: {
+  startDate: string
+  endDate: string
+}): Promise<{ date: string; count: number }[]> => {
+  return get<{ date: string; count: number }[]>('/content/notes/trend', params)
+}
+
+export const incrementNoteView = (id: number): Promise<null> => {
+  return post<null>(`/content/notes/${id}/view`)
+}
+
+export const incrementNoteLike = (id: number): Promise<null> => {
+  return post<null>(`/content/notes/${id}/like`)
+}
+
+export const incrementNoteShare = (id: number): Promise<null> => {
+  return post<null>(`/content/notes/${id}/share`)
+}

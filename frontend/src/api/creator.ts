@@ -28,3 +28,22 @@ export const auditQualification = (
 export const deleteCreator = (id: number): Promise<null> => {
   return del<null>(`/creator/${id}`)
 }
+
+export const updateCreatorQualification = (
+  id: number,
+  qualificationStatus: number
+): Promise<{ id: number }> => {
+  return post<{ id: number }>(`/creator/${id}/qualification`, { qualificationStatus })
+}
+
+export const banCreator = (id: number, days?: number): Promise<{ id: number }> => {
+  return post<{ id: number }>(`/creator/${id}/ban`, { days })
+}
+
+export const unbanCreator = (id: number): Promise<{ id: number }> => {
+  return post<{ id: number }>(`/creator/${id}/unban`)
+}
+
+export const getCreatorStats = (): Promise<Record<string, number>> => {
+  return get<Record<string, number>>('/creator/stats')
+}

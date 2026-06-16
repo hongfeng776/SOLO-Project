@@ -72,24 +72,35 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     build: {
       outDir: 'dist',
       sourcemap: !isProd,
-      minify: 'esbuild',
+      minify: isProd ? 'esbuild' : false,
       target: 'es2018',
-      chunkSizeWarningLimit: 1500,
+      cssTarget: 'chrome80',
+      chunkSizeWarningLimit: 2000,
+      reportCompressedSize: false,
       rollupOptions: {
         output: {
-          chunkFileNames: 'assets/js/[name]-[hash].js',
-          entryFileNames: 'assets/js/[name]-[hash].js',
-          assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
+          chunkFileNames: 'js/[name]-[hash].js',
+          entryFileNames: 'js/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash].[ext]',
           manualChunks(id) {
             if (id.includes('node_modules')) {
-              if (id.includes('element-plus')) return 'element-plus'
-              if (id.includes('echarts')) return 'echarts'
-              if (id.includes('vue')) return 'vue-vendor'
+              if (id.includes('element-plus') || id.includes('@element-plus')) return 'element-plus'
+              if (id.includes('echarts') || id.includes('vue-echarts') || id.includes('zrender')) return 'echarts'
+              if (id.includes('vue') && (id.includes('vue-router') || id.includes('pinia'))) return 'vue-vendor'
+              if (id.includes('vue') && id.includes('node_modules/vue/')) return 'vue-vendor'
+              if (id.includes('axios')) return 'utils'
+              if (id.includes('dayjs')) return 'utils'
+              if (id.includes('nprogress')) return 'utils'
+              if (id.includes('pinia-plugin-persistedstate')) return 'utils'
               return 'vendor'
             }
           }
         }
       }
+    },
+    esbuild: {
+      drop: isProd ? ['console', 'debugger'] : [],
+      pure: isProd ? ['console.log', 'console.info', 'console.debug', 'console.warn'] : []
     },
     optimizeDeps: {
       include: [
@@ -97,10 +108,18 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         'vue-router',
         'pinia',
         'element-plus',
+        '@element-plus/icons-vue',
         'axios',
         'dayjs',
-        'echarts'
-      ]
+        'echarts/core',
+        'echarts/renderers',
+        'echarts/charts',
+        'echarts/components',
+        'vue-echarts',
+        'nprogress',
+        'pinia-plugin-persistedstate'
+      ],
+      exclude: []
     }
   }
 })

@@ -97,7 +97,12 @@ Note.init(
   {
     sequelize,
     tableName: 'biz_note',
-    modelName: 'Note'
+    modelName: 'Note',
+    indexes: [
+      { fields: ['status', 'create_time'] },
+      { fields: ['author_id', 'status'] },
+      { fields: ['review_level', 'status'] }
+    ]
   }
 )
 

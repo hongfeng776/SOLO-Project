@@ -5,6 +5,13 @@ import Tag from './tag'
 import Creator from './creator'
 import Activity from './activity'
 import Order from './order'
+import Comment from './comment'
+import ViolationRecord from './violation-record'
+import ResourceSlot from './resource-slot'
+import OperationLog from './operation-log'
+import Notification from './notification'
+import Feedback from './feedback'
+import Settlement from './settlement'
 
 const UserRole = User.sequelize!.define('sys_user_role', {}, { tableName: 'sys_user_role', timestamps: false })
 const NoteTag = Note.sequelize!.define('biz_note_tag', {}, { tableName: 'biz_note_tag', timestamps: false })
@@ -15,4 +22,4 @@ Role.belongsToMany(User, { through: UserRole, as: 'users', foreignKey: 'role_id'
 Note.belongsToMany(Tag, { through: NoteTag, as: 'tags', foreignKey: 'note_id' })
 Tag.belongsToMany(Note, { through: NoteTag, as: 'notes', foreignKey: 'tag_id' })
 
-export { User, Role, Note, Tag, Creator, Activity, Order, UserRole, NoteTag }
+export { User, Role, Note, Tag, Creator, Activity, Order, Comment, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, UserRole, NoteTag }

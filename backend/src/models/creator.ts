@@ -11,6 +11,7 @@ class Creator extends Model<InferAttributes<Creator>, InferCreationAttributes<Cr
   declare category: string
   declare level: CreationOptional<number>
   declare qualificationStatus: CreationOptional<number>
+  declare rejectReason: CreationOptional<string>
   declare contactName: string
   declare contactPhone: string
   declare createTime: CreationOptional<Date>
@@ -65,6 +66,11 @@ Creator.init(
       defaultValue: 0,
       comment: '0未提交 1审核中 2已通过 3已拒绝'
     },
+    rejectReason: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      defaultValue: ''
+    },
     contactName: {
       type: DataTypes.STRING(50),
       allowNull: true,
@@ -82,7 +88,10 @@ Creator.init(
   {
     sequelize,
     tableName: 'biz_creator',
-    modelName: 'Creator'
+    modelName: 'Creator',
+    indexes: [
+      { fields: ['level', 'qualification_status'] }
+    ]
   }
 )
 

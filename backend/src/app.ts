@@ -17,6 +17,14 @@ import creatorRoutes from '@routes/creator'
 import activityRoutes from '@routes/activity'
 import systemRoutes from '@routes/system'
 import uploadRoutes from '@routes/upload'
+import commentRoutes from '@routes/comment'
+import violationRoutes from '@routes/violation'
+import resourceSlotRoutes from '@routes/resource-slot'
+import operationLogRoutes from '@routes/operation-log'
+import notificationRoutes from '@routes/notification'
+import feedbackRoutes from '@routes/feedback'
+import settlementRoutes from '@routes/settlement'
+import statsRoutes from '@routes/stats'
 
 const app = express()
 
@@ -45,6 +53,14 @@ app.use('/api/creator', creatorRoutes)
 app.use('/api/activity', activityRoutes)
 app.use('/api/system', systemRoutes)
 app.use('/api/upload', uploadRoutes)
+app.use('/api/comments', commentRoutes)
+app.use('/api/violations', violationRoutes)
+app.use('/api/resource-slots', resourceSlotRoutes)
+app.use('/api/operation-logs', operationLogRoutes)
+app.use('/api/notifications', notificationRoutes)
+app.use('/api/feedbacks', feedbackRoutes)
+app.use('/api/settlements', settlementRoutes)
+app.use('/api/stats', statsRoutes)
 
 app.use(celebrateErrors())
 app.use(errorHandler)

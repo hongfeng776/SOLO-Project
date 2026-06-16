@@ -37,3 +37,15 @@ export const updateOrderStatus = (
 ): Promise<{ id: number }> => {
   return put<{ id: number }>(`/activity/orders/${id}/status`, { status, remark })
 }
+
+export const getOrderStats = (): Promise<Record<string, number>> => {
+  return get<Record<string, number>>('/activity/orders/stats')
+}
+
+export const settleOrder = (id: number, remark?: string): Promise<{ id: number }> => {
+  return post<{ id: number }>(`/activity/orders/${id}/settle`, { remark })
+}
+
+export const batchSettleOrders = (ids: number[], remark?: string): Promise<null> => {
+  return post<null>('/activity/orders/batch-settle', { ids, remark })
+}

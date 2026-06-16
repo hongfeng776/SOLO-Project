@@ -94,7 +94,11 @@ Order.init(
   {
     sequelize,
     tableName: 'biz_order',
-    modelName: 'Order'
+    modelName: 'Order',
+    indexes: [
+      { fields: ['status', 'create_time'] },
+      { fields: ['creator_id', 'status'] }
+    ]
   }
 )
 

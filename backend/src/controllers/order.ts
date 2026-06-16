@@ -35,3 +35,49 @@ export const updateStatus = async (req: Request, res: Response, next: NextFuncti
     next(error)
   }
 }
+
+export const create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const data = await orderService.create(req.body)
+    success(res, data, '创建成功')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const data = await orderService.update(Number(req.params.id), req.body)
+    success(res, data, '更新成功')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const remove = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    await orderService.remove(Number(req.params.id))
+    success(res, null, '删除成功')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const batchUpdateStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { ids, status, remark } = req.body
+    await orderService.batchUpdateStatus(ids, status, remark)
+    success(res, null, '批量状态更新成功')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getStats = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const data = await orderService.getStats()
+    success(res, data)
+  } catch (error) {
+    next(error)
+  }
+}

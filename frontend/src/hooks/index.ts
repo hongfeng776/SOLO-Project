@@ -4,6 +4,7 @@ import { useClipboard } from './useCommon'
 export { useFetchList, useCrud, useSelection } from './useTable'
 export { useDateTime, useNumberFormat, formatDate, formatDateTime, fromNow } from './useFormat'
 export { useEventListener, useDebounce, useThrottle, useClipboard } from './useCommon'
+export { useVirtualList } from './useVirtualList'
 
 export function useCopy() {
   const { copy } = useClipboard()

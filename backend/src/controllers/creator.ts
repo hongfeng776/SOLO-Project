@@ -62,3 +62,32 @@ export const remove = async (req: Request, res: Response, next: NextFunction): P
     next(error)
   }
 }
+
+export const batchChangeStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { ids, status } = req.body
+    await creatorService.batchChangeStatus(ids, status)
+    success(res, null, '批量状态更新成功')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const stats = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const data = await creatorService.getStats()
+    success(res, data)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const trend = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { days = 7 } = req.query
+    const data = await creatorService.getTrendData(Number(days))
+    success(res, data)
+  } catch (error) {
+    next(error)
+  }
+}

@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import { noteService } from '@services/note'
 import { success } from '@utils/response'
+import type { AuthenticatedRequest } from '@/types/index'
 
 export const list = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -77,6 +78,75 @@ export const remove = async (req: Request, res: Response, next: NextFunction): P
   try {
     await noteService.remove(Number(req.params.id))
     success(res, null, '删除成功')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const batchChangeStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { ids, status } = req.body
+    await noteService.batchChangeStatus(ids, status)
+    success(res, null, '批量状态更新成功')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const hotList = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { page = 1, pageSize = 10 } = req.query
+    const data = await noteService.getHotList({
+      page: Number(page),
+      pageSize: Number(pageSize)
+    })
+    success(res, data)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const stats = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const data = await noteService.getStats()
+    success(res, data)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const trend = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { days = 7 } = req.query
+    const data = await noteService.getTrendData(Number(days))
+    success(res, data)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const view = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const data = await noteService.incrementView(Number(req.params.id))
+    success(res, data, '浏览量增加成功')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const like = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const data = await noteService.incrementLike(Number(req.params.id))
+    success(res, data, '点赞成功')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const share = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const data = await noteService.incrementShare(Number(req.params.id))
+    success(res, data, '分享量增加成功')
   } catch (error) {
     next(error)
   }

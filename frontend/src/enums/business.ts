@@ -38,3 +38,127 @@ export enum OrderStatus {
   CANCELLED = 3,
   REFUNDED = 4
 }
+
+export enum ViolationTargetType {
+  NOTE = 'note',
+  COMMENT = 'comment',
+  USER = 'user',
+  CREATOR = 'creator',
+  ACTIVITY = 'activity',
+  ORDER = 'order'
+}
+
+export enum ViolationType {
+  SEXUAL = 'sexual',
+  FALSE_ADVERTISING = 'false_advertising',
+  INFRINGEMENT = 'infringement',
+  ILLEGAL = 'illegal',
+  OTHER = 'other'
+}
+
+export enum ViolationLevel {
+  MILD = 1,
+  MODERATE = 2,
+  SEVERE = 3,
+  EXTREME = 4
+}
+
+export enum HandleResult {
+  WARNING = 1,
+  REMOVE = 2,
+  LIMIT_FLOW = 3,
+  BAN_7D = 4,
+  BAN_30D = 5,
+  BAN_PERMANENT = 6
+}
+
+export enum CommentStatus {
+  NORMAL = 1,
+  VIOLATION = 2,
+  DELETED = 3
+}
+
+export enum LogModule {
+  CONTENT = 'content',
+  CREATOR = 'creator',
+  ACTIVITY = 'activity',
+  ORDER = 'order',
+  SYSTEM = 'system',
+  RISK = 'risk'
+}
+
+export enum LogAction {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  AUDIT = 'audit',
+  PUBLISH = 'publish',
+  EXPORT = 'export',
+  IMPORT = 'import'
+}
+
+export enum NotificationType {
+  SYSTEM = 'system',
+  AUDIT = 'audit',
+  ORDER = 'order',
+  ACTIVITY = 'activity',
+  RISK = 'risk'
+}
+
+export enum NotificationStatus {
+  UNREAD = 1,
+  READ = 2,
+  DELETED = 3
+}
+
+export enum FeedbackType {
+  BUG = 'bug',
+  SUGGESTION = 'suggestion',
+  COMPLAINT = 'complaint',
+  OTHER = 'other'
+}
+
+export enum FeedbackStatus {
+  PENDING = 1,
+  PROCESSING = 2,
+  RESOLVED = 3,
+  CLOSED = 4
+}
+
+export enum FeedbackPriority {
+  URGENT = 1,
+  NORMAL = 2,
+  LOW = 3
+}
+
+export enum SettlementType {
+  ORDER = 'order',
+  ACTIVITY = 'activity',
+  BONUS = 'bonus'
+}
+
+export enum SettlementStatus {
+  PENDING = 1,
+  SETTLING = 2,
+  SETTLED = 3,
+  REJECTED = 4
+}
+
+export enum ResourceSlotType {
+  BANNER = 'banner',
+  TOPIC = 'topic',
+  RECOMMEND = 'recommend',
+  FLOAT = 'float'
+}
+
+export enum ResourceSlotPosition {
+  HOME = 'home',
+  DISCOVER = 'discover',
+  SEARCH = 'search',
+  TOPIC = 'topic'
+}
+
+export enum ResourceSlotStatus {
+  ENABLED = 1,
+  DISABLED = 2
+}

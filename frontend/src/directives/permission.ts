@@ -1,6 +1,32 @@
+import type { App, Directive } from 'vue'
 import { useUserStore } from '@stores/modules/user'
 
 export type PermissionMode = 'some' | 'every'
+
+export const vPermission: Directive<HTMLElement, {
+  role?: string
+  roles?: string[]
+  permission?: string
+  permissions?: string[]
+  mode?: PermissionMode
+}> = {
+  mounted(el, binding) {
+    const options = binding.value || {}
+    if (!checkAccess(options)) {
+      el.parentNode?.removeChild(el)
+    }
+  },
+  updated(el, binding) {
+    const options = binding.value || {}
+    if (!checkAccess(options)) {
+      el.parentNode?.removeChild(el)
+    }
+  }
+}
+
+export function setupPermissionDirective(app: App): void {
+  app.directive('permission', vPermission)
+}
 
 export function hasRole(role: string): boolean {
   const userStore = useUserStore()
@@ -56,3 +82,5 @@ export function checkAccess(options: {
 
   return true
 }
+
+export default vPermission

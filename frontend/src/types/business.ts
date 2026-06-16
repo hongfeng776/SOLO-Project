@@ -98,3 +98,152 @@ export interface Role {
   permissions: string[]
   createTime: string
 }
+
+export interface Comment {
+  id: number
+  noteId: number
+  noteTitle: string
+  userId: number
+  userName: string
+  userAvatar: string
+  content: string
+  parentId: number
+  replyTo?: number
+  likeCount: number
+  status: number
+  violationType: string
+  createTime: string
+  updateTime: string
+}
+
+export interface ViolationRecord {
+  id: number
+  targetType: string
+  targetId: number
+  targetTitle: string
+  violationType: string
+  violationLevel: number
+  description: string
+  evidence: string
+  handlerId: number
+  handlerName: string
+  handleResult: number
+  handleNote: string
+  status: number
+  appealContent: string
+  createTime: string
+  updateTime: string
+}
+
+export interface ResourceSlot {
+  id: number
+  name: string
+  code: string
+  position: string
+  type: string
+  width?: number
+  height?: number
+  sortOrder: number
+  status: number
+  description: string
+  createTime: string
+  updateTime: string
+}
+
+export interface OperationLog {
+  id: number
+  userId: number
+  userName: string
+  module: string
+  action: string
+  targetType: string
+  targetId?: number
+  targetName: string
+  ip: string
+  userAgent: string
+  params?: string
+  result?: string
+  status: number
+  errorMsg: string
+  duration: number
+  createTime: string
+}
+
+export interface Notification {
+  id: number
+  type: string
+  title: string
+  content: string
+  targetType: string
+  targetId?: number
+  receiverType: string
+  receiverIds?: string
+  senderId?: number
+  senderName: string
+  status: number
+  readTime?: string
+  createTime: string
+}
+
+export interface Feedback {
+  id: number
+  userId: number
+  userName: string
+  type: string
+  title: string
+  content: string
+  images: string
+  contact: string
+  status: number
+  priority: number
+  handlerId?: number
+  handlerName: string
+  handleResult?: string
+  handleTime?: string
+  createTime: string
+  updateTime: string
+}
+
+export interface Settlement {
+  id: number
+  orderId: number
+  orderNo: string
+  creatorId: number
+  creatorName: string
+  merchantId?: number
+  merchantName: string
+  amount: number
+  platformFee: number
+  creatorIncome: number
+  settlementType: string
+  settlementPeriod: string
+  status: number
+  remark: string
+  settleTime?: string
+  createTime: string
+  updateTime: string
+}
+
+export interface OverviewStats {
+  totalNotes: number
+  totalCreators: number
+  totalOrders: number
+  totalUsers: number
+  totalComments: number
+  totalRevenue: number
+  todayNewNotes: number
+  todayNewCreators: number
+  todayNewOrders: number
+  todayNewUsers: number
+  todayRevenue: number
+  pendingReviews: number
+  pendingSettlements: number
+}
+
+export interface TrendDataItem {
+  date: string
+  noteCount?: number
+  userCount?: number
+  orderCount?: number
+  revenue?: number
+}
