@@ -1,0 +1,21 @@
+{
+  "name": "youcai-recruitment",
+  "version": "1.0.0",
+  "description": "优才企招管理后台 - 企业招聘运维系统",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "init:db": "cd backend && npm run init-db"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
