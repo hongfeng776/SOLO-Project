@@ -1,0 +1,33 @@
+{
+  "name": "utuilianmeng-distribution-system",
+  "version": "1.0.0",
+  "description": "优推联盟分销管理系统 - 全栈企业级分销业务管理平台",
+  "private": true,
+  "scripts": {
+    "install:all": "cd server && npm install && cd ../web && npm install",
+    "install:server": "cd server && npm install",
+    "install:web": "cd web && npm install",
+    "dev": "concurrently -n Server,Web -c bgBlue,bgGreen -k \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:web": "cd web && npm run dev",
+    "build": "cd server && npm run build && cd ../web && npm run build",
+    "build:server": "cd server && npm run build",
+    "build:web": "cd web && npm run build",
+    "typecheck:web": "cd web && npm run typecheck",
+    "start": "cd server && npm start",
+    "start:prod": "cd server && set NODE_ENV=production && node dist/server.js"
+  },
+  "keywords": [
+    "distribution",
+    "分销系统",
+    "优推联盟",
+    "Vue3",
+    "Express",
+    "TypeScript"
+  ],
+  "author": "优推联盟技术团队",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

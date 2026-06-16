@@ -1,0 +1,27 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.permissionService = exports.roleService = exports.withdrawService = exports.marketingService = exports.commissionService = exports.orderService = exports.promoterService = exports.channelService = exports.userService = exports.authService = void 0;
+const Auth_service_1 = __importDefault(require("./Auth.service"));
+exports.authService = Auth_service_1.default;
+const User_service_1 = __importDefault(require("./User.service"));
+exports.userService = User_service_1.default;
+const Channel_service_1 = __importDefault(require("./Channel.service"));
+exports.channelService = Channel_service_1.default;
+const Promoter_service_1 = __importDefault(require("./Promoter.service"));
+exports.promoterService = Promoter_service_1.default;
+const Order_service_1 = __importDefault(require("./Order.service"));
+exports.orderService = Order_service_1.default;
+const Commission_service_1 = __importDefault(require("./Commission.service"));
+exports.commissionService = Commission_service_1.default;
+const Marketing_service_1 = __importDefault(require("./Marketing.service"));
+exports.marketingService = Marketing_service_1.default;
+const Withdraw_service_1 = __importDefault(require("./Withdraw.service"));
+exports.withdrawService = Withdraw_service_1.default;
+const Role_service_1 = __importDefault(require("./Role.service"));
+exports.roleService = Role_service_1.default;
+const Permission_service_1 = __importDefault(require("./Permission.service"));
+exports.permissionService = Permission_service_1.default;
+//# sourceMappingURL=index.js.map
