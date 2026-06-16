@@ -2,10 +2,21 @@ import { BaseDao, PageResult, PageOptions } from './BaseDao';
 import { AdminDao } from './AdminDao';
 import { UserDao } from './UserDao';
 import { GoodsDao } from './GoodsDao';
+import { GoodsAuditDao } from './GoodsAuditDao';
 import { OrderDao } from './OrderDao';
+import { OrderItemDao } from './OrderItemDao';
+import { OrderLogDao } from './OrderLogDao';
 import { MarketingDao } from './MarketingDao';
+import { MarketingUserDao } from './MarketingUserDao';
 import { AfterSaleDao } from './AfterSaleDao';
+import { AfterSaleAuditDao } from './AfterSaleAuditDao';
 import { MerchantDao } from './MerchantDao';
+import { MerchantAuditDao } from './MerchantAuditDao';
+import { RiskControlDao } from './RiskControlDao';
+import { RiskAlertDao } from './RiskAlertDao';
+import { OperateLogDao } from './OperateLogDao';
+import { MessageDao } from './MessageDao';
+import { PenaltyDao } from './PenaltyDao';
 
 export {
   BaseDao,
@@ -14,20 +25,42 @@ export {
   AdminDao,
   UserDao,
   GoodsDao,
+  GoodsAuditDao,
   OrderDao,
+  OrderItemDao,
+  OrderLogDao,
   MarketingDao,
+  MarketingUserDao,
   AfterSaleDao,
+  AfterSaleAuditDao,
   MerchantDao,
+  MerchantAuditDao,
+  RiskControlDao,
+  RiskAlertDao,
+  OperateLogDao,
+  MessageDao,
+  PenaltyDao,
 };
 
 export const daos = {
   adminDao: new AdminDao(),
   userDao: new UserDao(),
   goodsDao: new GoodsDao(),
+  goodsAuditDao: new GoodsAuditDao(),
   orderDao: new OrderDao(),
+  orderItemDao: new OrderItemDao(),
+  orderLogDao: new OrderLogDao(),
   marketingDao: new MarketingDao(),
+  marketingUserDao: new MarketingUserDao(),
   afterSaleDao: new AfterSaleDao(),
+  afterSaleAuditDao: new AfterSaleAuditDao(),
   merchantDao: new MerchantDao(),
+  merchantAuditDao: new MerchantAuditDao(),
+  riskControlDao: new RiskControlDao(),
+  riskAlertDao: new RiskAlertDao(),
+  operateLogDao: new OperateLogDao(),
+  messageDao: new MessageDao(),
+  penaltyDao: new PenaltyDao(),
 };
 
 export default daos;

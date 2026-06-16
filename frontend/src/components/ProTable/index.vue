@@ -187,6 +187,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 import { formatAmount } from '@/utils/amount'
 import { formatDate, formatDateTime } from '@/utils/date'
+import type { TagType } from '@/types/business'
 
 interface ColumnOption {
   label: string
@@ -203,7 +204,7 @@ interface TableColumn {
   showOverflowTooltip?: boolean
   slot?: string
   type?: 'status' | 'amount' | 'datetime' | 'date' | 'image' | 'input' | 'select' | 'daterange'
-  statusMap?: Record<string | number, { label: string; type: string }>
+  statusMap?: Record<string | number, { label: string; type: TagType }>
 }
 
 interface SearchColumn extends TableColumn {
@@ -262,7 +263,7 @@ const searchFormRef = ref<FormInstance>()
 const loading = ref(false)
 const tableData = ref<Record<string, unknown>[]>([])
 const selectedRows = ref<Record<string, unknown>[]>([])
-const searchForm = reactive<Record<string, unknown>>({})
+const searchForm = reactive<Record<string, any>>({})
 
 const pagination = reactive({
   currentPage: 1,

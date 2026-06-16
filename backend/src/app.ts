@@ -3,6 +3,7 @@ import express, { Request, Response, Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { requestLogger, loggerMiddleware } from './middlewares/logger';
+import { operateLogMiddleware } from './middlewares/operateLog';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
 import { appConfig } from './config/index';
 import { ok } from './utils/response';
@@ -27,6 +28,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.use(loggerMiddleware);
 app.use(requestLogger);
+app.use(operateLogMiddleware);
 
 app.get('/health', (_req: Request, res: Response) => {
   ok(res, {

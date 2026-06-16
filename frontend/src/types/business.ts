@@ -1,3 +1,5 @@
+export type TagType = 'primary' | 'success' | 'warning' | 'danger' | 'info'
+
 export enum OrderStatus {
   PENDING_PAYMENT = 1,
   PAID = 2,
@@ -8,7 +10,7 @@ export enum OrderStatus {
   REFUNDED = 7
 }
 
-export const OrderStatusMap: Record<number, { label: string; type: string }> = {
+export const OrderStatusMap: Record<number, { label: string; type: TagType }> = {
   [OrderStatus.PENDING_PAYMENT]: { label: '待付款', type: 'warning' },
   [OrderStatus.PAID]: { label: '已付款', type: 'primary' },
   [OrderStatus.SHIPPED]: { label: '已发货', type: 'info' },
@@ -26,7 +28,7 @@ export enum LogisticsStatus {
   SIGNED = 4
 }
 
-export const LogisticsStatusMap: Record<number, { label: string; type: string }> = {
+export const LogisticsStatusMap: Record<number, { label: string; type: TagType }> = {
   [LogisticsStatus.NOT_SHIPPED]: { label: '未发货', type: 'info' },
   [LogisticsStatus.SHIPPED]: { label: '已发货', type: 'primary' },
   [LogisticsStatus.IN_TRANSIT]: { label: '运输中', type: 'warning' },
@@ -40,7 +42,7 @@ export enum GoodsStatus {
   DELETED = 2
 }
 
-export const GoodsStatusMap: Record<number, { label: string; type: string }> = {
+export const GoodsStatusMap: Record<number, { label: string; type: TagType }> = {
   [GoodsStatus.OFF_SHELF]: { label: '下架', type: 'info' },
   [GoodsStatus.ON_SHELF]: { label: '上架', type: 'success' },
   [GoodsStatus.DELETED]: { label: '已删除', type: 'danger' }
@@ -51,7 +53,7 @@ export enum UserStatus {
   ENABLED = 1
 }
 
-export const UserStatusMap: Record<number, { label: string; type: string }> = {
+export const UserStatusMap: Record<number, { label: string; type: TagType }> = {
   [UserStatus.DISABLED]: { label: '禁用', type: 'danger' },
   [UserStatus.ENABLED]: { label: '启用', type: 'success' }
 }
@@ -64,7 +66,7 @@ export enum AfterSaleStatus {
   CANCELLED = 5
 }
 
-export const AfterSaleStatusMap: Record<number, { label: string; type: string }> = {
+export const AfterSaleStatusMap: Record<number, { label: string; type: TagType }> = {
   [AfterSaleStatus.PENDING]: { label: '待处理', type: 'warning' },
   [AfterSaleStatus.PROCESSING]: { label: '处理中', type: 'primary' },
   [AfterSaleStatus.COMPLETED]: { label: '已完成', type: 'success' },
@@ -93,7 +95,7 @@ export enum MerchantStatus {
   DISABLED = 3
 }
 
-export const MerchantStatusMap: Record<number, { label: string; type: string }> = {
+export const MerchantStatusMap: Record<number, { label: string; type: TagType }> = {
   [MerchantStatus.PENDING]: { label: '待审核', type: 'warning' },
   [MerchantStatus.APPROVED]: { label: '已入驻', type: 'success' },
   [MerchantStatus.REJECTED]: { label: '已拒绝', type: 'danger' },

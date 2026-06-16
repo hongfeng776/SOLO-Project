@@ -134,7 +134,7 @@ import { getToken } from '@/utils/auth'
 
 interface FormItemOption {
   label: string
-  value: string | number | boolean
+  value: string | number
 }
 
 interface FormItem {
@@ -160,11 +160,11 @@ interface Props {
   mode?: 'add' | 'edit' | 'view'
   formItems: readonly FormItem[]
   rules?: FormRules
-  initialData?: Record<string, unknown>
+  initialData?: Record<string, any>
   width?: string
   labelWidth?: string
   fullscreen?: boolean
-  onSubmit?: (data: Record<string, unknown>) => Promise<unknown>
+  onSubmit?: (data: Record<string, any>) => Promise<unknown>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -176,12 +176,12 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: boolean): void
-  (e: 'submit', data: Record<string, unknown>): void
+  (e: 'submit', data: Record<string, any>): void
 }>()
 
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
-const formData = reactive<Record<string, unknown>>({})
+const formData = reactive<Record<string, any>>({})
 
 const isView = computed(() => props.mode === 'view')
 

@@ -3,10 +3,12 @@ import vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+import viteCompression from 'vite-plugin-compression'
 import path from 'path'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
+  const isProduction = mode === 'production'
 
   return {
     resolve: {
@@ -25,6 +27,14 @@ export default defineConfig(({ mode }) => {
         resolvers: [ElementPlusResolver()],
         dts: 'src/types/components.d.ts',
         dirs: ['src/components']
+      }),
+      viteCompression({
+        verbose: true,
+        disable: !isProduction,
+        threshold: 10240,
+        algorithm: 'gzip',
+        ext: '.gz',
+        deleteOriginFile: false
       })
     ],
     server: {
@@ -48,14 +58,20 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       outDir: 'dist',
-      sourcemap: mode !== 'production',
+      sourcemap: !isProduction,
+      minify: 'esbuild',
+      cssCodeSplit: true,
       chunkSizeWarningLimit: 1500,
       rollupOptions: {
         output: {
+          chunkFileNames: 'assets/js/[name]-[hash].js',
+          entryFileNames: 'assets/js/[name]-[hash].js',
+          assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
           manualChunks: {
             vue: ['vue', 'vue-router', 'pinia'],
-            'element-plus': ['element-plus', '@element-plus/icons-vue'],
-            echarts: ['echarts', 'vue-echarts']
+            elementPlus: ['element-plus', '@element-plus/icons-vue'],
+            echarts: ['echarts', 'vue-echarts'],
+            vendor: ['axios', 'dayjs', 'nprogress']
           }
         }
       }

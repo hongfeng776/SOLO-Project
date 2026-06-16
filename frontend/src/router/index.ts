@@ -61,8 +61,28 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'system',
         name: 'System',
-        component: () => import('@/views/system/index.vue'),
-        meta: { title: '系统设置', icon: 'Setting', requiresAuth: true }
+        redirect: '/system/profile',
+        meta: { title: '系统管理', icon: 'Setting', requiresAuth: true },
+        children: [
+          {
+            path: 'profile',
+            name: 'SystemProfile',
+            component: () => import('@/views/system/index.vue'),
+            meta: { title: '个人设置', icon: 'User', requiresAuth: true }
+          },
+          {
+            path: 'risk',
+            name: 'SystemRisk',
+            component: () => import('@/views/system/risk.vue'),
+            meta: { title: '风控管理', icon: 'Warning', requiresAuth: true }
+          },
+          {
+            path: 'log',
+            name: 'SystemLog',
+            component: () => import('@/views/system/log.vue'),
+            meta: { title: '操作日志', icon: 'Document', requiresAuth: true }
+          }
+        ]
       }
     ]
   },

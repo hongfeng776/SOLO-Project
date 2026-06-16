@@ -6,6 +6,16 @@ import userRouter from './user';
 import marketingRouter from './marketing';
 import afterSaleRouter from './aftersale';
 import merchantRouter from './merchant';
+import orderFlowRouter from './orderFlow';
+import goodsAuditRouter from './goodsAudit';
+import merchantAuditRouter from './merchantAudit';
+import marketingCalcRouter from './marketingCalc';
+import afterSaleAuditRouter from './afterSaleAudit';
+import penaltyRouter from './penalty';
+import riskRouter from './risk';
+import messageRouter from './message';
+import operateLogRouter from './operateLog';
+import statisticsRouter from './statistics';
 
 const router = Router();
 
@@ -16,5 +26,15 @@ router.use('/user', userRouter);
 router.use('/marketing', marketingRouter);
 router.use('/aftersale', afterSaleRouter);
 router.use('/merchant', merchantRouter);
+router.use('/orderFlow', orderFlowRouter);
+router.use('/goodsAudit', goodsAuditRouter);
+router.use('/merchantAudit', merchantAuditRouter);
+router.use('/marketingCalc', marketingCalcRouter);
+router.use('/afterSaleAudit', afterSaleAuditRouter);
+router.use('/penalty', penaltyRouter);
+router.use('/risk', riskRouter);
+router.use('/message', messageRouter);
+router.use('/operateLog', operateLogRouter);
+router.use('/statistics', statisticsRouter);
 
 export default router;
