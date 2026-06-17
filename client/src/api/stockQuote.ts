@@ -1,5 +1,17 @@
 import { get, post, put, del } from '@utils/request'
-import type { IStockQuote, IApiResponse, IPaginatedData, IPageParams } from '@/types/api'
+import type {
+  IStockQuote,
+  IApiResponse,
+  IPaginatedData,
+  IPageParams,
+  IStockValidation,
+  ITradingSession,
+  IDataSourceStatus,
+  IStockHistory,
+  IQuoteValidationResult,
+  IDataCheckResult,
+  ISyncHistoryItem,
+} from '@/types/api'
 
 export function getStockList(params: IPageParams & Record<string, any>): Promise<IApiResponse<IPaginatedData<IStockQuote>>> {
   return get<IPaginatedData<IStockQuote>>('/api/stocks', params)
@@ -49,4 +61,36 @@ export function batchDelete(ids: number[]): Promise<IApiResponse<null>> {
 
 export function exportStock(params: Record<string, any>): Promise<IApiResponse<Blob>> {
   return get<Blob>('/api/stocks/export', params, { responseType: 'blob' })
+}
+
+export function validateCode(code: string, market: string): Promise<IApiResponse<IStockValidation>> {
+  return get<IStockValidation>('/api/stocks/validate-code', { code, market })
+}
+
+export function getTradingSession(): Promise<IApiResponse<ITradingSession>> {
+  return get<ITradingSession>('/api/stocks/trading-session')
+}
+
+export function getDataSourceStatus(): Promise<IApiResponse<IDataSourceStatus>> {
+  return get<IDataSourceStatus>('/api/stocks/data-source-status')
+}
+
+export function getHistory(id: number, days: number = 30): Promise<IApiResponse<IStockHistory[]>> {
+  return get<IStockHistory[]>(`/api/stocks/${id}/history`, { days })
+}
+
+export function refreshAllPrices(): Promise<IApiResponse<{ count: number }>> {
+  return post<{ count: number }>('/api/stocks/refresh-all')
+}
+
+export function validateQuote(data: Partial<IStockQuote>): Promise<IApiResponse<IQuoteValidationResult>> {
+  return post<IQuoteValidationResult>('/api/stocks/validate-quote', data)
+}
+
+export function getDataCheck(stockId: number): Promise<IApiResponse<IDataCheckResult>> {
+  return get<IDataCheckResult>(`/api/stocks/${stockId}/data-check`)
+}
+
+export function getSyncHistory(stockId: number): Promise<IApiResponse<ISyncHistoryItem[]>> {
+  return get<ISyncHistoryItem[]>(`/api/stocks/${stockId}/sync-history`)
 }

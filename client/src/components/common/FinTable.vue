@@ -6,6 +6,7 @@
       :border="true"
       :stripe="true"
       highlight-current-row
+      :row-class-name="rowClassName"
       @selection-change="handleSelectionChange"
       @sort-change="handleSortChange"
     >
@@ -103,12 +104,14 @@ interface IProps {
   pagination: IPagination
   selection?: boolean
   showIndex?: boolean
+  rowClassName?: (row: any, index: number) => string
 }
 
 const props = withDefaults(defineProps<IProps>(), {
   loading: false,
   selection: false,
-  showIndex: false
+  showIndex: false,
+  rowClassName: undefined
 })
 
 const emit = defineEmits<{

@@ -35,7 +35,8 @@
       "@middlewares/*": ["middlewares/*"],
       "@utils/*": ["utils/*"],
       "@typings/*": ["types/*"],
-      "@dao/*": ["dao/*"]
+      "@dao/*": ["dao/*"],
+      "@enums/*": ["enums/*"]
     }
   },
   "include": ["src/**/*"],

@@ -1,8 +1,9 @@
 import { sequelize } from '@config/database';
 import { db } from '@models/index';
 import bcrypt from 'bcryptjs';
+import { StockStatus } from '@enums/index';
 
-const { User, Role, Permission, UserRole, RolePermission, StockQuote, AssetProduct, CustomerAsset, FundFlow, ComplianceAudit, Trade, CustomerHolding, RiskAlert, OperationLog } = db;
+const { User, Role, Permission, UserRole, RolePermission, StockQuote, StockQuoteHistory, AssetProduct, CustomerAsset, FundFlow, ComplianceAudit, Trade, CustomerHolding, RiskAlert, OperationLog } = db;
 
 async function seedPermissions() {
   const modules = [
@@ -179,55 +180,133 @@ async function seedUsers(roles: { superAdmin: InstanceType<typeof Role>; analyst
 }
 
 async function seedStockQuotes() {
-  const stocks = [
-    {
-      stock_code: '600519', stock_name: '贵州茅台', market: 'SH',
-      current_price: 1689.00, change_amount: 15.50, change_rate: 0.93,
-      open_price: 1675.00, close_price: 1673.50, high_price: 1695.00, low_price: 1670.00,
-      volume: 32567800, turnover: 5498230000, amplitude: 1.49,
-      pe_ratio: 33.56, pb_ratio: 10.28,
-      total_market_cap: 2122500000000, circulate_market_cap: 2122500000000,
-      trade_date: '2026-06-15',
-    },
-    {
-      stock_code: '000858', stock_name: '五粮液', market: 'SZ',
-      current_price: 156.30, change_amount: -2.10, change_rate: -1.32,
-      open_price: 158.50, close_price: 158.40, high_price: 159.80, low_price: 155.60,
-      volume: 45231000, turnover: 7031560000, amplitude: 2.65,
-      pe_ratio: 21.45, pb_ratio: 5.63,
-      total_market_cap: 606300000000, circulate_market_cap: 606300000000,
-      trade_date: '2026-06-15',
-    },
-    {
-      stock_code: '601318', stock_name: '中国平安', market: 'SH',
-      current_price: 48.65, change_amount: 0.35, change_rate: 0.72,
-      open_price: 48.20, close_price: 48.30, high_price: 49.10, low_price: 48.00,
-      volume: 68945000, turnover: 3342000000, amplitude: 2.28,
-      pe_ratio: 9.87, pb_ratio: 1.15,
-      total_market_cap: 886000000000, circulate_market_cap: 886000000000,
-      trade_date: '2026-06-15',
-    },
-    {
-      stock_code: '300750', stock_name: '宁德时代', market: 'SZ',
-      current_price: 218.50, change_amount: 5.80, change_rate: 2.72,
-      open_price: 213.00, close_price: 212.70, high_price: 220.00, low_price: 212.00,
-      volume: 28765000, turnover: 6234500000, amplitude: 3.76,
-      pe_ratio: 25.32, pb_ratio: 6.78,
-      total_market_cap: 958000000000, circulate_market_cap: 845000000000,
-      trade_date: '2026-06-15',
-    },
-    {
-      stock_code: '002594', stock_name: '比亚迪', market: 'SZ',
-      current_price: 286.40, change_amount: -4.60, change_rate: -1.58,
-      open_price: 291.00, close_price: 291.00, high_price: 293.50, low_price: 284.80,
-      volume: 19876000, turnover: 5678900000, amplitude: 2.99,
-      pe_ratio: 28.56, pb_ratio: 5.92,
-      total_market_cap: 832000000000, circulate_market_cap: 756000000000,
-      trade_date: '2026-06-15',
-    },
+  const statusArray: string[] = [];
+  for (let i = 0; i < 25; i++) statusArray.push(StockStatus.TRADING);
+  for (let i = 0; i < 2; i++) statusArray.push(StockStatus.HOLIDAY);
+  for (let i = 0; i < 2; i++) statusArray.push(StockStatus.SUSPENDED);
+  statusArray.push(StockStatus.DELISTED);
+  for (let i = statusArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [statusArray[i], statusArray[j]] = [statusArray[j], statusArray[i]];
+  }
+  const dataSources = ['sina', 'tencent', 'eastmoney'];
+  const baseStocks = [
+    { stock_code: '600519', stock_name: '贵州茅台', market: 'SH', sector: '消费', current_price: 1689.00, pe_ratio: 33.56, pb_ratio: 10.28, total_market_cap: 2122500000000, circulate_market_cap: 2122500000000 },
+    { stock_code: '000858', stock_name: '五粮液', market: 'SZ', sector: '消费', current_price: 156.30, pe_ratio: 21.45, pb_ratio: 5.63, total_market_cap: 606300000000, circulate_market_cap: 606300000000 },
+    { stock_code: '601318', stock_name: '中国平安', market: 'SH', sector: '金融', current_price: 48.65, pe_ratio: 9.87, pb_ratio: 1.15, total_market_cap: 886000000000, circulate_market_cap: 886000000000 },
+    { stock_code: '300750', stock_name: '宁德时代', market: 'SZ', sector: '制造', current_price: 218.50, pe_ratio: 25.32, pb_ratio: 6.78, total_market_cap: 958000000000, circulate_market_cap: 845000000000 },
+    { stock_code: '002594', stock_name: '比亚迪', market: 'SZ', sector: '制造', current_price: 286.40, pe_ratio: 28.56, pb_ratio: 5.92, total_market_cap: 832000000000, circulate_market_cap: 756000000000 },
+    { stock_code: '600036', stock_name: '招商银行', market: 'SH', sector: '金融', current_price: 35.20, pe_ratio: 7.12, pb_ratio: 0.95, total_market_cap: 885000000000, circulate_market_cap: 885000000000 },
+    { stock_code: '601012', stock_name: '隆基绿能', market: 'SH', sector: '能源', current_price: 24.85, pe_ratio: 18.32, pb_ratio: 3.25, total_market_cap: 188000000000, circulate_market_cap: 188000000000 },
+    { stock_code: '600276', stock_name: '恒瑞医药', market: 'SH', sector: '医药', current_price: 45.30, pe_ratio: 52.18, pb_ratio: 8.76, total_market_cap: 288000000000, circulate_market_cap: 288000000000 },
+    { stock_code: '000333', stock_name: '美的集团', market: 'SZ', sector: '制造', current_price: 62.50, pe_ratio: 13.85, pb_ratio: 3.12, total_market_cap: 436000000000, circulate_market_cap: 436000000000 },
+    { stock_code: '601899', stock_name: '紫金矿业', market: 'SH', sector: '材料', current_price: 15.68, pe_ratio: 12.45, pb_ratio: 2.88, total_market_cap: 408000000000, circulate_market_cap: 408000000000 },
+    { stock_code: '000002', stock_name: '万科A', market: 'SZ', sector: '地产', current_price: 8.56, pe_ratio: 6.23, pb_ratio: 0.48, total_market_cap: 99500000000, circulate_market_cap: 99500000000 },
+    { stock_code: '601888', stock_name: '中国中免', market: 'SH', sector: '消费', current_price: 68.90, pe_ratio: 28.65, pb_ratio: 5.32, total_market_cap: 134000000000, circulate_market_cap: 134000000000 },
+    { stock_code: '600030', stock_name: '中信证券', market: 'SH', sector: '金融', current_price: 22.15, pe_ratio: 15.32, pb_ratio: 1.28, total_market_cap: 330000000000, circulate_market_cap: 330000000000 },
+    { stock_code: '002475', stock_name: '立讯精密', market: 'SZ', sector: '科技', current_price: 32.40, pe_ratio: 22.15, pb_ratio: 4.56, total_market_cap: 231000000000, circulate_market_cap: 231000000000 },
+    { stock_code: '300059', stock_name: '东方财富', market: 'SZ', sector: '金融', current_price: 16.85, pe_ratio: 48.23, pb_ratio: 6.12, total_market_cap: 282000000000, circulate_market_cap: 282000000000 },
+    { stock_code: '600887', stock_name: '伊利股份', market: 'SH', sector: '消费', current_price: 27.60, pe_ratio: 18.45, pb_ratio: 3.88, total_market_cap: 175000000000, circulate_market_cap: 175000000000 },
+    { stock_code: '000568', stock_name: '泸州老窖', market: 'SZ', sector: '消费', current_price: 185.50, pe_ratio: 25.67, pb_ratio: 9.88, total_market_cap: 274000000000, circulate_market_cap: 274000000000 },
+    { stock_code: '600031', stock_name: '三一重工', market: 'SH', sector: '制造', current_price: 18.25, pe_ratio: 15.62, pb_ratio: 2.15, total_market_cap: 156000000000, circulate_market_cap: 156000000000 },
+    { stock_code: '000001', stock_name: '平安银行', market: 'SZ', sector: '金融', current_price: 11.28, pe_ratio: 5.45, pb_ratio: 0.52, total_market_cap: 218000000000, circulate_market_cap: 218000000000 },
+    { stock_code: '601398', stock_name: '工商银行', market: 'SH', sector: '金融', current_price: 5.62, pe_ratio: 4.88, pb_ratio: 0.45, total_market_cap: 2008000000000, circulate_market_cap: 2008000000000 },
+    { stock_code: '600900', stock_name: '长江电力', market: 'SH', sector: '能源', current_price: 27.85, pe_ratio: 20.32, pb_ratio: 3.85, total_market_cap: 624000000000, circulate_market_cap: 624000000000 },
+    { stock_code: '002415', stock_name: '海康威视', market: 'SZ', sector: '科技', current_price: 34.12, pe_ratio: 19.85, pb_ratio: 4.22, total_market_cap: 323000000000, circulate_market_cap: 323000000000 },
+    { stock_code: '300015', stock_name: '爱尔眼科', market: 'SZ', sector: '医药', current_price: 15.36, pe_ratio: 65.23, pb_ratio: 12.56, total_market_cap: 197000000000, circulate_market_cap: 197000000000 },
+    { stock_code: '601668', stock_name: '中国建筑', market: 'SH', sector: '地产', current_price: 5.18, pe_ratio: 4.52, pb_ratio: 0.58, total_market_cap: 219000000000, circulate_market_cap: 219000000000 },
+    { stock_code: '600585', stock_name: '海螺水泥', market: 'SH', sector: '材料', current_price: 26.85, pe_ratio: 8.32, pb_ratio: 1.02, total_market_cap: 144000000000, circulate_market_cap: 144000000000 },
+    { stock_code: '601166', stock_name: '兴业银行', market: 'SH', sector: '金融', current_price: 17.56, pe_ratio: 4.88, pb_ratio: 0.48, total_market_cap: 367000000000, circulate_market_cap: 367000000000 },
+    { stock_code: '002714', stock_name: '牧原股份', market: 'SZ', sector: '消费', current_price: 42.35, pe_ratio: 12.88, pb_ratio: 4.15, total_market_cap: 227000000000, circulate_market_cap: 227000000000 },
+    { stock_code: '601288', stock_name: '农业银行', market: 'SH', sector: '金融', current_price: 3.85, pe_ratio: 4.52, pb_ratio: 0.42, total_market_cap: 1350000000000, circulate_market_cap: 1350000000000 },
+    { stock_code: '002230', stock_name: '科大讯飞', market: 'SZ', sector: '科技', current_price: 52.18, pe_ratio: 168.35, pb_ratio: 8.56, total_market_cap: 121000000000, circulate_market_cap: 121000000000 },
+    { stock_code: '600438', stock_name: '通威股份', market: 'SH', sector: '能源', current_price: 28.65, pe_ratio: 15.23, pb_ratio: 3.56, total_market_cap: 206000000000, circulate_market_cap: 206000000000 },
   ];
+  const stocks = baseStocks.map((s, idx) => {
+    const currentPrice = s.current_price;
+    const changePercent = (Math.random() * 8 - 4) / 100;
+    const changeAmount = Number((currentPrice * changePercent).toFixed(2));
+    const changeRate = Number((changePercent * 100).toFixed(2));
+    const open = Number((currentPrice * (1 + (Math.random() * 2 - 1) / 100)).toFixed(2));
+    const close = Number((currentPrice - changeAmount).toFixed(2));
+    const high = Number((Math.max(open, currentPrice) * (1 + Math.random() / 100)).toFixed(2));
+    const low = Number((Math.min(open, currentPrice) * (1 - Math.random() / 100)).toFixed(2));
+    const volume = Math.floor(Math.random() * 90000000) + 10000000;
+    const turnover = Number((volume * (high + low) / 2).toFixed(2));
+    const amplitude = Number((((high - low) / close) * 100).toFixed(2));
+    return {
+      stock_code: s.stock_code,
+      stock_name: s.stock_name,
+      market: s.market,
+      status: statusArray[idx],
+      sector: s.sector,
+      data_source: dataSources[idx % dataSources.length],
+      current_price: currentPrice,
+      change_amount: changeAmount,
+      change_rate: changeRate,
+      open_price: open,
+      close_price: close,
+      high_price: high,
+      low_price: low,
+      volume,
+      turnover,
+      amplitude,
+      pe_ratio: s.pe_ratio,
+      pb_ratio: s.pb_ratio,
+      total_market_cap: s.total_market_cap,
+      circulate_market_cap: s.circulate_market_cap,
+      trade_date: '2026-06-16',
+      last_sync_at: new Date(),
+    };
+  });
 
   await StockQuote.bulkCreate(stocks as any);
+  console.log(`Seeded ${stocks.length} stock quotes`);
+}
+
+async function seedStockQuoteHistory() {
+  const stocks = await StockQuote.findAll();
+  const historyRecords: any[] = [];
+  for (const stock of stocks) {
+    let basePrice = Number(stock.close_price || stock.current_price || 100);
+    const baseVolume = Number(stock.volume || 10000000);
+    for (let i = 45; i >= 1; i--) {
+      const date = new Date('2026-06-16');
+      date.setDate(date.getDate() - i);
+      const dayOfWeek = date.getDay();
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        continue;
+      }
+      const dateStr = date.toISOString().split('T')[0];
+      const changePercent = (Math.random() * 6 - 3) / 100;
+      const open = Number((basePrice * (1 + (Math.random() * 1 - 0.5) / 100)).toFixed(2));
+      const close = Number((basePrice * (1 + changePercent)).toFixed(2));
+      const high = Number((Math.max(open, close) * (1 + Math.random() * 1.5 / 100)).toFixed(2));
+      const low = Number((Math.min(open, close) * (1 - Math.random() * 1.5 / 100)).toFixed(2));
+      const volume = Math.floor(baseVolume * (0.7 + Math.random() * 0.6));
+      const turnover = Number((volume * ((open + close) / 2)).toFixed(2));
+      historyRecords.push({
+        stock_id: stock.id,
+        stock_code: stock.stock_code,
+        stock_name: stock.stock_name,
+        trade_date: dateStr,
+        open_price: open,
+        close_price: close,
+        high_price: high,
+        low_price: low,
+        current_price: close,
+        change_amount: Number((close - basePrice).toFixed(2)),
+        change_rate: Number((((close - basePrice) / basePrice) * 100).toFixed(4)),
+        volume,
+        turnover,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+      basePrice = close;
+    }
+  }
+  await StockQuoteHistory.bulkCreate(historyRecords as any);
+  console.log(`Seeded ${historyRecords.length} stock quote history records`);
 }
 
 async function seedAssetProducts() {
@@ -631,7 +710,8 @@ async function seed() {
     console.log(`Seeded 3 users`);
 
     await seedStockQuotes();
-    console.log('Seeded 5 stock quotes');
+
+    await seedStockQuoteHistory();
 
     await seedAssetProducts();
     console.log('Seeded 5 asset products');

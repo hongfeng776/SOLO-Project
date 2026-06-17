@@ -1,10 +1,43 @@
-import { MarketType, RiskLevel, ProductType, ProductStatus, CustomerType, CustomerStatus, FlowType, FlowStatus, FlowChannel, AuditType, AuditStatus, TargetType, PermType, UserStatus, RoleStatus, PermissionStatus, TradeType, TradeStatus, AlertType, AlertLevel, AlertStatus, LogStatus, LogModule, LogAction } from '@/enums'
+import { MarketType, RiskLevel, ProductType, ProductStatus, CustomerType, CustomerStatus, FlowType, FlowStatus, FlowChannel, AuditType, AuditStatus, TargetType, PermType, UserStatus, RoleStatus, PermissionStatus, TradeType, TradeStatus, AlertType, AlertLevel, AlertStatus, LogStatus, LogModule, LogAction, StockStatus } from '@/enums'
+import { BoardType, TradeStatus as QuoteTradeStatus } from '@/types/api'
 
 export const MARKET_LABELS: Record<MarketType, string> = {
   [MarketType.SH]: '沪市',
   [MarketType.SZ]: '深市',
   [MarketType.HK]: '港股',
   [MarketType.US]: '美股',
+}
+
+export const BOARD_LABELS: Record<BoardType, string> = {
+  [BoardType.MAIN]: '主板',
+  [BoardType.SME]: '中小板',
+  [BoardType.CHINEXT]: '创业板',
+  [BoardType.STAR]: '科创板',
+  [BoardType.BSE]: '北交所',
+  [BoardType.HK_MAIN]: '港股主板',
+  [BoardType.US_NASDAQ]: '纳斯达克',
+  [BoardType.US_NYSE]: '纽交所',
+}
+
+export const QUOTE_TRADE_STATUS_LABELS: Record<QuoteTradeStatus, string> = {
+  [QuoteTradeStatus.NORMAL]: '正常交易',
+  [QuoteTradeStatus.HOLIDAY]: '休市',
+  [QuoteTradeStatus.SUSPENDED]: '停牌',
+  [QuoteTradeStatus.DELISTED]: '退市',
+}
+
+export const QUOTE_TRADE_STATUS_COLORS: Record<QuoteTradeStatus, string> = {
+  [QuoteTradeStatus.NORMAL]: '#67C23A',
+  [QuoteTradeStatus.HOLIDAY]: '#909399',
+  [QuoteTradeStatus.SUSPENDED]: '#E6A23C',
+  [QuoteTradeStatus.DELISTED]: '#F56C6C',
+}
+
+export const EXCHANGE_LABELS: Record<MarketType, string> = {
+  [MarketType.SH]: '上海证券交易所',
+  [MarketType.SZ]: '深圳证券交易所',
+  [MarketType.HK]: '香港联合交易所',
+  [MarketType.US]: '美国证券交易所',
 }
 
 export const RISK_LEVEL_LABELS: Record<RiskLevel, string> = {
@@ -252,4 +285,31 @@ export const LOG_ACTION_LABELS: Record<LogAction, string> = {
   [LogAction.EXPORT]: '导出',
   [LogAction.IMPORT]: '导入',
   [LogAction.AUDIT]: '审核',
+}
+
+export const MARKET_SECTOR_LIST: string[] = ['金融', '科技', '医药', '能源', '消费', '地产', '制造', '材料']
+
+export const SECTOR_COLORS: Record<string, string> = {
+  '金融': '#409EFF',
+  '科技': '#8E44AD',
+  '医药': '#27AE60',
+  '能源': '#F39C12',
+  '消费': '#E74C3C',
+  '地产': '#34495E',
+  '制造': '#16A085',
+  '材料': '#D35400',
+}
+
+export const STOCK_STATUS_LABELS: Record<StockStatus, string> = {
+  [StockStatus.TRADING]: '正常交易',
+  [StockStatus.HOLIDAY]: '休市',
+  [StockStatus.SUSPENDED]: '停牌',
+  [StockStatus.DELISTED]: '退市',
+}
+
+export const STOCK_STATUS_COLORS: Record<StockStatus, string> = {
+  [StockStatus.TRADING]: '#67C23A',
+  [StockStatus.HOLIDAY]: '#909399',
+  [StockStatus.SUSPENDED]: '#E6A23C',
+  [StockStatus.DELISTED]: '#C0C4CC',
 }

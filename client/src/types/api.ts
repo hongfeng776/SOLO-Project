@@ -62,7 +62,7 @@ export interface IPermission {
   updatedAt: string
 }
 
-export interface IStockQuote {
+export interface IStockQuoteBase {
   id: number
   stockCode: string
   stockName: string
@@ -82,6 +82,49 @@ export interface IStockQuote {
   totalMarketCap: number
   circulateMarketCap: number
   tradeDate: string
+}
+
+export interface IStockQuote extends IStockQuoteBase {
+  status: string
+  sector: string
+  rank?: number
+  isHot?: boolean
+  isRisk?: boolean
+  dataSource?: string
+  lastSyncAt?: string
+  _highPrecision?: boolean
+}
+
+export interface IStockValidation {
+  valid: boolean
+  format: string
+  market: string
+}
+
+export interface ITradingSession {
+  inSession: boolean
+  currentPeriod: string
+  nextSessionAt: string
+  isWeekend: boolean
+  isHoliday: boolean
+}
+
+export interface IDataSourceStatus {
+  overallStatus: string
+  healthyCount: number
+  totalCount: number
+  sources: Array<{ name: string; status: string; latencyMs: number }>
+}
+
+export interface IStockHistory {
+  list: IStockQuote[]
+  stats: {
+    peakPrice: number
+    valleyPrice: number
+    avgPrice: number
+    avgVolume: number
+    maxChangeRate: number
+  }
 }
 
 export interface IAssetProduct {
@@ -287,3 +330,99 @@ export interface IHoldingDetail {
   tradeAt: string
   createdAt: string
 }
+
+export enum TradeStatus {
+  NORMAL = 'normal',
+  HOLIDAY = 'holiday',
+  SUSPENDED = 'suspended',
+  DELISTED = 'delisted'
+}
+
+export enum BoardType {
+  MAIN = 'main',
+  SME = 'sme',
+  CHINEXT = 'chinext',
+  STAR = 'star',
+  BSE = 'bse',
+  HK_MAIN = 'hk_main',
+  US_NASDAQ = 'us_nasdaq',
+  US_NYSE = 'us_nyse'
+}
+
+export interface IStockQuoteExtended extends IStockQuote {
+  stockId: number
+  board: BoardType
+  tradeStatus: TradeStatus
+  bookValuePerShare: number
+  lastSyncAt: string
+  dataSource: string
+  checkResult?: IDataCheckResult
+}
+
+export interface IStockHistory {
+  id: number
+  stockId: number
+  stockCode: string
+  tradeDate: string
+  openPrice: number
+  closePrice: number
+  highPrice: number
+  lowPrice: number
+  volume: number
+  turnover: number
+  changeRate: number
+}
+
+export interface IDataCheckResult {
+  duplicateCheck: {
+    passed: boolean
+    duplicateCount: number
+    details: string[]
+  }
+  timestampCheck: {
+    passed: boolean
+    isExpired: boolean
+    expiredMinutes: number
+    message: string
+  }
+  rangeCheck: {
+    passed: boolean
+    abnormalFields: string[]
+    details: string[]
+  }
+}
+
+export interface IQuoteValidationResult {
+  valid: boolean
+  errors: string[]
+  warnings: string[]
+}
+
+export interface IPeakValleyInfo {
+  peakPrice: number
+  peakDate: string
+  valleyPrice: number
+  valleyDate: string
+  avgPrice: number
+  maxChangeRate: number
+  fromPeakChangeRate: number
+  fromValleyChangeRate: number
+  fromAvgChangeRate: number
+  isDeepPullback: boolean
+  isBigRebound: boolean
+  historyStats: {
+    avgPrice: number
+    highestPrice: number
+    lowestPrice: number
+    maxChangeRate: number
+  }
+}
+
+export interface ISyncHistoryItem {
+  syncAt: string
+  dataSource: string
+  recordCount: number
+  status: 'success' | 'failed'
+}
+
+export type IStockQuoteFull = IStockQuote & IStockQuoteExtended

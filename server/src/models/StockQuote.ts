@@ -6,6 +6,9 @@ class StockQuote extends Model<InferAttributes<StockQuote>, InferCreationAttribu
   declare stock_code: string;
   declare stock_name: string;
   declare market: CreationOptional<string>;
+  declare status: CreationOptional<string>;
+  declare sector: CreationOptional<string>;
+  declare data_source: CreationOptional<string>;
   declare current_price: CreationOptional<number>;
   declare change_amount: CreationOptional<number>;
   declare change_rate: CreationOptional<number>;
@@ -21,6 +24,7 @@ class StockQuote extends Model<InferAttributes<StockQuote>, InferCreationAttribu
   declare total_market_cap: CreationOptional<number>;
   declare circulate_market_cap: CreationOptional<number>;
   declare trade_date: CreationOptional<string>;
+  declare last_sync_at: CreationOptional<Date>;
   declare readonly created_at: CreationOptional<Date>;
   declare readonly updated_at: CreationOptional<Date>;
   declare deleted_at: CreationOptional<Date>;
@@ -43,6 +47,19 @@ StockQuote.init(
     },
     market: {
       type: DataTypes.STRING(10),
+      allowNull: true,
+    },
+    status: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+      defaultValue: 'trading',
+    },
+    sector: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    data_source: {
+      type: DataTypes.STRING(20),
       allowNull: true,
     },
     current_price: {
@@ -103,6 +120,10 @@ StockQuote.init(
     },
     trade_date: {
       type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    last_sync_at: {
+      type: DataTypes.DATE,
       allowNull: true,
     },
     created_at: {
