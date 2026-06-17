@@ -185,6 +185,125 @@ class JobController {
       next(error);
     }
   }
+
+  async checkEditPermission(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const result = await jobService.checkEditPermission(Number(id), (req as any).currentUser);
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateJob(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const result = await jobService.updateJob(Number(id), req.body, (req as any).currentUser);
+      const message = result.effectiveMode === 'audit_required' 
+        ? '已提交变更审核，审核通过后生效' 
+        : '更新成功';
+      res.json(Result.success(result, message));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async approveChange(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { remark } = req.body;
+      const result = await jobService.approveChange(Number(id), (req as any).currentUser, remark);
+      res.json(Result.success(result, '变更审核通过，已同步更新'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async rejectChange(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { rejectReason } = req.body;
+      const result = await jobService.rejectChange(Number(id), rejectReason, (req as any).currentUser);
+      res.json(Result.success(result, '变更已驳回'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async cancelChange(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const result = await jobService.cancelChange(Number(id), (req as any).currentUser);
+      res.json(Result.success(result, '已取消待审核变更'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getVersionDiff(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { fromVersion, toVersion } = req.query;
+      const result = await jobService.getVersionDiff(
+        Number(id),
+        fromVersion ? Number(fromVersion) : undefined,
+        toVersion ? Number(toVersion) : undefined
+      );
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getEditHistory(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const result = await jobService.getEditHistory(Number(id));
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async batchUpdate(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { ids, data, filter } = req.body;
+      const result = await jobService.batchUpdate(ids, data, filter || {}, (req as any).currentUser);
+      res.json(Result.success(result, '批量更新完成'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async rollbackVersion(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const result = await jobService.rollbackVersion(Number(id), (req as any).currentUser);
+      res.json(Result.success(result, '已回滚到上一版本'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async calculateMatchWeight(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = jobService.calculateMatchWeight(req.body);
+      res.json(Result.success({ matchWeight: result }));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async validateIndustryNorm(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { data, category } = req.body;
+      const result = jobService.validateIndustryNorm(data, category);
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new JobController();

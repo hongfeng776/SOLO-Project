@@ -14,6 +14,15 @@ export enum JobOperationAction {
   BATCH_CREATE = 'batch_create',
   BATCH_SUBMIT = 'batch_submit',
   BATCH_APPROVE = 'batch_approve',
+  SUBMIT_CHANGE_AUDIT = 'submit_change_audit',
+  APPROVE_CHANGE = 'approve_change',
+  REJECT_CHANGE = 'reject_change',
+  BATCH_UPDATE = 'batch_update',
+  CANCEL_CHANGE = 'cancel_change',
+  ROLLBACK_VERSION = 'rollback_version',
+  UPDATE_MATCH_WEIGHT = 'update_match_weight',
+  MARK_ABNORMAL = 'mark_abnormal',
+  CLEAR_ABNORMAL = 'clear_abnormal',
 }
 
 export const JobOperationActionLabel: Record<JobOperationAction, string> = {
@@ -29,6 +38,15 @@ export const JobOperationActionLabel: Record<JobOperationAction, string> = {
   [JobOperationAction.BATCH_CREATE]: '批量创建',
   [JobOperationAction.BATCH_SUBMIT]: '批量提交',
   [JobOperationAction.BATCH_APPROVE]: '批量审核',
+  [JobOperationAction.SUBMIT_CHANGE_AUDIT]: '提交变更审核',
+  [JobOperationAction.APPROVE_CHANGE]: '变更审核通过',
+  [JobOperationAction.REJECT_CHANGE]: '变更审核驳回',
+  [JobOperationAction.BATCH_UPDATE]: '批量更新',
+  [JobOperationAction.CANCEL_CHANGE]: '取消变更',
+  [JobOperationAction.ROLLBACK_VERSION]: '回滚版本',
+  [JobOperationAction.UPDATE_MATCH_WEIGHT]: '更新匹配权重',
+  [JobOperationAction.MARK_ABNORMAL]: '标记异常',
+  [JobOperationAction.CLEAR_ABNORMAL]: '解除异常',
 };
 
 interface JobOperationLogAttributes {

@@ -56,6 +56,73 @@ const JOB_EDITABLE_FIELDS_DRAFT = [
 
 const JOB_EDITABLE_FIELDS_PENDING = ['sort'];
 
+const JOB_EDITABLE_FIELDS_PUBLISHED = [
+  'salaryMin', 'salaryMax', 'salaryUnit',
+  'recruitNum', 'city', 'address',
+  'description', 'requirements', 'benefits',
+  'deadline', 'sort'
+];
+
+const JOB_MAJOR_CHANGE_FIELDS = [
+  'salaryMin', 'salaryMax', 'salaryUnit',
+  'experience', 'education', 'category',
+  'city', 'recruitNum'
+];
+
+const INDUSTRY_SALARY_RANGES: Record<string, { min: number; max: number }> = {
+  tech: { min: 8, max: 80 },
+  product: { min: 6, max: 60 },
+  design: { min: 5, max: 40 },
+  operations: { min: 4, max: 30 },
+  marketing: { min: 4, max: 35 },
+  hr: { min: 3, max: 25 },
+  finance: { min: 4, max: 40 },
+  admin: { min: 3, max: 20 },
+  sales: { min: 3, max: 50 },
+  other: { min: 3, max: 30 },
+};
+
+const EDUCATION_WEIGHTS: Record<string, number> = {
+  '不限': 0,
+  '大专': 1,
+  '本科': 2,
+  '硕士': 3,
+  '博士': 4,
+};
+
+const EXPERIENCE_WEIGHTS: Record<string, number> = {
+  '不限': 0,
+  '应届生': 1,
+  '1年以内': 2,
+  '1-3年': 3,
+  '3-5年': 5,
+  '5-10年': 8,
+  '10年以上': 10,
+};
+
+interface VersionDiff {
+  field: string;
+  label: string;
+  oldValue: any;
+  newValue: any;
+  changed: boolean;
+}
+
+interface EditCheckResult {
+  canEdit: boolean;
+  reason?: string;
+  editableFields: string[];
+  isMajorChange?: boolean;
+}
+
+interface BatchEditFilter {
+  category?: string;
+  publishTimeStart?: string;
+  publishTimeEnd?: string;
+  status?: string;
+  companyId?: number;
+}
+
 class JobService {
   async checkPreConditions(companyId: number, currentUser: CurrentUser): Promise<PreCheckResult> {
     const failedItems: { key: string; label: string; reason?: string }[] = [];
@@ -737,6 +804,732 @@ class JobService {
       operatorId: currentUser?.id,
       operatorName: currentUser?.realName || currentUser?.username,
       remark: '关闭岗位',
+    });
+
+    return result;
+  }
+
+  async checkEditPermission(id: number, currentUser?: CurrentUser): Promise<EditCheckResult> {
+    const job: any = await this.getById(id);
+
+    if (currentUser && currentUser.role !== UserRole.ADMIN) {
+      if (job.creatorId && job.creatorId !== currentUser.id) {
+        return {
+          canEdit: false,
+          reason: '仅可编辑本人创建的岗位',
+          editableFields: [],
+        };
+      }
+    }
+
+    if (job.status === JobStatus.PENDING_AUDIT) {
+      return {
+        canEdit: true,
+        reason: '待审核状态仅可编辑排序等非核心字段',
+        editableFields: JOB_EDITABLE_FIELDS_PENDING,
+      };
+    }
+
+    if (job.status === JobStatus.DRAFT || job.status === JobStatus.REJECTED) {
+      return {
+        canEdit: true,
+        editableFields: JOB_EDITABLE_FIELDS_DRAFT,
+      };
+    }
+
+    if (job.status === JobStatus.PUBLISHED) {
+      return {
+        canEdit: true,
+        reason: '已发布岗位编辑核心字段需重新审核',
+        editableFields: JOB_EDITABLE_FIELDS_PUBLISHED,
+      };
+    }
+
+    return {
+      canEdit: false,
+      reason: '当前状态不可编辑',
+      editableFields: [],
+    };
+  }
+
+  calculateMatchWeight(data: any): number {
+    let weight = 0;
+
+    if (data.salaryMin && data.salaryMax) {
+      const avgSalary = (data.salaryMin + data.salaryMax) / 2;
+      weight += Math.min(avgSalary / 10, 10);
+    }
+
+    if (data.education && EDUCATION_WEIGHTS[data.education] !== undefined) {
+      weight += EDUCATION_WEIGHTS[data.education] * 2;
+    }
+
+    if (data.experience && EXPERIENCE_WEIGHTS[data.experience] !== undefined) {
+      weight += EXPERIENCE_WEIGHTS[data.experience];
+    }
+
+    if (data.requirements) {
+      const reqLength = data.requirements.trim().length;
+      weight += Math.min(reqLength / 50, 5);
+    }
+
+    if (data.benefits) {
+      const benefitsLength = data.benefits.trim().length;
+      weight += Math.min(benefitsLength / 30, 3);
+    }
+
+    return Math.round(Math.min(weight, 30) * 100) / 100;
+  }
+
+  validateIndustryNorm(data: any, category?: string): ValidateResult {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    if (data.salaryMin !== undefined && data.salaryMax !== undefined && category) {
+      const range = INDUSTRY_SALARY_RANGES[category] || INDUSTRY_SALARY_RANGES.other;
+
+      if (data.salaryMin < range.min) {
+        errors.push(`薪资低于行业标准（${category}类别最低建议${range.min}K），请核实`);
+      }
+      if (data.salaryMax > range.max) {
+        warnings.push(`薪资高于行业常规范围（${category}类别最高建议${range.max}K），请确认是否合理`);
+      }
+    }
+
+    if (data.experience && data.salaryMin) {
+      const expSalaryMap: Record<string, number> = {
+        '应届生': 6,
+        '1年以内': 8,
+        '1-3年': 10,
+        '3-5年': 15,
+        '5-10年': 20,
+        '10年以上': 30,
+      };
+      const expectedMin = expSalaryMap[data.experience];
+      if (expectedMin && data.salaryMin < expectedMin * 0.6) {
+        warnings.push(`薪资与经验要求不匹配，${data.experience}经验建议最低薪资${expectedMin}K`);
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings,
+    };
+  }
+
+  checkDuplicateEdit(jobId: number, operatorId: number): boolean {
+    return false;
+  }
+
+  isMajorChange(changedFields: string[]): boolean {
+    return changedFields.some(f => JOB_MAJOR_CHANGE_FIELDS.includes(f));
+  }
+
+  async updateJob(id: number, data: any, currentUser?: CurrentUser): Promise<any> {
+    const job: any = await this.getById(id);
+
+    if (currentUser && currentUser.role !== UserRole.ADMIN) {
+      if (job.creatorId && job.creatorId !== currentUser.id) {
+        throw new ForbiddenError('仅可编辑本人创建的岗位');
+      }
+    }
+
+    const editCheck = await this.checkEditPermission(id, currentUser);
+    if (!editCheck.canEdit) {
+      throw new ForbiddenError(editCheck.reason || '当前状态不可编辑');
+    }
+
+    const allowedFields = editCheck.editableFields;
+    const filteredData: any = {};
+    const changedFields: string[] = [];
+
+    for (const field of allowedFields) {
+      if (data[field] !== undefined) {
+        filteredData[field] = data[field];
+        if (job[field] !== data[field]) {
+          changedFields.push(field);
+        }
+      }
+    }
+
+    if (changedFields.length === 0) {
+      throw new ParamError('未检测到有效变更');
+    }
+
+    const isMajor = this.isMajorChange(changedFields);
+
+    const company: any = await companyDao.findById(job.companyId);
+    const companyCity = company?.address ? this.extractCity(company.address) : '';
+
+    const validation = this.validateJobData({ ...job.toJSON(), ...filteredData }, companyCity);
+    if (!validation.valid) {
+      throw new ParamError(validation.errors.join('；'));
+    }
+
+    const industryValidation = this.validateIndustryNorm({ ...job.toJSON(), ...filteredData }, job.category);
+    if (!industryValidation.valid) {
+      throw new ParamError(industryValidation.errors.join('；'));
+    }
+
+    const duplicate = await this.checkDuplicateJob({ ...job.toJSON(), ...filteredData }, id);
+    if (duplicate.isDuplicate) {
+      throw new ConflictError('该企业下已存在同名岗位');
+    }
+
+    const weightFields = ['salaryMin', 'salaryMax', 'experience', 'education', 'requirements', 'benefits'];
+    const hasWeightChange = changedFields.some(f => weightFields.includes(f));
+    let matchWeight = job.matchWeight;
+    if (hasWeightChange) {
+      matchWeight = this.calculateMatchWeight({ ...job.toJSON(), ...filteredData });
+      filteredData.matchWeight = matchWeight;
+    }
+
+    if (job.status === JobStatus.DRAFT || job.status === JobStatus.REJECTED) {
+      const oldValues = this.extractJobValues(job, changedFields);
+      const version = (job.version || 1) + 1;
+
+      const result = await jobDao.updateById(id, {
+        ...filteredData,
+        version,
+        lastEditTime: new Date(),
+        lastEditorId: currentUser?.id,
+        lastEditorName: currentUser?.realName || currentUser?.username,
+      });
+
+      await this.writeOperationLog({
+        jobId: id,
+        action: JobOperationAction.UPDATE,
+        fromStatus: job.status,
+        toStatus: job.status,
+        operatorId: currentUser?.id,
+        operatorName: currentUser?.realName || currentUser?.username,
+        remark: `更新字段：${changedFields.join('、')}（即时生效）`,
+        changedFields: changedFields.join(','),
+        oldValues: JSON.stringify(oldValues),
+        newValues: JSON.stringify(filteredData),
+      });
+
+      if (hasWeightChange) {
+        await this.writeOperationLog({
+          jobId: id,
+          action: JobOperationAction.UPDATE_MATCH_WEIGHT,
+          fromStatus: job.status,
+          toStatus: job.status,
+          operatorId: currentUser?.id,
+          operatorName: currentUser?.realName || currentUser?.username,
+          remark: `智能匹配权重更新：${job.matchWeight || 0} → ${matchWeight}`,
+        });
+      }
+
+      return {
+        ...result,
+        effectiveMode: 'immediate',
+        matchWeight,
+      };
+    }
+
+    if (job.status === JobStatus.PUBLISHED) {
+      if (!isMajor) {
+        const oldValues = this.extractJobValues(job, changedFields);
+        const version = (job.version || 1) + 1;
+
+        const result = await jobDao.updateById(id, {
+          ...filteredData,
+          version,
+          lastEditTime: new Date(),
+          lastEditorId: currentUser?.id,
+          lastEditorName: currentUser?.realName || currentUser?.username,
+        });
+
+        await this.writeOperationLog({
+          jobId: id,
+          action: JobOperationAction.UPDATE,
+          fromStatus: job.status,
+          toStatus: job.status,
+          operatorId: currentUser?.id,
+          operatorName: currentUser?.realName || currentUser?.username,
+          remark: `更新字段：${changedFields.join('、')}（即时生效）`,
+          changedFields: changedFields.join(','),
+          oldValues: JSON.stringify(oldValues),
+          newValues: JSON.stringify(filteredData),
+        });
+
+        return {
+          ...result,
+          effectiveMode: 'immediate',
+          matchWeight,
+        };
+      }
+
+      const oldValues = this.extractJobValues(job, changedFields);
+      const pendingChanges = {
+        changes: filteredData,
+        changedFields,
+        oldValues,
+        matchWeight,
+        version: (job.version || 1) + 1,
+      };
+
+      const result = await jobDao.updateById(id, {
+        pendingChanges: JSON.stringify(pendingChanges),
+        isMajorChange: true,
+        changeOperatorId: currentUser?.id,
+        changeOperatorName: currentUser?.realName || currentUser?.username,
+        changeSubmitTime: new Date(),
+        lastEditTime: new Date(),
+        lastEditorId: currentUser?.id,
+        lastEditorName: currentUser?.realName || currentUser?.username,
+      });
+
+      await this.writeOperationLog({
+        jobId: id,
+        action: JobOperationAction.SUBMIT_CHANGE_AUDIT,
+        fromStatus: job.status,
+        toStatus: job.status,
+        operatorId: currentUser?.id,
+        operatorName: currentUser?.realName || currentUser?.username,
+        remark: `提交变更审核：${changedFields.join('、')}`,
+        changedFields: changedFields.join(','),
+        oldValues: JSON.stringify(oldValues),
+        newValues: JSON.stringify(filteredData),
+      });
+
+      return {
+        ...result,
+        effectiveMode: 'audit_required',
+        matchWeight,
+      };
+    }
+
+    throw new ForbiddenError('当前状态不可编辑');
+  }
+
+  async approveChange(id: number, currentUser: CurrentUser, remark?: string): Promise<any> {
+    if (currentUser.role !== UserRole.ADMIN) {
+      throw new ForbiddenError('仅管理员可审核变更');
+    }
+
+    const job: any = await this.getById(id);
+
+    if (!job.pendingChanges) {
+      throw new NotFoundError('没有待审核的变更');
+    }
+
+    let pendingData: any;
+    try {
+      pendingData = JSON.parse(job.pendingChanges);
+    } catch {
+      throw new ParamError('待审核变更数据格式错误');
+    }
+
+    const { changes, matchWeight, version } = pendingData;
+
+    const result = await jobDao.updateById(id, {
+      ...changes,
+      matchWeight,
+      version,
+      pendingChanges: null,
+      isMajorChange: false,
+      changeOperatorId: null,
+      changeOperatorName: null,
+      changeSubmitTime: null,
+      lastEditTime: new Date(),
+    });
+
+    await this.writeOperationLog({
+      jobId: id,
+      action: JobOperationAction.APPROVE_CHANGE,
+      fromStatus: job.status,
+      toStatus: job.status,
+      operatorId: currentUser.id,
+      operatorName: currentUser.realName || currentUser.username,
+      remark: remark || '变更审核通过，已同步更新',
+      changedFields: pendingData.changedFields.join(','),
+      oldValues: JSON.stringify(pendingData.oldValues),
+      newValues: JSON.stringify(changes),
+    });
+
+    return result;
+  }
+
+  async rejectChange(id: number, rejectReason: string, currentUser: CurrentUser): Promise<any> {
+    if (currentUser.role !== UserRole.ADMIN) {
+      throw new ForbiddenError('仅管理员可驳回变更');
+    }
+
+    const job: any = await this.getById(id);
+
+    if (!job.pendingChanges) {
+      throw new NotFoundError('没有待审核的变更');
+    }
+
+    let pendingData: any;
+    try {
+      pendingData = JSON.parse(job.pendingChanges);
+    } catch {
+      throw new ParamError('待审核变更数据格式错误');
+    }
+
+    const result = await jobDao.updateById(id, {
+      pendingChanges: null,
+      isMajorChange: false,
+      changeOperatorId: null,
+      changeOperatorName: null,
+      changeSubmitTime: null,
+    });
+
+    await this.writeOperationLog({
+      jobId: id,
+      action: JobOperationAction.REJECT_CHANGE,
+      fromStatus: job.status,
+      toStatus: job.status,
+      operatorId: currentUser.id,
+      operatorName: currentUser.realName || currentUser.username,
+      remark: `变更审核驳回：${rejectReason}`,
+      changedFields: pendingData.changedFields.join(','),
+      oldValues: JSON.stringify(pendingData.oldValues),
+      newValues: JSON.stringify(pendingData.changes),
+    });
+
+    return result;
+  }
+
+  async cancelChange(id: number, currentUser?: CurrentUser): Promise<any> {
+    const job: any = await this.getById(id);
+
+    if (!job.pendingChanges) {
+      throw new NotFoundError('没有待审核的变更');
+    }
+
+    if (currentUser && currentUser.role !== UserRole.ADMIN) {
+      if (job.changeOperatorId && job.changeOperatorId !== currentUser.id) {
+        throw new ForbiddenError('仅可取消本人提交的变更');
+      }
+    }
+
+    const result = await jobDao.updateById(id, {
+      pendingChanges: null,
+      isMajorChange: false,
+      changeOperatorId: null,
+      changeOperatorName: null,
+      changeSubmitTime: null,
+    });
+
+    await this.writeOperationLog({
+      jobId: id,
+      action: JobOperationAction.CANCEL_CHANGE,
+      fromStatus: job.status,
+      toStatus: job.status,
+      operatorId: currentUser?.id,
+      operatorName: currentUser?.realName || currentUser?.username,
+      remark: '取消待审核变更',
+    });
+
+    return result;
+  }
+
+  async getVersionDiff(id: number, fromVersion?: number, toVersion?: number): Promise<VersionDiff[]> {
+    const job: any = await this.getById(id);
+    const logs = await jobOperationLogDao.findByJobId(id);
+
+    const fieldLabels: Record<string, string> = {
+      title: '岗位名称',
+      category: '岗位类别',
+      department: '所属部门',
+      jobType: '工作类型',
+      salaryMin: '最低薪资',
+      salaryMax: '最高薪资',
+      salaryUnit: '薪资单位',
+      city: '工作城市',
+      address: '工作地址',
+      experience: '经验要求',
+      education: '学历要求',
+      recruitNum: '招聘人数',
+      description: '岗位职责',
+      requirements: '任职要求',
+      benefits: '福利待遇',
+      deadline: '截止日期',
+      sort: '排序',
+      status: '岗位状态',
+    };
+
+    const diffs: VersionDiff[] = [];
+    const updateLogs = logs.filter(
+      (l: any) => l.action === JobOperationAction.UPDATE || l.action === JobOperationAction.APPROVE_CHANGE
+    );
+
+    if (updateLogs.length >= 2) {
+      const newLog = updateLogs[0];
+      const oldLog = updateLogs[1];
+
+      let newValues = {};
+      let oldValues = {};
+
+      try {
+        newValues = newLog.newValues ? JSON.parse(newLog.newValues) : {};
+        oldValues = oldLog.oldValues ? JSON.parse(oldLog.oldValues) : {};
+      } catch {}
+
+      const allFields = new Set([...Object.keys(newValues), ...Object.keys(oldValues)]);
+
+      for (const field of allFields) {
+        if (JOB_EDITABLE_FIELDS_DRAFT.includes(field)) {
+          const oldVal = oldValues[field as keyof typeof oldValues];
+          const newVal = newValues[field as keyof typeof newValues];
+          diffs.push({
+            field,
+            label: fieldLabels[field] || field,
+            oldValue: oldVal,
+            newValue: newVal,
+            changed: oldVal !== newVal,
+          });
+        }
+      }
+    } else {
+      const allFields = [
+        'title', 'category', 'department', 'jobType',
+        'salaryMin', 'salaryMax', 'salaryUnit',
+        'city', 'address', 'experience', 'education',
+        'recruitNum', 'description', 'requirements', 'benefits',
+      ];
+
+      for (const field of allFields) {
+        diffs.push({
+          field,
+          label: fieldLabels[field] || field,
+          oldValue: job[field],
+          newValue: job[field],
+          changed: false,
+        });
+      }
+    }
+
+    return diffs;
+  }
+
+  async getEditHistory(jobId: number): Promise<any[]> {
+    const logs = await jobOperationLogDao.findByJobId(jobId);
+    const editActions = [
+      JobOperationAction.UPDATE,
+      JobOperationAction.SUBMIT_CHANGE_AUDIT,
+      JobOperationAction.APPROVE_CHANGE,
+      JobOperationAction.REJECT_CHANGE,
+      JobOperationAction.CANCEL_CHANGE,
+      JobOperationAction.ROLLBACK_VERSION,
+    ];
+
+    return logs
+      .filter((l: any) => editActions.includes(l.action as JobOperationAction))
+      .map((log: any) => ({
+        ...log.toJSON(),
+        actionLabel: JobOperationActionLabel[log.action as JobOperationAction] || log.action,
+      }));
+  }
+
+  async checkQualificationMatch(job: any): Promise<{ matched: boolean; reason?: string }> {
+    if (!job.category) {
+      return { matched: true };
+    }
+
+    const company: any = await companyDao.findById(job.companyId);
+    if (!company) {
+      return { matched: false, reason: '企业不存在' };
+    }
+
+    if (!company.isQualificationApproved) {
+      return { matched: false, reason: '企业资质未审核通过' };
+    }
+
+    if (company.jobCategories) {
+      const allowedCategories = company.jobCategories.split(',');
+      if (!allowedCategories.includes(job.category)) {
+        return { matched: false, reason: `企业无"${job.category}"类岗位的招聘资质` };
+      }
+    }
+
+    return { matched: true };
+  }
+
+  async updateAbnormalStatus(id: number, abnormal: boolean, reason?: string, currentUser?: CurrentUser): Promise<any> {
+    const job: any = await this.getById(id);
+
+    const result = await jobDao.updateById(id, {
+      abnormalFlag: abnormal,
+      abnormalReason: reason,
+    });
+
+    await this.writeOperationLog({
+      jobId: id,
+      action: abnormal ? JobOperationAction.MARK_ABNORMAL : JobOperationAction.CLEAR_ABNORMAL,
+      fromStatus: job.status,
+      toStatus: job.status,
+      operatorId: currentUser?.id,
+      operatorName: currentUser?.realName || currentUser?.username,
+      remark: abnormal ? `标记异常：${reason || ''}` : '解除异常标记',
+    });
+
+    return result;
+  }
+
+  async batchUpdate(ids: number[], data: any, filter: BatchEditFilter, currentUser?: CurrentUser): Promise<BatchResult> {
+    const result: BatchResult = {
+      total: ids.length,
+      success: 0,
+      failed: 0,
+      errors: [],
+    };
+
+    const allowedBatchFields = ['salaryMin', 'salaryMax', 'salaryUnit', 'recruitNum', 'city', 'status'];
+    const filteredData: any = {};
+    for (const field of allowedBatchFields) {
+      if (data[field] !== undefined) {
+        filteredData[field] = data[field];
+      }
+    }
+
+    if (Object.keys(filteredData).length === 0) {
+      throw new ParamError('未指定要更新的字段');
+    }
+
+    for (const id of ids) {
+      try {
+        const job: any = await jobDao.findById(id);
+        if (!job) {
+          result.failed++;
+          result.errors.push({ jobId: id, message: '岗位不存在' });
+          continue;
+        }
+
+        if (currentUser && currentUser.role !== UserRole.ADMIN) {
+          if (job.creatorId && job.creatorId !== currentUser.id) {
+            result.failed++;
+            result.errors.push({ jobId: id, title: job.title, message: '仅可编辑本人创建的岗位' });
+            continue;
+          }
+        }
+
+        const editCheck = await this.checkEditPermission(id, currentUser);
+        if (!editCheck.canEdit) {
+          result.failed++;
+          result.errors.push({ jobId: id, title: job.title, message: editCheck.reason || '不可编辑' });
+          continue;
+        }
+
+        const hasResume = await this.checkHasResume(id);
+        const updateData = hasResume
+          ? Object.fromEntries(Object.entries(filteredData).filter(([key]) => ['salaryMin', 'salaryMax', 'salaryUnit', 'recruitNum'].includes(key)))
+          : filteredData;
+
+        if (Object.keys(updateData).length === 0) {
+          result.failed++;
+          result.errors.push({ jobId: id, title: job.title, message: '已投递简历的岗位仅可更新薪资和招聘人数' });
+          continue;
+        }
+
+        const changedFields = Object.keys(updateData).filter(f => job[f] !== updateData[f]);
+        if (changedFields.length === 0) {
+          result.failed++;
+          result.errors.push({ jobId: id, title: job.title, message: '无有效变更' });
+          continue;
+        }
+
+        const oldValues = this.extractJobValues(job, changedFields);
+        const version = (job.version || 1) + 1;
+
+        await jobDao.updateById(id, {
+          ...updateData,
+          version,
+          lastEditTime: new Date(),
+          lastEditorId: currentUser?.id,
+          lastEditorName: currentUser?.realName || currentUser?.username,
+        });
+
+        await this.writeOperationLog({
+          jobId: id,
+          action: JobOperationAction.BATCH_UPDATE,
+          fromStatus: job.status,
+          toStatus: updateData.status || job.status,
+          operatorId: currentUser?.id,
+          operatorName: currentUser?.realName || currentUser?.username,
+          remark: `批量更新：${changedFields.join('、')}`,
+          changedFields: changedFields.join(','),
+          oldValues: JSON.stringify(oldValues),
+          newValues: JSON.stringify(updateData),
+        });
+
+        const qualMatch = await this.checkQualificationMatch({ ...job.toJSON(), ...updateData });
+        if (!qualMatch.matched) {
+          await this.updateAbnormalStatus(id, true, qualMatch.reason, currentUser);
+        } else if (job.abnormalFlag) {
+          await this.updateAbnormalStatus(id, false, '', currentUser);
+        }
+
+        result.success++;
+      } catch (error: any) {
+        result.failed++;
+        result.errors.push({
+          jobId: id,
+          message: error.message || '更新失败',
+        });
+      }
+    }
+
+    return result;
+  }
+
+  private async checkHasResume(jobId: number): Promise<boolean> {
+    try {
+      const { Resume } = await import('../models');
+      const count = await Resume.count({ where: { jobId } });
+      return count > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  async rollbackVersion(id: number, currentUser?: CurrentUser): Promise<any> {
+    const job: any = await this.getById(id);
+    const logs = await jobOperationLogDao.findByJobId(id);
+
+    const updateLogs = logs.filter(
+      (l: any) => l.action === JobOperationAction.UPDATE || l.action === JobOperationAction.APPROVE_CHANGE
+    );
+
+    if (updateLogs.length < 2) {
+      throw new AppError(40007, '没有可回滚的历史版本', 400);
+    }
+
+    const lastLog = updateLogs[1];
+    let oldValues = {};
+    try {
+      oldValues = lastLog.oldValues ? JSON.parse(lastLog.oldValues) : {};
+    } catch {
+      throw new ParamError('历史版本数据格式错误');
+    }
+
+    const changedFields = Object.keys(oldValues);
+    const version = (job.version || 1) + 1;
+
+    const result = await jobDao.updateById(id, {
+      ...oldValues,
+      version,
+      lastEditTime: new Date(),
+      lastEditorId: currentUser?.id,
+      lastEditorName: currentUser?.realName || currentUser?.username,
+    });
+
+    await this.writeOperationLog({
+      jobId: id,
+      action: JobOperationAction.ROLLBACK_VERSION,
+      fromStatus: job.status,
+      toStatus: job.status,
+      operatorId: currentUser?.id,
+      operatorName: currentUser?.realName || currentUser?.username,
+      remark: `回滚到上一版本，恢复字段：${changedFields.join('、')}`,
+      changedFields: changedFields.join(','),
+      oldValues: JSON.stringify(this.extractJobValues(job, changedFields)),
+      newValues: JSON.stringify(oldValues),
     });
 
     return result;

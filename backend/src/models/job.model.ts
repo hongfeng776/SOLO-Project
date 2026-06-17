@@ -31,6 +31,18 @@ interface JobAttributes {
   creatorId?: number;
   creatorName?: string;
   sort: number;
+  matchWeight?: number;
+  isMajorChange?: boolean;
+  pendingChanges?: string;
+  changeOperatorId?: number;
+  changeOperatorName?: string;
+  changeSubmitTime?: Date;
+  abnormalFlag?: boolean;
+  abnormalReason?: string;
+  version?: number;
+  lastEditTime?: Date;
+  lastEditorId?: number;
+  lastEditorName?: string;
 }
 
 interface JobCreationAttributes extends Optional<JobAttributes, 'id' | 'status' | 'sort' | 'recruitNum'> {}
@@ -64,6 +76,18 @@ class Job extends Model<JobAttributes, JobCreationAttributes> implements JobAttr
   public creatorId?: number;
   public creatorName?: string;
   public sort!: number;
+  public matchWeight?: number;
+  public isMajorChange?: boolean;
+  public pendingChanges?: string;
+  public changeOperatorId?: number;
+  public changeOperatorName?: string;
+  public changeSubmitTime?: Date;
+  public abnormalFlag?: boolean;
+  public abnormalReason?: string;
+  public version?: number;
+  public lastEditTime?: Date;
+  public lastEditorId?: number;
+  public lastEditorName?: string;
 
   public readonly created_at!: Date;
   public readonly updated_at!: Date;
@@ -191,6 +215,58 @@ Job.init(
       type: DataTypes.INTEGER,
       defaultValue: 0,
       comment: '排序',
+    },
+    matchWeight: {
+      type: DataTypes.DECIMAL(5, 2),
+      defaultValue: 0,
+      comment: '智能匹配权重',
+    },
+    isMajorChange: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: '是否为重大变更',
+    },
+    pendingChanges: {
+      type: DataTypes.TEXT,
+      comment: '待审核的变更内容（JSON格式）',
+    },
+    changeOperatorId: {
+      type: DataTypes.INTEGER,
+      comment: '变更提交人ID',
+    },
+    changeOperatorName: {
+      type: DataTypes.STRING(50),
+      comment: '变更提交人姓名',
+    },
+    changeSubmitTime: {
+      type: DataTypes.DATE,
+      comment: '变更提交时间',
+    },
+    abnormalFlag: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: '异常标记',
+    },
+    abnormalReason: {
+      type: DataTypes.TEXT,
+      comment: '异常原因',
+    },
+    version: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1,
+      comment: '版本号',
+    },
+    lastEditTime: {
+      type: DataTypes.DATE,
+      comment: '最后编辑时间',
+    },
+    lastEditorId: {
+      type: DataTypes.INTEGER,
+      comment: '最后编辑人ID',
+    },
+    lastEditorName: {
+      type: DataTypes.STRING(50),
+      comment: '最后编辑人姓名',
     },
   },
   {

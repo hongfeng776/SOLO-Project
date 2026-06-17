@@ -28,4 +28,16 @@ router.get('/:id/validate-submit', authMiddleware, jobController.validateForSubm
 router.get('/pre-check/:companyId', authMiddleware, jobController.getPreCheckInfo);
 router.get('/batch-fill/config', authMiddleware, jobController.getBatchFillConfig);
 
+router.get('/:id/edit-permission', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), jobController.checkEditPermission);
+router.put('/:id/update-job', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), jobController.updateJob);
+router.put('/:id/approve-change', authMiddleware, roleMiddleware(UserRole.ADMIN), jobController.approveChange);
+router.put('/:id/reject-change', authMiddleware, roleMiddleware(UserRole.ADMIN), jobController.rejectChange);
+router.put('/:id/cancel-change', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), jobController.cancelChange);
+router.get('/:id/version-diff', authMiddleware, jobController.getVersionDiff);
+router.get('/:id/edit-history', authMiddleware, jobController.getEditHistory);
+router.post('/batch-update', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), jobController.batchUpdate);
+router.put('/:id/rollback', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), jobController.rollbackVersion);
+router.post('/calculate-match-weight', authMiddleware, jobController.calculateMatchWeight);
+router.post('/validate-industry-norm', authMiddleware, jobController.validateIndustryNorm);
+
 export default router;
