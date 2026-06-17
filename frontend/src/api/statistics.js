@@ -1,5 +1,30 @@
 import request from '@/utils/request'
 
+export function getOrderStatistics(params) {
+  return request({
+    url: '/order-statistics',
+    method: 'get',
+    params
+  })
+}
+
+export function filterOrders(params) {
+  return request({
+    url: '/order-filter',
+    method: 'get',
+    params
+  })
+}
+
+export function exportOrders(params) {
+  return request({
+    url: '/order-export',
+    method: 'post',
+    data: params,
+    responseType: 'blob'
+  })
+}
+
 export function getOverviewStats() {
   return request({
     url: '/statistics/overview',

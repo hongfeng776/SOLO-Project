@@ -149,12 +149,20 @@ export const routes = [
   {
     path: '/statistics',
     component: Layout,
+    redirect: '/statistics/analysis',
+    meta: { title: '数据统计', icon: 'DataLine' },
     children: [
       {
         path: 'analysis',
         name: 'DataAnalysis',
         component: () => import('@/views/statistics/DataAnalysis.vue'),
         meta: { title: '数据分析', icon: 'DataAnalysis', roles: ['admin'] }
+      },
+      {
+        path: 'order',
+        name: 'OrderStatistics',
+        component: () => import('@/views/statistics/OrderStatistics.vue'),
+        meta: { title: '订单统计导出', icon: 'PieChart', roles: ['admin', 'user'] }
       }
     ]
   },

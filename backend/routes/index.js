@@ -22,6 +22,8 @@ const approvalController = require('../controllers/ApprovalController')
 const paymentController = require('../controllers/PaymentController')
 const afterSaleController = require('../controllers/AfterSaleController')
 const afterSaleValidator = require('../middleware/afterSaleValidator')
+const orderStatisticsController = require('../controllers/OrderStatisticsController')
+const { validateStatisticsParams } = require('../middleware/statisticsValidator')
 
 const router = express.Router();
 
@@ -122,5 +124,9 @@ router.post('/after-sales/batch/postpone', auth(['admin', 'operator']), orderPer
 router.get('/after-sales/trace', auth(), pagination, preventDuplicateTrace, afterSaleController.trace.bind(afterSaleController))
 router.get('/after-sales/:id', auth(), afterSaleController.getDetail.bind(afterSaleController))
 router.get('/after-sales', auth(), pagination, afterSaleController.list.bind(afterSaleController))
+
+router.get('/order-statistics', auth(), validateStatisticsParams, orderStatisticsController.getOrderStatistics.bind(orderStatisticsController))
+router.get('/order-filter', auth(), pagination, validateStatisticsParams, orderStatisticsController.filterOrders.bind(orderStatisticsController))
+router.post('/order-export', auth(), validateStatisticsParams, orderStatisticsController.exportOrders.bind(orderStatisticsController))
 
 module.exports = router;

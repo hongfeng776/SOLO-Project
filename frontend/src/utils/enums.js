@@ -218,6 +218,42 @@ export const RefundRatioEnum = {
   FULL_FULFILLED: { value: 0.5, label: '完全履约', rateLabel: '50%' }
 }
 
+export const StatsPeriodEnum = {
+  DAY: { value: 'day', label: '单日' },
+  WEEK: { value: 'week', label: '周度' },
+  MONTH: { value: 'month', label: '月度' },
+  CUSTOM: { value: 'custom', label: '自定义周期' }
+}
+
+export const StatsDimensionEnum = {
+  OVERVIEW: { value: 'overview', label: '整体概览' },
+  CATEGORY: { value: 'category', label: '按品类' },
+  PAYMENT: { value: 'payment', label: '按支付渠道' },
+  STATUS: { value: 'status', label: '按订单状态' }
+}
+
+export const UserLevelEnum = {
+  NORMAL: { value: 1, label: '普通用户', color: '#909399' },
+  SILVER: { value: 2, label: '银卡', color: '#c0c4cc' },
+  GOLD: { value: 3, label: '金卡', color: '#faad14' },
+  PLATINUM: { value: 4, label: '白金', color: '#722ed1' },
+  DIAMOND: { value: 5, label: '钻石', color: '#1890ff' }
+}
+
+export const MerchantTypeEnum = {
+  INDIVIDUAL: { value: 1, label: '个人商家' },
+  ENTERPRISE: { value: 2, label: '企业商家' },
+  OFFICIAL: { value: 3, label: '官方直营' },
+  FRANCHISE: { value: 4, label: '品牌加盟' }
+}
+
+export const ExportStatusEnum = {
+  IDLE: { value: 'idle', label: '待导出' },
+  PROCESSING: { value: 'processing', label: '导出中' },
+  SUCCESS: { value: 'success', label: '导出成功' },
+  FAILED: { value: 'failed', label: '导出失败' }
+}
+
 export default {
   OrderStatusEnum,
   OrderSourceEnum,
@@ -248,6 +284,11 @@ export default {
   RefundFlowStatusEnum,
   PenaltyRuleEnum,
   RefundRatioEnum,
+  StatsPeriodEnum,
+  StatsDimensionEnum,
+  UserLevelEnum,
+  MerchantTypeEnum,
+  ExportStatusEnum,
   getEnumLabel,
   getEnumType,
   getEnumOptions,
