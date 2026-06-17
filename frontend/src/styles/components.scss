@@ -100,3 +100,111 @@
     margin-left: $spacing-sm;
   }
 }
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+.is-shake .el-input__wrapper {
+  animation: shake 0.5s ease-in-out;
+  box-shadow: 0 0 0 1px #f56c6c inset !important;
+}
+
+.is-shake .el-textarea__inner {
+  animation: shake 0.5s ease-in-out;
+  box-shadow: 0 0 0 1px #f56c6c inset !important;
+}
+
+.goods-row-hover {
+  transition: all 0.22s ease;
+}
+
+.goods-row-hover:hover {
+  transform: scale(1.008);
+  z-index: 2;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.goods-row-hover td.el-table__cell {
+  background: #fff;
+}
+
+.readonly-field {
+  .el-input__wrapper {
+    background-color: #f5f7fa;
+    cursor: not-allowed;
+
+    .el-input__inner {
+      color: #606266;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.field-readonly-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: rgba(144, 147, 153, 0.1);
+  color: #909399;
+  font-size: 12px;
+  border-radius: 4px;
+  margin-left: 8px;
+}
+
+.trace-dialog {
+  .el-tabs__content {
+    padding: $spacing-base 0;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+}
+
+.timeline-section {
+  padding: $spacing-base;
+  background: #fafafa;
+  border-radius: $radius-base;
+}
+
+.risk-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+
+  &.danger {
+    background: rgba(245, 108, 108, 0.1);
+    color: $danger-color;
+    border: 1px solid rgba(245, 108, 108, 0.2);
+  }
+
+  &.warning {
+    background: rgba(230, 162, 60, 0.1);
+    color: $warning-color;
+    border: 1px solid rgba(230, 162, 60, 0.2);
+  }
+}
+
+.batch-edit-dialog {
+  .field-check-group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-sm;
+    margin-bottom: $spacing-base;
+    padding: $spacing-base;
+    background: #f5f7fa;
+    border-radius: $radius-base;
+  }
+}
+

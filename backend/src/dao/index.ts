@@ -17,6 +17,9 @@ import { RiskAlertDao } from './RiskAlertDao';
 import { OperateLogDao } from './OperateLogDao';
 import { MessageDao } from './MessageDao';
 import { PenaltyDao } from './PenaltyDao';
+import { GoodsEditLogDao } from './GoodsEditLogDao';
+import { MerchantQualificationDao } from './MerchantQualificationDao';
+import { BrandAuthorizationDao } from './BrandAuthorizationDao';
 
 export {
   BaseDao,
@@ -40,6 +43,9 @@ export {
   OperateLogDao,
   MessageDao,
   PenaltyDao,
+  GoodsEditLogDao,
+  MerchantQualificationDao,
+  BrandAuthorizationDao,
 };
 
 export const daos = {
@@ -61,6 +67,9 @@ export const daos = {
   operateLogDao: new OperateLogDao(),
   messageDao: new MessageDao(),
   penaltyDao: new PenaltyDao(),
+  goodsEditLogDao: new GoodsEditLogDao(),
+  merchantQualificationDao: new MerchantQualificationDao(),
+  brandAuthorizationDao: new BrandAuthorizationDao(),
 };
 
 export default daos;

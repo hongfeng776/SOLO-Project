@@ -16,6 +16,10 @@ import riskRouter from './risk';
 import messageRouter from './message';
 import operateLogRouter from './operateLog';
 import statisticsRouter from './statistics';
+import goodsValidateRouter from './goodsValidate';
+import goodsEditorRouter from './goodsEditor';
+import goodsBatchRouter from './goodsBatch';
+import goodsTraceRouter from './goodsTrace';
 
 const router = Router();
 
@@ -36,5 +40,9 @@ router.use('/risk', riskRouter);
 router.use('/message', messageRouter);
 router.use('/operateLog', operateLogRouter);
 router.use('/statistics', statisticsRouter);
+router.use('/goodsValidate', goodsValidateRouter);
+router.use('/goodsEditor', goodsEditorRouter);
+router.use('/goodsBatch', goodsBatchRouter);
+router.use('/goodsTrace', goodsTraceRouter);
 
 export default router;

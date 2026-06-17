@@ -16,6 +16,10 @@ import PenaltyService, { penaltyService } from './PenaltyService';
 import RiskControlService, { riskControlService } from './RiskControlService';
 import StatisticsService, { statisticsService } from './StatisticsService';
 import UserService, { userService } from './UserService';
+import GoodsValidateService, { goodsValidateService } from './GoodsValidateService';
+import GoodsEditorService, { goodsEditorService } from './GoodsEditorService';
+import GoodsBatchService, { goodsBatchService } from './GoodsBatchService';
+import GoodsTraceService, { goodsTraceService } from './GoodsTraceService';
 
 export {
   AfterSaleAuditService,
@@ -36,6 +40,10 @@ export {
   RiskControlService,
   StatisticsService,
   UserService,
+  GoodsValidateService,
+  GoodsEditorService,
+  GoodsBatchService,
+  GoodsTraceService,
 };
 
 export const services = {
@@ -57,6 +65,10 @@ export const services = {
   riskControlService,
   statisticsService,
   userService,
+  goodsValidateService,
+  goodsEditorService,
+  goodsBatchService,
+  goodsTraceService,
 };
 
 export default services;

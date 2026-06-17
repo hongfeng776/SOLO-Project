@@ -101,3 +101,166 @@ export const MerchantStatusMap: Record<number, { label: string; type: TagType }>
   [MerchantStatus.REJECTED]: { label: '已拒绝', type: 'danger' },
   [MerchantStatus.DISABLED]: { label: '已禁用', type: 'info' }
 }
+
+export interface GoodsRequiredField {
+  field: string
+  label: string
+  required: boolean
+  rules: any[]
+}
+
+export interface ValidateError {
+  field: string
+  message: string
+  code: string
+}
+
+export interface ValidateResult {
+  valid: boolean
+  errors: ValidateError[]
+}
+
+export interface EditFieldConfig {
+  field: string
+  editable: boolean
+  readonlyReason?: string
+  rules: any[]
+}
+
+export interface GoodsEditLog {
+  id: number
+  goodsId: number
+  field: string
+  oldValue: string
+  newValue: string
+  operator: string
+  operateTime: string
+  remark?: string
+}
+
+export interface GoodsAuditRecord {
+  id: number
+  goodsId: number
+  auditor: string
+  auditResult: string
+  auditTime: string
+  remark?: string
+}
+
+export interface MerchantInfo {
+  id: number
+  name: string
+  status: number
+  licenseNo: string
+  registerTime: string
+  qualificationList: QualificationItem[]
+}
+
+export interface QualificationItem {
+  name: string
+  no: string
+  expireDate: string
+  status: number
+}
+
+export interface CategoryRecord {
+  id: number
+  name: string
+  parentId: number
+  recordTime: string
+  attributes: CategoryAttribute[]
+}
+
+export interface CategoryAttribute {
+  name: string
+  value: string
+}
+
+export interface GoodsFullTrace {
+  merchant: MerchantInfo
+  category: CategoryRecord
+  editLogs: GoodsEditLog[]
+  auditRecords: GoodsAuditRecord[]
+}
+
+export interface BatchAbility {
+  canEdit: boolean
+  canOffline: boolean
+  canTop: boolean
+  canDelete: boolean
+  reason?: string
+}
+
+export interface ConsistencyIssue {
+  type: string
+  level: 'warning' | 'danger'
+  message: string
+  detail?: string
+}
+
+export interface RepeatSuggestion {
+  goodsId: number
+  name: string
+  similarity: number
+  matchFields: string[]
+}
+
+export interface ConsistencyResult {
+  consistent: boolean
+  issues: ConsistencyIssue[]
+}
+
+export interface BatchResult {
+  successCount: number
+  failCount: number
+  failDetails: { id: number; message: string }[]
+}
+
+export enum ComplianceLevel {
+  EXCELLENT = 1,
+  GOOD = 2,
+  NORMAL = 3,
+  POOR = 4
+}
+
+export const ComplianceLevelMap: Record<number, { label: string; type: TagType }> = {
+  [ComplianceLevel.EXCELLENT]: { label: '优秀', type: 'success' },
+  [ComplianceLevel.GOOD]: { label: '良好', type: 'primary' },
+  [ComplianceLevel.NORMAL]: { label: '一般', type: 'warning' },
+  [ComplianceLevel.POOR]: { label: '较差', type: 'danger' }
+}
+
+export enum MerchantLevel {
+  DIAMOND = 1,
+  GOLD = 2,
+  SILVER = 3,
+  BRONZE = 4
+}
+
+export const MerchantLevelMap: Record<number, { label: string; type: TagType }> = {
+  [MerchantLevel.DIAMOND]: { label: '钻石', type: 'primary' },
+  [MerchantLevel.GOLD]: { label: '黄金', type: 'warning' },
+  [MerchantLevel.SILVER]: { label: '白银', type: 'info' },
+  [MerchantLevel.BRONZE]: { label: '青铜', type: 'success' }
+}
+
+export interface CategoryTreeNode {
+  id: number
+  name: string
+  children?: CategoryTreeNode[]
+}
+
+export interface SkuCheckResult {
+  unique: boolean
+  duplicateGoods?: {
+    id: number
+    name: string
+  }
+}
+
+export interface BrandCategoryCheckResult {
+  valid: boolean
+  authorized: boolean
+  message?: string
+}
+

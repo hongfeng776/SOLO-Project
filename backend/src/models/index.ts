@@ -13,6 +13,9 @@ import { OrderLog } from './OrderLog';
 import { OrderItem } from './OrderItem';
 import { GoodsAudit } from './GoodsAudit';
 import { MerchantAudit } from './MerchantAudit';
+import { GoodsEditLog } from './GoodsEditLog';
+import { MerchantQualification } from './MerchantQualification';
+import { BrandAuthorization } from './BrandAuthorization';
 
 export {
   Admin,
@@ -30,6 +33,9 @@ export {
   OrderItem,
   GoodsAudit,
   MerchantAudit,
+  GoodsEditLog,
+  MerchantQualification,
+  BrandAuthorization,
 };
 
 export const models = {
@@ -48,6 +54,9 @@ export const models = {
   OrderItem,
   GoodsAudit,
   MerchantAudit,
+  GoodsEditLog,
+  MerchantQualification,
+  BrandAuthorization,
 };
 
 export default models;
