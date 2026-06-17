@@ -19,6 +19,11 @@ import { BrandAuthorization } from './BrandAuthorization';
 import { Category } from './Category';
 import { CategoryLog } from './CategoryLog';
 import { CategoryPermission } from './CategoryPermission';
+import { Article } from './Article';
+import { ArticleVersion } from './ArticleVersion';
+import { ArticleTopic } from './ArticleTopic';
+import { SensitiveWord } from './SensitiveWord';
+import { ArticleReviewLog } from './ArticleReviewLog';
 
 export {
   Admin,
@@ -42,6 +47,11 @@ export {
   Category,
   CategoryLog,
   CategoryPermission,
+  Article,
+  ArticleVersion,
+  ArticleTopic,
+  SensitiveWord,
+  ArticleReviewLog,
 };
 
 export const models = {
@@ -66,6 +76,11 @@ export const models = {
   Category,
   CategoryLog,
   CategoryPermission,
+  Article,
+  ArticleVersion,
+  ArticleTopic,
+  SensitiveWord,
+  ArticleReviewLog,
 };
 
 export default models;

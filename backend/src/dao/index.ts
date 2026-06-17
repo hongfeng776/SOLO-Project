@@ -23,6 +23,11 @@ import { BrandAuthorizationDao } from './BrandAuthorizationDao';
 import { CategoryDao } from './CategoryDao';
 import { CategoryLogDao } from './CategoryLogDao';
 import { CategoryPermissionDao } from './CategoryPermissionDao';
+import { ArticleDao } from './ArticleDao';
+import { ArticleVersionDao } from './ArticleVersionDao';
+import { ArticleTopicDao } from './ArticleTopicDao';
+import { SensitiveWordDao } from './SensitiveWordDao';
+import { ArticleReviewLogDao } from './ArticleReviewLogDao';
 
 export {
   BaseDao,
@@ -52,6 +57,11 @@ export {
   CategoryDao,
   CategoryLogDao,
   CategoryPermissionDao,
+  ArticleDao,
+  ArticleVersionDao,
+  ArticleTopicDao,
+  SensitiveWordDao,
+  ArticleReviewLogDao,
 };
 
 export const daos = {
@@ -79,6 +89,11 @@ export const daos = {
   categoryDao: new CategoryDao(),
   categoryLogDao: new CategoryLogDao(),
   categoryPermissionDao: new CategoryPermissionDao(),
+  articleDao: new ArticleDao(),
+  articleVersionDao: new ArticleVersionDao(),
+  articleTopicDao: new ArticleTopicDao(),
+  sensitiveWordDao: new SensitiveWordDao(),
+  articleReviewLogDao: new ArticleReviewLogDao(),
 };
 
 export default daos;

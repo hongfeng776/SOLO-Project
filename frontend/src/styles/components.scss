@@ -257,3 +257,39 @@
   background: rgba(64, 158, 255, 0.15);
 }
 
+.article-form .el-input__wrapper.is-focus,
+.article-form .el-textarea__inner:focus {
+  box-shadow: 0 0 0 1px #67C23A inset, 0 0 10px rgba(103,194,58,0.4) !important;
+  transform: scale(1.008);
+  transition: all 0.25s ease;
+}
+.article-form .el-textarea__inner:focus {
+  background: linear-gradient(180deg, #fff, #fafef9);
+}
+
+.article-table .el-table__row:nth-child(odd) td { background-color: #ffffff; }
+.article-table .el-table__row:nth-child(even) td { background-color: #fafbfc; }
+
+.article-table .el-table__body tr.current-row > td {
+  background: linear-gradient(90deg, #ecf5ff, #e1f3d8) !important;
+  font-weight: 500;
+}
+.article-table .el-table__row:hover td {
+  background: #f0f9ff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+.article-table .el-table__row {
+  transition: all 0.2s ease;
+}
+
+.sensitive-highlight {
+  background: linear-gradient(180deg, rgba(245,108,108,0.2), rgba(245,108,108,0.35));
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: #f56c6c;
+  font-weight: 600;
+  border-bottom: 2px dashed #f56c6c;
+  cursor: help;
+}
+

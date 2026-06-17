@@ -384,3 +384,176 @@ export const RoleTypeMap: Record<number, { label: string; type: TagType }> = {
   [RoleType.READONLY]: { label: '只读用户', type: 'info' }
 }
 
+export type Channel = 'homepage' | 'infopage' | 'special'
+
+export const ChannelMap: Record<Channel, { label: string; type: TagType }> = {
+  homepage: { label: '首页', type: 'primary' },
+  infopage: { label: '资讯页', type: 'success' },
+  special: { label: '专题页', type: 'warning' }
+}
+
+export enum ArticleStatus {
+  Draft = 0,
+  Pending = 1,
+  Published = 2,
+  Offline = 3,
+  Rejected = 4
+}
+
+export const ArticleStatusMap: Record<number, { label: string; type: TagType }> = {
+  [ArticleStatus.Draft]: { label: '草稿', type: 'info' },
+  [ArticleStatus.Pending]: { label: '待审核', type: 'warning' },
+  [ArticleStatus.Published]: { label: '已发布', type: 'success' },
+  [ArticleStatus.Offline]: { label: '已下架', type: 'danger' },
+  [ArticleStatus.Rejected]: { label: '已驳回', type: 'danger' }
+}
+
+export interface ArticleInfo {
+  id: number
+  uniqueCode: string
+  title: string
+  summary: string
+  content: string
+  coverImage: string
+  images: string[]
+  domainCategoryId: number
+  domainCategoryName?: string
+  channel: Channel
+  template: string
+  wordCount: number
+  viewCount: number
+  likeCount: number
+  commentCount: number
+  shareCount: number
+  topFlag: boolean
+  status: ArticleStatus
+  version: string
+  topicId?: number
+  topicName?: string
+  publisherId: number
+  publisherName?: string
+  publisherType: string
+  publishedAt?: string
+  createdAt: string
+  updatedAt: string
+  abilityList?: {
+    canEdit: boolean
+    canDelete: boolean
+    canTop: boolean
+    canOffline: boolean
+  }
+}
+
+export interface ArticleVersion {
+  id: number
+  articleId: number
+  version: string
+  title: string
+  content: string
+  changeLog: string
+  editorId: number
+  editorName?: string
+  editType: 'incremental' | 'full'
+  reviewedStatus: 'pending' | 'approved' | 'rejected'
+  reviewerId?: number
+  reviewerName?: string
+  reviewRemark?: string
+  reviewedAt?: string
+  createdAt: string
+}
+
+export interface ArticleTopic {
+  id: number
+  name: string
+  uniqueCode: string
+  coverImage: string
+  description: string
+  bannerImage: string
+  resourceSlot: string
+  channel: Channel
+  sort: number
+  status: number
+  publishedCount: number
+  startDate: string
+  endDate: string
+}
+
+export interface SensitiveHit {
+  word: string
+  type: string
+  level: 'low' | 'medium' | 'high'
+  position: number
+  context: string
+}
+
+export const SensitiveLevelMap: Record<string, { label: string; type: TagType }> = {
+  low: { label: '低风险', type: 'info' },
+  medium: { label: '中风险', type: 'warning' },
+  high: { label: '高风险', type: 'danger' }
+}
+
+export interface ValidateArticleResult {
+  valid: boolean
+  errors: ValidateError[]
+  sensitiveHits: SensitiveHit[]
+  templateConfig: Record<string, unknown>
+  wordConfig: {
+    minWord: number
+    maxWord: number
+  }
+  minWord: number
+  maxWord: number
+}
+
+export interface EditMode {
+  mode: 'draft' | 'published'
+  allowIncremental: boolean
+  allowFull: boolean
+  needReview: boolean
+}
+
+export interface BatchOperScope {
+  scope: 'self' | 'global'
+  allowedChannels: Channel[]
+  allowedDomains: number[]
+}
+
+export interface ArticleFullTrace {
+  basic: ArticleInfo
+  versionTimeline: TimelineItem[]
+  topicInfo?: ArticleTopic
+  reviewTimeline: TimelineItem[]
+}
+
+export interface DuplicateCheckResult {
+  hasDuplicate: boolean
+  titleDupArticles: { id: number; title: string; similarity: number }[]
+  contentDupArticles: { id: number; title: string; similarity: number }[]
+  similarityReport: {
+    titleSimilarity: number
+    contentSimilarity: number
+    overallSimilarity: number
+  }
+}
+
+export interface QualityReport {
+  qualityScore: number
+  dimensions: {
+    name: string
+    score: number
+    maxScore: number
+    description: string
+  }[]
+  warnings: {
+    level: 'low' | 'medium' | 'high'
+    message: string
+    detail?: string
+  }[]
+  imageChecks?: {
+    url: string
+    width: number
+    height: number
+    resolution达标: boolean
+  }[]
+}
+

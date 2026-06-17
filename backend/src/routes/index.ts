@@ -25,6 +25,11 @@ import categoryValidateRouter from './categoryValidate';
 import categoryLinkageRouter from './categoryLinkage';
 import categoryBatchRouter from './categoryBatch';
 import categoryTraceRouter from './categoryTrace';
+import articleRouter from './article';
+import articleValidateRouter from './articleValidate';
+import articleEditorRouter from './articleEditor';
+import articleBatchRouter from './articleBatch';
+import articleTraceRouter from './articleTrace';
 
 const router = Router();
 
@@ -54,5 +59,10 @@ router.use('/categoryValidate', categoryValidateRouter);
 router.use('/categoryLinkage', categoryLinkageRouter);
 router.use('/categoryBatch', categoryBatchRouter);
 router.use('/categoryTrace', categoryTraceRouter);
+router.use('/article', articleRouter);
+router.use('/articleValidate', articleValidateRouter);
+router.use('/articleEditor', articleEditorRouter);
+router.use('/articleBatch', articleBatchRouter);
+router.use('/articleTrace', articleTraceRouter);
 
 export default router;

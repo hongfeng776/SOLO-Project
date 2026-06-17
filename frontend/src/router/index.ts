@@ -73,6 +73,20 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '商家管理', icon: 'Shop', requiresAuth: true }
       },
       {
+        path: 'content',
+        name: 'Content',
+        redirect: '/content/list',
+        meta: { title: '内容运营', icon: 'Document', requiresAuth: true },
+        children: [
+          {
+            path: 'list',
+            name: 'ContentList',
+            component: () => import('@/views/content/article.vue'),
+            meta: { title: '图文内容管理', icon: 'Document', requiresAuth: true }
+          }
+        ]
+      },
+      {
         path: 'system',
         name: 'System',
         redirect: '/system/profile',
