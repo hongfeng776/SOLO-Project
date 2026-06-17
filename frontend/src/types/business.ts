@@ -18,6 +18,84 @@ export interface Note {
   publishTime?: string
   createTime: string
   updateTime: string
+  reviewWeight?: number
+  flowUnlocked?: number
+  postponeReason?: string
+  lastReviewerId?: number
+  lastReviewerName?: string
+  lastReviewTime?: string
+  isAbnormal?: number
+}
+
+export interface ReviewActionData {
+  noteId: number
+  action: number
+  violationType?: string
+  reason?: string
+  reviewLevel?: number
+}
+
+export interface ReviewResult {
+  success: boolean
+  noteId: number
+  previousStatus: number
+  newStatus: number
+  flowUnlocked?: boolean
+  notificationSent?: boolean
+}
+
+export interface BatchReviewResult {
+  total: number
+  success: number
+  fail: number
+  results: ReviewResult[]
+}
+
+export interface ReviewLog {
+  id: number
+  noteId: number
+  noteTitle: string
+  reviewerId: number
+  reviewerName: string
+  reviewLevel: number
+  action: number
+  previousStatus: number
+  newStatus: number
+  violationType: string
+  reason: string
+  isAbnormal: number
+  abnormalReason: string
+  createTime: string
+}
+
+export interface ReviewComplianceResult {
+  valid: boolean
+  violations: Array<{ type: string; message: string }>
+  isAbnormal: boolean
+  abnormalType?: string
+  abnormalReason?: string
+}
+
+export interface ReviewAbnormalLog {
+  id: number
+  reviewLogId: number
+  noteId: number
+  reviewerId: number
+  reviewerName: string
+  abnormalType: string
+  abnormalDetail: string
+  severity: number
+  handled: number
+  createTime: string
+}
+
+export interface ReviewerStats {
+  totalReviewed: number
+  approved: number
+  rejected: number
+  postponed: number
+  rejectionRate: number
+  abnormalCount: number
 }
 
 export interface Tag {

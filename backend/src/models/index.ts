@@ -15,6 +15,8 @@ import Settlement from './settlement'
 import NoteBatchRecord from './note-batch-record'
 import NoteComplianceLog from './note-compliance-log'
 import PublishAbnormalLog from './publish-abnormal-log'
+import ReviewLog from './review-log'
+import ReviewAbnormalLog from './review-abnormal-log'
 
 const UserRole = User.sequelize!.define('sys_user_role', {}, { tableName: 'sys_user_role', timestamps: false })
 const NoteTag = Note.sequelize!.define('biz_note_tag', {}, { tableName: 'biz_note_tag', timestamps: false })
@@ -25,4 +27,4 @@ Role.belongsToMany(User, { through: UserRole, as: 'users', foreignKey: 'role_id'
 Note.belongsToMany(Tag, { through: NoteTag, as: 'tags', foreignKey: 'note_id' })
 Tag.belongsToMany(Note, { through: NoteTag, as: 'notes', foreignKey: 'tag_id' })
 
-export { User, Role, Note, Tag, Creator, Activity, Order, Comment, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, UserRole, NoteTag }
+export { User, Role, Note, Tag, Creator, Activity, Order, Comment, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, UserRole, NoteTag }

@@ -10,8 +10,11 @@
       :stripe="stripe"
       :row-key="rowKey"
       :default-sort="defaultSort"
+      :row-class-name="rowClassName"
+      highlight-current-row
       @selection-change="handleSelectionChange"
       @sort-change="handleSortChange"
+      @row-dblclick="handleRowDblclick"
       style="width: 100%"
     >
       <el-table-column v-if="selectable" type="selection" width="50" align="center" />
@@ -54,6 +57,7 @@ interface Props {
   rowKey?: string
   defaultSort?: Record<string, unknown>
   emptyText?: string
+  rowClassName?: ((row: unknown, rowIndex: number) => string) | string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -68,7 +72,8 @@ const props = withDefaults(defineProps<Props>(), {
   selectable: false,
   showIndex: false,
   rowKey: 'id',
-  emptyText: '暂无数据'
+  emptyText: '暂无数据',
+  rowClassName: ''
 })
 
 const emit = defineEmits<{
@@ -77,6 +82,7 @@ const emit = defineEmits<{
   (e: 'selection-change', val: unknown[]): void
   (e: 'sort-change', val: { prop: string; order: string }): void
   (e: 'paginate'): void
+  (e: 'row-dblclick', row: unknown, column: unknown, event: unknown): void
 }>()
 
 const currentPage = computed({
@@ -103,6 +109,10 @@ const handleSizeChange = () => {
 
 const handlePageChange = () => {
   emit('paginate')
+}
+
+const handleRowDblclick = (row: unknown, column: unknown, event: unknown) => {
+  emit('row-dblclick', row, column, event)
 }
 </script>
 

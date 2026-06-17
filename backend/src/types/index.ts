@@ -103,3 +103,50 @@ export interface BatchPublishResult {
     error?: string
   }>
 }
+
+export interface ReviewWeightParams {
+  noteType: number
+  noteLevel: number
+  hasSensitiveWords: boolean
+  violationCount7d: number
+  authorLevel: number
+}
+
+export interface ReviewActionData {
+  noteId: number
+  action: number
+  reason?: string
+  violationType?: string
+}
+
+export interface BatchReviewData {
+  noteIds: number[]
+  action: number
+  reason?: string
+  violationType?: string
+}
+
+export interface ReviewResult {
+  noteId: number
+  success: boolean
+  action: number
+  statusAfter: number
+  error?: string
+}
+
+export interface ReviewComplianceResult {
+  isCompliant: boolean
+  isAbnormal: boolean
+  abnormalType?: string
+  abnormalReason?: string
+  severity?: number
+}
+
+export interface ReviewerStats {
+  totalReviewed: number
+  approved: number
+  rejected: number
+  postponed: number
+  rejectionRate: number
+  abnormalCount: number
+}

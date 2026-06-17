@@ -13,6 +13,7 @@ export interface UserInfo {
   email: string
   phone: string
   status: number
+  reviewerLevel?: number
   createTime: string
   updateTime: string
 }

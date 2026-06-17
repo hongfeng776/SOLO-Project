@@ -29,6 +29,9 @@ import userAccountRoutes from '@routes/user-account'
 import noteComplianceRoutes from '@routes/note-compliance'
 import notePublishRoutes from '@routes/note-publish'
 import noteBatchRoutes from '@routes/note-batch'
+import reviewRoutes from '@routes/review'
+import reviewLogRoutes from '@routes/review-log'
+import reviewComplianceRoutes from '@routes/review-compliance'
 
 const app = express()
 
@@ -69,6 +72,9 @@ app.use('/api/user-account', userAccountRoutes)
 app.use('/api/note-compliance', noteComplianceRoutes)
 app.use('/api/note-publish', notePublishRoutes)
 app.use('/api/note-batch', noteBatchRoutes)
+app.use('/api/review', reviewRoutes)
+app.use('/api/review-logs', reviewLogRoutes)
+app.use('/api/review-compliance', reviewComplianceRoutes)
 
 app.use(celebrateErrors())
 app.use(errorHandler)

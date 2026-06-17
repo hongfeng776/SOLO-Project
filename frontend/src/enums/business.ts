@@ -194,3 +194,21 @@ export enum ResourceSlotStatus {
   ENABLED = 1,
   DISABLED = 2
 }
+
+export enum ReviewAction {
+  APPROVE = 1,
+  REJECT = 2,
+  POSTPONE = 3
+}
+
+export enum ReviewPermission {
+  NORMAL = 1,
+  SENIOR = 2
+}
+
+export enum AbnormalReviewType {
+  NO_REASON_REJECT = 'no_reason_reject',
+  TAG_MISMATCH = 'tag_mismatch',
+  EXCESSIVE_REJECTION = 'excessive_rejection',
+  UNUSUAL_PATTERN = 'unusual_pattern'
+}

@@ -15,6 +15,9 @@ class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare idCard: CreationOptional<string>
   declare banExpireTime: CreationOptional<Date | null>
   declare flowLimitExpireTime: CreationOptional<Date | null>
+  declare reviewLevel: CreationOptional<number>
+  declare reviewCount: CreationOptional<number>
+  declare isSeniorReviewer: CreationOptional<number>
   declare createTime: CreationOptional<Date>
   declare updateTime: CreationOptional<Date>
   declare deleteTime: CreationOptional<Date | null>
@@ -83,6 +86,24 @@ User.init(
     flowLimitExpireTime: {
       type: DataTypes.DATE,
       allowNull: true
+    },
+    reviewLevel: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '审核权限等级 0无 1普通 2高级'
+    },
+    reviewCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '累计审核数'
+    },
+    isSeniorReviewer: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '是否高级审核员 0否 1是'
     },
     createTime: DataTypes.DATE,
     updateTime: DataTypes.DATE,

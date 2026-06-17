@@ -252,10 +252,11 @@ const handleAuditReject = (row: Comment) => {
   auditVisible.value = true
 }
 
-const handleAuditSubmit = async (data: { id: number; status: number; rejectReason?: string }) => {
+const handleAuditSubmit = async (data: { id: number; action: number; reason?: string }) => {
   try {
-    await auditComment(data.id, { status: data.status, violationType: data.rejectReason })
-    ElMessage.success(data.status === 1 ? '审核通过' : '已拒绝')
+    const status = data.action === 1 ? 1 : 2
+    await auditComment(data.id, { status, violationType: data.reason })
+    ElMessage.success(data.action === 1 ? '审核通过' : '已拒绝')
     fetchData()
     loadStats()
   } catch (error) {
