@@ -572,3 +572,136 @@ export interface IAuditTrailData {
     duplicateTradeDate: string
   }
 }
+
+export type ThresholdType = 'change_rate' | 'volume' | 'turnover'
+
+export type ScopeType = 'global' | 'sector'
+
+export type ConfigStatus = 'permanent' | 'temporary' | 'expired'
+
+export type ChangeType = 'create' | 'update' | 'delete' | 'expire'
+
+export interface IQuoteThreshold {
+  id: number
+  thresholdType: ThresholdType
+  thresholdTypeLabel?: string
+  sector: string
+  sectorLabel?: string
+  scopeType: ScopeType
+  scopeTypeLabel?: string
+  configStatus: ConfigStatus
+  configStatusLabel?: string
+  minValue: number
+  maxValue: number
+  warningThreshold: number
+  triggerThreshold: number
+  operator: string
+  version: number
+  remark?: string
+  effectiveStart: string
+  effectiveEnd?: string
+  createdBy: number
+  createdByName?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface IThresholdValidationError {
+  field: string
+  message: string
+  suggestion?: string
+}
+
+export interface IThresholdRangeCheckResult {
+  valid: boolean
+  errors: IThresholdValidationError[]
+}
+
+export interface IThresholdConflictInfo {
+  type: 'logic' | 'extreme' | 'drift' | 'overlap'
+  message: string
+  level: 'high' | 'medium' | 'low'
+  similarConfig?: Partial<IQuoteThreshold>
+}
+
+export interface IThresholdConflictCheckResult {
+  hasConflict: boolean
+  conflicts: IThresholdConflictInfo[]
+}
+
+export interface IThresholdPeriodCheckResult {
+  valid: boolean
+  message?: string
+}
+
+export interface IThresholdHistory {
+  id: number
+  thresholdId: number
+  changeType: ChangeType
+  changeTypeLabel?: string
+  beforeSnapshot: Partial<IQuoteThreshold>
+  afterSnapshot: Partial<IQuoteThreshold>
+  conflictCheckResult?: IThresholdConflictCheckResult
+  operatorId: number
+  operatorName: string
+  remark?: string
+  createdAt: string
+}
+
+export interface IThresholdHistoryResult {
+  list: IThresholdHistory[]
+  stats: {
+    changeTypeDist: Array<{ type: ChangeType; count: number }>
+    operatorDist: Array<{ operatorId: number; operatorName: string; count: number }>
+    avgInterval: number
+  }
+}
+
+export interface IActiveThreshold {
+  thresholdType: ThresholdType
+  sector: string
+  minValue: number
+  maxValue: number
+  warningThreshold: number
+  triggerThreshold: number
+  configStatus: ConfigStatus
+  version: number
+}
+
+export interface IThresholdScenarioMatch {
+  scenarioName: string
+  matchScore: number
+  suggestion: string
+}
+
+export interface IThresholdListParams {
+  page: number
+  pageSize: number
+  scopeType?: ScopeType
+  sector?: string
+  thresholdType?: ThresholdType
+  configStatus?: ConfigStatus
+}
+
+export interface IThresholdCreateData {
+  thresholdType: ThresholdType
+  sector: string
+  scopeType: ScopeType
+  configStatus: ConfigStatus
+  minValue: number
+  maxValue: number
+  warningThreshold: number
+  triggerThreshold: number
+  remark?: string
+  effectiveStart: string
+  effectiveEnd?: string
+}
+
+export interface IThresholdUpdateData extends Partial<IThresholdCreateData> {
+  version?: number
+}
+
+export interface IBatchUpdateThresholdsParams {
+  ids: number[]
+  patch: Partial<IThresholdUpdateData>
+}

@@ -165,6 +165,13 @@
           </template>
         </el-dropdown>
 
+        <el-button
+          v-if="hasPerm('stock:threshold:manage')"
+          :icon="Setting"
+          @click="handleOpenThresholdConfig"
+        >
+          阈值配置
+        </el-button>
         <el-button type="success" :icon="Refresh" class="ripple-btn" @click="handleManualRefresh">
           刷新数据
           <span v-if="lastRefreshTime" class="refresh-time">
@@ -215,10 +222,10 @@
           <span class="name-text">{{ row.stockName }}</span>
           <span class="change-icons">
             <template v-if="row.status === 'trading'">
-              <span v-if="row.changeRate > 5" class="icon-hot">🔥</span>
-              <span v-else-if="row.changeRate > 3" class="icon-up">↑</span>
-              <span v-else-if="row.changeRate < -5" class="icon-risk">⚠️</span>
-              <span v-else-if="row.changeRate < -3" class="icon-down">↓</span>
+              <span v-if="row.changeRate >= getStockTriggerThreshold(row)" class="icon-hot">🔥</span>
+              <span v-else-if="row.changeRate >= getStockWarningThreshold(row)" class="icon-up">↑</span>
+              <span v-else-if="row.changeRate <= -getStockTriggerThreshold(row)" class="icon-risk">⚠️</span>
+              <span v-else-if="row.changeRate <= -getStockWarningThreshold(row)" class="icon-down">↓</span>
             </template>
           </span>
         </div>
@@ -594,6 +601,11 @@
       :stock-id="currentAuditStockId"
       :stock-code="currentAuditStockCode"
     />
+
+    <ThresholdListPage
+      v-model:visible="thresholdListVisible"
+      @refresh="fetchData"
+    />
   </div>
 </template>
 
@@ -614,6 +626,7 @@ import {
   CaretBottom,
   Upload,
   Tickets,
+  Setting,
 } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import { usePermission } from '@/hooks/usePermission'
@@ -630,15 +643,18 @@ import {
 import { HOT_RISE_THRESHOLD, RISK_FALL_THRESHOLD } from '@/enums'
 import { formatMoney, formatVolume, formatMarketCap, formatChangeRate } from '@/utils/format'
 import * as stockApi from '@/api/stockQuote'
+import * as thresholdApi from '@/api/threshold'
 import QuoteEntryDialog from './QuoteEntryDialog.vue'
 import QuoteImportDialog from './QuoteImportDialog.vue'
 import QuoteAuditTrailDialog from './QuoteAuditTrailDialog.vue'
+import ThresholdListPage from './ThresholdListPage.vue'
 import type {
   IStockQuote,
   IPaginatedData,
   ITradingSession,
   IDataSourceStatus,
   IStockValidation,
+  IActiveThreshold,
 } from '@/types/api'
 import type { ITableColumn } from '@/types/components'
 
@@ -659,6 +675,9 @@ const codeValidation = reactive<IStockValidation>({ valid: true, format: '', mar
 
 const quoteEntryVisible = ref(false)
 const quoteImportVisible = ref(false)
+
+const thresholdListVisible = ref(false)
+const activeThresholds = ref<IActiveThreshold[]>([])
 
 const auditTrailVisible = ref(false)
 const currentAuditStockId = ref<number | null>(null)
@@ -821,16 +840,38 @@ const volumeRanking = computed(() =>
     .slice(0, 10),
 )
 
+function getStockWarningThreshold(stock: IStockQuote): number {
+  const sectorThreshold = activeThresholds.value.find(
+    t => t.thresholdType === 'change_rate' && t.sector === stock.sector,
+  )
+  if (sectorThreshold) return sectorThreshold.warningThreshold
+  const globalThreshold = activeThresholds.value.find(
+    t => t.thresholdType === 'change_rate' && !t.sector,
+  )
+  return globalThreshold ? globalThreshold.warningThreshold : HOT_RISE_THRESHOLD
+}
+
+function getStockTriggerThreshold(stock: IStockQuote): number {
+  const sectorThreshold = activeThresholds.value.find(
+    t => t.thresholdType === 'change_rate' && t.sector === stock.sector,
+  )
+  if (sectorThreshold) return sectorThreshold.triggerThreshold
+  const globalThreshold = activeThresholds.value.find(
+    t => t.thresholdType === 'change_rate' && !t.sector,
+  )
+  return globalThreshold ? globalThreshold.triggerThreshold : HOT_RISE_THRESHOLD
+}
+
 const hotRanking = computed(() =>
   [...allStockData.value]
-    .filter(s => s.status === 'trading' && s.changeRate >= HOT_RISE_THRESHOLD)
+    .filter(s => s.status === 'trading' && s.changeRate >= getStockWarningThreshold(s))
     .sort((a, b) => b.changeRate - a.changeRate)
     .slice(0, 10),
 )
 
 const riskRanking = computed(() =>
   [...allStockData.value]
-    .filter(s => s.status === 'trading' && s.changeRate <= RISK_FALL_THRESHOLD)
+    .filter(s => s.status === 'trading' && s.changeRate <= -getStockWarningThreshold(s))
     .sort((a, b) => a.changeRate - b.changeRate)
     .slice(0, 10),
 )
@@ -887,9 +928,13 @@ function tableRowClassName({ row }: { row: IStockQuote }): string {
 
 function markHotAndRisk(stocks: IStockQuote[]): IStockQuote[] {
   return stocks.map(stock => {
-    const isHot = stock.changeRate >= HOT_RISE_THRESHOLD
-    const isRisk = stock.changeRate <= RISK_FALL_THRESHOLD
-    return { ...stock, isHot, isRisk }
+    const warningThreshold = getStockWarningThreshold(stock)
+    const triggerThreshold = getStockTriggerThreshold(stock)
+    const isHot = stock.changeRate >= triggerThreshold
+    const isRisk = stock.changeRate <= -triggerThreshold
+    const isWarningHot = !isHot && stock.changeRate >= warningThreshold
+    const isWarningRisk = !isRisk && stock.changeRate <= -warningThreshold
+    return { ...stock, isHot: isHot || isWarningHot, isRisk: isRisk || isWarningRisk }
   })
 }
 
@@ -945,9 +990,24 @@ async function fetchDataSourceStatus() {
   }
 }
 
+async function fetchActiveThresholds() {
+  try {
+    const res = await thresholdApi.getActiveThresholds()
+    activeThresholds.value = res.data || []
+  } catch (error) {
+    console.error('获取生效阈值失败:', error)
+    activeThresholds.value = []
+  }
+}
+
+function handleOpenThresholdConfig() {
+  thresholdListVisible.value = true
+}
+
 async function fetchData() {
   loading.value = true
   try {
+    await fetchActiveThresholds()
     const params = {
       page: pagination.page,
       pageSize: pagination.pageSize,
@@ -978,6 +1038,7 @@ async function fetchData() {
 async function pollingRefresh() {
   pollingLoading.value = true
   try {
+    await fetchActiveThresholds()
     const params = {
       page: pagination.page,
       pageSize: pagination.pageSize,

@@ -15,6 +15,8 @@ import Trade from './Trade';
 import CustomerHolding from './CustomerHolding';
 import RiskAlert from './RiskAlert';
 import OperationLog from './OperationLog';
+import QuoteThreshold from './QuoteThreshold';
+import QuoteThresholdHistory from './QuoteThresholdHistory';
 
 const db = {
   sequelize,
@@ -34,6 +36,8 @@ const db = {
   CustomerHolding,
   RiskAlert,
   OperationLog,
+  QuoteThreshold,
+  QuoteThresholdHistory,
 };
 
 const setupAssociations = () => {
@@ -41,6 +45,8 @@ const setupAssociations = () => {
   Role.belongsToMany(User, { through: UserRole, foreignKey: 'role_id', otherKey: 'user_id', as: 'users' });
   Role.belongsToMany(Permission, { through: RolePermission, foreignKey: 'role_id', otherKey: 'perm_id', as: 'permissions' });
   Permission.belongsToMany(Role, { through: RolePermission, foreignKey: 'perm_id', otherKey: 'role_id', as: 'roles' });
+  QuoteThreshold.hasMany(QuoteThresholdHistory, { foreignKey: 'threshold_id', as: 'history' });
+  QuoteThresholdHistory.belongsTo(QuoteThreshold, { foreignKey: 'threshold_id', as: 'threshold' });
 };
 
 setupAssociations();
