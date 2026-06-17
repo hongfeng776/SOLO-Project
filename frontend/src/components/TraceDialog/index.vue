@@ -406,7 +406,10 @@
             </div>
           </div>
           <el-empty v-else-if="!billingTraceLoading" description="暂无计费溯源数据" />
-          <el-loading v-else text="加载计费溯源数据中..." />
+          <div v-else class="loading-container">
+            <el-spinner size="32" />
+            <span class="loading-text">加载计费溯源数据中...</span>
+          </div>
         </el-tab-pane>
         <el-tab-pane label="售后溯源" name="after-sale">
           <div v-if="afterSaleTraceData" class="after-sale-trace">
@@ -660,11 +663,17 @@
             </div>
           </div>
           <el-empty v-else-if="!afterSaleTraceLoading" description="暂无售后溯源数据" :image-size="60" />
-          <el-loading v-else text="加载售后溯源数据中..." />
+          <div v-else class="loading-container">
+            <el-spinner size="32" />
+            <span class="loading-text">加载售后溯源数据中...</span>
+          </div>
         </el-tab-pane>
       </el-tabs>
     <el-empty v-else-if="!loading" description="请输入订单号查询溯源信息" />
-    <el-loading v-else text="加载中..." />
+    <div v-else class="loading-container">
+      <el-spinner size="40" />
+      <span class="loading-text">加载中...</span>
+    </div>
   </el-dialog>
 
   <el-dialog
@@ -1281,6 +1290,20 @@ const handleShowReport = () => {
 
 .ml-8 {
   margin-left: 8px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+  color: #909399;
+}
+
+.loading-text {
+  font-size: 14px;
 }
 
 .after-sale-trace {
