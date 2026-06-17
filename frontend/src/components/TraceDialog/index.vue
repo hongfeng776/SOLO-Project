@@ -408,6 +408,260 @@
           <el-empty v-else-if="!billingTraceLoading" description="暂无计费溯源数据" />
           <el-loading v-else text="加载计费溯源数据中..." />
         </el-tab-pane>
+        <el-tab-pane label="售后溯源" name="after-sale">
+          <div v-if="afterSaleTraceData" class="after-sale-trace">
+            <div v-if="afterSaleTraceData.ticket.hasException === 1" class="exception-alert">
+              <el-alert
+                type="error"
+                :closable="false"
+                show-icon
+                class="mb-16"
+              >
+                <template #title>
+                  <el-icon><Warning /></el-icon>
+                  该工单存在异常：{{ afterSaleTraceData.ticket.exceptionType }}
+                </template>
+                <div>{{ afterSaleTraceData.ticket.exceptionDetail }}</div>
+              </el-alert>
+            </div>
+
+            <div class="trace-header">
+              <div class="trace-title-section">
+                <h3>工单基本信息</h3>
+                <div class="ticket-tags">
+                  <el-tag
+                    v-if="afterSaleTraceData.ticket.isDuplicate === 1"
+                    type="warning"
+                    effect="dark"
+                    size="small"
+                  >
+                    <el-icon><Warning /></el-icon>
+                    重复提交，关联工单：#{{ afterSaleTraceData.ticket.duplicateTicketId }}
+                  </el-tag>
+                  <el-tag
+                    :color="DisputeTypeColorMap[afterSaleTraceData.ticket.disputeType]"
+                    effect="dark"
+                    size="small"
+                  >
+                    {{ DisputeTypeMap[afterSaleTraceData.ticket.disputeType] }}
+                  </el-tag>
+                  <el-tag
+                    :color="TicketStatusColorMap[afterSaleTraceData.ticket.status]"
+                    effect="dark"
+                    size="small"
+                  >
+                    {{ TicketStatusMap[afterSaleTraceData.ticket.status] }}
+                  </el-tag>
+                  <el-tag
+                    v-if="afterSaleTraceData.ticket.reviewStep"
+                    type="info"
+                    size="small"
+                  >
+                    {{ ReviewStepMap[afterSaleTraceData.ticket.reviewStep] }}
+                  </el-tag>
+                </div>
+              </div>
+              <div class="compliance-score">
+                <el-progress
+                  type="dashboard"
+                  :percentage="afterSaleTraceData.validation.score"
+                  :color="afterSaleTraceData.validation.score >= 80 ? '#67c23a' : afterSaleTraceData.validation.score >= 60 ? '#e6a23c' : '#f56c6c'"
+                  :width="100"
+                />
+                <div class="score-label">合规得分</div>
+              </div>
+            </div>
+
+            <el-descriptions :column="2" border class="mb-16">
+              <el-descriptions-item label="工单号">{{ afterSaleTraceData.ticket.ticketNo }}</el-descriptions-item>
+              <el-descriptions-item label="关联订单号">{{ afterSaleTraceData.ticket.orderNo }}</el-descriptions-item>
+              <el-descriptions-item label="乘客姓名">{{ afterSaleTraceData.ticket.passengerName }}</el-descriptions-item>
+              <el-descriptions-item label="联系电话">{{ formatPhone(afterSaleTraceData.ticket.passengerPhone) }}</el-descriptions-item>
+              <el-descriptions-item label="申请退款金额">
+                <span v-if="afterSaleTraceData.ticket.refundAmount > 0">¥{{ afterSaleTraceData.ticket.refundAmount.toFixed(2) }}</span>
+                <span v-else>-</span>
+              </el-descriptions-item>
+              <el-descriptions-item label="实际退款金额">
+                <span v-if="afterSaleTraceData.ticket.actualRefundAmount > 0">
+                  ¥{{ afterSaleTraceData.ticket.actualRefundAmount.toFixed(2) }}
+                  <el-tag
+                    v-if="afterSaleTraceData.ticket.actualRefundAmount > afterSaleTraceData.ticket.refundAmount * 1.5"
+                    type="danger"
+                    size="small"
+                    effect="dark"
+                    class="ml-8"
+                  >
+                    <el-icon><Warning /></el-icon>
+                    超申请金额150%
+                  </el-tag>
+                </span>
+                <span v-else>-</span>
+              </el-descriptions-item>
+              <el-descriptions-item label="问题描述" :span="2">
+                <el-tooltip :content="afterSaleTraceData.ticket.content" placement="top" :show-after="500">
+                  <span class="text-ellipsis" style="display: block; max-width: 500px;">
+                    {{ afterSaleTraceData.ticket.content }}
+                  </span>
+                </el-tooltip>
+              </el-descriptions-item>
+              <el-descriptions-item label="处理结果" :span="2">
+                <el-tooltip :content="afterSaleTraceData.ticket.handleResult" placement="top" :show-after="500">
+                  <span class="text-ellipsis" style="display: block; max-width: 500px;">
+                    {{ afterSaleTraceData.ticket.handleResult || '-' }}
+                  </span>
+                </el-tooltip>
+              </el-descriptions-item>
+              <el-descriptions-item label="驳回原因" :span="2">
+                <el-tooltip :content="afterSaleTraceData.ticket.rejectReason" placement="top" :show-after="500">
+                  <span class="text-ellipsis" style="display: block; max-width: 500px;">
+                    {{ afterSaleTraceData.ticket.rejectReason || '-' }}
+                  </span>
+                </el-tooltip>
+              </el-descriptions-item>
+              <el-descriptions-item label="创建时间">{{ formatDate(afterSaleTraceData.ticket.createTime) }}</el-descriptions-item>
+              <el-descriptions-item label="处理时间">
+                {{ afterSaleTraceData.ticket.handleTime ? formatDate(afterSaleTraceData.ticket.handleTime) : '-' }}
+              </el-descriptions-item>
+            </el-descriptions>
+
+            <el-divider>合规校验结果</el-divider>
+            <div class="validation-result mb-16">
+              <el-row :gutter="16">
+                <el-col :span="8">
+                  <div class="validation-card pass">
+                    <div class="validation-count">{{ afterSaleTraceData.validation.passItems?.length || 0 }}</div>
+                    <div class="validation-label">通过项</div>
+                  </div>
+                </el-col>
+                <el-col :span="8">
+                  <div class="validation-card warning">
+                    <div class="validation-count">{{ afterSaleTraceData.validation.warnings?.length || 0 }}</div>
+                    <div class="validation-label">警告项</div>
+                  </div>
+                </el-col>
+                <el-col :span="8">
+                  <div class="validation-card error">
+                    <div class="validation-count">{{ afterSaleTraceData.validation.exceptions?.length || 0 }}</div>
+                    <div class="validation-label">异常项</div>
+                  </div>
+                </el-col>
+              </el-row>
+              <div v-if="afterSaleTraceData.validation.exceptions?.length > 0" class="validation-details">
+                <div class="detail-title">异常详情：</div>
+                <div
+                  v-for="(item, index) in afterSaleTraceData.validation.exceptions"
+                  :key="index"
+                  class="detail-item error"
+                >
+                  <el-icon><Warning /></el-icon>
+                  <span>{{ item }}</span>
+                </div>
+              </div>
+              <div v-if="afterSaleTraceData.validation.warnings?.length > 0" class="validation-details">
+                <div class="detail-title">警告详情：</div>
+                <div
+                  v-for="(item, index) in afterSaleTraceData.validation.warnings"
+                  :key="index"
+                  class="detail-item warning"
+                >
+                  <el-icon><InfoFilled /></el-icon>
+                  <span>{{ item }}</span>
+                </div>
+              </div>
+              <div v-if="afterSaleTraceData.validation.passItems?.length > 0" class="validation-details">
+                <div class="detail-title">通过项：</div>
+                <div
+                  v-for="(item, index) in afterSaleTraceData.validation.passItems"
+                  :key="index"
+                  class="detail-item pass"
+                >
+                  <el-icon><CircleCheck /></el-icon>
+                  <span>{{ item }}</span>
+                </div>
+              </div>
+            </div>
+
+            <el-divider>风险检查</el-divider>
+            <div class="risk-list mb-16">
+              <div
+                v-for="(risk, index) in afterSaleTraceData.riskChecks"
+                :key="index"
+                class="risk-item"
+                :class="risk.level"
+              >
+                <el-icon class="risk-icon">
+                  <component :is="risk.level === 'error' ? 'Warning' : risk.level === 'warning' ? 'InfoFilled' : 'CircleCheck'" />
+                </el-icon>
+                <span class="risk-message">{{ risk.message }}</span>
+                <el-tag size="small" :type="risk.level === 'error' ? 'danger' : risk.level === 'warning' ? 'warning' : 'success'">
+                  {{ risk.type }}
+                </el-tag>
+              </div>
+            </div>
+
+            <el-divider>审核流程</el-divider>
+            <el-timeline class="mb-16">
+              <el-timeline-item
+                v-for="(log, index) in afterSaleTraceData.submissionTimeline"
+                :key="index"
+                :timestamp="formatDate(log.time)"
+                placement="top"
+                :type="log.status === 3 ? 'success' : log.status === 4 ? 'danger' : log.status === 5 ? 'info' : 'primary'"
+              >
+                <el-card
+                  shadow="never"
+                  class="timeline-card"
+                  :class="{ 'has-exception': afterSaleTraceData.ticket.hasException === 1 && index === afterSaleTraceData.submissionTimeline.length - 1 }"
+                >
+                  <div class="timeline-header">
+                    <span class="timeline-operation">{{ log.operation }}</span>
+                    <span class="timeline-operator">操作人：{{ log.operator || '系统' }}</span>
+                  </div>
+                  <div v-if="log.content" class="timeline-content">
+                    <el-tooltip :content="log.content" placement="top" :show-after="500">
+                      <span class="text-ellipsis" style="display: block; max-width: 500px;">
+                        {{ log.content }}
+                      </span>
+                    </el-tooltip>
+                  </div>
+                  <div v-if="log.remark" class="timeline-remark">
+                    备注：{{ log.remark }}
+                  </div>
+                </el-card>
+              </el-timeline-item>
+            </el-timeline>
+
+            <el-divider v-if="afterSaleTraceData.ticket.evidences?.length > 0">凭证信息</el-divider>
+            <div v-if="afterSaleTraceData.ticket.evidences?.length > 0" class="evidence-list mb-16">
+              <el-image
+                v-for="(evidence, index) in afterSaleTraceData.ticket.evidences"
+                :key="index"
+                :src="evidence.url"
+                :preview-src-list="afterSaleTraceData.ticket.evidences?.map(e => e.url) || []"
+                :initial-index="index"
+                fit="cover"
+                class="evidence-image"
+              />
+            </div>
+
+            <el-divider v-if="afterSaleTraceData.similarTickets?.length > 0">相似工单</el-divider>
+            <div v-if="afterSaleTraceData.similarTickets?.length > 0" class="similar-tickets">
+              <div
+                v-for="ticket in afterSaleTraceData.similarTickets"
+                :key="ticket.id"
+                class="similar-ticket-item"
+              >
+                <span class="ticket-no">{{ ticket.ticketNo }}</span>
+                <el-tag :color="TicketStatusColorMap[ticket.status]" effect="dark" size="small">
+                  {{ TicketStatusMap[ticket.status] }}
+                </el-tag>
+                <span class="ticket-time">{{ formatDate(ticket.createTime) }}</span>
+              </div>
+            </div>
+          </div>
+          <el-empty v-else-if="!afterSaleTraceLoading" description="暂无售后溯源数据" :image-size="60" />
+          <el-loading v-else text="加载售后溯源数据中..." />
+        </el-tab-pane>
       </el-tabs>
     <el-empty v-else-if="!loading" description="请输入订单号查询溯源信息" />
     <el-loading v-else text="加载中..." />
@@ -448,19 +702,30 @@ import {
 import StatusTag from '@/components/StatusTag/index.vue'
 import { getOrderTraceApi } from '@/api/order'
 import { getBillingTraceApi } from '@/api/pricing'
+import { getTicketTraceApi } from '@/api/after-sale'
 import { OrderStatusMap, OrderStatusColorMap } from '@/enums/order'
 import { RuleTypeMap } from '@/enums/pricing'
+import {
+  DisputeTypeMap,
+  DisputeTypeColorMap,
+  TicketStatusMap,
+  TicketStatusColorMap,
+  ReviewStepMap
+} from '@/enums/after-sale'
 import { formatDate, formatPhone } from '@/utils/format'
 import type { OrderTraceData } from '@/types/order'
 import type { BillingTraceData, BillingItem } from '@/types/pricing'
+import type { TicketTraceData } from '@/types/after-sale'
 
 interface Props {
   modelValue: boolean
   orderNo?: string
+  ticketId?: number | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  orderNo: ''
+  orderNo: '',
+  ticketId: null
 })
 
 const emit = defineEmits<{
@@ -488,17 +753,26 @@ const loading = ref(false)
 const traceData = ref<OrderTraceData | null>(null)
 const billingTraceData = ref<BillingTraceData | null>(null)
 const billingTraceLoading = ref(false)
+const afterSaleTraceData = ref<TicketTraceData | null>(null)
+const afterSaleTraceLoading = ref(false)
 const reportDialogVisible = ref(false)
 const reportContent = ref('')
 
 watch(
   () => props.modelValue,
   (val) => {
-    if (val && props.orderNo) {
-      searchOrderNo.value = props.orderNo
-      handleSearch()
-    } else if (!val) {
+    if (val) {
+      if (props.ticketId) {
+        activeTab.value = 'after-sale'
+        loadAfterSaleTrace()
+      } else if (props.orderNo) {
+        searchOrderNo.value = props.orderNo
+        handleSearch()
+      }
+    } else {
       traceData.value = null
+      billingTraceData.value = null
+      afterSaleTraceData.value = null
       activeTab.value = 'order'
     }
   }
@@ -510,6 +784,16 @@ watch(
     if (val && props.modelValue) {
       searchOrderNo.value = val
       handleSearch()
+    }
+  }
+)
+
+watch(
+  () => props.ticketId,
+  (val) => {
+    if (val && props.modelValue) {
+      activeTab.value = 'after-sale'
+      loadAfterSaleTrace()
     }
   }
 )
@@ -545,6 +829,9 @@ watch(
     if (val === 'billing' && !billingTraceData.value && searchOrderNo.value) {
       await loadBillingTrace()
     }
+    if (val === 'after-sale' && !afterSaleTraceData.value && (props.ticketId || searchOrderNo.value)) {
+      await loadAfterSaleTrace()
+    }
   }
 )
 
@@ -558,6 +845,22 @@ const loadBillingTrace = async () => {
     ElMessage.error(error.message || '加载计费溯源数据失败')
   } finally {
     billingTraceLoading.value = false
+  }
+}
+
+const loadAfterSaleTrace = async () => {
+  const ticketId = props.ticketId
+  if (!ticketId) return
+  
+  afterSaleTraceLoading.value = true
+  afterSaleTraceData.value = null
+  try {
+    const res = await getTicketTraceApi(ticketId)
+    afterSaleTraceData.value = res.data
+  } catch (error: any) {
+    ElMessage.error(error.message || '加载售后溯源数据失败')
+  } finally {
+    afterSaleTraceLoading.value = false
   }
 }
 
@@ -963,6 +1266,267 @@ const handleShowReport = () => {
     line-height: 1.6;
     white-space: pre-wrap;
     word-break: break-all;
+  }
+}
+
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mb-16 {
+  margin-bottom: 16px;
+}
+
+.ml-8 {
+  margin-left: 8px;
+}
+
+.after-sale-trace {
+  .trace-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+
+    .trace-title-section {
+      flex: 1;
+
+      h3 {
+        margin: 0 0 12px 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #303133;
+      }
+
+      .ticket-tags {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+    }
+
+    .compliance-score {
+      text-align: center;
+
+      .score-label {
+        font-size: 13px;
+        color: #606266;
+        margin-top: 8px;
+      }
+    }
+  }
+
+  .validation-result {
+    .validation-card {
+      text-align: center;
+      padding: 20px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+
+      &.pass {
+        background: rgba(103, 194, 58, 0.1);
+
+        .validation-count {
+          color: #67c23a;
+        }
+      }
+
+      &.warning {
+        background: rgba(230, 162, 60, 0.1);
+
+        .validation-count {
+          color: #e6a23c;
+        }
+      }
+
+      &.error {
+        background: rgba(245, 108, 108, 0.1);
+
+        .validation-count {
+          color: #f56c6c;
+        }
+      }
+
+      .validation-count {
+        font-size: 32px;
+        font-weight: bold;
+        margin-bottom: 8px;
+      }
+
+      .validation-label {
+        font-size: 13px;
+        color: #606266;
+      }
+    }
+
+    .validation-details {
+      margin-top: 16px;
+
+      .detail-title {
+        font-weight: 500;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 4px;
+        margin-bottom: 4px;
+
+        &.error {
+          background: rgba(245, 108, 108, 0.05);
+          color: #f56c6c;
+        }
+
+        &.warning {
+          background: rgba(230, 162, 60, 0.05);
+          color: #e6a23c;
+        }
+
+        &.pass {
+          background: rgba(103, 194, 58, 0.05);
+          color: #67c23a;
+        }
+      }
+    }
+  }
+
+  .risk-list {
+    .risk-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      transition: all 0.3s ease;
+
+      &.error {
+        background: rgba(245, 108, 108, 0.1);
+        border-left: 4px solid #f56c6c;
+
+        .risk-icon {
+          color: #f56c6c;
+        }
+      }
+
+      &.warning {
+        background: rgba(230, 162, 60, 0.1);
+        border-left: 4px solid #e6a23c;
+
+        .risk-icon {
+          color: #e6a23c;
+        }
+      }
+
+      &.success {
+        background: rgba(103, 194, 58, 0.1);
+        border-left: 4px solid #67c23a;
+
+        .risk-icon {
+          color: #67c23a;
+        }
+      }
+
+      .risk-icon {
+        font-size: 20px;
+      }
+
+      .risk-message {
+        flex: 1;
+        font-size: 14px;
+        color: #303133;
+      }
+    }
+  }
+
+  .timeline-card {
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+
+    &.has-exception {
+      background: rgba(245, 108, 108, 0.1) !important;
+      border-left: 4px solid #f56c6c;
+    }
+
+    .timeline-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+
+      .timeline-operation {
+        font-weight: 500;
+        color: #303133;
+      }
+
+      .timeline-operator {
+        font-size: 12px;
+        color: #909399;
+      }
+    }
+
+    .timeline-content,
+    .timeline-remark {
+      font-size: 13px;
+      color: #606266;
+      margin-bottom: 4px;
+    }
+  }
+
+  .evidence-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .evidence-image {
+      width: 120px;
+      height: 120px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
+  }
+
+  .similar-tickets {
+    .similar-ticket-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: #f5f7fa;
+      border-radius: 8px;
+      margin-bottom: 8px;
+
+      .ticket-no {
+        font-weight: 500;
+        color: #409eff;
+        min-width: 150px;
+      }
+
+      .ticket-time {
+        margin-left: auto;
+        font-size: 12px;
+        color: #909399;
+      }
+    }
+  }
+
+  .exception-alert {
+    :deep(.el-alert__title) {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
   }
 }
 </style>

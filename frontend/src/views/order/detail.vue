@@ -59,12 +59,23 @@
           <el-descriptions :column="2" border>
             <el-descriptions-item label="订单号">{{ orderInfo.orderNo }}</el-descriptions-item>
             <el-descriptions-item label="订单状态">
-              <div :key="orderInfo.status" class="status-zoom-in">
-                <StatusTag
-                  :status="orderInfo.status"
-                  :status-map="OrderStatusMap"
-                  :color-map="OrderStatusColorMap"
-                />
+              <div class="status-with-tags">
+                <div :key="orderInfo.status" class="status-zoom-in">
+                  <StatusTag
+                    :status="orderInfo.status"
+                    :status-map="OrderStatusMap"
+                    :color-map="OrderStatusColorMap"
+                  />
+                </div>
+                <el-tag
+                  v-if="afterSaleTicketCount > 0"
+                  type="danger"
+                  size="small"
+                  effect="dark"
+                  class="after-sale-tag"
+                >
+                  有售后
+                </el-tag>
               </div>
             </el-descriptions-item>
             <el-descriptions-item label="运力类型">
@@ -338,6 +349,97 @@
           <el-empty v-else description="加载计费信息中..." :image-size="60" />
         </el-card>
 
+        <el-card class="info-card after-sale-card">
+          <template #header>
+            <span class="card-title">售后纠纷</span>
+            <div class="after-sale-actions">
+              <el-button
+                v-if="hasActiveTicket"
+                type="warning"
+                size="small"
+                @click="handleViewExistingTicket"
+              >
+                <el-icon><Warning /></el-icon>
+                已有售后工单
+              </el-button>
+              <el-button
+                v-else
+                type="primary"
+                size="small"
+                :disabled="!canInitiateAfterSale"
+                @click="handleInitiateAfterSale"
+              >
+                <el-icon><Plus /></el-icon>
+                发起售后
+              </el-button>
+            </div>
+          </template>
+          <el-table :data="afterSaleTickets" border v-if="afterSaleTickets.length > 0">
+            <el-table-column prop="ticketNo" label="工单号" width="180" />
+            <el-table-column label="纠纷类型" width="120">
+              <template #default="{ row }">
+                <el-tag :color="DisputeTypeColorMap[row.disputeType]" effect="dark" size="small">
+                  {{ DisputeTypeMap[row.disputeType] }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" width="100">
+              <template #default="{ row }">
+                <el-tag :color="TicketStatusColorMap[row.status]" effect="dark" size="small">
+                  {{ TicketStatusMap[row.status] }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="content" label="问题描述" show-overflow-tooltip>
+              <template #default="{ row }">
+                <el-tooltip :content="row.content" placement="top" :show-after="500">
+                  <span class="text-ellipsis">{{ row.content }}</span>
+                </el-tooltip>
+              </template>
+            </el-table-column>
+            <el-table-column prop="refundAmount" label="申请退款" width="100">
+              <template #default="{ row }">
+                <span v-if="row.refundAmount > 0">¥{{ row.refundAmount.toFixed(2) }}</span>
+                <span v-else>-</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="createTime" label="创建时间" width="170">
+              <template #default="{ row }">{{ formatDate(row.createTime) }}</template>
+            </el-table-column>
+            <el-table-column label="操作" width="200" fixed="right" align="center">
+              <template #default="{ row }">
+                <el-button
+                  v-if="row.status === TicketStatus.PENDING_REVIEW && canProcessTicket"
+                  type="primary"
+                  size="small"
+                  link
+                  @click="handleProcessTicket(row)"
+                >
+                  审核
+                </el-button>
+                <el-button
+                  type="primary"
+                  size="small"
+                  link
+                  @click="handleViewTicketTrace(row)"
+                >
+                  溯源
+                </el-button>
+                <el-button
+                  v-if="row.status === TicketStatus.PENDING_REVIEW || row.status === TicketStatus.REVIEWING"
+                  type="info"
+                  size="small"
+                  link
+                  @click="handleViewAuditLogs(row)"
+                >
+                  日志
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-empty v-else description="暂无售后工单" :image-size="60" />
+        </el-card>
+
         <el-card class="info-card" ref="timelineCardRef">
           <template #header>
             <span class="card-title">时间轴</span>
@@ -446,6 +548,13 @@
               <div class="phone">{{ formatPhone(orderInfo.passengerPhone) }}</div>
             </div>
           </div>
+          <el-divider v-if="passengerReputationScore !== null" />
+          <div v-if="passengerReputationScore !== null" class="reputation-info">
+            <div class="reputation-label">信誉分</div>
+            <div class="reputation-score" :class="{ 'low': passengerReputationScore < 80 }">
+              {{ passengerReputationScore }}
+            </div>
+          </div>
         </el-card>
 
         <el-card class="info-card">
@@ -469,7 +578,266 @@
       </el-col>
     </el-row>
 
-    <TraceDialog v-model="traceDialogVisible" :order-no="orderInfo.orderNo" />
+    <transition name="slideDownFade">
+      <el-dialog
+        v-model="afterSaleSubmitDialogVisible"
+        title="发起售后"
+        width="600px"
+        :close-on-click-modal="false"
+      >
+        <el-form :model="afterSaleForm" label-width="100px">
+          <el-alert
+            :title="getDisputeFlowTip()"
+            :type="afterSaleForm.disputeType ? 'info' : 'warning'"
+            :closable="false"
+            class="mb-16"
+            show-icon
+          />
+          <el-form-item
+            label="纠纷类型"
+            :class="{ 'has-error': !afterSaleForm.disputeType && submitValidationError }"
+          >
+            <el-radio-group v-model="afterSaleForm.disputeType">
+              <el-radio :value="DisputeType.FEE_DISPUTE">
+                <el-icon><Wallet /></el-icon>
+                费用争议
+              </el-radio>
+              <el-radio :value="DisputeType.SERVICE_COMPLAINT">
+                <el-icon><Warning /></el-icon>
+                服务投诉
+              </el-radio>
+              <el-radio :value="DisputeType.LOST_ITEM">
+                <el-icon><Goods /></el-icon>
+                物品遗失
+              </el-radio>
+            </el-radio-group>
+            <div v-if="!afterSaleForm.disputeType && submitValidationError" class="field-error">
+              <el-icon><Warning /></el-icon>
+              <span>请选择纠纷类型</span>
+            </div>
+          </el-form-item>
+          <el-form-item
+            label="问题描述"
+            :class="{ 'has-error': afterSaleForm.disputeType && !afterSaleForm.content.trim() && submitValidationError }"
+          >
+            <el-input
+              v-model="afterSaleForm.content"
+              type="textarea"
+              :rows="5"
+              placeholder="请详细描述您遇到的问题..."
+              @input="handleSubmitValidation"
+            />
+            <div v-if="afterSaleForm.disputeType && !afterSaleForm.content.trim() && submitValidationError" class="field-error">
+              <el-icon><Warning /></el-icon>
+              <span>请填写问题描述</span>
+            </div>
+          </el-form-item>
+          <el-form-item
+            label="凭证上传"
+            :class="{ 'has-error': afterSaleForm.disputeType === DisputeType.FEE_DISPUTE && afterSaleForm.evidences.length === 0 && submitValidationError }"
+          >
+            <el-upload
+              v-model:file-list="afterSaleFileList"
+              :action="uploadUrl"
+              :limit="9"
+              list-type="picture-card"
+              :on-success="handleUploadSuccess"
+              :on-remove="handleUploadRemove"
+              :before-upload="handleBeforeUpload"
+              accept="image/*"
+            >
+              <el-icon><Plus /></el-icon>
+            </el-upload>
+            <div v-if="afterSaleForm.disputeType === DisputeType.FEE_DISPUTE && afterSaleForm.evidences.length === 0 && submitValidationError" class="field-error">
+              <el-icon><Warning /></el-icon>
+              <span>费用争议必须至少上传1张凭证</span>
+            </div>
+            <div v-if="afterSaleForm.disputeType === DisputeType.FEE_DISPUTE" class="form-tip">
+              费用争议需提供凭证，最多上传9张图片
+            </div>
+          </el-form-item>
+          <el-form-item
+            v-if="afterSaleForm.disputeType === DisputeType.FEE_DISPUTE"
+            label="退款金额"
+          >
+            <el-input-number
+              v-model="afterSaleForm.refundAmount"
+              :min="0"
+              :max="orderInfo.actualPrice || orderInfo.estimatedPrice || 500"
+              :precision="2"
+              :step="1"
+              style="width: 100%"
+            />
+            <div class="form-tip">
+              最高可申请退款 ¥{{ (orderInfo.actualPrice || orderInfo.estimatedPrice || 500).toFixed(2) }}
+            </div>
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="afterSaleSubmitDialogVisible = false">取消</el-button>
+          <el-button
+            type="primary"
+            :disabled="!canSubmitAfterSale"
+            :loading="afterSaleSubmitting"
+            @click="handleSubmitAfterSale"
+          >
+            提交售后
+          </el-button>
+        </template>
+      </el-dialog>
+    </transition>
+
+    <transition name="slideDownFade">
+      <el-dialog
+        v-model="afterSaleProcessDialogVisible"
+        title="处理售后工单"
+        width="560px"
+        :close-on-click-modal="false"
+      >
+        <el-descriptions :column="2" border class="mb-16" v-if="currentProcessTicket">
+          <el-descriptions-item label="工单号">{{ currentProcessTicket.ticketNo }}</el-descriptions-item>
+          <el-descriptions-item label="纠纷类型">
+            <el-tag :color="DisputeTypeColorMap[currentProcessTicket.disputeType]" effect="dark" size="small">
+              {{ DisputeTypeMap[currentProcessTicket.disputeType] }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="申请退款" :span="2">
+            ¥{{ currentProcessTicket.refundAmount?.toFixed(2) || '0.00' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="问题描述" :span="2">
+            <el-tooltip :content="currentProcessTicket.content" placement="top" :show-after="500">
+              <span class="text-ellipsis" style="display: block; max-width: 400px;">
+                {{ currentProcessTicket.content }}
+              </span>
+            </el-tooltip>
+          </el-descriptions-item>
+        </el-descriptions>
+        <el-form :model="processForm" label-width="120px">
+          <el-form-item label="处理结果" required>
+            <el-input
+              v-model="processForm.handleResult"
+              type="textarea"
+              :rows="4"
+              placeholder="请填写处理结果..."
+            />
+          </el-form-item>
+          <el-form-item
+            v-if="currentProcessTicket?.disputeType === DisputeType.FEE_DISPUTE"
+            label="实际退款金额"
+            required
+          >
+            <el-input-number
+              v-model="processForm.actualRefundAmount"
+              :min="0"
+              :max="(currentProcessTicket?.refundAmount || 0) * REFUND_OVER_LIMIT_RATIO"
+              :precision="2"
+              :step="1"
+              style="width: 100%"
+            />
+            <div v-if="processForm.actualRefundAmount > (currentProcessTicket?.refundAmount || 0)" class="field-error">
+              <el-icon><Warning /></el-icon>
+              <span>退款金额超过申请金额，将标记异常</span>
+            </div>
+          </el-form-item>
+          <el-form-item
+            v-if="processAction === 'reject'"
+            label="驳回原因"
+            required
+          >
+            <el-input
+              v-model="processForm.rejectReason"
+              type="textarea"
+              :rows="3"
+              placeholder="请填写驳回原因..."
+            />
+          </el-form-item>
+          <el-form-item label="备注">
+            <el-input
+              v-model="processForm.remark"
+              type="textarea"
+              :rows="2"
+              placeholder="选填"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="afterSaleProcessDialogVisible = false">取消</el-button>
+          <el-button type="danger" :loading="afterSaleProcessing" @click="handleRejectTicket">
+            驳回
+          </el-button>
+          <el-button type="success" :loading="afterSaleProcessing" @click="handleResolveTicket">
+            解决
+          </el-button>
+        </template>
+      </el-dialog>
+    </transition>
+
+    <transition name="slideDownFade">
+      <el-dialog
+        v-model="auditLogsDialogVisible"
+        title="审核日志"
+        width="700px"
+      >
+        <el-timeline v-if="auditLogs.length > 0">
+          <el-timeline-item
+            v-for="log in auditLogs"
+            :key="log.id"
+            :timestamp="formatDate(log.createTime)"
+            placement="top"
+            :type="log.hasException === 1 ? 'danger' : 'primary'"
+          >
+            <el-card
+              shadow="never"
+              class="audit-log-card"
+              :class="{ 'has-exception': log.hasException === 1 }"
+            >
+              <div class="log-header">
+                <el-tag
+                  :color="OperationTypeColorMap[log.operationType] || '#909399'"
+                  effect="dark"
+                  size="small"
+                >
+                  {{ OperationTypeMap[log.operationType] || log.operationType }}
+                </el-tag>
+                <span class="log-operator">
+                  操作人：{{ log.operatorName || '系统' }}
+                  <span v-if="log.operatorRole">({{ log.operatorRole }})</span>
+                </span>
+                <span v-if="log.operatorIP" class="log-ip">IP：{{ log.operatorIP }}</span>
+              </div>
+              <div v-if="log.oldStatus !== null && log.newStatus !== null" class="log-status">
+                <StatusTag :status="log.oldStatus" :status-map="TicketStatusMap" :color-map="TicketStatusColorMap" />
+                <el-icon class="arrow"><ArrowRight /></el-icon>
+                <StatusTag :status="log.newStatus" :status-map="TicketStatusMap" :color-map="TicketStatusColorMap" />
+              </div>
+              <div v-if="log.content" class="log-content">
+                <el-tooltip :content="log.content" placement="top" :show-after="500">
+                  <span class="text-ellipsis" style="display: block; max-width: 500px;">
+                    {{ log.content }}
+                  </span>
+                </el-tooltip>
+              </div>
+              <div v-if="log.rejectReason" class="log-reject">
+                驳回原因：{{ log.rejectReason }}
+              </div>
+              <div v-if="log.refundAmount > 0" class="log-refund">
+                退款金额：¥{{ log.refundAmount.toFixed(2) }}
+              </div>
+              <div v-if="log.reputationImpact !== 0" class="log-reputation">
+                信誉分：{{ log.reputationImpact > 0 ? '+' : '' }}{{ log.reputationImpact }}
+              </div>
+              <div v-if="log.hasException === 1" class="log-exception">
+                <el-icon><Warning /></el-icon>
+                <span>{{ log.exceptionType }}：{{ log.exceptionDetail }}</span>
+              </div>
+            </el-card>
+          </el-timeline-item>
+        </el-timeline>
+        <el-empty v-else description="暂无审核日志" :image-size="60" />
+      </el-dialog>
+    </transition>
+
+    <TraceDialog v-model="traceDialogVisible" :order-no="orderInfo.orderNo" :ticket-id="currentTraceTicketId" />
 
     <el-dialog v-model="prerequisiteDialogVisible" title="流转条件校验" width="450px">
       <el-alert type="warning" :closable="false">
@@ -657,8 +1025,36 @@ import {
   Refresh,
   Document,
   Wallet,
-  View
+  View,
+  Plus,
+  Goods
 } from '@element-plus/icons-vue'
+import {
+  getAfterSaleListApi,
+  getSubmitPrerequisitesApi,
+  submitAfterSaleApi,
+  resolveTicketApi,
+  rejectTicketApi,
+  getTicketAuditLogsApi,
+  getReputationRecordsApi
+} from '@/api/after-sale'
+import {
+  DisputeType,
+  DisputeTypeMap,
+  DisputeTypeColorMap,
+  TicketStatus,
+  TicketStatusMap,
+  TicketStatusColorMap,
+  OperationTypeMap,
+  OperationTypeColorMap,
+  REFUND_OVER_LIMIT_RATIO,
+  MAX_EVIDENCE_COUNT
+} from '@/enums/after-sale'
+import type {
+  AfterSaleTicket,
+  TicketAuditLogItem,
+  SubmitPrerequisiteResult
+} from '@/types/after-sale'
 import StatusTag from '@/components/StatusTag/index.vue'
 import TraceDialog from '@/components/TraceDialog/index.vue'
 import { OrderStatusMap, OrderStatusColorMap, OrderStatus } from '@/enums/order'
@@ -708,6 +1104,7 @@ const userStore = useUserStore()
 const userRole = computed(() => {
   const role = userStore.userInfo?.role
   if (role === '1' || role === 1) return 1
+  if (role === '6' || role === 6) return 6
   if (role === '2' || role === 2) return 2
   return 0
 })
@@ -750,6 +1147,59 @@ const orderInfo = reactive<Order>({
 
 const statusLogs = ref<StatusLogItem[]>([])
 const traceDialogVisible = ref(false)
+
+const afterSaleTickets = ref<AfterSaleTicket[]>([])
+const afterSaleTicketCount = ref(0)
+const passengerReputationScore = ref<number | null>(null)
+const afterSaleSubmitDialogVisible = ref(false)
+const afterSaleProcessDialogVisible = ref(false)
+const auditLogsDialogVisible = ref(false)
+const afterSaleSubmitting = ref(false)
+const afterSaleProcessing = ref(false)
+const submitValidationError = ref(false)
+const uploadUrl = '/api/upload'
+const currentProcessTicket = ref<AfterSaleTicket | null>(null)
+const currentTraceTicketId = ref<number | null>(null)
+const processAction = ref<'resolve' | 'reject'>('resolve')
+const auditLogs = ref<TicketAuditLogItem[]>([])
+const prerequisitesResult = ref<SubmitPrerequisiteResult | null>(null)
+
+const afterSaleForm = reactive({
+  disputeType: null as DisputeType | null,
+  content: '',
+  refundAmount: 0,
+  evidences: [] as string[]
+})
+
+const afterSaleFileList = ref<any[]>([])
+
+const processForm = reactive({
+  handleResult: '',
+  actualRefundAmount: 0,
+  rejectReason: '',
+  remark: ''
+})
+
+const canInitiateAfterSale = computed(() => {
+  return orderInfo.status === 5
+})
+
+const hasActiveTicket = computed(() => {
+  return afterSaleTickets.value.some(
+    t => t.status === TicketStatus.PENDING_REVIEW || t.status === TicketStatus.REVIEWING
+  )
+})
+
+const canProcessTicket = computed(() => {
+  return userRole.value === 1 || userRole.value === 6 || userRole.value === 2
+})
+
+const canSubmitAfterSale = computed(() => {
+  if (!afterSaleForm.disputeType) return false
+  if (!afterSaleForm.content.trim()) return false
+  if (afterSaleForm.disputeType === DisputeType.FEE_DISPUTE && afterSaleForm.evidences.length === 0) return false
+  return true
+})
 const isEditing = ref(false)
 const editSubmitting = ref(false)
 const priceValidateResult = ref<PriceValidateResult | null>(null)
@@ -1072,6 +1522,264 @@ const handleRefund = () => {
   ElMessage.info('申请退款功能开发中')
 }
 
+const getDisputeFlowTip = () => {
+  if (!afterSaleForm.disputeType) {
+    return '请选择纠纷类型，不同类型对应不同审核流程'
+  }
+  const flowMap: Record<number, string> = {
+    [DisputeType.FEE_DISPUTE]: '费用争议 → 财务审核，终审',
+    [DisputeType.SERVICE_COMPLAINT]: '服务投诉 → 客服审核，复核',
+    [DisputeType.LOST_ITEM]: '物品遗失 → 物流审核，复核'
+  }
+  return flowMap[afterSaleForm.disputeType] || ''
+}
+
+const handleSubmitValidation = () => {
+  submitValidationError.value = false
+}
+
+const handleBeforeUpload = (file: any) => {
+  const isImage = file.type.startsWith('image/')
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件')
+    return false
+  }
+  const isLt5M = file.size / 1024 / 1024 < 5
+  if (!isLt5M) {
+    ElMessage.error('图片大小不能超过 5MB')
+    return false
+  }
+  return true
+}
+
+const handleUploadSuccess = (response: any, file: any) => {
+  if (response?.url) {
+    afterSaleForm.evidences.push(response.url)
+  } else if (file?.url) {
+    afterSaleForm.evidences.push(file.url)
+  }
+}
+
+const handleUploadRemove = (file: any) => {
+  const url = file?.url || file?.response?.url
+  const index = afterSaleForm.evidences.indexOf(url)
+  if (index > -1) {
+    afterSaleForm.evidences.splice(index, 1)
+  }
+}
+
+const loadAfterSaleTickets = async () => {
+  if (!orderInfo.id) return
+  try {
+    const res = await getAfterSaleListApi({
+      page: 1,
+      pageSize: 100,
+      orderNo: orderInfo.orderNo
+    })
+    afterSaleTickets.value = res.data.list || []
+    afterSaleTicketCount.value = afterSaleTickets.value.length
+  } catch (e: any) {
+    console.error('加载售后工单失败', e)
+  }
+}
+
+const loadReputationScore = async () => {
+  if (!orderInfo.passengerId) return
+  try {
+    const res = await getReputationRecordsApi(orderInfo.passengerId, { page: 1, pageSize: 1 })
+    const records = res.data.list || []
+    if (records.length > 0) {
+      passengerReputationScore.value = records[0].afterScore
+    }
+  } catch (e: any) {
+    console.error('加载信誉分失败', e)
+  }
+}
+
+const handleInitiateAfterSale = async () => {
+  if (!orderInfo.id || !orderInfo.passengerId) return
+  
+  try {
+    const res = await getSubmitPrerequisitesApi(orderInfo.id, orderInfo.passengerId)
+    prerequisitesResult.value = res.data
+    
+    if (!res.data.orderCompleted) {
+      ElMessage.warning('订单未完成无法发起售后')
+      return
+    }
+    if (!res.data.withinValidPeriod) {
+      ElMessage.warning('售后时效已过期（需在30天内发起）')
+      return
+    }
+    if (res.data.hasDuplicateTicket) {
+      ElMessage.warning('该订单已有进行中的售后工单')
+      return
+    }
+    
+    afterSaleForm.disputeType = null
+    afterSaleForm.content = ''
+    afterSaleForm.refundAmount = 0
+    afterSaleForm.evidences = []
+    afterSaleFileList.value = []
+    submitValidationError.value = false
+    afterSaleSubmitDialogVisible.value = true
+  } catch (error: any) {
+    ElMessage.error(error.message || '前置校验失败')
+  }
+}
+
+const handleViewExistingTicket = () => {
+  const activeTicket = afterSaleTickets.value.find(
+    t => t.status === TicketStatus.PENDING_REVIEW || t.status === TicketStatus.REVIEWING
+  )
+  if (activeTicket) {
+    handleViewTicketTrace(activeTicket)
+  }
+}
+
+const handleSubmitAfterSale = async () => {
+  submitValidationError.value = true
+  
+  if (!afterSaleForm.disputeType) {
+    ElMessage.warning('请选择纠纷类型')
+    return
+  }
+  if (!afterSaleForm.content.trim()) {
+    ElMessage.warning('请填写问题描述')
+    return
+  }
+  if (afterSaleForm.disputeType === DisputeType.FEE_DISPUTE && afterSaleForm.evidences.length === 0) {
+    ElMessage.warning('请上传凭证')
+    return
+  }
+  
+  const startTime = Date.now()
+  afterSaleSubmitting.value = true
+  
+  try {
+    await submitAfterSaleApi(orderInfo.id, {
+      disputeType: afterSaleForm.disputeType,
+      content: afterSaleForm.content,
+      refundAmount: afterSaleForm.disputeType === DisputeType.FEE_DISPUTE ? afterSaleForm.refundAmount : undefined,
+      evidences: afterSaleForm.evidences,
+      passengerId: orderInfo.passengerId,
+      passengerName: orderInfo.passengerName,
+      passengerPhone: orderInfo.passengerPhone
+    })
+    
+    ElMessage.success('售后提交成功')
+    afterSaleSubmitDialogVisible.value = false
+    loadAfterSaleTickets()
+    loadReputationScore()
+  } catch (error: any) {
+    ElMessage.error(error.message || '提交失败')
+  } finally {
+    const elapsed = Date.now() - startTime
+    const remaining = Math.max(0, 300 - elapsed)
+    setTimeout(() => {
+      afterSaleSubmitting.value = false
+    }, remaining)
+  }
+}
+
+const handleProcessTicket = (ticket: AfterSaleTicket) => {
+  if (userRole.value !== 1 && userRole.value !== 6 && userRole.value !== 2) {
+    ElMessage.warning('您没有权限处理售后工单')
+    return
+  }
+  
+  currentProcessTicket.value = ticket
+  processForm.handleResult = ''
+  processForm.actualRefundAmount = ticket.refundAmount || 0
+  processForm.rejectReason = ''
+  processForm.remark = ''
+  processAction.value = 'resolve'
+  afterSaleProcessDialogVisible.value = true
+}
+
+const handleResolveTicket = async () => {
+  if (!currentProcessTicket.value) return
+  
+  if (!processForm.handleResult.trim()) {
+    ElMessage.warning('请填写处理结果')
+    return
+  }
+  if (currentProcessTicket.value.disputeType === DisputeType.FEE_DISPUTE && processForm.actualRefundAmount < 0) {
+    ElMessage.warning('请填写实际退款金额')
+    return
+  }
+  
+  processAction.value = 'resolve'
+  afterSaleProcessing.value = true
+  
+  try {
+    const data: any = {
+      handleResult: processForm.handleResult,
+      remark: processForm.remark
+    }
+    if (currentProcessTicket.value.disputeType === DisputeType.FEE_DISPUTE) {
+      data.actualRefundAmount = processForm.actualRefundAmount
+    }
+    
+    await resolveTicketApi(currentProcessTicket.value.id, data)
+    ElMessage.success('工单已解决')
+    afterSaleProcessDialogVisible.value = false
+    loadAfterSaleTickets()
+    loadReputationScore()
+  } catch (error: any) {
+    ElMessage.error(error.message || '处理失败')
+  } finally {
+    afterSaleProcessing.value = false
+  }
+}
+
+const handleRejectTicket = async () => {
+  if (!currentProcessTicket.value) return
+  
+  if (!processForm.handleResult.trim()) {
+    ElMessage.warning('请填写处理结果')
+    return
+  }
+  if (!processForm.rejectReason.trim()) {
+    ElMessage.warning('请填写驳回原因')
+    return
+  }
+  
+  processAction.value = 'reject'
+  afterSaleProcessing.value = true
+  
+  try {
+    await rejectTicketApi(currentProcessTicket.value.id, {
+      rejectReason: processForm.rejectReason,
+      remark: processForm.remark
+    })
+    ElMessage.success('工单已驳回')
+    afterSaleProcessDialogVisible.value = false
+    loadAfterSaleTickets()
+    loadReputationScore()
+  } catch (error: any) {
+    ElMessage.error(error.message || '处理失败')
+  } finally {
+    afterSaleProcessing.value = false
+  }
+}
+
+const handleViewAuditLogs = async (ticket: AfterSaleTicket) => {
+  auditLogs.value = []
+  auditLogsDialogVisible.value = true
+  try {
+    const res = await getTicketAuditLogsApi(ticket.id, { page: 1, pageSize: 50 })
+    auditLogs.value = res.data.list || []
+  } catch (error: any) {
+    ElMessage.error(error.message || '加载审核日志失败')
+  }
+}
+
+const handleViewTicketTrace = (ticket: AfterSaleTicket) => {
+  currentTraceTicketId.value = ticket.id
+  traceDialogVisible.value = true
+}
+
 const handleTrace = () => {
   traceDialogVisible.value = true
 }
@@ -1363,7 +2071,10 @@ const loadCancelStatistics = async () => {
 }
 
 onMounted(() => {
-  loadDetail()
+  loadDetail().then(() => {
+    loadAfterSaleTickets()
+    loadReputationScore()
+  })
   loadStatusLogs()
   loadFlowDetail()
   loadCancelStatistics()
@@ -1379,6 +2090,159 @@ onMounted(() => {
   0%, 100% { transform: translateX(0); }
   20%, 60% { transform: translateX(-8px); }
   40%, 80% { transform: translateX(8px); }
+}
+
+.slideDownFade-enter-active,
+.slideDownFade-leave-active {
+  transition: all 0.3s ease;
+}
+.slideDownFade-enter-from {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+.slideDownFade-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mb-16 {
+  margin-bottom: 16px;
+}
+
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #f56c6c;
+  margin-top: 4px;
+}
+
+.form-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+.status-with-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.after-sale-tag {
+  animation: pulse 2s infinite;
+}
+
+.after-sale-actions {
+  float: right;
+}
+
+.after-sale-card {
+  .has-exception {
+    background: rgba(245, 108, 108, 0.1) !important;
+  }
+}
+
+.reputation-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+
+  .reputation-label {
+    font-size: 14px;
+    color: #606266;
+  }
+
+  .reputation-score {
+    font-size: 24px;
+    font-weight: bold;
+    color: #67c23a;
+
+    &.low {
+      color: #f56c6c;
+    }
+  }
+}
+
+.audit-log-card {
+  margin-bottom: 8px;
+  transition: all 0.3s ease;
+
+  &.has-exception {
+    background: rgba(245, 108, 108, 0.1) !important;
+    border-left: 4px solid #f56c6c;
+  }
+
+  .log-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+
+    .log-operator,
+    .log-ip {
+      font-size: 12px;
+      color: #909399;
+    }
+  }
+
+  .log-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+
+    .arrow {
+      color: #909399;
+      font-size: 12px;
+    }
+  }
+
+  .log-content,
+  .log-reject,
+  .log-refund,
+  .log-reputation {
+    font-size: 13px;
+    color: #606266;
+    margin-bottom: 4px;
+  }
+
+  .log-reject {
+    color: #f56c6c;
+  }
+
+  .log-refund {
+    color: #e6a23c;
+  }
+
+  .log-reputation {
+    color: #67c23a;
+  }
+
+  .log-exception {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #f56c6c;
+    margin-top: 8px;
+  }
+}
+
+.has-error {
+  :deep(.el-form-item__label) {
+    color: #f56c6c;
+  }
 }
 
 .order-detail {

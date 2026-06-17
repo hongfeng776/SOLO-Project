@@ -146,6 +146,22 @@
           <el-icon><Money /></el-icon>
           批量调整溢价
         </el-button>
+        <el-button
+          v-if="userRole === 1 || userRole === 6"
+          type="danger"
+          @click="handleAfterSaleBatch"
+        >
+          <el-icon><Warning /></el-icon>
+          售后批量处理
+        </el-button>
+        <el-button
+          v-if="userRole === 2"
+          type="info"
+          @click="handleAfterSaleBatchNoPermission"
+        >
+          <el-icon><Warning /></el-icon>
+          售后批量处理
+        </el-button>
         <el-dropdown
           trigger="click"
           :disabled="selectedRows.length === 0"
@@ -1005,6 +1021,184 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <transition name="slideDownFade">
+      <el-dialog
+        v-model="afterSaleBatchDialogVisible"
+        title="售后批量处理"
+        width="700px"
+        :close-on-click-modal="false"
+      >
+        <el-alert
+          v-if="userRole === 2"
+          title="您只有查看权限，无法执行批量操作"
+          type="warning"
+          :closable="false"
+          class="mb-16"
+          show-icon
+        />
+        <el-form :model="batchFilterForm" label-width="100px" class="mb-16">
+          <el-form-item label="工单类型">
+            <el-select
+              v-model="batchFilterForm.filterType"
+              placeholder="请选择工单类型"
+              clearable
+              style="width: 100%"
+            >
+              <el-option value="overdue" label="超时未处理" />
+              <el-option value="pending_review" label="待复核" />
+              <el-option value="rejected" label="已驳回" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="纠纷类型">
+            <el-select
+              v-model="batchFilterForm.disputeType"
+              placeholder="请选择纠纷类型"
+              clearable
+              style="width: 100%"
+            >
+              <el-option :value="1" label="费用争议" />
+              <el-option :value="2" label="服务投诉" />
+              <el-option :value="3" label="物品遗失" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="时间范围">
+            <el-date-picker
+              v-model="batchDateRange"
+              type="datetimerange"
+              range-separator="至"
+              start-placeholder="开始时间"
+              end-placeholder="结束时间"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              style="width: 100%"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button
+              type="primary"
+              :loading="batchPreviewLoading"
+              @click="handleBatchPreview"
+            >
+              预览
+            </el-button>
+          </el-form-item>
+        </el-form>
+
+        <el-divider v-if="batchPreviewResult" />
+
+        <div v-if="batchPreviewResult" class="batch-preview">
+          <el-row :gutter="16" class="mb-16">
+            <el-col :span="8">
+              <el-card shadow="hover" class="stat-card">
+                <div class="stat-label">符合条件</div>
+                <div class="stat-value text-success">{{ batchPreviewResult.eligibleCount }}</div>
+              </el-card>
+            </el-col>
+            <el-col :span="8">
+              <el-card shadow="hover" class="stat-card">
+                <div class="stat-label">已排除</div>
+                <div class="stat-value text-warning">{{ batchPreviewResult.excludedCount }}</div>
+              </el-card>
+            </el-col>
+            <el-col :span="8">
+              <el-card shadow="hover" class="stat-card">
+                <div class="stat-label">总计</div>
+                <div class="stat-value">{{ batchPreviewResult.total }}</div>
+              </el-card>
+            </el-col>
+          </el-row>
+
+          <el-collapse>
+            <el-collapse-item title="符合条件工单列表" :name="1">
+              <el-table :data="batchPreviewResult.eligible" border size="small" max-height="200">
+                <el-table-column prop="ticketNo" label="工单号" width="180" />
+                <el-table-column label="纠纷类型" width="100">
+                  <template #default="{ row }">
+                    <el-tag :color="DisputeTypeColorMap[row.disputeType]" effect="dark" size="small">
+                      {{ DisputeTypeMap[row.disputeType] }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="状态" width="80">
+                  <template #default="{ row }">
+                    <el-tag :color="TicketStatusColorMap[row.status]" effect="dark" size="small">
+                      {{ TicketStatusMap[row.status] }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="passengerName" label="乘客" width="80" />
+                <el-table-column prop="createTime" label="创建时间" width="170" />
+                <el-table-column label="是否超时" width="80">
+                  <template #default="{ row }">
+                    <el-tag v-if="row.isOverdue === 1" type="danger" size="small">超时</el-tag>
+                    <el-tag v-else type="success" size="small">正常</el-tag>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </el-collapse-item>
+            <el-collapse-item title="已排除工单列表" :name="2">
+              <el-table :data="batchPreviewResult.excluded" border size="small" max-height="200">
+                <el-table-column prop="ticketNo" label="工单号" width="180" />
+                <el-table-column prop="orderNo" label="订单号" width="180" />
+                <el-table-column prop="reason" label="排除原因" />
+              </el-table>
+            </el-collapse-item>
+          </el-collapse>
+
+          <el-divider />
+
+          <el-form label-width="100px">
+            <el-form-item label="操作类型">
+              <el-radio-group v-model="batchOperation">
+                <el-radio value="urge">批量催办</el-radio>
+                <el-radio value="review">批量复核</el-radio>
+                <el-radio value="close">批量关闭无效工单</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-form>
+
+          <el-progress
+            v-if="batchExecuting"
+            :percentage="batchExecuteProgress"
+            :status="batchExecuteProgressStatus"
+            class="mb-16"
+          />
+
+          <div v-if="batchExecuteResult" class="batch-result mb-16">
+            <el-alert
+              :title="`批量操作完成：成功 ${batchExecuteResult.success} 条，失败 ${batchExecuteResult.failed} 条`"
+              :type="batchExecuteResult.failed === 0 ? 'success' : 'warning'"
+              :closable="false"
+              show-icon
+            />
+            <div v-if="batchExecuteResult.failedOrders?.length > 0" class="failed-list mt-16">
+              <div class="failed-title">失败详情：</div>
+              <div
+                v-for="item in batchExecuteResult.failedOrders"
+                :key="item.id"
+                class="failed-item"
+              >
+                <span class="failed-id">ID: {{ item.id }}</span>
+                <span class="failed-reason">{{ item.reason }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <template #footer>
+          <el-button @click="afterSaleBatchDialogVisible = false">取消</el-button>
+          <el-button
+            v-if="userRole !== 2"
+            type="primary"
+            :disabled="!canExecuteBatch"
+            :loading="batchExecuting"
+            @click="handleBatchExecute"
+          >
+            执行操作
+          </el-button>
+        </template>
+      </el-dialog>
+    </transition>
   </div>
 </template>
 
@@ -1026,6 +1220,20 @@ import {
   Warning,
   Money
 } from '@element-plus/icons-vue'
+import {
+  getBatchPreviewApi,
+  batchOperationApi
+} from '@/api/after-sale'
+import {
+  DisputeTypeMap,
+  DisputeTypeColorMap,
+  TicketStatusMap,
+  TicketStatusColorMap
+} from '@/enums/after-sale'
+import type {
+  BatchOperationResult,
+  BatchPreviewResult
+} from '@/types/after-sale'
 import CommonTable from '@/components/CommonTable/index.vue'
 import StatusTag from '@/components/StatusTag/index.vue'
 import DetailDialog from '@/components/DetailDialog/index.vue'
@@ -1105,6 +1313,7 @@ const userStore = useUserStore()
 const userRole = computed(() => {
   const role = userStore.userInfo?.role
   if (role === '1' || role === 1) return 1
+  if (role === '6' || role === 6) return 6
   if (role === '2' || role === 2) return 2
   return 0
 })
@@ -1382,7 +1591,39 @@ const singleAdjustForm = reactive({
   perKmPriceAdjust: 0
 })
 
-const prerequisiteDialogVisible = ref(false)
+const afterSaleBatchDialogVisible = ref(false)
+const batchPreviewLoading = ref(false)
+const batchExecuting = ref(false)
+const batchPreviewResult = ref<BatchPreviewResult | null>(null)
+const batchExecuteResult = ref<BatchOperationResult | null>(null)
+const batchExecuteProgress = ref(0)
+const batchExecuteProgressStatus = ref<'success' | 'warning' | 'danger' | ''>('')
+const batchOperation = ref<'urge' | 'review' | 'close'>('urge')
+const batchDateRange = ref<string[]>([])
+
+const batchFilterForm = reactive({
+  filterType: undefined as 'overdue' | 'pending_review' | 'rejected' | undefined,
+  disputeType: undefined as number | undefined,
+  startTime: undefined as string | undefined,
+  endTime: undefined as string | undefined
+})
+
+watch(batchDateRange, (val) => {
+  if (val && val.length === 2) {
+    batchFilterForm.startTime = val[0]
+    batchFilterForm.endTime = val[1]
+  } else {
+    batchFilterForm.startTime = undefined
+    batchFilterForm.endTime = undefined
+  }
+})
+
+const canExecuteBatch = computed(() => {
+  if (!batchPreviewResult.value) return false
+  if (batchPreviewResult.value.eligibleCount === 0) return false
+  if (userRole.value !== 1 && userRole.value !== 6) return false
+  return true
+})
 const prerequisiteFailures = ref<Array<{ field: string; message: string }>>([])
 const transitionLoadingMap = ref<Record<number, boolean>>({})
 
@@ -2024,6 +2265,131 @@ const handleSingleAdjustSubmit = async () => {
   }
 }
 
+const handleAfterSaleBatch = () => {
+  if (userRole.value !== 1 && userRole.value !== 6) {
+    ElMessage.warning('您没有权限执行售后批量操作')
+    return
+  }
+  batchFilterForm.filterType = undefined
+  batchFilterForm.disputeType = undefined
+  batchDateRange.value = []
+  batchPreviewResult.value = null
+  batchExecuteResult.value = null
+  batchOperation.value = 'urge'
+  batchExecuteProgress.value = 0
+  batchExecuteProgressStatus.value = ''
+  afterSaleBatchDialogVisible.value = true
+}
+
+const handleAfterSaleBatchNoPermission = () => {
+  ElMessage.warning('运营角色仅有查看权限，如需执行批量操作请联系售后管理员')
+}
+
+const handleBatchPreview = async () => {
+  const params: any = {}
+  if (batchFilterForm.filterType) {
+    params.filterType = batchFilterForm.filterType
+  }
+  if (batchFilterForm.disputeType) {
+    params.disputeType = batchFilterForm.disputeType
+  }
+  if (batchFilterForm.startTime) {
+    params.startTime = batchFilterForm.startTime
+  }
+  if (batchFilterForm.endTime) {
+    params.endTime = batchFilterForm.endTime
+  }
+
+  batchPreviewLoading.value = true
+  batchExecuteResult.value = null
+  try {
+    const res = await getBatchPreviewApi(params)
+    batchPreviewResult.value = res.data
+  } catch (error: any) {
+    ElMessage.error(error.message || '预览失败')
+  } finally {
+    batchPreviewLoading.value = false
+  }
+}
+
+const handleBatchExecute = async () => {
+  if (!batchPreviewResult.value || !canExecuteBatch.value) return
+  if (userRole.value === 2) {
+    ElMessage.warning('您没有权限执行批量操作')
+    return
+  }
+
+  const ids = batchPreviewResult.value.eligible.map(item => item.id)
+  if (ids.length === 0) {
+    ElMessage.warning('没有可执行的工单')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要对选中的 ${ids.length} 条工单执行"${batchOperation.value === 'urge' ? '批量催办' : batchOperation.value === 'review' ? '批量复核' : '批量关闭无效工单'}"操作吗？`,
+      '提示',
+      { type: 'warning' }
+    )
+  } catch {
+    return
+  }
+
+  batchExecuting.value = true
+  batchExecuteProgress.value = 0
+  batchExecuteProgressStatus.value = ''
+  batchExecuteResult.value = null
+
+  try {
+    const total = ids.length
+    const batchSize = Math.ceil(total / 10)
+
+    let successCount = 0
+    let failedCount = 0
+    const failedOrders: Array<{ id: number; reason: string }> = []
+
+    for (let i = 0; i < total; i += batchSize) {
+      const batchIds = ids.slice(i, i + batchSize)
+      try {
+        const res = await batchOperationApi({
+          ids: batchIds,
+          operation: batchOperation.value
+        })
+        successCount += res.data.success
+        failedCount += res.data.failed
+        if (res.data.failedOrders) {
+          failedOrders.push(...res.data.failedOrders)
+        }
+      } catch (error: any) {
+        failedCount += batchIds.length
+        batchIds.forEach(id => {
+          failedOrders.push({ id, reason: error.message || '操作失败' })
+        })
+      }
+
+      batchExecuteProgress.value = Math.min(100, Math.round(((i + batchSize) / total) * 100))
+      await new Promise(resolve => setTimeout(resolve, 200))
+    }
+
+    batchExecuteResult.value = {
+      total,
+      success: successCount,
+      failed: failedCount,
+      failedOrders
+    }
+
+    batchExecuteProgressStatus.value = failedCount === 0 ? 'success' : 'warning'
+    ElMessage.success(`批量操作完成，成功${successCount}条，失败${failedCount}条`)
+
+    await handleBatchPreview()
+  } catch (error: any) {
+    batchExecuteProgressStatus.value = 'danger'
+    ElMessage.error(error.message || '批量操作失败')
+  } finally {
+    batchExecuting.value = false
+  }
+}
+
 onMounted(() => {
   getList()
   loadAbnormalStats()
@@ -2035,6 +2401,90 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
+.slideDownFade-enter-active,
+.slideDownFade-leave-active {
+  transition: all 0.3s ease;
+}
+.slideDownFade-enter-from {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+.slideDownFade-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mb-16 {
+  margin-bottom: 16px;
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+
+.batch-preview {
+  .stat-card {
+    text-align: center;
+    transition: all 0.3s ease;
+
+    .stat-label {
+      font-size: 13px;
+      color: #909399;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: #303133;
+
+      &.text-success {
+        color: #67c23a;
+      }
+
+      &.text-warning {
+        color: #e6a23c;
+      }
+    }
+  }
+
+  .failed-list {
+    .failed-title {
+      font-weight: 500;
+      color: #f56c6c;
+      margin-bottom: 8px;
+    }
+
+    .failed-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 12px;
+      background: rgba(245, 108, 108, 0.05);
+      border-radius: 4px;
+      margin-bottom: 4px;
+
+      .failed-id {
+        font-size: 12px;
+        color: #909399;
+        min-width: 80px;
+      }
+
+      .failed-reason {
+        flex: 1;
+        font-size: 13px;
+        color: #606266;
+      }
+    }
+  }
+}
+
 .order-list {
   .sub-text {
     font-size: 12px;

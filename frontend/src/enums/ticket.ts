@@ -46,3 +46,27 @@ export const TicketStatusMap: Record<number, string> = {
   [TicketStatus.RESOLVED]: '已解决',
   [TicketStatus.CLOSED]: '已关闭'
 }
+
+export enum AfterSaleTicketStatus {
+  PENDING_REVIEW = 1,
+  REVIEWING = 2,
+  RESOLVED = 3,
+  REJECTED = 4,
+  CLOSED = 5
+}
+
+export const AfterSaleTicketStatusMap: Record<number, string> = {
+  [AfterSaleTicketStatus.PENDING_REVIEW]: '待审核',
+  [AfterSaleTicketStatus.REVIEWING]: '审核中',
+  [AfterSaleTicketStatus.RESOLVED]: '已解决',
+  [AfterSaleTicketStatus.REJECTED]: '已驳回',
+  [AfterSaleTicketStatus.CLOSED]: '已关闭'
+}
+
+export const AfterSaleTicketStatusColorMap: Record<number, string> = {
+  [AfterSaleTicketStatus.PENDING_REVIEW]: '#e6a23c',
+  [AfterSaleTicketStatus.REVIEWING]: '#409eff',
+  [AfterSaleTicketStatus.RESOLVED]: '#67c23a',
+  [AfterSaleTicketStatus.REJECTED]: '#f56c6c',
+  [AfterSaleTicketStatus.CLOSED]: '#909399'
+}

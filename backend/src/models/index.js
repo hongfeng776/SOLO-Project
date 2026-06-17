@@ -19,6 +19,8 @@ const OrderTraceHistory = require('./OrderTraceHistory')
 const TransitionViolation = require('./TransitionViolation')
 const PricingRule = require('./PricingRule')
 const PricingChangeLog = require('./PricingChangeLog')
+const TicketAuditLog = require('./TicketAuditLog')
+const ReputationRecord = require('./ReputationRecord')
 
 Driver.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
 Vehicle.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
@@ -42,6 +44,15 @@ TransitionViolation.belongsTo(Order, { foreignKey: 'orderId', as: 'order' })
 PricingChangeLog.belongsTo(Order, { foreignKey: 'orderId', as: 'order' })
 PricingChangeLog.belongsTo(PricingRule, { foreignKey: 'ruleId', as: 'pricingRule' })
 
+Ticket.belongsTo(Order, { foreignKey: 'orderId', as: 'order' })
+Ticket.hasMany(TicketAuditLog, { foreignKey: 'ticketId', as: 'auditLogs' })
+TicketAuditLog.belongsTo(Ticket, { foreignKey: 'ticketId', as: 'ticket' })
+TicketAuditLog.belongsTo(Order, { foreignKey: 'orderId', as: 'order' })
+
+ReputationRecord.belongsTo(Passenger, { foreignKey: 'passengerId', as: 'passenger' })
+ReputationRecord.belongsTo(Order, { foreignKey: 'orderId', as: 'order' })
+ReputationRecord.belongsTo(Ticket, { foreignKey: 'ticketId', as: 'ticket' })
+
 module.exports = {
   User,
   Role,
@@ -63,5 +74,7 @@ module.exports = {
   OrderTraceHistory,
   TransitionViolation,
   PricingRule,
-  PricingChangeLog
+  PricingChangeLog,
+  TicketAuditLog,
+  ReputationRecord
 }

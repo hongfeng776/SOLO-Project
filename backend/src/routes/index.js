@@ -15,6 +15,7 @@ const notificationRouter = require('./notification')
 const analyticsRouter = require('./analytics')
 const monitorRouter = require('./monitor')
 const pricingRouter = require('./pricing')
+const afterSaleRouter = require('./after-sale')
 
 module.exports = {
   auth: authRouter,
@@ -33,5 +34,6 @@ module.exports = {
   notification: notificationRouter,
   analytics: analyticsRouter,
   monitor: monitorRouter,
-  pricing: pricingRouter
+  pricing: pricingRouter,
+  afterSale: afterSaleRouter
 }
