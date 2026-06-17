@@ -69,6 +69,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '交易管理', icon: 'Money', keepAlive: true }
       },
       {
+        path: 'order-entry',
+        name: 'OrderEntry',
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/order-entry/index.vue'),
+        meta: { title: '委托受理', icon: 'List', keepAlive: true, permission: 'trade:manage' }
+      },
+      {
         path: 'holding',
         name: 'Holding',
         component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/holding/index.vue'),

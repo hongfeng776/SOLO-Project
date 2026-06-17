@@ -116,6 +116,20 @@ export async function getStockById(req: Request, res: Response, next: NextFuncti
   }
 }
 
+export async function getStockSimpleList(req: Request, res: Response, next: NextFunction) {
+  try {
+    const status = req.query.status as string | undefined;
+    const result = await stockQuoteService.getStockList({
+      page: 1,
+      pageSize: 1000,
+      status: status || 'trading',
+    });
+    res.json(success(result.list));
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getStockByCode(req: Request, res: Response, next: NextFunction) {
   try {
     const stockCode = req.params.stockCode;

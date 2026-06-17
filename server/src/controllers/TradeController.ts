@@ -70,3 +70,94 @@ export async function cancelTrade(req: Request, res: Response, next: NextFunctio
     next(err);
   }
 }
+
+export async function getTradingSession(_req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = tradeService.getTradingSession();
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function validateOrder(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { customerId, stockId, direction, price, quantity, checkSession } = req.body;
+    const result = await tradeService.validateOrder({
+      customerId: Number(customerId),
+      stockId: Number(stockId),
+      direction,
+      price: Number(price),
+      quantity: Number(quantity),
+      checkSession: checkSession !== false,
+    });
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function submitOrder(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await tradeService.submitOrder({
+      ...req.body,
+      customerId: Number(req.body.customerId),
+      stockId: Number(req.body.stockId),
+      price: Number(req.body.price),
+      quantity: Number(req.body.quantity),
+      operatorId: (req as any).user?.id,
+    });
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function batchSubmitOrders(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { orders } = req.body;
+    const result = await tradeService.batchSubmitOrders(orders, (req as any).user?.id);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getOrderTrace(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id);
+    const result = await tradeService.getOrderTrace(id);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getPendingOrders(req: Request, res: Response, next: NextFunction) {
+  try {
+    const page = Number(req.query.page) || 1;
+    const pageSize = Number(req.query.pageSize) || 10;
+    const riskLevel = req.query.riskLevel as string | undefined;
+    const customerId = req.query.customerId ? Number(req.query.customerId) : undefined;
+
+    const result = await tradeService.getPendingOrders({ page, pageSize, riskLevel, customerId });
+    res.json(paginated(result.list, result.total, result.page, result.pageSize));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function processBatchOrders(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { ids, action, opinion } = req.body;
+    const result = await tradeService.processBatchOrders(
+      ids.map(Number),
+      action,
+      (req as any).user?.id,
+      opinion,
+    );
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}

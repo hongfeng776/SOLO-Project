@@ -55,3 +55,17 @@ export async function deleteCustomer(req: Request, res: Response, next: NextFunc
     next(err);
   }
 }
+
+export async function getCustomerSimpleList(req: Request, res: Response, next: NextFunction) {
+  try {
+    const status = req.query.status as string | undefined;
+    const result = await customerAssetService.getCustomerList({
+      page: 1,
+      pageSize: 1000,
+      status: status || 'normal',
+    });
+    res.json(success(result.list));
+  } catch (err) {
+    next(err);
+  }
+}

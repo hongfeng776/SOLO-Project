@@ -12,6 +12,43 @@ const COMMISSION_RATE = 0.0003;
 const MIN_COMMISSION = 5;
 const STAMP_TAX_RATE = 0.001;
 const AUDIT_THRESHOLD = 100000;
+const BATCH_AUDIT_THRESHOLD = 50000;
+const PRICE_DEVIATION_THRESHOLD = 0.1;
+const SINGLE_ORDER_MAX_QUANTITY = 1000000;
+const DAILY_ORDER_MAX_AMOUNT = 5000000;
+
+const TRADING_SESSIONS = [
+  { start: '09:30', end: '11:30' },
+  { start: '13:00', end: '15:00' },
+];
+
+interface IValidationResult {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+interface IOrderTraceInfo {
+  orderId: number;
+  tradeNo: string;
+  customerName: string;
+  stockName: string;
+  tradeType: string;
+  price: number;
+  quantity: number;
+  amount: number;
+  status: string;
+  operator: string;
+  ip: string;
+  userAgent: string;
+  submitAt: string;
+  checkPoints: Array<{
+    name: string;
+    passed: boolean;
+    message: string;
+    time: string;
+  }>;
+}
 
 function generateTradeNo(): string {
   const now = new Date();
@@ -47,6 +84,33 @@ function getRiskLevelOrder(level: string): number {
     R5: 5,
   };
   return orders[level] || 0;
+}
+
+function isInTradingSession(): { inSession: boolean; currentPeriod: string; nextSessionAt: string } {
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const currentTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+  const day = now.getDay();
+  if (day === 0 || day === 6) {
+    return { inSession: false, currentPeriod: '休市', nextSessionAt: '下周一 09:30' };
+  }
+
+  const morning = TRADING_SESSIONS[0];
+  const afternoon = TRADING_SESSIONS[1];
+
+  if (currentTime < morning.start) {
+    return { inSession: false, currentPeriod: '开盘前', nextSessionAt: `今日 ${morning.start}` };
+  } else if (currentTime >= morning.start && currentTime <= morning.end) {
+    return { inSession: true, currentPeriod: '早盘', nextSessionAt: `今日 ${afternoon.start}` };
+  } else if (currentTime > morning.end && currentTime < afternoon.start) {
+    return { inSession: false, currentPeriod: '午间休市', nextSessionAt: `今日 ${afternoon.start}` };
+  } else if (currentTime >= afternoon.start && currentTime <= afternoon.end) {
+    return { inSession: true, currentPeriod: '午盘', nextSessionAt: '明日 09:30' };
+  } else {
+    return { inSession: false, currentPeriod: '收盘后', nextSessionAt: '明日 09:30' };
+  }
 }
 
 class TradeService {
@@ -383,6 +447,455 @@ class TradeService {
     });
 
     return { list: rows, total: count, page, pageSize };
+  }
+
+  getTradingSession() {
+    return isInTradingSession();
+  }
+
+  async validateOrder(data: {
+    customerId: number;
+    stockId: number;
+    direction: string;
+    price: number;
+    quantity: number;
+    checkSession?: boolean;
+  }): Promise<IValidationResult & {
+    customer?: any;
+    stock?: any;
+    holding?: any;
+    tradeAmount?: number;
+    totalCost?: number;
+  }> {
+    const { customerId, stockId, direction, price, quantity, checkSession = true } = data;
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    const checkPoints: Array<{ name: string; passed: boolean; message: string }> = [];
+
+    if (checkSession) {
+      const session = isInTradingSession();
+      if (!session.inSession) {
+        errors.push(`当前处于${session.currentPeriod}，无法提交委托。下一交易时段：${session.nextSessionAt}`);
+      }
+      checkPoints.push({
+        name: '交易时段校验',
+        passed: session.inSession,
+        message: session.inSession ? '交易时段正常' : `非交易时段：${session.currentPeriod}`,
+      });
+    }
+
+    if (!quantity || quantity <= 0) {
+      errors.push('委托数量必须大于0');
+    } else if (quantity % 100 !== 0) {
+      errors.push('委托数量必须为100股的整数倍');
+    }
+    checkPoints.push({
+      name: '委托数量校验',
+      passed: quantity > 0 && quantity % 100 === 0,
+      message: quantity > 0 && quantity % 100 === 0 ? '数量格式正确' : '数量必须为100股整数倍',
+    });
+
+    if (quantity > SINGLE_ORDER_MAX_QUANTITY) {
+      errors.push(`单笔委托数量不能超过${SINGLE_ORDER_MAX_QUANTITY}股`);
+    }
+
+    if (!price || price <= 0) {
+      errors.push('委托价格必须大于0');
+    }
+
+    const stock = await db.StockQuote.findByPk(stockId);
+    if (!stock) {
+      errors.push('股票不存在');
+    } else {
+      if (stock.status !== 'trading') {
+        errors.push(`股票当前状态为${stock.status}，无法交易`);
+      }
+      checkPoints.push({
+        name: '股票状态校验',
+        passed: stock.status === 'trading',
+        message: stock.status === 'trading' ? '股票正常交易中' : `股票状态：${stock.status}`,
+      });
+
+      const currentPrice = Number(stock.current_price || 0);
+      if (currentPrice > 0 && price > 0) {
+        const deviation = Math.abs(price - currentPrice) / currentPrice;
+        if (deviation > PRICE_DEVIATION_THRESHOLD) {
+          warnings.push(`委托价格与市价偏差${(deviation * 100).toFixed(2)}%，请注意价格风险`);
+        }
+        checkPoints.push({
+          name: '价格偏差校验',
+          passed: deviation <= PRICE_DEVIATION_THRESHOLD,
+          message: `价格偏差${(deviation * 100).toFixed(2)}%，${deviation <= PRICE_DEVIATION_THRESHOLD ? '在合理范围内' : '超出合理范围'}`,
+        });
+      }
+    }
+
+    const customer = await db.CustomerAsset.findByPk(customerId);
+    if (!customer) {
+      errors.push('客户不存在');
+    } else {
+      if (customer.status !== 'normal') {
+        errors.push(`客户账户状态为${customer.status}，无法交易`);
+      }
+      checkPoints.push({
+        name: '客户账户校验',
+        passed: customer.status === 'normal',
+        message: customer.status === 'normal' ? '账户状态正常' : `账户状态：${customer.status}`,
+      });
+
+      const tradeAmount = Number((price * quantity).toFixed(2));
+      const { totalFee } = calculateFees(direction, tradeAmount);
+      const totalCost = direction === 'buy' ? Number((tradeAmount + totalFee).toFixed(2)) : tradeAmount;
+
+      if (direction === 'buy') {
+        const availableAmount = Number(customer.available_amount || 0);
+        if (availableAmount < totalCost) {
+          errors.push(`可用资金不足。需要${totalCost.toFixed(2)}元，当前可用${availableAmount.toFixed(2)}元`);
+        }
+        checkPoints.push({
+          name: '资金余额校验',
+          passed: availableAmount >= totalCost,
+          message: `可用资金${availableAmount.toFixed(2)}元，需${totalCost.toFixed(2)}元`,
+        });
+      } else if (direction === 'sell') {
+        const holding = await customerHoldingDAO.findByCustomerIdAndStock(customerId, stockId);
+        const availableQty = holding ? Number(holding.available_quantity || 0) : 0;
+        if (availableQty < quantity) {
+          errors.push(`可用持仓不足。需要${quantity}股，当前可用${availableQty}股`);
+        }
+        checkPoints.push({
+          name: '持仓数量校验',
+          passed: availableQty >= quantity,
+          message: `可用持仓${availableQty}股，需${quantity}股`,
+        });
+      }
+
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const todayTrades = await db.Trade.findAndCountAll({
+        where: {
+          customer_id: customerId,
+          created_at: { [Op.between]: [todayStart, todayEnd] },
+          trade_status: { [Op.ne]: 'cancelled' },
+        },
+      });
+
+      const todayAmount = todayTrades.rows.reduce((sum, t) => sum + Number(t.trade_amount || 0), 0);
+      if (todayAmount + tradeAmount > DAILY_ORDER_MAX_AMOUNT) {
+        warnings.push(`今日委托金额已达${todayAmount.toFixed(2)}元，接近每日限额${DAILY_ORDER_MAX_AMOUNT}元`);
+      }
+    }
+
+    const isDuplicate = await this.checkDuplicateOrder(customerId, stockId, direction, price, quantity);
+    if (isDuplicate) {
+      warnings.push('检测到相似委托，请确认是否重复提交');
+    }
+    checkPoints.push({
+      name: '重复委托校验',
+      passed: !isDuplicate,
+      message: isDuplicate ? '存在相似委托' : '无重复委托',
+    });
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings,
+      customer,
+      stock,
+      tradeAmount: price * quantity,
+      totalCost: direction === 'buy' ? price * quantity + calculateFees(direction, price * quantity).totalFee : price * quantity,
+    };
+  }
+
+  async checkDuplicateOrder(customerId: number, stockId: number, direction: string, price: number, quantity: number): Promise<boolean> {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+    const duplicate = await db.Trade.findOne({
+      where: {
+        customer_id: customerId,
+        stock_id: stockId,
+        direction,
+        price,
+        quantity,
+        created_at: { [Op.gte]: fiveMinutesAgo },
+        trade_status: { [Op.in]: ['pending', 'auditing', 'success'] },
+      },
+    });
+
+    return !!duplicate;
+  }
+
+  async submitOrder(data: {
+    customerId: number;
+    stockId: number;
+    tradeType: string;
+    direction: string;
+    price: number;
+    quantity: number;
+    remark?: string;
+    operatorId?: number;
+    auditThreshold?: number;
+  }) {
+    const validation = await this.validateOrder({
+      customerId: data.customerId,
+      stockId: data.stockId,
+      direction: data.direction,
+      price: data.price,
+      quantity: data.quantity,
+    });
+
+    if (!validation.valid) {
+      throw new AppError(400, validation.errors.join('; '));
+    }
+
+    const customer = validation.customer;
+    const riskLevel = customer?.risk_level || 'R1';
+    const riskLevelOrder = getRiskLevelOrder(riskLevel);
+
+    const tradeAmount = Number((data.price * data.quantity).toFixed(2));
+    const isHighRisk = riskLevelOrder >= 4;
+    const threshold = data.auditThreshold !== undefined ? data.auditThreshold : AUDIT_THRESHOLD;
+    const needAudit = tradeAmount > threshold || isHighRisk;
+
+    const result = await this.createTrade({
+      ...data,
+      tradeType: data.tradeType,
+    });
+
+    if (needAudit && result) {
+      await db.Trade.update(
+        { need_audit: true, trade_status: 'auditing' },
+        { where: { id: result.id } },
+      );
+      result.need_audit = true;
+      result.trade_status = 'auditing';
+    }
+
+    return {
+      trade: result,
+      validation,
+      needAudit,
+      isHighRisk,
+    };
+  }
+
+  async batchSubmitOrders(orders: Array<{
+    customerId: number;
+    stockId: number;
+    tradeType: string;
+    direction: string;
+    price: number;
+    quantity: number;
+    remark?: string;
+  }>, operatorId?: number) {
+    const results: Array<{
+      success: boolean;
+      order?: any;
+      error?: string;
+      needAudit?: boolean;
+    }> = [];
+
+    const customerIds = [...new Set(orders.map(o => o.customerId))];
+    const customers = await db.CustomerAsset.findAll({
+      where: { id: { [Op.in]: customerIds } },
+      attributes: ['id', 'risk_level'],
+    });
+    const customerRiskMap = new Map<number, number>();
+    const riskLevelOrder: Record<string, number> = { R1: 1, R2: 2, R3: 3, R4: 4, R5: 5 };
+    for (const c of customers) {
+      customerRiskMap.set(c.id, riskLevelOrder[c.risk_level || 'R3'] || 3);
+    }
+
+    const sortedOrders = [...orders].sort((a, b) => {
+      const riskA = customerRiskMap.get(a.customerId) || 3;
+      const riskB = customerRiskMap.get(b.customerId) || 3;
+      return riskB - riskA;
+    });
+
+    for (const order of sortedOrders) {
+      try {
+        const result = await this.submitOrder({
+          ...order,
+          operatorId,
+          auditThreshold: BATCH_AUDIT_THRESHOLD,
+        });
+        results.push({
+          success: true,
+          order: result.trade,
+          needAudit: result.needAudit,
+        });
+      } catch (error: any) {
+        results.push({
+          success: false,
+          error: error.message,
+        });
+      }
+    }
+
+    const successCount = results.filter(r => r.success).length;
+    const failedCount = results.filter(r => !r.success).length;
+    const auditCount = results.filter(r => r.needAudit).length;
+
+    return {
+      total: orders.length,
+      successCount,
+      failedCount,
+      auditCount,
+      results,
+    };
+  }
+
+  async cancelOrder(id: number, _operatorId?: number) {
+    return this.cancelTrade(id);
+  }
+
+  async getOrderTrace(id: number): Promise<IOrderTraceInfo> {
+    const trade = await db.Trade.findByPk(id);
+    if (!trade) {
+      throw new AppError(404, 'Trade not found');
+    }
+
+    const customer = await db.CustomerAsset.findByPk(trade.customer_id);
+    const stock = await db.StockQuote.findByPk(trade.stock_id);
+
+    const checkPoints: Array<{ name: string; passed: boolean; message: string; time: string }> = [];
+
+    checkPoints.push({
+      name: '委托提交',
+      passed: true,
+      message: '委托已提交',
+      time: trade.created_at?.toISOString() || new Date().toISOString(),
+    });
+
+    if (trade.trade_status === 'cancelled') {
+      checkPoints.push({
+        name: '委托撤销',
+        passed: true,
+        message: '委托已撤销，资金/持仓已解冻',
+        time: trade.updated_at?.toISOString() || new Date().toISOString(),
+      });
+    } else if (trade.trade_status === 'failed' || trade.trade_status === 'rejected') {
+      checkPoints.push({
+        name: '审核拒绝',
+        passed: false,
+        message: trade.audit_opinion || '委托被驳回',
+        time: trade.audit_at?.toISOString() || new Date().toISOString(),
+      });
+    } else if (trade.trade_status === 'auditing') {
+      checkPoints.push({
+        name: '合规检查',
+        passed: true,
+        message: '待人工复核',
+        time: trade.created_at?.toISOString() || new Date().toISOString(),
+      });
+    } else if (trade.trade_status === 'success' || trade.trade_status === 'dealed') {
+      checkPoints.push({
+        name: '合规检查',
+        passed: true,
+        message: '合规检查通过',
+        time: trade.created_at?.toISOString() || new Date().toISOString(),
+      });
+      checkPoints.push({
+        name: '待撮合',
+        passed: true,
+        message: '进入待撮合队列',
+        time: trade.created_at?.toISOString() || new Date().toISOString(),
+      });
+    } else {
+      checkPoints.push({
+        name: '待处理',
+        passed: true,
+        message: '委托处理中',
+        time: trade.created_at?.toISOString() || new Date().toISOString(),
+      });
+    }
+
+    return {
+      orderId: trade.id,
+      tradeNo: trade.trade_no,
+      customerName: customer?.customer_name || '',
+      stockName: stock ? `${stock.stock_code} ${stock.stock_name}` : '',
+      tradeType: trade.direction,
+      price: Number(trade.price),
+      quantity: Number(trade.quantity),
+      amount: Number(trade.trade_amount),
+      status: trade.trade_status,
+      operator: '',
+      ip: '',
+      userAgent: '',
+      submitAt: trade.created_at?.toISOString() || '',
+      checkPoints,
+    };
+  }
+
+  async getPendingOrders(params: {
+    page: number;
+    pageSize: number;
+    riskLevel?: string;
+    customerId?: number;
+  }) {
+    const { page, pageSize, riskLevel, customerId } = params;
+    const where: any = {
+      trade_status: { [Op.in]: ['pending', 'auditing'] },
+    };
+
+    if (customerId) {
+      where.customer_id = customerId;
+    }
+
+    const include: any[] = [];
+    if (riskLevel) {
+      include.push({
+        model: db.CustomerAsset,
+        as: 'customer',
+        where: { risk_level: riskLevel },
+        attributes: [],
+      });
+    }
+
+    const { rows, count } = await db.Trade.findAndCountAll({
+      where,
+      include,
+      offset: (page - 1) * pageSize,
+      limit: pageSize,
+      order: [
+        ['need_audit', 'DESC'],
+        ['created_at', 'ASC'],
+      ],
+    });
+
+    return { list: rows, total: count, page, pageSize };
+  }
+
+  async processBatchOrders(ids: number[], action: 'approve' | 'reject', operatorId: number, opinion?: string) {
+    const results: Array<{ id: number; success: boolean; error?: string }> = [];
+
+    for (const id of ids) {
+      try {
+        if (action === 'approve') {
+          await this.auditTrade(id, operatorId, true, opinion || '批量审核通过');
+        } else {
+          await this.auditTrade(id, operatorId, false, opinion || '批量审核拒绝');
+        }
+        results.push({ id, success: true });
+      } catch (error: any) {
+        results.push({ id, success: false, error: error.message });
+      }
+    }
+
+    const successCount = results.filter(r => r.success).length;
+    const failedCount = results.filter(r => !r.success).length;
+
+    return {
+      total: ids.length,
+      successCount,
+      failedCount,
+      results,
+    };
   }
 }
 

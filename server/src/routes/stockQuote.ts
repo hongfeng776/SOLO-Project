@@ -19,6 +19,7 @@ router.get('/:id/audit-trail', checkPermission('stock:view'), stockQuoteControll
 router.get('/:id/consistency', checkPermission('stock:view'), stockQuoteController.checkConsistency);
 router.post('/create-with-audit', checkPermission('stock:manage'), stockQuoteController.createWithAudit);
 router.get('/', checkPermission('stock:view'), stockQuoteController.getStockList);
+router.get('/list', checkPermission('stock:view'), stockQuoteController.getStockSimpleList);
 router.get('/code/:stockCode', checkPermission('stock:view'), stockQuoteController.getStockByCode);
 router.get('/:id/history', checkPermission('stock:view'), stockQuoteController.getStockHistory);
 router.get('/:id', checkPermission('stock:view'), stockQuoteController.getStockById);
