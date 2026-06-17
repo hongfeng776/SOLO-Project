@@ -13,3 +13,4 @@ export { CustomerService } from './CustomerService';
 export { AccountService } from './AccountService';
 export { AccountOpeningService } from './AccountOpeningService';
 export { CorporateAccountOpeningService } from './CorporateAccountOpeningService';
+export { OpeningReviewService } from './OpeningReviewService';

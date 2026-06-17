@@ -204,6 +204,32 @@ const asyncRoutes: RouteRecordRaw[] = [
           keepAlive: true,
           roles: ['admin', 'manager', 'operator']
         }
+      },
+      {
+        path: 'opening-review/index',
+        name: 'BusinessOpeningReviewIndex',
+        component: () => import('@views/business/opening-review/index.vue'),
+        meta: {
+          title: '开户审核工作台',
+          icon: 'CircleCheck',
+          componentName: 'BusinessOpeningReviewIndex',
+          keepAlive: true,
+          permissions: ['opening:review:query'],
+          roles: ['admin', 'manager', 'operator', 'auditor']
+        }
+      },
+      {
+        path: 'opening-review/trace',
+        name: 'BusinessOpeningReviewTrace',
+        component: () => import('@views/business/opening-review/trace.vue'),
+        meta: {
+          title: '审核溯源',
+          icon: 'Search',
+          componentName: 'BusinessOpeningReviewTrace',
+          keepAlive: false,
+          permissions: ['opening:review:trace'],
+          roles: ['admin', 'manager', 'auditor']
+        }
       }
     ]
   },

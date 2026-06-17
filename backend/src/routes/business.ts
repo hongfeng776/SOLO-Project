@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -9,6 +9,7 @@ const customerController = new CustomerController();
 const riskController = new RiskController();
 const accountOpeningController = new AccountOpeningController();
 const corporateOpeningController = new CorporateAccountOpeningController();
+const openingReviewController = new OpeningReviewController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -76,5 +77,23 @@ router.post('/corporate/:id/open', requirePermission('business:corporate:open'),
 router.post('/corporate/:id/refresh', requirePermission('business:corporate:query'), (req, res, next) => corporateOpeningController.refresh(req, res));
 router.post('/corporate/batch/import', requirePermission('business:corporate:create'), (req, res, next) => corporateOpeningController.batchImport(req, res));
 router.post('/corporate/batch/review', requirePermission('business:corporate:review'), (req, res, next) => corporateOpeningController.batchReview(req, res));
+
+// ========== 开户资料审核 ==========
+// 功能点1：前置校验 + 详情
+router.get('/opening/review/precheck', requireAuth, (req, res, next) => openingReviewController.preconditions(req, res));
+router.get('/opening/review/list', requirePermission('opening:review:query'), (req, res, next) => openingReviewController.getList(req, res));
+router.get('/opening/review/detail', requirePermission('opening:review:query'), (req, res, next) => openingReviewController.getDetail(req, res));
+
+// 功能点2：提交审核（单条）
+router.post('/opening/review/submit', requirePermission('opening:review:submit'), (req, res, next) => openingReviewController.submitReview(req, res));
+
+// 功能点3：批量审核（权限控制更严）
+router.post('/opening/review/batch', requirePermission('opening:review:batch'), (req, res, next) => openingReviewController.batchReview(req, res));
+
+// 功能点4：溯源查询
+router.post('/opening/review/trace', requirePermission('opening:review:trace'), (req, res, next) => openingReviewController.trace(req, res));
+
+// 配置枚举
+router.get('/opening/review/config', requireAuth, (req, res, next) => openingReviewController.getConfig(req, res));
 
 export default router;

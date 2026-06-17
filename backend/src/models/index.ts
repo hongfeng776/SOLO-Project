@@ -14,3 +14,4 @@ export { ViolationRecord } from './ViolationRecord';
 export { Account } from './Account';
 export { AccountOpening } from './AccountOpening';
 export { CorporateAccountOpening } from './CorporateAccountOpening';
+export { OpeningReviewLog } from './OpeningReviewLog';

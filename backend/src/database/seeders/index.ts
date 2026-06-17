@@ -1,4 +1,4 @@
-import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction, Account, AccountOpening, CorporateAccountOpening } from '../../models';
+import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog } from '../../models';
 import { hashPasswordSync } from '../../utils/password';
 import { sequelize, syncDatabase } from '../../config/database';
 import { v4 as uuidv4 } from 'uuid';
@@ -210,6 +210,14 @@ export async function seedPermissions(): Promise<void> {
     { id: 'perm065', parent_id: 'perm060', name: '对公开户', code: 'business:corporate:open', type: 3, sort: 5, visible: 1, status: 1, perms: 'business:corporate:open' },
     { id: 'perm066', parent_id: 'perm023', name: '对公批量材料', code: 'business:corporate:batch', type: 2, path: 'corporate/batch', component: 'business/corporate/batch', icon: 'Folder', sort: 9, visible: 1, status: 1, perms: '' },
     { id: 'perm067', parent_id: 'perm023', name: '企业开户溯源', code: 'business:corporate:trace', type: 2, path: 'corporate/trace', component: 'business/corporate/trace', icon: 'Connection', sort: 10, visible: 1, status: 1, perms: '' },
+    { id: 'perm068', parent_id: 'perm023', name: '开户审核查询', code: 'opening:review:query', type: 3, sort: 11, visible: 1, status: 1, perms: 'opening:review:query' },
+    { id: 'perm069', parent_id: 'perm023', name: '开户审核提交', code: 'opening:review:submit', type: 3, sort: 12, visible: 1, status: 1, perms: 'opening:review:submit' },
+    { id: 'perm070', parent_id: 'perm023', name: '开户批量审核', code: 'opening:review:batch', type: 3, sort: 13, visible: 1, status: 1, perms: 'opening:review:batch' },
+    { id: 'perm071', parent_id: 'perm023', name: '初审权限', code: 'opening:review:first', type: 3, sort: 14, visible: 1, status: 1, perms: 'opening:review:first' },
+    { id: 'perm072', parent_id: 'perm023', name: '复审权限', code: 'opening:review:second', type: 3, sort: 15, visible: 1, status: 1, perms: 'opening:review:second' },
+    { id: 'perm073', parent_id: 'perm023', name: '终审权限', code: 'opening:review:final', type: 3, sort: 16, visible: 1, status: 1, perms: 'opening:review:final' },
+    { id: 'perm074', parent_id: 'perm023', name: '审核取消', code: 'opening:review:cancel', type: 3, sort: 17, visible: 1, status: 1, perms: 'opening:review:cancel' },
+    { id: 'perm075', parent_id: 'perm023', name: '审核溯源', code: 'opening:review:trace', type: 3, sort: 18, visible: 1, status: 1, perms: 'opening:review:trace' },
 
     { id: 'perm032', parent_id: null, name: '审核管理', code: 'audit', type: 1, path: '/audit', component: 'Layout', icon: 'Stamp', sort: 3, visible: 1, status: 1 },
     { id: 'perm033', parent_id: 'perm032', name: '待审核列表', code: 'audit:pending', type: 2, path: 'pending', component: 'audit/pending/index', icon: 'Tickets', sort: 1, visible: 1, status: 1, perms: '' },
@@ -274,7 +282,9 @@ export async function seedRolePermissions(): Promise<void> {
       'business:corporate:query', 'business:corporate:create', 'business:corporate:update', 'business:corporate:open',
       'business:account:query', 'business:account:update',
       'audit:record:query', 'audit:record:submit', 'audit:record:cancel',
-      'log:operation:query'
+      'log:operation:query',
+      'opening:review:query', 'opening:review:submit', 'opening:review:batch',
+      'opening:review:first', 'opening:review:second', 'opening:review:cancel', 'opening:review:trace'
     ];
     const perms = allPermissions.filter(p => managerCodes.includes(p.code) || p.type !== 3);
     const managerRPs = perms.map(p => ({
@@ -292,7 +302,8 @@ export async function seedRolePermissions(): Promise<void> {
       'business:corporate:query', 'business:corporate:create', 'business:corporate:update',
       'business:account:query',
       'audit:record:query', 'audit:record:submit', 'audit:record:cancel',
-      'log:operation:query'
+      'log:operation:query',
+      'opening:review:query', 'opening:review:submit', 'opening:review:first'
     ];
     const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation')));
     const operatorRPs = perms.map(p => ({
@@ -310,7 +321,8 @@ export async function seedRolePermissions(): Promise<void> {
       'business:corporate:query',
       'business:account:query',
       'audit:record:query', 'audit:record:audit',
-      'log:operation:query'
+      'log:operation:query',
+      'opening:review:query', 'opening:review:trace'
     ];
     const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation')));
     const auditorRPs = perms.map(p => ({
@@ -1417,6 +1429,191 @@ export async function seedCorporateAccountOpenings(): Promise<void> {
   console.log('[Seeder] Corporate account openings seeded successfully.');
 }
 
+export async function seedOpeningReviewLogs(): Promise<void> {
+  console.log('[Seeder] Seeding opening review logs...');
+  const existing = await OpeningReviewLog.count();
+  if (existing > 0) {
+    console.log('[Seeder] Opening review logs already exist, skipping...');
+    return;
+  }
+
+  const adminId = 'user000000000000000000000000000001';
+  const managerId = 'user000000000000000000000000000002';
+  const operatorId = 'user000000000000000000000000000003';
+  const auditorId = 'user000000000000000000000000000004';
+
+  const reviewLogs = [
+    {
+      opening_type: 2,
+      opening_id: 'corp00001',
+      opening_no: 'CO202406000001',
+      review_level: 1,
+      reviewer_id: auditorId,
+      reviewer_name: '审核员',
+      review_result: 1,
+      review_comment: '资料齐全，信息真实有效，初审通过',
+      reject_reason: null,
+      reject_details: null,
+      supporting_files: JSON.stringify(['初审核对表.pdf', '法人面签照片.jpg']),
+      pre_approved_amount: 500,
+      risk_level_before: 1,
+      risk_level_after: 1,
+      consistency_check: 2,
+      conflict_flag: 0,
+      next_required_level: 2,
+      created_at: new Date('2024-06-08 09:30:00')
+    },
+    {
+      opening_type: 2,
+      opening_id: 'corp00001',
+      opening_no: 'CO202406000001',
+      review_level: 2,
+      reviewer_id: managerId,
+      reviewer_name: '机构管理员',
+      review_result: 1,
+      review_comment: '符合开户条件，复审通过，建议进入终审',
+      reject_reason: null,
+      reject_details: null,
+      supporting_files: JSON.stringify(['复审意见书.pdf']),
+      pre_approved_amount: 500,
+      risk_level_before: 1,
+      risk_level_after: 1,
+      consistency_check: 1,
+      conflict_flag: 0,
+      next_required_level: 3,
+      created_at: new Date('2024-06-08 14:20:00')
+    },
+    {
+      opening_type: 2,
+      opening_id: 'corp00002',
+      opening_no: 'CO202406000002',
+      review_level: 1,
+      reviewer_id: operatorId,
+      reviewer_name: '业务操作员',
+      review_result: 1,
+      review_comment: '贷款材料已核实，初审通过',
+      reject_reason: null,
+      reject_details: null,
+      supporting_files: JSON.stringify(['初审核对表.pdf']),
+      pre_approved_amount: 2000,
+      risk_level_before: 2,
+      risk_level_after: 2,
+      consistency_check: 2,
+      conflict_flag: 0,
+      next_required_level: 2,
+      created_at: new Date('2024-06-09 10:15:00')
+    },
+    {
+      opening_type: 2,
+      opening_id: 'corp00003',
+      opening_no: 'CO202406000003',
+      review_level: 1,
+      reviewer_id: operatorId,
+      reviewer_name: '业务操作员',
+      review_result: 1,
+      review_comment: '项目资金证明材料齐全，初审通过',
+      reject_reason: null,
+      reject_details: null,
+      supporting_files: JSON.stringify(['开户资料核验单.pdf']),
+      pre_approved_amount: 8000,
+      risk_level_before: 2,
+      risk_level_after: 2,
+      consistency_check: 2,
+      conflict_flag: 0,
+      next_required_level: 2,
+      created_at: new Date('2024-06-10 09:00:00')
+    },
+    {
+      opening_type: 2,
+      opening_id: 'corp00003',
+      opening_no: 'CO202406000003',
+      review_level: 2,
+      reviewer_id: managerId,
+      reviewer_name: '机构管理员',
+      review_result: 1,
+      review_comment: '复核信息一致，复审通过',
+      reject_reason: null,
+      reject_details: null,
+      supporting_files: JSON.stringify(['复审意见.pdf']),
+      pre_approved_amount: 8000,
+      risk_level_before: 2,
+      risk_level_after: 2,
+      consistency_check: 1,
+      conflict_flag: 0,
+      next_required_level: 3,
+      created_at: new Date('2024-06-10 15:30:00')
+    },
+    {
+      opening_type: 2,
+      opening_id: 'corp00003',
+      opening_no: 'CO202406000003',
+      review_level: 3,
+      reviewer_id: adminId,
+      reviewer_name: '系统管理员',
+      review_result: 1,
+      review_comment: '符合专用账户开户条件，终审通过',
+      reject_reason: null,
+      reject_details: null,
+      supporting_files: JSON.stringify(['终审批准书.pdf']),
+      pre_approved_amount: 8000,
+      risk_level_before: 2,
+      risk_level_after: 2,
+      consistency_check: 1,
+      conflict_flag: 0,
+      next_required_level: 0,
+      created_at: new Date('2024-06-11 11:00:00')
+    },
+    {
+      opening_type: 1,
+      opening_id: 'opening00001',
+      opening_no: 'AO202406000001',
+      review_level: 1,
+      reviewer_id: auditorId,
+      reviewer_name: '审核员',
+      review_result: 2,
+      review_comment: '身份证影像模糊，且姓名与实名系统比对存在差异，予以驳回',
+      reject_reason: 'PHOTO_UNCLEAR',
+      reject_details: '身份证影像清晰度评分仅35分，低于60分标准；客户姓名与公安部实名系统比对不一致，请客户重新提交身份材料',
+      supporting_files: JSON.stringify(['驳回通知书.pdf']),
+      pre_approved_amount: null,
+      risk_level_before: 5,
+      risk_level_after: 5,
+      consistency_check: 2,
+      conflict_flag: 0,
+      next_required_level: 0,
+      created_at: new Date('2024-06-03 16:45:00')
+    },
+    {
+      opening_type: 1,
+      opening_id: 'opening00002',
+      opening_no: 'AO202406000002',
+      review_level: 1,
+      reviewer_id: managerId,
+      reviewer_name: '机构管理员',
+      review_result: 3,
+      review_comment: '客户电话申请取消本次二类账户开户，转至柜面办理一类账户',
+      reject_reason: null,
+      reject_details: null,
+      supporting_files: JSON.stringify(['取消申请确认单.pdf']),
+      pre_approved_amount: null,
+      risk_level_before: 1,
+      risk_level_after: 1,
+      consistency_check: 2,
+      conflict_flag: 0,
+      next_required_level: 1,
+      created_at: new Date('2024-06-11 10:30:00')
+    }
+  ];
+
+  const records = reviewLogs.map((log, i) => ({
+    id: `orlog${String(i + 1).padStart(5, '0')}`,
+    ...log
+  }));
+
+  await bulkCreateInBatches(OpeningReviewLog, records as any);
+  console.log('[Seeder] Opening review logs seeded successfully.');
+}
+
 export async function runAllSeeders(options?: { force?: boolean; closeOnFinish?: boolean }): Promise<void> {
   const force = options?.force ?? false;
   const closeOnFinish = options?.closeOnFinish ?? false;
@@ -1442,6 +1639,7 @@ export async function runAllSeeders(options?: { force?: boolean; closeOnFinish?:
     await seedAccounts();
     await seedAccountOpenings();
     await seedCorporateAccountOpenings();
+    await seedOpeningReviewLogs();
     await seedViolationRecords();
     await seedTransactions();
 
