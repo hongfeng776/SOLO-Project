@@ -13,6 +13,7 @@ const violationRoutes = require('./violations')
 const appealRoutes = require('./appeals')
 const notificationRoutes = require('./notifications')
 const logRoutes = require('./logs')
+const recycleRoutes = require('./recycles')
 
 router.use('/auth', authRoutes)
 router.use('/resources', resourceRoutes)
@@ -26,5 +27,6 @@ router.use('/violations', violationRoutes)
 router.use('/appeals', appealRoutes)
 router.use('/notifications', notificationRoutes)
 router.use('/logs', logRoutes)
+router.use('/recycles', recycleRoutes)
 
 module.exports = router

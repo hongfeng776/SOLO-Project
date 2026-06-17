@@ -42,6 +42,12 @@ const routes: RouteRecordRaw[] = [
             name: 'ResourceCategory',
             component: () => import('@/views/resources/category.vue'),
             meta: { title: '资源分类', icon: 'Folder' }
+          },
+          {
+            path: 'recycle',
+            name: 'ResourceRecycle',
+            component: () => import('@/views/resources/recycle.vue'),
+            meta: { title: '回收站', icon: 'Delete' }
           }
         ]
       },

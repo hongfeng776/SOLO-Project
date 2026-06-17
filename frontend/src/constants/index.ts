@@ -6,7 +6,8 @@ export enum ResourceStatus {
   PUBLISHED = 'published',
   OFFLINE = 'offline',
   VIOLATION = 'violation',
-  BLOCKED = 'blocked'
+  BLOCKED = 'blocked',
+  RECYCLE = 'recycle'
 }
 
 export const ResourceStatusLabel: Record<string, string> = {
@@ -17,7 +18,8 @@ export const ResourceStatusLabel: Record<string, string> = {
   [ResourceStatus.PUBLISHED]: '已发布',
   [ResourceStatus.OFFLINE]: '已下架',
   [ResourceStatus.VIOLATION]: '违规下架',
-  [ResourceStatus.BLOCKED]: '风控拦截'
+  [ResourceStatus.BLOCKED]: '风控拦截',
+  [ResourceStatus.RECYCLE]: '已废弃'
 }
 
 export const ResourceStatusFlow: Record<string, string[]> = {
@@ -28,7 +30,20 @@ export const ResourceStatusFlow: Record<string, string[]> = {
   published: ['offline', 'violation'],
   offline: ['draft', 'published'],
   violation: ['appealed'],
-  blocked: ['pending', 'rejected']
+  blocked: ['pending', 'rejected'],
+  recycle: []
+}
+
+export enum RecycleReviewStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected'
+}
+
+export const RecycleReviewStatusLabel: Record<string, string> = {
+  [RecycleReviewStatus.PENDING]: '待审核',
+  [RecycleReviewStatus.APPROVED]: '审核通过',
+  [RecycleReviewStatus.REJECTED]: '审核驳回'
 }
 
 export enum AuditLevel {

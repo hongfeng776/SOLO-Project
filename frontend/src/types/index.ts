@@ -358,3 +358,59 @@ export interface TraceResult {
     conflicts: ConflictNode[]
   }
 }
+
+export interface RecycleItem {
+  id: number
+  resourceId: number
+  resourceTitle: string
+  resourceType: string
+  materialCode: string
+  originalStatus: string
+  originalCategoryId: number
+  originalCategoryName: string
+  authorId: number
+  authorName: string
+  discardReason: string
+  applicantId: number
+  applicantName: string
+  applyTime: string
+  reviewStatus: 'pending' | 'approved' | 'rejected'
+  reviewerId: number
+  reviewerName: string
+  reviewOpinion: string
+  reviewTime: string
+  offlineDays: number
+  relatedWorks: number
+  snapshot: string
+  expireAt: string
+  isDestroyed: boolean
+}
+
+export interface DiscardValidateResult {
+  valid: boolean
+  errors: string[]
+  warnings: string[]
+  offlineDays: number
+  relatedWorks: number
+  resource: ImageResource
+}
+
+export interface RestoreValidateResult {
+  valid: boolean
+  errors: string[]
+  categoryExists: boolean
+  resource: ImageResource
+}
+
+export interface BatchDiscardResult {
+  valid: number[]
+  invalid: { id: number; title?: string; reason: string }[]
+  submitted: { id: number; recycleId: number }[]
+  total: number
+}
+
+export interface BatchRestoreResult {
+  success: number[]
+  failed: { id: number; reason: string }[]
+  total: number
+}

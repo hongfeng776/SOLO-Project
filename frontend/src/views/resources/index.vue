@@ -167,8 +167,21 @@
         <el-table-column prop="createdAt" label="创建时间" width="160" align="center">
           <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="360" fixed="right" align="center">
+        <el-table-column label="操作" width="410" fixed="right" align="center">
           <template #default="{ row }">
+            <el-tooltip content="申请废弃" placement="top">
+              <el-button
+                link
+                size="small"
+                type="danger"
+                class="state-action-btn ripple btn-hover-scale"
+                :disabled="discardSubmitting"
+                @click="openDiscard(row)"
+              >
+                <el-icon><Delete /></el-icon>废弃
+              </el-button>
+            </el-tooltip>
+
             <el-tooltip v-if="!canEditRow(row)" content="无权限编辑" placement="top">
               <el-button
                 link
@@ -843,13 +856,14 @@
 import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 import { Search, Refresh, Plus, UploadFilled, DataAnalysis,
   Edit, MoreFilled, Top, Bottom, CircleCheck,
-  CircleClose, Warning, Clock } from '@element-plus/icons-vue'
+  CircleClose, Warning, Clock, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, ElNotification } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { DataTable, StatusTag, BatchOperation, FileUpload, ResourcePreview } from '@/components/business'
 import { ResourceStatusLabel, FileTypeLabel, ResourceStatus } from '@/constants'
 import * as resourceApi from '@/api/resource'
-import type { ImageResource, ValidateResult, TraceResult } from '@/types'
+import * as recycleApi from '@/api/recycle'
+import type { ImageResource, ValidateResult, TraceResult, DiscardValidateResult } from '@/types'
 
 const permissionFilter = ref<any>({ allowedStatuses: [], editableStatuses: [], isAdmin: false, canHandleViolation: false })
 const stateSwitchLoadingId = ref<number | null>(null)
@@ -869,6 +883,7 @@ const batchStateLoading = ref(false)
 const disabledRowIds = ref<Set<number>>(new Set())
 const shakingBtnId = ref<number | null>(null)
 const rowErrors = ref<Map<number, string>>(new Map())
+const discardSubmitting = ref(false)
 
 const loading = ref(false)
 const tableData = ref<ImageResource[]>([])
@@ -1464,6 +1479,60 @@ function parseLogDetail(detail: string | undefined | null): string {
     return detail
   } catch {
     return detail
+  }
+}
+
+async function openDiscard(row: ImageResource) {
+  discardSubmitting.value = true
+  try {
+    const validateRes = await recycleApi.validateDiscard(row.id)
+    const validateResult: DiscardValidateResult = validateRes.data
+
+    if (!validateResult.valid && validateResult.errors.length > 0) {
+      ElMessageBox.alert(
+        `<div>废弃校验不通过：<br/>${validateResult.errors.map((e) => `• ${e}`).join('<br/>')}</div>`,
+        '无法废弃',
+        { dangerouslyUseHTMLString: true, type: 'error', confirmButtonText: '知道了' }
+      )
+      return
+    }
+
+    let confirmMsg = `确定要废弃素材「${row.title}」吗？`
+    const warnings: string[] = []
+    if (validateResult.offlineDays > 0) {
+      warnings.push(`该素材已下架 ${validateResult.offlineDays} 天`)
+    }
+    if (validateResult.relatedWorks > 0) {
+      warnings.push(`存在 ${validateResult.relatedWorks} 个关联使用作品`)
+    }
+    warnings.push(...validateResult.warnings)
+
+    if (warnings.length > 0) {
+      confirmMsg += `<br/><br/><b style="color: #e6a23c">注意事项：</b><br/>${warnings.map((w) => `• ${w}`).join('<br/>')}`
+    }
+    confirmMsg += `<br/><br/>请输入废弃原因：`
+
+    const { value: reason } = await ElMessageBox.prompt(confirmMsg, '废弃确认', {
+      dangerouslyUseHTMLString: true,
+      confirmButtonText: '确认废弃',
+      cancelButtonText: '取消',
+      type: 'warning',
+      inputType: 'textarea',
+      inputPlaceholder: '请输入废弃原因',
+      inputValidator: (v: string) => !!v?.trim() || '请输入废弃原因'
+    })
+
+    await recycleApi.submitDiscard(row.id, reason)
+    ElMessage.success('废弃申请已提交，等待审核')
+    fetchList()
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      ElMessage.error(e?.message || '废弃申请提交失败')
+    }
+  } finally {
+    setTimeout(() => {
+      discardSubmitting.value = false
+    }, 300)
   }
 }
 

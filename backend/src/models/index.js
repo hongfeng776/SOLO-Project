@@ -8,6 +8,7 @@ const Violation = require('./Violation')
 const Appeal = require('./Appeal')
 const Notification = require('./Notification')
 const OperationLog = require('./OperationLog')
+const Recycle = require('./Recycle')
 
 User.hasMany(Resource, { foreignKey: 'authorId', as: 'resources' })
 Resource.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
@@ -48,6 +49,9 @@ Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' })
 User.hasMany(OperationLog, { foreignKey: 'userId', as: 'operationLogs' })
 OperationLog.belongsTo(User, { foreignKey: 'userId', as: 'user' })
 
+Resource.hasMany(Recycle, { foreignKey: 'resourceId', as: 'recycles' })
+Recycle.belongsTo(Resource, { foreignKey: 'resourceId', as: 'resource' })
+
 module.exports = {
   User,
   Category,
@@ -58,5 +62,6 @@ module.exports = {
   Violation,
   Appeal,
   Notification,
-  OperationLog
+  OperationLog,
+  Recycle
 }
