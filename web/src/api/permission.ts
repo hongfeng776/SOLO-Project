@@ -1,5 +1,5 @@
 import { get, post, put, del } from '@/utils/axios'
-import type { PageParams, PageResult, Status, BaseEntity, TreeNode } from '@/types'
+import type { PageParams, PageResult, BaseEntity, TreeNode } from '@/types'
 
 export type PermissionType = 'menu' | 'button' | 'api'
 
@@ -12,38 +12,95 @@ export interface PermissionItem extends BaseEntity, TreeNode {
   apiUrl?: string
   apiMethod?: 'get' | 'post' | 'put' | 'delete' | 'patch'
   sort: number
-  status: Status
+  status: number
 }
 
 export interface RoleItem extends BaseEntity {
   name: string
   code: string
   description?: string
-  status: Status
+  status: number
   sort: number
-  permissionIds?: (string | number)[]
+  level?: number
+  scenario?: string
+  isSystem?: boolean
+  createdBy?: string
+  createdByName?: string
   userCount?: number
+  permissionIds?: (string | number)[]
+  boundPermissionIds?: (string | number)[]
 }
 
 export interface RoleQueryParams extends PageParams {
   name?: string
   code?: string
-  status?: Status
+  status?: number
   keyword?: string
+  startTime?: string
+  endTime?: string
 }
 
-export type RoleCreateParams = Omit<RoleItem, 'id' | 'createdAt' | 'updatedAt' | 'permissionIds' | 'userCount'>
-export type RoleUpdateParams = Partial<RoleCreateParams>
+export interface CreateRoleParams {
+  name: string
+  code?: string
+  description?: string
+  sort: number
+  level?: number
+  scenario?: string
+  permissionIds?: (string | number)[]
+}
+
+export interface UpdateRoleParams extends Partial<CreateRoleParams> {
+  status?: number
+}
+
+export interface RoleDeletionLog {
+  id: string
+  roleId: string
+  roleName: string
+  roleCode: string
+  deletedBy: string
+  deletedByName: string
+  reason?: string
+  permissionSnapshot?: any
+  boundUsers?: number
+  deletedAt: string
+  createdAt: string
+}
+
+export interface BatchCopyParams {
+  sourceRoleIds: (string | number)[]
+  newNamePrefix: string
+  scenario?: string
+  permissionDelta?: { add?: (string | number)[]; remove?: (string | number)[] }
+}
+
+export interface BatchOperateResult {
+  success: (string | number)[]
+  failed: Array<{ id: string | number; reason: string }>
+}
+
+export interface RoleDependencies {
+  hasDependencies: boolean
+  canDelete: boolean
+  dependencies: Array<{ type: string; count: number; description: string }>
+}
+
+export interface PermissionConflict {
+  code: string
+  conflictCode: string
+  reason: string
+}
 
 export function getRoleList(params: RoleQueryParams): Promise<PageResult<RoleItem>> {
   return get<PageResult<RoleItem>>('/roles', params)
 }
 
-export function createRole(data: RoleCreateParams): Promise<RoleItem> {
+export function createRole(data: CreateRoleParams): Promise<RoleItem> {
   return post<RoleItem>('/roles', data)
 }
 
-export function updateRole(id: string | number, data: RoleUpdateParams): Promise<RoleItem> {
+export function updateRole(id: string | number, data: UpdateRoleParams): Promise<RoleItem> {
   return put<RoleItem>(`/roles/${id}`, data)
 }
 
@@ -64,4 +121,35 @@ export function assignRolePermissions(
   permissionIds: (string | number)[]
 ): Promise<null> {
   return post<null>(`/roles/${roleId}/permissions`, { permissionIds })
+}
+
+export function updateRoleWithPermissions(
+  id: string | number,
+  data: UpdateRoleParams & { permissionIds?: (string | number)[] }
+): Promise<RoleItem> {
+  return put<RoleItem>(`/roles/${id}/with-permissions`, data)
+}
+
+export function batchCopyRoles(params: BatchCopyParams): Promise<BatchOperateResult> {
+  return post<BatchOperateResult>('/roles/batch-copy', params)
+}
+
+export function batchUpdateRoleStatus(ids: (string | number)[], status: number): Promise<BatchOperateResult> {
+  return post<BatchOperateResult>('/roles/batch-status', { ids, status })
+}
+
+export function checkRoleDependencies(id: string | number): Promise<RoleDependencies> {
+  return get<RoleDependencies>(`/roles/${id}/dependencies`)
+}
+
+export function getRoleDeletionLogs(params: { keyword?: string; startTime?: string; endTime?: string }): Promise<RoleDeletionLog[]> {
+  return get<RoleDeletionLog[]>('/roles/deletion-logs', params)
+}
+
+export function getPermissionExclusions(): Promise<Array<{ codes: [string, string]; reason: string }>> {
+  return get<Array<{ codes: [string, string]; reason: string }>>('/roles/permission-exclusions')
+}
+
+export function checkRoleNameExists(name: string, excludeId?: string | number): Promise<boolean> {
+  return get<boolean>('/roles/check-name', { name, excludeId })
 }

@@ -7,6 +7,7 @@ const sequelize_1 = require("sequelize");
 const Role_model_1 = __importDefault(require("../models/Role.model"));
 const RolePermission_model_1 = __importDefault(require("../models/RolePermission.model"));
 const Permission_model_1 = __importDefault(require("../models/Permission.model"));
+const UserRole_model_1 = __importDefault(require("../models/UserRole.model"));
 class RoleDao {
     async create(data, options) {
         return Role_model_1.default.create(data, options);
@@ -91,6 +92,84 @@ class RoleDao {
         return Permission_model_1.default.findAll({
             where: { id: { [sequelize_1.Op.in]: permissionIds } },
             order: [['sort', 'ASC']],
+        });
+    }
+    async existsByName(name, excludeId) {
+        const where = { name };
+        if (excludeId) {
+            where.id = { [sequelize_1.Op.ne]: excludeId };
+        }
+        const count = await this.count({ where });
+        return count > 0;
+    }
+    async countByLevel() {
+        const results = await Role_model_1.default.findAll({
+            attributes: [
+                'level',
+                [(0, sequelize_1.literal)('COUNT(*)'), 'count'],
+            ],
+            group: ['level'],
+            raw: true,
+        });
+        return results.map((r) => ({
+            level: Number(r.level),
+            count: Number(r.count),
+        }));
+    }
+    async getBoundUserIds(roleId) {
+        const userRoles = await UserRole_model_1.default.findAll({
+            where: { roleId },
+            attributes: ['userId'],
+        });
+        return userRoles.map((ur) => ur.userId);
+    }
+    async getBoundUserCount(roleId) {
+        return UserRole_model_1.default.count({ where: { roleId } });
+    }
+    async findAllPagedWithUserCount(params) {
+        const { page, pageSize, keyword, status } = params;
+        const offset = (page - 1) * pageSize;
+        const where = {};
+        if (keyword) {
+            where[sequelize_1.Op.or] = [
+                { name: { [sequelize_1.Op.like]: `%${keyword}%` } },
+                { code: { [sequelize_1.Op.like]: `%${keyword}%` } },
+            ];
+        }
+        if (status !== undefined) {
+            where.status = status;
+        }
+        const { rows, count } = await Role_model_1.default.findAndCountAll({
+            where,
+            offset,
+            limit: pageSize,
+            order: [['sort', 'ASC'], ['createdAt', 'DESC']],
+            attributes: {
+                include: [
+                    [
+                        (0, sequelize_1.literal)('(SELECT COUNT(*) FROM user_roles ur WHERE ur.role_id = role.id)'),
+                        'userCount',
+                    ],
+                ],
+            },
+        });
+        const enrichedRows = rows.map((role) => {
+            const json = role.toJSON();
+            json.userCount = Number(json.userCount) || 0;
+            return json;
+        });
+        return { rows: enrichedRows, count };
+    }
+    async copyRolePermissions(sourceRoleId, targetRoleId) {
+        const permissions = await this.getPermissions(sourceRoleId);
+        const permissionIds = permissions.map((p) => p.id);
+        await this.assignPermissions(targetRoleId, permissionIds);
+    }
+    async countByLevelLessThan(level) {
+        return Role_model_1.default.count({
+            where: {
+                level: { [sequelize_1.Op.lt]: level },
+            },
         });
     }
 }

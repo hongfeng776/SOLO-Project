@@ -1,7 +1,8 @@
-import { FindOptions, CreateOptions, UpdateOptions, DestroyOptions, CountOptions, Op } from 'sequelize';
+import { FindOptions, CreateOptions, UpdateOptions, DestroyOptions, CountOptions, Op, literal } from 'sequelize';
 import Role, { RoleAttributes, RoleCreationAttributes } from '../models/Role.model';
 import RolePermission from '../models/RolePermission.model';
 import Permission from '../models/Permission.model';
+import UserRole from '../models/UserRole.model';
 
 interface RoleQueryParams {
   page: number;
@@ -111,6 +112,100 @@ class RoleDao {
     return Permission.findAll({
       where: { id: { [Op.in]: permissionIds } },
       order: [['sort', 'ASC']],
+    });
+  }
+
+  public async existsByName(name: string, excludeId?: string): Promise<boolean> {
+    const where: any = { name };
+    if (excludeId) {
+      where.id = { [Op.ne]: excludeId };
+    }
+    const count = await this.count({ where });
+    return count > 0;
+  }
+
+  public async countByLevel(): Promise<Array<{ level: number; count: number }>> {
+    const results = await Role.findAll({
+      attributes: [
+        'level',
+        [literal('COUNT(*)'), 'count'],
+      ],
+      group: ['level'],
+      raw: true,
+    }) as unknown as Array<{ level: number; count: string }>;
+
+    return results.map((r) => ({
+      level: Number(r.level),
+      count: Number(r.count),
+    }));
+  }
+
+  public async getBoundUserIds(roleId: string): Promise<string[]> {
+    const userRoles = await UserRole.findAll({
+      where: { roleId },
+      attributes: ['userId'],
+    });
+    return userRoles.map((ur) => ur.userId);
+  }
+
+  public async getBoundUserCount(roleId: string): Promise<number> {
+    return UserRole.count({ where: { roleId } });
+  }
+
+  public async findAllPagedWithUserCount(
+    params: RoleQueryParams
+  ): Promise<{ rows: any[]; count: number }> {
+    const { page, pageSize, keyword, status } = params;
+    const offset = (page - 1) * pageSize;
+    const where: any = {};
+
+    if (keyword) {
+      where[Op.or] = [
+        { name: { [Op.like]: `%${keyword}%` } },
+        { code: { [Op.like]: `%${keyword}%` } },
+      ];
+    }
+    if (status !== undefined) {
+      where.status = status;
+    }
+
+    const { rows, count } = await Role.findAndCountAll({
+      where,
+      offset,
+      limit: pageSize,
+      order: [['sort', 'ASC'], ['createdAt', 'DESC']],
+      attributes: {
+        include: [
+          [
+            literal(
+              '(SELECT COUNT(*) FROM user_roles ur WHERE ur.role_id = role.id)'
+            ),
+            'userCount',
+          ],
+        ],
+      },
+    });
+
+    const enrichedRows = rows.map((role) => {
+      const json = role.toJSON() as any;
+      json.userCount = Number(json.userCount) || 0;
+      return json;
+    });
+
+    return { rows: enrichedRows, count };
+  }
+
+  public async copyRolePermissions(sourceRoleId: string, targetRoleId: string): Promise<void> {
+    const permissions = await this.getPermissions(sourceRoleId);
+    const permissionIds = permissions.map((p) => p.id);
+    await this.assignPermissions(targetRoleId, permissionIds);
+  }
+
+  public async countByLevelLessThan(level: number): Promise<number> {
+    return Role.count({
+      where: {
+        level: { [Op.lt]: level },
+      },
     });
   }
 }

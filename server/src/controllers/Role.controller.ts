@@ -7,7 +7,17 @@ class RoleController {
   public async create(req: Request, res: Response): Promise<void> {
     try {
       const data: RoleCreationAttributes = req.body;
-      const result = await roleService.create(data);
+      const result = await roleService.createRole((req as any).user, data);
+      ResponseUtils.created(res, result, '角色创建成功');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async createRole(req: Request, res: Response): Promise<void> {
+    try {
+      const data = req.body;
+      const result = await roleService.createRole((req as any).user, data);
       ResponseUtils.created(res, result, '角色创建成功');
     } catch (err: any) {
       ResponseUtils.error(res, err.message, err.code);
@@ -45,7 +55,18 @@ class RoleController {
     try {
       const { id } = req.params;
       const data: Partial<RoleAttributes> = req.body;
-      const result = await roleService.update(id, data);
+      const result = await roleService.updateRoleWithPermissions((req as any).user, id, data);
+      ResponseUtils.success(res, result, '角色更新成功');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async updateRoleWithPermissions(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const data = req.body;
+      const result = await roleService.updateRoleWithPermissions((req as any).user, id, data);
       ResponseUtils.success(res, result, '角色更新成功');
     } catch (err: any) {
       ResponseUtils.error(res, err.message, err.code);
@@ -55,7 +76,17 @@ class RoleController {
   public async delete(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      await roleService.delete(id);
+      await roleService.deleteRole((req as any).user, id);
+      ResponseUtils.success(res, null, '角色删除成功');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async deleteRole(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      await roleService.deleteRole((req as any).user, id);
       ResponseUtils.success(res, null, '角色删除成功');
     } catch (err: any) {
       ResponseUtils.error(res, err.message, err.code);
@@ -65,7 +96,13 @@ class RoleController {
   public async bulkDelete(req: Request, res: Response): Promise<void> {
     try {
       const { ids } = req.body;
-      await roleService.bulkDelete(ids);
+      if (!ids || ids.length === 0) {
+        ResponseUtils.error(res, '请选择要删除的记录', 400);
+        return;
+      }
+      for (const id of ids) {
+        await roleService.deleteRole((req as any).user, id);
+      }
       ResponseUtils.success(res, null, '批量删除成功');
     } catch (err: any) {
       ResponseUtils.error(res, err.message, err.code);
@@ -76,8 +113,12 @@ class RoleController {
     try {
       const { id } = req.params;
       const { status } = req.body;
-      await roleService.updateStatus(id, status);
-      ResponseUtils.success(res, null, '状态更新成功');
+      const result = await roleService.batchUpdateStatus((req as any).user, [id], status);
+      if (result.success.length > 0) {
+        ResponseUtils.success(res, null, '状态更新成功');
+      } else {
+        ResponseUtils.error(res, result.failed[0]?.reason || '状态更新失败', 400);
+      }
     } catch (err: any) {
       ResponseUtils.error(res, err.message, err.code);
     }
@@ -87,7 +128,7 @@ class RoleController {
     try {
       const { id } = req.params;
       const { permissionIds } = req.body;
-      await roleService.assignPermissions(id, permissionIds || []);
+      await roleService.updateRoleWithPermissions((req as any).user, id, { permissionIds });
       ResponseUtils.success(res, null, '权限分配成功');
     } catch (err: any) {
       ResponseUtils.error(res, err.message, err.code);
@@ -99,6 +140,60 @@ class RoleController {
       const { id } = req.params;
       const result = await roleService.getPermissions(id);
       ResponseUtils.success(res, result);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async batchCopyRoles(req: Request, res: Response): Promise<void> {
+    try {
+      const params = req.body;
+      const result = await roleService.batchCopyRoles((req as any).user, params);
+      ResponseUtils.success(res, result, '批量复制完成');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async batchUpdateStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const { ids, status } = req.body;
+      const result = await roleService.batchUpdateStatus((req as any).user, ids, status);
+      ResponseUtils.success(res, result, '批量状态更新完成');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async checkRoleDependencies(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const result = await roleService.checkRoleDependencies(id);
+      ResponseUtils.success(res, result);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async searchDeletionLogs(req: Request, res: Response): Promise<void> {
+    try {
+      const params = {
+        keyword: req.query.keyword as string,
+        startTime: req.query.startTime as string,
+        endTime: req.query.endTime as string,
+      };
+      const result = await roleService.searchDeletionLogs(params);
+      ResponseUtils.success(res, result);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getBoundUserCount(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const result = await roleService.getBoundUserCount(id);
+      ResponseUtils.success(res, { count: result });
     } catch (err: any) {
       ResponseUtils.error(res, err.message, err.code);
     }

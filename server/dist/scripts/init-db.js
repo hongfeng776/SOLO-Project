@@ -11,6 +11,7 @@ const logger_1 = __importDefault(require("../utils/logger"));
 require("../models/OperationLog.model");
 require("../models/ChannelExtension.model");
 require("../models/CommissionRule.model");
+require("../models/RoleDeletionLog.model");
 const initDatabase = async () => {
     try {
         logger_1.default.info('Starting database initialization...');

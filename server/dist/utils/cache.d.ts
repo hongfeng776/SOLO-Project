@@ -13,7 +13,11 @@ export declare enum CacheKey {
     USER_INFO = "user:info:",
     USER_LIST = "user:list",
     USER_DETAIL = "user:detail:",
-    PERMISSION_LIST = "permission:list:"
+    PERMISSION_LIST = "permission:list:",
+    ROLE_LIST = "role:list",
+    ROLE_DETAIL = "role:detail:",
+    ROLE_PERMISSIONS = "role:permissions:",
+    ROLE_DELETION_LOGS = "role:deletion-logs"
 }
 export declare enum CacheTTL {
     SHORT = 60,

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CommissionRule = exports.ChannelExtension = exports.OperationLog = exports.UserRole = exports.RolePermission = exports.Permission = exports.Role = exports.Withdraw = exports.Marketing = exports.Commission = exports.Order = exports.Promoter = exports.Channel = exports.User = exports.associate = void 0;
+exports.RoleDeletionLog = exports.CommissionRule = exports.ChannelExtension = exports.OperationLog = exports.UserRole = exports.RolePermission = exports.Permission = exports.Role = exports.Withdraw = exports.Marketing = exports.Commission = exports.Order = exports.Promoter = exports.Channel = exports.User = exports.associate = void 0;
 const User_model_1 = __importDefault(require("./User.model"));
 exports.User = User_model_1.default;
 const Channel_model_1 = __importDefault(require("./Channel.model"));
@@ -32,6 +32,8 @@ const ChannelExtension_model_1 = __importDefault(require("./ChannelExtension.mod
 exports.ChannelExtension = ChannelExtension_model_1.default;
 const CommissionRule_model_1 = __importDefault(require("./CommissionRule.model"));
 exports.CommissionRule = CommissionRule_model_1.default;
+const RoleDeletionLog_model_1 = __importDefault(require("./RoleDeletionLog.model"));
+exports.RoleDeletionLog = RoleDeletionLog_model_1.default;
 const models = {
     User: User_model_1.default,
     Channel: Channel_model_1.default,
@@ -47,6 +49,7 @@ const models = {
     OperationLog: OperationLog_model_1.default,
     ChannelExtension: ChannelExtension_model_1.default,
     CommissionRule: CommissionRule_model_1.default,
+    RoleDeletionLog: RoleDeletionLog_model_1.default,
 };
 const associate = () => {
     Channel_model_1.default.hasMany(Promoter_model_1.default, { foreignKey: 'channelId', as: 'promoters' });

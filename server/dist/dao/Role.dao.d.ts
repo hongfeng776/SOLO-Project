@@ -30,6 +30,19 @@ declare class RoleDao {
     existsByCodeAndId(code: string, excludeId: string): Promise<boolean>;
     assignPermissions(roleId: string, permissionIds: string[]): Promise<void>;
     getPermissions(roleId: string): Promise<Permission[]>;
+    existsByName(name: string, excludeId?: string): Promise<boolean>;
+    countByLevel(): Promise<Array<{
+        level: number;
+        count: number;
+    }>>;
+    getBoundUserIds(roleId: string): Promise<string[]>;
+    getBoundUserCount(roleId: string): Promise<number>;
+    findAllPagedWithUserCount(params: RoleQueryParams): Promise<{
+        rows: any[];
+        count: number;
+    }>;
+    copyRolePermissions(sourceRoleId: string, targetRoleId: string): Promise<void>;
+    countByLevelLessThan(level: number): Promise<number>;
 }
 declare const _default: RoleDao;
 export default _default;

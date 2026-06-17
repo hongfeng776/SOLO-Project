@@ -85,7 +85,7 @@
         <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
             <el-switch
-              :model-value="(row as PermissionItem).status as any === 1 || (row as PermissionItem).status === 'enable'"
+              :model-value="(row as PermissionItem).status === 1"
               @change="(val: string | number | boolean) => handleStatusChange(row as PermissionItem, Boolean(val))"
               :width="44"
             />

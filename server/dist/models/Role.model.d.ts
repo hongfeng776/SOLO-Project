@@ -7,11 +7,19 @@ interface RoleAttributes {
     description?: string;
     status: CommonStatus;
     sort?: number;
+    level?: number;
+    scenario?: string;
+    permissionIds?: string[];
+    createdBy?: string;
+    createdByName?: string;
+    isSystem?: boolean;
+    userCount?: number;
+    boundPermissionIds?: string[];
     createdAt: Date;
     updatedAt: Date;
     deletedAt?: Date;
 }
-interface RoleCreationAttributes extends Optional<RoleAttributes, 'id' | 'description' | 'status' | 'sort' | 'createdAt' | 'updatedAt' | 'deletedAt'> {
+interface RoleCreationAttributes extends Optional<RoleAttributes, 'id' | 'description' | 'status' | 'sort' | 'level' | 'scenario' | 'permissionIds' | 'createdBy' | 'createdByName' | 'isSystem' | 'userCount' | 'boundPermissionIds' | 'createdAt' | 'updatedAt' | 'deletedAt'> {
 }
 declare class Role extends Model<RoleAttributes, RoleCreationAttributes> implements RoleAttributes {
     id: string;
@@ -20,6 +28,14 @@ declare class Role extends Model<RoleAttributes, RoleCreationAttributes> impleme
     description?: string;
     status: CommonStatus;
     sort?: number;
+    level?: number;
+    scenario?: string;
+    permissionIds?: string[];
+    createdBy?: string;
+    createdByName?: string;
+    isSystem?: boolean;
+    userCount?: number;
+    boundPermissionIds?: string[];
     readonly createdAt: Date;
     readonly updatedAt: Date;
     readonly deletedAt?: Date;

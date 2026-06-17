@@ -23,6 +23,10 @@ var CacheKey;
     CacheKey["USER_LIST"] = "user:list";
     CacheKey["USER_DETAIL"] = "user:detail:";
     CacheKey["PERMISSION_LIST"] = "permission:list:";
+    CacheKey["ROLE_LIST"] = "role:list";
+    CacheKey["ROLE_DETAIL"] = "role:detail:";
+    CacheKey["ROLE_PERMISSIONS"] = "role:permissions:";
+    CacheKey["ROLE_DELETION_LOGS"] = "role:deletion-logs";
 })(CacheKey || (exports.CacheKey = CacheKey = {}));
 var CacheTTL;
 (function (CacheTTL) {

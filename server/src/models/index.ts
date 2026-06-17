@@ -12,6 +12,7 @@ import UserRole from './UserRole.model';
 import OperationLog from './OperationLog.model';
 import ChannelExtension from './ChannelExtension.model';
 import CommissionRule from './CommissionRule.model';
+import RoleDeletionLog from './RoleDeletionLog.model';
 
 const models = {
   User,
@@ -28,6 +29,7 @@ const models = {
   OperationLog,
   ChannelExtension,
   CommissionRule,
+  RoleDeletionLog,
 };
 
 const associate = (): void => {
@@ -61,5 +63,5 @@ const associate = (): void => {
 };
 
 export { associate };
-export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule };
+export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog };
 export default models;

@@ -460,7 +460,7 @@ const selectedPermissionCodes = ref<string[]>([])
 
 async function fetchRoleList() {
   try {
-    const res = await getRoleList({ page: 1, pageSize: 999, status: 'enable' })
+    const res = await getRoleList({ page: 1, pageSize: 999, status: 1 })
     roleList.value = res.list
   } catch (error) {
     console.error('Fetch role list error:', error)

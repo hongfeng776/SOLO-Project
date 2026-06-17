@@ -194,3 +194,41 @@ export const USER_ROLE_MAP: Record<string, string> = {
   user: '普通管理员',
   guest: '访客',
 }
+
+export const ROLE_LEVEL_OPTIONS = [
+  { label: '超级管理员', value: 1, color: 'danger' },
+  { label: '系统管理员', value: 3, color: 'warning' },
+  { label: '运营经理', value: 5, color: 'primary' },
+  { label: '运营操作员', value: 7, color: 'success' },
+  { label: '只读用户', value: 9, color: 'info' },
+] as const
+
+export const ROLE_LEVEL_MAP: Record<number, { label: string; color: string }> = {
+  1: { label: '超级管理员', color: 'danger' },
+  3: { label: '系统管理员', color: 'warning' },
+  5: { label: '运营经理', color: 'primary' },
+  7: { label: '运营操作员', color: 'success' },
+  9: { label: '只读用户', color: 'info' },
+}
+
+export const ROLE_SCENARIO_OPTIONS = [
+  { label: '渠道运营', value: 'channel_operation' },
+  { label: '推客管理', value: 'promoter_management' },
+  { label: '订单审核', value: 'order_audit' },
+  { label: '财务结算', value: 'financial_settlement' },
+  { label: '营销策划', value: 'marketing' },
+  { label: '数据查看', value: 'data_view' },
+  { label: '系统运维', value: 'system_ops' },
+  { label: '全功能权限', value: 'full_access' },
+] as const
+
+export const ROLE_SCENARIO_MAP: Record<string, string> = {
+  channel_operation: '渠道运营',
+  promoter_management: '推客管理',
+  order_audit: '订单审核',
+  financial_settlement: '财务结算',
+  marketing: '营销策划',
+  data_view: '数据查看',
+  system_ops: '系统运维',
+  full_access: '全功能权限',
+}

@@ -37,6 +37,28 @@ Role.init({
         allowNull: false,
         defaultValue: 0,
     },
+    level: {
+        type: sequelize_1.DataTypes.TINYINT,
+        allowNull: true,
+        defaultValue: 5,
+    },
+    scenario: {
+        type: sequelize_1.DataTypes.STRING(200),
+        allowNull: true,
+    },
+    createdBy: {
+        type: sequelize_1.DataTypes.STRING(36),
+        allowNull: true,
+    },
+    createdByName: {
+        type: sequelize_1.DataTypes.STRING(50),
+        allowNull: true,
+    },
+    isSystem: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+    },
     createdAt: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: false,
@@ -59,6 +81,14 @@ Role.init({
         {
             name: 'idx_status',
             fields: ['status'],
+        },
+        {
+            name: 'idx_level',
+            fields: ['level'],
+        },
+        {
+            name: 'idx_is_system',
+            fields: ['is_system'],
         },
     ],
 });

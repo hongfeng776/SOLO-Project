@@ -6,6 +6,7 @@ import Logger from '../utils/logger';
 import '../models/OperationLog.model';
 import '../models/ChannelExtension.model';
 import '../models/CommissionRule.model';
+import '../models/RoleDeletionLog.model';
 
 const initDatabase = async (): Promise<void> => {
   try {

@@ -10,12 +10,20 @@ interface RoleAttributes {
   description?: string;
   status: CommonStatus;
   sort?: number;
+  level?: number;
+  scenario?: string;
+  permissionIds?: string[];
+  createdBy?: string;
+  createdByName?: string;
+  isSystem?: boolean;
+  userCount?: number;
+  boundPermissionIds?: string[];
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
 }
 
-interface RoleCreationAttributes extends Optional<RoleAttributes, 'id' | 'description' | 'status' | 'sort' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
+interface RoleCreationAttributes extends Optional<RoleAttributes, 'id' | 'description' | 'status' | 'sort' | 'level' | 'scenario' | 'permissionIds' | 'createdBy' | 'createdByName' | 'isSystem' | 'userCount' | 'boundPermissionIds' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
 
 class Role extends Model<RoleAttributes, RoleCreationAttributes> implements RoleAttributes {
   public id!: string;
@@ -24,6 +32,14 @@ class Role extends Model<RoleAttributes, RoleCreationAttributes> implements Role
   public description?: string;
   public status!: CommonStatus;
   public sort?: number;
+  public level?: number;
+  public scenario?: string;
+  public permissionIds?: string[];
+  public createdBy?: string;
+  public createdByName?: string;
+  public isSystem?: boolean;
+  public userCount?: number;
+  public boundPermissionIds?: string[];
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
   public readonly deletedAt?: Date;
@@ -59,6 +75,28 @@ Role.init(
       allowNull: false,
       defaultValue: 0,
     },
+    level: {
+      type: DataTypes.TINYINT,
+      allowNull: true,
+      defaultValue: 5,
+    },
+    scenario: {
+      type: DataTypes.STRING(200),
+      allowNull: true,
+    },
+    createdBy: {
+      type: DataTypes.STRING(36),
+      allowNull: true,
+    },
+    createdByName: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    isSystem: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -82,6 +120,14 @@ Role.init(
       {
         name: 'idx_status',
         fields: ['status'],
+      },
+      {
+        name: 'idx_level',
+        fields: ['level'],
+      },
+      {
+        name: 'idx_is_system',
+        fields: ['is_system'],
       },
     ],
   }

@@ -9,7 +9,17 @@ class RoleController {
     async create(req, res) {
         try {
             const data = req.body;
-            const result = await services_1.roleService.create(data);
+            const result = await services_1.roleService.createRole(req.user, data);
+            response_1.default.created(res, result, '角色创建成功');
+        }
+        catch (err) {
+            response_1.default.error(res, err.message, err.code);
+        }
+    }
+    async createRole(req, res) {
+        try {
+            const data = req.body;
+            const result = await services_1.roleService.createRole(req.user, data);
             response_1.default.created(res, result, '角色创建成功');
         }
         catch (err) {
@@ -47,7 +57,18 @@ class RoleController {
         try {
             const { id } = req.params;
             const data = req.body;
-            const result = await services_1.roleService.update(id, data);
+            const result = await services_1.roleService.updateRoleWithPermissions(req.user, id, data);
+            response_1.default.success(res, result, '角色更新成功');
+        }
+        catch (err) {
+            response_1.default.error(res, err.message, err.code);
+        }
+    }
+    async updateRoleWithPermissions(req, res) {
+        try {
+            const { id } = req.params;
+            const data = req.body;
+            const result = await services_1.roleService.updateRoleWithPermissions(req.user, id, data);
             response_1.default.success(res, result, '角色更新成功');
         }
         catch (err) {
@@ -57,7 +78,17 @@ class RoleController {
     async delete(req, res) {
         try {
             const { id } = req.params;
-            await services_1.roleService.delete(id);
+            await services_1.roleService.deleteRole(req.user, id);
+            response_1.default.success(res, null, '角色删除成功');
+        }
+        catch (err) {
+            response_1.default.error(res, err.message, err.code);
+        }
+    }
+    async deleteRole(req, res) {
+        try {
+            const { id } = req.params;
+            await services_1.roleService.deleteRole(req.user, id);
             response_1.default.success(res, null, '角色删除成功');
         }
         catch (err) {
@@ -67,7 +98,13 @@ class RoleController {
     async bulkDelete(req, res) {
         try {
             const { ids } = req.body;
-            await services_1.roleService.bulkDelete(ids);
+            if (!ids || ids.length === 0) {
+                response_1.default.error(res, '请选择要删除的记录', 400);
+                return;
+            }
+            for (const id of ids) {
+                await services_1.roleService.deleteRole(req.user, id);
+            }
             response_1.default.success(res, null, '批量删除成功');
         }
         catch (err) {
@@ -78,8 +115,13 @@ class RoleController {
         try {
             const { id } = req.params;
             const { status } = req.body;
-            await services_1.roleService.updateStatus(id, status);
-            response_1.default.success(res, null, '状态更新成功');
+            const result = await services_1.roleService.batchUpdateStatus(req.user, [id], status);
+            if (result.success.length > 0) {
+                response_1.default.success(res, null, '状态更新成功');
+            }
+            else {
+                response_1.default.error(res, result.failed[0]?.reason || '状态更新失败', 400);
+            }
         }
         catch (err) {
             response_1.default.error(res, err.message, err.code);
@@ -89,7 +131,7 @@ class RoleController {
         try {
             const { id } = req.params;
             const { permissionIds } = req.body;
-            await services_1.roleService.assignPermissions(id, permissionIds || []);
+            await services_1.roleService.updateRoleWithPermissions(req.user, id, { permissionIds });
             response_1.default.success(res, null, '权限分配成功');
         }
         catch (err) {
@@ -101,6 +143,60 @@ class RoleController {
             const { id } = req.params;
             const result = await services_1.roleService.getPermissions(id);
             response_1.default.success(res, result);
+        }
+        catch (err) {
+            response_1.default.error(res, err.message, err.code);
+        }
+    }
+    async batchCopyRoles(req, res) {
+        try {
+            const params = req.body;
+            const result = await services_1.roleService.batchCopyRoles(req.user, params);
+            response_1.default.success(res, result, '批量复制完成');
+        }
+        catch (err) {
+            response_1.default.error(res, err.message, err.code);
+        }
+    }
+    async batchUpdateStatus(req, res) {
+        try {
+            const { ids, status } = req.body;
+            const result = await services_1.roleService.batchUpdateStatus(req.user, ids, status);
+            response_1.default.success(res, result, '批量状态更新完成');
+        }
+        catch (err) {
+            response_1.default.error(res, err.message, err.code);
+        }
+    }
+    async checkRoleDependencies(req, res) {
+        try {
+            const { id } = req.params;
+            const result = await services_1.roleService.checkRoleDependencies(id);
+            response_1.default.success(res, result);
+        }
+        catch (err) {
+            response_1.default.error(res, err.message, err.code);
+        }
+    }
+    async searchDeletionLogs(req, res) {
+        try {
+            const params = {
+                keyword: req.query.keyword,
+                startTime: req.query.startTime,
+                endTime: req.query.endTime,
+            };
+            const result = await services_1.roleService.searchDeletionLogs(params);
+            response_1.default.success(res, result);
+        }
+        catch (err) {
+            response_1.default.error(res, err.message, err.code);
+        }
+    }
+    async getBoundUserCount(req, res) {
+        try {
+            const { id } = req.params;
+            const result = await services_1.roleService.getBoundUserCount(id);
+            response_1.default.success(res, { count: result });
         }
         catch (err) {
             response_1.default.error(res, err.message, err.code);
