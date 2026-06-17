@@ -1,5 +1,7 @@
 const resourceService = require('../services/resourceService')
 const ApiResponse = require('../utils/response')
+const { Resource } = require('../models')
+const ApiError = require('../utils/apiError')
 
 class ResourceController {
   async getList(req, res, next) {
@@ -205,6 +207,64 @@ class ResourceController {
     } catch (error) {
       next(error)
     }
+  }
+
+  async checkStateExclusive(req, res, next) {
+    try {
+      const { id, operation } = req.query
+      const resource = await Resource.findByPk(parseInt(id))
+      if (!resource) throw ApiError.notFound('资源不存在')
+      const result = resourceService.checkStateExclusive(resource.status, operation)
+      res.json(ApiResponse.success(result))
+    } catch (e) { next(e) }
+  }
+
+  async getRelatedWorks(req, res, next) {
+    try {
+      const { id } = req.params
+      const result = await resourceService.getRelatedWorks(parseInt(id))
+      res.json(ApiResponse.success(result))
+    } catch (e) { next(e) }
+  }
+
+  async changeStateWithValidation(req, res, next) {
+    try {
+      const { id } = req.params
+      const { targetStatus, skipConfirm } = req.body
+      const userId = req.user.id
+      const result = await resourceService.changeStateWithValidation(
+        parseInt(id), targetStatus, userId, skipConfirm
+      )
+      res.json(ApiResponse.success(result))
+    } catch (e) { next(e) }
+  }
+
+  async batchChangeState(req, res, next) {
+    try {
+      const { ids, targetStatus } = req.body
+      const userId = req.user.id
+      const userRole = req.user.role
+      const result = await resourceService.batchChangeStateWithPermission(
+        ids, targetStatus, userId, userRole
+      )
+      res.json(ApiResponse.success(result))
+    } catch (e) { next(e) }
+  }
+
+  async getStateChangeHistory(req, res, next) {
+    try {
+      const { id, days } = req.query
+      const result = await resourceService.getStateChangeHistory(parseInt(id), parseInt(days || 30))
+      res.json(ApiResponse.success(result))
+    } catch (e) { next(e) }
+  }
+
+  async getPermissionFilter(req, res, next) {
+    try {
+      const role = req.user.role
+      const result = resourceService.getPermissionFilter(role)
+      res.json(ApiResponse.success(result))
+    } catch (e) { next(e) }
   }
 }
 

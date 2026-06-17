@@ -723,6 +723,270 @@ class ResourceService {
   _clearListCache() {
     cache.deleteByPrefix('resource_list_')
   }
+
+  checkStateExclusive(currentStatus, operation) {
+    const rules = {
+      audit: ['pending'],
+      publish: ['offline', 'approved'],
+      offline: ['published', 'approved'],
+      edit: ['draft', 'pending', 'rejected', 'offline'],
+      remove: ['draft', 'offline']
+    }
+    const allowed = rules[operation] || []
+    if (currentStatus === 'violation' || currentStatus === 'blocked') {
+      return { allowed: false, reason: `当前素材状态为「${currentStatus}」，禁止${operation === 'edit' ? '编辑' : '上架'}操作` }
+    }
+    if (!allowed.includes(currentStatus)) {
+      return { allowed: false, reason: `素材当前状态为「${currentStatus}」，仅${allowed.join('、')}状态可执行此操作` }
+    }
+    return { allowed: true }
+  }
+
+  async getRelatedWorks(resourceId) {
+    const count = await OperationLog.count({
+      where: {
+        targetId: resourceId,
+        module: 'resource',
+        createdAt: { [require('sequelize').Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+      }
+    })
+    const viewAndDownloadCount = await Resource.findByPk(resourceId, {
+      attributes: ['viewCount', 'downloadCount']
+    })
+    const used = count + (viewAndDownloadCount ? (viewAndDownloadCount.viewCount + viewAndDownloadCount.downloadCount > 100 ? 1 : 0) : 0)
+    return {
+      inUse: used > 0,
+      referencedWorks: count,
+      activeDownloads: viewAndDownloadCount?.downloadCount || 0
+    }
+  }
+
+  async changeStateWithValidation(id, targetStatus, userId, skipConfirm = false) {
+    const resource = await Resource.findByPk(id)
+    if (!resource) throw ApiError.notFound('资源不存在')
+
+    const operationMap = {
+      approved: 'audit', rejected: 'audit',
+      published: 'publish', offline: 'offline'
+    }
+    const operation = operationMap[targetStatus] || 'edit'
+    const exclusiveCheck = this.checkStateExclusive(resource.status, operation)
+    if (!exclusiveCheck.allowed) {
+      throw ApiError.badRequest(exclusiveCheck.reason)
+    }
+
+    if (!this.validateTransition(resource.status, targetStatus)) {
+      throw ApiError.badRequest(`素材状态不能从 ${resource.status} 变更为 ${targetStatus}`)
+    }
+
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+    const recentChanges = await OperationLog.count({
+      where: {
+        targetId: id, module: 'resource', action: 'status_change',
+        result: 'success', createdAt: { [Op.gte]: oneHourAgo }
+      }
+    })
+    let frequentWarning = false
+    if (recentChanges >= 3 && !skipConfirm) {
+      frequentWarning = true
+      return {
+        needConfirm: true,
+        frequentWarning: true,
+        resource: resource.toJSON(),
+        recentChanges
+      }
+    }
+
+    const relatedWorks = await this.getRelatedWorks(id)
+    if (relatedWorks.inUse && !skipConfirm) {
+      return {
+        needConfirm: true,
+        relatedWorks,
+        resource: resource.toJSON()
+      }
+    }
+
+    const oldStatus = resource.status
+    await resource.update({ status: targetStatus })
+
+    if (targetStatus === 'published') {
+      await resource.update({
+        sortWeight: resource.sortWeight + 10,
+        publishedAt: new Date()
+      })
+    } else if (targetStatus === 'offline') {
+      await resource.update({
+        sortWeight: Math.max(0, resource.sortWeight - 20),
+        offlineAt: new Date(),
+        offlineReason: '用户操作下架'
+      })
+    } else if (targetStatus === 'violation') {
+      await resource.update({
+        sortWeight: 0,
+        violationCount: resource.violationCount + 1
+      })
+    }
+
+    await OperationLog.create({
+      userId,
+      username: 'operator',
+      module: 'resource',
+      action: 'status_change',
+      target: `素材「${resource.title}」`,
+      targetId: id,
+      detail: JSON.stringify({ from: oldStatus, to: targetStatus, reason: '手动变更' }),
+      result: 'success'
+    })
+
+    cache.delete('hot_resources')
+    cache.deleteByPrefix && cache.deleteByPrefix('resource_list_')
+    cache.delete('resource_detail_' + id)
+
+    return {
+      success: true,
+      needConfirm: false,
+      resource: resource.toJSON()
+    }
+  }
+
+  async batchChangeStateWithPermission(ids, targetStatus, userId, userRole) {
+    const OPERATOR_ALLOWED_FROM = ['draft', 'pending', 'rejected', 'approved', 'offline']
+    const ADMIN_ALLOWED_FROM = ['draft', 'pending', 'rejected', 'approved', 'offline', 'published', 'violation', 'blocked']
+    const allowedFromStates = ['super_admin', 'admin'].includes(userRole)
+      ? ADMIN_ALLOWED_FROM
+      : OPERATOR_ALLOWED_FROM
+
+    const resources = await Resource.findAll({ where: { id: { [Op.in]: ids } } })
+    const results = {
+      successIds: [],
+      failedItems: [],
+      permissionBlockedIds: [],
+      updated: 0,
+      globalErrors: []
+    }
+
+    const operationMap = {
+      approved: 'audit', rejected: 'audit',
+      published: 'publish', offline: 'offline'
+    }
+    const operation = operationMap[targetStatus] || 'edit'
+
+    for (const resource of resources) {
+      if (!allowedFromStates.includes(resource.status)) {
+        results.permissionBlockedIds.push(resource.id)
+        results.failedItems.push({
+          id: resource.id,
+          title: resource.title,
+          reason: `无权限操作${resource.status}状态的素材`
+        })
+        continue
+      }
+
+      const exclusiveCheck = this.checkStateExclusive(resource.status, operation)
+      if (!exclusiveCheck.allowed) {
+        results.failedItems.push({
+          id: resource.id,
+          title: resource.title,
+          reason: exclusiveCheck.reason
+        })
+        continue
+      }
+
+      if (!this.validateTransition(resource.status, targetStatus)) {
+        results.failedItems.push({
+          id: resource.id,
+          title: resource.title,
+          reason: `状态不可从${resource.status}变更为${targetStatus}`
+        })
+        continue
+      }
+
+      try {
+        const oldStatus = resource.status
+        await resource.update({ status: targetStatus })
+        if (targetStatus === 'published') {
+          await resource.update({ sortWeight: resource.sortWeight + 10, publishedAt: new Date() })
+        } else if (targetStatus === 'offline') {
+          await resource.update({ sortWeight: Math.max(0, resource.sortWeight - 20), offlineAt: new Date() })
+        }
+        results.successIds.push(resource.id)
+        results.updated++
+        await OperationLog.create({
+          userId, username: 'operator', module: 'resource', action: 'batch_status_change',
+          target: resource.title, targetId: resource.id,
+          detail: JSON.stringify({ from: oldStatus, to: targetStatus }), result: 'success'
+        })
+      } catch (err) {
+        results.failedItems.push({
+          id: resource.id,
+          title: resource.title,
+          reason: err.message || '系统异常'
+        })
+      }
+    }
+
+    cache.delete('hot_resources')
+    cache.deleteByPrefix && cache.deleteByPrefix('resource_list_')
+
+    return results
+  }
+
+  async getStateChangeHistory(resourceId, days = 30) {
+    const dateFrom = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+    const logs = await OperationLog.findAll({
+      where: {
+        targetId: resourceId,
+        module: 'resource',
+        action: { [Op.in]: ['status_change', 'batch_status_change'] },
+        createdAt: { [Op.gte]: dateFrom }
+      },
+      order: [['createdAt', 'DESC']]
+    })
+
+    const resource = await Resource.findByPk(resourceId)
+    const complianceLevel = resource
+      ? (resource.violationCount === 0 ? 'A' : resource.violationCount === 1 ? 'B' : resource.violationCount <= 3 ? 'C' : 'D')
+      : 'N/A'
+
+    const changeCount = logs.length
+    let warnings = []
+    if (changeCount > 20) warnings.push('近30天状态变更过于频繁（' + changeCount + '次）')
+    if (complianceLevel === 'D') warnings.push('合规等级过低，建议先处理违规记录再变更状态')
+    if (resource?.isBlocked) warnings.push('素材被风控拦截，无法正常变更状态')
+
+    return {
+      history: logs,
+      totalChanges: changeCount,
+      complianceLevel,
+      warnings,
+      resource: resource ? resource.toJSON() : null
+    }
+  }
+
+  getPermissionFilter(role) {
+    if (['super_admin', 'admin'].includes(role)) {
+      return {
+        allowedStatuses: ['draft', 'pending', 'rejected', 'approved', 'offline', 'published', 'violation', 'blocked'],
+        editableStatuses: ['draft', 'pending', 'rejected', 'approved', 'offline', 'published', 'violation', 'blocked'],
+        isAdmin: true,
+        canHandleViolation: true
+      }
+    } else if (role === 'auditor') {
+      return {
+        allowedStatuses: ['pending', 'approved', 'rejected'],
+        editableStatuses: ['pending', 'approved', 'rejected'],
+        isAdmin: false,
+        canHandleViolation: false
+      }
+    } else {
+      return {
+        allowedStatuses: ['draft', 'pending', 'rejected', 'approved', 'offline'],
+        editableStatuses: ['draft', 'pending', 'rejected', 'approved', 'offline'],
+        isAdmin: false,
+        canHandleViolation: false
+      }
+    }
+  }
 }
 
 module.exports = new ResourceService()

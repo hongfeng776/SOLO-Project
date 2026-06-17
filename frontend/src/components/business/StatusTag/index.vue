@@ -94,5 +94,25 @@ const label = computed(() => {
     color: $warning-color;
     background: rgba($warning-color, 0.1);
   }
+
+  &.violation {
+    color: #f56c6c;
+    background: rgba(#f56c6c, 0.15);
+    animation: violation-glow 2s ease-in-out infinite;
+    box-shadow: 0 0 0 rgba(#f56c6c, 0);
+  }
+  &.blocked {
+    color: #909399;
+    background: rgba(#909399, 0.15);
+    animation: blocked-pulse 2s ease-in-out infinite;
+  }
+}
+@keyframes violation-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 108, 108, 0); }
+  50% { box-shadow: 0 0 8px 2px rgba(245, 108, 108, 0.5); }
+}
+@keyframes blocked-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 </style>

@@ -64,3 +64,31 @@ export const batchToggleStatus = (ids: number[], targetStatus: string) => {
 export const traceMaterial = (keyword: string) => {
   return request.get<TraceResult>('/resources/trace', { keyword })
 }
+
+export const checkStateExclusive = (id: number, operation: string) => {
+  return request.get<{ allowed: boolean; reason?: string }>(`/resources/state/exclusive`, { params: { id, operation } })
+}
+
+export const getRelatedWorks = (id: number) => {
+  return request.get<any>(`/resources/${id}/related-works`)
+}
+
+export const changeStateWithValidation = (id: number, targetStatus: string, skipConfirm = false) => {
+  return request.put<any>(`/resources/${id}/state`, { targetStatus, skipConfirm })
+}
+
+export const batchChangeState = (ids: number[], targetStatus: string) => {
+  return request.post<any>('/resources/batch-change-state', { ids, targetStatus })
+}
+
+export const getStateChangeHistory = (id: number, days = 30) => {
+  return request.get<any>('/resources/state/history', { params: { id, days } })
+}
+
+export const getPermissionFilter = () => {
+  return request.get<any>('/resources/permission-filter')
+}
+
+export const getCategoryList = () => {
+  return request.get<any>('/categories')
+}

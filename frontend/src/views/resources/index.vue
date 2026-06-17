@@ -53,10 +53,10 @@
       <div class="table-toolbar">
         <div class="toolbar-left">
           <el-button type="primary" :icon="Plus" @click="handleOpenCreate">新增素材</el-button>
-          <el-button :icon="Upload" @click="handleUpload">上传资源</el-button>
+          <el-button :icon="UploadFilled" @click="handleUpload">上传资源</el-button>
           <el-dropdown class="dropdown-hover-shadow" trigger="click" @command="handleBatchCommand">
             <el-button :disabled="selectedRows.length === 0">
-              批量操作<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              批量操作<el-icon class="el-icon--right"><MoreFilled /></el-icon>
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
@@ -66,7 +66,7 @@
               </el-dropdown-menu>
             </template>
           </el-dropdown>
-          <el-button :icon="Search" @click="handleOpenTrace">溯源查询</el-button>
+          <el-button :icon="DataAnalysis" @click="handleOpenTrace">溯源查询</el-button>
         </div>
       </div>
 
@@ -86,7 +86,14 @@
         :row-class-name="rowClassName"
       >
         <el-table-column prop="id" label="ID" width="70" align="center" />
-        <el-table-column prop="materialCode" label="素材编码" width="140" align="center" show-overflow-tooltip />
+        <el-table-column prop="materialCode" label="素材编码" width="150">
+          <template #default="{ row }">
+            <el-tooltip v-if="row.materialCode" :content="row.materialCode" placement="top">
+              <span class="material-code">{{ row.materialCode || '-' }}</span>
+            </el-tooltip>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="title" label="标题" min-width="180" show-overflow-tooltip />
         <el-table-column label="封面" width="90" align="center">
           <template #default="{ row }">
@@ -108,30 +115,128 @@
             <span>{{ row.resolution || (row.width && row.height ? `${row.width}×${row.height}` : '-') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column label="上架控制" width="130" align="center">
           <template #default="{ row }">
-            <StatusTag :status="row.status" type="resource" />
+            <el-tooltip
+              v-if="!canEditRow(row)"
+              :content="permissionFilter.canHandleViolation ? '当前状态不可操作' : '无权限操作此状态素材'"
+              placement="top"
+            >
+              <span
+                class="state-toggle-btn disabled-state"
+                :class="{ shake: shakingBtnId === row.id }"
+                @click="triggerShake(row.id)"
+              >
+                <el-switch :model-value="row.status === 'published'" disabled />
+              </span>
+            </el-tooltip>
+            <span v-else class="state-toggle-wrapper" @click.stop>
+              <el-switch
+                :model-value="row.status === 'published'"
+                :loading="stateSwitchLoadingId === row.id"
+                :disabled="row.status === 'violation' || row.status === 'blocked' ? !permissionFilter.canHandleViolation : false"
+                inline-prompt
+                active-text="上架"
+                inactive-text="下架"
+                style="--el-switch-on-color: #67c23a; --el-switch-off-color: #909399"
+                class="state-switch slide-transition"
+                @change="(v: boolean) => handleInlineToggle(row, v)"
+              />
+            </span>
           </template>
         </el-table-column>
-        <el-table-column prop="sortWeight" label="权重" width="70" align="center" />
+        <el-table-column label="状态" width="110" align="center">
+          <template #default="{ row }">
+            <div class="status-cell">
+              <StatusTag :status="row.status" type="resource" />
+              <el-tag
+                v-if="rowErrors.has(row.id)"
+                type="danger"
+                size="small"
+                effect="dark"
+                class="error-tag"
+              >
+                异常
+              </el-tag>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="sortWeight" label="权重" width="70" align="center" sortable />
         <el-table-column prop="categoryName" label="分类" width="100" align="center" />
         <el-table-column prop="source" label="来源" width="100" align="center" show-overflow-tooltip />
         <el-table-column prop="createdAt" label="创建时间" width="160" align="center">
           <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="160" align="center" fixed="right">
+        <el-table-column label="操作" width="360" fixed="right" align="center">
           <template #default="{ row }">
-            <el-button link type="primary" class="btn-hover-scale" @click="handleOpenEdit(row, $event)">编辑</el-button>
-            <el-button link type="primary" @click="handlePreview(row)">预览</el-button>
-            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
-            <el-tag
-              v-if="batchFailedMap[row.id]"
-              type="danger"
+            <el-tooltip v-if="!canEditRow(row)" content="无权限编辑" placement="top">
+              <el-button
+                link
+                type="primary"
+                size="small"
+                class="state-action-btn disabled-btn"
+                :class="{ 'btn-shake': shakingBtnId === row.id * 10 + 1 }"
+                @click="triggerShake(row.id * 10 + 1)"
+              >
+                <el-icon><Edit /></el-icon>编辑
+              </el-button>
+            </el-tooltip>
+            <el-tooltip v-else content="分步编辑" placement="top">
+              <el-button
+                link
+                type="primary"
+                size="small"
+                class="state-action-btn ripple btn-hover-scale"
+                @click="openEditDialog(row)"
+              >
+                <el-icon><Edit /></el-icon>编辑
+              </el-button>
+            </el-tooltip>
+
+            <el-button
+              v-if="row.status === 'pending' && permissionFilter.allowedStatuses.includes('pending')"
+              link
+              type="success"
               size="small"
-              class="failed-tag"
+              class="state-action-btn ripple btn-hover-scale"
+              @click="onStateToggle(row, 'approved')"
             >
-              {{ batchFailedMap[row.id] }}
-            </el-tag>
+              <el-icon><CircleCheck /></el-icon>审核
+            </el-button>
+
+            <el-button
+              v-if="row.status === 'offline' && permissionFilter.allowedStatuses.includes('offline')"
+              link
+              type="warning"
+              size="small"
+              class="state-action-btn ripple btn-hover-scale"
+              @click="onStateToggle(row, 'published')"
+            >
+              <el-icon><Top /></el-icon>上架申请
+            </el-button>
+
+            <el-button
+              v-if="row.status === 'published' && permissionFilter.allowedStatuses.includes('published')"
+              link
+              type="info"
+              size="small"
+              class="state-action-btn ripple btn-hover-scale"
+              @click="onStateToggle(row, 'offline')"
+            >
+              <el-icon><Bottom /></el-icon>下架
+            </el-button>
+
+            <el-tooltip content="状态溯源" placement="top">
+              <el-button
+                link
+                size="small"
+                class="state-action-btn ripple btn-hover-scale"
+                style="color: #909399"
+                @click="openStateHistory(row)"
+              >
+                <el-icon><Clock /></el-icon>溯源
+              </el-button>
+            </el-tooltip>
           </template>
         </el-table-column>
       </DataTable>
@@ -547,12 +652,12 @@
         <div class="trace-section">
           <h4 class="trace-section-title">一致性校验</h4>
           <div v-if="traceResult.consistencyCheck.consistent" class="consistency-pass">
-            <el-icon color="#67c23a"><CircleCheckFilled /></el-icon>
+            <el-icon color="#67c23a"><CircleCheck /></el-icon>
             <span>数据一致性校验通过</span>
           </div>
           <div v-else class="consistency-fail">
             <div class="consistency-fail-header">
-              <el-icon color="#f56c6c"><CircleCloseFilled /></el-icon>
+              <el-icon color="#f56c6c"><CircleClose /></el-icon>
               <span>数据一致性校验未通过</span>
             </div>
             <div
@@ -568,27 +673,202 @@
         </div>
       </div>
     </el-dialog>
+
+    <el-dialog
+      v-model="stateDialogVisible"
+      title="状态变更"
+      width="520px"
+      class="state-dialog scale-dialog"
+      :close-on-click-modal="false"
+    >
+      <div v-loading="stateDialogLoading" class="state-dialog-content">
+        <div v-if="stateChangeTarget" class="state-info">
+          <el-descriptions :column="1" border size="small">
+            <el-descriptions-item label="素材名称">
+              <el-tooltip v-if="stateChangeTarget.title.length > 20" :content="stateChangeTarget.title" placement="top">
+                <span>{{ stateChangeTarget.title }}</span>
+              </el-tooltip>
+              <span v-else>{{ stateChangeTarget.title }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="目标状态">
+              <StatusTag :status="stateChangeTarget.status" type="resource" />
+            </el-descriptions-item>
+          </el-descriptions>
+        </div>
+        <el-alert
+          style="margin-top: 16px"
+          type="warning"
+          :closable="false"
+          show-icon
+          title="请确认状态变更是否正确，操作将联动更新展示权重并写入日志"
+        />
+      </div>
+      <template #footer>
+        <el-button @click="stateDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="stateDialogLoading" @click="confirmStateChange(false)">
+          确认变更
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="confirmDialogVisible"
+      title="二次确认"
+      width="480px"
+      class="scale-dialog"
+      type="warning"
+    >
+      <div v-if="confirmDialogData">
+        <template v-if="confirmDialogData.frequentWarning">
+          <el-alert type="error" :closable="false" show-icon
+            :title="`近1小时内已变更${confirmDialogData.recentChanges}次状态，操作过于频繁`" />
+          <p style="margin: 12px 0; color: #606266">是否仍然继续执行本次状态变更？</p>
+        </template>
+        <template v-else-if="confirmDialogData.relatedWorks">
+          <el-alert type="warning" :closable="false" show-icon title="该素材存在关联使用作品" />
+          <el-descriptions :column="1" size="small" style="margin-top: 12px" border>
+            <el-descriptions-item label="引用作品数">{{ confirmDialogData.relatedWorks.referencedWorks }}</el-descriptions-item>
+            <el-descriptions-item label="累计下载量">{{ confirmDialogData.relatedWorks.activeDownloads }}</el-descriptions-item>
+          </el-descriptions>
+          <p style="margin: 12px 0; color: #606266">下架将影响关联作品展示，是否确认继续？</p>
+        </template>
+      </div>
+      <template #footer>
+        <el-button @click="confirmDialogVisible = false">取消</el-button>
+        <el-button type="warning" @click="proceedAfterConfirm">确认执行</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="batchStateDialogVisible" title="批量状态变更" width="460px" class="scale-dialog">
+      <div class="batch-state-content" v-loading="batchStateLoading">
+        <p>已选择 <b style="color: var(--el-color-primary)">{{ selectedRows.length }}</b> 条素材</p>
+        <p>目标状态：<StatusTag :status="batchTargetStatus" type="resource" /></p>
+        <el-alert type="info" :closable="false" show-icon
+          title="系统将自动按权限过滤可操作素材，异常素材将单独标注" style="margin-top: 12px" />
+      </div>
+      <template #footer>
+        <el-button @click="batchStateDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="batchStateLoading" @click="doBatchChangeState">
+          确认批量变更
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="historyDialogVisible" title="素材状态变更溯源" width="820px" class="scale-dialog">
+      <div v-loading="skeletonLoading" class="history-content">
+        <template v-if="!skeletonLoading">
+          <el-row :gutter="16" style="margin-bottom: 16px">
+            <el-col :span="8">
+              <el-statistic title="近30天变更次数" :value="historyData.totalChanges" />
+            </el-col>
+            <el-col :span="8">
+              <div class="compliance-box">
+                <span class="label">合规等级</span>
+                <el-tag
+                  :type="historyData.complianceLevel === 'A' ? 'success'
+                    : historyData.complianceLevel === 'B' ? 'warning'
+                    : historyData.complianceLevel === 'C' ? 'danger' : 'info'"
+                  size="large" effect="dark"
+                >
+                  {{ historyData.complianceLevel }}级
+                </el-tag>
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="warning-box">
+                <el-icon v-if="historyData.warnings.length === 0" color="#67c23a"><CircleCheck /></el-icon>
+                <el-icon v-else color="#e6a23c"><Warning /></el-icon>
+                <span style="margin-left: 6px">
+                  {{ historyData.warnings.length === 0 ? '校验通过' : historyData.warnings.length + '项异常' }}
+                </span>
+              </div>
+            </el-col>
+          </el-row>
+
+          <el-alert
+            v-if="historyData.warnings.length > 0"
+            v-for="(w, i) in historyData.warnings"
+            :key="i"
+            type="error"
+            style="margin-bottom: 8px"
+            :closable="false"
+            show-icon
+            :title="w"
+          />
+
+          <div class="history-timeline">
+            <h4 style="margin: 16px 0 8px">状态变更记录</h4>
+            <el-timeline v-if="historyData.history.length > 0">
+              <el-timeline-item
+                v-for="(log, idx) in historyData.history"
+                :key="idx"
+                :type="log.result === 'success' ? 'success' : 'danger'"
+                :timestamp="log.createdAt"
+                placement="top"
+              >
+                <el-card shadow="never" size="small">
+                  <div class="log-item">
+                    <div class="log-header">
+                      <span class="log-action">{{ log.action }}</span>
+                      <span class="log-user" v-if="log.username">{{ log.username }}</span>
+                    </div>
+                    <el-tooltip
+                      v-if="log.detail && log.detail.length > 80"
+                      :content="log.detail"
+                      placement="top"
+                    >
+                      <div class="log-detail">{{ parseLogDetail(log.detail) }}</div>
+                    </el-tooltip>
+                    <div v-else class="log-detail">{{ parseLogDetail(log.detail) }}</div>
+                  </div>
+                </el-card>
+              </el-timeline-item>
+            </el-timeline>
+            <el-empty v-else description="暂无变更记录" />
+          </div>
+        </template>
+
+        <template v-else>
+          <el-skeleton :rows="8" animated />
+        </template>
+      </div>
+      <template #footer>
+        <el-button @click="historyDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-import { Search, Refresh, Plus, Upload, ArrowDown, CircleCheckFilled, CircleCloseFilled } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
+import { Search, Refresh, Plus, UploadFilled, DataAnalysis,
+  Edit, MoreFilled, Top, Bottom, CircleCheck,
+  CircleClose, Warning, Clock } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox, ElNotification } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { DataTable, StatusTag, BatchOperation, ResourcePreview, FileUpload } from '@/components/business'
+import { DataTable, StatusTag, BatchOperation, FileUpload, ResourcePreview } from '@/components/business'
 import { ResourceStatusLabel, FileTypeLabel, ResourceStatus } from '@/constants'
-import {
-  getResourceList,
-  batchDeleteResource,
-  validateCreate,
-  createWithValidation,
-  updateWithConstraint,
-  batchUpdateWeight,
-  batchToggleStatus,
-  traceMaterial
-} from '@/api/resource'
+import * as resourceApi from '@/api/resource'
 import type { ImageResource, ValidateResult, TraceResult } from '@/types'
+
+const permissionFilter = ref<any>({ allowedStatuses: [], editableStatuses: [], isAdmin: false, canHandleViolation: false })
+const stateSwitchLoadingId = ref<number | null>(null)
+const stateDialogVisible = ref(false)
+const stateDialogLoading = ref(false)
+const stateChangeTarget = ref<{ id: number; status: string; title: string } | null>(null)
+const confirmDialogVisible = ref(false)
+const confirmDialogData = ref<any>(null)
+const historyDialogVisible = ref(false)
+const historyDialogLoading = ref(false)
+const historyData = ref<any>({ history: [], complianceLevel: '', warnings: [], totalChanges: 0 })
+const historyTargetId = ref<number | null>(null)
+const skeletonLoading = ref(false)
+const batchStateDialogVisible = ref(false)
+const batchTargetStatus = ref('')
+const batchStateLoading = ref(false)
+const disabledRowIds = ref<Set<number>>(new Set())
+const shakingBtnId = ref<number | null>(null)
+const rowErrors = ref<Map<number, string>>(new Map())
 
 const loading = ref(false)
 const tableData = ref<ImageResource[]>([])
@@ -621,7 +901,7 @@ const fileTypeLabel = FileTypeLabel as Record<string, string>
 const fetchList = async () => {
   loading.value = true
   try {
-    const res = await getResourceList({
+    const res = await resourceApi.getResourceList({
       page: page.value,
       pageSize: pageSize.value,
       keyword: filterForm.keyword || undefined,
@@ -635,6 +915,17 @@ const fetchList = async () => {
     console.error('获取资源列表失败:', error)
   } finally {
     loading.value = false
+  }
+}
+
+const loadList = fetchList
+
+const loadCategories = async () => {
+  try {
+    const res = await resourceApi.getCategoryList() as any
+    categories.value = res.data || []
+  } catch (e) {
+    console.error('加载分类失败:', e)
   }
 }
 
@@ -674,27 +965,8 @@ const handleUploadSuccess = () => {
   fetchList()
 }
 
-const handlePreview = (row: ImageResource) => {
-  currentResource.value = row
-  previewVisible.value = true
-}
-
 const handleDownload = (resource: ImageResource) => {
   console.log('下载资源:', resource)
-}
-
-const handleDelete = async (row: ImageResource) => {
-  try {
-    await ElMessageBox.confirm(`确定要删除资源「${row.title}」吗？`, '提示', { type: 'warning' })
-    const { deleteResource } = await import('@/api/resource')
-    await deleteResource(row.id)
-    ElMessage.success('删除成功')
-    fetchList()
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('删除失败:', error)
-    }
-  }
 }
 
 const handleBatchDelete = async () => {
@@ -706,7 +978,7 @@ const handleBatchDelete = async () => {
       { type: 'warning' }
     )
     const ids = selectedRows.value.map((item) => item.id)
-    await batchDeleteResource(ids)
+    await resourceApi.batchDeleteResource(ids)
     ElMessage.success('批量删除成功')
     fetchList()
   } catch (error) {
@@ -721,8 +993,19 @@ const formatDate = (date: string) => {
   return date.replace('T', ' ').substring(0, 16)
 }
 
+const refreshRow = (id: number, newData?: any) => {
+  if (newData) {
+    const idx = tableData.value.findIndex(r => r.id === id)
+    if (idx !== -1) {
+      tableData.value[idx] = { ...tableData.value[idx], ...newData }
+    }
+  } else {
+    refreshRows([id])
+  }
+}
+
 const refreshRows = (ids: number[]) => {
-  const res = getResourceList({ page: page.value, pageSize: pageSize.value })
+  const res = resourceApi.getResourceList({ page: page.value, pageSize: pageSize.value })
   res.then((result) => {
     const updatedMap = new Map(result.data.list.map((r) => [r.id, r]))
     tableData.value = tableData.value.map((row) => {
@@ -788,7 +1071,7 @@ const handleTitleInput = () => {
       return
     }
     try {
-      const res = await validateCreate({ title: createForm.title })
+      const res = await resourceApi.validateCreate({ title: createForm.title })
       const result: ValidateResult = res.data
       if (result.duplicate) {
         titleDuplicate.value = true
@@ -809,7 +1092,7 @@ const handleSubmitCreate = async () => {
 
   createSubmitting.value = true
   try {
-    const validateRes = await validateCreate(createForm)
+    const validateRes = await resourceApi.validateCreate(createForm)
     const result: ValidateResult = validateRes.data
     if (!result.valid) {
       validateErrors.value = result.errors
@@ -819,7 +1102,7 @@ const handleSubmitCreate = async () => {
     }
     validateErrors.value = []
 
-    await createWithValidation(createForm)
+    await resourceApi.createWithValidation(createForm)
     ElMessage.success('素材录入成功')
     createDialogVisible.value = false
     fetchList()
@@ -861,11 +1144,7 @@ const isApprovedOrPublished = computed(() => {
     editingResourceStatus.value === ResourceStatus.PUBLISHED
 })
 
-const handleOpenEdit = (row: ImageResource, event: MouseEvent) => {
-  const target = event.currentTarget as HTMLElement
-  target.classList.add('ripple')
-  setTimeout(() => target.classList.remove('ripple'), 600)
-
+const openEditDialog = (row: ImageResource) => {
   editingResourceId.value = row.id
   editingResourceStatus.value = row.status
   Object.assign(editForm, {
@@ -901,7 +1180,7 @@ const handleSubmitEdit = async () => {
       delete (data as any).duration
       delete (data as any).categoryId
     }
-    await updateWithConstraint(editingResourceId.value, data)
+    await resourceApi.updateWithConstraint(editingResourceId.value, data)
     ElMessage.success('修改成功')
     editDialogVisible.value = false
     refreshRows([editingResourceId.value])
@@ -925,9 +1204,9 @@ const handleBatchCommand = (command: string) => {
     batchWeightValue.value = 0
     batchWeightDialogVisible.value = true
   } else if (command === 'online') {
-    handleBatchToggle('published')
+    openBatchStateChange('published')
   } else if (command === 'offline') {
-    handleBatchToggle('offline')
+    openBatchStateChange('offline')
   }
 }
 
@@ -935,7 +1214,7 @@ const handleBatchWeight = async () => {
   const ids = selectedRows.value.map((item) => item.id)
   batchWeightSubmitting.value = true
   try {
-    const res = await batchUpdateWeight(ids, batchWeightValue.value)
+    const res = await resourceApi.batchUpdateWeight(ids, batchWeightValue.value)
     const result = res.data
     processBatchResult(result, ids)
     batchWeightDialogVisible.value = false
@@ -943,17 +1222,6 @@ const handleBatchWeight = async () => {
     console.error('批量修改权重失败:', error)
   } finally {
     batchWeightSubmitting.value = false
-  }
-}
-
-const handleBatchToggle = async (targetStatus: string) => {
-  const ids = selectedRows.value.map((item) => item.id)
-  try {
-    const res = await batchToggleStatus(ids, targetStatus)
-    const result = res.data
-    processBatchResult(result, ids)
-  } catch (error) {
-    console.error('批量启停失败:', error)
   }
 }
 
@@ -1011,7 +1279,7 @@ const handleTrace = async () => {
   }, 200)
 
   try {
-    const res = await traceMaterial(traceKeyword.value.trim())
+    const res = await resourceApi.traceMaterial(traceKeyword.value.trim())
     traceResult.value = res.data
     loadingProgress.value = 100
   } catch (error) {
@@ -1026,8 +1294,183 @@ const handleTrace = async () => {
   }
 }
 
+async function loadPermissionFilter() {
+  try {
+    const res = await resourceApi.getPermissionFilter() as any
+    permissionFilter.value = res.data || permissionFilter.value
+  } catch (e) { /* ignore */ }
+}
+
+function canEditRow(row: ImageResource): boolean {
+  return permissionFilter.value.allowedStatuses.includes(row.status)
+}
+
+function triggerShake(id: number) {
+  shakingBtnId.value = id
+  setTimeout(() => shakingBtnId.value = null, 300)
+}
+
+async function onStateToggle(row: ImageResource, targetStatus: string) {
+  if (!canEditRow(row)) {
+    triggerShake(row.id)
+    ElMessage.warning('无权限操作此状态的素材')
+    return
+  }
+  if (row.status === 'violation' || row.status === 'blocked') {
+    if (!permissionFilter.value.canHandleViolation) {
+      triggerShake(row.id)
+      ElMessage.warning(`${row.status === 'violation' ? '违规' : '风控'}状态素材禁止编辑上架操作`)
+      return
+    }
+  }
+  stateChangeTarget.value = { id: row.id, status: targetStatus, title: row.title }
+  stateDialogVisible.value = true
+}
+
+async function confirmStateChange(skipConfirm = false) {
+  if (!stateChangeTarget.value) return
+  stateDialogLoading.value = true
+  try {
+    const res = await resourceApi.changeStateWithValidation(
+      stateChangeTarget.value.id,
+      stateChangeTarget.value.status,
+      skipConfirm
+    ) as any
+    const data = res.data
+    if (data.needConfirm) {
+      confirmDialogData.value = data
+      confirmDialogVisible.value = true
+      stateDialogLoading.value = false
+      return
+    }
+    if (data.success) {
+      ElMessage({ type: 'success', message: '状态变更成功', duration: 2000 })
+      refreshRow(stateChangeTarget.value.id, data.resource)
+      stateDialogVisible.value = false
+      stateChangeTarget.value = null
+    }
+  } catch (e: any) {
+    ElMessage.error(e?.message || '状态变更失败')
+  } finally {
+    stateDialogLoading.value = false
+  }
+}
+
+async function proceedAfterConfirm() {
+  confirmDialogVisible.value = false
+  if (!stateChangeTarget.value) return
+  stateDialogLoading.value = true
+  try {
+    const res = await resourceApi.changeStateWithValidation(
+      stateChangeTarget.value.id,
+      stateChangeTarget.value.status,
+      true
+    ) as any
+    if (res.data?.success) {
+      ElMessage({ type: 'success', message: '状态变更成功', duration: 2000 })
+      refreshRow(stateChangeTarget.value.id, res.data.resource)
+      stateDialogVisible.value = false
+      stateChangeTarget.value = null
+    }
+  } catch (e: any) {
+    ElMessage.error(e?.message || '状态变更失败')
+  } finally {
+    stateDialogLoading.value = false
+  }
+}
+
+function openBatchStateChange(targetStatus: string) {
+  batchTargetStatus.value = targetStatus
+  batchStateDialogVisible.value = true
+}
+
+async function doBatchChangeState() {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择素材')
+    return
+  }
+  batchStateLoading.value = true
+  rowErrors.value.clear()
+  disabledRowIds.value.clear()
+  try {
+    const res = await resourceApi.batchChangeState(
+      selectedRows.value.map(r => r.id),
+      batchTargetStatus.value
+    ) as any
+    const data = res.data
+    if (data.updated > 0) {
+      ElNotification({
+        type: 'success',
+        title: '批量操作完成',
+        message: `成功${data.updated}条，失败${data.failedItems.length}条`,
+        duration: 3000
+      })
+      for (const id of data.successIds) refreshRow(id)
+      for (const item of data.failedItems) {
+        rowErrors.value.set(item.id, item.reason)
+      }
+      for (const id of data.permissionBlockedIds || []) {
+        disabledRowIds.value.add(id)
+      }
+      refreshRows(data.successIds)
+    } else if (data.failedItems.length > 0) {
+      const firstReason = data.failedItems[0]?.reason
+      ElMessageBox.alert(
+        `<div>批量操作全部失败，共 ${data.failedItems.length} 条异常。<br/>首条原因：${firstReason}</div>`,
+        '批量操作失败',
+        { dangerouslyUseHTMLString: true, type: 'error', confirmButtonText: '知道了' }
+      )
+      for (const item of data.failedItems) {
+        rowErrors.value.set(item.id, item.reason)
+      }
+    }
+    batchStateDialogVisible.value = false
+  } catch (e: any) {
+    ElMessage.error(e?.message || '批量操作失败')
+  } finally {
+    batchStateLoading.value = false
+  }
+}
+
+async function openStateHistory(row: ImageResource) {
+  historyTargetId.value = row.id
+  historyDialogVisible.value = true
+  historyDialogLoading.value = true
+  skeletonLoading.value = true
+  try {
+    const res = await resourceApi.getStateChangeHistory(row.id, 30) as any
+    historyData.value = res.data || { history: [], complianceLevel: '', warnings: [], totalChanges: 0 }
+  } catch (e) {
+    ElMessage.error('加载历史记录失败')
+  } finally {
+    await new Promise(r => setTimeout(r, 600))
+    skeletonLoading.value = false
+    historyDialogLoading.value = false
+  }
+}
+
+function handleInlineToggle(row: ImageResource, checked: boolean) {
+  const target = checked ? 'published' : 'offline'
+  onStateToggle(row, target)
+}
+
+function parseLogDetail(detail: string | undefined | null): string {
+  if (!detail) return '-'
+  try {
+    const parsed = JSON.parse(detail)
+    if (parsed.from || parsed.to) {
+      return `${parsed.from || ''} → ${parsed.to || ''}`
+    }
+    return detail
+  } catch {
+    return detail
+  }
+}
+
 onMounted(() => {
-  fetchList()
+  loadPermissionFilter()
+  loadList()
+  loadCategories()
 })
 
 onUnmounted(() => {
@@ -1062,6 +1505,72 @@ onUnmounted(() => {
   }
 }
 
+.state-switch {
+  &.slide-transition {
+    transition: all 0.3s ease;
+    :deep(.el-switch__core) {
+      transition: all 0.3s ease;
+    }
+    :deep(.el-switch__action) {
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+}
+.state-toggle-wrapper { display: inline-block; cursor: pointer; }
+.state-toggle-btn.disabled-state {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.scale-dialog {
+  :deep(.el-dialog) {
+    animation: dialog-zoom-in 0.25s cubic-bezier(0.4, 0, 0.2, 1) both;
+    transform-origin: center center;
+  }
+  :deep(.el-dialog__wrapper) {
+    &.dialog-fade-leave-active .el-dialog {
+      animation: dialog-slide-down 0.2s ease-out both !important;
+    }
+  }
+}
+@keyframes dialog-zoom-in {
+  0% { opacity: 0; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes dialog-slide-down {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(30px); }
+}
+
+.btn-shake, .shake, .state-action-btn {
+  &.shake, &.btn-shake {
+    animation: btn-shake 0.3s ease-in-out !important;
+  }
+}
+@keyframes btn-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.ripple { position: relative; overflow: hidden; }
+.btn-hover-scale {
+  transition: transform 0.15s ease;
+  &:hover { transform: scale(1.08); }
+  &:active { transform: scale(0.95); }
+}
+
+.status-cell { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.error-tag { animation: tag-pulse 0.6s ease infinite alternate; }
+@keyframes tag-pulse { from { transform: scale(1); } to { transform: scale(1.08); } }
+
+.material-code { font-family: 'Courier New', monospace; color: var(--el-color-primary); font-size: 12px; }
+
+.compliance-box { display: flex; flex-direction: column; gap: 4px; .label { color: #909399; font-size: 13px; } }
+.warning-box { display: flex; align-items: center; height: 100%; }
+.state-action-btn { position: relative; margin: 0 2px; }
+.disabled-btn { opacity: 0.4; cursor: not-allowed; text-decoration: none !important; }
+
 .resources-page {
   .page-header {
     margin-bottom: 16px;
@@ -1094,27 +1603,6 @@ onUnmounted(() => {
         align-items: center;
       }
     }
-  }
-}
-
-.btn-hover-scale:hover {
-  transform: scale(1.05);
-  transition: transform 0.2s;
-}
-
-.ripple {
-  position: relative;
-  overflow: hidden;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    animation: ripple-effect 0.6s ease-out;
   }
 }
 
@@ -1242,6 +1730,39 @@ onUnmounted(() => {
       .conflict-desc {
         color: $text-secondary;
       }
+    }
+  }
+}
+
+.state-dialog-content {
+  .state-info {
+    margin-bottom: 12px;
+  }
+}
+
+.history-content {
+  .log-item {
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+
+      .log-action {
+        font-weight: 600;
+        color: $text-primary;
+      }
+
+      .log-user {
+        font-size: $font-size-extra-small;
+        color: $text-secondary;
+      }
+    }
+
+    .log-detail {
+      font-size: $font-size-small;
+      color: $text-regular;
+      word-break: break-all;
     }
   }
 }
