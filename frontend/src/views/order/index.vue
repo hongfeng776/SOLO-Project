@@ -138,6 +138,14 @@
           <el-icon><Delete /></el-icon>
           批量删除
         </el-button>
+        <el-button
+          v-if="userRole === 1"
+          type="warning"
+          @click="handleBatchAdjustPricing"
+        >
+          <el-icon><Money /></el-icon>
+          批量调整溢价
+        </el-button>
         <el-dropdown
           trigger="click"
           :disabled="selectedRows.length === 0"
@@ -362,9 +370,18 @@
       <el-table-column prop="createTime" label="创建时间" width="170">
         <template #default="{ row }">{{ formatDate(row.createTime) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="280" fixed="right" align="center">
+      <el-table-column label="操作" :width="userRole >= 2 ? 340 : 280" fixed="right" align="center">
         <template #default="{ row }">
           <transition-group name="fade" tag="div" class="action-buttons">
+            <el-button
+              v-if="userRole === 2"
+              type="warning"
+              link
+              size="small"
+              @click="handleSingleAdjustPricing(row)"
+            >
+              调整溢价
+            </el-button>
             <el-button
               v-for="btn in getActionButtons(row)"
               :key="btn.key"
@@ -816,6 +833,178 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="batchAdjustDialogVisible"
+      title="批量调整溢价"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="batchAdjustForm" label-width="120px">
+        <el-alert
+          title="条件筛选"
+          type="info"
+          :closable="false"
+          class="mb-16"
+        />
+        <el-form-item label="城市编码">
+          <el-input
+            v-model="batchAdjustForm.filter.cityCode"
+            placeholder="请输入城市编码，如：010"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="车型类型">
+          <el-select
+            v-model="batchAdjustForm.filter.capacityType"
+            placeholder="请选择车型"
+            clearable
+            style="width: 100%"
+          >
+            <el-option :value="1" label="快车" />
+            <el-option :value="2" label="专车" />
+            <el-option :value="3" label="豪华车" />
+            <el-option :value="4" label="拼车" />
+            <el-option :value="5" label="出租车" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="服务时段">
+          <el-select
+            v-model="batchAdjustForm.filter.timePeriod"
+            placeholder="请选择服务时段"
+            clearable
+            style="width: 100%"
+          >
+            <el-option value="daytime" label="日间(06:00-22:00)" />
+            <el-option value="nighttime" label="夜间(22:00-06:00)" />
+            <el-option value="peak" label="高峰(07:00-09:00,17:00-19:00)" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="时间范围">
+          <el-date-picker
+            v-model="batchAdjustDateRange"
+            type="datetimerange"
+            range-separator="至"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-divider />
+        <el-alert
+          title="调整参数"
+          type="warning"
+          :closable="false"
+          class="mb-16"
+        />
+        <el-form-item label="溢价倍数">
+          <el-input-number
+            v-model="batchAdjustForm.adjustParams.surgeRatio"
+            :min="1"
+            :max="3"
+            :precision="1"
+            :step="0.1"
+            style="width: 100%"
+            placeholder="不调整请留空"
+          />
+          <span class="form-tip">设置为1表示取消溢价</span>
+        </el-form-item>
+        <el-form-item label="里程费调整">
+          <el-input-number
+            v-model="batchAdjustForm.adjustParams.perKmPriceAdjust"
+            :precision="2"
+            :step="0.1"
+            style="width: 100%"
+            placeholder="正数增加，负数减少，不调整请留空"
+          />
+        </el-form-item>
+        <el-divider />
+        <el-form-item v-if="batchAdjustPreviewResult">
+          <div class="preview-result">
+            <div class="preview-item">
+              <span class="label">符合条件订单：</span>
+              <span class="value">{{ batchAdjustPreviewResult.total }} 单</span>
+            </div>
+            <div class="preview-item">
+              <span class="label">已排除订单：</span>
+              <span class="value excluded">{{ batchAdjustPreviewResult.excludedCount }} 单</span>
+            </div>
+            <div v-if="batchAdjustPreviewResult.excludedOrders.length > 0" class="excluded-list">
+              <div class="excluded-title">排除原因：</div>
+              <div
+                v-for="item in batchAdjustPreviewResult.excludedOrders.slice(0, 5)"
+                :key="item.id"
+                class="excluded-item"
+              >
+                <span>{{ item.orderNo }}</span>
+                <span class="reason">{{ item.reason }}</span>
+              </div>
+              <div v-if="batchAdjustPreviewResult.excludedOrders.length > 5" class="excluded-more">
+                还有 {{ batchAdjustPreviewResult.excludedOrders.length - 5 }} 条...
+              </div>
+            </div>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="batchAdjustDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="batchAdjustPreviewLoading" @click="handleBatchAdjustPreview">
+          预览
+        </el-button>
+        <el-button
+          type="success"
+          :loading="batchAdjustExecuting"
+          :disabled="!batchAdjustPreviewResult || batchAdjustPreviewResult.total === 0"
+          @click="handleBatchAdjustExecute"
+        >
+          执行调整
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="singleAdjustDialogVisible"
+      title="调整订单溢价"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <el-alert
+        v-if="singleAdjustOrder"
+        :title="`订单号：${singleAdjustOrder.orderNo}`"
+        type="info"
+        :closable="false"
+        class="mb-16"
+      />
+      <el-form :model="singleAdjustForm" label-width="120px">
+        <el-form-item label="溢价倍数">
+          <el-input-number
+            v-model="singleAdjustForm.surgeRatio"
+            :min="1"
+            :max="3"
+            :precision="1"
+            :step="0.1"
+            style="width: 100%"
+          />
+          <span class="form-tip">设置为1表示取消溢价</span>
+        </el-form-item>
+        <el-form-item label="里程费调整">
+          <el-input-number
+            v-model="singleAdjustForm.perKmPriceAdjust"
+            :precision="2"
+            :step="0.1"
+            style="width: 100%"
+            placeholder="正数增加，负数减少"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="singleAdjustDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="singleAdjustSubmitting" @click="handleSingleAdjustSubmit">
+          确认调整
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -834,11 +1023,13 @@ import {
   MoreFilled,
   ArrowDown,
   Search,
-  Warning
+  Warning,
+  Money
 } from '@element-plus/icons-vue'
 import CommonTable from '@/components/CommonTable/index.vue'
 import StatusTag from '@/components/StatusTag/index.vue'
 import DetailDialog from '@/components/DetailDialog/index.vue'
+import { useUserStore } from '@/store/modules/user'
 import {
   getOrderListApi,
   deleteOrderApi,
@@ -858,6 +1049,10 @@ import {
   getFlowDetailApi,
   updateOrderStatusApi
 } from '@/api/order'
+import {
+  batchAdjustPricingApi,
+  updateOrderBillingApi
+} from '@/api/pricing'
 import { OrderStatusMap, OrderStatusColorMap, OrderStatus } from '@/enums/order'
 import { formatDate, formatPhone } from '@/utils/format'
 import type {
@@ -871,6 +1066,10 @@ import type {
   ViolationLogItem,
   FlowDetailData
 } from '@/types/order'
+import type {
+  BatchAdjustResult,
+  BatchAdjustParams as BatchAdjustPricingParams
+} from '@/types/pricing'
 
 const PayStatusMap: Record<number, string> = {
   0: '未支付',
@@ -900,6 +1099,15 @@ const OrderSourceMap: Record<number, string> = {
   3: '客服代下',
   4: '企业用车'
 }
+
+const userStore = useUserStore()
+
+const userRole = computed(() => {
+  const role = userStore.userInfo?.role
+  if (role === '1' || role === 1) return 1
+  if (role === '2' || role === 2) return 2
+  return 0
+})
 
 const tableRef = ref()
 const loading = ref(false)
@@ -1136,6 +1344,43 @@ const batchStats = reactive({
   failed: 0
 })
 const batchFailedList = ref<Array<{ id: number; orderNo?: string; reason: string }>>([])
+
+const batchAdjustDialogVisible = ref(false)
+const batchAdjustPreviewLoading = ref(false)
+const batchAdjustExecuting = ref(false)
+const batchAdjustPreviewResult = ref<BatchAdjustResult | null>(null)
+const batchAdjustDateRange = ref<string[]>([])
+const batchAdjustForm = reactive<BatchAdjustPricingParams>({
+  filter: {
+    cityCode: undefined,
+    capacityType: undefined,
+    timePeriod: undefined,
+    startTime: undefined,
+    endTime: undefined
+  },
+  adjustParams: {
+    surgeRatio: undefined,
+    perKmPriceAdjust: undefined
+  }
+})
+
+watch(batchAdjustDateRange, (val) => {
+  if (val && val.length === 2) {
+    batchAdjustForm.filter.startTime = val[0]
+    batchAdjustForm.filter.endTime = val[1]
+  } else {
+    batchAdjustForm.filter.startTime = undefined
+    batchAdjustForm.filter.endTime = undefined
+  }
+})
+
+const singleAdjustDialogVisible = ref(false)
+const singleAdjustSubmitting = ref(false)
+const singleAdjustOrder = ref<Order | null>(null)
+const singleAdjustForm = reactive({
+  surgeRatio: 1.0,
+  perKmPriceAdjust: 0
+})
 
 const prerequisiteDialogVisible = ref(false)
 const prerequisiteFailures = ref<Array<{ field: string; message: string }>>([])
@@ -1664,6 +1909,121 @@ const handleRowDblClick = async (row: Order) => {
   }
 }
 
+const handleBatchAdjustPricing = () => {
+  if (userRole.value !== 1) {
+    ElMessage.warning('您没有权限进行批量调整')
+    return
+  }
+  batchAdjustForm.filter = {
+    cityCode: undefined,
+    capacityType: undefined,
+    timePeriod: undefined,
+    startTime: undefined,
+    endTime: undefined
+  }
+  batchAdjustForm.adjustParams = {
+    surgeRatio: undefined,
+    perKmPriceAdjust: undefined
+  }
+  batchAdjustDateRange.value = []
+  batchAdjustPreviewResult.value = null
+  batchAdjustDialogVisible.value = true
+}
+
+const handleBatchAdjustPreview = async () => {
+  if (batchAdjustForm.adjustParams.surgeRatio === undefined && batchAdjustForm.adjustParams.perKmPriceAdjust === undefined) {
+    ElMessage.warning('请至少设置一个调整参数')
+    return
+  }
+  batchAdjustPreviewLoading.value = true
+  try {
+    const res = await batchAdjustPricingApi(batchAdjustForm)
+    batchAdjustPreviewResult.value = res.data
+  } catch (error: any) {
+    ElMessage.error(error.message || '预览失败')
+  } finally {
+    batchAdjustPreviewLoading.value = false
+  }
+}
+
+const handleBatchAdjustExecute = async () => {
+  if (!batchAdjustPreviewResult.value || batchAdjustPreviewResult.value.total === 0) {
+    ElMessage.warning('没有符合条件的订单')
+    return
+  }
+  await ElMessageBox.confirm(
+    `确定要对 ${batchAdjustPreviewResult.value.total} 条订单执行调整吗？`,
+    '提示',
+    { type: 'warning' }
+  )
+  batchAdjustExecuting.value = true
+  batchAdjustDialogVisible.value = false
+  batchOpTitle.value = '批量调整溢价'
+  batchProgressVisible.value = true
+  batchProgress.value = 0
+  batchProgressStatus.value = ''
+  batchStats.total = batchAdjustPreviewResult.value.total
+  batchStats.success = 0
+  batchStats.failed = 0
+  batchFailedList.value = []
+
+  try {
+    const total = batchAdjustPreviewResult.value.total
+    const updateInterval = Math.max(1, Math.floor(total / 10))
+    
+    for (let i = 0; i < total; i += updateInterval) {
+      await new Promise(resolve => setTimeout(resolve, 300))
+      const progress = Math.min(100, Math.round(((i + updateInterval) / total) * 100))
+      batchProgress.value = progress
+    }
+
+    const res = await batchAdjustPricingApi(batchAdjustForm)
+    batchStats.success = res.data.success
+    batchStats.failed = res.data.failed
+    if (res.data.failedOrders) {
+      batchFailedList.value = res.data.failedOrders
+    }
+    batchProgress.value = 100
+    batchProgressStatus.value = batchStats.failed === 0 ? 'success' : 'warning'
+    ElMessage.success(`批量调整完成，成功${batchStats.success}条，失败${batchStats.failed}条，排除${res.data.excludedCount}条`)
+    getList()
+  } catch (error: any) {
+    batchProgressStatus.value = 'danger'
+    batchProgress.value = 100
+    ElMessage.error(error.message || '批量调整失败')
+  } finally {
+    batchAdjustExecuting.value = false
+  }
+}
+
+const handleSingleAdjustPricing = (row: Order) => {
+  if (userRole.value < 2) {
+    ElMessage.warning('您没有权限调整溢价')
+    return
+  }
+  singleAdjustOrder.value = row
+  singleAdjustForm.surgeRatio = 1.0
+  singleAdjustForm.perKmPriceAdjust = 0
+  singleAdjustDialogVisible.value = true
+}
+
+const handleSingleAdjustSubmit = async () => {
+  if (!singleAdjustOrder.value) return
+  singleAdjustSubmitting.value = true
+  try {
+    await updateOrderBillingApi(singleAdjustOrder.value.id, {
+      surgeRatio: singleAdjustForm.surgeRatio
+    })
+    ElMessage.success('调整成功')
+    singleAdjustDialogVisible.value = false
+    getList()
+  } catch (error: any) {
+    ElMessage.error(error.message || '调整失败')
+  } finally {
+    singleAdjustSubmitting.value = false
+  }
+}
+
 onMounted(() => {
   getList()
   loadAbnormalStats()
@@ -1921,6 +2281,77 @@ defineExpose({
         .failed-reason {
           color: #909399;
         }
+      }
+    }
+  }
+
+  .mb-16 {
+    margin-bottom: 16px;
+  }
+
+  .form-tip {
+    display: block;
+    font-size: 12px;
+    color: #909399;
+    margin-top: 4px;
+  }
+
+  .preview-result {
+    width: 100%;
+    padding: 16px;
+    background: #f5f7fa;
+    border-radius: 8px;
+
+    .preview-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+
+      .label {
+        color: #606266;
+        font-size: 14px;
+      }
+
+      .value {
+        font-weight: 600;
+        font-size: 16px;
+        color: #303133;
+
+        &.excluded {
+          color: #e6a23c;
+        }
+      }
+    }
+
+    .excluded-list {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e4e7ed;
+
+      .excluded-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: #606266;
+        margin-bottom: 8px;
+      }
+
+      .excluded-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        font-size: 13px;
+
+        .reason {
+          color: #909399;
+        }
+      }
+
+      .excluded-more {
+        font-size: 12px;
+        color: #909399;
+        text-align: center;
+        padding: 4px 0;
       }
     }
   }

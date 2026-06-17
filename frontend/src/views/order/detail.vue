@@ -115,7 +115,7 @@
               <div v-if="isEditing && priceValidateResult" class="price-validate-tip" :class="priceValidateResult.isValid ? 'success' : 'error'">
                 <el-icon v-if="priceValidateResult.isValid"><CircleCheck /></el-icon>
                 <el-icon v-else><Warning /></el-icon>
-                <span>{{ priceValidateResult.isValid ? '费用匹配正常' : `预估费用偏差超过${priceValidateResult.threshold}%，建议核对里程` }}</span>
+                <span>{{ priceValidateResult.isValid ? '费用匹配正常' : '预估费用偏差超过' + priceValidateResult.threshold + '%，建议核对里程' }}</span>
               </div>
             </el-descriptions-item>
             <el-descriptions-item label="实际金额">
@@ -168,6 +168,174 @@
               </div>
             </div>
           </div>
+        </el-card>
+
+        <el-card class="info-card billing-scenario-card" v-if="billingDetailData">
+          <template #header>
+            <span class="card-title">场景适配</span>
+          </template>
+          <el-row :gutter="16" class="scenario-row">
+            <el-col :span="6" v-for="scenario in scenarios" :key="scenario.key">
+              <div
+                class="scenario-card"
+                :class="{ active: activeScenario === scenario.key }"
+                @click="handleScenarioChange(scenario.key)"
+              >
+                <div class="scenario-name">{{ scenario.name }}</div>
+                <div class="scenario-value">{{ getCurrentScenarioValue(scenario.key) }}</div>
+                <div class="scenario-surge" :class="{ 'has-surge': getScenarioSurge(scenario.key) > 1 }">
+                  溢价 {{ getScenarioSurge(scenario.key).toFixed(1) }}x
+                </div>
+              </div>
+            </el-col>
+          </el-row>
+          <el-divider />
+          <div class="billing-table-wrapper">
+            <el-table
+              :data="billingDetailData.billingItems"
+              border
+              :row-class-name="billingTableRowClassName"
+              class="billing-detail-table"
+            >
+              <el-table-column prop="ruleName" label="规则名称" min-width="120" resizable />
+              <el-table-column label="类型" width="100" resizable>
+                <template #default="{ row }">
+                  <el-tag :type="getRuleTypeTagType(row.ruleType)" size="small">
+                    {{ RuleTypeMap[row.ruleType] }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="basePrice" label="基础价" width="100" resizable>
+                <template #default="{ row }">¥{{ row.basePrice || 0 }}</template>
+              </el-table-column>
+              <el-table-column prop="perKmPrice" label="里程费" width="100" resizable>
+                <template #default="{ row }">¥{{ row.perKmPrice || 0 }}/km</template>
+              </el-table-column>
+              <el-table-column prop="perMinPrice" label="时长费" width="100" resizable>
+                <template #default="{ row }">¥{{ row.perMinPrice || 0 }}/min</template>
+              </el-table-column>
+              <el-table-column prop="surgeRatio" label="溢价倍数" width="100" resizable>
+                <template #default="{ row }">{{ row.surgeRatio.toFixed(1) }}x</template>
+              </el-table-column>
+              <el-table-column prop="itemTotal" label="小计" width="120" resizable align="right">
+                <template #default="{ row }">
+                  <span class="item-total">¥{{ row.itemTotal?.toFixed(2) || '0.00' }}</span>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <el-divider />
+          <div class="billing-summary">
+            <div class="summary-item">
+              <span class="label">基础价：</span>
+              <span class="value">¥{{ billingDetailData.basePrice.toFixed(2) }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">里程费：</span>
+              <span class="value">¥{{ billingDetailData.totalDistanceFee.toFixed(2) }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">时长费：</span>
+              <span class="value">¥{{ billingDetailData.totalDurationFee.toFixed(2) }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">溢价：</span>
+              <span class="value surge">¥{{ billingDetailData.totalSurgeAmount.toFixed(2) }}</span>
+            </div>
+            <div class="summary-item total">
+              <span class="label">预估总价：</span>
+              <span class="value">¥{{ billingDetailData.estimatedTotal.toFixed(2) }}</span>
+            </div>
+          </div>
+          <el-divider />
+          <div class="change-logs-section">
+            <div class="section-title">变更日志</div>
+            <el-timeline v-if="pricingChangeLogs.length > 0">
+              <el-timeline-item
+                v-for="log in pricingChangeLogs"
+                :key="log.id"
+                :timestamp="formatDate(log.createTime)"
+                placement="top"
+              >
+                <el-card shadow="never" class="log-card">
+                  <div class="log-header">
+                    <el-tag
+                      :color="PricingChangeTypeColorMap[log.changeType] || '#909399'"
+                      size="small"
+                      effect="dark"
+                    >
+                      {{ PricingChangeTypeMap[log.changeType] || log.changeType }}
+                    </el-tag>
+                    <span class="log-operator">操作人：{{ log.operatorName || '系统' }}</span>
+                  </div>
+                  <div v-if="log.priceDiff !== 0" class="log-price-diff" :class="{ 'price-up': log.priceDiff > 0, 'price-down': log.priceDiff < 0 }">
+                    价格变动：{{ log.priceDiff > 0 ? '+' : '' }}{{ log.priceDiff.toFixed(2) }}元
+                  </div>
+                  <div v-if="log.remark" class="log-remark">备注：{{ log.remark }}</div>
+                  <div v-if="log.hasException === 1" class="log-exception">
+                    <el-icon><Warning /></el-icon>
+                    <span>{{ log.exceptionType }}：{{ log.exceptionDetail }}</span>
+                  </div>
+                </el-card>
+              </el-timeline-item>
+            </el-timeline>
+            <el-empty v-else description="暂无变更日志" :image-size="60" />
+          </div>
+        </el-card>
+
+        <el-card class="info-card billing-section">
+          <template #header>
+            <span class="card-title">计费信息</span>
+            <div class="billing-actions">
+              <el-button
+                type="primary"
+                size="small"
+                :disabled="!canEditBilling || userRole < 2"
+                @click="handleEditBilling"
+              >
+                <el-icon><Edit /></el-icon>
+                修改计费
+              </el-button>
+              <el-tooltip
+                v-if="!canEditBilling"
+                placement="top"
+                :show-after="500"
+              >
+                <template #content>
+                  <div v-if="billingEditConditions">
+                    <div v-if="billingEditConditions.hasSettled">订单已结算</div>
+                    <div v-if="billingEditConditions.hasTicket">存在售后工单</div>
+                    <div v-if="billingEditConditions.hasArrears">存在欠费</div>
+                  </div>
+                </template>
+                <el-icon class="warning-icon"><Warning /></el-icon>
+              </el-tooltip>
+            </div>
+          </template>
+          <div v-if="billingDetailData" class="billing-info">
+            <div class="billing-row">
+              <div class="billing-label">基础价</div>
+              <div class="billing-value">¥{{ billingDetailData.basePrice.toFixed(2) }}</div>
+            </div>
+            <div class="billing-row">
+              <div class="billing-label">里程费</div>
+              <div class="billing-value">¥{{ billingDetailData.perKmPrice.toFixed(2) }}/公里 × {{ billingDetailData.distance }}公里 = ¥{{ billingDetailData.totalDistanceFee.toFixed(2) }}</div>
+            </div>
+            <div class="billing-row">
+              <div class="billing-label">时长费</div>
+              <div class="billing-value">¥{{ billingDetailData.perMinPrice.toFixed(2) }}/分钟 × {{ billingDetailData.duration }}分钟 = ¥{{ billingDetailData.totalDurationFee.toFixed(2) }}</div>
+            </div>
+            <div class="billing-row" v-if="billingDetailData.totalSurgeAmount > 0">
+              <div class="billing-label">溢价金额</div>
+              <div class="billing-value surge">¥{{ billingDetailData.totalSurgeAmount.toFixed(2) }}</div>
+            </div>
+            <el-divider />
+            <div class="billing-row total">
+              <div class="billing-label">预估总价</div>
+              <div class="billing-value">¥{{ billingDetailData.estimatedTotal.toFixed(2) }}</div>
+            </div>
+          </div>
+          <el-empty v-else description="加载计费信息中..." :image-size="60" />
         </el-card>
 
         <el-card class="info-card" ref="timelineCardRef">
@@ -347,11 +515,129 @@
         <el-button type="danger" :loading="cancelSubmitting" @click="confirmCancel">确认取消</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="billingEditDialogVisible"
+      title="修改计费参数"
+      width="560px"
+      :close-on-click-modal="false"
+    >
+      <el-alert
+        v-if="!canEditBilling"
+        type="warning"
+        :closable="false"
+        class="mb-16"
+      >
+        <template #title>该订单不允许修改计费</template>
+        <div v-if="billingEditConditions">
+          <div v-if="billingEditConditions.hasSettled">订单已结算</div>
+          <div v-if="billingEditConditions.hasTicket">存在售后工单</div>
+          <div v-if="billingEditConditions.hasArrears">存在欠费</div>
+        </div>
+      </el-alert>
+      <el-form :model="billingEditForm" label-width="120px">
+        <el-form-item label="基础价(元)">
+          <el-input-number
+            v-model="billingEditForm.basePrice"
+            :min="0"
+            :precision="2"
+            :step="1"
+            style="width: 100%"
+            :class="{ 'shake': shakeFields.basePrice }"
+            @change="handleBillingFieldChange('basePrice')"
+          />
+        </el-form-item>
+        <el-form-item label="里程费(元/公里)">
+          <el-input-number
+            v-model="billingEditForm.perKmPrice"
+            :min="0"
+            :precision="2"
+            :step="0.1"
+            style="width: 100%"
+            :class="{ 'shake': shakeFields.perKmPrice }"
+            @change="handleBillingFieldChange('perKmPrice')"
+          />
+        </el-form-item>
+        <el-form-item label="时长费(元/分钟)">
+          <el-input-number
+            v-model="billingEditForm.perMinPrice"
+            :min="0"
+            :precision="2"
+            :step="0.1"
+            style="width: 100%"
+            :class="{ 'shake': shakeFields.perMinPrice }"
+            @change="handleBillingFieldChange('perMinPrice')"
+          />
+        </el-form-item>
+        <el-form-item label="夜间溢价(元)">
+          <el-input-number
+            v-model="billingEditForm.nightSurcharge"
+            :min="0"
+            :precision="2"
+            :step="1"
+            style="width: 100%"
+            :class="{ 'shake': shakeFields.nightSurcharge }"
+            @change="handleBillingFieldChange('nightSurcharge')"
+          />
+        </el-form-item>
+        <el-form-item
+          label="溢价倍数"
+          :class="{ 'has-error': billingValidationResult && billingValidationResult.estimatedTotal > billingValidationResult.industryThreshold }"
+        >
+          <el-input-number
+            v-model="billingEditForm.surgeRatio"
+            :min="1"
+            :max="10"
+            :precision="1"
+            :step="0.1"
+            style="width: 100%"
+            :class="{ 'shake': shakeFields.surgeRatio }"
+            @change="handleBillingFieldChange('surgeRatio')"
+          />
+          <div v-if="billingValidationResult && billingEditForm.surgeRatio > billingValidationResult.surgeLimit" class="field-error">
+            <el-icon><Warning /></el-icon>
+            <span>溢价倍数超过行业限制 {{ billingValidationResult.surgeLimit }}x</span>
+          </div>
+        </el-form-item>
+        <el-divider />
+        <el-form-item label="预估总价">
+          <span
+            class="estimated-total"
+            :class="{ 'price-high': billingValidationResult && billingValidationResult.estimatedTotal > billingValidationResult.industryThreshold }"
+          >
+            ¥{{ billingValidationResult?.estimatedTotal.toFixed(2) || '0.00' }}
+          </span>
+          <div v-if="billingValidationResult && billingValidationResult.estimatedTotal > billingValidationResult.industryThreshold" class="field-error">
+            <el-icon><Warning /></el-icon>
+            <span>总价超过行业阈值 ¥{{ billingValidationResult.industryThreshold }}</span>
+          </div>
+        </el-form-item>
+        <el-form-item v-if="billingValidationResult && !billingValidationResult.validation.isValid" label="校验结果">
+          <div class="validation-errors">
+            <div v-for="(e, i) in billingValidationResult.validation.exceptions" :key="i" class="validation-error">
+              <el-tag type="danger" size="small">{{ e.field }}</el-tag>
+              <span>{{ e.message }}</span>
+            </div>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="billingEditDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="billingEditSubmitting"
+          :disabled="!canSubmitBillingEdit"
+          @click="handleBillingEditSubmit"
+        >
+          确认修改
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   ElMessage,
@@ -377,7 +663,15 @@ import StatusTag from '@/components/StatusTag/index.vue'
 import TraceDialog from '@/components/TraceDialog/index.vue'
 import { OrderStatusMap, OrderStatusColorMap, OrderStatus } from '@/enums/order'
 import { CapacityTypeMap, CapacityTypeColorMap } from '@/enums/capacity'
+import {
+  RuleTypeMap,
+  PricingChangeTypeMap,
+  PricingChangeTypeColorMap,
+  INDUSTRY_PRICE_THRESHOLD,
+  SURGE_RATIO_LIMIT
+} from '@/enums/pricing'
 import { formatDate, formatPhone } from '@/utils/format'
+import { useUserStore } from '@/store/modules/user'
 import {
   getOrderDetailApi,
   getEditConditionsApi,
@@ -390,10 +684,33 @@ import {
   getCancelStatisticsApi,
   getFlowDetailApi
 } from '@/api/order'
+import {
+  calculateBillingApi,
+  updateOrderBillingApi,
+  getPricingChangeLogsApi,
+  validatePricingEditApi,
+  getApplicableScenariosApi
+} from '@/api/pricing'
 import type { Order, PriceValidateResult, StatusLogItem, PrerequisiteResult, CancelStatistics, FlowDetailData } from '@/types/order'
+import type {
+  BillingDetailData,
+  PricingChangeLogItem,
+  PricingValidationResult,
+  BillingScenario,
+  BillingItem,
+  EditConditionResult
+} from '@/types/pricing'
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
+
+const userRole = computed(() => {
+  const role = userStore.userInfo?.role
+  if (role === '1' || role === 1) return 1
+  if (role === '2' || role === 2) return 2
+  return 0
+})
 
 const orderInfo = reactive<Order>({
   id: 0,
@@ -452,6 +769,37 @@ const cancelForm = reactive({
 })
 const flowDetailData = ref<FlowDetailData | null>(null)
 const cancelStatisticsData = ref<CancelStatistics | null>(null)
+
+const billingDetailData = ref<BillingDetailData | null>(null)
+const billingEditDialogVisible = ref(false)
+const billingEditSubmitting = ref(false)
+const billingEditConditions = ref<EditConditionResult | null>(null)
+const billingValidationResult = ref<PricingValidationResult | null>(null)
+const pricingChangeLogs = ref<PricingChangeLogItem[]>([])
+const scenarios = ref<BillingScenario[]>([])
+const activeScenario = ref('time')
+const shakeFields = reactive<Record<string, boolean>>({})
+
+const billingEditForm = reactive({
+  basePrice: 0,
+  perKmPrice: 0,
+  perMinPrice: 0,
+  nightSurcharge: 0,
+  surgeRatio: 1.0
+})
+
+const canEditBilling = computed(() => {
+  if (!billingEditConditions) return false
+  return !billingEditConditions.hasSettled && !billingEditConditions.hasTicket && !billingEditConditions.hasArrears
+})
+
+const canSubmitBillingEdit = computed(() => {
+  if (!canEditBilling.value) return false
+  if (!billingValidationResult.value) return false
+  if (billingValidationResult.value.estimatedTotal > billingValidationResult.value.industryThreshold) return false
+  if (billingEditForm.surgeRatio > billingValidationResult.value.surgeLimit) return false
+  return true
+})
 
 const cancelTypeNameMap: Record<number, string> = {
   1: '用户主动取消',
@@ -575,6 +923,49 @@ const actionButtons = computed(() => {
 
   return buttons
 })
+
+const getRuleTypeTagType = (ruleType: number) => {
+  const map: Record<number, string> = {
+    1: '',
+    2: 'warning',
+    3: 'success',
+    4: 'danger',
+    5: 'info'
+  }
+  return map[ruleType] || ''
+}
+
+const getCurrentScenarioValue = (key: string) => {
+  if (!billingDetailData.value) return '-'
+  const map: Record<string, string> = {
+    time: billingDetailData.value.timeInfo?.period || '-',
+    weather: billingDetailData.value.weatherCondition || '-',
+    holiday: billingDetailData.value.holidayType || '-',
+    vehicle: CapacityTypeMap[orderInfo.capacityType] || '-'
+  }
+  return map[key] || '-'
+}
+
+const getScenarioSurge = (key: string) => {
+  if (!billingDetailData.value) return 1.0
+  const items = billingDetailData.value.billingItems
+  const typeMap: Record<string, number> = {
+    time: 2,
+    weather: 3,
+    holiday: 4,
+    vehicle: 5
+  }
+  const item = items.find(i => i.ruleType === typeMap[key])
+  return item?.surgeRatio || 1.0
+}
+
+const billingTableRowClassName = ({ row }: { row: BillingItem }) => {
+  if (!billingDetailData.value?.validation) return ''
+  const hasError = billingDetailData.value.validation.exceptions.some(
+    e => e.field === row.ruleName || e.field.includes(String(row.ruleId))
+  )
+  return hasError ? 'billing-row-error' : ''
+}
 
 const goBack = () => {
   router.back()
@@ -782,6 +1173,150 @@ const handleEditSave = async () => {
   }
 }
 
+const loadBillingDetail = async (params?: { weather?: string; date?: string }) => {
+  const id = route.params.id as string
+  if (!id) return
+  try {
+    const res = await calculateBillingApi(Number(id), params)
+    billingDetailData.value = res.data
+  } catch (e: any) {
+    console.error('获取计费明细失败', e)
+  }
+}
+
+const loadBillingEditConditions = async () => {
+  const id = route.params.id as string
+  if (!id) return
+  try {
+    const res = await getEditConditionsApi(Number(id))
+    billingEditConditions.value = res.data
+  } catch (e: any) {
+    console.error('获取计费编辑条件失败', e)
+  }
+}
+
+const loadPricingChangeLogs = async () => {
+  const id = route.params.id as string
+  if (!id) return
+  try {
+    const res = await getPricingChangeLogsApi(Number(id), { page: 1, pageSize: 20 })
+    pricingChangeLogs.value = res.data.list || []
+  } catch (e: any) {
+    console.error('获取计费变更日志失败', e)
+  }
+}
+
+const loadScenarios = async () => {
+  try {
+    const res = await getApplicableScenariosApi()
+    scenarios.value = res.data
+  } catch (e: any) {
+    console.error('获取适用场景失败', e)
+    scenarios.value = [
+      { key: 'time', name: '时段', items: [] },
+      { key: 'weather', name: '天气', items: [] },
+      { key: 'holiday', name: '节假日', items: [] },
+      { key: 'vehicle', name: '车型', items: [] }
+    ]
+  }
+}
+
+const handleEditBilling = async () => {
+  if (userRole.value < 2) {
+    ElMessage.warning('您没有权限修改计费')
+    return
+  }
+  await loadBillingEditConditions()
+  if (!canEditBilling.value) {
+    ElMessage.warning('该订单不允许修改计费')
+    return
+  }
+  billingEditForm.basePrice = billingDetailData.value?.basePrice || 0
+  billingEditForm.perKmPrice = billingDetailData.value?.perKmPrice || 0
+  billingEditForm.perMinPrice = billingDetailData.value?.perMinPrice || 0
+  billingEditForm.nightSurcharge = 0
+  billingEditForm.surgeRatio = 1.0
+  billingValidationResult.value = null
+  Object.keys(shakeFields).forEach(key => { shakeFields[key] = false })
+  billingEditDialogVisible.value = true
+  await validateBillingEdit()
+}
+
+const triggerShake = (field: string) => {
+  shakeFields[field] = true
+  setTimeout(() => {
+    shakeFields[field] = false
+  }, 500)
+}
+
+const handleBillingFieldChange = (field: string) => {
+  const value = billingEditForm[field as keyof typeof billingEditForm]
+  if (value < 0 || (field === 'surgeRatio' && value > 10)) {
+    triggerShake(field)
+    if (value < 0) {
+      billingEditForm[field as keyof typeof billingEditForm] = 0 as any
+    }
+    if (field === 'surgeRatio' && value > 10) {
+      billingEditForm.surgeRatio = 10
+    }
+  }
+  validateBillingEdit()
+}
+
+const validateBillingEdit = async () => {
+  try {
+    const res = await validatePricingEditApi({
+      basePrice: billingEditForm.basePrice,
+      perKmPrice: billingEditForm.perKmPrice,
+      perMinPrice: billingEditForm.perMinPrice,
+      surgeRatio: billingEditForm.surgeRatio,
+      distance: orderInfo.distance,
+      duration: orderInfo.duration
+    })
+    billingValidationResult.value = res.data
+  } catch (e: any) {
+    console.error('实时校验失败', e)
+  }
+}
+
+const handleBillingEditSubmit = async () => {
+  if (!canSubmitBillingEdit.value) return
+  const id = route.params.id as string
+  if (!id) return
+
+  billingEditSubmitting.value = true
+  try {
+    await updateOrderBillingApi(Number(id), {
+      basePrice: billingEditForm.basePrice,
+      perKmPrice: billingEditForm.perKmPrice,
+      perMinPrice: billingEditForm.perMinPrice,
+      nightSurcharge: billingEditForm.nightSurcharge,
+      surgeRatio: billingEditForm.surgeRatio
+    })
+    ElMessage.success('计费修改成功')
+    billingEditDialogVisible.value = false
+    loadBillingDetail()
+    loadPricingChangeLogs()
+  } catch (error: any) {
+    ElMessage.error(error.message || '修改失败')
+  } finally {
+    billingEditSubmitting.value = false
+  }
+}
+
+const handleScenarioChange = async (key: string) => {
+  activeScenario.value = key
+  const params: { weather?: string; date?: string } = {}
+  if (key === 'weather') {
+    params.weather = billingDetailData.value?.weatherCondition
+  }
+  if (key === 'holiday') {
+    params.date = orderInfo.createTime?.split(' ')[0]
+  }
+  await loadBillingDetail(params)
+  await loadPricingChangeLogs()
+}
+
 const loadDetail = async () => {
   const id = route.params.id as string
   if (id) {
@@ -832,10 +1367,20 @@ onMounted(() => {
   loadStatusLogs()
   loadFlowDetail()
   loadCancelStatistics()
+  loadBillingDetail()
+  loadBillingEditConditions()
+  loadPricingChangeLogs()
+  loadScenarios()
 })
 </script>
 
 <style lang="scss" scoped>
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
 .order-detail {
   .content {
     margin-top: 20px;
@@ -1095,6 +1640,266 @@ onMounted(() => {
         color: #409eff;
         margin-top: 5px;
       }
+    }
+  }
+
+  .billing-section {
+    .billing-actions {
+      float: right;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .warning-icon {
+        color: #e6a23c;
+        cursor: help;
+      }
+    }
+
+    .billing-info {
+      .billing-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background-color 0.3s ease;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &.total {
+          font-weight: bold;
+
+          .billing-value {
+            font-size: 20px;
+            color: #f56c6c;
+          }
+        }
+
+        .billing-label {
+          color: #606266;
+        }
+
+        .billing-value {
+          color: #303133;
+          font-weight: 500;
+
+          &.surge {
+            color: #e6a23c;
+          }
+        }
+      }
+    }
+  }
+
+  .billing-scenario-card {
+    .scenario-row {
+      margin-bottom: 8px;
+
+      .scenario-card {
+        padding: 16px;
+        border: 2px solid #e4e7ed;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.3s ease;
+
+        &:hover {
+          border-color: #409eff;
+          transform: translateY(-2px);
+        }
+
+        &.active {
+          border-color: #409eff;
+          background: rgba(64, 158, 255, 0.05);
+        }
+
+        .scenario-name {
+          font-size: 13px;
+          color: #909399;
+          margin-bottom: 8px;
+        }
+
+        .scenario-value {
+          font-size: 16px;
+          font-weight: 600;
+          color: #303133;
+          margin-bottom: 8px;
+        }
+
+        .scenario-surge {
+          font-size: 12px;
+          color: #67c23a;
+
+          &.has-surge {
+            color: #e6a23c;
+          }
+        }
+      }
+    }
+
+    .billing-table-wrapper {
+      :deep(.billing-detail-table) {
+        .billing-row-error {
+          background-color: rgba(245, 108, 108, 0.1);
+
+          td {
+            background-color: transparent;
+          }
+        }
+
+        .el-table__column-resize-proxy {
+          transition: none;
+        }
+
+        .item-total {
+          font-weight: 600;
+          color: #303133;
+        }
+
+        th, td {
+          transition: background-color 0.3s ease;
+        }
+      }
+    }
+
+    .billing-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      padding: 16px 0;
+
+      .summary-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .label {
+          color: #606266;
+          font-size: 14px;
+        }
+
+        .value {
+          color: #303133;
+          font-weight: 600;
+          font-size: 16px;
+
+          &.surge {
+            color: #e6a23c;
+          }
+        }
+
+        &.total {
+          margin-left: auto;
+
+          .label {
+            font-size: 16px;
+            font-weight: 600;
+          }
+
+          .value {
+            color: #f56c6c;
+            font-size: 20px;
+          }
+        }
+      }
+    }
+
+    .change-logs-section {
+      .section-title {
+        font-weight: 600;
+        font-size: 15px;
+        margin-bottom: 16px;
+        color: #303133;
+      }
+
+      .log-card {
+        margin-bottom: 0;
+
+        .log-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 8px;
+
+          .log-operator {
+            font-size: 13px;
+            color: #909399;
+          }
+        }
+
+        .log-price-diff {
+          font-size: 14px;
+          margin-bottom: 4px;
+
+          &.price-up {
+            color: #f56c6c;
+          }
+
+          &.price-down {
+            color: #67c23a;
+          }
+        }
+
+        .log-remark {
+          font-size: 13px;
+          color: #606266;
+          margin-bottom: 4px;
+        }
+
+        .log-exception {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 13px;
+          color: #f56c6c;
+        }
+      }
+    }
+  }
+
+  .mb-16 {
+    margin-bottom: 16px;
+  }
+
+  .shake {
+    animation: shake 0.5s ease;
+  }
+
+  .estimated-total {
+    font-size: 24px;
+    font-weight: bold;
+    color: #303133;
+
+    &.price-high {
+      color: #f56c6c;
+    }
+  }
+
+  .field-error {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #f56c6c;
+    margin-top: 4px;
+  }
+
+  .has-error {
+    :deep(.el-form-item__label) {
+      color: #f56c6c;
+    }
+  }
+
+  .validation-errors {
+    .validation-error {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      font-size: 13px;
+      color: #606266;
     }
   }
 }

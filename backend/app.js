@@ -50,6 +50,7 @@ app.use('/marketing', routes.marketing)
 app.use('/notification', routes.notification)
 app.use('/analytics', routes.analytics)
 app.use('/monitor', routes.monitor)
+app.use('/pricing', routes.pricing)
 
 app.use(notFound)
 app.use(errorHandler)
