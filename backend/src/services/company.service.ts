@@ -445,7 +445,7 @@ class CompanyService {
     await companyChangeLogDao.create({
       companyId,
       action,
-      changedFields: changedFields.length > 0 ? changedFields.map(f => f.field).join(','),
+      changedFields: changedFields.length > 0 ? changedFields.map(f => f.field).join(',') : undefined,
       oldValues: JSON.stringify(oldValues),
       newValues: JSON.stringify(newValues),
       operatorId: currentUser.id,

@@ -24,7 +24,33 @@
         </el-button>
       </template>
 
-      <SearchForm :fields="searchFields" v-model="searchParams" @search="handleSearch" @reset="handleReset" />
+      <SearchForm @search="handleSearch" @reset="handleReset">
+        <el-form-item label="关键词" prop="keyword">
+          <el-input v-model="searchForm.keyword" placeholder="用户名/姓名/手机" clearable style="width: 200px" />
+        </el-form-item>
+        <el-form-item label="角色" prop="role">
+          <el-select v-model="searchForm.role" placeholder="全部" clearable style="width: 140px">
+            <el-option label="全部" value="" />
+            <el-option v-for="opt in ROLE_OPTIONS" :key="opt.value" :label="opt.label" :value="opt.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="账号状态" prop="accountStatus">
+          <el-select v-model="searchForm.accountStatus" placeholder="全部" clearable style="width: 120px">
+            <el-option label="全部" value="" />
+            <el-option label="正常" value="normal" />
+            <el-option label="冻结" value="frozen" />
+            <el-option label="过期" value="expired" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="操作频次" prop="minOperationCount">
+          <el-select v-model="searchForm.minOperationCount" placeholder="不限" clearable style="width: 140px">
+            <el-option label="不限" :value="undefined" />
+            <el-option label="50次以上" :value="50" />
+            <el-option label="100次以上" :value="100" />
+            <el-option label="200次以上" :value="200" />
+          </el-select>
+        </el-form-item>
+      </SearchForm>
 
       <div class="anomaly-banner" v-if="anomalyCount > 0" @click="showOnlyAnomaly = !showOnlyAnomaly">
         <el-icon><WarningFilled /></el-icon>

@@ -6,6 +6,7 @@ interface JobAttributes {
   id: number;
   companyId: number;
   title: string;
+  category?: string;
   department?: string;
   jobType?: string;
   salaryMin?: number;
@@ -20,8 +21,15 @@ interface JobAttributes {
   requirements?: string;
   benefits?: string;
   status: JobStatus;
+  rejectReason?: string;
+  submitTime?: Date;
+  auditTime?: Date;
+  auditUserId?: number;
+  auditUserName?: string;
   publishTime?: Date;
   deadline?: Date;
+  creatorId?: number;
+  creatorName?: string;
   sort: number;
 }
 
@@ -31,6 +39,7 @@ class Job extends Model<JobAttributes, JobCreationAttributes> implements JobAttr
   public id!: number;
   public companyId!: number;
   public title!: string;
+  public category?: string;
   public department?: string;
   public jobType?: string;
   public salaryMin?: number;
@@ -45,8 +54,15 @@ class Job extends Model<JobAttributes, JobCreationAttributes> implements JobAttr
   public requirements?: string;
   public benefits?: string;
   public status!: JobStatus;
+  public rejectReason?: string;
+  public submitTime?: Date;
+  public auditTime?: Date;
+  public auditUserId?: number;
+  public auditUserName?: string;
   public publishTime?: Date;
   public deadline?: Date;
+  public creatorId?: number;
+  public creatorName?: string;
   public sort!: number;
 
   public readonly created_at!: Date;
@@ -71,6 +87,10 @@ Job.init(
       type: DataTypes.STRING(100),
       allowNull: false,
       comment: '岗位名称',
+    },
+    category: {
+      type: DataTypes.STRING(50),
+      comment: '岗位类别',
     },
     department: {
       type: DataTypes.STRING(50),
@@ -127,9 +147,29 @@ Job.init(
       comment: '福利待遇',
     },
     status: {
-      type: DataTypes.ENUM('draft', 'published', 'closed', 'paused'),
+      type: DataTypes.ENUM('draft', 'pending_audit', 'published', 'rejected', 'closed', 'paused'),
       defaultValue: JobStatus.DRAFT,
-      comment: '岗位状态 draft-草稿 published-招聘中 closed-已关闭 paused-已暂停',
+      comment: '岗位状态 draft-草稿 pending_audit-待审核 published-已发布 rejected-发布驳回 closed-已关闭 paused-已暂停',
+    },
+    rejectReason: {
+      type: DataTypes.TEXT,
+      comment: '驳回原因',
+    },
+    submitTime: {
+      type: DataTypes.DATE,
+      comment: '提交审核时间',
+    },
+    auditTime: {
+      type: DataTypes.DATE,
+      comment: '审核时间',
+    },
+    auditUserId: {
+      type: DataTypes.INTEGER,
+      comment: '审核人ID',
+    },
+    auditUserName: {
+      type: DataTypes.STRING(50),
+      comment: '审核人姓名',
     },
     publishTime: {
       type: DataTypes.DATE,
@@ -138,6 +178,14 @@ Job.init(
     deadline: {
       type: DataTypes.DATE,
       comment: '截止日期',
+    },
+    creatorId: {
+      type: DataTypes.INTEGER,
+      comment: '创建人ID',
+    },
+    creatorName: {
+      type: DataTypes.STRING(50),
+      comment: '创建人姓名',
     },
     sort: {
       type: DataTypes.INTEGER,

@@ -1,5 +1,6 @@
 import Company from './company.model';
 import Job from './job.model';
+import JobOperationLog from './job-operation-log.model';
 import Resume from './resume.model';
 import Interview from './interview.model';
 import Onboard from './onboard.model';
@@ -47,4 +48,7 @@ Onboard.belongsTo(Job, { foreignKey: 'jobId', as: 'job' });
 Qualification.hasMany(QualificationAuditLog, { foreignKey: 'qualificationId', as: 'auditLogs' });
 QualificationAuditLog.belongsTo(Qualification, { foreignKey: 'qualificationId', as: 'qualification' });
 
-export { Company, Job, Resume, Interview, Onboard, User, Qualification, QualificationAuditLog, CompanyChangeLog, RecruitmentConfig, RecruitmentConfigLog, PermissionLog, LoginLog };
+Job.hasMany(JobOperationLog, { foreignKey: 'jobId', as: 'operationLogs' });
+JobOperationLog.belongsTo(Job, { foreignKey: 'jobId', as: 'job' });
+
+export { Company, Job, JobOperationLog, Resume, Interview, Onboard, User, Qualification, QualificationAuditLog, CompanyChangeLog, RecruitmentConfig, RecruitmentConfigLog, PermissionLog, LoginLog };

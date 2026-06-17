@@ -1,13 +1,17 @@
 export enum JobStatus {
   DRAFT = 'draft',
+  PENDING_AUDIT = 'pending_audit',
   PUBLISHED = 'published',
+  REJECTED = 'rejected',
   CLOSED = 'closed',
   PAUSED = 'paused',
 }
 
 export const JobStatusLabel: Record<JobStatus, string> = {
   [JobStatus.DRAFT]: '草稿',
-  [JobStatus.PUBLISHED]: '招聘中',
+  [JobStatus.PENDING_AUDIT]: '待审核',
+  [JobStatus.PUBLISHED]: '已发布',
+  [JobStatus.REJECTED]: '发布驳回',
   [JobStatus.CLOSED]: '已关闭',
   [JobStatus.PAUSED]: '已暂停',
 };
