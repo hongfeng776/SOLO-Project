@@ -301,3 +301,101 @@ export const INDUSTRY_JOB_CATEGORY_MAP: Record<string, string[]> = {
   '农业': ['operations', 'sales', 'admin', 'other'],
   '其他': ['other', 'admin', 'operations', 'sales'],
 };
+
+export enum ConfigStatus {
+  ENABLED = 'enabled',
+  DISABLED = 'disabled',
+}
+
+export const ConfigStatusLabel: Record<ConfigStatus, string> = {
+  [ConfigStatus.ENABLED]: '已启用',
+  [ConfigStatus.DISABLED]: '已停用',
+};
+
+export const ConfigStatusType: Record<ConfigStatus, string> = {
+  [ConfigStatus.ENABLED]: 'success',
+  [ConfigStatus.DISABLED]: 'info',
+};
+
+export enum ConfigLogAction {
+  CREATE = 'create',
+  UPDATE = 'update',
+  ENABLE = 'enable',
+  DISABLE = 'disable',
+  BATCH_REPLACE = 'batch_replace',
+}
+
+export const ConfigLogActionLabel: Record<ConfigLogAction, string> = {
+  [ConfigLogAction.CREATE]: '创建配置',
+  [ConfigLogAction.UPDATE]: '修改配置',
+  [ConfigLogAction.ENABLE]: '启用配置',
+  [ConfigLogAction.DISABLE]: '停用配置',
+  [ConfigLogAction.BATCH_REPLACE]: '批量替换',
+};
+
+export enum WorkType {
+  FULL_TIME = 'full_time',
+  PART_TIME = 'part_time',
+  CONTRACT = 'contract',
+  INTERNSHIP = 'internship',
+  REMOTE = 'remote',
+}
+
+export const WorkTypeLabel: Record<WorkType, string> = {
+  [WorkType.FULL_TIME]: '全职',
+  [WorkType.PART_TIME]: '兼职',
+  [WorkType.CONTRACT]: '合同制',
+  [WorkType.INTERNSHIP]: '实习',
+  [WorkType.REMOTE]: '远程办公',
+};
+
+export const DISPLAY_TAGS = [
+  '明星企业', '高新企业', '独角兽', '国企', '外企', '上市公司',
+  '创业公司', '500强', '行业TOP10', '发展前景好',
+];
+
+export const WELFARE_TAGS: Record<string, string[]> = {
+  tech: ['技术分享', '学习补贴', '技术培训', '设备补贴', '开源贡献奖励', '黑客松'],
+  product: ['产品培训', '用户研究支持', '数据分析工具', '原型工具补贴', '行业峰会'],
+  design: ['设计软件授权', '设计交流', '设计培训', '创意空间', '作品集指导'],
+  operations: ['运营培训', '数据工具', '项目奖金', '绩效奖金', '晋升通道'],
+  marketing: ['市场活动预算', '品牌推广', '绩效提成', '渠道资源', '行业交流'],
+  hr: ['HR培训', '人才发展', '员工关系', '企业文化', '团建预算'],
+  finance: ['财务培训', '证书补贴', '年终奖金', '稳定福利', '专业发展'],
+  admin: ['行政福利', '节日礼品', '员工关怀', '后勤保障', '下午茶'],
+  sales: ['高提成', '销售奖金', '客户资源', '销售培训', '晋升空间'],
+  other: ['弹性工作', '扁平管理', '团队氛围好', '公司福利好', '年度旅游'],
+};
+
+export const GENERAL_WELFARE_TAGS = [
+  '五险一金', '补充医疗', '年终奖', '股票期权', '带薪年假',
+  '节日福利', '生日福利', '定期体检', '团队建设', '员工宿舍',
+  '交通补贴', '餐补', '通讯补贴', '住房补贴', '弹性工作',
+  '远程办公', '扁平管理', '氛围轻松', '下午茶', '健身房',
+];
+
+export const INFO_COMPLETENESS_THRESHOLD = 80;
+
+export const ACTIVITY_LEVEL_OPTIONS = [
+  { label: '高活跃度（70分以上）', value: 70 },
+  { label: '中活跃度（40分以上）', value: 40 },
+  { label: '低活跃度（20分以上）', value: 20 },
+];
+
+export const POSITION_GAP_OPTIONS = [
+  { label: '10人以上缺口', value: 10 },
+  { label: '50人以上缺口', value: 50 },
+  { label: '100人以上缺口', value: 100 },
+];
+
+export const VIOLATION_KEYWORDS = [
+  '传销', '刷单', '网贷', '博彩', '色情', '暴力', '毒品',
+  '枪支', '诈骗', '非法集资', '高利', '担保贷款',
+  '日结高薪', '月入过万', '轻松过万', '包赚不赔',
+  '包分配', '包就业', '包过', '保过',
+];
+
+export const FALSE_RECRUITMENT_KEYWORDS = [
+  '无需经验', '零基础上岗', '人人都能做', '月薪3万',
+  '年薪百万', '不用干活', '躺着赚钱', '轻松赚钱',
+];

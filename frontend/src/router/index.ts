@@ -60,6 +60,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '资质审核', icon: 'Stamp' },
       },
       {
+        path: 'recruitment-config',
+        name: 'RecruitmentConfig',
+        component: () => import('@/views/recruitment-config/index.vue'),
+        meta: { title: '招聘配置', icon: 'Tools' },
+      },
+      {
         path: 'system',
         name: 'System',
         component: () => import('@/views/system/user/index.vue'),
