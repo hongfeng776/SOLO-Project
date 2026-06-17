@@ -20,6 +20,8 @@ const businessTravelController = require('../controllers/BusinessTravelControlle
 const couponController = require('../controllers/CouponController')
 const approvalController = require('../controllers/ApprovalController')
 const paymentController = require('../controllers/PaymentController')
+const afterSaleController = require('../controllers/AfterSaleController')
+const afterSaleValidator = require('../middleware/afterSaleValidator')
 
 const router = express.Router();
 
@@ -106,5 +108,19 @@ router.post('/payments/batch/exempt-timeout', auth(['admin']), orderPermission.c
 router.get('/payments/trace', auth(), preventDuplicateTrace, paymentController.tracePaymentFlows.bind(paymentController))
 router.get('/payments/:flowId', auth(), paymentController.getFlowDetail.bind(paymentController))
 router.get('/payments/order/:orderId', auth(), paymentController.getOrderFlows.bind(paymentController))
+
+router.post('/after-sales/apply', auth(), afterSaleValidator.checkAfterSalePreconditions, afterSaleValidator.validateAfterSaleParams, afterSaleController.apply.bind(afterSaleController))
+router.put('/after-sales/:id/approve', auth(['admin', 'operator']), afterSaleController.approve.bind(afterSaleController))
+router.put('/after-sales/:id/reject', auth(['admin', 'operator']), afterSaleController.reject.bind(afterSaleController))
+router.put('/after-sales/:id/postpone', auth(['admin', 'operator']), afterSaleController.postpone.bind(afterSaleController))
+router.post('/after-sales/:id/execute-refund', auth(['admin']), afterSaleController.executeRefund.bind(afterSaleController))
+
+router.post('/after-sales/batch/approve', auth(['admin', 'operator']), orderPermission.checkBatchOperationPermission, afterSaleController.batchApprove.bind(afterSaleController))
+router.post('/after-sales/batch/reject', auth(['admin', 'operator']), orderPermission.checkBatchOperationPermission, afterSaleController.batchReject.bind(afterSaleController))
+router.post('/after-sales/batch/postpone', auth(['admin', 'operator']), orderPermission.checkBatchOperationPermission, afterSaleController.batchPostpone.bind(afterSaleController))
+
+router.get('/after-sales/trace', auth(), pagination, preventDuplicateTrace, afterSaleController.trace.bind(afterSaleController))
+router.get('/after-sales/:id', auth(), afterSaleController.getDetail.bind(afterSaleController))
+router.get('/after-sales', auth(), pagination, afterSaleController.list.bind(afterSaleController))
 
 module.exports = router;

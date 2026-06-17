@@ -166,6 +166,58 @@ export const getEnumColor = (enumObj, value) => {
   return item ? item.color : '#909399'
 }
 
+export const AfterSaleTypeEnum = {
+  NOT_FULFILLED: { value: 'not_fulfilled', label: '未履约退款', color: '#52c41a' },
+  PARTIAL_FULFILLED: { value: 'partial_fulfilled', label: '部分履约退款', color: '#faad14' },
+  FULL_FULFILLED: { value: 'full_fulfilled', label: '完全履约退款', color: '#ff7a45' }
+}
+
+export const AfterSaleStatusEnum = {
+  PENDING: { value: 0, label: '待审核', type: 'warning', color: '#faad14' },
+  APPROVED: { value: 1, label: '审核通过', type: 'primary', color: '#1890ff' },
+  REJECTED: { value: 2, label: '审核驳回', type: 'danger', color: '#ff4d4f' },
+  REFUNDING: { value: 3, label: '退款中', type: 'warning', color: '#ff7a45' },
+  REFUNDED: { value: 4, label: '已退款', type: 'success', color: '#52c41a' },
+  CLOSED: { value: 5, label: '已关闭', type: 'info', color: '#909399' },
+  POSTPONED: { value: 6, label: '暂缓处理', type: 'info', color: '#722ed1' }
+}
+
+export const AfterSaleAuditActionEnum = {
+  SUBMIT: { value: 'submit', label: '提交申请' },
+  APPROVE: { value: 'approve', label: '审核通过' },
+  REJECT: { value: 'reject', label: '审核驳回' },
+  POSTPONE: { value: 'postpone', label: '暂缓处理' },
+  CLOSE: { value: 'close', label: '关闭申请' },
+  EXECUTE_REFUND: { value: 'execute_refund', label: '执行退款' }
+}
+
+export const RefundChannelEnum = {
+  WECHAT: { value: 'wechat', label: '微信退款', icon: 'ChatDotRound' },
+  ALIPAY: { value: 'alipay', label: '支付宝退款', icon: 'Aim' },
+  UNIONPAY: { value: 'unionpay', label: '银联退款', icon: 'CreditCard' },
+  CREDIT_CARD: { value: 'credit_card', label: '信用卡退款', icon: 'Money' },
+  BALANCE: { value: 'balance', label: '余额退款', icon: 'Wallet' }
+}
+
+export const RefundFlowStatusEnum = {
+  PROCESSING: { value: 0, label: '处理中', type: 'warning', color: '#faad14' },
+  SUCCESS: { value: 1, label: '退款成功', type: 'success', color: '#52c41a' },
+  FAILED: { value: 2, label: '退款失败', type: 'danger', color: '#ff4d4f' },
+  CANCELLED: { value: 3, label: '已撤销', type: 'info', color: '#909399' }
+}
+
+export const PenaltyRuleEnum = {
+  WITHIN_24H: { value: 0.1, label: '24小时内', rateLabel: '10%' },
+  WITHIN_7D: { value: 0.05, label: '7天内', rateLabel: '5%' },
+  OVER_7D: { value: 0, label: '超过7天', rateLabel: '0%' }
+}
+
+export const RefundRatioEnum = {
+  NOT_FULFILLED: { value: 1.0, label: '未履约', rateLabel: '100%' },
+  PARTIAL_FULFILLED: { value: 0.7, label: '部分履约', rateLabel: '70%' },
+  FULL_FULFILLED: { value: 0.5, label: '完全履约', rateLabel: '50%' }
+}
+
 export default {
   OrderStatusEnum,
   OrderSourceEnum,
@@ -189,6 +241,13 @@ export default {
   DeductionTypeEnum,
   FeeTypeEnum,
   OrderPriorityEnum,
+  AfterSaleTypeEnum,
+  AfterSaleStatusEnum,
+  AfterSaleAuditActionEnum,
+  RefundChannelEnum,
+  RefundFlowStatusEnum,
+  PenaltyRuleEnum,
+  RefundRatioEnum,
   getEnumLabel,
   getEnumType,
   getEnumOptions,

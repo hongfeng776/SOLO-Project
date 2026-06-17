@@ -1,6 +1,7 @@
 @use './variables.scss' as *;
 @use './payment.scss';
 @use './order.scss';
+@use './afterSale.scss';
 
 * {
   margin: 0;

@@ -43,9 +43,11 @@
       <el-tab-pane label="异常订单" name="abnormal" />
       <el-tab-pane label="作废订单" name="invalid" />
       <el-tab-pane label="已归档" name="archived" />
+      <el-tab-pane label="售后管理" name="after_sale" />
     </el-tabs>
 
     <OrderBatchToolbar
+      v-if="activeTab !== 'after_sale'"
       :selected-count="selectedRows.length"
       :selected-ids="selectedIds"
       @success="handleBatchSuccess"
@@ -53,6 +55,7 @@
     />
 
     <PaymentBatchToolbar
+      v-if="activeTab !== 'after_sale'"
       :selected-count="selectedRows.length"
       :selected-ids="selectedIds"
       :selected-rows="selectedRows"
@@ -60,7 +63,16 @@
       @clear-selection="clearSelection"
     />
 
-    <div class="search-form">
+    <div v-if="activeTab === 'after_sale'" class="after-sale-container">
+      <AfterSaleTracePanel
+        ref="afterSaleTracePanelRef"
+        :visible="activeTab === 'after_sale'"
+        @row-selection-change="handleAfterSaleSelectionChange"
+        @open-audit-panel="handleOpenAuditPanel"
+      />
+    </div>
+
+    <div v-else class="search-form">
       <el-form :inline="true" :model="searchForm" @submit.prevent>
         <el-form-item label="订单号">
           <el-input v-model="searchForm.orderNo" placeholder="请输入订单号" clearable class="input-glow-focus" />
@@ -118,7 +130,7 @@
       </el-form>
     </div>
 
-    <div class="table-container">
+    <div v-if="activeTab !== 'after_sale'" class="table-container">
       <el-table
         ref="tableRef"
         :data="pagedData"
@@ -233,7 +245,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="下单时间" width="180" />
-        <el-table-column label="操作" width="340" fixed="right">
+        <el-table-column label="操作" width="440" fixed="right">
           <template #default="{ row }">
             <el-button
               v-if="row.status === OrderStatusEnum.PENDING_PAYMENT.value"
@@ -275,12 +287,19 @@
               @click="handleCancel(row)"
             >取消</el-button>
             <el-button
-              v-if="row.status === OrderStatusEnum.PAID.value"
+              v-if="canApplyAfterSale(row.status)"
               type="danger"
               link
               size="small"
-              @click="handleRefund(row)"
-            >退款</el-button>
+              @click="handleApplyAfterSale(row)"
+            >申请售后</el-button>
+            <el-button
+              v-if="canAuditAfterSale(row.status)"
+              type="warning"
+              link
+              size="small"
+              @click="handleAuditAfterSale(row)"
+            >售后审核</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -425,6 +444,18 @@
         <el-button type="primary" @click="handleRefundSubmit">确认退款</el-button>
       </template>
     </el-dialog>
+
+    <AfterSaleApplyDialog
+      v-model="afterSaleApplyVisible"
+      :order-info="afterSaleApplyOrder"
+      @success="handleAfterSaleApplySuccess"
+    />
+
+    <AfterSaleAuditPanel
+      v-model="afterSaleAuditVisible"
+      :after-sale-info="afterSaleAuditInfo"
+      @success="handleAfterSaleAuditSuccess"
+    />
   </div>
 </template>
 
@@ -465,6 +496,9 @@ import PaymentDialog from '@/components/Payment/PaymentDialog.vue'
 import PaymentResultTip from '@/components/Payment/PaymentResultTip.vue'
 import PaymentBatchToolbar from '@/components/Payment/PaymentBatchToolbar.vue'
 import PaymentFlowTable from '@/components/Payment/PaymentFlowTable.vue'
+import AfterSaleTracePanel from '@/components/AfterSale/AfterSaleTracePanel.vue'
+import AfterSaleApplyDialog from '@/components/AfterSale/AfterSaleApplyDialog.vue'
+import AfterSaleAuditPanel from '@/components/AfterSale/AfterSaleAuditPanel.vue'
 
 const loading = ref(false)
 const tableRef = ref(null)
@@ -486,6 +520,13 @@ const currentPayOrder = ref(null)
 const currentFlowOrder = ref(null)
 const refundTargetOrder = ref(null)
 const refundFormRef = ref(null)
+
+const afterSaleTracePanelRef = ref(null)
+const afterSaleApplyVisible = ref(false)
+const afterSaleAuditVisible = ref(false)
+const afterSaleApplyOrder = ref(null)
+const afterSaleAuditInfo = ref(null)
+const afterSaleSelectedRows = ref([])
 
 const selectedRows = ref([])
 const countdownMap = reactive({})
@@ -826,6 +867,65 @@ const handlePaymentBatchSuccess = (action) => {
   fetchData()
 }
 
+const canApplyAfterSale = (status) => {
+  const allowStatuses = [
+    OrderStatusEnum.PAID.value,
+    OrderStatusEnum.COMPLETED.value
+  ]
+  return allowStatuses.includes(status)
+}
+
+const canAuditAfterSale = (status) => {
+  return status === OrderStatusEnum.REFUNDING.value
+}
+
+const handleApplyAfterSale = (row) => {
+  afterSaleApplyOrder.value = { ...row }
+  afterSaleApplyVisible.value = true
+}
+
+const handleAfterSaleApplySuccess = () => {
+  ElMessage.success('售后申请提交成功')
+  afterSaleApplyVisible.value = false
+  fetchData()
+}
+
+const handleAuditAfterSale = (row) => {
+  afterSaleAuditInfo.value = {
+    id: row.id,
+    afterSaleNo: `AS${row.orderNo}`,
+    orderNo: row.orderNo,
+    afterSaleType: 'not_fulfilled',
+    status: 0,
+    applyAmount: row.amount,
+    penaltyAmount: 0,
+    finalAmount: row.amount,
+    createTime: row.createTime,
+    productName: row.productName,
+    orderAmount: row.amount,
+    buyer: row.buyer,
+    phone: row.phone,
+    payTime: row.payTime || null,
+    reason: '用户申请退款'
+  }
+  afterSaleAuditVisible.value = true
+}
+
+const handleAfterSaleAuditSuccess = () => {
+  ElMessage.success('审核操作成功')
+  afterSaleAuditVisible.value = false
+  fetchData()
+}
+
+const handleAfterSaleSelectionChange = (selection) => {
+  afterSaleSelectedRows.value = selection
+}
+
+const handleOpenAuditPanel = (row) => {
+  afterSaleAuditInfo.value = row
+  afterSaleAuditVisible.value = true
+}
+
 const onPaymentStatusChange = (data) => {
   if (!data || !data.orderId) return
   const order = rawData.value.find(r => r.id === data.orderId)
@@ -982,6 +1082,13 @@ watch(() => [activeTab.value, searchForm], () => {
       background: #f5f7fa;
       border-radius: 4px;
     }
+  }
+
+  .after-sale-container {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   }
 }
 

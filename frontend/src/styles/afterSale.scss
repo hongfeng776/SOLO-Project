@@ -1,0 +1,165 @@
+@keyframes refundInputFocus {
+  0% {
+    border-color: #dcdfe6;
+    box-shadow: none;
+  }
+  100% {
+    border-color: #52c41a;
+    box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.2);
+  }
+}
+.refund-input-focus {
+  transition: all 0.3s ease;
+  &:focus {
+    animation: refundInputFocus 0.3s ease forwards;
+    outline: none;
+  }
+}
+
+@keyframes refundErrorShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+.refund-error-text {
+  color: #ff4d4f;
+  font-style: italic;
+  animation: refundErrorShake 0.4s ease-in-out;
+}
+
+@keyframes refundDisableBtn {
+  0% {
+    opacity: 1;
+    cursor: pointer;
+  }
+  100% {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+.refund-disable-btn {
+  animation: refundDisableBtn 0.3s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes refundSlideFade {
+  0% {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.refund-slide-fade {
+  animation: refundSlideFade 0.35s ease-out;
+}
+
+.refund-striped-row {
+  &:nth-child(odd) {
+    background-color: #fafafa;
+  }
+  &:nth-child(even) {
+    background-color: #fff;
+  }
+  &:hover {
+    background-color: #e6f7ff !important;
+    transition: background-color 0.2s ease;
+  }
+}
+
+@keyframes refundRowSelected {
+  0% {
+    transform: scale(1);
+    background: #e6f7ff;
+  }
+  100% {
+    transform: scale(1.01);
+    background: linear-gradient(45deg, #e6f7ff, #bae7ff);
+  }
+}
+.refund-row-selected {
+  animation: refundRowSelected 0.3s ease forwards;
+  transform-origin: center;
+}
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.refund-back-top {
+  position: fixed;
+  right: 30px;
+  bottom: 30px;
+  z-index: 1000;
+  display: none;
+  transition: transform 0.3s ease;
+  &.visible {
+    display: block;
+    animation: fadeInScale 0.3s ease-out;
+  }
+  &:hover {
+    transform: rotate(180deg);
+  }
+}
+
+@keyframes refundModalZoom {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.refund-modal-zoom {
+  animation: refundModalZoom 0.3s ease-out;
+}
+
+@keyframes refundLargeTagPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 6px 6px rgba(255, 77, 79, 0);
+  }
+}
+.refund-large-tag {
+  background-color: #ff4d4f;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  animation: refundLargeTagPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.refund-timeline-item {
+  opacity: 0;
+  &.animate {
+    animation: fadeInUp 0.4s ease-out forwards;
+  }
+  @for $i from 1 through 10 {
+    &:nth-child(#{$i}).animate {
+      animation-delay: #{$i * 0.08}s;
+    }
+  }
+}
