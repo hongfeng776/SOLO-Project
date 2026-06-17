@@ -3,7 +3,7 @@ import { db } from '@models/index';
 import bcrypt from 'bcryptjs';
 import { StockStatus } from '@enums/index';
 
-const { User, Role, Permission, UserRole, RolePermission, StockQuote, StockQuoteHistory, AssetProduct, CustomerAsset, FundFlow, ComplianceAudit, Trade, CustomerHolding, RiskAlert, OperationLog } = db;
+const { User, Role, Permission, UserRole, RolePermission, StockQuote, StockQuoteHistory, QuoteAuditTrail, AssetProduct, CustomerAsset, FundFlow, ComplianceAudit, Trade, CustomerHolding, RiskAlert, OperationLog } = db;
 
 async function seedPermissions() {
   const modules = [
@@ -695,6 +695,84 @@ async function seedOperationLogs() {
   await OperationLog.bulkCreate(logs as any);
 }
 
+async function seedQuoteAuditTrails() {
+  const stocks = await StockQuote.findAll();
+  const operationTypes = ['create', 'update', 'import_manual', 'import_batch', 'delete'];
+  const dataPeriods = ['early_morning', 'midday', 'after_close'];
+  const sourceChannels = ['manual', 'import_api', 'excel_import', 'system_sync'];
+  const dataSources = ['sina', 'tencent', 'eastmoney', 'manual_input'];
+  const verificationStatuses = ['verified', 'pending', 'rejected'];
+  const operators = [
+    { id: 1, name: '系统管理员' },
+    { id: 2, name: '张分析师' },
+    { id: 3, name: '李审计员' },
+  ];
+  const fields = ['current_price', 'change_rate', 'volume', 'close_price', 'open_price'];
+
+  const auditTrails: any[] = [];
+
+  for (let i = 0; i < 20; i++) {
+    const stock = stocks[i % stocks.length];
+    const operator = operators[i % operators.length];
+    const operationType = operationTypes[i % operationTypes.length];
+    const dataPeriod = dataPeriods[i % dataPeriods.length];
+    const sourceChannel = sourceChannels[i % sourceChannels.length];
+    const dataSource = dataSources[i % dataSources.length];
+    const status = verificationStatuses[i % verificationStatuses.length];
+    const consistencyScore = Math.floor(Math.random() * 16) + 85;
+    const changedField = fields[i % fields.length];
+
+    const stockJson = stock.toJSON() as any;
+    const previousSnapshot: any = {};
+    const newSnapshot: any = {};
+    const fieldChanges: any = {};
+
+    for (const key of Object.keys(stockJson)) {
+      previousSnapshot[key] = stockJson[key];
+      newSnapshot[key] = stockJson[key];
+    }
+
+    if (stockJson[changedField] != null) {
+      const originalVal = Number(stockJson[changedField]) || 100;
+      const newVal = Number((originalVal * (1 + (Math.random() * 4 - 2) / 100)).toFixed(2));
+      newSnapshot[changedField] = newVal;
+      fieldChanges[changedField] = {
+        previous: stockJson[changedField],
+        new: newVal,
+      };
+    }
+
+    const createdAt = new Date();
+    createdAt.setDate(createdAt.getDate() - (i % 15));
+    createdAt.setHours(9 + (i % 8), (i * 7) % 60, 0, 0);
+
+    auditTrails.push({
+      stock_id: stock.id,
+      stock_code: stockJson.stock_code,
+      operation_type: operationType,
+      data_period: dataPeriod,
+      field_changes: Object.keys(fieldChanges).length > 0 ? fieldChanges : null,
+      previous_snapshot: previousSnapshot,
+      new_snapshot: newSnapshot,
+      operator_id: operator.id,
+      operator_name: operator.name,
+      source_channel: sourceChannel,
+      data_source: dataSource,
+      remark: `第${i + 1}条示例溯源记录 - ${operationType}操作`,
+      verification_status: status,
+      consistency_score: consistencyScore,
+      accuracy_violations:
+        status === 'rejected'
+          ? [{ field: changedField, message: '数据精度超出阈值', level: 'warning' }]
+          : null,
+      created_at: createdAt,
+    });
+  }
+
+  await QuoteAuditTrail.bulkCreate(auditTrails as any);
+  console.log(`Seeded ${auditTrails.length} quote audit trails`);
+}
+
 async function seed() {
   try {
     await sequelize.sync({ force: false, alter: true });
@@ -736,6 +814,8 @@ async function seed() {
 
     await seedOperationLogs();
     console.log('Seeded 10 operation logs');
+
+    await seedQuoteAuditTrails();
 
     console.log('All seed data inserted successfully');
     process.exit(0);

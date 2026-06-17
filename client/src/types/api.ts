@@ -359,7 +359,7 @@ export interface IStockQuoteExtended extends IStockQuote {
   checkResult?: IDataCheckResult
 }
 
-export interface IStockHistory {
+export interface IStockHistoryItem {
   id: number
   stockId: number
   stockCode: string
@@ -371,6 +371,22 @@ export interface IStockHistory {
   volume: number
   turnover: number
   changeRate: number
+}
+
+export interface IAuditTrailListResult {
+  list: IQuoteAuditTrail[]
+  stats: {
+    operatorStats: Array<{ operatorId: number; operatorName: string; count: number }>
+    operationTypeStats: Array<{ type: string; count: number }>
+    periodStats: Array<{ period: string; count: number }>
+    avgConsistencyScore: number
+  }
+}
+
+export interface IConsistencyResult {
+  score: number
+  status: 'verified' | 'pending' | 'rejected'
+  issues: Array<{ field: string; message: string; level: 'high' | 'medium' | 'low'; suggestion?: string }>
 }
 
 export interface IDataCheckResult {
@@ -392,10 +408,57 @@ export interface IDataCheckResult {
   }
 }
 
+export interface IQuoteValidationError {
+  field: string
+  value: any
+  message: string
+  code: string
+  suggestion?: string
+}
+
 export interface IQuoteValidationResult {
   valid: boolean
-  errors: string[]
-  warnings: string[]
+  errors: IQuoteValidationError[]
+  warnings: IQuoteValidationError[]
+  accuracyLevel: 'high' | 'medium' | 'low'
+}
+
+export interface IQuoteImportResult {
+  taskId: string
+  summary: { total: number; success: number; failed: number; duplicates: number; errors: number; elapsedMs: number }
+  successList: any[]
+  errorList: Array<{ row: number; data: any; message: string; type: 'format' | 'duplicate' | 'logic' }>
+  duplicateList: any[]
+}
+
+export interface IQuoteAuditTrail {
+  id: number
+  stockId: number
+  stockCode: string
+  operationType: string
+  dataPeriod: string
+  periodLabel?: string
+  fieldChanges: Record<string, { before: any; after: any }>
+  previousSnapshot?: any
+  newSnapshot?: any
+  operatorId: number
+  operatorName: string
+  sourceChannel: string
+  dataSource: string
+  remark?: string
+  verificationStatus: string
+  consistencyScore: number
+  accuracyViolations?: any[]
+  createdAt: string
+}
+
+export interface IImportProgress {
+  taskId: string
+  percent: number
+  current: number
+  total: number
+  status: 'pending' | 'processing' | 'success' | 'failed'
+  message?: string
 }
 
 export interface IPeakValleyInfo {
@@ -426,3 +489,86 @@ export interface ISyncHistoryItem {
 }
 
 export type IStockQuoteFull = IStockQuote & IStockQuoteExtended
+
+export type DataSourceType = 'sina' | 'tencent' | 'eastmoney' | 'manual_input'
+
+export type OperationType = 'create' | 'update' | 'import' | 'delete'
+
+export interface IAuditOperator {
+  id: number
+  name: string
+  avatar?: string
+  role: string
+}
+
+export interface IAuditTrailItem {
+  id: number
+  stockId: number
+  stockCode: string
+  stockName: string
+  operator: IAuditOperator
+  operationType: OperationType
+  dataSource: DataSourceType
+  operatedAt: string
+  beforeData: Partial<IStockQuote>
+  afterData: Partial<IStockQuote>
+  changedFields: string[]
+  remark?: string
+}
+
+export interface IConsistencyIssue {
+  field: string
+  severity: 'high' | 'medium' | 'low'
+  message: string
+  suggestion: string
+}
+
+export interface IConsistencyCheckResult {
+  score: number
+  issues: IConsistencyIssue[]
+  passed: boolean
+}
+
+export interface IPrecisionCheckResult {
+  passed: boolean
+  violations: Array<{
+    field: string
+    message: string
+  }>
+}
+
+export interface IFieldComplianceResult {
+  passed: boolean
+  missingFields: string[]
+  invalidFields: Array<{
+    field: string
+    message: string
+  }>
+  outOfRangeFields: Array<{
+    field: string
+    message: string
+  }>
+}
+
+export interface ITimeValidityResult {
+  passed: boolean
+  tradeDateValid: boolean
+  tradeDateMessage: string
+  syncFreshness: boolean
+  syncFreshnessMessage: string
+  syncFrequencyValid: boolean
+  syncFrequencyMessage: string
+}
+
+export interface IAuditTrailData {
+  trail: IAuditTrailItem
+  consistency: IConsistencyCheckResult
+  precisionCheck: IPrecisionCheckResult
+  fieldCompliance: IFieldComplianceResult
+  timeValidity: ITimeValidityResult
+  duplicateWarning: {
+    exists: boolean
+    duplicateStockCode: string
+    duplicateTradeDate: string
+  }
+}

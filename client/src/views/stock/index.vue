@@ -58,7 +58,13 @@
     <FinFilter :filters="filterConfig" @search="handleSearch" @reset="handleReset" />
 
     <div class="table-toolbar">
-      <el-button v-if="hasPerm('stock:add')" type="primary" :icon="Plus" @click="handleAdd">
+      <el-button v-if="hasPerm('stock:manage')" type="primary" :icon="Plus" @click="handleQuoteEntry">
+        录入行情
+      </el-button>
+      <el-button v-if="hasPerm('stock:manage')" :icon="Upload" @click="handleQuoteImport">
+        批量导入
+      </el-button>
+      <el-button v-if="hasPerm('stock:add')" :icon="Plus" @click="handleAdd">
         新增
       </el-button>
       <el-button
@@ -177,9 +183,12 @@
       :selection="hasPerm('stock:batchDelete')"
       :showIndex="true"
       :rowClassName="tableRowClassName"
+      :editable="hasPerm('stock:edit')"
+      :editableColumns="editableColumns"
       @selection-change="handleSelectionChange"
       @page-change="handlePageChange"
       @size-change="handleSizeChange"
+      @cell-dbl-click="handleCellDblClick"
     >
       <template #stockCode="{ row }">
         <div class="stock-code-cell">
@@ -267,9 +276,29 @@
         {{ formatMarketCap(row.totalMarketCap) }}
       </template>
 
+      <template #tradingPeriod="{ row }">
+        <span
+          v-if="getTradingPeriodInfo(row.lastSyncAt)"
+          class="period-badge"
+          :class="getTradingPeriodInfo(row.lastSyncAt)?.class"
+        >
+          {{ getTradingPeriodInfo(row.lastSyncAt)?.label }}
+        </span>
+        <span v-else>--</span>
+      </template>
+
       <template #action="{ row }">
         <template v-if="row.status !== 'delisted'">
           <el-button type="primary" link :icon="View" @click="handleView(row)">查看</el-button>
+          <el-button
+            v-if="hasPerm('stock:view')"
+            type="success"
+            link
+            :icon="Tickets"
+            @click="handleAuditTrail(row)"
+          >
+            溯源
+          </el-button>
           <el-button
             v-if="hasPerm('stock:edit') && row.status === 'trading'"
             type="primary"
@@ -508,12 +537,69 @@
         </el-row>
       </el-form>
     </FinDialog>
+
+    <QuoteEntryDialog
+      v-model:visible="quoteEntryVisible"
+      mode="create"
+      @success="handleQuoteEntrySuccess"
+      @refresh="fetchData"
+    />
+
+    <QuoteImportDialog
+      v-model:visible="quoteImportVisible"
+      @success="handleQuoteImportSuccess"
+      @refresh="fetchData"
+    />
+
+    <el-dialog
+      v-model="quickEditVisible"
+      :title="`编辑 ${quickEditColumnLabel}`"
+      width="420px"
+      :close-on-click-modal="false"
+      append-to-body
+    >
+      <el-form ref="quickEditFormRef" :model="quickEditForm" :rules="quickEditRules" label-width="90px">
+        <el-form-item label="股票代码">
+          <span>{{ quickEditRow?.stockCode }}</span>
+          <el-tag size="small" style="margin-left: 8px">{{ quickEditRow?.stockName }}</el-tag>
+        </el-form-item>
+        <el-form-item label="原值">
+          <span class="original-value">{{ formatQuickEditValue(quickEditColumn, quickEditOriginalValue) }}</span>
+        </el-form-item>
+        <el-form-item :label="quickEditColumnLabel" prop="newValue">
+          <el-input-number
+            v-model="quickEditForm.newValue"
+            :min="getQuickEditMin()"
+            :precision="getQuickEditPrecision()"
+            :step="getQuickEditStep()"
+            :controls="false"
+            style="width: 100%"
+            @blur="handleQuickEditValidate"
+          />
+        </el-form-item>
+        <el-form-item v-if="quickEditWarning" label="波动提示">
+          <el-alert :title="quickEditWarning" type="warning" show-icon :closable="false" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="handleQuickEditCancel">取消</el-button>
+        <el-button type="primary" :loading="quickEditLoading" @click="handleQuickEditConfirm">
+          确定
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <QuoteAuditTrailDialog
+      v-model:visible="auditTrailVisible"
+      :stock-id="currentAuditStockId"
+      :stock-code="currentAuditStockCode"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules, type FormItemRule } from 'element-plus'
 import {
   Plus,
   Delete,
@@ -526,7 +612,10 @@ import {
   CircleCloseFilled,
   ArrowDown,
   CaretBottom,
+  Upload,
+  Tickets,
 } from '@element-plus/icons-vue'
+import dayjs from 'dayjs'
 import { usePermission } from '@/hooks/usePermission'
 import { usePolling } from '@/hooks/usePolling'
 import {
@@ -535,10 +624,15 @@ import {
   STOCK_STATUS_COLORS,
   SECTOR_COLORS,
   MARKET_SECTOR_LIST,
+  FIELD_LABELS,
+  TRADING_PERIOD_LABELS,
 } from '@/constants/dictionaries'
 import { HOT_RISE_THRESHOLD, RISK_FALL_THRESHOLD } from '@/enums'
 import { formatMoney, formatVolume, formatMarketCap, formatChangeRate } from '@/utils/format'
 import * as stockApi from '@/api/stockQuote'
+import QuoteEntryDialog from './QuoteEntryDialog.vue'
+import QuoteImportDialog from './QuoteImportDialog.vue'
+import QuoteAuditTrailDialog from './QuoteAuditTrailDialog.vue'
 import type {
   IStockQuote,
   IPaginatedData,
@@ -546,6 +640,7 @@ import type {
   IDataSourceStatus,
   IStockValidation,
 } from '@/types/api'
+import type { ITableColumn } from '@/types/components'
 
 const { hasPerm } = usePermission()
 
@@ -561,6 +656,24 @@ const dataSourceAlertVisible = ref(false)
 const dataSourceAlertTitle = ref('')
 const codeValidating = ref(false)
 const codeValidation = reactive<IStockValidation>({ valid: true, format: '', market: '' })
+
+const quoteEntryVisible = ref(false)
+const quoteImportVisible = ref(false)
+
+const auditTrailVisible = ref(false)
+const currentAuditStockId = ref<number | null>(null)
+const currentAuditStockCode = ref('')
+
+const quickEditVisible = ref(false)
+const quickEditLoading = ref(false)
+const quickEditFormRef = ref<FormInstance>()
+const quickEditRow = ref<IStockQuote | null>(null)
+const quickEditColumn = ref('')
+const quickEditOriginalValue = ref<number>(0)
+const quickEditWarning = ref('')
+const quickEditForm = reactive<{ newValue: number | null }>({ newValue: null })
+
+const editableColumns = ['currentPrice', 'changeAmount', 'changeRate', 'volume', 'turnover']
 
 const priceChangeMap = reactive<Record<number, 'up' | 'down' | ''>>({})
 
@@ -629,6 +742,24 @@ const formRules: FormRules = {
   currentPrice: [{ required: true, message: '请输入现价', trigger: 'blur' }],
 }
 
+const quickEditColumnLabel = computed(() => FIELD_LABELS[quickEditColumn.value] || quickEditColumn.value)
+
+const quickEditRules: FormRules = {
+  newValue: [
+    { required: true, message: '请输入新值', trigger: 'blur' } as FormItemRule,
+    {
+      validator: (_rule, value, callback) => {
+        if (value === null || value === undefined || isNaN(Number(value))) {
+          callback(new Error('请输入有效的数值'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur',
+    } as FormItemRule,
+  ],
+}
+
 const filterConfig = [
   { prop: 'keyword', label: '股票代码/名称', type: 'input' as const, placeholder: '请输入股票代码或名称' },
   {
@@ -652,7 +783,7 @@ const filterConfig = [
   { prop: 'tradeDate', label: '交易日期', type: 'date' as const },
 ]
 
-const tableColumns = [
+const tableColumns: ITableColumn[] = [
   { prop: 'stockCode', label: '股票代码', width: 170, fixed: 'left' as const, slot: 'stockCode' },
   { prop: 'stockName', label: '股票名称', width: 210, fixed: 'left' as const, slot: 'stockName' },
   { prop: 'sector', label: '板块', width: 100, slot: 'sector' },
@@ -670,7 +801,8 @@ const tableColumns = [
   { prop: 'pbRatio', label: '市净率', width: 100, type: 'money' as const, precision: 2 },
   { prop: 'totalMarketCap', label: '总市值', width: 130, slot: 'totalMarketCap', sortable: true },
   { prop: 'tradeDate', label: '交易日期', width: 120, type: 'date' as const },
-  { prop: 'action', label: '操作', width: 200, fixed: 'right' as const, slot: 'action' },
+  { prop: 'tradingPeriod', label: '时段', width: 90, slot: 'tradingPeriod' },
+  { prop: 'action', label: '操作', width: 260, fixed: 'right' as const, slot: 'action' },
 ]
 
 const allStockData = computed(() => tableData.value)
@@ -952,6 +1084,22 @@ function handleSizeChange(size: number) {
   fetchData()
 }
 
+function handleQuoteEntry() {
+  quoteEntryVisible.value = true
+}
+
+function handleQuoteImport() {
+  quoteImportVisible.value = true
+}
+
+function handleQuoteEntrySuccess() {
+  fetchData()
+}
+
+function handleQuoteImportSuccess() {
+  fetchData()
+}
+
 function handleAdd() {
   dialogType.value = 'add'
   isView.value = false
@@ -1034,6 +1182,21 @@ async function handleDialogConfirm() {
 
   try {
     await formRef.value.validate()
+  } catch {
+    return
+  }
+
+  if (dialogType.value === 'add') {
+    if (checkDuplicateRecord(formData.stockCode || '', formData.tradeDate || '')) {
+      return
+    }
+  } else {
+    if (checkDuplicateRecord(formData.stockCode || '', formData.tradeDate || '', formData.id as number)) {
+      return
+    }
+  }
+
+  try {
     dialogLoading.value = true
 
     if (dialogType.value === 'add') {
@@ -1081,6 +1244,164 @@ function resetForm() {
   })
   codeValidation.valid = true
   formRef.value?.resetFields()
+}
+
+function getTradingPeriodInfo(lastSyncAt?: string): { label: string; class: string } | null {
+  if (!lastSyncAt) return null
+  const time = dayjs(lastSyncAt)
+  const hourMinute = time.format('HH:mm')
+  if (hourMinute >= '09:30' && hourMinute <= '11:30') {
+    return { label: '早盘', class: 'early-morning' }
+  }
+  if (hourMinute >= '13:00' && hourMinute <= '15:00') {
+    return { label: '午盘', class: 'midday' }
+  }
+  if (hourMinute > '15:00') {
+    return { label: '盘后', class: 'after-close' }
+  }
+  const keys = Object.keys(TRADING_PERIOD_LABELS).sort()
+  for (const key of keys) {
+    if (hourMinute <= key) {
+      return TRADING_PERIOD_LABELS[key]
+    }
+  }
+  return { label: '盘后', class: 'after-close' }
+}
+
+function handleAuditTrail(row: IStockQuote) {
+  currentAuditStockId.value = row.id || null
+  currentAuditStockCode.value = row.stockCode || ''
+  auditTrailVisible.value = true
+}
+
+function checkDuplicateRecord(stockCode: string, tradeDate: string, excludeId?: number): boolean {
+  const exists = tableData.value.some(
+    item =>
+      item.stockCode === stockCode &&
+      item.tradeDate === tradeDate &&
+      (excludeId === undefined || item.id !== excludeId),
+  )
+  if (exists) {
+    ElMessage.warning('已存在相同交易日数据，详情请查看溯源')
+    return true
+  }
+  return false
+}
+
+function handleCellDblClick(row: IStockQuote, column: ITableColumn, _cell: HTMLElement | undefined, _event: Event) {
+  if (!hasPerm('stock:edit') || row.status !== 'trading') return
+  if (!editableColumns.includes(column.prop)) return
+  if (row.status === 'delisted' || row.status === 'suspended') return
+
+  const val = row[column.prop as keyof IStockQuote]
+  if (typeof val !== 'number') return
+
+  quickEditRow.value = { ...row }
+  quickEditColumn.value = column.prop
+  quickEditOriginalValue.value = val
+  quickEditForm.newValue = val
+  quickEditWarning.value = ''
+  nextTick(() => {
+    quickEditVisible.value = true
+  })
+}
+
+function formatQuickEditValue(column: string, value: number): string {
+  if (value === null || value === undefined) return '--'
+  if (column === 'changeRate') {
+    const result = formatChangeRate(value)
+    return result.text
+  }
+  if (column === 'volume') return formatVolume(value)
+  if (column === 'turnover') return formatMarketCap(value)
+  return formatMoney(value, 2, '')
+}
+
+function getQuickEditMin(): number {
+  if (quickEditColumn.value === 'changeRate' || quickEditColumn.value === 'changeAmount') {
+    return -Infinity
+  }
+  return 0
+}
+
+function getQuickEditPrecision(): number {
+  if (quickEditColumn.value === 'volume') return 0
+  return 2
+}
+
+function getQuickEditStep(): number {
+  if (quickEditColumn.value === 'volume') return 100
+  if (quickEditColumn.value === 'turnover') return 1000
+  return 0.01
+}
+
+async function handleQuickEditValidate() {
+  if (!quickEditRow.value || quickEditForm.newValue === null) return
+  try {
+    const res = await stockApi.checkFluctuation(
+      quickEditRow.value.id as number,
+      quickEditColumn.value,
+      quickEditForm.newValue,
+    )
+    if (res.data && res.data.warning) {
+      quickEditWarning.value = res.data.warning
+    } else {
+      quickEditWarning.value = ''
+    }
+  } catch {
+    quickEditWarning.value = ''
+  }
+}
+
+async function handleQuickEditConfirm() {
+  if (!quickEditFormRef.value || !quickEditRow.value) return
+  try {
+    await quickEditFormRef.value.validate()
+  } catch {
+    return
+  }
+
+  const updateData: Partial<IStockQuote> = {
+    [quickEditColumn.value]: quickEditForm.newValue,
+  }
+
+  try {
+    const validateRes = await stockApi.validateRecord({ ...quickEditRow.value, ...updateData })
+    if (validateRes.data && !validateRes.data.valid && validateRes.data.errors?.length) {
+      ElMessage.error(validateRes.data.errors[0])
+      return
+    }
+  } catch {
+    // 忽略校验错误继续执行
+  }
+
+  try {
+    quickEditLoading.value = true
+    await stockApi.update(quickEditRow.value.id as number, updateData)
+
+    const idx = tableData.value.findIndex(item => item.id === quickEditRow.value?.id)
+    if (idx !== -1 && quickEditForm.newValue !== null) {
+      const field = quickEditColumn.value as keyof IStockQuote
+      tableData.value[idx] = {
+        ...tableData.value[idx],
+        [field]: quickEditForm.newValue,
+      }
+    }
+
+    ElMessage.success('编辑成功')
+    quickEditVisible.value = false
+  } catch (error) {
+    console.error('快速编辑失败:', error)
+    ElMessage.error('编辑失败')
+  } finally {
+    quickEditLoading.value = false
+  }
+}
+
+function handleQuickEditCancel() {
+  quickEditVisible.value = false
+  quickEditRow.value = null
+  quickEditWarning.value = ''
 }
 
 onMounted(async () => {
@@ -1513,5 +1834,15 @@ onMounted(async () => {
   100% {
     transform: translateY(0);
   }
+}
+
+.original-value {
+  display: inline-block;
+  padding: 2px 10px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+  font-family: 'Consolas', monospace;
+  font-weight: 500;
+  color: #606266;
 }
 </style>

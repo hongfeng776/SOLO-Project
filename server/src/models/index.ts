@@ -6,6 +6,7 @@ import UserRole from './UserRole';
 import RolePermission from './RolePermission';
 import StockQuote from './StockQuote';
 import StockQuoteHistory from './StockQuoteHistory';
+import QuoteAuditTrail from './QuoteAuditTrail';
 import AssetProduct from './AssetProduct';
 import CustomerAsset from './CustomerAsset';
 import FundFlow from './FundFlow';
@@ -24,6 +25,7 @@ const db = {
   RolePermission,
   StockQuote,
   StockQuoteHistory,
+  QuoteAuditTrail,
   AssetProduct,
   CustomerAsset,
   FundFlow,

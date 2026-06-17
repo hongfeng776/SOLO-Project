@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import stockQuoteService from '@services/StockQuoteService';
 import { success, paginated } from '@utils/response';
+import { AppError } from '@middlewares/errorHandler';
 
 export async function validateStockCode(req: Request, res: Response, next: NextFunction) {
   try {
@@ -159,6 +160,171 @@ export async function batchDeleteStock(req: Request, res: Response, next: NextFu
     const ids = req.body.ids as number[];
     const result = await stockQuoteService.batchDelete(ids);
     res.json(success({ deletedCount: result }));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function exportTemplate(_req: Request, res: Response, next: NextFunction) {
+  try {
+    const headers = [
+      '股票代码',
+      '股票名称',
+      '市场',
+      '交易日期',
+      '现价',
+      '涨跌额',
+      '涨跌幅(%)',
+      '开盘价',
+      '收盘价',
+      '最高价',
+      '最低价',
+      '成交量',
+      '成交额',
+      '市盈率',
+      '市净率',
+      '总市值',
+      '流通市值',
+      '板块',
+      '数据源',
+    ];
+
+    const csvContent = headers.join(',') + '\n';
+    const exampleRow = [
+      '600519',
+      '贵州茅台',
+      'SH',
+      '2026-06-16',
+      '1689.00',
+      '25.50',
+      '1.53',
+      '1665.00',
+      '1663.50',
+      '1695.00',
+      '1660.00',
+      '2580000',
+      '4350000000.00',
+      '33.56',
+      '10.28',
+      '2122500000000',
+      '2122500000000',
+      '消费',
+      'sina',
+    ];
+    const fullContent = csvContent + exampleRow.join(',') + '\n';
+
+    const fileName = `stock_quote_template_${new Date().toISOString().split('T')[0]}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Pragma', 'no-cache');
+
+    const bom = '\uFEFF';
+    res.send(bom + fullContent);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function batchImportQuotes(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user || !req.user.userId) {
+      throw new AppError(401, '请先登录');
+    }
+    const dataList = req.body.dataList as any[];
+    const operator = {
+      id: req.user.userId,
+      name: (req.user as any).username || req.user.userId.toString(),
+    };
+    const result = await stockQuoteService.batchImportQuotes(dataList, operator);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getImportProgress(req: Request, res: Response, next: NextFunction) {
+  try {
+    const taskId = req.params.taskId;
+    const result = await stockQuoteService.getImportProgress(taskId);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function checkRegistered(req: Request, res: Response, next: NextFunction) {
+  try {
+    const stockCode = req.query.stockCode as string;
+    if (!stockCode) {
+      throw new AppError(400, '请提供股票代码');
+    }
+    const result = await stockQuoteService.checkStockRegistered(stockCode);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function checkFluctuation(req: Request, res: Response, next: NextFunction) {
+  try {
+    const stockId = Number(req.params.id);
+    const newPrice = Number(req.query.newPrice);
+    const baseDate = req.query.baseDate as string | undefined;
+    if (isNaN(newPrice)) {
+      throw new AppError(400, '请提供有效的新价格 newPrice');
+    }
+    const result = await stockQuoteService.checkPriceFluctuation(stockId, newPrice, baseDate);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function validateRecord(req: Request, res: Response, next: NextFunction) {
+  try {
+    const data = req.body;
+    const result = stockQuoteService.validateQuoteRecord(data);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getAuditTrail(req: Request, res: Response, next: NextFunction) {
+  try {
+    const stockId = Number(req.params.id);
+    const days = Number(req.query.days) || 30;
+    const result = await stockQuoteService.getQuoteAuditTrail(stockId, days);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function checkConsistency(req: Request, res: Response, next: NextFunction) {
+  try {
+    const stockId = Number(req.params.id);
+    const result = await stockQuoteService.checkConsistencyWithExchange(stockId);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function createWithAudit(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user || !req.user.userId) {
+      throw new AppError(401, '请先登录');
+    }
+    const data = req.body.data;
+    const confirmed = req.body.confirmed === true;
+    const operator = {
+      id: req.user.userId,
+      name: (req.user as any).username || req.user.userId.toString(),
+    };
+    const result = await stockQuoteService.createQuoteWithAudit(data, operator, confirmed);
+    res.json(success(result));
   } catch (err) {
     next(err);
   }

@@ -313,3 +313,63 @@ export const STOCK_STATUS_COLORS: Record<StockStatus, string> = {
   [StockStatus.SUSPENDED]: '#E6A23C',
   [StockStatus.DELISTED]: '#C0C4CC',
 }
+
+export const DATA_SOURCE_LABELS: Record<string, string> = {
+  sina: '新浪财经',
+  tencent: '腾讯财经',
+  eastmoney: '东方财富',
+  manual_input: '手动录入',
+}
+
+export const DATA_SOURCE_COLORS: Record<string, { bg: string; text: string; icon: string }> = {
+  sina: { bg: '#FFF1F0', text: '#F56C6C', icon: '📡' },
+  tencent: { bg: '#ECF5FF', text: '#409EFF', icon: '📊' },
+  eastmoney: { bg: '#F0F9EB', text: '#67C23A', icon: '💰' },
+  manual_input: { bg: '#FDF6EC', text: '#E6A23C', icon: '✏️' },
+}
+
+export const OPERATION_TYPE_LABELS: Record<string, string> = {
+  create: '录入',
+  update: '修改',
+  import: '导入',
+  delete: '删除',
+}
+
+export const OPERATION_TYPE_TYPES: Record<string, 'primary' | 'success' | 'warning' | 'danger'> = {
+  create: 'primary',
+  update: 'success',
+  import: 'warning',
+  delete: 'danger',
+}
+
+export const FIELD_LABELS: Record<string, string> = {
+  stockCode: '股票代码',
+  stockName: '股票名称',
+  market: '市场',
+  sector: '板块',
+  status: '状态',
+  tradeDate: '交易日期',
+  currentPrice: '现价',
+  changeAmount: '涨跌额',
+  changeRate: '涨跌幅',
+  openPrice: '开盘价',
+  closePrice: '收盘价',
+  highPrice: '最高价',
+  lowPrice: '最低价',
+  volume: '成交量',
+  turnover: '成交额',
+  peRatio: '市盈率',
+  pbRatio: '市净率',
+  totalMarketCap: '总市值',
+  circulateMarketCap: '流通市值',
+  amplitude: '振幅',
+}
+
+export const TRADING_PERIOD_LABELS: Record<string, { label: string; class: string }> = {
+  '09:30': { label: '早盘', class: 'early-morning' },
+  '11:30': { label: '早盘', class: 'early-morning' },
+  '13:00': { label: '午盘', class: 'midday' },
+  '15:00': { label: '午盘', class: 'midday' },
+  '15:01': { label: '盘后', class: 'after-close' },
+  '23:59': { label: '盘后', class: 'after-close' },
+}

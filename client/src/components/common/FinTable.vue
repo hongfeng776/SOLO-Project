@@ -7,8 +7,10 @@
       :stripe="true"
       highlight-current-row
       :row-class-name="rowClassName"
+      :cell-class-name="getCellClassName"
       @selection-change="handleSelectionChange"
       @sort-change="handleSortChange"
+      @cell-dblclick="handleCellDblClick"
     >
       <el-table-column
         v-if="selection"
@@ -49,8 +51,29 @@
           <span v-else>{{ scope.column.label }}</span>
         </template>
         <template #default="scope">
+          <div
+            v-if="isEditableColumn(column.prop)"
+            class="editable-cell"
+            @dblclick.stop="handleEditableCellDblClick(scope.row, column, scope.$index)"
+          >
+            <slot
+              v-if="column.slot"
+              :name="column.slot"
+              :row="scope.row"
+              :index="scope.$index"
+              :column="column"
+            >
+              <span :class="getCellClass(column, scope.row)">
+                {{ formatCellValue(column, scope.row) }}
+              </span>
+            </slot>
+            <span v-else :class="getCellClass(column, scope.row)">
+              {{ formatCellValue(column, scope.row) }}
+            </span>
+            <span class="edit-hint">✎</span>
+          </div>
           <slot
-            v-if="column.slot"
+            v-else-if="column.slot"
             :name="column.slot"
             :row="scope.row"
             :index="scope.$index"
@@ -104,14 +127,18 @@ interface IProps {
   pagination: IPagination
   selection?: boolean
   showIndex?: boolean
-  rowClassName?: (row: any, index: number) => string
+  rowClassName?: (params: { row: any; rowIndex: number }) => string
+  editable?: boolean
+  editableColumns?: string[]
 }
 
 const props = withDefaults(defineProps<IProps>(), {
   loading: false,
   selection: false,
   showIndex: false,
-  rowClassName: undefined
+  rowClassName: undefined,
+  editable: false,
+  editableColumns: () => []
 })
 
 const emit = defineEmits<{
@@ -119,6 +146,7 @@ const emit = defineEmits<{
   'sort-change': [val: { prop: string; order: string | null }]
   'page-change': [page: number]
   'size-change': [size: number]
+  'cell-dbl-click': [row: any, column: ITableColumn, cell: HTMLElement | undefined, event: Event]
 }>()
 
 const tableData = computed(() => props.data)
@@ -187,6 +215,43 @@ function handlePageChange(page: number) {
 
 function handleSizeChange(size: number) {
   emit('size-change', size)
+}
+
+function isEditableColumn(prop: string): boolean {
+  if (!props.editable) return false
+  if (props.editableColumns.length === 0) return true
+  return props.editableColumns.includes(prop)
+}
+
+function getCellClassName({
+  row,
+  column,
+}: {
+  row: any
+  column: TableColumnCtx
+  rowIndex: number
+  columnIndex: number
+}): string {
+  if (isEditableColumn(column.property as string)) {
+    return 'editable-column-cell'
+  }
+  return ''
+}
+
+function handleCellDblClick(
+  row: any,
+  column: TableColumnCtx,
+  cell: HTMLElement,
+  event: Event,
+) {
+  const tableColumn = props.columns.find(c => c.prop === column.property)
+  if (tableColumn) {
+    emit('cell-dbl-click', row, tableColumn, cell, event)
+  }
+}
+
+function handleEditableCellDblClick(row: any, column: ITableColumn, _index: number) {
+  emit('cell-dbl-click', row, column, undefined, new MouseEvent('dblclick'))
 }
 </script>
 
