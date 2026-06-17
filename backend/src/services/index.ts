@@ -14,3 +14,4 @@ export { AccountService } from './AccountService';
 export { AccountOpeningService } from './AccountOpeningService';
 export { CorporateAccountOpeningService } from './CorporateAccountOpeningService';
 export { OpeningReviewService } from './OpeningReviewService';
+export { StatusFlowService } from './StatusFlowService';

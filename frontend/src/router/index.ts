@@ -230,6 +230,45 @@ const asyncRoutes: RouteRecordRaw[] = [
           permissions: ['opening:review:trace'],
           roles: ['admin', 'manager', 'auditor']
         }
+      },
+      {
+        path: 'status-flow/index',
+        name: 'BusinessStatusFlowIndex',
+        component: () => import('@views/business/status-flow/index.vue'),
+        meta: {
+          title: '状态流转管控',
+          icon: 'Switch',
+          componentName: 'BusinessStatusFlowIndex',
+          keepAlive: true,
+          permissions: ['status:flow:query'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'status-flow/batch',
+        name: 'BusinessStatusFlowBatch',
+        component: () => import('@views/business/status-flow/batch.vue'),
+        meta: {
+          title: '批量状态操作',
+          icon: 'Files',
+          componentName: 'BusinessStatusFlowBatch',
+          keepAlive: false,
+          permissions: ['status:flow:batch'],
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'status-flow/trace',
+        name: 'BusinessStatusFlowTrace',
+        component: () => import('@views/business/status-flow/trace.vue'),
+        meta: {
+          title: '状态变更溯源',
+          icon: 'Connection',
+          componentName: 'BusinessStatusFlowTrace',
+          keepAlive: false,
+          permissions: ['status:flow:trace'],
+          roles: ['admin', 'manager', 'auditor']
+        }
       }
     ]
   },

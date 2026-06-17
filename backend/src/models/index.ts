@@ -15,3 +15,4 @@ export { Account } from './Account';
 export { AccountOpening } from './AccountOpening';
 export { CorporateAccountOpening } from './CorporateAccountOpening';
 export { OpeningReviewLog } from './OpeningReviewLog';
+export { StatusChangeLog } from './StatusChangeLog';

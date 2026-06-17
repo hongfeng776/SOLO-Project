@@ -1,4 +1,4 @@
-import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog } from '../../models';
+import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog, StatusChangeLog } from '../../models';
 import { hashPasswordSync } from '../../utils/password';
 import { sequelize, syncDatabase } from '../../config/database';
 import { v4 as uuidv4 } from 'uuid';
@@ -219,6 +219,12 @@ export async function seedPermissions(): Promise<void> {
     { id: 'perm074', parent_id: 'perm023', name: '审核取消', code: 'opening:review:cancel', type: 3, sort: 17, visible: 1, status: 1, perms: 'opening:review:cancel' },
     { id: 'perm075', parent_id: 'perm023', name: '审核溯源', code: 'opening:review:trace', type: 3, sort: 18, visible: 1, status: 1, perms: 'opening:review:trace' },
 
+    { id: 'perm076', parent_id: 'perm023', name: '状态流转管控', code: 'status:flow', type: 2, path: 'status-flow', component: 'business/status-flow/index', icon: 'Switch', sort: 19, visible: 1, status: 1, perms: '' },
+    { id: 'perm077', parent_id: 'perm076', name: '状态流转查询', code: 'status:flow:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'status:flow:query' },
+    { id: 'perm078', parent_id: 'perm076', name: '状态流转操作', code: 'status:flow:operate', type: 3, sort: 2, visible: 1, status: 1, perms: 'status:flow:operate' },
+    { id: 'perm079', parent_id: 'perm076', name: '批量状态操作', code: 'status:flow:batch', type: 3, sort: 3, visible: 1, status: 1, perms: 'status:flow:batch' },
+    { id: 'perm080', parent_id: 'perm076', name: '状态流转溯源', code: 'status:flow:trace', type: 3, sort: 4, visible: 1, status: 1, perms: 'status:flow:trace' },
+
     { id: 'perm032', parent_id: null, name: '审核管理', code: 'audit', type: 1, path: '/audit', component: 'Layout', icon: 'Stamp', sort: 3, visible: 1, status: 1 },
     { id: 'perm033', parent_id: 'perm032', name: '待审核列表', code: 'audit:pending', type: 2, path: 'pending', component: 'audit/pending/index', icon: 'Tickets', sort: 1, visible: 1, status: 1, perms: '' },
     { id: 'perm034', parent_id: 'perm032', name: '审核记录', code: 'audit:record', type: 2, path: 'record', component: 'audit/record/index', icon: 'Document', sort: 2, visible: 1, status: 1, perms: '' },
@@ -284,7 +290,8 @@ export async function seedRolePermissions(): Promise<void> {
       'audit:record:query', 'audit:record:submit', 'audit:record:cancel',
       'log:operation:query',
       'opening:review:query', 'opening:review:submit', 'opening:review:batch',
-      'opening:review:first', 'opening:review:second', 'opening:review:cancel', 'opening:review:trace'
+      'opening:review:first', 'opening:review:second', 'opening:review:cancel', 'opening:review:trace',
+      'status:flow:query', 'status:flow:operate', 'status:flow:batch', 'status:flow:trace'
     ];
     const perms = allPermissions.filter(p => managerCodes.includes(p.code) || p.type !== 3);
     const managerRPs = perms.map(p => ({
@@ -303,7 +310,8 @@ export async function seedRolePermissions(): Promise<void> {
       'business:account:query',
       'audit:record:query', 'audit:record:submit', 'audit:record:cancel',
       'log:operation:query',
-      'opening:review:query', 'opening:review:submit', 'opening:review:first'
+      'opening:review:query', 'opening:review:submit', 'opening:review:first',
+      'status:flow:query', 'status:flow:operate'
     ];
     const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation')));
     const operatorRPs = perms.map(p => ({
@@ -322,7 +330,8 @@ export async function seedRolePermissions(): Promise<void> {
       'business:account:query',
       'audit:record:query', 'audit:record:audit',
       'log:operation:query',
-      'opening:review:query', 'opening:review:trace'
+      'opening:review:query', 'opening:review:trace',
+      'status:flow:query', 'status:flow:trace'
     ];
     const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation')));
     const auditorRPs = perms.map(p => ({
@@ -1614,6 +1623,179 @@ export async function seedOpeningReviewLogs(): Promise<void> {
   console.log('[Seeder] Opening review logs seeded successfully.');
 }
 
+export async function seedStatusChangeLogs(): Promise<void> {
+  console.log('[Seeder] Seeding status change logs...');
+  const existing = await StatusChangeLog.count();
+  if (existing > 0) {
+    console.log('[Seeder] Status change logs already exist, skipping...');
+    return;
+  }
+
+  const adminId = 'user000000000000000000000000000001';
+  const managerId = 'user000000000000000000000000000002';
+  const operatorId = 'user000000000000000000000000000003';
+
+  const logs = [
+    {
+      opening_type: 1,
+      opening_id: 'personal00001',
+      opening_no: 'OPN20240101001',
+      status_before: 0,
+      status_before_text: '待预检',
+      status_after: 1,
+      status_after_text: '预检通过待录入',
+      operation_type: 'submit',
+      operation_type_text: '提交申请',
+      operator_id: operatorId,
+      operator_name: '操作员',
+      operator_role: 'operator',
+      compliance_check: 1,
+      operation_node: '资料录入'
+    },
+    {
+      opening_type: 1,
+      opening_id: 'personal00001',
+      opening_no: 'OPN20240101001',
+      status_before: 1,
+      status_before_text: '预检通过待录入',
+      status_after: 2,
+      status_after_text: '录入中',
+      operation_type: 'submit',
+      operation_type_text: '提交申请',
+      operator_id: operatorId,
+      operator_name: '操作员',
+      operator_role: 'operator',
+      compliance_check: 1,
+      operation_node: '资料录入'
+    },
+    {
+      opening_type: 1,
+      opening_id: 'personal00001',
+      opening_no: 'OPN20240101001',
+      status_before: 2,
+      status_before_text: '录入中',
+      status_after: 3,
+      status_after_text: '待复核',
+      operation_type: 'submit',
+      operation_type_text: '提交申请',
+      operator_id: operatorId,
+      operator_name: '操作员',
+      operator_role: 'operator',
+      compliance_check: 1,
+      operation_node: '提交审核'
+    },
+    {
+      opening_type: 1,
+      opening_id: 'personal00001',
+      opening_no: 'OPN20240101001',
+      status_before: 3,
+      status_before_text: '待复核',
+      status_after: 4,
+      status_after_text: '复核通过待开户',
+      operation_type: 'review_approve',
+      operation_type_text: '审核通过',
+      operator_id: managerId,
+      operator_name: '管理员',
+      operator_role: 'manager',
+      compliance_check: 1,
+      sync_result: JSON.stringify({ customerStatusSynced: false, accountStatusSynced: false, riskFilingSynced: true }),
+      operation_node: '审核通过'
+    },
+    {
+      opening_type: 1,
+      opening_id: 'personal00002',
+      opening_no: 'OPN20240101002',
+      status_before: 3,
+      status_before_text: '待复核',
+      status_after: 6,
+      status_after_text: '已驳回',
+      operation_type: 'review_reject',
+      operation_type_text: '审核驳回',
+      operator_id: managerId,
+      operator_name: '管理员',
+      operator_role: 'manager',
+      compliance_check: 1,
+      remark: '身份证影像不清晰',
+      operation_node: '审核驳回'
+    },
+    {
+      opening_type: 2,
+      opening_id: 'corporate00001',
+      opening_no: 'CORP20240101001',
+      status_before: 0,
+      status_before_text: '待预检',
+      status_after: 1,
+      status_after_text: '预检通过待录入',
+      operation_type: 'submit',
+      operation_type_text: '提交申请',
+      operator_id: operatorId,
+      operator_name: '操作员',
+      operator_role: 'operator',
+      compliance_check: 1,
+      operation_node: '资料录入'
+    },
+    {
+      opening_type: 2,
+      opening_id: 'corporate00001',
+      opening_no: 'CORP20240101001',
+      status_before: 2,
+      status_before_text: '录入中',
+      status_after: 7,
+      status_after_text: '已取消',
+      operation_type: 'cancel',
+      operation_type_text: '撤销取消',
+      operator_id: managerId,
+      operator_name: '管理员',
+      operator_role: 'manager',
+      compliance_check: 1,
+      remark: '客户主动取消',
+      operation_node: '撤销/作废'
+    },
+    {
+      opening_type: 1,
+      opening_id: 'personal00003',
+      opening_no: 'OPN20240101003',
+      status_before: 5,
+      status_before_text: '已开户',
+      status_after: 3,
+      status_after_text: '待复核',
+      operation_type: 'cancel',
+      operation_type_text: '撤销取消',
+      operator_id: operatorId,
+      operator_name: '操作员',
+      operator_role: 'operator',
+      compliance_check: 0,
+      violation_details: '已完成开户状态禁止撤销修改；操作类型在当前状态下被锁定；状态流转不合规，禁止跳转',
+      operation_node: '状态变更'
+    },
+    {
+      opening_type: 2,
+      opening_id: 'corporate00002',
+      opening_no: 'CORP20240101002',
+      status_before: 4,
+      status_before_text: '复核通过待开户',
+      status_after: 7,
+      status_after_text: '已取消',
+      operation_type: 'void',
+      operation_type_text: '作废',
+      operator_id: operatorId,
+      operator_name: '操作员',
+      operator_role: 'operator',
+      compliance_check: 2,
+      violation_details: '已通过终审状态禁止作废；仅管理员可执行作废操作',
+      operation_node: '撤销/作废'
+    }
+  ];
+
+  const records = logs.map((log, i) => ({
+    id: `scl${String(i + 1).padStart(5, '0')}`,
+    ...log
+  }));
+
+  await bulkCreateInBatches(StatusChangeLog, records as any);
+  console.log('[Seeder] Status change logs seeded successfully.');
+}
+
 export async function runAllSeeders(options?: { force?: boolean; closeOnFinish?: boolean }): Promise<void> {
   const force = options?.force ?? false;
   const closeOnFinish = options?.closeOnFinish ?? false;
@@ -1640,6 +1822,7 @@ export async function runAllSeeders(options?: { force?: boolean; closeOnFinish?:
     await seedAccountOpenings();
     await seedCorporateAccountOpenings();
     await seedOpeningReviewLogs();
+    await seedStatusChangeLogs();
     await seedViolationRecords();
     await seedTransactions();
 

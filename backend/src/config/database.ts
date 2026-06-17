@@ -1,6 +1,6 @@
 import { Sequelize } from 'sequelize-typescript';
 import { config } from './index';
-import { User, Role, Permission, Organization, UserRole, RolePermission, Transaction, Product, AuditRecord, AuditRule, OperationLog, Customer, ViolationRecord, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog } from '../models';
+import { User, Role, Permission, Organization, UserRole, RolePermission, Transaction, Product, AuditRecord, AuditRule, OperationLog, Customer, ViolationRecord, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog, StatusChangeLog } from '../models';
 
 export const sequelize = new Sequelize({
   dialect: 'mysql',
@@ -9,7 +9,7 @@ export const sequelize = new Sequelize({
   database: config.database.name,
   username: config.database.user,
   password: config.database.password,
-  models: [User, Role, Permission, Organization, UserRole, RolePermission, Transaction, Product, AuditRecord, AuditRule, OperationLog, Customer, ViolationRecord, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog],
+  models: [User, Role, Permission, Organization, UserRole, RolePermission, Transaction, Product, AuditRecord, AuditRule, OperationLog, Customer, ViolationRecord, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog, StatusChangeLog],
   timezone: '+08:00',
   dialectOptions: {
     charset: 'utf8mb4',

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -10,6 +10,7 @@ const riskController = new RiskController();
 const accountOpeningController = new AccountOpeningController();
 const corporateOpeningController = new CorporateAccountOpeningController();
 const openingReviewController = new OpeningReviewController();
+const statusFlowController = new StatusFlowController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -95,5 +96,13 @@ router.post('/opening/review/trace', requirePermission('opening:review:trace'), 
 
 // 配置枚举
 router.get('/opening/review/config', requireAuth, (req, res, next) => openingReviewController.getConfig(req, res));
+
+// ========== 开户状态流转管控 ==========
+router.get('/status-flow/config', requireAuth, (req, res, next) => statusFlowController.getStatusConfig(req, res));
+router.post('/status-flow/check', requireAuth, (req, res, next) => statusFlowController.checkTransition(req, res));
+router.post('/status-flow/execute', requirePermission('status:flow:operate'), (req, res, next) => statusFlowController.executeTransition(req, res));
+router.get('/status-flow/list', requirePermission('status:flow:query'), (req, res, next) => statusFlowController.getFlowList(req, res));
+router.post('/status-flow/batch', requirePermission('status:flow:batch'), (req, res, next) => statusFlowController.batchOperation(req, res));
+router.post('/status-flow/trace', requirePermission('status:flow:trace'), (req, res, next) => statusFlowController.traceStatusChange(req, res));
 
 export default router;
