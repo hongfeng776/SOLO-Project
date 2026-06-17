@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
-import { PromoterLevel, PromoterStatus } from '../constants/enum';
+import { PromoterLevel, PromoterStatus, AuditStage, AuditStatus } from '../constants/enum';
 import { v4 as uuidv4 } from 'uuid';
 
 interface PromoterAttributes {
@@ -14,8 +14,27 @@ interface PromoterAttributes {
   email?: string;
   wechatId?: string;
   idCard?: string;
+  idCardFrontImg?: string;
+  idCardBackImg?: string;
   level: PromoterLevel;
   status: PromoterStatus;
+  auditStage: AuditStage;
+  auditStatus: AuditStatus;
+  firstAuditorId?: string;
+  firstAuditAt?: Date;
+  firstAuditRemark?: string;
+  secondAuditorId?: string;
+  secondAuditAt?: Date;
+  secondAuditRemark?: string;
+  rejectReasonCode?: string;
+  rejectCustomRemark?: string;
+  rejectedAt?: Date;
+  lockUntil?: Date;
+  applyCount?: number;
+  lastApplyAt?: Date;
+  dataHash?: string;
+  riskFlagged?: boolean;
+  riskReason?: string;
   parentId?: string;
   totalOrders?: number;
   totalAmount?: number;
@@ -30,7 +49,7 @@ interface PromoterAttributes {
   deletedAt?: Date;
 }
 
-interface PromoterCreationAttributes extends Optional<PromoterAttributes, 'id' | 'channelId' | 'nickname' | 'avatar' | 'phone' | 'email' | 'wechatId' | 'idCard' | 'level' | 'status' | 'parentId' | 'totalOrders' | 'totalAmount' | 'totalCommission' | 'availableCommission' | 'frozenCommission' | 'registerAt' | 'lastActiveAt' | 'remark' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
+interface PromoterCreationAttributes extends Optional<PromoterAttributes, 'id' | 'channelId' | 'nickname' | 'avatar' | 'phone' | 'email' | 'wechatId' | 'idCard' | 'idCardFrontImg' | 'idCardBackImg' | 'level' | 'status' | 'auditStage' | 'auditStatus' | 'firstAuditorId' | 'firstAuditAt' | 'firstAuditRemark' | 'secondAuditorId' | 'secondAuditAt' | 'secondAuditRemark' | 'rejectReasonCode' | 'rejectCustomRemark' | 'rejectedAt' | 'lockUntil' | 'applyCount' | 'lastApplyAt' | 'dataHash' | 'riskFlagged' | 'riskReason' | 'parentId' | 'totalOrders' | 'totalAmount' | 'totalCommission' | 'availableCommission' | 'frozenCommission' | 'registerAt' | 'lastActiveAt' | 'remark' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
 
 class Promoter extends Model<PromoterAttributes, PromoterCreationAttributes> implements PromoterAttributes {
   public id!: string;
@@ -43,8 +62,27 @@ class Promoter extends Model<PromoterAttributes, PromoterCreationAttributes> imp
   public email?: string;
   public wechatId?: string;
   public idCard?: string;
+  public idCardFrontImg?: string;
+  public idCardBackImg?: string;
   public level!: PromoterLevel;
   public status!: PromoterStatus;
+  public auditStage!: AuditStage;
+  public auditStatus!: AuditStatus;
+  public firstAuditorId?: string;
+  public firstAuditAt?: Date;
+  public firstAuditRemark?: string;
+  public secondAuditorId?: string;
+  public secondAuditAt?: Date;
+  public secondAuditRemark?: string;
+  public rejectReasonCode?: string;
+  public rejectCustomRemark?: string;
+  public rejectedAt?: Date;
+  public lockUntil?: Date;
+  public applyCount?: number;
+  public lastApplyAt?: Date;
+  public dataHash?: string;
+  public riskFlagged?: boolean;
+  public riskReason?: string;
   public parentId?: string;
   public totalOrders?: number;
   public totalAmount?: number;
@@ -110,6 +148,14 @@ Promoter.init(
       type: DataTypes.STRING(30),
       allowNull: true,
     },
+    idCardFrontImg: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
+    idCardBackImg: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
     level: {
       type: DataTypes.ENUM(PromoterLevel.L1, PromoterLevel.L2, PromoterLevel.L3, PromoterLevel.L4, PromoterLevel.L5),
       allowNull: false,
@@ -118,7 +164,87 @@ Promoter.init(
     status: {
       type: DataTypes.TINYINT,
       allowNull: false,
-      defaultValue: PromoterStatus.NORMAL,
+      defaultValue: PromoterStatus.PENDING,
+    },
+    auditStage: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: AuditStage.FIRST_AUDIT,
+    },
+    auditStatus: {
+      type: DataTypes.STRING(30),
+      allowNull: false,
+      defaultValue: AuditStatus.FIRST_AUDITING,
+    },
+    firstAuditorId: {
+      type: DataTypes.STRING(36),
+      allowNull: true,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+    },
+    firstAuditAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    firstAuditRemark: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    secondAuditorId: {
+      type: DataTypes.STRING(36),
+      allowNull: true,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+    },
+    secondAuditAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    secondAuditRemark: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    rejectReasonCode: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    rejectCustomRemark: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    rejectedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    lockUntil: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    applyCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1,
+    },
+    lastApplyAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    dataHash: {
+      type: DataTypes.STRING(128),
+      allowNull: true,
+    },
+    riskFlagged: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    riskReason: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     parentId: {
       type: DataTypes.STRING(36),
@@ -190,6 +316,10 @@ Promoter.init(
         fields: ['phone'],
       },
       {
+        name: 'idx_id_card',
+        fields: ['id_card'],
+      },
+      {
         name: 'idx_channel_id',
         fields: ['channel_id'],
       },
@@ -204,6 +334,22 @@ Promoter.init(
       {
         name: 'idx_status',
         fields: ['status'],
+      },
+      {
+        name: 'idx_audit_stage',
+        fields: ['audit_stage'],
+      },
+      {
+        name: 'idx_audit_status',
+        fields: ['audit_status'],
+      },
+      {
+        name: 'idx_lock_until',
+        fields: ['lock_until'],
+      },
+      {
+        name: 'idx_risk_flagged',
+        fields: ['risk_flagged'],
       },
     ],
   }

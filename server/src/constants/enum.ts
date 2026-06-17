@@ -45,6 +45,53 @@ export enum PromoterStatus {
   REJECTED = -2,
 }
 
+export enum AuditStage {
+  PENDING_SUBMIT = 0,
+  FIRST_AUDIT = 1,
+  SECOND_AUDIT = 2,
+  COMPLETED = 3,
+  REJECTED = -1,
+}
+
+export enum AuditAction {
+  SUBMIT = 'submit',
+  FIRST_PASS = 'first_pass',
+  FIRST_REJECT = 'first_reject',
+  SECOND_PASS = 'second_pass',
+  SECOND_REJECT = 'second_reject',
+  ROLLBACK = 'rollback',
+  BLACKLIST_BLOCK = 'blacklist_block',
+}
+
+export enum AuditStatus {
+  PENDING = 'pending',
+  FIRST_AUDITING = 'first_auditing',
+  FIRST_PASSED = 'first_passed',
+  SECOND_AUDITING = 'second_auditing',
+  PASSED = 'passed',
+  REJECTED = 'rejected',
+  BLACKLISTED = 'blacklisted',
+  LOCKED = 'locked',
+}
+
+export enum BlacklistType {
+  PHONE = 'phone',
+  ID_CARD = 'id_card',
+  NAME = 'name',
+  WECHAT = 'wechat',
+}
+
+export const REJECT_REASONS = [
+  { code: 'incomplete_info', label: '申请信息不完整' },
+  { code: 'invalid_phone', label: '手机号无效或已被使用' },
+  { code: 'invalid_id_card', label: '身份证信息不合规' },
+  { code: 'blacklist_match', label: '匹配黑名单记录' },
+  { code: 'fraud_risk', label: '存在欺诈风险' },
+  { code: 'duplicate_apply', label: '重复提交申请' },
+  { code: 'data_tampered', label: '申请信息存在篡改痕迹' },
+  { code: 'other', label: '其他原因' },
+] as const;
+
 export enum OrderStatus {
   PENDING_PAY = 0,
   PAID = 1,

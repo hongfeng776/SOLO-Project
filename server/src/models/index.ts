@@ -13,6 +13,8 @@ import OperationLog from './OperationLog.model';
 import ChannelExtension from './ChannelExtension.model';
 import CommissionRule from './CommissionRule.model';
 import RoleDeletionLog from './RoleDeletionLog.model';
+import PromoterBlacklist from './PromoterBlacklist.model';
+import PromoterAuditLog from './PromoterAuditLog.model';
 
 const models = {
   User,
@@ -30,6 +32,8 @@ const models = {
   ChannelExtension,
   CommissionRule,
   RoleDeletionLog,
+  PromoterBlacklist,
+  PromoterAuditLog,
 };
 
 const associate = (): void => {
@@ -45,6 +49,9 @@ const associate = (): void => {
   Promoter.hasMany(Withdraw, { foreignKey: 'promoterId', as: 'withdraws' });
   Promoter.hasMany(Promoter, { foreignKey: 'parentId', as: 'children' });
   Promoter.belongsTo(Promoter, { foreignKey: 'parentId', as: 'parent' });
+  Promoter.hasMany(PromoterAuditLog, { foreignKey: 'promoterId', as: 'auditLogs' });
+  Promoter.belongsTo(User, { foreignKey: 'firstAuditorId', as: 'firstAuditor' });
+  Promoter.belongsTo(User, { foreignKey: 'secondAuditorId', as: 'secondAuditor' });
 
   Order.belongsTo(Channel, { foreignKey: 'channelId', as: 'channel' });
   Order.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
@@ -60,8 +67,10 @@ const associate = (): void => {
 
   User.belongsToMany(Role, { through: UserRole, foreignKey: 'userId', otherKey: 'roleId', as: 'roles' });
   Role.belongsToMany(User, { through: UserRole, foreignKey: 'roleId', otherKey: 'userId', as: 'users' });
+
+  PromoterAuditLog.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
 };
 
 export { associate };
-export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog };
+export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog };
 export default models;

@@ -1,6 +1,7 @@
-import { FindOptions, CreateOptions, UpdateOptions, DestroyOptions, CountOptions, Op } from 'sequelize';
+import { FindOptions, CreateOptions, UpdateOptions, DestroyOptions, CountOptions, Op, fn, col, where } from 'sequelize';
 import Promoter, { PromoterAttributes, PromoterCreationAttributes } from '../models/Promoter.model';
-import { Channel } from '../models';
+import { Channel, User, PromoterAuditLog } from '../models';
+import { AuditStage, AuditStatus, PromoterStatus } from '../constants/enum';
 
 interface PromoterQueryParams {
   page: number;
@@ -9,6 +10,18 @@ interface PromoterQueryParams {
   channelId?: string;
   level?: string;
   status?: number;
+  auditStage?: AuditStage;
+  auditStatus?: AuditStatus;
+  phone?: string;
+  idCard?: string;
+  riskFlagged?: boolean;
+  startDate?: string;
+  endDate?: string;
+}
+
+interface AuditListQueryParams extends PromoterQueryParams {
+  auditStageList?: AuditStage[];
+  auditStatusList?: AuditStatus[];
 }
 
 class PromoterDao {
@@ -49,7 +62,7 @@ class PromoterDao {
   }
 
   public async findAllPaged(params: PromoterQueryParams): Promise<{ rows: Promoter[]; count: number }> {
-    const { page, pageSize, keyword, channelId, level, status } = params;
+    const { page, pageSize, keyword, channelId, level, status, auditStage, auditStatus, phone, idCard, riskFlagged, startDate, endDate } = params;
     const offset = (page - 1) * pageSize;
     const where: any = {};
 
@@ -59,7 +72,14 @@ class PromoterDao {
         { code: { [Op.like]: `%${keyword}%` } },
         { phone: { [Op.like]: `%${keyword}%` } },
         { nickname: { [Op.like]: `%${keyword}%` } },
+        { idCard: { [Op.like]: `%${keyword}%` } },
       ];
+    }
+    if (phone) {
+      where.phone = { [Op.like]: `%${phone}%` };
+    }
+    if (idCard) {
+      where.idCard = { [Op.like]: `%${idCard}%` };
     }
     if (channelId) {
       where.channelId = channelId;
@@ -69,6 +89,26 @@ class PromoterDao {
     }
     if (status !== undefined) {
       where.status = status;
+    }
+    if (auditStage !== undefined) {
+      where.auditStage = auditStage;
+    }
+    if (auditStatus) {
+      where.auditStatus = auditStatus;
+    }
+    if (riskFlagged !== undefined) {
+      where.riskFlagged = riskFlagged;
+    }
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) {
+        where.createdAt[Op.gte] = new Date(startDate);
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        where.createdAt[Op.lte] = end;
+      }
     }
 
     return this.findAndCountAll({
@@ -81,6 +121,101 @@ class PromoterDao {
           model: Channel,
           as: 'channel',
           attributes: ['id', 'name'],
+          required: false,
+        },
+        {
+          model: User,
+          as: 'firstAuditor',
+          attributes: ['id', 'name', 'username'],
+          required: false,
+        },
+        {
+          model: User,
+          as: 'secondAuditor',
+          attributes: ['id', 'name', 'username'],
+          required: false,
+        },
+      ],
+    });
+  }
+
+  public async findAuditListPaged(params: AuditListQueryParams): Promise<{ rows: Promoter[]; count: number }> {
+    const { page, pageSize, keyword, channelId, level, auditStage, auditStageList, auditStatus, auditStatusList, phone, idCard, riskFlagged, startDate, endDate } = params;
+    const offset = (page - 1) * pageSize;
+    const where: any = {};
+
+    if (keyword) {
+      where[Op.or] = [
+        { name: { [Op.like]: `%${keyword}%` } },
+        { code: { [Op.like]: `%${keyword}%` } },
+        { phone: { [Op.like]: `%${keyword}%` } },
+        { idCard: { [Op.like]: `%${keyword}%` } },
+      ];
+    }
+    if (phone) {
+      where.phone = phone;
+    }
+    if (idCard) {
+      where.idCard = idCard;
+    }
+    if (channelId) {
+      where.channelId = channelId;
+    }
+    if (level) {
+      where.level = level;
+    }
+    if (auditStage !== undefined) {
+      where.auditStage = auditStage;
+    }
+    if (auditStageList && auditStageList.length > 0) {
+      where.auditStage = { [Op.in]: auditStageList };
+    }
+    if (auditStatus) {
+      where.auditStatus = auditStatus;
+    }
+    if (auditStatusList && auditStatusList.length > 0) {
+      where.auditStatus = { [Op.in]: auditStatusList };
+    }
+    if (riskFlagged !== undefined) {
+      where.riskFlagged = riskFlagged;
+    }
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) {
+        where.createdAt[Op.gte] = new Date(startDate);
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        where.createdAt[Op.lte] = end;
+      }
+    }
+
+    return this.findAndCountAll({
+      where,
+      offset,
+      limit: pageSize,
+      order: [
+        ['riskFlagged', 'DESC'],
+        ['createdAt', 'ASC'],
+      ],
+      include: [
+        {
+          model: Channel,
+          as: 'channel',
+          attributes: ['id', 'name'],
+          required: false,
+        },
+        {
+          model: User,
+          as: 'firstAuditor',
+          attributes: ['id', 'name', 'username'],
+          required: false,
+        },
+        {
+          model: User,
+          as: 'secondAuditor',
+          attributes: ['id', 'name', 'username'],
           required: false,
         },
       ],
@@ -133,6 +268,91 @@ class PromoterDao {
         },
       },
     });
+  }
+
+  public async existsByPhone(phone: string, excludeId?: string): Promise<boolean> {
+    const where: any = { phone };
+    if (excludeId) {
+      where.id = { [Op.ne]: excludeId };
+    }
+    const count = await this.count({ where });
+    return count > 0;
+  }
+
+  public async existsByIdCard(idCard: string, excludeId?: string): Promise<boolean> {
+    const where: any = { idCard };
+    if (excludeId) {
+      where.id = { [Op.ne]: excludeId };
+    }
+    const count = await this.count({ where });
+    return count > 0;
+  }
+
+  public async findByPhone(phone: string): Promise<Promoter | null> {
+    return this.findOne({ where: { phone } });
+  }
+
+  public async findByIdCard(idCard: string): Promise<Promoter | null> {
+    return this.findOne({ where: { idCard } });
+  }
+
+  public async findByIdWithAuditLogs(id: string): Promise<Promoter | null> {
+    return this.findByPk(id, {
+      include: [
+        {
+          model: Channel,
+          as: 'channel',
+          attributes: ['id', 'name'],
+          required: false,
+        },
+        {
+          model: User,
+          as: 'firstAuditor',
+          attributes: ['id', 'name', 'username'],
+          required: false,
+        },
+        {
+          model: User,
+          as: 'secondAuditor',
+          attributes: ['id', 'name', 'username'],
+          required: false,
+        },
+        {
+          model: PromoterAuditLog,
+          as: 'auditLogs',
+          required: false,
+          order: [['createdAt', 'ASC']],
+        },
+      ],
+    });
+  }
+
+  public async checkLockStatus(phone?: string, idCard?: string): Promise<{ locked: boolean; lockUntil?: Date; promoterId?: string }> {
+    const where: any = {};
+    const orConditions: any[] = [];
+    if (phone) orConditions.push({ phone });
+    if (idCard) orConditions.push({ idCard });
+    if (orConditions.length > 0) {
+      where[Op.or] = orConditions;
+    }
+
+    const promoter = await this.findOne({
+      where: {
+        ...where,
+        lockUntil: { [Op.gt]: new Date() },
+      },
+      attributes: ['id', 'lockUntil'],
+    });
+
+    if (promoter && promoter.lockUntil) {
+      return {
+        locked: true,
+        lockUntil: promoter.lockUntil,
+        promoterId: promoter.id,
+      };
+    }
+
+    return { locked: false };
   }
 }
 

@@ -322,3 +322,97 @@ export const ANOMALY_THRESHOLD_OPTIONS = [
   { label: '30分钟≥50次', value: { window: 30, threshold: 50 } },
   { label: '1小时≥100次', value: { window: 60, threshold: 100 } },
 ]
+
+export enum AuditStage {
+  PENDING_SUBMIT = 0,
+  FIRST_AUDIT = 1,
+  SECOND_AUDIT = 2,
+  COMPLETED = 3,
+  REJECTED = -1,
+}
+
+export enum AuditStatus {
+  PENDING = 'pending',
+  FIRST_AUDITING = 'first_auditing',
+  FIRST_PASSED = 'first_passed',
+  SECOND_AUDITING = 'second_auditing',
+  PASSED = 'passed',
+  REJECTED = 'rejected',
+  BLACKLISTED = 'blacklisted',
+  LOCKED = 'locked',
+}
+
+export const AUDIT_STAGE_OPTIONS = [
+  { label: '待提交', value: 0, type: 'info' },
+  { label: '初审中', value: 1, type: 'primary' },
+  { label: '复审中', value: 2, type: 'warning' },
+  { label: '审核完成', value: 3, type: 'success' },
+  { label: '已驳回', value: -1, type: 'danger' },
+] as const
+
+export const AUDIT_STAGE_MAP: Record<number, { label: string; type: 'primary' | 'success' | 'warning' | 'danger' | 'info' }> = {
+  0: { label: '待提交', type: 'info' },
+  1: { label: '初审中', type: 'primary' },
+  2: { label: '复审中', type: 'warning' },
+  3: { label: '审核完成', type: 'success' },
+  '-1': { label: '已驳回', type: 'danger' },
+}
+
+export const AUDIT_STATUS_OPTIONS = [
+  { label: '待处理', value: 'pending', type: 'info' },
+  { label: '初审中', value: 'first_auditing', type: 'primary' },
+  { label: '初审通过', value: 'first_passed', type: 'success' },
+  { label: '复审中', value: 'second_auditing', type: 'warning' },
+  { label: '审核通过', value: 'passed', type: 'success' },
+  { label: '已驳回', value: 'rejected', type: 'danger' },
+  { label: '黑名单', value: 'blacklisted', type: 'danger' },
+  { label: '锁定中', value: 'locked', type: 'warning' },
+] as const
+
+export const AUDIT_STATUS_MAP: Record<string, { label: string; type: 'primary' | 'success' | 'warning' | 'danger' | 'info' }> = {
+  pending: { label: '待处理', type: 'info' },
+  first_auditing: { label: '初审中', type: 'primary' },
+  first_passed: { label: '初审通过', type: 'success' },
+  second_auditing: { label: '复审中', type: 'warning' },
+  passed: { label: '审核通过', type: 'success' },
+  rejected: { label: '已驳回', type: 'danger' },
+  blacklisted: { label: '黑名单', type: 'danger' },
+  locked: { label: '锁定中', type: 'warning' },
+}
+
+export const AUDIT_TAB_OPTIONS = [
+  { label: '待初审', value: 'first', auditStageList: [1], auditStatusList: ['first_auditing'] },
+  { label: '待复审', value: 'second', auditStageList: [2], auditStatusList: ['second_auditing'] },
+  { label: '已驳回', value: 'rejected', auditStageList: [-1], auditStatusList: ['rejected'] },
+  { label: '已通过', value: 'passed', auditStageList: [3], auditStatusList: ['passed'] },
+  { label: '全部', value: 'all', auditStageList: undefined, auditStatusList: undefined },
+] as const
+
+export const REJECT_REASON_OPTIONS = [
+  { code: 'incomplete_info', label: '申请信息不完整' },
+  { code: 'invalid_phone', label: '手机号无效或已被使用' },
+  { code: 'invalid_id_card', label: '身份证信息不合规' },
+  { code: 'blacklist_match', label: '匹配黑名单记录' },
+  { code: 'fraud_risk', label: '存在欺诈风险' },
+  { code: 'duplicate_apply', label: '重复提交申请' },
+  { code: 'data_tampered', label: '申请信息存在篡改痕迹' },
+  { code: 'other', label: '其他原因' },
+] as const
+
+export const AUDIT_ACTION_LABELS: Record<string, string> = {
+  submit: '提交申请',
+  first_pass: '初审通过',
+  first_reject: '初审驳回',
+  second_pass: '复审通过',
+  second_reject: '复审驳回',
+  rollback: '回退状态',
+  blacklist_block: '黑名单拦截',
+}
+
+export const LOCK_WINDOW_DAYS_OPTIONS = [
+  { label: '1天', value: 1 },
+  { label: '3天', value: 3 },
+  { label: '7天', value: 7 },
+  { label: '15天', value: 15 },
+  { label: '30天', value: 30 },
+]

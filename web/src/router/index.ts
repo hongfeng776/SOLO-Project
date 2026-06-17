@@ -95,6 +95,12 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/views/permission/trace.vue'),
             meta: { title: '权限溯源', icon: 'Search' },
           },
+          {
+            path: 'audit',
+            name: 'PromoterAudit',
+            component: () => import('@/views/permission/audit.vue'),
+            meta: { title: '推客入驻审核', icon: 'UserCheck' },
+          },
         ],
       },
       {

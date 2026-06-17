@@ -12,6 +12,7 @@ import permissionRoutes from './permission.routes';
 import operationLogRoutes from './operation-log.routes';
 import commissionRuleRoutes from './commission-rule.routes';
 import permissionChangeLogRoutes from './permission-change-log.routes';
+import promoterAuditRoutes from './promoter-audit.routes';
 import ResponseUtils from '../utils/response';
 
 const router = Router();
@@ -24,6 +25,7 @@ router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/channels', channelRoutes);
 router.use('/promoters', promoterRoutes);
+router.use('/promoter-audits', promoterAuditRoutes);
 router.use('/orders', orderRoutes);
 router.use('/commissions', commissionRoutes);
 router.use('/marketings', marketingRoutes);

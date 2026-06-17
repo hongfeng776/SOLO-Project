@@ -13,6 +13,7 @@ import operationLogService from './OperationLog.service';
 import riskControlService from './RiskControl.service';
 import commissionRuleService from './CommissionRule.service';
 import notificationService from './Notification.service';
+import promoterAuditService from './PromoterAudit.service';
 
 export {
   authService,
@@ -30,4 +31,5 @@ export {
   riskControlService,
   commissionRuleService,
   notificationService,
+  promoterAuditService,
 };
