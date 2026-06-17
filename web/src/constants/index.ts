@@ -232,3 +232,37 @@ export const ROLE_SCENARIO_MAP: Record<string, string> = {
   system_ops: '系统运维',
   full_access: '全功能权限',
 }
+
+export const PERMISSION_MODULE_OPTIONS = [
+  { label: '数据看板', value: 'dashboard' },
+  { label: '系统管理', value: 'system' },
+  { label: '渠道管理', value: 'channel' },
+  { label: '推客管理', value: 'promoter' },
+  { label: '订单管理', value: 'order' },
+  { label: '佣金管理', value: 'commission' },
+  { label: '营销管理', value: 'marketing' },
+  { label: '提现管理', value: 'withdraw' },
+  { label: '日志管理', value: 'log' },
+]
+export const PERMISSION_MODULE_MAP: Record<string, string> = {
+  dashboard: '数据看板',
+  system: '系统管理',
+  channel: '渠道管理',
+  promoter: '推客管理',
+  order: '订单管理',
+  commission: '佣金管理',
+  marketing: '营销管理',
+  withdraw: '提现管理',
+  log: '日志管理',
+}
+export const PERMISSION_LEVEL_OPTIONS = [
+  { label: '一级菜单', value: 1 },
+  { label: '二级菜单', value: 2 },
+  { label: '三级菜单', value: 3 },
+]
+export const VISIBLE_RANGE_OPTIONS = [
+  { label: '全部角色可见', value: 'all' },
+  { label: '超级管理员可见', value: 'admin' },
+  { label: '运营团队可见', value: 'manager' },
+  { label: '仅指定角色可见', value: 'custom' },
+]

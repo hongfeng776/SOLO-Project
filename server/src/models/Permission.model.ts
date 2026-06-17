@@ -16,12 +16,18 @@ interface PermissionAttributes {
   sort?: number;
   status: CommonStatus;
   remark?: string;
+  module?: string;
+  level?: number;
+  createdBy?: string;
+  createdByName?: string;
+  isSystem?: boolean;
+  visibleRange?: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
 }
 
-interface PermissionCreationAttributes extends Optional<PermissionAttributes, 'id' | 'parentId' | 'type' | 'path' | 'icon' | 'component' | 'method' | 'sort' | 'status' | 'remark' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
+interface PermissionCreationAttributes extends Optional<PermissionAttributes, 'id' | 'parentId' | 'type' | 'path' | 'icon' | 'component' | 'method' | 'sort' | 'status' | 'remark' | 'module' | 'level' | 'createdBy' | 'createdByName' | 'isSystem' | 'visibleRange' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
 
 class Permission extends Model<PermissionAttributes, PermissionCreationAttributes> implements PermissionAttributes {
   public id!: string;
@@ -36,6 +42,12 @@ class Permission extends Model<PermissionAttributes, PermissionCreationAttribute
   public sort?: number;
   public status!: CommonStatus;
   public remark?: string;
+  public module?: string;
+  public level?: number;
+  public createdBy?: string;
+  public createdByName?: string;
+  public isSystem?: boolean;
+  public visibleRange?: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
   public readonly deletedAt?: Date;
@@ -100,6 +112,32 @@ Permission.init(
       type: DataTypes.STRING(255),
       allowNull: true,
     },
+    module: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    level: {
+      type: DataTypes.TINYINT,
+      allowNull: true,
+      defaultValue: 1,
+    },
+    createdBy: {
+      type: DataTypes.STRING(36),
+      allowNull: true,
+    },
+    createdByName: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    isSystem: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    visibleRange: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -131,6 +169,18 @@ Permission.init(
       {
         name: 'idx_status',
         fields: ['status'],
+      },
+      {
+        name: 'idx_module',
+        fields: ['module'],
+      },
+      {
+        name: 'idx_is_system',
+        fields: ['is_system'],
+      },
+      {
+        name: 'idx_level',
+        fields: ['level'],
       },
     ],
   }

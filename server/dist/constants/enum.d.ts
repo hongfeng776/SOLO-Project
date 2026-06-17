@@ -79,6 +79,18 @@ export declare enum PermissionType {
     BUTTON = "button",
     API = "api"
 }
+export declare enum PermissionModule {
+    SYSTEM = "system",
+    CHANNEL = "channel",
+    PROMOTER = "promoter",
+    ORDER = "order",
+    COMMISSION = "commission",
+    MARKETING = "marketing",
+    WITHDRAW = "withdraw",
+    LOG = "log",
+    DASHBOARD = "dashboard"
+}
+export declare const PERMISSION_MODULE_LABELS: Record<string, string>;
 export declare enum AccountLevel {
     SUPER_ADMIN = 1,
     ADMIN = 3,

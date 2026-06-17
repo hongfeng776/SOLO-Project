@@ -13,11 +13,17 @@ interface PermissionAttributes {
     sort?: number;
     status: CommonStatus;
     remark?: string;
+    module?: string;
+    level?: number;
+    createdBy?: string;
+    createdByName?: string;
+    isSystem?: boolean;
+    visibleRange?: string;
     createdAt: Date;
     updatedAt: Date;
     deletedAt?: Date;
 }
-interface PermissionCreationAttributes extends Optional<PermissionAttributes, 'id' | 'parentId' | 'type' | 'path' | 'icon' | 'component' | 'method' | 'sort' | 'status' | 'remark' | 'createdAt' | 'updatedAt' | 'deletedAt'> {
+interface PermissionCreationAttributes extends Optional<PermissionAttributes, 'id' | 'parentId' | 'type' | 'path' | 'icon' | 'component' | 'method' | 'sort' | 'status' | 'remark' | 'module' | 'level' | 'createdBy' | 'createdByName' | 'isSystem' | 'visibleRange' | 'createdAt' | 'updatedAt' | 'deletedAt'> {
 }
 declare class Permission extends Model<PermissionAttributes, PermissionCreationAttributes> implements PermissionAttributes {
     id: string;
@@ -32,6 +38,12 @@ declare class Permission extends Model<PermissionAttributes, PermissionCreationA
     sort?: number;
     status: CommonStatus;
     remark?: string;
+    module?: string;
+    level?: number;
+    createdBy?: string;
+    createdByName?: string;
+    isSystem?: boolean;
+    visibleRange?: string;
     readonly createdAt: Date;
     readonly updatedAt: Date;
     readonly deletedAt?: Date;

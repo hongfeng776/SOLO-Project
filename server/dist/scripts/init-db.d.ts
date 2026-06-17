@@ -1,3 +1,4 @@
+import '../models/Permission.model';
 import '../models/OperationLog.model';
 import '../models/ChannelExtension.model';
 import '../models/CommissionRule.model';

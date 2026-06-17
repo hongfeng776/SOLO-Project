@@ -66,6 +66,32 @@ Permission.init({
         type: sequelize_1.DataTypes.STRING(255),
         allowNull: true,
     },
+    module: {
+        type: sequelize_1.DataTypes.STRING(50),
+        allowNull: true,
+    },
+    level: {
+        type: sequelize_1.DataTypes.TINYINT,
+        allowNull: true,
+        defaultValue: 1,
+    },
+    createdBy: {
+        type: sequelize_1.DataTypes.STRING(36),
+        allowNull: true,
+    },
+    createdByName: {
+        type: sequelize_1.DataTypes.STRING(50),
+        allowNull: true,
+    },
+    isSystem: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+    },
+    visibleRange: {
+        type: sequelize_1.DataTypes.TEXT,
+        allowNull: true,
+    },
     createdAt: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: false,
@@ -96,6 +122,18 @@ Permission.init({
         {
             name: 'idx_status',
             fields: ['status'],
+        },
+        {
+            name: 'idx_module',
+            fields: ['module'],
+        },
+        {
+            name: 'idx_is_system',
+            fields: ['is_system'],
+        },
+        {
+            name: 'idx_level',
+            fields: ['level'],
         },
     ],
 });

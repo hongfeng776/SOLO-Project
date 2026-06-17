@@ -1,13 +1,54 @@
 import { PermissionTree } from '../dao/Permission.dao';
-import { PermissionAttributes, PermissionCreationAttributes } from '../models/Permission.model';
+import Permission, { PermissionAttributes, PermissionCreationAttributes } from '../models/Permission.model';
+interface PermissionQueryParams {
+    page: number;
+    pageSize: number;
+    keyword?: string;
+    type?: string;
+    module?: string;
+    status?: number;
+    level?: number;
+}
+interface BatchSortRequest {
+    items: Array<{
+        id: string;
+        sort: number;
+        parentId?: string;
+        level?: number;
+    }>;
+}
+interface BatchOperateResult {
+    success: string[];
+    failed: Array<{
+        id: string;
+        reason: string;
+    }>;
+}
+interface PermissionDependencies {
+    hasDependencies: boolean;
+    canDelete: boolean;
+    dependencies: Array<{
+        type: string;
+        count: number;
+        description: string;
+    }>;
+}
 declare class PermissionService {
-    create(data: PermissionCreationAttributes): Promise<import("../models/Permission.model").Permission>;
-    findById(id: string): Promise<import("../models/Permission.model").Permission>;
+    createPermission(currentUser: any, data: PermissionCreationAttributes & {
+        visibleRange?: string;
+    }): Promise<Permission>;
+    updatePermission(currentUser: any, id: string, data: Partial<PermissionAttributes>): Promise<Permission | null>;
+    updateStatusBatch(currentUser: any, ids: string[], status: number): Promise<BatchOperateResult>;
+    batchSort(currentUser: any, req: BatchSortRequest): Promise<BatchOperateResult>;
+    checkDeleteDependencies(id: string): Promise<PermissionDependencies>;
+    deletePermission(currentUser: any, id: string): Promise<void>;
+    findIdlePermissions(params: PermissionQueryParams & {
+        unusedDays?: number;
+    }): Promise<any[]>;
     findTree(): Promise<PermissionTree[]>;
-    update(id: string, data: Partial<PermissionAttributes>): Promise<import("../models/Permission.model").Permission | null>;
-    delete(id: string): Promise<void>;
-    bulkDelete(ids: string[]): Promise<void>;
-    updateStatus(id: string, status: number): Promise<void>;
+    findById(id: string): Promise<any>;
+    findByModule(module: string): Promise<any>;
+    private clearPermissionCache;
 }
 declare const _default: PermissionService;
 export default _default;

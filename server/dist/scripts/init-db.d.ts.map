@@ -1,1 +1,1 @@
-{"version":3,"file":"init-db.d.ts","sourceRoot":"","sources":["../../src/scripts/init-db.ts"],"names":[],"mappings":"AAKA,OAAO,8BAA8B,CAAC;AACtC,OAAO,kCAAkC,CAAC;AAC1C,OAAO,gCAAgC,CAAC;AACxC,OAAO,iCAAiC,CAAC"}
+{"version":3,"file":"init-db.d.ts","sourceRoot":"","sources":["../../src/scripts/init-db.ts"],"names":[],"mappings":"AAKA,OAAO,4BAA4B,CAAC;AACpC,OAAO,8BAA8B,CAAC;AACtC,OAAO,kCAAkC,CAAC;AAC1C,OAAO,gCAAgC,CAAC;AACxC,OAAO,iCAAiC,CAAC"}

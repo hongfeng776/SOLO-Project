@@ -92,6 +92,30 @@ export enum PermissionType {
   API = 'api',
 }
 
+export enum PermissionModule {
+  SYSTEM = 'system',
+  CHANNEL = 'channel',
+  PROMOTER = 'promoter',
+  ORDER = 'order',
+  COMMISSION = 'commission',
+  MARKETING = 'marketing',
+  WITHDRAW = 'withdraw',
+  LOG = 'log',
+  DASHBOARD = 'dashboard',
+}
+
+export const PERMISSION_MODULE_LABELS: Record<string, string> = {
+  system: '系统管理',
+  channel: '渠道管理',
+  promoter: '推客管理',
+  order: '订单管理',
+  commission: '佣金管理',
+  marketing: '营销管理',
+  withdraw: '提现管理',
+  log: '日志管理',
+  dashboard: '数据看板',
+};
+
 export enum AccountLevel {
   SUPER_ADMIN = 1,
   ADMIN = 3,

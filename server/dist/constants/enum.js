@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PERMISSION_MUTUAL_EXCLUSIONS = exports.AccountLevel = exports.PermissionType = exports.WithdrawStatus = exports.MarketingType = exports.MarketingStatus = exports.CommissionStatus = exports.OrderStatus = exports.PromoterStatus = exports.PromoterLevel = exports.ChannelType = exports.ChannelStatus = exports.CommonStatus = exports.UserStatus = exports.UserRole = void 0;
+exports.PERMISSION_MUTUAL_EXCLUSIONS = exports.AccountLevel = exports.PERMISSION_MODULE_LABELS = exports.PermissionModule = exports.PermissionType = exports.WithdrawStatus = exports.MarketingType = exports.MarketingStatus = exports.CommissionStatus = exports.OrderStatus = exports.PromoterStatus = exports.PromoterLevel = exports.ChannelType = exports.ChannelStatus = exports.CommonStatus = exports.UserStatus = exports.UserRole = void 0;
 var UserRole;
 (function (UserRole) {
     UserRole["ADMIN"] = "admin";
@@ -95,6 +95,29 @@ var PermissionType;
     PermissionType["BUTTON"] = "button";
     PermissionType["API"] = "api";
 })(PermissionType || (exports.PermissionType = PermissionType = {}));
+var PermissionModule;
+(function (PermissionModule) {
+    PermissionModule["SYSTEM"] = "system";
+    PermissionModule["CHANNEL"] = "channel";
+    PermissionModule["PROMOTER"] = "promoter";
+    PermissionModule["ORDER"] = "order";
+    PermissionModule["COMMISSION"] = "commission";
+    PermissionModule["MARKETING"] = "marketing";
+    PermissionModule["WITHDRAW"] = "withdraw";
+    PermissionModule["LOG"] = "log";
+    PermissionModule["DASHBOARD"] = "dashboard";
+})(PermissionModule || (exports.PermissionModule = PermissionModule = {}));
+exports.PERMISSION_MODULE_LABELS = {
+    system: '系统管理',
+    channel: '渠道管理',
+    promoter: '推客管理',
+    order: '订单管理',
+    commission: '佣金管理',
+    marketing: '营销管理',
+    withdraw: '提现管理',
+    log: '日志管理',
+    dashboard: '数据看板',
+};
 var AccountLevel;
 (function (AccountLevel) {
     AccountLevel[AccountLevel["SUPER_ADMIN"] = 1] = "SUPER_ADMIN";

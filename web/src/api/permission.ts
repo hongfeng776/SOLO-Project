@@ -1,7 +1,7 @@
 import { get, post, put, del } from '@/utils/axios'
 import type { PageParams, PageResult, BaseEntity, TreeNode } from '@/types'
 
-export type PermissionType = 'menu' | 'button' | 'api'
+export type PermissionType = 'menu' | 'button' | 'api' | 'directory'
 
 export interface PermissionItem extends BaseEntity, TreeNode {
   type: PermissionType
@@ -13,6 +13,27 @@ export interface PermissionItem extends BaseEntity, TreeNode {
   apiMethod?: 'get' | 'post' | 'put' | 'delete' | 'patch'
   sort: number
   status: number
+  module?: string
+  level?: number
+  createdBy?: string
+  createdByName?: string
+  isSystem?: boolean
+  visibleRange?: string[]
+  parentId?: string
+  remark?: string
+}
+
+export interface PermissionDependencies {
+  hasDependencies: boolean
+  canDelete: boolean
+  dependencies: Array<{ type: string; count: number; description: string }>
+}
+
+export interface BatchSortItem {
+  id: string | number
+  sort: number
+  parentId?: string | number
+  level?: number
 }
 
 export interface RoleItem extends BaseEntity {
@@ -152,4 +173,29 @@ export function getPermissionExclusions(): Promise<Array<{ codes: [string, strin
 
 export function checkRoleNameExists(name: string, excludeId?: string | number): Promise<boolean> {
   return get<boolean>('/roles/check-name', { name, excludeId })
+}
+
+export function createPermission(data: Partial<PermissionItem>): Promise<PermissionItem> {
+  return post<PermissionItem>('/permissions', data)
+}
+export function updatePermission(id: string | number, data: Partial<PermissionItem>): Promise<PermissionItem> {
+  return put<PermissionItem>(`/permissions/${id}`, data)
+}
+export function deletePermission(id: string | number): Promise<null> {
+  return del<null>(`/permissions/${id}`)
+}
+export function checkPermissionDependencies(id: string | number): Promise<PermissionDependencies> {
+  return get<PermissionDependencies>(`/permissions/${id}/dependencies`)
+}
+export function batchUpdatePermissionStatus(ids: (string | number)[], status: number): Promise<BatchOperateResult> {
+  return post<BatchOperateResult>('/permissions/batch-status', { ids, status })
+}
+export function batchSortPermissions(items: BatchSortItem[]): Promise<BatchOperateResult> {
+  return post<BatchOperateResult>('/permissions/batch-sort', { items })
+}
+export function getPermissionsByModule(module: string): Promise<PermissionItem[]> {
+  return get<PermissionItem[]>(`/permissions/module/${module}`)
+}
+export function getIdlePermissions(params: any): Promise<PermissionItem[]> {
+  return get<PermissionItem[]>('/permissions/idle', params)
 }

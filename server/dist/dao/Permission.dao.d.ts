@@ -3,6 +3,15 @@ import Permission, { PermissionAttributes, PermissionCreationAttributes } from '
 export interface PermissionTree extends PermissionAttributes {
     children?: PermissionTree[];
 }
+interface PermissionQueryParams {
+    page: number;
+    pageSize: number;
+    keyword?: string;
+    type?: string;
+    module?: string;
+    status?: number;
+    level?: number;
+}
 declare class PermissionDao {
     create(data: PermissionCreationAttributes, options?: CreateOptions): Promise<Permission>;
     findByPk(id: string, options?: FindOptions): Promise<Permission | null>;
@@ -20,6 +29,22 @@ declare class PermissionDao {
     bulkSoftDelete(ids: string[]): Promise<number>;
     existsByCode(code: string): Promise<boolean>;
     existsByCodeAndId(code: string, excludeId: string): Promise<boolean>;
+    existsByPath(path: string, excludeId?: string): Promise<boolean>;
+    findByIds(ids: string[]): Promise<Permission[]>;
+    getChildren(parentId: string): Promise<Permission[]>;
+    hasChildren(parentId: string): Promise<boolean>;
+    findByModule(module: string): Promise<Permission[]>;
+    getMaxLevel(): Promise<number>;
+    countByStatus(): Promise<{
+        enabled: number;
+        disabled: number;
+    }>;
+    getBoundRoleCount(permissionId: string): Promise<number>;
+    getAccessLogCount(permissionId: string, days?: number): Promise<number>;
+    findAllPaged(params: PermissionQueryParams): Promise<{
+        rows: Permission[];
+        count: number;
+    }>;
     findTree(): Promise<PermissionTree[]>;
     private buildTree;
 }
