@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
-import { UserRole } from '../constants/recruitment.enum';
+import { UserRole, AccountStatus } from '../constants/recruitment.enum';
 import bcrypt from 'bcryptjs';
 
 interface UserAttributes {
@@ -16,11 +16,24 @@ interface UserAttributes {
   department?: string;
   position?: string;
   status: number;
+  accountStatus: AccountStatus;
+  expireAt?: Date;
+  permissions?: string;
+  dataScope?: string;
+  isMainAccount: boolean;
+  operationCount?: number;
+  lastOperationTime?: Date;
+  loginCount?: number;
+  isAnomalyLogin: boolean;
+  anomalyReason?: string;
+  lastLoginDevice?: string;
+  lastLoginLocation?: string;
+  remark?: string;
   lastLoginTime?: Date;
   lastLoginIp?: string;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'role' | 'status'> {}
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'role' | 'status' | 'accountStatus' | 'isMainAccount' | 'isAnomalyLogin'> {}
 
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   public id!: number;
@@ -35,6 +48,19 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public department?: string;
   public position?: string;
   public status!: number;
+  public accountStatus!: AccountStatus;
+  public expireAt?: Date;
+  public permissions?: string;
+  public dataScope?: string;
+  public isMainAccount!: boolean;
+  public operationCount?: number;
+  public lastOperationTime?: Date;
+  public loginCount?: number;
+  public isAnomalyLogin!: boolean;
+  public anomalyReason?: string;
+  public lastLoginDevice?: string;
+  public lastLoginLocation?: string;
+  public remark?: string;
   public lastLoginTime?: Date;
   public lastLoginIp?: string;
 
@@ -104,6 +130,63 @@ User.init(
       defaultValue: 1,
       comment: '状态 0-禁用 1-启用',
     },
+    accountStatus: {
+      type: DataTypes.ENUM('normal', 'frozen', 'expired'),
+      defaultValue: AccountStatus.NORMAL,
+      comment: '账号状态 normal-正常 frozen-冻结 expired-过期',
+    },
+    expireAt: {
+      type: DataTypes.DATE,
+      comment: '账号过期时间',
+    },
+    permissions: {
+      type: DataTypes.TEXT,
+      comment: '操作权限列表，JSON格式',
+    },
+    dataScope: {
+      type: DataTypes.STRING(50),
+      comment: '数据查看范围 all-全部 dept-本部门 self-仅自己',
+    },
+    isMainAccount: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: '是否主账号',
+    },
+    operationCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: '操作次数',
+    },
+    lastOperationTime: {
+      type: DataTypes.DATE,
+      comment: '最后操作时间',
+    },
+    loginCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: '登录次数',
+    },
+    isAnomalyLogin: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: '是否异常登录',
+    },
+    anomalyReason: {
+      type: DataTypes.STRING(255),
+      comment: '异常原因',
+    },
+    lastLoginDevice: {
+      type: DataTypes.STRING(100),
+      comment: '最后登录设备',
+    },
+    lastLoginLocation: {
+      type: DataTypes.STRING(100),
+      comment: '最后登录地点',
+    },
+    remark: {
+      type: DataTypes.STRING(500),
+      comment: '账号备注',
+    },
     lastLoginTime: {
       type: DataTypes.DATE,
       comment: '最后登录时间',
@@ -117,6 +200,14 @@ User.init(
     sequelize,
     tableName: 'user',
     comment: '用户表',
+    indexes: [
+      { fields: ['username'], unique: true },
+      { fields: ['companyId'] },
+      { fields: ['role'] },
+      { fields: ['accountStatus'] },
+      { fields: ['isMainAccount'] },
+      { fields: ['isAnomalyLogin'] },
+    ],
     hooks: {
       beforeCreate: async (user: User) => {
         if (user.password) {

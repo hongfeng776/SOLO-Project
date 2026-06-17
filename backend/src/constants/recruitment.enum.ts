@@ -333,3 +333,100 @@ export const COMPANY_INFO_FIELDS: { key: string; label: string; weight: number }
 ];
 
 export const INFO_COMPLETENESS_THRESHOLD = 80;
+
+export enum AccountStatus {
+  NORMAL = 'normal',
+  FROZEN = 'frozen',
+  EXPIRED = 'expired',
+}
+
+export const AccountStatusLabel: Record<AccountStatus, string> = {
+  [AccountStatus.NORMAL]: '正常',
+  [AccountStatus.FROZEN]: '冻结',
+  [AccountStatus.EXPIRED]: '过期',
+};
+
+export const AccountStatusType: Record<AccountStatus, string> = {
+  [AccountStatus.NORMAL]: 'success',
+  [AccountStatus.FROZEN]: 'warning',
+  [AccountStatus.EXPIRED]: 'info',
+};
+
+export enum PermissionLogAction {
+  CREATE = 'create',
+  UPDATE = 'update',
+  FREEZE = 'freeze',
+  UNFREEZE = 'unfreeze',
+  EXPIRE = 'expire',
+  PERMISSION_CHANGE = 'permission_change',
+  STATUS_CHANGE = 'status_change',
+  BATCH_ASSIGN = 'batch_assign',
+}
+
+export const PermissionLogActionLabel: Record<PermissionLogAction, string> = {
+  [PermissionLogAction.CREATE]: '创建账号',
+  [PermissionLogAction.UPDATE]: '更新信息',
+  [PermissionLogAction.FREEZE]: '冻结账号',
+  [PermissionLogAction.UNFREEZE]: '解冻账号',
+  [PermissionLogAction.EXPIRE]: '账号过期',
+  [PermissionLogAction.PERMISSION_CHANGE]: '权限变更',
+  [PermissionLogAction.STATUS_CHANGE]: '状态变更',
+  [PermissionLogAction.BATCH_ASSIGN]: '批量分配',
+};
+
+export enum LoginStatus {
+  SUCCESS = 'success',
+  FAILED = 'failed',
+  ANOMALY = 'anomaly',
+}
+
+export const LoginStatusLabel: Record<LoginStatus, string> = {
+  [LoginStatus.SUCCESS]: '成功',
+  [LoginStatus.FAILED]: '失败',
+  [LoginStatus.ANOMALY]: '异常',
+};
+
+export enum DataScope {
+  ALL = 'all',
+  DEPT = 'dept',
+  SELF = 'self',
+}
+
+export const DataScopeLabel: Record<DataScope, string> = {
+  [DataScope.ALL]: '全部数据',
+  [DataScope.DEPT]: '本部门数据',
+  [DataScope.SELF]: '仅自己数据',
+};
+
+export const ROLE_PERMISSIONS: Record<string, string[]> = {
+  admin: ['*'],
+  hr: [
+    'company:view', 'company:edit',
+    'job:view', 'job:create', 'job:edit', 'job:delete',
+    'resume:view', 'resume:review',
+    'interview:view', 'interview:arrange',
+    'onboard:view', 'onboard:manage',
+    'qualification:view',
+    'recruitment_config:view', 'recruitment_config:edit',
+  ],
+  interviewer: [
+    'job:view',
+    'resume:view',
+    'interview:view', 'interview:evaluate',
+    'onboard:view',
+  ],
+};
+
+export const PASSWORD_COMPLEXITY = {
+  minLength: 8,
+  requireUppercase: true,
+  requireLowercase: true,
+  requireNumber: true,
+  requireSpecial: false,
+};
+
+export const ANOMALY_LOGIN_THRESHOLDS = {
+  maxFailedAttempts: 5,
+  maxLoginLocations: 3,
+  maxDailyLogins: 20,
+};

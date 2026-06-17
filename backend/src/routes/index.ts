@@ -7,6 +7,7 @@ import interviewRoutes from './interview.routes';
 import onboardRoutes from './onboard.routes';
 import qualificationRoutes from './qualification.routes';
 import recruitmentConfigRoutes from './recruitment-config.routes';
+import userPermissionRoutes from './user-permission.routes';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/interviews', interviewRoutes);
 router.use('/onboards', onboardRoutes);
 router.use('/qualifications', qualificationRoutes);
 router.use('/recruitment-configs', recruitmentConfigRoutes);
+router.use('/user-permissions', userPermissionRoutes);
 
 export default router;

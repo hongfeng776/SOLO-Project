@@ -399,3 +399,116 @@ export const FALSE_RECRUITMENT_KEYWORDS = [
   '无需经验', '零基础上岗', '人人都能做', '月薪3万',
   '年薪百万', '不用干活', '躺着赚钱', '轻松赚钱',
 ];
+
+export enum AccountStatus {
+  NORMAL = 'normal',
+  FROZEN = 'frozen',
+  EXPIRED = 'expired',
+}
+
+export const AccountStatusLabel: Record<AccountStatus, string> = {
+  [AccountStatus.NORMAL]: '正常',
+  [AccountStatus.FROZEN]: '冻结',
+  [AccountStatus.EXPIRED]: '过期',
+};
+
+export const AccountStatusType: Record<AccountStatus, string> = {
+  [AccountStatus.NORMAL]: 'success',
+  [AccountStatus.FROZEN]: 'warning',
+  [AccountStatus.EXPIRED]: 'info',
+};
+
+export enum PermissionLogAction {
+  CREATE = 'create',
+  UPDATE = 'update',
+  FREEZE = 'freeze',
+  UNFREEZE = 'unfreeze',
+  EXPIRE = 'expire',
+  PERMISSION_CHANGE = 'permission_change',
+  STATUS_CHANGE = 'status_change',
+  BATCH_ASSIGN = 'batch_assign',
+}
+
+export const PermissionLogActionLabel: Record<PermissionLogAction, string> = {
+  [PermissionLogAction.CREATE]: '创建账号',
+  [PermissionLogAction.UPDATE]: '更新信息',
+  [PermissionLogAction.FREEZE]: '冻结账号',
+  [PermissionLogAction.UNFREEZE]: '解冻账号',
+  [PermissionLogAction.EXPIRE]: '账号过期',
+  [PermissionLogAction.PERMISSION_CHANGE]: '权限变更',
+  [PermissionLogAction.STATUS_CHANGE]: '状态变更',
+  [PermissionLogAction.BATCH_ASSIGN]: '批量分配',
+};
+
+export enum LoginStatus {
+  SUCCESS = 'success',
+  FAILED = 'failed',
+  ANOMALY = 'anomaly',
+}
+
+export const LoginStatusLabel: Record<LoginStatus, string> = {
+  [LoginStatus.SUCCESS]: '成功',
+  [LoginStatus.FAILED]: '失败',
+  [LoginStatus.ANOMALY]: '异常',
+};
+
+export const LoginStatusType: Record<LoginStatus, string> = {
+  [LoginStatus.SUCCESS]: 'success',
+  [LoginStatus.FAILED]: 'danger',
+  [LoginStatus.ANOMALY]: 'warning',
+};
+
+export enum DataScope {
+  ALL = 'all',
+  DEPT = 'dept',
+  SELF = 'self',
+}
+
+export const DataScopeLabel: Record<DataScope, string> = {
+  [DataScope.ALL]: '全部数据',
+  [DataScope.DEPT]: '本部门数据',
+  [DataScope.SELF]: '仅自己数据',
+};
+
+export const ROLE_OPTIONS = [
+  { label: '超级管理员', value: 'admin' },
+  { label: 'HR专员', value: 'hr' },
+  { label: '面试官', value: 'interviewer' },
+];
+
+export const ACCOUNT_STATUS_OPTIONS = [
+  { label: '正常', value: 'normal' },
+  { label: '冻结', value: 'frozen' },
+  { label: '过期', value: 'expired' },
+];
+
+export const DATA_SCOPE_OPTIONS = [
+  { label: '全部数据', value: 'all' },
+  { label: '本部门数据', value: 'dept' },
+  { label: '仅自己数据', value: 'self' },
+];
+
+export const ROLE_PERMISSIONS: Record<string, string[]> = {
+  admin: ['*'],
+  hr: [
+    'company:view', 'company:edit',
+    'job:view', 'job:create', 'job:edit', 'job:delete',
+    'resume:view', 'resume:review',
+    'interview:view', 'interview:arrange',
+    'onboard:view', 'onboard:manage',
+    'qualification:view',
+    'recruitment_config:view', 'recruitment_config:edit',
+  ],
+  interviewer: [
+    'job:view',
+    'resume:view',
+    'interview:view', 'interview:evaluate',
+    'onboard:view',
+  ],
+};
+
+export const OPERATION_FREQUENCY_OPTIONS = [
+  { label: '高频（100次以上）', value: 100 },
+  { label: '中频（50次以上）', value: 50 },
+  { label: '低频（10次以上）', value: 10 },
+];
