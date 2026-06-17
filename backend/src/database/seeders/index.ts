@@ -1,4 +1,4 @@
-import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction } from '../../models';
+import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction, Account, AccountOpening } from '../../models';
 import { hashPasswordSync } from '../../utils/password';
 import { sequelize, syncDatabase } from '../../config/database';
 import { v4 as uuidv4 } from 'uuid';
@@ -188,6 +188,20 @@ export async function seedPermissions(): Promise<void> {
     { id: 'perm030', parent_id: 'perm028', name: '产品修改', code: 'business:product:update', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:product:update' },
     { id: 'perm031', parent_id: 'perm028', name: '产品删除', code: 'business:product:delete', type: 3, sort: 3, visible: 1, status: 1, perms: 'business:product:delete' },
 
+    { id: 'perm049', parent_id: 'perm023', name: '个人开户', code: 'business:opening', type: 2, path: 'opening', component: 'business/opening/index', icon: 'CreditCard', sort: 4, visible: 1, status: 1, perms: '' },
+    { id: 'perm050', parent_id: 'perm049', name: '开户查询', code: 'business:opening:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:opening:query' },
+    { id: 'perm051', parent_id: 'perm049', name: '开户创建', code: 'business:opening:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:opening:create' },
+    { id: 'perm052', parent_id: 'perm049', name: '开户修改', code: 'business:opening:update', type: 3, sort: 3, visible: 1, status: 1, perms: 'business:opening:update' },
+    { id: 'perm053', parent_id: 'perm049', name: '开户审核', code: 'business:opening:review', type: 3, sort: 4, visible: 1, status: 1, perms: 'business:opening:review' },
+    { id: 'perm054', parent_id: 'perm049', name: '开户执行', code: 'business:opening:open', type: 3, sort: 5, visible: 1, status: 1, perms: 'business:opening:open' },
+
+    { id: 'perm055', parent_id: 'perm023', name: '批量开户预审', code: 'business:opening:batch', type: 2, path: 'opening/batch', component: 'business/opening/batch', icon: 'Files', sort: 5, visible: 1, status: 1, perms: '' },
+    { id: 'perm056', parent_id: 'perm023', name: '开户溯源查询', code: 'business:opening:trace', type: 2, path: 'opening/trace', component: 'business/opening/trace', icon: 'Search', sort: 6, visible: 1, status: 1, perms: '' },
+
+    { id: 'perm057', parent_id: 'perm023', name: '账户管理', code: 'business:account', type: 2, path: 'account', component: 'business/account/index', icon: 'Wallet', sort: 7, visible: 1, status: 1, perms: '' },
+    { id: 'perm058', parent_id: 'perm057', name: '账户查询', code: 'business:account:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:account:query' },
+    { id: 'perm059', parent_id: 'perm057', name: '账户更新', code: 'business:account:update', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:account:update' },
+
     { id: 'perm032', parent_id: null, name: '审核管理', code: 'audit', type: 1, path: '/audit', component: 'Layout', icon: 'Stamp', sort: 3, visible: 1, status: 1 },
     { id: 'perm033', parent_id: 'perm032', name: '待审核列表', code: 'audit:pending', type: 2, path: 'pending', component: 'audit/pending/index', icon: 'Tickets', sort: 1, visible: 1, status: 1, perms: '' },
     { id: 'perm034', parent_id: 'perm032', name: '审核记录', code: 'audit:record', type: 2, path: 'record', component: 'audit/record/index', icon: 'Document', sort: 2, visible: 1, status: 1, perms: '' },
@@ -247,6 +261,8 @@ export async function seedRolePermissions(): Promise<void> {
       'system:org:query',
       'business:transaction:query', 'business:transaction:create', 'business:transaction:update',
       'business:product:create', 'business:product:update',
+      'business:opening:query', 'business:opening:create', 'business:opening:update', 'business:opening:open',
+      'business:account:query', 'business:account:update',
       'audit:record:query', 'audit:record:submit', 'audit:record:cancel',
       'log:operation:query'
     ];
@@ -262,10 +278,12 @@ export async function seedRolePermissions(): Promise<void> {
   if (operatorRole) {
     const operatorCodes = [
       'business:transaction:query', 'business:transaction:create', 'business:transaction:update',
+      'business:opening:query', 'business:opening:create', 'business:opening:update',
+      'business:account:query',
       'audit:record:query', 'audit:record:submit', 'audit:record:cancel',
       'log:operation:query'
     ];
-    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation')));
+    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation')));
     const operatorRPs = perms.map(p => ({
       id: `rp_${operatorRole.id}_${p.id}`,
       role_id: operatorRole.id,
@@ -277,10 +295,12 @@ export async function seedRolePermissions(): Promise<void> {
   if (auditorRole) {
     const auditorCodes = [
       'business:transaction:query',
+      'business:opening:query',
+      'business:account:query',
       'audit:record:query', 'audit:record:audit',
       'log:operation:query'
     ];
-    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation')));
+    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation')));
     const auditorRPs = perms.map(p => ({
       id: `rp_${auditorRole.id}_${p.id}`,
       role_id: auditorRole.id,
@@ -1213,6 +1233,80 @@ export async function seedTransactions(): Promise<void> {
   console.log('[Seeder] Transactions seeded successfully.');
 }
 
+export async function seedAccountOpenings(): Promise<void> {
+  console.log('[Seeder] Seeding account openings...');
+  const existing = await AccountOpening.count();
+  if (existing > 0) {
+    console.log('[Seeder] Account openings already exist, skipping...');
+    return;
+  }
+
+  const org1 = 'org0000000000000000000000000000002';
+  const org2 = 'org0000000000000000000000000000003';
+  const adminId = 'user000000000000000000000000000001';
+  const operatorId = 'user000000000000000000000000000003';
+  const auditorId = 'user000000000000000000000000000004';
+
+  const customers = await Customer.findAll({ limit: 8, order: [['id', 'ASC']], raw: true });
+  if (customers.length < 8) {
+    console.log('[Seeder] Not enough customers found, skipping account openings...');
+    return;
+  }
+
+  const openings = [
+    { customer_id: customers[0].id, customer_no: customers[0].customer_no, account_type: 1, customer_name: customers[0].customer_name, id_card_no: customers[0].id_card_no, mobile: customers[0].mobile, risk_level: 0, status: 5, channel_code: 'counter', submit_org_id: org1, submitter_id: operatorId, submit_time: new Date('2024-06-01 09:00:00'), is_isolated: 0, account_no: '622220240601000001', account_id: 'acc1' },
+    { customer_id: customers[1].id, customer_no: customers[1].customer_no, account_type: 2, customer_name: customers[1].customer_name, id_card_no: customers[1].id_card_no, mobile: customers[1].mobile, risk_level: 1, status: 3, channel_code: 'mobile', submit_org_id: org1, submitter_id: operatorId, submit_time: new Date('2024-06-10 14:20:00'), is_isolated: 0, reviewer_id: auditorId },
+    { customer_id: customers[2].id, customer_no: customers[2].customer_no, account_type: 1, customer_name: customers[2].customer_name, id_card_no: customers[2].id_card_no, mobile: customers[2].mobile, risk_level: 5, status: 6, channel_code: 'counter', submit_org_id: org2, submitter_id: adminId, submit_time: new Date('2024-06-12 10:10:00'), is_isolated: 1, isolate_reason: '身份证影像不清晰+信息不一致+跨境高风险客户', reject_reason: '该身份证影像清晰度仅35分，低于60分标准；同时客户姓名与公安部实名系统比对不一致', reviewer_id: auditorId, review_time: new Date('2024-06-12 15:00:00') },
+    { customer_id: customers[3].id, customer_no: customers[3].customer_no, account_type: 3, customer_name: customers[3].customer_name, id_card_no: customers[3].id_card_no, mobile: customers[3].mobile, risk_level: 0, status: 2, channel_code: 'ebank', submit_org_id: org1, submitter_id: operatorId, submit_time: new Date('2024-06-13 16:45:00'), is_isolated: 0 },
+    { customer_id: customers[4].id, customer_no: customers[4].customer_no, account_type: 2, customer_name: customers[4].customer_name, id_card_no: customers[4].id_card_no, mobile: customers[4].mobile, risk_level: 2, status: 4, channel_code: 'counter', submit_org_id: org2, submitter_id: adminId, submit_time: new Date('2024-06-14 11:00:00'), is_isolated: 0, reviewer_id: auditorId, review_time: new Date('2024-06-14 14:30:00') },
+    { customer_id: customers[5].id, customer_no: customers[5].customer_no, account_type: 1, customer_name: customers[5].customer_name, id_card_no: customers[5].id_card_no, mobile: customers[5].mobile, risk_level: 4, status: 3, channel_code: 'atm', submit_org_id: org1, submitter_id: operatorId, submit_time: new Date('2024-06-15 08:30:00'), is_isolated: 0, risk_tags: '近30天重复开户3次,客户风险等级中高风险' },
+    { customer_id: customers[6].id, customer_no: customers[6].customer_no, account_type: 3, customer_name: customers[6].customer_name, id_card_no: customers[6].id_card_no, mobile: customers[6].mobile, risk_level: 1, status: 5, channel_code: 'mobile', submit_org_id: org2, submitter_id: adminId, submit_time: new Date('2024-06-15 13:20:00'), is_isolated: 0, account_no: '622220240615000002', account_id: 'acc2' },
+    { customer_id: customers[7].id, customer_no: customers[7].customer_no, account_type: 1, customer_name: customers[7].customer_name, id_card_no: customers[7].id_card_no, mobile: customers[7].mobile, risk_level: 3, status: 7, channel_code: 'counter', submit_org_id: org1, submitter_id: operatorId, submit_time: new Date('2024-06-16 09:10:00'), is_isolated: 0 }
+  ];
+
+  const records = openings.map((o, i) => ({
+    id: `opening${String(i + 1).padStart(5, '0')}`,
+    opening_no: `AO202406${String(i + 1).padStart(6, '0')}`,
+    ...o
+  }));
+
+  await bulkCreateInBatches(AccountOpening, records as any);
+  console.log('[Seeder] Account openings seeded successfully.');
+}
+
+export async function seedAccounts(): Promise<void> {
+  console.log('[Seeder] Seeding accounts...');
+  const existing = await Account.count();
+  if (existing > 0) {
+    console.log('[Seeder] Accounts already exist, skipping...');
+    return;
+  }
+
+  const org1 = 'org0000000000000000000000000000002';
+  const org2 = 'org0000000000000000000000000000003';
+  const operatorId = 'user000000000000000000000000000003';
+  const adminId = 'user000000000000000000000000000001';
+
+  const customers = await Customer.findAll({ limit: 8, order: [['id', 'ASC']], raw: true });
+  if (customers.length < 3) {
+    console.log('[Seeder] Not enough customers found, skipping accounts...');
+    return;
+  }
+
+  const accounts = [
+    { id: 'acc1', account_no: '622220240601000001', customer_id: customers[0].id, customer_no: customers[0].customer_no, account_type: 1, alias: '工资主账户', balance: 128600.55, available_balance: 128600.55, frozen_amount: 0, daily_limit: 200000, single_limit: 50000, annual_fee: 10, open_org_id: org1, open_operator_id: operatorId, status: 1, open_date: new Date('2024-06-01 09:30:00') },
+    { id: 'acc2', account_no: '622220240615000002', customer_id: customers[6].id, customer_no: customers[6].customer_no, account_type: 3, alias: '三类电子钱包', balance: 580.00, available_balance: 580.00, frozen_amount: 0, daily_limit: 2000, single_limit: 1000, annual_fee: 0, open_org_id: org2, open_operator_id: adminId, status: 1, open_date: new Date('2024-06-15 14:00:00') },
+    { id: 'acc3', account_no: '622220240605000003', customer_id: customers[1].id, customer_no: customers[1].customer_no, account_type: 2, alias: '理财账户', balance: 85000.00, available_balance: 80000.00, frozen_amount: 5000.00, daily_limit: 10000, single_limit: 5000, annual_fee: 0, open_org_id: org1, open_operator_id: operatorId, status: 2, open_date: new Date('2024-06-05 10:00:00') }
+  ];
+
+  const records = accounts.map(a => ({
+    ...a
+  }));
+
+  await bulkCreateInBatches(Account, records as any);
+  console.log('[Seeder] Accounts seeded successfully.');
+}
+
 export async function runAllSeeders(options?: { force?: boolean; closeOnFinish?: boolean }): Promise<void> {
   const force = options?.force ?? false;
   const closeOnFinish = options?.closeOnFinish ?? false;
@@ -1235,6 +1329,8 @@ export async function runAllSeeders(options?: { force?: boolean; closeOnFinish?:
     await seedAuditRules();
     await seedProducts();
     await seedCustomers();
+    await seedAccounts();
+    await seedAccountOpenings();
     await seedViolationRecords();
     await seedTransactions();
 

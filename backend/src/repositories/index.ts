@@ -9,3 +9,5 @@ export { AuditRecordRepository, AuditRuleRepository } from './AuditRepository';
 export { OperationLogRepository } from './LogRepository';
 export { CustomerRepository } from './CustomerRepository';
 export { ViolationRepository } from './ViolationRepository';
+export { AccountRepository } from './AccountRepository';
+export { AccountOpeningRepository } from './AccountOpeningRepository';

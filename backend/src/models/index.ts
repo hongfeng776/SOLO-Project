@@ -11,3 +11,5 @@ export { AuditRule } from './AuditRule';
 export { OperationLog } from './OperationLog';
 export { Customer } from './Customer';
 export { ViolationRecord } from './ViolationRecord';
+export { Account } from './Account';
+export { AccountOpening } from './AccountOpening';

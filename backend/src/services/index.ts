@@ -10,3 +10,5 @@ export { LogService } from './LogService';
 export { DashboardService } from './DashboardService';
 export { RiskControlService } from './RiskControlService';
 export { CustomerService } from './CustomerService';
+export { AccountService } from './AccountService';
+export { AccountOpeningService } from './AccountOpeningService';

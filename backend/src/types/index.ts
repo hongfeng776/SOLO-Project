@@ -10,3 +10,4 @@ export * from './audit';
 export * from './log';
 export * from './customer';
 export * from './violation';
+export * from './account';

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -7,6 +7,7 @@ const transactionController = new TransactionController();
 const productController = new ProductController();
 const customerController = new CustomerController();
 const riskController = new RiskController();
+const accountOpeningController = new AccountOpeningController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -34,6 +35,24 @@ router.get('/product/:id', (req, res, next) => productController.detail(req, res
 router.post('/product', requirePermission('business:product:create'), (req, res, next) => productController.create(req, res, next));
 router.put('/product/:id', requirePermission('business:product:update'), (req, res, next) => productController.update(req, res, next));
 router.delete('/product/:id', requirePermission('business:product:delete'), (req, res, next) => productController.delete(req, res, next));
+
+router.post('/opening/precheck', requireAuth, (req, res, next) => accountOpeningController.precheck(req, res));
+router.post('/opening/trace', requireAuth, (req, res, next) => accountOpeningController.traceCheck(req, res));
+router.get('/opening/list', requirePermission('business:opening:query'), (req, res, next) => accountOpeningController.list(req, res));
+router.get('/opening/:id', requirePermission('business:opening:query'), (req, res, next) => accountOpeningController.detail(req, res));
+router.post('/opening', requirePermission('business:opening:create'), (req, res, next) => accountOpeningController.create(req, res));
+router.put('/opening/:id', requirePermission('business:opening:update'), (req, res, next) => accountOpeningController.update(req, res));
+router.post('/opening/:id/cancel', requirePermission('business:opening:update'), (req, res, next) => accountOpeningController.cancel(req, res));
+router.post('/opening/:id/review', requirePermission('business:opening:review'), (req, res, next) => accountOpeningController.review(req, res));
+router.post('/opening/:id/open', requirePermission('business:opening:open'), (req, res, next) => accountOpeningController.openAccount(req, res));
+router.post('/opening/:id/refresh', requirePermission('business:opening:query'), (req, res, next) => accountOpeningController.refresh(req, res));
+router.post('/opening/batch/import', requirePermission('business:opening:create'), (req, res, next) => accountOpeningController.batchImport(req, res));
+router.post('/opening/batch/review', requirePermission('business:opening:review'), (req, res, next) => accountOpeningController.batchReview(req, res));
+
+router.get('/account/list', requirePermission('business:account:query'), (req, res, next) => accountOpeningController.accountList(req, res));
+router.get('/account/:id', requirePermission('business:account:query'), (req, res, next) => accountOpeningController.accountDetail(req, res));
+router.get('/account/customer/:customerId', requirePermission('business:account:query'), (req, res, next) => accountOpeningController.accountByCustomer(req, res));
+router.post('/account/:id/status', requirePermission('business:account:update'), (req, res, next) => accountOpeningController.accountUpdateStatus(req, res));
 
 router.get('/risk/evaluate/:transactionId', requireAuth, (req, res, next) => riskController.evaluateTransaction(req, res, next));
 router.get('/risk/anomaly', requirePermission('risk:anomaly:query'), (req, res, next) => riskController.detectAnomaly(req, res, next));

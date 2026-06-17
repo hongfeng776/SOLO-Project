@@ -119,6 +119,54 @@ const asyncRoutes: RouteRecordRaw[] = [
           keepAlive: true,
           roles: ['admin', 'manager']
         }
+      },
+      {
+        path: 'opening',
+        name: 'BusinessOpening',
+        component: () => import('@views/business/opening/index.vue'),
+        meta: {
+          title: '个人开户',
+          icon: 'CreditCard',
+          componentName: 'BusinessOpening',
+          keepAlive: true,
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'opening/batch',
+        name: 'BusinessOpeningBatch',
+        component: () => import('@views/business/opening/batch.vue'),
+        meta: {
+          title: '批量开户预审',
+          icon: 'Files',
+          componentName: 'BusinessOpeningBatch',
+          keepAlive: true,
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'opening/trace',
+        name: 'BusinessOpeningTrace',
+        component: () => import('@views/business/opening/trace.vue'),
+        meta: {
+          title: '开户溯源查询',
+          icon: 'Search',
+          componentName: 'BusinessOpeningTrace',
+          keepAlive: false,
+          roles: ['admin', 'manager', 'auditor']
+        }
+      },
+      {
+        path: 'account',
+        name: 'BusinessAccount',
+        component: () => import('@views/business/account/index.vue'),
+        meta: {
+          title: '账户管理',
+          icon: 'Wallet',
+          componentName: 'BusinessAccount',
+          keepAlive: true,
+          roles: ['admin', 'manager', 'operator']
+        }
       }
     ]
   },
