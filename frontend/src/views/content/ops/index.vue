@@ -494,6 +494,91 @@
         <el-button type="primary" @click="permissionWarningVisible = false">知道了</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="opsConfirmVisible"
+      :title="opsConfirmTitle"
+      width="480px"
+      center
+      class="center-dialog"
+      destroy-on-close
+      :close-on-click-modal="false"
+      @close="resetOpsForm"
+    >
+      <el-form :model="opsForm" label-width="80px">
+        <el-form-item label="目标状态">
+          <el-tag :type="getStatusType(opsForm.newStatus)" size="small">
+            {{ statusMap[opsForm.newStatus] }}
+          </el-tag>
+        </el-form-item>
+        <el-form-item label="操作原因" required>
+          <el-input
+            v-model="opsForm.reason"
+            type="textarea"
+            :rows="3"
+            maxlength="200"
+            show-word-limit
+            placeholder="请输入操作原因（必填）"
+            class="focus-input"
+            :class="{ 'field-error': opsFormError }"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="opsConfirmVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="opsConfirmLoading"
+          @click="submitOpsConfirm"
+        >
+          确认提交
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="batchOpsConfirmVisible"
+      :title="batchOpsConfirmTitle"
+      width="520px"
+      center
+      class="center-dialog"
+      destroy-on-close
+      :close-on-click-modal="false"
+      @close="resetBatchOpsForm"
+    >
+      <el-form :model="batchOpsForm" label-width="90px">
+        <el-form-item label="选中条数">
+          <el-tag type="primary" size="small">{{ batchOpsForm.ids.length }} 条</el-tag>
+        </el-form-item>
+        <el-form-item label="目标状态">
+          <el-tag :type="getStatusType(batchOpsForm.newStatus)" size="small">
+            {{ statusMap[batchOpsForm.newStatus] }}
+          </el-tag>
+        </el-form-item>
+        <el-form-item label="操作原因" required>
+          <el-input
+            v-model="batchOpsForm.reason"
+            type="textarea"
+            :rows="3"
+            maxlength="200"
+            show-word-limit
+            placeholder="请输入批量操作原因（必填）"
+            class="focus-input"
+            :class="{ 'field-error': batchOpsFormError }"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="batchOpsConfirmVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="batchOpsConfirmLoading"
+          @click="submitBatchOpsConfirm"
+        >
+          确认提交
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -569,16 +654,6 @@ const tagList = ref<Tag[]>([])
 const highlightedRows = reactive(new Set<number>())
 const disabledButtons = reactive(new Set<string>())
 
-const baseParams = computed(() => ({
-  keyword: '',
-  status: undefined as number | undefined,
-  noteType: undefined as number | undefined,
-  dateRange: [] as string[],
-  tagId: undefined as number | undefined,
-  violationStatus: undefined as number | undefined,
-  flowLevel: undefined as number | undefined
-}))
-
 const {
   loading,
   dataList,
@@ -597,11 +672,27 @@ const {
   flowLevel?: number
 }>({
   fetchApi: getNoteList as unknown as (params: Record<string, unknown>) => Promise<PageResult<Note>>,
-  defaultParams: baseParams.value
+  defaultParams: {
+    keyword: '',
+    status: undefined,
+    noteType: undefined,
+    dateRange: [],
+    tagId: undefined,
+    violationStatus: undefined,
+    flowLevel: undefined
+  }
 })
 
 const handleReset = () => {
-  Object.assign(queryParams, { page: 1, pageSize: 10, ...baseParams.value })
+  queryParams.keyword = ''
+  queryParams.status = undefined
+  queryParams.noteType = undefined
+  queryParams.dateRange = []
+  queryParams.tagId = undefined
+  queryParams.violationStatus = undefined
+  queryParams.flowLevel = undefined
+  queryParams.page = 1
+  queryParams.pageSize = 10
   fetchData()
 }
 
@@ -634,6 +725,56 @@ const opsLogPageSize = ref(10)
 const currentOpsNote = ref<Note | null>(null)
 
 const permissionWarningVisible = ref(false)
+
+const opsConfirmVisible = ref(false)
+const opsConfirmTitle = ref('')
+const opsConfirmLoading = ref(false)
+const opsFormError = ref(false)
+const opsForm = reactive<{
+  noteId: number | null
+  newStatus: number
+  reason: string
+  row: Note | null
+  btnKey: string
+}>({
+  noteId: null,
+  newStatus: 0,
+  reason: '',
+  row: null,
+  btnKey: ''
+})
+
+const resetOpsForm = () => {
+  opsForm.noteId = null
+  opsForm.newStatus = 0
+  opsForm.reason = ''
+  opsForm.row = null
+  opsForm.btnKey = ''
+  opsFormError.value = false
+  opsConfirmLoading.value = false
+}
+
+const batchOpsConfirmVisible = ref(false)
+const batchOpsConfirmTitle = ref('')
+const batchOpsConfirmLoading = ref(false)
+const batchOpsFormError = ref(false)
+const batchOpsForm = reactive<{
+  ids: number[]
+  newStatus: number
+  reason: string
+}>({
+  ids: [],
+  newStatus: 0,
+  reason: ''
+})
+
+const resetBatchOpsForm = () => {
+  batchOpsForm.ids = []
+  batchOpsForm.newStatus = 0
+  batchOpsForm.reason = ''
+  batchOpsFormError.value = false
+  batchOpsConfirmLoading.value = false
+}
 
 const tableRowClassName = ({ row }: { row: Note }) => {
   const classes: string[] = []
@@ -727,24 +868,59 @@ const validateAndExecute = async (row: Note, targetStatus: number, btnKey: strin
       return
     }
 
+    const actionText = {
+      [NoteStatus.OFF_SHELF]: '下架',
+      [NoteStatus.FLOW_LIMITED]: '限流',
+      [NoteStatus.PUBLISHED]: '恢复'
+    }[targetStatus] || '运维'
+
+    opsForm.noteId = row.id
+    opsForm.newStatus = targetStatus
+    opsForm.row = row
+    opsForm.btnKey = btnKey
+    opsForm.reason = ''
+    opsFormError.value = false
+    opsConfirmTitle.value = `确认${actionText}该笔记`
+    opsConfirmVisible.value = true
+  } catch (error) {
+    console.error(error)
+    tempDisableButton(btnKey)
+  }
+}
+
+const submitOpsConfirm = async () => {
+  if (!opsForm.reason.trim()) {
+    opsFormError.value = true
+    setTimeout(() => { opsFormError.value = false }, 300)
+    ElMessage.warning('请填写操作原因')
+    return
+  }
+  if (!opsForm.noteId || !opsForm.row) return
+
+  opsConfirmLoading.value = true
+  try {
     const result = await executeNoteOps({
-      noteId: row.id,
-      newStatus: targetStatus
+      noteId: opsForm.noteId,
+      newStatus: opsForm.newStatus,
+      reason: opsForm.reason
     })
 
     resultDialogTitle.value = result.success ? '操作成功' : '操作失败'
     resultData.value = result
     batchResultData.value = null
     resultDialogVisible.value = true
+    opsConfirmVisible.value = false
 
     if (result.success) {
-      highlightRow(row.id)
+      highlightRow(opsForm.row.id)
       fetchData()
       fetchStats()
     }
   } catch (error) {
     console.error(error)
-    tempDisableButton(btnKey)
+    ElMessage.error('操作执行失败，请稍后重试')
+  } finally {
+    opsConfirmLoading.value = false
   }
 }
 
@@ -765,33 +941,70 @@ const handleRestore = (row: Note) => {
   validateAndExecute(row, NoteStatus.PUBLISHED, `${row.id}-restore`)
 }
 
-const handleBatchRestore = async () => {
-  const hotSelected = selectedRows.value.some((row) => row.flowLevel === FlowLevel.HOT)
-  if (isNormalOps.value && hotSelected) {
-    permissionWarningVisible.value = true
+const openBatchOpsConfirm = (targetStatus: number) => {
+  const actionText = {
+    [NoteStatus.OFF_SHELF]: '批量下架',
+    [NoteStatus.FLOW_LIMITED]: '批量限流',
+    [NoteStatus.PUBLISHED]: '批量恢复'
+  }[targetStatus] || '批量运维'
+
+  batchOpsForm.ids = [...selectedIds.value]
+  batchOpsForm.newStatus = targetStatus
+  batchOpsForm.reason = ''
+  batchOpsFormError.value = false
+  batchOpsConfirmTitle.value = `确认${actionText}`
+  batchOpsConfirmVisible.value = true
+}
+
+const submitBatchOpsConfirm = async () => {
+  if (!batchOpsForm.reason.trim()) {
+    batchOpsFormError.value = true
+    setTimeout(() => { batchOpsFormError.value = false }, 300)
+    ElMessage.warning('请填写操作原因')
     return
   }
+  if (!batchOpsForm.ids.length) return
 
+  batchOpsConfirmLoading.value = true
+  batchLoading.value = true
   try {
-    batchLoading.value = true
     const result = await batchNoteOps({
-      ids: selectedIds.value,
-      newStatus: NoteStatus.PUBLISHED
+      ids: batchOpsForm.ids,
+      newStatus: batchOpsForm.newStatus,
+      reason: batchOpsForm.reason
     })
 
-    resultDialogTitle.value = '批量恢复结果'
+    const actionText = {
+      [NoteStatus.OFF_SHELF]: '批量下架结果',
+      [NoteStatus.FLOW_LIMITED]: '批量限流结果',
+      [NoteStatus.PUBLISHED]: '批量恢复结果'
+    }[batchOpsForm.newStatus] || '批量运维结果'
+
+    resultDialogTitle.value = actionText
     resultData.value = null
     batchResultData.value = result
     resultDialogVisible.value = true
+    batchOpsConfirmVisible.value = false
 
     clearSelection()
     fetchData()
     fetchStats()
   } catch (error) {
     console.error(error)
+    ElMessage.error('批量操作执行失败，请稍后重试')
   } finally {
+    batchOpsConfirmLoading.value = false
     batchLoading.value = false
   }
+}
+
+const handleBatchRestore = async () => {
+  const hotSelected = selectedRows.value.some((row) => row.flowLevel === FlowLevel.HOT)
+  if (isNormalOps.value && hotSelected) {
+    permissionWarningVisible.value = true
+    return
+  }
+  openBatchOpsConfirm(NoteStatus.PUBLISHED)
 }
 
 const handleBatchOffShelf = async () => {
@@ -805,27 +1018,7 @@ const handleBatchOffShelf = async () => {
     ElMessage.error('选中内容包含处于热门流量推送的笔记，请先取消热门推送再操作')
     return
   }
-
-  try {
-    batchLoading.value = true
-    const result = await batchNoteOps({
-      ids: selectedIds.value,
-      newStatus: NoteStatus.OFF_SHELF
-    })
-
-    resultDialogTitle.value = '批量下架结果'
-    resultData.value = null
-    batchResultData.value = result
-    resultDialogVisible.value = true
-
-    clearSelection()
-    fetchData()
-    fetchStats()
-  } catch (error) {
-    console.error(error)
-  } finally {
-    batchLoading.value = false
-  }
+  openBatchOpsConfirm(NoteStatus.OFF_SHELF)
 }
 
 const handleBatchFlowLimit = async () => {
@@ -839,27 +1032,7 @@ const handleBatchFlowLimit = async () => {
     ElMessage.error('选中内容包含处于热门流量推送的笔记，请先取消热门推送再操作')
     return
   }
-
-  try {
-    batchLoading.value = true
-    const result = await batchNoteOps({
-      ids: selectedIds.value,
-      newStatus: NoteStatus.FLOW_LIMITED
-    })
-
-    resultDialogTitle.value = '批量限流结果'
-    resultData.value = null
-    batchResultData.value = result
-    resultDialogVisible.value = true
-
-    clearSelection()
-    fetchData()
-    fetchStats()
-  } catch (error) {
-    console.error(error)
-  } finally {
-    batchLoading.value = false
-  }
+  openBatchOpsConfirm(NoteStatus.FLOW_LIMITED)
 }
 
 const openOpsLog = async (row: Note) => {
@@ -1336,6 +1509,39 @@ onMounted(() => {
 
   :deep(.el-table__row.selected-row) {
     background-color: rgba(64, 158, 255, 0.05) !important;
+  }
+
+  .focus-input {
+    :deep(.el-input__wrapper) {
+      transition: all 0.25s ease;
+      &:focus-within {
+        transform: scale(1.005);
+        box-shadow: 0 0 0 1px #409eff inset;
+        background: #f4faff;
+      }
+    }
+  }
+
+  .field-error {
+    animation: fieldShake 0.3s ease;
+    :deep(.el-input__wrapper) {
+      box-shadow: 0 0 0 1px #f56c6c inset !important;
+    }
+  }
+
+  @keyframes fieldShake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    20%,
+    60% {
+      transform: translateX(-4px);
+    }
+    40%,
+    80% {
+      transform: translateX(4px);
+    }
   }
 }
 </style>
