@@ -4,11 +4,16 @@ const userController = require('../controllers/userController')
 const { authMiddleware, roleMiddleware } = require('../middlewares/auth')
 
 router.get('/', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.getList)
+router.get('/validate', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.validateAccount)
+router.get('/trace', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.traceAccount)
+router.get('/compliance-logs', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.getComplianceLogs)
 router.get('/:id', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.getDetail)
+router.get('/:id/edit-logs', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.getEditLogs)
 router.post('/', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.create)
 router.put('/:id', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.update)
 router.delete('/:id', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.delete)
 router.post('/batch-delete', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.batchDelete)
+router.post('/batch-update', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.batchUpdate)
 router.put('/:id/status', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.updateStatus)
 
 module.exports = router

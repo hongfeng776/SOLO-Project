@@ -72,6 +72,75 @@ export const FileTypeLabel: Record<string, string> = {
   [FileType.TEMPLATE]: '模板'
 }
 
+export enum UserStatus {
+  ACTIVE = 'active',
+  DISABLED = 'disabled',
+  FROZEN = 'frozen',
+  BANNED = 'banned'
+}
+
+export const UserStatusLabel: Record<string, string> = {
+  [UserStatus.ACTIVE]: '正常',
+  [UserStatus.DISABLED]: '禁用',
+  [UserStatus.FROZEN]: '冻结',
+  [UserStatus.BANNED]: '封禁'
+}
+
+export const UserStatusTagType: Record<string, string> = {
+  [UserStatus.ACTIVE]: 'success',
+  [UserStatus.DISABLED]: 'info',
+  [UserStatus.FROZEN]: 'warning',
+  [UserStatus.BANNED]: 'danger'
+}
+
+export enum PermissionGroup {
+  DEFAULT = 'default',
+  BASIC = 'basic',
+  ADVANCED = 'advanced',
+  PREMIUM = 'premium'
+}
+
+export const PermissionGroupLabel: Record<string, string> = {
+  [PermissionGroup.DEFAULT]: '默认权限',
+  [PermissionGroup.BASIC]: '基础权限',
+  [PermissionGroup.ADVANCED]: '高级权限',
+  [PermissionGroup.PREMIUM]: '尊享权限'
+}
+
+export enum CheckResult {
+  PASS = 'pass',
+  FAIL = 'fail',
+  WARNING = 'warning'
+}
+
+export const CheckResultLabel: Record<string, string> = {
+  [CheckResult.PASS]: '通过',
+  [CheckResult.FAIL]: '不通过',
+  [CheckResult.WARNING]: '警告'
+}
+
+export const CheckResultTagType: Record<string, string> = {
+  [CheckResult.PASS]: 'success',
+  [CheckResult.FAIL]: 'danger',
+  [CheckResult.WARNING]: 'warning'
+}
+
+export enum CheckType {
+  CREATE = 'create',
+  EDIT = 'edit',
+  TRACE = 'trace',
+  BATCH = 'batch',
+  MANUAL = 'manual'
+}
+
+export const CheckTypeLabel: Record<string, string> = {
+  [CheckType.CREATE]: '创建校验',
+  [CheckType.EDIT]: '编辑校验',
+  [CheckType.TRACE]: '溯源校验',
+  [CheckType.BATCH]: '批量校验',
+  [CheckType.MANUAL]: '手动校验'
+}
+
 export enum UserRole {
   SUPER_ADMIN = 'super_admin',
   ADMIN = 'admin',

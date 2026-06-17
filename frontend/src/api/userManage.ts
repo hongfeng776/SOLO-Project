@@ -1,10 +1,12 @@
 import request from '@/utils/request'
-import type { PageResult, UserInfo, PageParams, Member } from '@/types'
+import type { PageResult, UserInfo, PageParams, Member, AccountValidationResult, UserEditLog, TraceResultItem, AccountComplianceLog, BatchUpdateResult } from '@/types'
 
 interface UserListParams extends PageParams {
   keyword?: string
   role?: string
   status?: string
+  tag?: string
+  permissionGroup?: string
 }
 
 export const getUserList = (params: UserListParams) => {
@@ -19,8 +21,8 @@ export const createUser = (data: Partial<UserInfo> & { password: string }) => {
   return request.post<UserInfo>('/users', data)
 }
 
-export const updateUser = (id: number, data: Partial<UserInfo>) => {
-  return request.put<UserInfo>(`/users/${id}`, data)
+export const updateUser = (id: number, data: Partial<UserInfo> & { verifyPassword?: string; editStep?: number }) => {
+  return request.put<{ user: UserInfo; editLogs: UserEditLog[] }>(`/users/${id}`, data)
 }
 
 export const deleteUser = (id: number) => {
@@ -33,6 +35,48 @@ export const batchDeleteUser = (ids: number[]) => {
 
 export const updateUserStatus = (id: number, status: string) => {
   return request.put(`/users/${id}/status`, { status })
+}
+
+export const validateAccount = (params: { phone?: string; nickname?: string; uid?: string; excludeUserId?: number }) => {
+  return request.get<AccountValidationResult>('/users/validate', params)
+}
+
+export const getEditLogs = (userId: number, params?: PageParams) => {
+  return request.get<PageResult<UserEditLog>>(`/users/${userId}/edit-logs`, params)
+}
+
+export const batchUpdateUsers = (data: {
+  ids: number[]
+  nicknameSuffix?: string
+  tags?: string[]
+  permissionGroup?: string
+}) => {
+  return request.post<BatchUpdateResult>('/users/batch-update', data)
+}
+
+export const traceAccount = (params: {
+  uid?: string
+  phone?: string
+  username?: string
+  registerTimeStart?: string
+  registerTimeEnd?: string
+  page?: number
+  pageSize?: number
+}) => {
+  return request.get<PageResult<TraceResultItem>>('/users/trace', params)
+}
+
+export const getComplianceLogs = (params?: PageParams & {
+  userId?: number
+  uid?: string
+  checkType?: string
+  checkResult?: string
+}) => {
+  return request.get<PageResult<AccountComplianceLog>>('/users/compliance-logs', params)
+}
+
+export const partialRefreshUsers = (ids: number[]) => {
+  return getUserList({ page: 1, pageSize: 100 })
 }
 
 interface MemberListParams extends PageParams {

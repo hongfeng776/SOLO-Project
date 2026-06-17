@@ -18,12 +18,85 @@ export interface PageResult<T> {
 
 export interface UserInfo {
   id: number
+  uid: string
   username: string
   nickname: string
   avatar: string
   role: string
   email: string
   phone: string
+  status: 'active' | 'disabled' | 'frozen' | 'banned'
+  tags: string[]
+  permissionGroup: string
+  lastLoginTime: string
+  lastLoginIp: string
+  member?: Member
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FieldValidation {
+  valid: boolean
+  errors: string[]
+}
+
+export interface AccountValidationResult {
+  valid: boolean
+  phone: FieldValidation
+  nickname: FieldValidation
+  uid: FieldValidation
+}
+
+export interface UserEditLog {
+  id: number
+  userId: number
+  editorId: number
+  editorName: string
+  field: string
+  oldValue: string
+  newValue: string
+  editStep: number
+  verified: boolean
+  ip: string
+  remark: string
+  createdAt: string
+}
+
+export interface InconsistencyItem {
+  field: string
+  type: string
+  description: string
+  severity: 'low' | 'warning' | 'high'
+}
+
+export interface TraceResultItem {
+  user: UserInfo
+  member: Member | null
+  editLogs: UserEditLog[]
+  consistencyCheck: {
+    consistent: boolean
+    inconsistencies: InconsistencyItem[]
+  }
+}
+
+export interface AccountComplianceLog {
+  id: number
+  userId: number
+  uid: string
+  checkType: 'create' | 'edit' | 'trace' | 'batch' | 'manual'
+  checkResult: 'pass' | 'fail' | 'warning'
+  checkItems: Record<string, any>
+  inconsistencies: InconsistencyItem[]
+  operatorId: number
+  operatorName: string
+  remark: string
+  createdAt: string
+}
+
+export interface BatchUpdateResult {
+  successIds: number[]
+  failedItems: { id: number; username: string; reasons: string[] }[]
+  updated: number
 }
 
 export interface ImageResource {

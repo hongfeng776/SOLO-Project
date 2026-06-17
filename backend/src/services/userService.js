@@ -1,8 +1,9 @@
 const { User, Member } = require('../models')
 const { Op } = require('sequelize')
-const { getPagination, buildFuzzyWhere } = require('../utils/common')
+const { getPagination, buildFuzzyWhere, generateRandomString } = require('../utils/common')
 const { hashPassword } = require('../utils/auth')
 const ApiError = require('../utils/apiError')
+const dayjs = require('dayjs')
 
 class UserService {
   async getList(params = {}) {
@@ -11,7 +12,7 @@ class UserService {
     const where = {}
 
     if (params.keyword) {
-      Object.assign(where, buildFuzzyWhere(params.keyword, ['username', 'nickname', 'email', 'phone']))
+      Object.assign(where, buildFuzzyWhere(params.keyword, ['username', 'nickname', 'email', 'phone', 'uid']))
     }
 
     if (params.role) {
@@ -22,11 +23,20 @@ class UserService {
       where.status = params.status
     }
 
+    if (params.tag) {
+      where.tags = { [Op.contains]: [params.tag] }
+    }
+
+    if (params.permissionGroup) {
+      where.permissionGroup = params.permissionGroup
+    }
+
     const { count, rows } = await User.findAndCountAll({
       where,
       offset,
       limit,
       attributes: { exclude: ['password'] },
+      include: [{ model: Member, as: 'member' }],
       order: [['createdAt', 'DESC']]
     })
 
@@ -40,7 +50,8 @@ class UserService {
 
   async getDetail(id) {
     const user = await User.findByPk(id, {
-      attributes: { exclude: ['password'] }
+      attributes: { exclude: ['password'] },
+      include: [{ model: Member, as: 'member' }]
     })
 
     if (!user) {
@@ -60,9 +71,17 @@ class UserService {
 
     const hashedPassword = await hashPassword(password)
 
+    if (!data.uid) {
+      const datePart = dayjs().format('YYYYMMDD')
+      const randomPart = generateRandomString(8).toUpperCase()
+      data.uid = `U${datePart}${randomPart}`
+    }
+
     const user = await User.create({
       ...data,
-      password: hashedPassword
+      password: hashedPassword,
+      tags: data.tags || [],
+      permissionGroup: data.permissionGroup || 'default'
     })
 
     if (data.role === 'member' || !data.role) {
@@ -139,6 +158,16 @@ class UserService {
     await user.update({ status })
 
     return true
+  }
+
+  async partialRefresh(ids) {
+    const users = await User.findAll({
+      where: { id: { [Op.in]: ids } },
+      attributes: { exclude: ['password'] },
+      include: [{ model: Member, as: 'member' }]
+    })
+
+    return users
   }
 }
 
