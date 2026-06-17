@@ -14,6 +14,8 @@ export enum CacheKey {
   MARKETING_DETAIL = 'marketing:detail:',
   DASHBOARD_STATS = 'dashboard:stats',
   USER_INFO = 'user:info:',
+  USER_LIST = 'user:list',
+  USER_DETAIL = 'user:detail:',
   PERMISSION_LIST = 'permission:list:',
 }
 

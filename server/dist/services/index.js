@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.commissionRuleService = exports.riskControlService = exports.operationLogService = exports.permissionService = exports.roleService = exports.withdrawService = exports.marketingService = exports.commissionEngineService = exports.commissionService = exports.orderService = exports.promoterService = exports.channelService = exports.userService = exports.authService = void 0;
+exports.notificationService = exports.commissionRuleService = exports.riskControlService = exports.operationLogService = exports.permissionService = exports.roleService = exports.withdrawService = exports.marketingService = exports.commissionEngineService = exports.commissionService = exports.orderService = exports.promoterService = exports.channelService = exports.userService = exports.authService = void 0;
 const Auth_service_1 = __importDefault(require("./Auth.service"));
 exports.authService = Auth_service_1.default;
 const User_service_1 = __importDefault(require("./User.service"));
@@ -32,4 +32,6 @@ const RiskControl_service_1 = __importDefault(require("./RiskControl.service"));
 exports.riskControlService = RiskControl_service_1.default;
 const CommissionRule_service_1 = __importDefault(require("./CommissionRule.service"));
 exports.commissionRuleService = CommissionRule_service_1.default;
+const Notification_service_1 = __importDefault(require("./Notification.service"));
+exports.notificationService = Notification_service_1.default;
 //# sourceMappingURL=index.js.map

@@ -1,4 +1,5 @@
 import type { BaseEntity, Status } from './index'
+import type { AdminItem } from '@/api/admin'
 
 export interface UserInfo extends BaseEntity {
   username: string
@@ -32,3 +33,5 @@ export interface RegisterParams {
   phone: string
   captcha?: string
 }
+
+export type { AdminItem }

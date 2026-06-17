@@ -10,6 +10,12 @@ interface UserAttributes {
     phone?: string;
     role: UserRole;
     status: UserStatus;
+    position?: string;
+    positionLevel?: number;
+    createdBy?: string;
+    createdByName?: string;
+    activatedAt?: Date;
+    lastActiveAt?: Date;
     lastLoginAt?: Date;
     createdAt: Date;
     updatedAt: Date;
@@ -27,6 +33,12 @@ declare class User extends Model<UserAttributes, UserCreationAttributes> impleme
     phone?: string;
     role: UserRole;
     status: UserStatus;
+    position?: string;
+    positionLevel?: number;
+    createdBy?: string;
+    createdByName?: string;
+    activatedAt?: Date;
+    lastActiveAt?: Date;
     lastLoginAt?: Date;
     readonly createdAt: Date;
     readonly updatedAt: Date;

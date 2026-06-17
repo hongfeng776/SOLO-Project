@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PermissionType = exports.WithdrawStatus = exports.MarketingType = exports.MarketingStatus = exports.CommissionStatus = exports.OrderStatus = exports.PromoterStatus = exports.PromoterLevel = exports.ChannelType = exports.ChannelStatus = exports.CommonStatus = exports.UserStatus = exports.UserRole = void 0;
+exports.PERMISSION_MUTUAL_EXCLUSIONS = exports.AccountLevel = exports.PermissionType = exports.WithdrawStatus = exports.MarketingType = exports.MarketingStatus = exports.CommissionStatus = exports.OrderStatus = exports.PromoterStatus = exports.PromoterLevel = exports.ChannelType = exports.ChannelStatus = exports.CommonStatus = exports.UserStatus = exports.UserRole = void 0;
 var UserRole;
 (function (UserRole) {
     UserRole["ADMIN"] = "admin";
@@ -95,4 +95,26 @@ var PermissionType;
     PermissionType["BUTTON"] = "button";
     PermissionType["API"] = "api";
 })(PermissionType || (exports.PermissionType = PermissionType = {}));
+var AccountLevel;
+(function (AccountLevel) {
+    AccountLevel[AccountLevel["SUPER_ADMIN"] = 1] = "SUPER_ADMIN";
+    AccountLevel[AccountLevel["ADMIN"] = 3] = "ADMIN";
+    AccountLevel[AccountLevel["MANAGER"] = 5] = "MANAGER";
+    AccountLevel[AccountLevel["OPERATOR"] = 7] = "OPERATOR";
+    AccountLevel[AccountLevel["VIEWER"] = 9] = "VIEWER";
+})(AccountLevel || (exports.AccountLevel = AccountLevel = {}));
+exports.PERMISSION_MUTUAL_EXCLUSIONS = [
+    {
+        codes: ['user:create', 'role:assign'],
+        reason: '创建用户与分配角色互斥，防止越权创建高权限账号',
+    },
+    {
+        codes: ['user:delete', 'log:delete'],
+        reason: '删除用户与删除日志互斥，防止销毁操作痕迹',
+    },
+    {
+        codes: ['commission:settle', 'withdraw:approve'],
+        reason: '佣金结算与提现审批互斥，防止财务操作风险',
+    },
+];
 //# sourceMappingURL=enum.js.map

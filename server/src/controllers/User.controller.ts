@@ -57,6 +57,77 @@ class UserController {
     const result = await userService.update(userId, data);
     ResponseUtils.success(res, result, 'Profile updated successfully');
   }
+
+  public async createAdmin(req: Request, res: Response): Promise<void> {
+    const currentUser = req.user;
+    const data = req.body;
+    const result = await userService.createAdmin(currentUser, data);
+    ResponseUtils.created(res, result, '管理员账号创建成功');
+  }
+
+  public async updateAdmin(req: Request, res: Response): Promise<void> {
+    const currentUser = req.user;
+    const { id } = req.params;
+    const data = req.body;
+    const result = await userService.updateAdmin(currentUser, id, data);
+    ResponseUtils.success(res, result, '管理员账号更新成功');
+  }
+
+  public async findAllAdvanced(req: Request, res: Response): Promise<void> {
+    const page = parseInt(req.query.page as string || '1', 10);
+    const pageSize = parseInt(req.query.pageSize as string || '10', 10);
+    const params = {
+      page,
+      pageSize,
+      role: req.query.role as string | undefined,
+      status: req.query.status !== undefined ? parseInt(req.query.status as string, 10) : undefined,
+      positionLevel: req.query.positionLevel !== undefined ? parseInt(req.query.positionLevel as string, 10) : undefined,
+      permissionId: req.query.permissionId as string | undefined,
+      keyword: req.query.keyword as string | undefined,
+      startTime: req.query.startTime as string | undefined,
+      endTime: req.query.endTime as string | undefined,
+    };
+    const result = await userService.findAllAdvanced(params);
+    ResponseUtils.paginated(res, result.list, result.total, result.page, result.pageSize);
+  }
+
+  public async batchUpdateStatus(req: Request, res: Response): Promise<void> {
+    const currentUser = req.user;
+    const { ids, status } = req.body;
+    const result = await userService.batchUpdateStatus(currentUser, ids, status);
+    ResponseUtils.success(res, result, '批量状态更新完成');
+  }
+
+  public async batchResetPermissions(req: Request, res: Response): Promise<void> {
+    const currentUser = req.user;
+    const { ids } = req.body;
+    const result = await userService.batchResetPermissions(currentUser, ids);
+    ResponseUtils.success(res, result, '批量权限重置完成');
+  }
+
+  public async checkDeleteDependencies(req: Request, res: Response): Promise<void> {
+    const { id } = req.params;
+    const result = await userService.checkDeleteDependencies(id);
+    ResponseUtils.success(res, result);
+  }
+
+  public async deleteAdmin(req: Request, res: Response): Promise<void> {
+    const currentUser = req.user;
+    const { id } = req.params;
+    await userService.deleteAdmin(currentUser, id);
+    ResponseUtils.success(res, null, '管理员账号删除成功');
+  }
+
+  public async getUserTraceInfo(req: Request, res: Response): Promise<void> {
+    const { id } = req.params;
+    const result = await userService.getUserTraceInfo(id);
+    ResponseUtils.success(res, result);
+  }
+
+  public async getPermissionMutualExclusionRules(req: Request, res: Response): Promise<void> {
+    const result = userService.getPermissionMutualExclusionRules();
+    ResponseUtils.success(res, result);
+  }
 }
 
 export default new UserController();

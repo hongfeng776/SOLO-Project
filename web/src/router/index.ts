@@ -78,6 +78,12 @@ const routes: RouteRecordRaw[] = [
             meta: { title: '角色管理', icon: 'UserFilled' },
           },
           {
+            path: 'admin',
+            name: 'Admin',
+            component: () => import('@/views/admin/index.vue'),
+            meta: { title: '管理员管控', icon: 'Avatar' },
+          },
+          {
             path: 'menu',
             name: 'PermissionMenu',
             component: () => import('@/views/permission/menu.vue'),

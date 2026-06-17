@@ -53,6 +53,34 @@ User.init({
         allowNull: false,
         defaultValue: enum_1.UserStatus.ACTIVE,
     },
+    position: {
+        type: sequelize_1.DataTypes.STRING(100),
+        allowNull: true,
+    },
+    positionLevel: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+        validate: {
+            min: 1,
+            max: 10,
+        },
+    },
+    createdBy: {
+        type: sequelize_1.DataTypes.STRING(36),
+        allowNull: true,
+    },
+    createdByName: {
+        type: sequelize_1.DataTypes.STRING(50),
+        allowNull: true,
+    },
+    activatedAt: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true,
+    },
+    lastActiveAt: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true,
+    },
     lastLoginAt: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true,

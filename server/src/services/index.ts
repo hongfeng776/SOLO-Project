@@ -12,6 +12,7 @@ import permissionService from './Permission.service';
 import operationLogService from './OperationLog.service';
 import riskControlService from './RiskControl.service';
 import commissionRuleService from './CommissionRule.service';
+import notificationService from './Notification.service';
 
 export {
   authService,
@@ -28,4 +29,5 @@ export {
   operationLogService,
   riskControlService,
   commissionRuleService,
+  notificationService,
 };

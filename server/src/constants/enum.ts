@@ -91,3 +91,31 @@ export enum PermissionType {
   BUTTON = 'button',
   API = 'api',
 }
+
+export enum AccountLevel {
+  SUPER_ADMIN = 1,
+  ADMIN = 3,
+  MANAGER = 5,
+  OPERATOR = 7,
+  VIEWER = 9,
+}
+
+export interface PermissionMutualExclusion {
+  codes: [string, string];
+  reason: string;
+}
+
+export const PERMISSION_MUTUAL_EXCLUSIONS: PermissionMutualExclusion[] = [
+  {
+    codes: ['user:create', 'role:assign'],
+    reason: '创建用户与分配角色互斥，防止越权创建高权限账号',
+  },
+  {
+    codes: ['user:delete', 'log:delete'],
+    reason: '删除用户与删除日志互斥，防止销毁操作痕迹',
+  },
+  {
+    codes: ['commission:settle', 'withdraw:approve'],
+    reason: '佣金结算与提现审批互斥，防止财务操作风险',
+  },
+];

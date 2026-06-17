@@ -20,6 +20,8 @@ var CacheKey;
     CacheKey["MARKETING_DETAIL"] = "marketing:detail:";
     CacheKey["DASHBOARD_STATS"] = "dashboard:stats";
     CacheKey["USER_INFO"] = "user:info:";
+    CacheKey["USER_LIST"] = "user:list";
+    CacheKey["USER_DETAIL"] = "user:detail:";
     CacheKey["PERMISSION_LIST"] = "permission:list:";
 })(CacheKey || (exports.CacheKey = CacheKey = {}));
 var CacheTTL;

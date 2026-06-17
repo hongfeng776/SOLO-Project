@@ -12,5 +12,6 @@ import permissionService from './Permission.service';
 import operationLogService from './OperationLog.service';
 import riskControlService from './RiskControl.service';
 import commissionRuleService from './CommissionRule.service';
-export { authService, userService, channelService, promoterService, orderService, commissionService, commissionEngineService, marketingService, withdrawService, roleService, permissionService, operationLogService, riskControlService, commissionRuleService, };
+import notificationService from './Notification.service';
+export { authService, userService, channelService, promoterService, orderService, commissionService, commissionEngineService, marketingService, withdrawService, roleService, permissionService, operationLogService, riskControlService, commissionRuleService, notificationService, };
 //# sourceMappingURL=index.d.ts.map

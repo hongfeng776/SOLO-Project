@@ -13,6 +13,12 @@ interface UserAttributes {
   phone?: string;
   role: UserRole;
   status: UserStatus;
+  position?: string;
+  positionLevel?: number;
+  createdBy?: string;
+  createdByName?: string;
+  activatedAt?: Date;
+  lastActiveAt?: Date;
   lastLoginAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -31,6 +37,12 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public phone?: string;
   public role!: UserRole;
   public status!: UserStatus;
+  public position?: string;
+  public positionLevel?: number;
+  public createdBy?: string;
+  public createdByName?: string;
+  public activatedAt?: Date;
+  public lastActiveAt?: Date;
   public lastLoginAt?: Date;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -82,6 +94,34 @@ User.init(
       type: DataTypes.TINYINT,
       allowNull: false,
       defaultValue: UserStatus.ACTIVE,
+    },
+    position: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    positionLevel: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: 1,
+        max: 10,
+      },
+    },
+    createdBy: {
+      type: DataTypes.STRING(36),
+      allowNull: true,
+    },
+    createdByName: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    activatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    lastActiveAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
     lastLoginAt: {
       type: DataTypes.DATE,

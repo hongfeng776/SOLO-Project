@@ -166,3 +166,31 @@ export const STATUS_MAP: Record<number | string, { label: string; type: 'success
 export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const
 
 export const DEFAULT_PAGE_SIZE = 20
+
+export const POSITION_LEVEL_OPTIONS = [
+  { label: '超级管理员', value: 1 },
+  { label: '系统管理员', value: 3 },
+  { label: '运营经理', value: 5 },
+  { label: '运营操作员', value: 7 },
+  { label: '只读用户', value: 9 },
+]
+
+export const POSITION_LEVEL_MAP: Record<number, { label: string; color: 'primary' | 'success' | 'warning' | 'danger' | 'info' }> = {
+  1: { label: '超级管理员', color: 'danger' },
+  3: { label: '系统管理员', color: 'warning' },
+  5: { label: '运营经理', color: 'primary' },
+  7: { label: '运营操作员', color: 'success' },
+  9: { label: '只读用户', color: 'info' },
+}
+
+export const USER_ROLE_OPTIONS = [
+  { label: '超级管理员', value: 'admin' },
+  { label: '普通管理员', value: 'user' },
+  { label: '访客', value: 'guest' },
+]
+
+export const USER_ROLE_MAP: Record<string, string> = {
+  admin: '超级管理员',
+  user: '普通管理员',
+  guest: '访客',
+}

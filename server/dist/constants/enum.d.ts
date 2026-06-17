@@ -79,4 +79,16 @@ export declare enum PermissionType {
     BUTTON = "button",
     API = "api"
 }
+export declare enum AccountLevel {
+    SUPER_ADMIN = 1,
+    ADMIN = 3,
+    MANAGER = 5,
+    OPERATOR = 7,
+    VIEWER = 9
+}
+export interface PermissionMutualExclusion {
+    codes: [string, string];
+    reason: string;
+}
+export declare const PERMISSION_MUTUAL_EXCLUSIONS: PermissionMutualExclusion[];
 //# sourceMappingURL=enum.d.ts.map
