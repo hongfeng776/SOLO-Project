@@ -162,3 +162,78 @@ export const EducationLabel: Record<Education, string> = {
   [Education.MASTER]: '硕士',
   [Education.DOCTOR]: '博士',
 };
+
+export enum RecruitStatus {
+  ACTIVE = 'active',
+  PAUSED = 'paused',
+  STOPPED = 'stopped',
+}
+
+export const RecruitStatusLabel: Record<RecruitStatus, string> = {
+  [RecruitStatus.ACTIVE]: '招聘中',
+  [RecruitStatus.PAUSED]: '暂停招聘',
+  [RecruitStatus.STOPPED]: '停止招聘',
+};
+
+export enum CompanyChangeAction {
+  CREATE = 'create',
+  UPDATE = 'update',
+  BATCH_UPDATE = 'batch_update',
+  UPDATE_APPROVE = 'update_approve',
+  UPDATE_REJECT = 'update_reject',
+}
+
+export const CompanyChangeActionLabel: Record<CompanyChangeAction, string> = {
+  [CompanyChangeAction.CREATE]: '创建',
+  [CompanyChangeAction.UPDATE]: '更新',
+  [CompanyChangeAction.BATCH_UPDATE]: '批量更新',
+  [CompanyChangeAction.UPDATE_APPROVE]: '审核通过',
+  [CompanyChangeAction.UPDATE_REJECT]: '审核驳回',
+};
+
+export enum JobCategory {
+  TECH = 'tech',
+  PRODUCT = 'product',
+  DESIGN = 'design',
+  OPERATIONS = 'operations',
+  MARKETING = 'marketing',
+  HR = 'hr',
+  FINANCE = 'finance',
+  ADMIN = 'admin',
+  SALES = 'sales',
+  OTHER = 'other',
+}
+
+export const JobCategoryLabel: Record<JobCategory, string> = {
+  [JobCategory.TECH]: '技术',
+  [JobCategory.PRODUCT]: '产品',
+  [JobCategory.DESIGN]: '设计',
+  [JobCategory.OPERATIONS]: '运营',
+  [JobCategory.MARKETING]: '市场',
+  [JobCategory.HR]: '人事',
+  [JobCategory.FINANCE]: '财务',
+  [JobCategory.ADMIN]: '行政',
+  [JobCategory.SALES]: '销售',
+  [JobCategory.OTHER]: '其他',
+};
+
+export const IndustryJobCategoryMap: Record<string, string[]> = {
+  '信息技术': [JobCategory.TECH, JobCategory.PRODUCT, JobCategory.DESIGN, JobCategory.OPERATIONS],
+  '金融': [JobCategory.TECH, JobCategory.FINANCE, JobCategory.OPERATIONS, JobCategory.ADMIN],
+  '制造业': [JobCategory.TECH, JobCategory.SALES, JobCategory.OPERATIONS, JobCategory.ADMIN],
+  '教育': [JobCategory.TECH, JobCategory.OPERATIONS, JobCategory.MARKETING, JobCategory.ADMIN],
+  '医疗健康': [JobCategory.SALES, JobCategory.OPERATIONS, JobCategory.ADMIN, JobCategory.OTHER],
+  '房地产': [JobCategory.SALES, JobCategory.MARKETING, JobCategory.ADMIN, JobCategory.OTHER],
+  '贸易': [JobCategory.SALES, JobCategory.MARKETING, JobCategory.OPERATIONS, JobCategory.ADMIN],
+  '服务业': [JobCategory.OPERATIONS, JobCategory.SALES, JobCategory.ADMIN, JobCategory.OTHER],
+  '农业': [JobCategory.OPERATIONS, JobCategory.SALES, JobCategory.ADMIN, JobCategory.OTHER],
+  '其他': [JobCategory.OTHER, JobCategory.ADMIN, JobCategory.OPERATIONS, JobCategory.SALES],
+};
+
+export const ScaleRecruitRangeMap: Record<string, string[]> = {
+  '少于50人': ['1-50人规模'],
+  '50-100人': ['50-100人规模'],
+  '100-500人': ['100-500人规模'],
+  '500-1000人': ['500-1000人规模'],
+  '1000人以上': ['1000人以上规模'],
+};

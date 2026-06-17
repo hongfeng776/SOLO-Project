@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
+import { RecruitStatus } from '../constants/recruitment.enum';
 
 interface CompanyAttributes {
   id: number;
@@ -10,15 +11,24 @@ interface CompanyAttributes {
   scale?: string;
   nature?: string;
   address?: string;
+  officeAddress?: string;
   contactPerson?: string;
   contactPhone?: string;
   contactEmail?: string;
   description?: string;
+  recruitStatus: RecruitStatus;
+  jobCategories?: string;
+  qualificationId?: number;
+  isQualificationApproved: boolean;
   status: number;
   sort: number;
+  pendingChanges?: string;
+  changeAuditStatus?: 'pending' | 'approved' | 'rejected';
+  changeOperatorId?: number;
+  changeOperatorName?: string;
 }
 
-interface CompanyCreationAttributes extends Optional<CompanyAttributes, 'id' | 'status' | 'sort'> {}
+interface CompanyCreationAttributes extends Optional<CompanyAttributes, 'id' | 'status' | 'sort' | 'recruitStatus' | 'isQualificationApproved'> {}
 
 class Company extends Model<CompanyAttributes, CompanyCreationAttributes> implements CompanyAttributes {
   public id!: number;
@@ -29,12 +39,21 @@ class Company extends Model<CompanyAttributes, CompanyCreationAttributes> implem
   public scale?: string;
   public nature?: string;
   public address?: string;
+  public officeAddress?: string;
   public contactPerson?: string;
   public contactPhone?: string;
   public contactEmail?: string;
   public description?: string;
+  public recruitStatus!: RecruitStatus;
+  public jobCategories?: string;
+  public qualificationId?: number;
+  public isQualificationApproved!: boolean;
   public status!: number;
   public sort!: number;
+  public pendingChanges?: string;
+  public changeAuditStatus?: 'pending' | 'approved' | 'rejected';
+  public changeOperatorId?: number;
+  public changeOperatorName?: string;
 
   public readonly created_at!: Date;
   public readonly updated_at!: Date;
@@ -93,6 +112,40 @@ Company.init(
     description: {
       type: DataTypes.TEXT,
       comment: '企业简介',
+    },
+    recruitStatus: {
+      type: DataTypes.ENUM('active', 'paused', 'stopped'),
+      defaultValue: RecruitStatus.ACTIVE,
+      comment: '招聘状态 active-招聘中 paused-暂停招聘 stopped-停止招聘',
+    },
+    jobCategories: {
+      type: DataTypes.STRING(255),
+      comment: '岗位分类，逗号分隔',
+    },
+    qualificationId: {
+      type: DataTypes.INTEGER,
+      comment: '关联资质ID',
+    },
+    isQualificationApproved: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: '资质是否审核通过',
+    },
+    pendingChanges: {
+      type: DataTypes.TEXT,
+      comment: '待审核变更内容 JSON',
+    },
+    changeAuditStatus: {
+      type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+      comment: '变更审核状态',
+    },
+    changeOperatorId: {
+      type: DataTypes.INTEGER,
+      comment: '变更提交人ID',
+    },
+    changeOperatorName: {
+      type: DataTypes.STRING(50),
+      comment: '变更提交人姓名',
     },
     status: {
       type: DataTypes.TINYINT,

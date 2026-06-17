@@ -193,3 +193,111 @@ export const INDUSTRY_OPTIONS = [
 
 export const DATE_FORMAT = 'YYYY-MM-DD';
 export const DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';
+
+export enum RecruitStatus {
+  ACTIVE = 'active',
+  PAUSED = 'paused',
+  STOPPED = 'stopped',
+}
+
+export const RecruitStatusLabel: Record<RecruitStatus, string> = {
+  [RecruitStatus.ACTIVE]: '招聘中',
+  [RecruitStatus.PAUSED]: '暂停招聘',
+  [RecruitStatus.STOPPED]: '停止招聘',
+};
+
+export const RecruitStatusType: Record<RecruitStatus, string> = {
+  [RecruitStatus.ACTIVE]: 'success',
+  [RecruitStatus.PAUSED]: 'warning',
+  [RecruitStatus.STOPPED]: 'danger',
+};
+
+export enum CompanyChangeAction {
+  CREATE = 'create',
+  UPDATE = 'update',
+  BATCH_UPDATE = 'batch_update',
+  UPDATE_APPROVE = 'update_approve',
+  UPDATE_REJECT = 'update_reject',
+}
+
+export const CompanyChangeActionLabel: Record<CompanyChangeAction, string> = {
+  [CompanyChangeAction.CREATE]: '创建',
+  [CompanyChangeAction.UPDATE]: '更新',
+  [CompanyChangeAction.BATCH_UPDATE]: '批量更新',
+  [CompanyChangeAction.UPDATE_APPROVE]: '审核通过',
+  [CompanyChangeAction.UPDATE_REJECT]: '审核驳回',
+};
+
+export const AuditStatusLabel: Record<string, string> = {
+  pending: '待审核',
+  approved: '已通过',
+  rejected: '已驳回',
+};
+
+export const AuditStatusType: Record<string, string> = {
+  pending: 'warning',
+  approved: 'success',
+  rejected: 'danger',
+};
+
+export enum JobCategory {
+  TECH = 'tech',
+  PRODUCT = 'product',
+  DESIGN = 'design',
+  OPERATIONS = 'operations',
+  MARKETING = 'marketing',
+  HR = 'hr',
+  FINANCE = 'finance',
+  ADMIN = 'admin',
+  SALES = 'sales',
+  OTHER = 'other',
+}
+
+export const JobCategoryLabel: Record<JobCategory, string> = {
+  [JobCategory.TECH]: '技术',
+  [JobCategory.PRODUCT]: '产品',
+  [JobCategory.DESIGN]: '设计',
+  [JobCategory.OPERATIONS]: '运营',
+  [JobCategory.MARKETING]: '市场',
+  [JobCategory.HR]: '人事',
+  [JobCategory.FINANCE]: '财务',
+  [JobCategory.ADMIN]: '行政',
+  [JobCategory.SALES]: '销售',
+  [JobCategory.OTHER]: '其他',
+};
+
+export const SCALE_OPTIONS = [
+  { label: '少于50人', value: '少于50人' },
+  { label: '50-100人', value: '50-100人' },
+  { label: '100-500人', value: '100-500人' },
+  { label: '500-1000人', value: '500-1000人' },
+  { label: '1000人以上', value: '1000人以上' },
+];
+
+export const NATURE_OPTIONS = [
+  { label: '国企', value: '国企' },
+  { label: '民营企业', value: '民营企业' },
+  { label: '外资企业', value: '外资企业' },
+  { label: '合资企业', value: '合资企业' },
+  { label: '上市公司', value: '上市公司' },
+  { label: '创业公司', value: '创业公司' },
+];
+
+export const RECRUIT_STATUS_OPTIONS = [
+  { label: '招聘中', value: 'active' },
+  { label: '暂停招聘', value: 'paused' },
+  { label: '停止招聘', value: 'stopped' },
+];
+
+export const INDUSTRY_JOB_CATEGORY_MAP: Record<string, string[]> = {
+  '信息技术': ['tech', 'product', 'design', 'operations'],
+  '金融': ['tech', 'finance', 'operations', 'admin'],
+  '制造业': ['tech', 'sales', 'operations', 'admin'],
+  '教育': ['tech', 'operations', 'marketing', 'admin'],
+  '医疗健康': ['sales', 'operations', 'admin', 'other'],
+  '房地产': ['sales', 'marketing', 'admin', 'other'],
+  '贸易': ['sales', 'marketing', 'operations', 'admin'],
+  '服务业': ['operations', 'sales', 'admin', 'other'],
+  '农业': ['operations', 'sales', 'admin', 'other'],
+  '其他': ['other', 'admin', 'operations', 'sales'],
+};
