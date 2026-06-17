@@ -332,6 +332,7 @@ async function handleGenerateReport() {
       startDate: props.startDate,
       endDate: props.endDate,
       sector: props.sector,
+      stockCode: props.stockCode,
     })
     const sessionId = sessionRes.data.id
     await generateConclusion(sessionId)

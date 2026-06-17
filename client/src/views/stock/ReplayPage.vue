@@ -19,16 +19,16 @@
       <el-table-column prop="stockName" label="股票名称" width="120" />
       <el-table-column prop="tradeDate" label="交易日期" width="120" />
       <el-table-column prop="openPrice" label="开盘价" width="100" align="right">
-        <template #default="{ row }">{{ formatMoney(row.openPrice, 2, '') }}</template>
+        <template #default="{ row }">{{ formatMoney(row.openPrice, 2) }}</template>
       </el-table-column>
       <el-table-column prop="closePrice" label="收盘价" width="100" align="right">
-        <template #default="{ row }">{{ formatMoney(row.closePrice, 2, '') }}</template>
+        <template #default="{ row }">{{ formatMoney(row.closePrice, 2) }}</template>
       </el-table-column>
       <el-table-column prop="highPrice" label="最高价" width="100" align="right">
-        <template #default="{ row }">{{ formatMoney(row.highPrice, 2, '') }}</template>
+        <template #default="{ row }">{{ formatMoney(row.highPrice, 2) }}</template>
       </el-table-column>
       <el-table-column prop="lowPrice" label="最低价" width="100" align="right">
-        <template #default="{ row }">{{ formatMoney(row.lowPrice, 2, '') }}</template>
+        <template #default="{ row }">{{ formatMoney(row.lowPrice, 2) }}</template>
       </el-table-column>
       <el-table-column prop="changeRate" label="涨跌幅" width="110" align="right">
         <template #default="{ row }">

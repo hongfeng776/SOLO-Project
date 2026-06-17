@@ -40,7 +40,7 @@ export function generateConclusion(sessionId: number): Promise<IApiResponse<IRep
 }
 
 export function queryHistoryData(params: IReplayQueryParams): Promise<IApiResponse<{ list: IHistoryRecord[]; total: number; periodSegments: IPeriodSegment[] }>> {
-  return get('/api/replay/query', params as Record<string, unknown>)
+  return get('/api/replay/query', params as unknown as Record<string, unknown>)
 }
 
 export function getVolatilityPattern(stockCode: string, startDate: string, endDate: string): Promise<IApiResponse<IVolatilityPattern>> {
