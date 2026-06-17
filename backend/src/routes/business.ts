@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -11,6 +11,7 @@ const accountOpeningController = new AccountOpeningController();
 const corporateOpeningController = new CorporateAccountOpeningController();
 const openingReviewController = new OpeningReviewController();
 const statusFlowController = new StatusFlowController();
+const depositController = new DepositController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -104,5 +105,27 @@ router.post('/status-flow/execute', requirePermission('status:flow:operate'), (r
 router.get('/status-flow/list', requirePermission('status:flow:query'), (req, res, next) => statusFlowController.getFlowList(req, res));
 router.post('/status-flow/batch', requirePermission('status:flow:batch'), (req, res, next) => statusFlowController.batchOperation(req, res));
 router.post('/status-flow/trace', requirePermission('status:flow:trace'), (req, res, next) => statusFlowController.traceStatusChange(req, res));
+
+// ========== 存款业务办理管控 ==========
+// 配置枚举
+router.get('/deposit/config', requireAuth, (req, res, next) => depositController.config(req, res, next));
+// 前置校验
+router.post('/deposit/precheck', requirePermission('business:deposit:create'), (req, res, next) => depositController.preCheck(req, res, next));
+// 列表查询
+router.get('/deposit/list', requirePermission('business:deposit:query'), (req, res, next) => depositController.list(req, res, next));
+// 详情查询
+router.get('/deposit/:id', requirePermission('business:deposit:query'), (req, res, next) => depositController.detail(req, res, next));
+// 办理存款
+router.post('/deposit', requirePermission('business:deposit:create'), (req, res, next) => depositController.create(req, res, next));
+// 撤销存款
+router.post('/deposit/:id/cancel', requirePermission('business:deposit:update'), (req, res, next) => depositController.cancel(req, res, next));
+// 确认入账
+router.post('/deposit/:id/confirm', requirePermission('business:deposit:confirm'), (req, res, next) => depositController.confirm(req, res, next));
+// 批量存款
+router.post('/deposit/batch', requirePermission('business:deposit:batch'), (req, res, next) => depositController.batch(req, res, next));
+// 批量审核
+router.post('/deposit/batch/review', requirePermission('business:deposit:review'), (req, res, next) => depositController.batchReview(req, res, next));
+// 溯源查询
+router.post('/deposit/trace', requirePermission('business:deposit:trace'), (req, res, next) => depositController.trace(req, res, next));
 
 export default router;

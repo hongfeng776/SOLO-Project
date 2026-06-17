@@ -11,3 +11,4 @@ export { CustomerRepository } from './CustomerRepository';
 export { ViolationRepository } from './ViolationRepository';
 export { AccountRepository } from './AccountRepository';
 export { AccountOpeningRepository } from './AccountOpeningRepository';
+export { DepositRepository } from './DepositRepository';

@@ -269,6 +269,45 @@ const asyncRoutes: RouteRecordRaw[] = [
           permissions: ['status:flow:trace'],
           roles: ['admin', 'manager', 'auditor']
         }
+      },
+      {
+        path: 'deposit/handle',
+        name: 'BusinessDepositHandle',
+        component: () => import('@views/business/deposit/index.vue'),
+        meta: {
+          title: '存款办理',
+          icon: 'Wallet',
+          componentName: 'BusinessDepositHandle',
+          keepAlive: true,
+          permissions: ['business:deposit:query'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'deposit/batch',
+        name: 'BusinessDepositBatch',
+        component: () => import('@views/business/deposit/batch.vue'),
+        meta: {
+          title: '批量存款',
+          icon: 'Files',
+          componentName: 'BusinessDepositBatch',
+          keepAlive: true,
+          permissions: ['business:deposit:batch'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'deposit/trace',
+        name: 'BusinessDepositTrace',
+        component: () => import('@views/business/deposit/trace.vue'),
+        meta: {
+          title: '存款溯源',
+          icon: 'Search',
+          componentName: 'BusinessDepositTrace',
+          keepAlive: false,
+          permissions: ['business:deposit:trace'],
+          roles: ['admin', 'manager', 'auditor']
+        }
       }
     ]
   },

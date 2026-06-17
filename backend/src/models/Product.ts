@@ -115,6 +115,13 @@ export class Product extends Model<Product> {
   })
   status!: number;
 
+  @Column({
+    type: DataType.TINYINT,
+    allowNull: true,
+    comment: '存款类型 1普通存款 2大额存单 3智能存款'
+  })
+  deposit_type?: number;
+
   @HasMany(() => Transaction, { foreignKey: 'product_id' })
   transactions?: Transaction[];
 

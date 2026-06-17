@@ -61,3 +61,32 @@ export {
   type StatusTraceRequest,
   type StatusTraceVO
 } from './statusFlow';
+
+export {
+  DepositType,
+  DepositStatus,
+  DepositTerm,
+  InterestCalculationMethod,
+  DepositTypeText,
+  DepositStatusText,
+  DepositTermText,
+  InterestMethodText,
+  DEPOSIT_LIMIT_CONFIG,
+  LARGE_DEPOSIT_THRESHOLD,
+  BATCH_SMALL_AMOUNT_THRESHOLD,
+  type DepositProductConfig,
+  type DepositPreCheckRequest,
+  type DepositPreCheckResult,
+  type CreateDepositRequest,
+  type DepositUpdateRequest,
+  type DepositQueryParams,
+  type Deposit,
+  type DepositVO,
+  type BatchDepositItem,
+  type BatchDepositRequest,
+  type BatchDepositResultItem,
+  type BatchDepositReviewRequest,
+  type DepositTraceRequest,
+  type DepositTraceResult,
+  type DepositLimitConfig
+} from './deposit';

@@ -243,7 +243,20 @@ export async function seedPermissions(): Promise<void> {
     { id: 'perm045', parent_id: 'perm044', name: '操作日志', code: 'log:operation', type: 2, path: 'operation', component: 'log/operation/index', icon: 'Document', sort: 1, visible: 1, status: 1, perms: '' },
     { id: 'perm046', parent_id: 'perm045', name: '日志查询', code: 'log:operation:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'log:operation:query' },
     { id: 'perm047', parent_id: 'perm045', name: '日志导出', code: 'log:operation:export', type: 3, sort: 2, visible: 1, status: 1, perms: 'log:operation:export' },
-    { id: 'perm048', parent_id: 'perm045', name: '日志删除', code: 'log:operation:delete', type: 3, sort: 3, visible: 1, status: 1, perms: 'log:operation:delete' }
+    { id: 'perm048', parent_id: 'perm045', name: '日志删除', code: 'log:operation:delete', type: 3, sort: 3, visible: 1, status: 1, perms: 'log:operation:delete' },
+
+    // ========== 存款业务权限 ==========
+    { id: 'perm049', parent_id: null, name: '存款业务', code: 'business:deposit', type: 1, path: '/deposit', component: 'Layout', icon: 'Money', sort: 5, visible: 1, status: 1 },
+    { id: 'perm050', parent_id: 'perm049', name: '存款办理', code: 'business:deposit:handle', type: 2, path: 'handle', component: 'deposit/index', icon: 'Wallet', sort: 1, visible: 1, status: 1, perms: '' },
+    { id: 'perm051', parent_id: 'perm050', name: '存款查询', code: 'business:deposit:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:deposit:query' },
+    { id: 'perm052', parent_id: 'perm050', name: '存款办理', code: 'business:deposit:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:deposit:create' },
+    { id: 'perm053', parent_id: 'perm050', name: '存款更新', code: 'business:deposit:update', type: 3, sort: 3, visible: 1, status: 1, perms: 'business:deposit:update' },
+    { id: 'perm054', parent_id: 'perm050', name: '存款入账', code: 'business:deposit:confirm', type: 3, sort: 4, visible: 1, status: 1, perms: 'business:deposit:confirm' },
+    { id: 'perm055', parent_id: 'perm049', name: '批量存款', code: 'business:deposit:batch', type: 2, path: 'batch', component: 'deposit/batch', icon: 'Files', sort: 2, visible: 1, status: 1, perms: '' },
+    { id: 'perm056', parent_id: 'perm055', name: '批量录入', code: 'business:deposit:batch', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:deposit:batch' },
+    { id: 'perm057', parent_id: 'perm055', name: '批量审核', code: 'business:deposit:review', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:deposit:review' },
+    { id: 'perm058', parent_id: 'perm049', name: '存款溯源', code: 'business:deposit:trace', type: 2, path: 'trace', component: 'deposit/trace', icon: 'Search', sort: 3, visible: 1, status: 1, perms: '' },
+    { id: 'perm059', parent_id: 'perm058', name: '溯源查询', code: 'business:deposit:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:deposit:trace' }
   ];
 
   await bulkCreateInBatches(Permission, permissions as any);
@@ -291,7 +304,9 @@ export async function seedRolePermissions(): Promise<void> {
       'log:operation:query',
       'opening:review:query', 'opening:review:submit', 'opening:review:batch',
       'opening:review:first', 'opening:review:second', 'opening:review:cancel', 'opening:review:trace',
-      'status:flow:query', 'status:flow:operate', 'status:flow:batch', 'status:flow:trace'
+      'status:flow:query', 'status:flow:operate', 'status:flow:batch', 'status:flow:trace',
+      'business:deposit:query', 'business:deposit:create', 'business:deposit:update', 'business:deposit:confirm',
+      'business:deposit:batch', 'business:deposit:review', 'business:deposit:trace'
     ];
     const perms = allPermissions.filter(p => managerCodes.includes(p.code) || p.type !== 3);
     const managerRPs = perms.map(p => ({
@@ -311,9 +326,11 @@ export async function seedRolePermissions(): Promise<void> {
       'audit:record:query', 'audit:record:submit', 'audit:record:cancel',
       'log:operation:query',
       'opening:review:query', 'opening:review:submit', 'opening:review:first',
-      'status:flow:query', 'status:flow:operate'
+      'status:flow:query', 'status:flow:operate',
+      'business:deposit:query', 'business:deposit:create', 'business:deposit:update',
+      'business:deposit:batch'
     ];
-    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation')));
+    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:batch' || p.code === 'business:deposit:trace')));
     const operatorRPs = perms.map(p => ({
       id: `rp_${operatorRole.id}_${p.id}`,
       role_id: operatorRole.id,
@@ -331,9 +348,10 @@ export async function seedRolePermissions(): Promise<void> {
       'audit:record:query', 'audit:record:audit',
       'log:operation:query',
       'opening:review:query', 'opening:review:trace',
-      'status:flow:query', 'status:flow:trace'
+      'status:flow:query', 'status:flow:trace',
+      'business:deposit:query', 'business:deposit:trace'
     ];
-    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation')));
+    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:trace')));
     const auditorRPs = perms.map(p => ({
       id: `rp_${auditorRole.id}_${p.id}`,
       role_id: auditorRole.id,
@@ -513,11 +531,12 @@ export async function seedProducts(): Promise<void> {
       description: '个人活期存款产品',
       risk_level: 1,
       min_amount: 0,
-      max_amount: 0,
+      max_amount: 5000000,
       interest_rate: 0.3,
       term_days: 0,
       sort: 1,
-      status: 1
+      status: 1,
+      deposit_type: 1
     },
     {
       id: 'prod000000000000000000000000000002',
@@ -528,11 +547,12 @@ export async function seedProducts(): Promise<void> {
       description: '一年期定期存款',
       risk_level: 1,
       min_amount: 50,
-      max_amount: 0,
+      max_amount: 5000000,
       interest_rate: 1.65,
       term_days: 365,
       sort: 2,
-      status: 1
+      status: 1,
+      deposit_type: 1
     },
     {
       id: 'prod000000000000000000000000000003',
@@ -578,6 +598,150 @@ export async function seedProducts(): Promise<void> {
       term_days: 0,
       sort: 5,
       status: 1
+    },
+    {
+      id: 'prod000000000000000000000000000006',
+      name: '大额存单一年期',
+      code: 'LARGE_CD_1Y',
+      category: '存款',
+      type: 'retail',
+      description: '大额存单产品，一年期，利率上浮',
+      risk_level: 1,
+      min_amount: 200000,
+      max_amount: 10000000,
+      interest_rate: 2.1,
+      term_days: 365,
+      sort: 6,
+      status: 1,
+      deposit_type: 2
+    },
+    {
+      id: 'prod000000000000000000000000000007',
+      name: '大额存单三年期',
+      code: 'LARGE_CD_3Y',
+      category: '存款',
+      type: 'retail',
+      description: '大额存单产品，三年期，利率上浮',
+      risk_level: 1,
+      min_amount: 200000,
+      max_amount: 10000000,
+      interest_rate: 2.65,
+      term_days: 1095,
+      sort: 7,
+      status: 1,
+      deposit_type: 2
+    },
+    {
+      id: 'prod000000000000000000000000000008',
+      name: '智能存款灵活宝',
+      code: 'SMART_DEPOSIT_FLEX',
+      category: '存款',
+      type: 'retail',
+      description: '智能存款产品，按存期阶梯计息',
+      risk_level: 1,
+      min_amount: 1000,
+      max_amount: 500000,
+      interest_rate: 1.2,
+      term_days: 0,
+      sort: 8,
+      status: 1,
+      deposit_type: 3
+    },
+    {
+      id: 'prod000000000000000000000000000009',
+      name: '三个月定期存款',
+      code: 'TIME_DEPOSIT_3M',
+      category: '存款',
+      type: 'retail',
+      description: '三个月期定期存款',
+      risk_level: 1,
+      min_amount: 50,
+      max_amount: 5000000,
+      interest_rate: 1.1,
+      term_days: 90,
+      sort: 9,
+      status: 1,
+      deposit_type: 1
+    },
+    {
+      id: 'prod000000000000000000000000000010',
+      name: '六个月定期存款',
+      code: 'TIME_DEPOSIT_6M',
+      category: '存款',
+      type: 'retail',
+      description: '六个月期定期存款',
+      risk_level: 1,
+      min_amount: 50,
+      max_amount: 5000000,
+      interest_rate: 1.3,
+      term_days: 180,
+      sort: 10,
+      status: 1,
+      deposit_type: 1
+    },
+    {
+      id: 'prod000000000000000000000000000011',
+      name: '二年定期存款',
+      code: 'TIME_DEPOSIT_2Y',
+      category: '存款',
+      type: 'retail',
+      description: '二年期定期存款',
+      risk_level: 1,
+      min_amount: 50,
+      max_amount: 5000000,
+      interest_rate: 1.95,
+      term_days: 730,
+      sort: 11,
+      status: 1,
+      deposit_type: 1
+    },
+    {
+      id: 'prod000000000000000000000000000012',
+      name: '三年定期存款',
+      code: 'TIME_DEPOSIT_3Y',
+      category: '存款',
+      type: 'retail',
+      description: '三年期定期存款',
+      risk_level: 1,
+      min_amount: 50,
+      max_amount: 5000000,
+      interest_rate: 2.4,
+      term_days: 1095,
+      sort: 12,
+      status: 1,
+      deposit_type: 1
+    },
+    {
+      id: 'prod000000000000000000000000000013',
+      name: '五年定期存款',
+      code: 'TIME_DEPOSIT_5Y',
+      category: '存款',
+      type: 'retail',
+      description: '五年期定期存款',
+      risk_level: 1,
+      min_amount: 50,
+      max_amount: 5000000,
+      interest_rate: 2.55,
+      term_days: 1825,
+      sort: 13,
+      status: 1,
+      deposit_type: 1
+    },
+    {
+      id: 'prod000000000000000000000000000014',
+      name: '大额存单五年期',
+      code: 'LARGE_CD_5Y',
+      category: '存款',
+      type: 'retail',
+      description: '大额存单产品，五年期，利率上浮',
+      risk_level: 1,
+      min_amount: 200000,
+      max_amount: 10000000,
+      interest_rate: 2.8,
+      term_days: 1825,
+      sort: 14,
+      status: 1,
+      deposit_type: 2
     }
   ] as any);
 
