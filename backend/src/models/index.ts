@@ -2,6 +2,8 @@ import User from './user'
 import Role from './role'
 import Note from './note'
 import Tag from './tag'
+import Category from './category'
+import TagUsageLog from './tag-usage-log'
 import Creator from './creator'
 import Activity from './activity'
 import Order from './order'
@@ -29,4 +31,7 @@ Role.belongsToMany(User, { through: UserRole, as: 'users', foreignKey: 'role_id'
 Note.belongsToMany(Tag, { through: NoteTag, as: 'tags', foreignKey: 'note_id' })
 Tag.belongsToMany(Note, { through: NoteTag, as: 'notes', foreignKey: 'tag_id' })
 
-export { User, Role, Note, Tag, Creator, Activity, Order, Comment, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserRole, NoteTag }
+Category.hasMany(Tag, { as: 'tags', foreignKey: 'categoryId' })
+Tag.belongsTo(Category, { as: 'category', foreignKey: 'categoryId' })
+
+export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserRole, NoteTag }

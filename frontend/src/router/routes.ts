@@ -47,10 +47,16 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: { title: '内容审核', icon: 'CircleCheck', roles: ['admin', 'reviewer'] }
       },
       {
+        path: 'category',
+        name: 'CategoryManagement',
+        component: () => import(/* webpackChunkName: "content" */ '@views/content/category/index.vue'),
+        meta: { title: '分类管理', icon: 'Menu', roles: ['admin', 'editor'] }
+      },
+      {
         path: 'tags',
         name: 'Tags',
         component: () => import(/* webpackChunkName: "content" */ '@views/content/tags/index.vue'),
-        meta: { title: '流量标签', icon: 'PriceTag', roles: ['admin', 'editor'] }
+        meta: { title: '标签管理', icon: 'PriceTag', roles: ['admin', 'editor'] }
       },
       {
         path: 'comment',

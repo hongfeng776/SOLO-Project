@@ -34,6 +34,8 @@ import reviewLogRoutes from '@routes/review-log'
 import reviewComplianceRoutes from '@routes/review-compliance'
 import noteOpsRoutes from '@routes/note-ops'
 import noteOpsLogRoutes from '@routes/note-ops-log'
+import categoryRoutes from '@routes/category'
+import tagManagementRoutes from '@routes/tag-management'
 
 const app = express()
 
@@ -79,6 +81,8 @@ app.use('/api/review-logs', reviewLogRoutes)
 app.use('/api/review-compliance', reviewComplianceRoutes)
 app.use('/api/note-ops', noteOpsRoutes)
 app.use('/api/note-ops-logs', noteOpsLogRoutes)
+app.use('/api/categories', categoryRoutes)
+app.use('/api/tags', tagManagementRoutes)
 
 app.use(celebrateErrors())
 app.use(errorHandler)

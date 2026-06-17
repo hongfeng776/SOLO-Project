@@ -211,3 +211,51 @@ export interface NoteAbnormalOpsListParams {
   pageSize: number
   handled?: number
 }
+
+export interface CategoryData {
+  id?: number
+  name: string
+  code: string
+  parentId?: number
+  level?: number
+  description?: string
+  coverImage?: string
+  icon?: string
+  color?: string
+  sort?: number
+  status?: number
+  isCore?: number
+  weight?: number
+  scenes: string[]
+}
+
+export interface TagData {
+  id?: number
+  name: string
+  type?: string
+  categoryId?: number | null
+  parentId?: number | null
+  description?: string
+  coverImage?: string
+  sort?: number
+  status?: number
+  hotLevel?: number
+  weight?: number
+  isCore?: number
+  complianceTags: string[]
+  scenes?: string[]
+  color?: string
+  icon?: string
+}
+
+export interface BatchTagOpsData {
+  ids: number[]
+  action: 'enable' | 'disable' | 'update_weight' | 'delete'
+  weight?: number
+}
+
+export interface TagCategoryComplianceResult {
+  valid: boolean
+  errors: string[]
+  warnings: string[]
+}

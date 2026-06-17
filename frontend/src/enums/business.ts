@@ -263,3 +263,48 @@ export enum AbnormalReviewType {
   EXCESSIVE_REJECTION = 'excessive_rejection',
   UNUSUAL_PATTERN = 'unusual_pattern'
 }
+
+export enum CategoryStatus {
+  ENABLED = 1,
+  DISABLED = 2
+}
+
+export enum TagStatus {
+  ENABLED = 1,
+  DISABLED = 2
+}
+
+export enum TagActionType {
+  BIND = 'bind',
+  UNBIND = 'unbind',
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete'
+}
+
+export enum HotLevel {
+  NORMAL = 1,
+  HOT = 2
+}
+
+export const CONTENT_SCENES = [
+  { value: '美食探店', label: '美食探店' },
+  { value: '美妆护肤', label: '美妆护肤' },
+  { value: '时尚穿搭', label: '时尚穿搭' },
+  { value: '旅行攻略', label: '旅行攻略' },
+  { value: '健身运动', label: '健身运动' },
+  { value: '家居生活', label: '家居生活' },
+  { value: '数码科技', label: '数码科技' },
+  { value: '母婴育儿', label: '母婴育儿' },
+  { value: '宠物日常', label: '宠物日常' },
+  { value: '情感心理', label: '情感心理' },
+  { value: '职场干货', label: '职场干货' },
+  { value: '学习教育', label: '学习教育' }
+]
+
+export const COMPLIANCE_LIBRARIES = [
+  { id: 'safe', name: '安全合规标签库', tags: ['安全', '正规', '合法', '合规'] },
+  { id: 'health', name: '健康合规标签库', tags: ['健康', '天然', '无添加', '有机'] },
+  { id: 'ad', name: '广告合规标签库', tags: ['真实', '实拍', '无夸大', '诚实'] },
+  { id: 'quality', name: '品质合规标签库', tags: ['正品', '高品质', '质检', '保修'] }
+]

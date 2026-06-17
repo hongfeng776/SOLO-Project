@@ -169,10 +169,74 @@ export interface ReviewerStats {
 export interface Tag {
   id: number
   name: string
-  type: TagType
+  type: string
+  categoryId?: number
+  categoryName?: string
+  parentId?: number
+  description: string
+  coverImage: string
   sort: number
   status: number
+  useCount: number
+  hotLevel: number
+  weight: number
+  isCore: number
+  complianceTags: string[]
+  scenes: string[]
+  color: string
+  icon: string
+  lastUsedTime?: string
   createTime: string
+  updateTime: string
+}
+
+export interface Category {
+  id: number
+  name: string
+  code: string
+  parentId?: number
+  level: number
+  description: string
+  coverImage: string
+  icon: string
+  color: string
+  sort: number
+  status: number
+  tagCount: number
+  noteCount: number
+  isCore: number
+  weight: number
+  scenes: string[]
+  children?: Category[]
+  createTime: string
+  updateTime: string
+}
+
+export interface TagUsageLog {
+  id: number
+  tagId: number
+  tagName: string
+  noteId: number
+  noteTitle: string
+  categoryId?: number
+  userId: number
+  userName: string
+  action: string
+  reason: string
+  createTime: string
+}
+
+export interface TagCategoryComplianceResult {
+  valid: boolean
+  errors: string[]
+  warnings: string[]
+}
+
+export interface BatchTagOpsResult {
+  total: number
+  success: number
+  fail: number
+  results: Array<{ id: number; success: boolean; error?: string }>
 }
 
 export interface Creator {
