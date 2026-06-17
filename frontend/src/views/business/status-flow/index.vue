@@ -325,6 +325,7 @@ const currentRow = ref<StatusFlowItem | null>(null)
 const searchForm = reactive({
   openingType: null as number | null,
   currentStatus: null as number | null,
+  statuses: null as number[] | null,
   timeRange: [] as string[],
   keyword: ''
 })
@@ -425,7 +426,8 @@ const fetchData = async () => {
       page: pageParams.page,
       pageSize: pageParams.pageSize,
       openingType: searchForm.openingType ?? undefined,
-      currentStatus: searchForm.currentStatus ?? undefined,
+      status: searchForm.currentStatus ?? undefined,
+      statuses: searchForm.statuses && searchForm.statuses.length > 0 ? searchForm.statuses.join(',') : undefined,
       keyword: searchForm.keyword || undefined,
       startTime: searchForm.timeRange?.[0] || undefined,
       endTime: searchForm.timeRange?.[1] || undefined
@@ -433,7 +435,12 @@ const fetchData = async () => {
     const res = await statusFlowApi.getFlowList(params)
     tableData.value = res.list || []
     total.value = res.total || 0
-    calculateStats(res.list || [])
+    if (res.statistics) {
+      stats.pending = res.statistics.pending ?? 0
+      stats.reviewing = res.statistics.reviewing ?? 0
+      stats.passed = res.statistics.passed ?? 0
+      stats.rejected = res.statistics.rejected ?? 0
+    }
   } catch (e: any) {
     ElMessage.error(e.message || '加载失败')
   } finally {
@@ -450,6 +457,7 @@ const handleReset = () => {
   Object.assign(searchForm, {
     openingType: null,
     currentStatus: null,
+    statuses: null,
     timeRange: [],
     keyword: ''
   })
@@ -469,10 +477,13 @@ const quickFilter = (category: string) => {
     rejected: [OpeningStatus.REJECTED, OpeningStatus.DENIED]
   }
   const statuses = statusMap[category]
-  if (statuses && statuses.length === 1) {
+  if (!statuses) return
+  if (statuses.length === 1) {
     searchForm.currentStatus = statuses[0]
+    searchForm.statuses = null
   } else {
     searchForm.currentStatus = null
+    searchForm.statuses = [...statuses]
   }
   pageParams.page = 1
   fetchData()
@@ -522,6 +533,10 @@ const handleAction = async (row: StatusFlowItem, op: string) => {
     triggerSlideAnimation(row.id, isForward ? 'left' : 'right')
 
     const remark = await promptRemarkIfNeeded(op)
+    if (needsRemarkButCancelled(op, remark)) {
+      return
+    }
+
     const result = await statusFlowApi.executeTransition({
       openingType: row.openingType,
       openingId: row.id,
@@ -564,6 +579,16 @@ const promptRemarkIfNeeded = async (op: string): Promise<string | undefined> => 
   } catch {
     return undefined
   }
+}
+
+const needsRemarkButCancelled = (op: string, remark: string | undefined): boolean => {
+  const needsRemark = [
+    OperationType.REVIEW_REJECT,
+    OperationType.CANCEL,
+    OperationType.VOID
+  ]
+  if (!needsRemark.includes(op as OperationType)) return false
+  return remark === undefined
 }
 
 const openDetail = async (row: StatusFlowItem) => {

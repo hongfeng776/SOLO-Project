@@ -270,18 +270,40 @@ export class StatusFlowService {
     userId?: string,
     orgId?: string,
     userRoles?: string[]
-  ): Promise<PaginatedResult<StatusFlowItemVO>> {
-    const { page, pageSize, ...queryParams } = params;
+  ): Promise<{
+    list: StatusFlowItemVO[];
+    total: number;
+    page: number;
+    pageSize: number;
+    statistics: {
+      pending: number;
+      reviewing: number;
+      passed: number;
+      rejected: number;
+      total: number;
+    };
+  }> {
+    const { page, pageSize, statuses, ...queryParams } = params;
     const pageNum = page || 1;
     const size = pageSize || 10;
 
     const isAdmin = userRoles?.includes('admin');
 
+    let parsedStatuses: number[] | undefined;
+    if (statuses !== undefined && statuses !== null) {
+      if (Array.isArray(statuses)) {
+        parsedStatuses = statuses.map(s => Number(s)).filter(s => !isNaN(s));
+      } else if (typeof statuses === 'string') {
+        parsedStatuses = statuses.split(',').map(s => Number(s.trim())).filter(s => !isNaN(s));
+      }
+      if (parsedStatuses && parsedStatuses.length === 0) parsedStatuses = undefined;
+    }
+
     const personalList = await this._queryFlowOpenings(
-      AccountOpening, OpeningType.PERSONAL, queryParams, orgId, isAdmin
+      AccountOpening, OpeningType.PERSONAL, { ...queryParams, statuses: parsedStatuses }, orgId, isAdmin
     );
     const corporateList = await this._queryFlowOpenings(
-      CorporateAccountOpening, OpeningType.CORPORATE, queryParams, orgId, isAdmin
+      CorporateAccountOpening, OpeningType.CORPORATE, { ...queryParams, statuses: parsedStatuses }, orgId, isAdmin
     );
 
     const combined = [...personalList, ...corporateList].sort((a: any, b: any) =>
@@ -296,7 +318,17 @@ export class StatusFlowService {
       this._toFlowItem(item, item._openingType)
     );
 
-    return { list, total, page: pageNum, pageSize: size };
+    const calcStatistics = (data: any[]) => ({
+      pending: data.filter((r: any) => r.status === 0 || r.status === 1).length,
+      reviewing: data.filter((r: any) => r.status === 2 || r.status === 3).length,
+      passed: data.filter((r: any) => r.status === 4 || r.status === 5).length,
+      rejected: data.filter((r: any) => r.status === 6 || r.status === 8).length,
+      total: data.length
+    });
+
+    const statistics = calcStatistics(combined);
+
+    return { list, total, page: pageNum, pageSize: size, statistics };
   }
 
   private async _queryFlowOpenings(
@@ -314,6 +346,9 @@ export class StatusFlowService {
     }
 
     if (params.status !== undefined) where.status = params.status;
+    if (params.statuses && Array.isArray(params.statuses)) {
+      where.status = { [Op.in]: params.statuses };
+    }
     if (params.keyword) {
       const nameField = openingType === OpeningType.PERSONAL ? 'customer_name' : 'enterprise_name';
       const idField = openingType === OpeningType.PERSONAL ? 'id_card_no' : 'credit_code';

@@ -1,6 +1,9 @@
 import { Sequelize } from 'sequelize-typescript';
 import { config } from './index';
 import { User, Role, Permission, Organization, UserRole, RolePermission, Transaction, Product, AuditRecord, AuditRule, OperationLog, Customer, ViolationRecord, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog, StatusChangeLog } from '../models';
+import { StatusChangeLog as SCL } from '../models';
+
+const _tableCreateEnsure = SCL;
 
 export const sequelize = new Sequelize({
   dialect: 'mysql',
@@ -47,7 +50,10 @@ export async function testConnection(): Promise<void> {
 
 export async function syncDatabase(force: boolean = false): Promise<void> {
   try {
-    await sequelize.sync({ force, alter: !force });
+    await sequelize.sync({ force, alter: false });
+    try {
+      await StatusChangeLog.sync({ alter: false });
+    } catch { /* table may already exist */ }
     console.log(`[Database] Database synced successfully (force=${force}).`);
   } catch (error) {
     console.error('[Database] Failed to sync database:', error);

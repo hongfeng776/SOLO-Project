@@ -184,10 +184,19 @@ export interface StatusFlowQueryParams {
   pageSize?: number;
   openingType?: number;
   status?: number;
+  statuses?: number[] | string;
   keyword?: string;
   channelCode?: string;
   startTime?: string;
   endTime?: string;
+}
+
+export interface StatusFlowStatistics {
+  pending: number;
+  reviewing: number;
+  passed: number;
+  rejected: number;
+  total: number;
 }
 
 export interface StatusTraceRequest {
