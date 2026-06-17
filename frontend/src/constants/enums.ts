@@ -238,4 +238,61 @@ export const VIOLATION_TYPE = {
   OTHER: { value: 'other', label: '其他违规' },
 } as const
 
+export const ARTICLE_TYPE = {
+  NEWS: { value: 0, label: '普通资讯', color: '#409EFF', type: 'primary' },
+  TOPIC: { value: 1, label: '专题文章', color: '#67C23A', type: 'success' },
+  COLUMN: { value: 2, label: '专栏', color: '#E6A23C', type: 'warning' },
+  INTERVIEW: { value: 3, label: '人物访谈', color: '#909399', type: 'info' },
+  ANALYSIS: { value: 4, label: '行业分析', color: '#F56C6C', type: 'danger' },
+} as const
+
+export const DOMAIN_CATEGORY = {
+  TECH: { value: 'tech', label: '科技', color: '#409EFF', type: 'primary' },
+  ENTERTAINMENT: { value: 'entertainment', label: '娱乐', color: '#E6A23C', type: 'warning' },
+  SPORTS: { value: 'sports', label: '体育', color: '#67C23A', type: 'success' },
+  FINANCE: { value: 'finance', label: '财经', color: '#F56C6C', type: 'danger' },
+  LIFESTYLE: { value: 'lifestyle', label: '生活', color: '#909399', type: 'info' },
+  EDUCATION: { value: 'education', label: '教育', color: '#67C23A', type: 'success' },
+} as const
+
+export const PUBLISH_CHANNEL = {
+  HOME: { value: 1, label: '首页', color: '#409EFF', type: 'primary' },
+  NEWS: { value: 2, label: '资讯页', color: '#67C23A', type: 'success' },
+  TOPIC: { value: 3, label: '专题页', color: '#E6A23C', type: 'warning' },
+  MULTI: { value: 4, label: '多渠道', color: '#F56C6C', type: 'danger' },
+} as const
+
+export const PUBLISH_PERMISSION = {
+  PUBLIC: { value: 0, label: '公开', color: '#67C23A', type: 'success' },
+  LOGIN: { value: 1, label: '登录可见', color: '#409EFF', type: 'primary' },
+  MEMBER: { value: 2, label: '会员可见', color: '#E6A23C', type: 'warning' },
+  PAID: { value: 3, label: '付费可见', color: '#F56C6C', type: 'danger' },
+} as const
+
+export const LAYOUT_TEMPLATE = {
+  DEFAULT: { value: 'default', label: '默认模板', desc: '标准三栏布局' },
+  FULL_WIDTH: { value: 'full-width', label: '通栏模板', desc: '全宽沉浸式阅读' },
+  MAGAZINE: { value: 'magazine', label: '杂志模板', desc: '图文并茂杂志风' },
+  ELEGANT: { value: 'elegant', label: '雅致模板', desc: '简约文艺排版' },
+  TECH_STYLE: { value: 'tech-style', label: '科技模板', desc: '深色科技风格' },
+} as const
+
+export const ARTICLE_QUALITY = {
+  LOW: { value: 0, label: '低质', color: '#F56C6C', type: 'danger' },
+  NORMAL: { value: 1, label: '普通', color: '#909399', type: 'info' },
+  GOOD: { value: 2, label: '优质', color: '#67C23A', type: 'success' },
+  EXCELLENT: { value: 3, label: '精品', color: '#409EFF', type: 'primary' },
+} as const
+
+export const EDIT_MODE = {
+  FULL: { value: 0, label: '全覆盖修改', desc: '替换全部内容，生成新版本' },
+  INCREMENTAL: { value: 1, label: '增量修改', desc: '只更新修改部分，保留原内容' },
+} as const
+
+export const SENSITIVE_CHECK_STATUS = {
+  UNCHECKED: { value: 0, label: '未检测', type: 'info' },
+  PASSED: { value: 1, label: '检测通过', type: 'success' },
+  FAILED: { value: 2, label: '含敏感词', type: 'danger' },
+} as const
+
 export const DATE_FORMAT_STRING = DATE_FORMAT

@@ -1,5 +1,6 @@
 const { User, Role } = require('./User');
 const { Content } = require('./Content');
+const { ArticleVersion } = require('./ArticleVersion');
 const { ContentStatusLog } = require('./ContentStatusLog');
 const { Copyright } = require('./Copyright');
 const { Advertisement } = require('./Advertisement');
@@ -13,13 +14,6 @@ Content.belongsTo(Copyright, { foreignKey: 'copyright_id', as: 'copyright' });
 Copyright.hasMany(Content, { foreignKey: 'copyright_id', as: 'contents' });
 
 Content.hasMany(Comment, { foreignKey: 'content_id', as: 'comments' });
-Comment.belongsTo(Content, { foreignKey: 'content_id', as: 'content' });
-
-Comment.belongsTo(User, { foreignKey: 'user_id', as: 'commentUser' });
-Comment.hasMany(Comment, { foreignKey: 'parent_id', as: 'replies' });
-Comment.belongsTo(Comment, { foreignKey: 'parent_id', as: 'parent' });
-
-Member.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 Advertisement.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 Activity.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
@@ -28,6 +22,7 @@ module.exports = {
   User,
   Role,
   Content,
+  ArticleVersion,
   ContentStatusLog,
   Copyright,
   Advertisement,

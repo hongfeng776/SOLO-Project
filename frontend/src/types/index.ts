@@ -466,3 +466,102 @@ export interface BatchOperationResult {
   successIds: number[]
   skippedIds: number[]
 }
+
+export interface ArticleItem {
+  id: number
+  title: string
+  category: number
+  coverImage: string
+  description: string
+  tags: string[]
+  articleType: number
+  articleCode: string
+  domainCategory: string
+  publishChannel: number
+  publishPermission: number
+  layoutTemplate: string
+  wordCount: number
+  summary: string
+  coverImages: string[]
+  contentImages: string[]
+  imageResolution?: string
+  topicId?: number
+  topicTitle?: string
+  resourcePosition?: string
+  isTop: number
+  topExpireAt?: string
+  weightScore: number
+  viewCount: number
+  likeCountArticle: number
+  favoriteCount: number
+  commentCountArticle: number
+  shareCountArticle: number
+  versionNo: number
+  latestPublishedVersion: number
+  publishAccount?: string
+  publishAccountId?: number
+  sensitiveWordCheck: number
+  sensitiveWords: string[]
+  contentHash?: string
+  articleQuality: number
+  isExpired: number
+  expireAt?: string
+  linksValid: number
+  invalidLinks: string[]
+  checkReport?: CheckReport
+  auditStatus: number
+  auditRemark?: string
+  status: number
+  statusLogs: StatusLogItem[]
+  isVip: number
+  sortOrder: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface ArticleVersionItem {
+  id: number
+  contentId: number
+  versionNo: number
+  title: string
+  description: string
+  coverImages: string[]
+  summary: string
+  wordCount: number
+  layoutTemplate: string
+  editMode: number
+  publishStatus: number
+  operatorId?: number
+  operatorName?: string
+  changeLog: string[]
+  auditStatus: number
+  auditRemark?: string
+  auditTime?: string
+  auditorId?: number
+  auditorName?: string
+  createdAt: string
+}
+
+export interface CheckReport {
+  overallScore: number
+  checks: CheckItem[]
+  issues: string[]
+  suggestions: string[]
+}
+
+export interface CheckItem {
+  item: string
+  status: 'pass' | 'warning' | 'fail'
+  score: number
+  message: string
+}
+
+export interface TitleCheckResult {
+  isUnique: boolean
+  duplicateTitle?: string
+}
+
+export interface ContentCheckResult {
+  isUnique: boolean
+  duplicateContent?: { id: number; title: string }
+}

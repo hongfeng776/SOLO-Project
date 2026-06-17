@@ -166,6 +166,57 @@ const OPERATION_MODULE = {
   SYSTEM: { value: 'system', label: '系统管理' },
 };
 
+const ARTICLE_TYPE = {
+  NEWS: { value: 0, label: '普通资讯', color: '#409EFF' },
+  TOPIC: { value: 1, label: '专题文章', color: '#67C23A' },
+  COLUMN: { value: 2, label: '专栏', color: '#E6A23C' },
+  INTERVIEW: { value: 3, label: '人物访谈', color: '#909399' },
+  ANALYSIS: { value: 4, label: '行业分析', color: '#F56C6C' },
+};
+
+const DOMAIN_CATEGORY = {
+  TECH: { value: 'tech', label: '科技', color: '#409EFF' },
+  ENTERTAINMENT: { value: 'entertainment', label: '娱乐', color: '#E6A23C' },
+  SPORTS: { value: 'sports', label: '体育', color: '#67C23A' },
+  FINANCE: { value: 'finance', label: '财经', color: '#F56C6C' },
+  LIFESTYLE: { value: 'lifestyle', label: '生活', color: '#909399' },
+  EDUCATION: { value: 'education', label: '教育', color: '#67C23A' },
+};
+
+const PUBLISH_CHANNEL = {
+  HOME: { value: 1, label: '首页', color: '#409EFF' },
+  NEWS: { value: 2, label: '资讯页', color: '#67C23A' },
+  TOPIC: { value: 3, label: '专题页', color: '#E6A23C' },
+  MULTI: { value: 4, label: '多渠道', color: '#F56C6C' },
+};
+
+const PUBLISH_PERMISSION = {
+  PUBLIC: { value: 0, label: '公开', color: '#67C23A' },
+  LOGIN: { value: 1, label: '登录可见', color: '#409EFF' },
+  MEMBER: { value: 2, label: '会员可见', color: '#E6A23C' },
+  PAID: { value: 3, label: '付费可见', color: '#F56C6C' },
+};
+
+const LAYOUT_TEMPLATE = {
+  DEFAULT: { value: 'default', label: '默认模板', desc: '标准三栏布局' },
+  FULL_WIDTH: { value: 'full-width', label: '通栏模板', desc: '全宽沉浸式阅读' },
+  MAGAZINE: { value: 'magazine', label: '杂志模板', desc: '图文并茂杂志风' },
+  ELEGANT: { value: 'elegant', label: '雅致模板', desc: '简约文艺排版' },
+  TECH_STYLE: { value: 'tech-style', label: '科技模板', desc: '深色科技风格' },
+};
+
+const ARTICLE_QUALITY = {
+  LOW: { value: 0, label: '低质', color: '#F56C6C' },
+  NORMAL: { value: 1, label: '普通', color: '#909399' },
+  GOOD: { value: 2, label: '优质', color: '#67C23A' },
+  EXCELLENT: { value: 3, label: '精品', color: '#409EFF' },
+};
+
+const EDIT_MODE = {
+  FULL: { value: 0, label: '全覆盖修改' },
+  INCREMENTAL: { value: 1, label: '增量修改' },
+};
+
 module.exports = {
   CONTENT_AUDIT_STATUS,
   getAuditStatusLabel,
@@ -188,4 +239,11 @@ module.exports = {
   VIOLATION_LEVEL,
   MESSAGE_PRIORITY,
   OPERATION_MODULE,
+  ARTICLE_TYPE,
+  DOMAIN_CATEGORY,
+  PUBLISH_CHANNEL,
+  PUBLISH_PERMISSION,
+  LAYOUT_TEMPLATE,
+  ARTICLE_QUALITY,
+  EDIT_MODE,
 };
