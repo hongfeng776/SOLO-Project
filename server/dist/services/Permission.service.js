@@ -42,6 +42,8 @@ const error_middleware_1 = require("../middleware/error.middleware");
 const enum_1 = require("../constants/enum");
 const cache_1 = __importStar(require("../utils/cache"));
 const RolePermission_model_1 = __importDefault(require("../models/RolePermission.model"));
+const PermissionChangeLog_service_1 = __importDefault(require("./PermissionChangeLog.service"));
+const PermissionChangeLog_model_1 = require("../models/PermissionChangeLog.model");
 const SYSTEM_MENU_PATHS = [
     '/dashboard', '/permission', '/channel', '/promoter', '/order',
     '/commission', '/marketing', '/withdraw', '/log',
@@ -76,6 +78,19 @@ class PermissionService {
             createdByName: currentUser?.username,
             isSystem: false,
         });
+        PermissionChangeLog_service_1.default.logChange({
+            operatorId: currentUser?.userId,
+            operatorName: currentUser?.username,
+            targetId: permission.id,
+            targetType: PermissionChangeLog_model_1.ChangeTargetType.PERMISSION,
+            targetName: permission.name,
+            action: PermissionChangeLog_model_1.ChangeAction.CREATE,
+            module: data.module,
+            afterData: permission.toJSON(),
+            ip: currentUser?.ip || 'unknown',
+            userAgent: currentUser?.userAgent,
+            reason: data.reason,
+        });
         await this.clearPermissionCache();
         return permission;
     }
@@ -87,6 +102,7 @@ class PermissionService {
         if (perm.isSystem) {
             throw new error_middleware_1.AppError('系统内置菜单禁止修改', statusCode_1.BusinessCode.FORBIDDEN);
         }
+        const beforeData = perm.toJSON();
         if (data.path && data.path !== perm.path) {
             const exists = await dao_1.permissionDao.existsByPath(data.path, id);
             if (exists)
@@ -103,13 +119,29 @@ class PermissionService {
             updateData.level = parent ? Number(parent.level || 1) + 1 : 1;
         }
         await dao_1.permissionDao.update(updateData, { where: { id } });
+        const updated = await dao_1.permissionDao.findById(id);
+        PermissionChangeLog_service_1.default.logChange({
+            operatorId: currentUser?.userId,
+            operatorName: currentUser?.username,
+            targetId: id,
+            targetType: PermissionChangeLog_model_1.ChangeTargetType.PERMISSION,
+            targetName: perm.name,
+            action: PermissionChangeLog_model_1.ChangeAction.UPDATE,
+            module: perm.module || data.module,
+            beforeData,
+            afterData: updated?.toJSON(),
+            ip: currentUser?.ip || 'unknown',
+            userAgent: currentUser?.userAgent,
+            reason: data.reason,
+        });
         await this.clearPermissionCache();
         await cache_1.default.delPattern(`user:menus:*`);
         await cache_1.default.delPattern(`user:permissions:*`);
-        return dao_1.permissionDao.findById(id);
+        return updated;
     }
     async updateStatusBatch(currentUser, ids, status) {
         const result = { success: [], failed: [] };
+        const successPerms = [];
         for (const id of ids) {
             try {
                 const perm = await dao_1.permissionDao.findById(id);
@@ -121,14 +153,32 @@ class PermissionService {
                     result.failed.push({ id, reason: '系统内置菜单禁止修改状态' });
                     continue;
                 }
+                const beforeData = perm.toJSON();
                 await dao_1.permissionDao.update({ status: status }, { where: { id } });
                 result.success.push(id);
+                successPerms.push({ perm, beforeData });
             }
             catch (err) {
                 result.failed.push({ id, reason: err.message || '操作失败' });
             }
         }
         if (result.success.length > 0) {
+            for (const { perm, beforeData } of successPerms) {
+                PermissionChangeLog_service_1.default.logChange({
+                    operatorId: currentUser?.userId,
+                    operatorName: currentUser?.username,
+                    targetId: perm.id,
+                    targetType: PermissionChangeLog_model_1.ChangeTargetType.PERMISSION,
+                    targetName: perm.name,
+                    action: PermissionChangeLog_model_1.ChangeAction.UPDATE,
+                    module: perm.module,
+                    beforeData,
+                    afterData: { ...beforeData, status },
+                    ip: currentUser?.ip || 'unknown',
+                    userAgent: currentUser?.userAgent,
+                    reason: status === enum_1.CommonStatus.ENABLED ? '批量启用菜单' : '批量禁用菜单',
+                });
+            }
             await this.clearPermissionCache();
             await cache_1.default.delPattern(`user:menus:*`);
         }
@@ -136,6 +186,7 @@ class PermissionService {
     }
     async batchSort(currentUser, req) {
         const result = { success: [], failed: [] };
+        const successItems = [];
         for (const item of req.items) {
             try {
                 const perm = await dao_1.permissionDao.findById(item.id);
@@ -147,6 +198,7 @@ class PermissionService {
                     result.failed.push({ id: item.id, reason: '系统内置菜单禁止调整' });
                     continue;
                 }
+                const beforeData = perm.toJSON();
                 const updateData = { sort: item.sort };
                 if (item.parentId !== undefined)
                     updateData.parentId = item.parentId;
@@ -154,13 +206,31 @@ class PermissionService {
                     updateData.level = item.level;
                 await dao_1.permissionDao.update(updateData, { where: { id: item.id } });
                 result.success.push(item.id);
+                successItems.push({ perm, beforeData, updateData });
             }
             catch (err) {
                 result.failed.push({ id: item.id, reason: err.message || '操作失败' });
             }
         }
-        if (result.success.length > 0)
+        if (result.success.length > 0) {
+            for (const { perm, beforeData, updateData } of successItems) {
+                PermissionChangeLog_service_1.default.logChange({
+                    operatorId: currentUser?.userId,
+                    operatorName: currentUser?.username,
+                    targetId: perm.id,
+                    targetType: PermissionChangeLog_model_1.ChangeTargetType.PERMISSION,
+                    targetName: perm.name,
+                    action: PermissionChangeLog_model_1.ChangeAction.UPDATE,
+                    module: perm.module,
+                    beforeData,
+                    afterData: { ...beforeData, ...updateData },
+                    ip: currentUser?.ip || 'unknown',
+                    userAgent: currentUser?.userAgent,
+                    reason: '调整菜单排序/层级',
+                });
+            }
             await this.clearPermissionCache();
+        }
         return result;
     }
     async checkDeleteDependencies(id) {
@@ -203,8 +273,21 @@ class PermissionService {
                 throw new error_middleware_1.AppError('菜单不存在', statusCode_1.BusinessCode.NOT_FOUND);
             if (perm.isSystem)
                 throw new error_middleware_1.AppError('系统内置菜单禁止删除', statusCode_1.BusinessCode.FORBIDDEN);
+            const beforeData = perm.toJSON();
             await dao_1.permissionDao.softDelete(id);
             await RolePermission_model_1.default.destroy({ where: { permissionId: id } });
+            PermissionChangeLog_service_1.default.logChange({
+                operatorId: currentUser?.userId,
+                operatorName: currentUser?.username,
+                targetId: id,
+                targetType: PermissionChangeLog_model_1.ChangeTargetType.PERMISSION,
+                targetName: perm.name,
+                action: PermissionChangeLog_model_1.ChangeAction.DELETE,
+                module: perm.module,
+                beforeData,
+                ip: currentUser?.ip || 'unknown',
+                userAgent: currentUser?.userAgent,
+            });
             await this.clearPermissionCache();
             await cache_1.default.delPattern(`user:menus:*`);
             await cache_1.default.delPattern(`user:permissions:*`);

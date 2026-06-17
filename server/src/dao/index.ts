@@ -8,6 +8,7 @@ import withdrawDao from './Withdraw.dao';
 import roleDao from './Role.dao';
 import permissionDao from './Permission.dao';
 import operationLogDao from './OperationLog.dao';
+import permissionChangeLogDao from './PermissionChangeLog.dao';
 
 export {
   userDao,
@@ -20,4 +21,5 @@ export {
   roleDao,
   permissionDao,
   operationLogDao,
+  permissionChangeLogDao,
 };

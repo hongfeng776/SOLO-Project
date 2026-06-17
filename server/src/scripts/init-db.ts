@@ -8,6 +8,7 @@ import '../models/OperationLog.model';
 import '../models/ChannelExtension.model';
 import '../models/CommissionRule.model';
 import '../models/RoleDeletionLog.model';
+import '../models/PermissionChangeLog.model';
 
 const initDatabase = async (): Promise<void> => {
   try {
@@ -71,6 +72,7 @@ const initDatabase = async (): Promise<void> => {
       { code: 'permission', name: '权限管理', type: PermissionType.MENU, parentId: undefined, path: '/permission', icon: 'Lock', sort: 8, module: PermissionModule.SYSTEM, level: 1, isSystem: true },
       { code: 'permission:role', name: '角色管理', type: PermissionType.MENU, parentId: undefined, path: '/permission/role', icon: 'UserFilled', sort: 1, module: PermissionModule.SYSTEM, level: 2, isSystem: true },
       { code: 'permission:menu', name: '权限菜单', type: PermissionType.MENU, parentId: undefined, path: '/permission/menu', icon: 'Menu', sort: 2, module: PermissionModule.SYSTEM, level: 2, isSystem: true },
+      { code: 'permission:trace', name: '权限溯源', type: PermissionType.MENU, parentId: undefined, path: '/permission/trace', icon: 'Search', sort: 3, module: PermissionModule.SYSTEM, level: 2, isSystem: true },
       { code: 'log', name: '操作日志', type: PermissionType.MENU, parentId: undefined, path: '/log', icon: 'Document', sort: 9, module: PermissionModule.LOG, level: 1, isSystem: true },
       { code: 'log:list', name: '日志列表', type: PermissionType.BUTTON, parentId: undefined, sort: 1, module: PermissionModule.LOG, level: 2, isSystem: true },
     ];

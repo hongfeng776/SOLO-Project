@@ -10,6 +10,8 @@ import CacheUtils, { CacheKey, CacheTTL } from '../utils/cache';
 import { checkPermissionMutualExclusion, PermissionConflict } from '../utils/permissionCheck';
 import { permissionDao } from '../dao';
 import { Op } from 'sequelize';
+import permissionChangeLogService from './PermissionChangeLog.service';
+import { ChangeAction, ChangeTargetType } from '../models/PermissionChangeLog.model';
 
 interface CreateRoleRequest extends RoleCreationAttributes {
   permissionIds?: string[];
@@ -87,6 +89,21 @@ class RoleService {
       await roleDao.assignPermissions(role.id, data.permissionIds);
     }
 
+    permissionChangeLogService.logChange({
+      operatorId: currentUser?.userId,
+      operatorName: currentUser?.username,
+      targetId: role.id,
+      targetType: ChangeTargetType.ROLE,
+      targetName: role.name,
+      action: ChangeAction.CREATE,
+      afterData: role.toJSON(),
+      ip: currentUser?.ip || 'unknown',
+      userAgent: currentUser?.userAgent,
+      reason: (data as any).reason,
+      affectedUserIds: [],
+      affectedUserCount: 0,
+    });
+
     await CacheUtils.delPattern(`${CacheKey.ROLE_LIST}*`);
     await CacheUtils.del(`${CacheKey.PERMISSION_LIST}all`);
 
@@ -130,6 +147,8 @@ class RoleService {
 
     const originalPermissions = await roleDao.getPermissions(roleId);
     const originalPermissionIds = originalPermissions.map(p => p.id);
+    const beforeData = role.toJSON();
+    beforeData.permissionIds = originalPermissionIds;
 
     let summary: PermissionChangeSummary = { removedCount: 0, addedCount: 0, lockedCount: 0 };
     let downshifted = false;
@@ -197,6 +216,26 @@ class RoleService {
     await CacheUtils.delPattern(`${CacheKey.ROLE_LIST}*`);
 
     const updatedRole = await roleDao.findById(roleId);
+
+    const afterData: any = updatedRole?.toJSON() || {};
+    afterData.permissionIds = data.permissionIds || originalPermissionIds;
+
+    permissionChangeLogService.logChange({
+      operatorId: currentUser?.userId,
+      operatorName: currentUser?.username,
+      targetId: roleId,
+      targetType: ChangeTargetType.ROLE,
+      targetName: role.name,
+      action: ChangeAction.UPDATE,
+      beforeData,
+      afterData,
+      ip: currentUser?.ip || 'unknown',
+      userAgent: currentUser?.userAgent,
+      reason: (data as any).reason,
+      affectedUserIds: boundUserIds,
+      affectedUserCount: boundUserCount,
+    });
+
     return { role: updatedRole, summary, downshifted };
   }
 
@@ -254,6 +293,19 @@ class RoleService {
 
         await roleDao.assignPermissions(newRole.id, permIds);
         result.success.push(newRole.id);
+
+        permissionChangeLogService.logChange({
+          operatorId: currentUser?.userId,
+          operatorName: currentUser?.username,
+          targetId: newRole.id,
+          targetType: ChangeTargetType.ROLE,
+          targetName: newRole.name,
+          action: ChangeAction.BATCH_COPY,
+          afterData: newRole.toJSON(),
+          ip: currentUser?.ip || 'unknown',
+          userAgent: currentUser?.userAgent,
+          reason: `从角色 ${sourceRole.name} 复制`,
+        });
       } catch (err: any) {
         result.failed.push({ id: sourceId, reason: err.message || '复制失败' });
       }
@@ -265,6 +317,7 @@ class RoleService {
 
   public async batchUpdateStatus(currentUser: any, ids: string[], status: number): Promise<BatchOperateResult> {
     const result: BatchOperateResult = { success: [], failed: [] };
+    const successRoles: any[] = [];
 
     for (const id of ids) {
       try {
@@ -277,12 +330,33 @@ class RoleService {
           result.failed.push({ id, reason: '系统内置角色禁止修改状态' });
           continue;
         }
+        const boundUserIds = await roleDao.getBoundUserIds(id);
+        const beforeData = role.toJSON();
         await roleDao.update({ status: status as CommonStatus } as any, { where: { id } });
         await CacheUtils.del(`${CacheKey.ROLE_DETAIL}${id}`);
         result.success.push(id);
+        successRoles.push({ role, beforeData, boundUserIds });
       } catch (err: any) {
         result.failed.push({ id, reason: err.message || '操作失败' });
       }
+    }
+
+    for (const { role, beforeData, boundUserIds } of successRoles) {
+      permissionChangeLogService.logChange({
+        operatorId: currentUser?.userId,
+        operatorName: currentUser?.username,
+        targetId: role.id,
+        targetType: ChangeTargetType.ROLE,
+        targetName: role.name,
+        action: ChangeAction.UPDATE,
+        beforeData,
+        afterData: { ...beforeData, status },
+        ip: currentUser?.ip || 'unknown',
+        userAgent: currentUser?.userAgent,
+        reason: status === CommonStatus.ENABLED ? '批量启用角色' : '批量禁用角色',
+        affectedUserIds: boundUserIds,
+        affectedUserCount: boundUserIds.length,
+      });
     }
 
     await CacheUtils.delPattern(`${CacheKey.ROLE_LIST}*`);
@@ -348,8 +422,11 @@ class RoleService {
 
       const perms = await roleDao.getPermissions(roleId);
       const permSnapshot = perms.map(p => ({ id: p.id, name: p.name, code: (p as any).code }));
+      const beforeData = role.toJSON();
+      (beforeData as any).permissions = permSnapshot;
 
       const boundUsers = await roleDao.getBoundUserCount(roleId);
+      const boundUserIds = await roleDao.getBoundUserIds(roleId);
       await RoleDeletionLog.create({
         roleId: role.id,
         roleName: role.name,
@@ -359,6 +436,20 @@ class RoleService {
         permissionSnapshot: permSnapshot,
         boundUsers,
         deletedAt: new Date(),
+      });
+
+      permissionChangeLogService.logChange({
+        operatorId: currentUser?.userId,
+        operatorName: currentUser?.username,
+        targetId: roleId,
+        targetType: ChangeTargetType.ROLE,
+        targetName: role.name,
+        action: ChangeAction.DELETE,
+        beforeData,
+        ip: currentUser?.ip || 'unknown',
+        userAgent: currentUser?.userAgent,
+        affectedUserIds: boundUserIds,
+        affectedUserCount: boundUsers,
       });
 
       await roleDao.softDelete(roleId);

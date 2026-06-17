@@ -89,6 +89,12 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/views/permission/menu.vue'),
             meta: { title: '权限菜单', icon: 'Menu' },
           },
+          {
+            path: 'trace',
+            name: 'PermissionTrace',
+            component: () => import('@/views/permission/trace.vue'),
+            meta: { title: '权限溯源', icon: 'Search' },
+          },
         ],
       },
       {

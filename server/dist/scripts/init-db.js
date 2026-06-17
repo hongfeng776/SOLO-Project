@@ -13,6 +13,7 @@ require("../models/OperationLog.model");
 require("../models/ChannelExtension.model");
 require("../models/CommissionRule.model");
 require("../models/RoleDeletionLog.model");
+require("../models/PermissionChangeLog.model");
 const initDatabase = async () => {
     try {
         logger_1.default.info('Starting database initialization...');
@@ -69,6 +70,7 @@ const initDatabase = async () => {
             { code: 'permission', name: '权限管理', type: enum_1.PermissionType.MENU, parentId: undefined, path: '/permission', icon: 'Lock', sort: 8, module: enum_1.PermissionModule.SYSTEM, level: 1, isSystem: true },
             { code: 'permission:role', name: '角色管理', type: enum_1.PermissionType.MENU, parentId: undefined, path: '/permission/role', icon: 'UserFilled', sort: 1, module: enum_1.PermissionModule.SYSTEM, level: 2, isSystem: true },
             { code: 'permission:menu', name: '权限菜单', type: enum_1.PermissionType.MENU, parentId: undefined, path: '/permission/menu', icon: 'Menu', sort: 2, module: enum_1.PermissionModule.SYSTEM, level: 2, isSystem: true },
+            { code: 'permission:trace', name: '权限溯源', type: enum_1.PermissionType.MENU, parentId: undefined, path: '/permission/trace', icon: 'Search', sort: 3, module: enum_1.PermissionModule.SYSTEM, level: 2, isSystem: true },
             { code: 'log', name: '操作日志', type: enum_1.PermissionType.MENU, parentId: undefined, path: '/log', icon: 'Document', sort: 9, module: enum_1.PermissionModule.LOG, level: 1, isSystem: true },
             { code: 'log:list', name: '日志列表', type: enum_1.PermissionType.BUTTON, parentId: undefined, sort: 1, module: enum_1.PermissionModule.LOG, level: 2, isSystem: true },
         ];

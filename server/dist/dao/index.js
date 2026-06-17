@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.operationLogDao = exports.permissionDao = exports.roleDao = exports.withdrawDao = exports.marketingDao = exports.commissionDao = exports.orderDao = exports.promoterDao = exports.channelDao = exports.userDao = void 0;
+exports.permissionChangeLogDao = exports.operationLogDao = exports.permissionDao = exports.roleDao = exports.withdrawDao = exports.marketingDao = exports.commissionDao = exports.orderDao = exports.promoterDao = exports.channelDao = exports.userDao = void 0;
 const User_dao_1 = __importDefault(require("./User.dao"));
 exports.userDao = User_dao_1.default;
 const Channel_dao_1 = __importDefault(require("./Channel.dao"));
@@ -24,4 +24,6 @@ const Permission_dao_1 = __importDefault(require("./Permission.dao"));
 exports.permissionDao = Permission_dao_1.default;
 const OperationLog_dao_1 = __importDefault(require("./OperationLog.dao"));
 exports.operationLogDao = OperationLog_dao_1.default;
+const PermissionChangeLog_dao_1 = __importDefault(require("./PermissionChangeLog.dao"));
+exports.permissionChangeLogDao = PermissionChangeLog_dao_1.default;
 //# sourceMappingURL=index.js.map

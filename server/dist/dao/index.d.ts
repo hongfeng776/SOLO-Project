@@ -8,5 +8,6 @@ import withdrawDao from './Withdraw.dao';
 import roleDao from './Role.dao';
 import permissionDao from './Permission.dao';
 import operationLogDao from './OperationLog.dao';
-export { userDao, channelDao, promoterDao, orderDao, commissionDao, marketingDao, withdrawDao, roleDao, permissionDao, operationLogDao, };
+import permissionChangeLogDao from './PermissionChangeLog.dao';
+export { userDao, channelDao, promoterDao, orderDao, commissionDao, marketingDao, withdrawDao, roleDao, permissionDao, operationLogDao, permissionChangeLogDao, };
 //# sourceMappingURL=index.d.ts.map

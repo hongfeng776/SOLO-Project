@@ -199,3 +199,84 @@ export function getPermissionsByModule(module: string): Promise<PermissionItem[]
 export function getIdlePermissions(params: any): Promise<PermissionItem[]> {
   return get<PermissionItem[]>('/permissions/idle', params)
 }
+
+export type ChangeTargetType = 'role' | 'permission' | 'user'
+export type ChangeAction = 'create' | 'update' | 'delete' | 'batch_assign' | 'batch_revoke' | 'batch_copy'
+
+export interface PermissionChangeLogItem {
+  id: string
+  operatorId: string
+  operatorName: string
+  targetId: string
+  targetType: ChangeTargetType
+  targetName?: string
+  action: ChangeAction
+  module?: string
+  beforeData?: any
+  afterData?: any
+  changedFields?: Record<string, { before: any; after: any }>
+  affectedUserIds?: string[]
+  affectedUserCount?: number
+  reason?: string
+  ip: string
+  userAgent?: string
+  createdAt: string
+}
+
+export interface PermissionChangeLogQueryParams extends PageParams {
+  operatorId?: string
+  operatorName?: string
+  targetType?: ChangeTargetType
+  targetId?: string
+  action?: ChangeAction
+  module?: string
+  startTime?: string
+  endTime?: string
+  keyword?: string
+}
+
+export interface AnomalyDetectionResult {
+  highFrequencyOperations: Array<{
+    startTime: string
+    endTime: string
+    count: number
+    operatorId: string
+    operatorName: string
+    actions: string[]
+    ips: string[]
+    sampleLogs: PermissionChangeLogItem[]
+  }>
+  suspiciousAccounts: Array<{
+    operatorId: string
+    operatorName: string
+    ip: string
+    userAgent?: string
+    operationCount: number
+    latestOperationTime: string
+    highRiskActions: string[]
+  }>
+  anomalyCount: number
+  highFrequencyCount: number
+}
+
+export function getPermissionChangeLogList(params: PermissionChangeLogQueryParams): Promise<PageResult<PermissionChangeLogItem>> {
+  return get<PageResult<PermissionChangeLogItem>>('/permission-change-logs', params)
+}
+
+export function getPermissionChangeLogDetail(id: string): Promise<PermissionChangeLogItem> {
+  return get<PermissionChangeLogItem>(`/permission-change-logs/${id}`)
+}
+
+export function exportPermissionChangeLogs(params: any): Promise<void> {
+  return import('@/utils/axios').then(mod => mod.download('/permission-change-logs/export', params))
+}
+
+export function detectPermissionAnomalies(params: {
+  userId?: string
+  timeWindowMinutes?: number
+  frequencyThreshold?: number
+  startTime?: string
+  endTime?: string
+}): Promise<AnomalyDetectionResult> {
+  return get<AnomalyDetectionResult>('/permission-change-logs/anomalies', params)
+}

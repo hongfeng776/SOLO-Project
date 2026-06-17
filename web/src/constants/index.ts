@@ -266,3 +266,59 @@ export const VISIBLE_RANGE_OPTIONS = [
   { label: '运营团队可见', value: 'manager' },
   { label: '仅指定角色可见', value: 'custom' },
 ]
+
+export const CHANGE_TARGET_TYPE_OPTIONS = [
+  { label: '角色', value: 'role' },
+  { label: '权限菜单', value: 'permission' },
+  { label: '用户', value: 'user' },
+] as const
+
+export const CHANGE_TARGET_TYPE_MAP: Record<string, string> = {
+  role: '角色',
+  permission: '权限菜单',
+  user: '用户',
+}
+
+export const CHANGE_ACTION_OPTIONS = [
+  { label: '创建', value: 'create', type: 'success' },
+  { label: '编辑', value: 'update', type: 'primary' },
+  { label: '删除', value: 'delete', type: 'danger' },
+  { label: '批量分配', value: 'batch_assign', type: 'warning' },
+  { label: '批量撤销', value: 'batch_revoke', type: 'danger' },
+  { label: '批量复制', value: 'batch_copy', type: 'info' },
+] as const
+
+export const CHANGE_ACTION_MAP: Record<string, { label: string; type: string }> = {
+  create: { label: '创建', type: 'success' },
+  update: { label: '编辑', type: 'primary' },
+  delete: { label: '删除', type: 'danger' },
+  batch_assign: { label: '批量分配', type: 'warning' },
+  batch_revoke: { label: '批量撤销', type: 'danger' },
+  batch_copy: { label: '批量复制', type: 'info' },
+}
+
+export const EXPORT_FIELD_OPTIONS = [
+  { label: '操作人', value: 'operatorName' },
+  { label: '目标类型', value: 'targetType' },
+  { label: '目标名称', value: 'targetName' },
+  { label: '操作类型', value: 'action' },
+  { label: '所属模块', value: 'module' },
+  { label: '变更原因', value: 'reason' },
+  { label: '影响账号数', value: 'affectedUserCount' },
+  { label: 'IP地址', value: 'ip' },
+  { label: '操作时间', value: 'createdAt' },
+]
+
+export const SORT_FIELD_OPTIONS = [
+  { label: '操作时间', value: 'createdAt' },
+  { label: '操作人', value: 'operatorName' },
+  { label: '目标名称', value: 'targetName' },
+  { label: '影响账号数', value: 'affectedUserCount' },
+]
+
+export const ANOMALY_THRESHOLD_OPTIONS = [
+  { label: '10分钟≥20次', value: { window: 10, threshold: 20 } },
+  { label: '5分钟≥15次', value: { window: 5, threshold: 15 } },
+  { label: '30分钟≥50次', value: { window: 30, threshold: 50 } },
+  { label: '1小时≥100次', value: { window: 60, threshold: 100 } },
+]

@@ -16,6 +16,7 @@ const role_routes_1 = __importDefault(require("./role.routes"));
 const permission_routes_1 = __importDefault(require("./permission.routes"));
 const operation_log_routes_1 = __importDefault(require("./operation-log.routes"));
 const commission_rule_routes_1 = __importDefault(require("./commission-rule.routes"));
+const permission_change_log_routes_1 = __importDefault(require("./permission-change-log.routes"));
 const response_1 = __importDefault(require("../utils/response"));
 const router = (0, express_1.Router)();
 router.get('/health', (_req, res) => {
@@ -33,5 +34,6 @@ router.use('/roles', role_routes_1.default);
 router.use('/permissions', permission_routes_1.default);
 router.use('/operation-logs', operation_log_routes_1.default);
 router.use('/commission-rules', commission_rule_routes_1.default);
+router.use('/permission-change-logs', permission_change_log_routes_1.default);
 exports.default = router;
 //# sourceMappingURL=index.js.map

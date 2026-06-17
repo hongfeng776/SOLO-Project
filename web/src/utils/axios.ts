@@ -245,4 +245,47 @@ export function upload<T = any>(
   })
 }
 
+export function download(
+  url: string,
+  data?: Record<string, any>,
+  filename?: string
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    service
+      .post(url, data, { responseType: 'blob' })
+      .then((response: any) => {
+        const blob = new Blob([response.data])
+        const disposition = response.headers['content-disposition']
+        let finalFilename = filename || 'export.xlsx'
+        if (disposition) {
+          const match = disposition.match(/filename=(.+)/)
+          if (match) finalFilename = decodeURIComponent(match[1])
+        }
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = finalFilename
+        link.click()
+        URL.revokeObjectURL(link.href)
+        resolve()
+      })
+      .catch((error) => {
+        if (error.response?.data?.type === 'application/json') {
+          const reader = new FileReader()
+          reader.onload = () => {
+            try {
+              const errData = JSON.parse(reader.result as string)
+              ElMessage.error(errData.message || '导出失败')
+            } catch {
+              ElMessage.error('导出失败')
+            }
+          }
+          reader.readAsText(error.response.data)
+        } else {
+          ElMessage.error('导出失败')
+        }
+        reject(error)
+      })
+  })
+}
+
 export default service
