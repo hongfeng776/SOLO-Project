@@ -9,6 +9,8 @@ const { Comment } = require('./Comment');
 const { Member } = require('./Member');
 const { Message } = require('./Message');
 const { OperationLog } = require('./OperationLog');
+const { Topic } = require('./Topic');
+const { TopicContent } = require('./TopicContent');
 
 Content.belongsTo(Copyright, { foreignKey: 'copyright_id', as: 'copyright' });
 Copyright.hasMany(Content, { foreignKey: 'copyright_id', as: 'contents' });
@@ -31,4 +33,6 @@ module.exports = {
   Member,
   Message,
   OperationLog,
+  Topic,
+  TopicContent,
 };

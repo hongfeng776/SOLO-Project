@@ -37,6 +37,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '短视频管理', icon: 'VideoPlay', roles: ['content:view'] },
       },
       {
+        path: 'articles',
+        name: 'Articles',
+        component: () => import('@/views/article/index.vue'),
+        meta: { title: '图文管理', icon: 'DocumentCopy', roles: ['content:view'] },
+      },
+      {
+        path: 'topics',
+        name: 'Topics',
+        component: () => import('@/views/topic/index.vue'),
+        meta: { title: '专题管理', icon: 'Collection', roles: ['content:view'] },
+      },
+      {
         path: 'content-audit',
         name: 'ContentAudit',
         component: () => import('@/views/content/audit.vue'),

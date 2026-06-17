@@ -217,6 +217,46 @@ const EDIT_MODE = {
   INCREMENTAL: { value: 1, label: '增量修改' },
 };
 
+const TOPIC_TYPE = {
+  FESTIVAL: { value: 0, label: '节日专题', color: '#F56C6C' },
+  HOT: { value: 1, label: '热点专题', color: '#E6A23C' },
+  CATEGORY: { value: 2, label: '品类专题', color: '#409EFF' },
+  PEOPLE: { value: 3, label: '人物专题', color: '#909399' },
+  ACTIVITY: { value: 4, label: '活动专题', color: '#67C23A' },
+};
+
+const TOPIC_COVER_TEMPLATE = {
+  FESTIVAL_DEFAULT: { value: 'festival-default', label: '节日默认模板', desc: '红金配色，节日氛围' },
+  HOT_STYLE: { value: 'hot-style', label: '热点风格模板', desc: '醒目大标题，时效性强' },
+  CATEGORY_BANNER: { value: 'category-banner', label: '品类横幅模板', desc: '分类导航，内容聚合' },
+  PEOPLE_FEATURE: { value: 'people-feature', label: '人物特写模板', desc: '大图人物，故事叙述' },
+  ACTIVITY_SPECIAL: { value: 'activity-special', label: '活动专属模板', desc: '互动感强，转化导向' },
+};
+
+const TOPIC_SORT_RULE = {
+  MANUAL: { value: 0, label: '手动排序' },
+  HOT: { value: 1, label: '热度优先' },
+  TIME: { value: 2, label: '时间优先' },
+  WEIGHT: { value: 3, label: '权重优先' },
+  COMPOSITE: { value: 4, label: '综合评分' },
+};
+
+const TOPIC_STATUS = {
+  DRAFT: { value: 0, label: '草稿', color: '#909399' },
+  NOT_LAUNCHED: { value: 1, label: '未上线', color: '#409EFF' },
+  ONLINE: { value: 2, label: '已上线', color: '#67C23A' },
+  OFFLINE: { value: 3, label: '已下线', color: '#E6A23C' },
+  EXPIRED: { value: 4, label: '已过期', color: '#F56C6C' },
+};
+
+const COVER_CATEGORY = {
+  MOVIE: { value: 'movie', label: '电影' },
+  TV: { value: 'tv', label: '剧集' },
+  SHORT_VIDEO: { value: 'short_video', label: '短视频' },
+  ARTICLE: { value: 'article', label: '图文' },
+  ACTIVITY: { value: 'activity', label: '活动' },
+};
+
 module.exports = {
   CONTENT_AUDIT_STATUS,
   getAuditStatusLabel,
@@ -246,4 +286,9 @@ module.exports = {
   LAYOUT_TEMPLATE,
   ARTICLE_QUALITY,
   EDIT_MODE,
+  TOPIC_TYPE,
+  TOPIC_COVER_TEMPLATE,
+  TOPIC_SORT_RULE,
+  TOPIC_STATUS,
+  COVER_CATEGORY,
 };

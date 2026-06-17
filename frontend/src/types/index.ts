@@ -565,3 +565,86 @@ export interface ContentCheckResult {
   isUnique: boolean
   duplicateContent?: { id: number; title: string }
 }
+
+export interface TopicItem {
+  id: number
+  topicCode: string
+  title: string
+  description: string
+  topicType: number
+  coverTemplate: string
+  sortRule: number
+  coverImage?: string
+  bannerImage?: string
+  iconImage?: string
+  operationStartTime?: string
+  operationEndTime?: string
+  coverCategories: string[]
+  contentCount: number
+  viewCount: number
+  hotScore: number
+  weightScore: number
+  isCore: number
+  resourcePosition?: string
+  resourceLink?: string
+  operationBatch?: string
+  creatorId?: number
+  creatorName?: string
+  operatorId?: number
+  operatorName?: string
+  status: number
+  auditStatus: number
+  auditRemark?: string
+  sortOrder: number
+  tags: string[]
+  extraConfig?: Record<string, any>
+  statusLogs: StatusLogItem[]
+  remark?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface TopicContentItem {
+  id: number
+  topicId: number
+  contentId: number
+  contentCategory: number
+  contentTitle: string
+  contentCover?: string
+  sortOrder: number
+  weightScore: number
+  isRecommended: number
+  mountTime?: string
+  mountOperatorId?: number
+  mountOperatorName?: string
+  remark?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface TopicTitleCheckResult {
+  isUnique: boolean
+  duplicateTopic?: { id: number; title: string }
+}
+
+export interface TopicTimeOverlapResult {
+  hasOverlap: boolean
+  overlappingTopics: Array<{
+    id: number
+    title: string
+    operationStartTime: string
+    operationEndTime: string
+  }>
+}
+
+export interface ContentMountCheckResult {
+  mounted: Array<{ contentId: number; topicContentId: number }>
+  notMounted: number[]
+}
+
+export interface TopicBatchMountItem {
+  contentId: number
+  sortOrder?: number
+  weightScore?: number
+  isRecommended?: number
+}
