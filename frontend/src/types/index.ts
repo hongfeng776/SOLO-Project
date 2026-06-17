@@ -65,10 +65,59 @@ export interface Category {
   id: number
   name: string
   icon: string
+  type: string
+  parentId: number
   sort: number
   status: string
-  parentId: number
+  resourceCount: number
+  maxCapacity: number
+  tags: string
+  bindTime: string
+  bindOperator: string
   children?: Category[]
+}
+
+export interface CategoryBindLog {
+  id: number
+  resourceId: number
+  resourceTitle: string
+  categoryId: number
+  categoryName: string
+  operatorName: string
+  createdAt: string
+}
+
+export interface CategoryConflict {
+  field: string
+  expected: number | string
+  actual: number | string
+  description: string
+}
+
+export interface CategoryTraceResult {
+  category: Category
+  resources: ImageResource[]
+  bindLogs: OperationLog[]
+  compliance: {
+    score: number
+    consistent: boolean
+    conflicts: CategoryConflict[]
+    duplicateBind: number[]
+    wrongCategory: { resourceId: number; resourceTitle: string }[]
+  }
+  statistics: {
+    totalResources: number
+    totalPublished: number
+    totalPending: number
+    totalViolation: number
+    typeDistribution: Record<string, number>
+  }
+}
+
+export interface MigrationResult {
+  success: number[]
+  failed: { id: number; reason: string }[]
+  total: number
 }
 
 export interface Template {
