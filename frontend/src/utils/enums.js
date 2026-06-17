@@ -97,6 +97,53 @@ export const NotificationTypeEnum = {
   APPROVAL: { value: 'approval', label: '审批通知' }
 }
 
+export const PaymentModeEnum = {
+  INSTANT: { value: 'instant', label: '即时支付' },
+  INSTALLMENT: { value: 'installment', label: '分期支付' },
+  DIFFERENCE: { value: 'difference', label: '补差支付' }
+}
+
+export const PaymentChannelEnum = {
+  WECHAT: { value: 'wechat', label: '微信支付', icon: 'ChatDotRound' },
+  ALIPAY: { value: 'alipay', label: '支付宝', icon: 'Aim' },
+  UNIONPAY: { value: 'unionpay', label: '银联支付', icon: 'CreditCard' },
+  CREDIT_CARD: { value: 'credit_card', label: '信用卡', icon: 'Money' },
+  BALANCE: { value: 'balance', label: '余额支付', icon: 'Wallet' }
+}
+
+export const PaymentFlowStatusEnum = {
+  PENDING: { value: 0, label: '待支付', type: 'warning', color: '#faad14' },
+  SUCCESS: { value: 1, label: '支付成功', type: 'success', color: '#52c41a' },
+  FAILED: { value: 2, label: '支付失败', type: 'danger', color: '#ff4d4f' },
+  REFUNDED: { value: 3, label: '已退款', type: 'info', color: '#909399' }
+}
+
+export const PaymentFailCodeEnum = {
+  INSUFFICIENT_BALANCE: { value: 'insufficient_balance', label: '余额不足' },
+  CHANNEL_ERROR: { value: 'channel_error', label: '渠道异常' },
+  TIMEOUT: { value: 'timeout', label: '超时未支付' }
+}
+
+export const DeductionTypeEnum = {
+  COUPON: { value: 'coupon', label: '优惠券', color: '#faad14' },
+  POINTS: { value: 'points', label: '积分抵扣', color: '#1890ff' },
+  MEMBER_DISCOUNT: { value: 'member_discount', label: '会员折扣', color: '#722ed1' },
+  ACTIVITY: { value: 'activity', label: '活动优惠', color: '#eb2f96' },
+  VOUCHER: { value: 'voucher', label: '代金券', color: '#52c41a' }
+}
+
+export const FeeTypeEnum = {
+  CHANNEL: { value: 'channel', label: '渠道手续费' },
+  SERVICE: { value: 'service', label: '服务费' },
+  INSTALLMENT: { value: 'installment', label: '分期手续费' },
+  WITHDRAW: { value: 'withdraw', label: '提现手续费' }
+}
+
+export const OrderPriorityEnum = {
+  NORMAL: { value: 0, label: '普通订单', type: 'info' },
+  HIGH_END: { value: 1, label: '高端商旅', type: 'danger' }
+}
+
 export const getEnumLabel = (enumObj, value) => {
   const item = Object.values(enumObj).find((item) => item.value === value)
   return item ? item.label : '未知'
@@ -135,6 +182,13 @@ export default {
   ApprovalStatusEnum,
   ViolationLevelEnum,
   NotificationTypeEnum,
+  PaymentModeEnum,
+  PaymentChannelEnum,
+  PaymentFlowStatusEnum,
+  PaymentFailCodeEnum,
+  DeductionTypeEnum,
+  FeeTypeEnum,
+  OrderPriorityEnum,
   getEnumLabel,
   getEnumType,
   getEnumOptions,

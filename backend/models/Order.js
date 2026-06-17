@@ -129,6 +129,50 @@ const Order = sequelize.define('Order', {
   archiveTime: {
     type: DataTypes.DATE,
     comment: '归档时间'
+  },
+  paymentMode: {
+    type: DataTypes.STRING(20),
+    comment: '支付方式: instant(即时支付), installment(分期支付), difference(补差支付)'
+  },
+  paymentChannel: {
+    type: DataTypes.STRING(20),
+    comment: '支付渠道: wechat, alipay, unionpay, credit_card, balance'
+  },
+  paymentExpireTime: {
+    type: DataTypes.DATE,
+    comment: '支付时效过期时间'
+  },
+  paidAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0,
+    comment: '已支付金额'
+  },
+  remainingAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    comment: '剩余待支付金额'
+  },
+  installmentCount: {
+    type: DataTypes.TINYINT,
+    comment: '分期期数(1-24)'
+  },
+  isHighPriority: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '订单优先级: 0-普通, 1-高端商旅(禁止批量取消)'
+  },
+  paymentTimeoutExempt: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '是否豁免超时限制:0-否, 1-是'
+  },
+  lastRemindTime: {
+    type: DataTypes.DATE,
+    comment: '最后提醒时间'
+  },
+  remindCount: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '提醒次数'
   }
 }, {
   tableName: 'orders',

@@ -1,0 +1,136 @@
+.valid-checkmark {
+  display: inline-flex;
+  align-items: center;
+  color: #52c41a;
+  margin-left: 8px;
+  animation: fadeInScale 0.3s ease-out;
+}
+@keyframes fadeInScale {
+  0% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.ripple-btn {
+  position: relative;
+  overflow: hidden;
+}
+.ripple-effect {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(0);
+  animation: ripple-animation 0.6s ease-out;
+  pointer-events: none;
+}
+@keyframes ripple-animation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+@keyframes centerScaleFadeIn {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+.payment-result-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  animation: centerScaleFadeIn 0.4s ease-out;
+  z-index: 3000;
+}
+
+@keyframes topSlideDown {
+  0% { transform: translateY(-100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+@keyframes topMarquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+.payment-notification-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2000;
+  animation: topSlideDown 0.5s ease-out;
+}
+.payment-marquee {
+  white-space: nowrap;
+  overflow: hidden;
+}
+.payment-marquee-content {
+  display: inline-block;
+  animation: topMarquee 20s linear infinite;
+}
+
+.btn-with-progress {
+  position: relative;
+  overflow: hidden;
+}
+.progress-bar-inside {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.3);
+  transition: width 0.3s ease;
+}
+
+@keyframes rowZoomIn {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.015); }
+}
+.row-selected-zoom {
+  animation: rowZoomIn 0.3s ease-out forwards;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+}
+
+.dragging-col {
+  cursor: col-resize !important;
+  user-select: none;
+  background: rgba(24, 144, 255, 0.05);
+}
+.col-resize-handle {
+  position: absolute;
+  right: -3px;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 10;
+}
+.col-resize-handle:hover {
+  background: #1890ff;
+}
+
+.flow-abnormal-row {
+  background: rgba(255, 77, 79, 0.08) !important;
+}
+.flow-abnormal-tag {
+  animation: pulseWarn 1.5s ease-in-out infinite;
+}
+@keyframes pulseWarn {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.4); }
+  50% { box-shadow: 0 0 4px 4px rgba(255, 77, 79, 0); }
+}
+
+.countdown-timer {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.countdown-urgent {
+  color: #ff4d4f;
+  animation: countdownBlink 1s ease-in-out infinite;
+}
+@keyframes countdownBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.detail-expand {
+  overflow: hidden;
+  transition: all 0.3s ease;
+}

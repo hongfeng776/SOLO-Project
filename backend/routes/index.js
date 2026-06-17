@@ -1,23 +1,25 @@
-const express = require('express');
-const { success } = require('../utils/result');
-const auth = require('../middleware/auth');
-const pagination = require('../middleware/pagination');
-const { checkOrderRisk, checkInventoryBeforeOrder } = require('../middleware/riskControl');
-const orderPermission = require('../middleware/orderPermission');
-const { preventDuplicateTrace } = require('../middleware/duplicateRequest');
+const express = require('express')
+const { success } = require('../utils/result')
+const auth = require('../middleware/auth')
+const pagination = require('../middleware/pagination')
+const { checkOrderRisk, checkInventoryBeforeOrder } = require('../middleware/riskControl')
+const orderPermission = require('../middleware/orderPermission')
+const { preventDuplicateTrace } = require('../middleware/duplicateRequest')
+const paymentValidator = require('../middleware/paymentValidator')
 
-const authController = require('../controllers/AuthController');
-const userController = require('../controllers/UserController');
-const roleController = require('../controllers/RoleController');
-const flightController = require('../controllers/FlightController');
-const hotelController = require('../controllers/HotelController');
-const carController = require('../controllers/CarController');
-const ticketController = require('../controllers/TicketController');
-const orderController = require('../controllers/OrderController');
-const merchantController = require('../controllers/MerchantController');
-const businessTravelController = require('../controllers/BusinessTravelController');
-const couponController = require('../controllers/CouponController');
-const approvalController = require('../controllers/ApprovalController');
+const authController = require('../controllers/AuthController')
+const userController = require('../controllers/UserController')
+const roleController = require('../controllers/RoleController')
+const flightController = require('../controllers/FlightController')
+const hotelController = require('../controllers/HotelController')
+const carController = require('../controllers/CarController')
+const ticketController = require('../controllers/TicketController')
+const orderController = require('../controllers/OrderController')
+const merchantController = require('../controllers/MerchantController')
+const businessTravelController = require('../controllers/BusinessTravelController')
+const couponController = require('../controllers/CouponController')
+const approvalController = require('../controllers/ApprovalController')
+const paymentController = require('../controllers/PaymentController')
 
 const router = express.Router();
 
@@ -89,8 +91,20 @@ registerCrudRoutes('approvals', approvalController);
 router.post('/approvals/:id/approve', auth(), approvalController.approve.bind(approvalController));
 router.post('/approvals/:id/reject', auth(), approvalController.reject.bind(approvalController));
 
-router.post('/merchants/:id/audit', auth(), merchantController.auditMerchant.bind(merchantController));
-router.get('/merchants/:id/orders', auth(), pagination, merchantController.getMerchantOrders.bind(merchantController));
-router.put('/merchants/:id/violation', auth(), merchantController.updateViolation.bind(merchantController));
+router.post('/merchants/:id/audit', auth(), merchantController.auditMerchant.bind(merchantController))
+router.get('/merchants/:id/orders', auth(), pagination, merchantController.getMerchantOrders.bind(merchantController))
+router.put('/merchants/:id/violation', auth(), merchantController.updateViolation.bind(merchantController))
+
+router.post('/payments/initiate', auth(), paymentValidator.checkPaymentPreconditions, paymentValidator.validatePaymentParams, paymentController.initiatePayment.bind(paymentController))
+router.put('/payments/:flowId/confirm', auth(), paymentController.confirmPayment.bind(paymentController))
+router.put('/payments/:flowId/fail', auth(), paymentController.failPayment.bind(paymentController))
+
+router.post('/payments/batch/remind', auth(['admin', 'operator']), orderPermission.checkBatchOperationPermission, paymentController.batchRemindPayment.bind(paymentController))
+router.post('/payments/batch/cancel-timeout', auth(['admin']), orderPermission.checkBatchOperationPermission, paymentController.batchCancelTimeout.bind(paymentController))
+router.post('/payments/batch/exempt-timeout', auth(['admin']), orderPermission.checkBatchOperationPermission, paymentController.batchExemptTimeout.bind(paymentController))
+
+router.get('/payments/trace', auth(), preventDuplicateTrace, paymentController.tracePaymentFlows.bind(paymentController))
+router.get('/payments/:flowId', auth(), paymentController.getFlowDetail.bind(paymentController))
+router.get('/payments/order/:orderId', auth(), paymentController.getOrderFlows.bind(paymentController))
 
 module.exports = router;

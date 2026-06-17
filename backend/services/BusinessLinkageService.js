@@ -1,12 +1,15 @@
-const OrderLog = require('../models/OrderLog');
-const Order = require('../models/Order');
-const Merchant = require('../models/Merchant');
-const Coupon = require('../models/Coupon');
-const Flight = require('../models/Flight');
-const Hotel = require('../models/Hotel');
-const Car = require('../models/Car');
-const Ticket = require('../models/Ticket');
-const { ValidationError } = require('../utils/error');
+const { Op } = require('sequelize')
+const OrderLog = require('../models/OrderLog')
+const Order = require('../models/Order')
+const Merchant = require('../models/Merchant')
+const Coupon = require('../models/Coupon')
+const Flight = require('../models/Flight')
+const Hotel = require('../models/Hotel')
+const Car = require('../models/Car')
+const Ticket = require('../models/Ticket')
+const PaymentDeduction = require('../models/PaymentDeduction')
+const PaymentFlow = require('../models/PaymentFlow')
+const { ValidationError } = require('../utils/error')
 
 const STATUS_TRANSITIONS = {
   flight: {
@@ -252,57 +255,174 @@ class BusinessLinkageService {
   }
 
   async validateOrderDataConsistency(orderId) {
-    const order = await Order.findByPk(orderId);
+    const order = await Order.findByPk(orderId)
     if (!order) {
-      throw new ValidationError('订单不存在');
+      throw new ValidationError('订单不存在')
     }
 
     const logs = await OrderLog.findAll({
       where: { orderId },
       order: [['createdAt', 'ASC']]
-    });
+    })
 
-    const gaps = [];
+    const gaps = []
     const nodes = {
       create: null,
       pay: null,
       fulfill: null,
       refund: null
-    };
+    }
 
     for (const log of logs) {
-      if (log.action === 'create') nodes.create = log;
-      else if (log.action === 'pay') nodes.pay = log;
-      else if (log.action === 'complete' || log.toStatus === 3 || log.toStatus === 4) nodes.fulfill = log;
-      else if (log.action === 'refund' || log.toStatus === 5 || log.toStatus === 6) nodes.refund = log;
+      if (log.action === 'create') nodes.create = log
+      else if (log.action === 'pay') nodes.pay = log
+      else if (log.action === 'complete' || log.toStatus === 3 || log.toStatus === 4) nodes.fulfill = log
+      else if (log.action === 'refund' || log.toStatus === 5 || log.toStatus === 6) nodes.refund = log
     }
 
     if (!nodes.create) {
-      gaps.push({ node: 'create', reason: '缺少订单创建日志' });
+      gaps.push({ node: 'create', reason: '缺少订单创建日志' })
     } else if (!order.createdAt) {
-      gaps.push({ node: 'create', reason: '订单创建时间缺失' });
+      gaps.push({ node: 'create', reason: '订单创建时间缺失' })
     }
 
     if (order.status >= 1 && !nodes.pay) {
-      gaps.push({ node: 'pay', reason: '已支付订单缺少支付日志' });
+      gaps.push({ node: 'pay', reason: '已支付订单缺少支付日志' })
     }
     if (order.status >= 1 && !order.payTime) {
-      gaps.push({ node: 'pay', reason: '订单支付时间缺失' });
+      gaps.push({ node: 'pay', reason: '订单支付时间缺失' })
     }
 
     if ((order.status === 3 || order.status === 4) && !nodes.fulfill) {
-      gaps.push({ node: 'fulfill', reason: '已履约订单缺少履约日志' });
+      gaps.push({ node: 'fulfill', reason: '已履约订单缺少履约日志' })
     }
 
     if ((order.status === 5 || order.status === 6) && !nodes.refund) {
-      gaps.push({ node: 'refund', reason: '退款订单缺少退款日志' });
+      gaps.push({ node: 'refund', reason: '退款订单缺少退款日志' })
     }
 
     return {
       isConsistent: gaps.length === 0,
       gaps
-    };
+    }
+  }
+
+  async linkPaymentSuccess(orderId, flowId, operator) {
+    const order = await Order.findByPk(orderId)
+    if (!order) {
+      throw new ValidationError('订单不存在')
+    }
+    const flow = await PaymentFlow.findByPk(flowId)
+    if (!flow) {
+      throw new ValidationError('支付流水不存在')
+    }
+
+    const fromStatus = order.status
+    const now = new Date()
+    const flowAmount = parseFloat(flow.actualAmount || 0)
+    const newPaidAmount = parseFloat((parseFloat(order.paidAmount || 0) + flowAmount).toFixed(2))
+    const orderAmount = parseFloat(order.amount || 0)
+    const newRemainingAmount = parseFloat(Math.max(0, orderAmount - newPaidAmount).toFixed(2))
+
+    await order.update({
+      status: 1,
+      payTime: now,
+      paidAmount: newPaidAmount,
+      remainingAmount: newRemainingAmount,
+      paymentMode: flow.payType,
+      paymentChannel: flow.channel,
+      isLocked: 1,
+      lockReason: '支付成功，履约锁定',
+      lockTime: now
+    })
+
+    await this.deductInventory(order.category, order.productId, order.quantity || 1)
+
+    await this.createOrderLog(orderId, 'pay', fromStatus, 1, operator, {
+      flowId,
+      flowNo: flow.flowNo,
+      channel: flow.channel,
+      amount: flow.actualAmount
+    }, `支付成功，流水号:${flow.flowNo}`)
+
+    if (order.merchantId) {
+      const merchant = await Merchant.findByPk(order.merchantId)
+      if (merchant) {
+        const orderCount = await Order.count({
+          where: { merchantId: order.merchantId, status: { [Op.in]: [1, 3, 4] } }
+        })
+        const result = await Order.findAll({
+          where: { merchantId: order.merchantId, status: { [Op.in]: [1, 3, 4] } },
+          attributes: [[require('sequelize').fn('SUM', require('sequelize').col('paidAmount')), 'totalIncome']],
+          raw: true
+        })
+      }
+    }
+
+    const deductions = await PaymentDeduction.findAll({ where: { flowId } })
+    for (const deduction of deductions) {
+      if (deduction.deductionType === 'coupon' && deduction.deductionSource) {
+        const coupon = await Coupon.findByPk(parseInt(deduction.deductionSource))
+        if (coupon) {
+          await coupon.update({
+            usedStock: coupon.usedStock + 1,
+            remainStock: Math.max(0, coupon.remainStock - 1)
+          })
+        }
+      }
+    }
+
+    const pointEarned = parseInt(flowAmount * 0.01)
+    if (pointEarned > 0) {
+    }
+
+    return { order, flow }
+  }
+
+  async linkPaymentFail(orderId, flowId, failCode, failReason, operator) {
+    const order = await Order.findByPk(orderId)
+    if (!order) {
+      throw new ValidationError('订单不存在')
+    }
+    const flow = await PaymentFlow.findByPk(flowId)
+    if (!flow) {
+      throw new ValidationError('支付流水不存在')
+    }
+
+    const detailReason = { failCode, failReason }
+    if (failCode === 'insufficient_balance') {
+      detailReason.description = '用户余额不足导致支付失败'
+    } else if (failCode === 'channel_error') {
+      detailReason.description = '支付渠道异常，请稍后重试'
+      detailReason.channelDetail = flow.channel
+    } else if (failCode === 'timeout') {
+      detailReason.description = '支付超时未完成'
+      detailReason.timeoutAt = new Date().toISOString()
+    }
+
+    await this.createOrderLog(orderId, 'pay_fail', order.status, order.status, operator, {
+      flowId,
+      flowNo: flow.flowNo,
+      failCode,
+      failReason,
+      detail: detailReason
+    }, `支付失败:${failCode}-${failReason}`)
+
+    const deductions = await PaymentDeduction.findAll({ where: { flowId } })
+    for (const deduction of deductions) {
+      if (deduction.deductionType === 'coupon' && deduction.deductionSource) {
+        const coupon = await Coupon.findByPk(parseInt(deduction.deductionSource))
+        if (coupon) {
+          await coupon.update({
+            usedStock: Math.max(0, coupon.usedStock - 1),
+            remainStock: coupon.remainStock + 1
+          })
+        }
+      }
+    }
+
+    return { order, flow }
   }
 }
 
-module.exports = new BusinessLinkageService();
+module.exports = new BusinessLinkageService()
