@@ -42,10 +42,25 @@ const OrderStatusLog = sequelize.define('OrderStatusLog', {
     defaultValue: 1,
     comment: '操作人类型：1管理员 2系统 3司机 4乘客'
   },
+  operatorIP: {
+    type: DataTypes.STRING(45),
+    allowNull: true,
+    comment: '操作人IP地址'
+  },
   changeReason: {
     type: DataTypes.STRING(255),
     allowNull: true,
     comment: '变更原因'
+  },
+  cancelType: {
+    type: DataTypes.TINYINT,
+    allowNull: true,
+    comment: '取消类型：1用户主动取消 2司机主动取消 3系统超时取消'
+  },
+  responsibility: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+    comment: '责任判定：passenger/driver/platform'
   },
   remark: {
     type: DataTypes.STRING(255),
@@ -64,7 +79,8 @@ const OrderStatusLog = sequelize.define('OrderStatusLog', {
     { fields: ['orderId'] },
     { fields: ['orderNo'] },
     { fields: ['operatorId'] },
-    { fields: ['createTime'] }
+    { fields: ['createTime'] },
+    { fields: ['orderId', 'oldStatus', 'newStatus'] }
   ]
 })
 

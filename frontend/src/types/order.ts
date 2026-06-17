@@ -30,6 +30,8 @@ export interface Order {
   cancelTime: string | null
   cancelReason: string | null
   availableActions?: string[]
+  abnormalType?: string
+  abnormalLabel?: string
 }
 
 export interface OrderQueryParams {
@@ -73,7 +75,10 @@ export interface StatusLogItem {
   operatorId: number | null
   operatorName: string | null
   operatorType: number
+  operatorIP: string | null
   changeReason: string | null
+  cancelType: number | null
+  responsibility: string | null
   remark: string | null
   traceId: string | null
   createTime: string
@@ -109,4 +114,39 @@ export interface BatchOpResult {
   total: number
   failedOrders: Array<{ id: number; orderNo?: string; reason: string }>
   progress: number
+}
+
+export interface PrerequisiteResult {
+  valid: boolean
+  failures: Array<{ field: string; message: string }>
+}
+
+export interface CancelStatistics {
+  totalToday: number
+  cancelledToday: number
+  cancelRate: number
+  byCancelType: Record<number, number>
+  byResponsibility: Record<string, number>
+}
+
+export interface ViolationLogItem {
+  id: number
+  orderId: number
+  orderNo: string
+  fromStatus: number | null
+  toStatus: number
+  currentStatus: number
+  violationType: string
+  operatorId: number | null
+  operatorName: string | null
+  operatorIP: string | null
+  detail: string | null
+  handled: number
+  createTime: string
+}
+
+export interface FlowDetailData {
+  order: Order
+  statusLogs: StatusLogItem[]
+  violations: ViolationLogItem[]
 }

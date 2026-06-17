@@ -16,6 +16,7 @@ const OperationLog = require('./OperationLog')
 const MarketingCampaign = require('./MarketingCampaign')
 const OrderStatusLog = require('./OrderStatusLog')
 const OrderTraceHistory = require('./OrderTraceHistory')
+const TransitionViolation = require('./TransitionViolation')
 
 Driver.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
 Vehicle.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
@@ -26,6 +27,7 @@ Order.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
 Order.hasMany(OrderStatusLog, { foreignKey: 'orderId', as: 'statusLogs' })
 Order.hasMany(Ticket, { foreignKey: 'orderId', as: 'tickets' })
 Order.hasMany(FinanceStatement, { foreignKey: 'orderNo', sourceKey: 'orderNo', as: 'statements' })
+Order.hasMany(TransitionViolation, { foreignKey: 'orderId', as: 'violations' })
 
 User.belongsTo(Role, { foreignKey: 'roleId', as: 'roleInfo' })
 
@@ -33,6 +35,7 @@ FinanceSettlement.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
 
 OrderStatusLog.belongsTo(Order, { foreignKey: 'orderId', as: 'order' })
 OrderTraceHistory.belongsTo(Order, { foreignKey: 'orderId', as: 'order' })
+TransitionViolation.belongsTo(Order, { foreignKey: 'orderId', as: 'order' })
 
 module.exports = {
   User,
@@ -52,5 +55,6 @@ module.exports = {
   OperationLog,
   MarketingCampaign,
   OrderStatusLog,
-  OrderTraceHistory
+  OrderTraceHistory,
+  TransitionViolation
 }

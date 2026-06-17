@@ -5,8 +5,8 @@
         <transition name="fade" mode="out-in">
           <div :key="orderInfo.status" class="action-buttons">
             <template v-for="btn in actionButtons" :key="btn.key">
-              <el-button :type="btn.type" @click="btn.handler">
-                <el-icon v-if="btn.icon"><component :is="btn.icon" /></el-icon>
+              <el-button :type="btn.type" :loading="transitionLoading[btn.key] || false" @click="btn.handler">
+                <el-icon v-if="btn.icon && !transitionLoading[btn.key]"><component :is="btn.icon" /></el-icon>
                 {{ btn.label }}
               </el-button>
             </template>
@@ -14,6 +14,35 @@
         </transition>
       </template>
     </el-page-header>
+
+    <transition name="fade">
+      <el-row
+        v-if="orderInfo.status === OrderStatus.CANCELLED && cancelStatisticsData"
+        :gutter="20"
+        class="cancel-statistics-row"
+      >
+        <el-col :span="6">
+          <el-card shadow="hover" class="stat-card">
+            <el-statistic title="今日取消率" :value="cancelStatisticsData.cancelRate" :precision="1" suffix="%" />
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card shadow="hover" class="stat-card">
+            <el-statistic title="用户取消次数" :value="cancelStatisticsData.byCancelType[1] || 0" />
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card shadow="hover" class="stat-card">
+            <el-statistic title="司机取消次数" :value="cancelStatisticsData.byCancelType[2] || 0" />
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card shadow="hover" class="stat-card">
+            <el-statistic title="系统超时次数" :value="cancelStatisticsData.byCancelType[3] || 0" />
+          </el-card>
+        </el-col>
+      </el-row>
+    </transition>
 
     <el-row :gutter="20" class="content">
       <el-col :span="16">
@@ -30,11 +59,13 @@
           <el-descriptions :column="2" border>
             <el-descriptions-item label="订单号">{{ orderInfo.orderNo }}</el-descriptions-item>
             <el-descriptions-item label="订单状态">
-              <StatusTag
-                :status="orderInfo.status"
-                :status-map="OrderStatusMap"
-                :color-map="OrderStatusColorMap"
-              />
+              <div :key="orderInfo.status" class="status-zoom-in">
+                <StatusTag
+                  :status="orderInfo.status"
+                  :status-map="OrderStatusMap"
+                  :color-map="OrderStatusColorMap"
+                />
+              </div>
             </el-descriptions-item>
             <el-descriptions-item label="运力类型">
               <StatusTag
@@ -169,9 +200,21 @@
           <template #header>
             <span class="card-title">订单日志</span>
           </template>
+          <el-alert
+            v-if="flowDetailData && flowDetailData.violations.length > 0"
+            type="error"
+            :closable="false"
+            class="violation-alert"
+          >
+            <template #title>发现 {{ flowDetailData.violations.length }} 条违规记录</template>
+            <div v-for="v in flowDetailData.violations" :key="v.id" class="violation-item">
+              <span>{{ v.violationType }} - {{ v.detail || '无详情' }}</span>
+              <span class="violation-time">{{ formatDate(v.createTime) }}</span>
+            </div>
+          </el-alert>
           <el-timeline>
             <el-timeline-item
-              v-for="log in statusLogs"
+              v-for="log in flowDetailLogs"
               :key="log.id"
               :timestamp="formatDate(log.createTime)"
               placement="top"
@@ -196,14 +239,28 @@
                   <span v-if="log.operatorType">
                     ({{ log.operatorType === 1 ? '乘客' : log.operatorType === 2 ? '司机' : '系统' }})
                   </span>
+                  <el-text v-if="log.operatorIP" size="small" type="info" class="log-ip">IP: {{ log.operatorIP }}</el-text>
                 </div>
                 <div v-if="log.changeReason" class="log-reason">
-                  变更原因：{{ log.changeReason }}
+                  流转原因：{{ log.changeReason }}
+                </div>
+                <div v-if="log.cancelType !== null" class="log-cancel-info">
+                  <el-tag :type="cancelTypeTagMap[log.cancelType]" size="small">
+                    {{ cancelTypeNameMap[log.cancelType] || '未知' }}
+                  </el-tag>
+                  <el-tag
+                    v-if="log.responsibility"
+                    :type="responsibilityTagMap[log.responsibility] || 'info'"
+                    size="small"
+                    class="responsibility-tag"
+                  >
+                    {{ log.responsibility }}
+                  </el-tag>
                 </div>
               </div>
             </el-timeline-item>
           </el-timeline>
-          <el-empty v-if="statusLogs.length === 0" description="暂无状态变更日志" :image-size="80" />
+          <el-empty v-if="flowDetailLogs.length === 0" description="暂无状态变更日志" :image-size="80" />
         </el-card>
       </el-col>
 
@@ -245,6 +302,51 @@
     </el-row>
 
     <TraceDialog v-model="traceDialogVisible" :order-no="orderInfo.orderNo" />
+
+    <el-dialog v-model="prerequisiteDialogVisible" title="流转条件校验" width="450px">
+      <el-alert type="warning" :closable="false">
+        <template #title>以下条件不满足，无法执行操作</template>
+      </el-alert>
+      <div class="prerequisite-failures">
+        <div v-for="(f, i) in prerequisiteFailures" :key="i" class="failure-item">
+          <el-icon><Warning /></el-icon>
+          <span>{{ f.message }}</span>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="prerequisiteDialogVisible = false">知道了</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="cancelDialogVisible" title="取消订单" width="520px">
+      <el-form label-width="100px">
+        <el-form-item label="取消类型">
+          <el-radio-group v-model="cancelForm.cancelType">
+            <el-radio :value="1">用户主动取消</el-radio>
+            <el-radio :value="2">司机主动取消</el-radio>
+            <el-radio :value="3">系统超时取消</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="责任判定">
+          <el-tag :type="cancelResponsibilityType" size="large">{{ cancelResponsibilityLabel }}</el-tag>
+        </el-form-item>
+        <el-form-item label="后置逻辑">
+          <el-text type="info">{{ cancelPostLogic }}</el-text>
+        </el-form-item>
+        <el-form-item label="取消原因">
+          <el-input
+            v-model="cancelForm.reason"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入取消原因"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="cancelDialogVisible = false">取消</el-button>
+        <el-button type="danger" :loading="cancelSubmitting" @click="confirmCancel">确认取消</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -283,9 +385,12 @@ import {
   updateOrderBaseInfoApi,
   getOrderStatusLogsApi,
   cancelOrderApi,
-  completeOrderApi
+  completeOrderApi,
+  getTransitionPrerequisitesApi,
+  getCancelStatisticsApi,
+  getFlowDetailApi
 } from '@/api/order'
-import type { Order, PriceValidateResult, StatusLogItem } from '@/types/order'
+import type { Order, PriceValidateResult, StatusLogItem, PrerequisiteResult, CancelStatistics, FlowDetailData } from '@/types/order'
 
 const route = useRoute()
 const router = useRouter()
@@ -335,6 +440,59 @@ const priceHighlighted = ref(false)
 const logHighlighted = ref(false)
 const logCardRef = ref()
 const timelineCardRef = ref()
+
+const transitionLoading = reactive<Record<string, boolean>>({})
+const prerequisiteDialogVisible = ref(false)
+const prerequisiteFailures = ref<PrerequisiteResult['failures']>([])
+const cancelDialogVisible = ref(false)
+const cancelSubmitting = ref(false)
+const cancelForm = reactive({
+  cancelType: 1,
+  reason: ''
+})
+const flowDetailData = ref<FlowDetailData | null>(null)
+const cancelStatisticsData = ref<CancelStatistics | null>(null)
+
+const cancelTypeNameMap: Record<number, string> = {
+  1: '用户主动取消',
+  2: '司机主动取消',
+  3: '系统超时取消'
+}
+
+const cancelTypeTagMap: Record<number, string> = {
+  1: 'warning',
+  2: 'danger',
+  3: 'info'
+}
+
+const cancelResponsibilityMap: Record<number, { label: string; tagType: string }> = {
+  1: { label: '乘客责任', tagType: 'warning' },
+  2: { label: '司机责任', tagType: 'danger' },
+  3: { label: '平台责任', tagType: 'info' }
+}
+
+const cancelPostLogicMap: Record<number, string> = {
+  1: '用户主动取消订单，费用将按取消规则退还，可能产生取消费用',
+  2: '司机主动取消订单，将记录司机责任，影响司机评分和服务分',
+  3: '系统超时自动取消，平台将自动处理退款，不产生取消费用'
+}
+
+const responsibilityTagMap: Record<string, string> = {
+  '乘客责任': 'warning',
+  '司机责任': 'danger',
+  '平台责任': 'info'
+}
+
+const cancelResponsibilityLabel = computed(() => cancelResponsibilityMap[cancelForm.cancelType]?.label || '')
+const cancelResponsibilityType = computed(() => cancelResponsibilityMap[cancelForm.cancelType]?.tagType || 'info')
+const cancelPostLogic = computed(() => cancelPostLogicMap[cancelForm.cancelType] || '')
+
+const flowDetailLogs = computed(() => {
+  if (flowDetailData.value) {
+    return flowDetailData.value.statusLogs
+  }
+  return statusLogs.value
+})
 
 const editForm = reactive({
   startAddress: '',
@@ -422,30 +580,73 @@ const goBack = () => {
   router.back()
 }
 
+const executeTransition = async (btnKey: string, targetStatus: number, action: () => Promise<void>) => {
+  if (transitionLoading[btnKey]) return
+  transitionLoading[btnKey] = true
+  const startTime = Date.now()
+
+  try {
+    const res = await getTransitionPrerequisitesApi(orderInfo.id, targetStatus)
+    if (!res.data.valid) {
+      prerequisiteFailures.value = res.data.failures
+      prerequisiteDialogVisible.value = true
+      return
+    }
+    await action()
+  } catch (error: any) {
+    if (error?.response?.status === 429 || error?.status === 429) {
+      ElMessage.warning('操作处理中，请勿重复提交')
+    } else {
+      ElMessage.error(error.message || '操作失败')
+    }
+  } finally {
+    const elapsed = Date.now() - startTime
+    const remaining = Math.max(0, 300 - elapsed)
+    setTimeout(() => {
+      transitionLoading[btnKey] = false
+    }, remaining)
+  }
+}
+
 const handleDispatch = () => {
-  ElMessage.info('派单功能开发中')
+  executeTransition('dispatch', OrderStatus.DISPATCHED, async () => {
+    ElMessage.info('派单功能开发中')
+  })
 }
 
 const handleCancel = () => {
-  ElMessageBox.prompt('请输入取消原因', '取消订单', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning',
-    inputType: 'textarea'
-  }).then(async ({ value }) => {
-    try {
-      await cancelOrderApi(orderInfo.id, value)
-      ElMessage.success('订单已取消')
-      loadDetail()
-      loadStatusLogs()
-    } catch (error: any) {
-      ElMessage.error(error.message || '取消失败')
-    }
-  }).catch(() => {})
+  executeTransition('cancel', OrderStatus.CANCELLED, async () => {
+    cancelForm.cancelType = 1
+    cancelForm.reason = ''
+    cancelDialogVisible.value = true
+  })
+}
+
+const confirmCancel = async () => {
+  if (!cancelForm.reason.trim()) {
+    ElMessage.warning('请输入取消原因')
+    return
+  }
+  cancelSubmitting.value = true
+  try {
+    await cancelOrderApi(orderInfo.id, cancelForm.reason, cancelForm.cancelType)
+    ElMessage.success('订单已取消')
+    cancelDialogVisible.value = false
+    loadDetail()
+    loadStatusLogs()
+    loadFlowDetail()
+    loadCancelStatistics()
+  } catch (error: any) {
+    ElMessage.error(error.message || '取消失败')
+  } finally {
+    cancelSubmitting.value = false
+  }
 }
 
 const handlePickup = () => {
-  ElMessage.info('确认接驾功能开发中')
+  executeTransition('pickup', OrderStatus.PICKING_UP, async () => {
+    ElMessage.info('确认接驾功能开发中')
+  })
 }
 
 const handleReassign = () => {
@@ -453,18 +654,19 @@ const handleReassign = () => {
 }
 
 const handleStartTrip = () => {
-  ElMessage.info('开始行程功能开发中')
+  executeTransition('start', OrderStatus.IN_PROGRESS, async () => {
+    ElMessage.info('开始行程功能开发中')
+  })
 }
 
-const handleComplete = async () => {
-  try {
+const handleComplete = () => {
+  executeTransition('complete', OrderStatus.COMPLETED, async () => {
     await completeOrderApi(orderInfo.id)
     ElMessage.success('订单已完成')
     loadDetail()
     loadStatusLogs()
-  } catch (error: any) {
-    ElMessage.error(error.message || '操作失败')
-  }
+    loadFlowDetail()
+  })
 }
 
 const handleSettle = () => {
@@ -604,9 +806,32 @@ const loadStatusLogs = async () => {
   }
 }
 
+const loadFlowDetail = async () => {
+  const id = route.params.id as string
+  if (id) {
+    try {
+      const res = await getFlowDetailApi(Number(id))
+      flowDetailData.value = res.data
+    } catch (e: any) {
+      console.error('获取流转详情失败', e)
+    }
+  }
+}
+
+const loadCancelStatistics = async () => {
+  try {
+    const res = await getCancelStatisticsApi()
+    cancelStatisticsData.value = res.data
+  } catch (e: any) {
+    console.error('获取取消统计失败', e)
+  }
+}
+
 onMounted(() => {
   loadDetail()
   loadStatusLogs()
+  loadFlowDetail()
+  loadCancelStatistics()
 })
 </script>
 
@@ -621,6 +846,24 @@ onMounted(() => {
     gap: 8px;
     flex-wrap: wrap;
     justify-content: flex-end;
+  }
+
+  .cancel-statistics-row {
+    margin-top: 16px;
+
+    .stat-card {
+      text-align: center;
+
+      :deep(.el-statistic__head) {
+        font-size: 13px;
+        color: #909399;
+      }
+
+      :deep(.el-statistic__content) {
+        font-size: 22px;
+        font-weight: 600;
+      }
+    }
   }
 
   .info-card {
@@ -643,6 +886,21 @@ onMounted(() => {
     &.highlight {
       box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.3);
       animation: pulse 1.5s ease-in-out;
+    }
+  }
+
+  .status-zoom-in {
+    animation: statusZoomIn 0.3s ease;
+  }
+
+  @keyframes statusZoomIn {
+    from {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
     }
   }
 
@@ -773,11 +1031,43 @@ onMounted(() => {
       font-size: 13px;
       color: #606266;
       margin-bottom: 4px;
+
+      .log-ip {
+        margin-left: 8px;
+      }
     }
 
     .log-reason {
       font-size: 12px;
       color: #909399;
+    }
+
+    .log-cancel-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+
+      .responsibility-tag {
+        margin-left: 4px;
+      }
+    }
+  }
+
+  .violation-alert {
+    margin-bottom: 16px;
+
+    .violation-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 13px;
+
+      .violation-time {
+        color: #909399;
+        font-size: 12px;
+      }
     }
   }
 
@@ -805,6 +1095,29 @@ onMounted(() => {
         color: #409eff;
         margin-top: 5px;
       }
+    }
+  }
+}
+
+.prerequisite-failures {
+  margin-top: 16px;
+
+  .failure-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    font-size: 14px;
+    color: #606266;
+    border-bottom: 1px solid #f0f0f0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .el-icon {
+      color: #e6a23c;
+      flex-shrink: 0;
     }
   }
 }

@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { Order, OrderQueryParams, OrderTraceData, EditConditionResult, PriceValidateResult, StatusLogItem, BatchOpResult } from '@/types/order'
+import type { Order, OrderQueryParams, OrderTraceData, EditConditionResult, PriceValidateResult, StatusLogItem, BatchOpResult, FlowDetailData, CancelStatistics, ViolationLogItem, PrerequisiteResult } from '@/types/order'
 import type { PageResult } from '@/utils/request'
 
 export const getOrderListApi = (params: OrderQueryParams) => {
@@ -26,8 +26,8 @@ export const dispatchOrderApi = (id: number, driverId: number) => {
   return request.put(`/order/${id}/dispatch`, { driverId })
 }
 
-export const cancelOrderApi = (id: number, reason: string) => {
-  return request.put(`/order/${id}/cancel`, { reason })
+export const cancelOrderApi = (id: number, reason: string, cancelType?: number) => {
+  return request.put(`/order/${id}/cancel`, { reason, cancelType })
 }
 
 export const getOrderStatisticsApi = () => {
@@ -72,4 +72,32 @@ export const getAvailableActionsApi = (id: number) => {
 
 export const batchUpdatePriceRuleApi = (orderIds: number[], priceRule: { basePrice?: number; perKmPrice?: number }) => {
   return request.post<BatchOpResult>('/order/batch-price-rule', { orderIds, priceRule })
+}
+
+export const getTransitionPrerequisitesApi = (id: number, targetStatus: number) => {
+  return request.get<PrerequisiteResult>(`/order/${id}/prerequisites`, { targetStatus })
+}
+
+export const getCancelStatisticsApi = () => {
+  return request.get<CancelStatistics>('/order/cancel-statistics')
+}
+
+export const getAbnormalOrdersApi = (params: { type: string; page?: number; pageSize?: number }) => {
+  return request.get('/order/abnormal', params)
+}
+
+export const batchAbnormalOperationApi = (orderIds: number[], operation: string) => {
+  return request.post<BatchOpResult>('/order/batch-abnormal', { orderIds, operation })
+}
+
+export const getViolationLogsApi = (params?: { page?: number; pageSize?: number; handled?: number }) => {
+  return request.get('/order/violations', params)
+}
+
+export const getFlowDetailApi = (id: number) => {
+  return request.get<FlowDetailData>(`/order/flow/${id}`)
+}
+
+export const updateOrderStatusApi = (id: number, status: number, reason?: string, cancelType?: number) => {
+  return request.put(`/order/${id}/status`, { status, reason, cancelType })
 }

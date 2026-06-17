@@ -65,12 +65,14 @@
     </div>
 
     <el-table
+      ref="elTableRef"
       v-loading="loading"
       :data="tableData"
       :border="border"
       :stripe="stripe"
       style="width: 100%"
       @selection-change="handleSelectionChange"
+      @row-dblclick="(row: any, column: any, event: MouseEvent) => emit('row-dblclick', row, column, event)"
     >
       <el-table-column v-if="showSelection" type="selection" width="55" align="center" />
       <el-table-column v-if="showIndex" type="index" label="序号" width="60" align="center" />
@@ -129,8 +131,9 @@ const props = withDefaults(defineProps<Props>(), {
   pageSize: 10
 })
 
-const emit = defineEmits(['search', 'reset', 'selection-change', 'page-change', 'size-change'])
+const emit = defineEmits(['search', 'reset', 'selection-change', 'page-change', 'size-change', 'row-dblclick'])
 
+const elTableRef = ref()
 const searchForm = reactive<Record<string, any>>({})
 const tableData = ref<any[]>([])
 const selectedRows = ref<any[]>([])
@@ -197,7 +200,8 @@ const handleSizeChange = (size: number) => {
 defineExpose({
   searchForm,
   selectedRows,
-  pagination
+  pagination,
+  elTableRef
 })
 </script>
 

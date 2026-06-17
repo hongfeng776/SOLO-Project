@@ -12,6 +12,7 @@
       @page-change="handlePageChange"
       @size-change="handleSizeChange"
       @selection-change="handleSelectionChange"
+      @row-dblclick="handleRowDblClick"
     >
       <template #search>
         <el-form :model="searchForm" :inline="true" @submit.prevent>
@@ -102,6 +103,19 @@
               style="width: 360px"
             />
           </el-form-item>
+          <el-form-item label="异常类型">
+            <el-select
+              v-model="searchForm.abnormalType"
+              placeholder="全部异常"
+              clearable
+              @change="handleAbnormalTypeChange"
+            >
+              <el-option value="all" label="全部异常" />
+              <el-option value="timeout_no_accept" label="超时未接单" />
+              <el-option value="midway_lost" label="中途失联" />
+              <el-option value="unsettled" label="未结算完成" />
+            </el-select>
+          </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="handleFormSearch">
               <el-icon><Search /></el-icon>
@@ -154,6 +168,21 @@
               >
                 批量取消
               </el-dropdown-item>
+              <el-dropdown-item divided disabled>
+                异常操作
+              </el-dropdown-item>
+              <el-dropdown-item command="retry_dispatch">
+                批量重试流转
+              </el-dropdown-item>
+              <el-dropdown-item command="mark_abnormal">
+                批量标记异常
+              </el-dropdown-item>
+              <el-dropdown-item command="force_close">
+                批量关闭订单
+              </el-dropdown-item>
+              <el-dropdown-item command="reset_status">
+                批量重置状态
+              </el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -166,6 +195,62 @@
         </el-button>
       </template>
 
+      <el-table-column type="expand">
+        <template #default="{ row }">
+          <div class="flow-expand-area">
+            <div v-if="flowLoadingMap[row.id]" class="flow-loading">
+              <el-icon class="is-loading"><Refresh /></el-icon>
+              <span>加载流转详情中...</span>
+            </div>
+            <template v-else-if="flowDetailMap[row.id]">
+              <el-collapse-transition>
+                <div class="flow-detail-content">
+                  <el-alert
+                    v-if="flowDetailMap[row.id].violations?.length > 0"
+                    type="error"
+                    :closable="false"
+                    class="mb-16"
+                  >
+                    <template #title>
+                      检测到 {{ flowDetailMap[row.id].violations.length }} 条违规记录
+                    </template>
+                    <div
+                      v-for="v in flowDetailMap[row.id].violations"
+                      :key="v.id"
+                      class="violation-item"
+                    >
+                      <el-tag type="danger" size="small">{{ v.violationType }}</el-tag>
+                      <span class="violation-operator">操作人：{{ v.operatorName || '未知' }}</span>
+                      <span class="violation-ip">IP：{{ v.operatorIP || '-' }}</span>
+                      <span class="violation-detail">{{ v.detail }}</span>
+                    </div>
+                  </el-alert>
+                  <el-timeline>
+                    <el-timeline-item
+                      v-for="log in flowDetailMap[row.id].statusLogs"
+                      :key="log.id"
+                      :timestamp="formatDate(log.createTime)"
+                      placement="top"
+                    >
+                      <el-card shadow="never">
+                        <h4>{{ OrderStatusMap[log.newStatus] || '未知状态' }}</h4>
+                        <p>操作人：{{ log.operatorName || '系统' }}
+                          <span v-if="log.operatorType">
+                            ({{ log.operatorType === 1 ? '乘客' : log.operatorType === 2 ? '司机' : '系统' }})
+                          </span>
+                        </p>
+                        <p v-if="log.operatorIP">操作IP：{{ log.operatorIP }}</p>
+                        <p v-if="log.changeReason">流转原因：{{ log.changeReason }}</p>
+                      </el-card>
+                    </el-timeline-item>
+                  </el-timeline>
+                </div>
+              </el-collapse-transition>
+            </template>
+            <el-empty v-else description="暂无流转详情" :image-size="60" />
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="订单号" width="200">
         <template #default="{ row }">
           <el-tooltip
@@ -254,13 +339,24 @@
           <span class="price">¥{{ row.actualPrice || row.estimatedPrice || 0 }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="状态" width="100" align="center">
+      <el-table-column prop="status" label="状态" width="140" align="center">
         <template #default="{ row }">
-          <StatusTag
-            :status="row.status"
-            :status-map="OrderStatusMap"
-            :color-map="OrderStatusColorMap"
-          />
+          <div class="status-cell">
+            <StatusTag
+              :status="row.status"
+              :status-map="OrderStatusMap"
+              :color-map="OrderStatusColorMap"
+              class="status-tag-animate"
+            />
+            <el-tag
+              v-if="row.abnormalType"
+              type="danger"
+              size="small"
+              class="abnormal-tag"
+            >
+              {{ row.abnormalLabel || row.abnormalType }}
+            </el-tag>
+          </div>
         </template>
       </el-table-column>
       <el-table-column prop="createTime" label="创建时间" width="170">
@@ -275,6 +371,7 @@
               :type="btn.type"
               link
               size="small"
+              :loading="isTransitionLoading(row.id, btn.key)"
               @click="btn.handler(row)"
             >
               {{ btn.label }}
@@ -376,6 +473,80 @@
         <el-button type="primary" :loading="editSubmitting" @click="handleEditSubmit">
           确定
         </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="cancelDialogVisible"
+      title="取消订单"
+      width="520px"
+      :close-on-click-modal="false"
+    >
+      <el-form label-width="100px">
+        <el-form-item label="取消原因" required>
+          <el-input
+            v-model="cancelForm.reason"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入取消原因"
+          />
+        </el-form-item>
+        <el-form-item label="取消类型" required>
+          <el-radio-group v-model="cancelForm.cancelType">
+            <el-radio :value="1">用户主动取消</el-radio>
+            <el-radio :value="2">司机主动取消</el-radio>
+            <el-radio :value="3">系统超时取消</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="责任判定">
+          <el-tag
+            :type="cancelResponsibilityMap[cancelForm.cancelType]?.type as any"
+            size="large"
+          >
+            {{ cancelResponsibilityMap[cancelForm.cancelType]?.label }}
+          </el-tag>
+        </el-form-item>
+        <el-alert
+          :title="cancelResponsibilityMap[cancelForm.cancelType]?.hint"
+          :type="cancelForm.cancelType === 2 ? 'error' : cancelForm.cancelType === 1 ? 'warning' : 'info'"
+          :closable="false"
+          show-icon
+          class="mb-16"
+        />
+      </el-form>
+      <template #footer>
+        <el-button @click="cancelDialogVisible = false">取消</el-button>
+        <el-button type="danger" :loading="cancelLoading" @click="handleCancelSubmit">
+          确认取消订单
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="prerequisiteDialogVisible"
+      title="前置条件校验未通过"
+      width="500px"
+    >
+      <el-alert
+        type="warning"
+        :closable="false"
+        class="mb-16"
+      >
+        <template #title>以下条件未满足，无法执行此操作</template>
+      </el-alert>
+      <div class="prerequisite-list">
+        <el-tag
+          v-for="(item, index) in prerequisiteFailures"
+          :key="index"
+          type="danger"
+          effect="dark"
+          class="prerequisite-tag"
+        >
+          {{ item.message }}
+        </el-tag>
+      </div>
+      <template #footer>
+        <el-button type="primary" @click="prerequisiteDialogVisible = false">知道了</el-button>
       </template>
     </el-dialog>
 
@@ -678,7 +849,14 @@ import {
   getOrderTraceApi,
   batchUpdatePriceRuleApi,
   batchDispatchApi,
-  cancelOrderApi
+  cancelOrderApi,
+  getTransitionPrerequisitesApi,
+  getCancelStatisticsApi,
+  getAbnormalOrdersApi,
+  batchAbnormalOperationApi,
+  getViolationLogsApi,
+  getFlowDetailApi,
+  updateOrderStatusApi
 } from '@/api/order'
 import { OrderStatusMap, OrderStatusColorMap, OrderStatus } from '@/enums/order'
 import { formatDate, formatPhone } from '@/utils/format'
@@ -687,7 +865,11 @@ import type {
   OrderQueryParams,
   PriceValidateResult,
   OrderTraceData,
-  BatchOpResult
+  BatchOpResult,
+  PrerequisiteResult,
+  CancelStatistics,
+  ViolationLogItem,
+  FlowDetailData
 } from '@/types/order'
 
 const PayStatusMap: Record<number, string> = {
@@ -748,7 +930,8 @@ const searchForm = reactive({
   capacityType: undefined as number | undefined,
   orderSource: undefined as number | undefined,
   passengerName: '',
-  driverName: ''
+  driverName: '',
+  abnormalType: ''
 })
 
 watch(dateTimeRange, (val) => {
@@ -770,7 +953,11 @@ const handleFormSearch = () => {
   queryParams.orderSource = searchForm.orderSource
   queryParams.passengerName = searchForm.passengerName
   queryParams.driverName = searchForm.driverName
-  getList()
+  if (searchForm.abnormalType) {
+    handleAbnormalTypeChange(searchForm.abnormalType)
+  } else {
+    getList()
+  }
 }
 
 const handleFormReset = () => {
@@ -781,6 +968,7 @@ const handleFormReset = () => {
   searchForm.orderSource = undefined
   searchForm.passengerName = ''
   searchForm.driverName = ''
+  searchForm.abnormalType = ''
   dateTimeRange.value = []
   queryParams.page = 1
   queryParams.pageSize = 10
@@ -818,6 +1006,13 @@ const detailFields = [
 const detailVisible = ref(false)
 const detailLoading = ref(false)
 const currentDetail = ref<any>({})
+
+const isTransitionLoading = (orderId: number, btnKey: string) => {
+  if (['dispatch', 'cancel', 'complete'].includes(btnKey)) {
+    return !!transitionLoadingMap.value[orderId]
+  }
+  return false
+}
 
 const canBatchUpdatePriceRule = computed(() => {
   if (selectedRows.value.length === 0) return false
@@ -941,6 +1136,35 @@ const batchStats = reactive({
   failed: 0
 })
 const batchFailedList = ref<Array<{ id: number; orderNo?: string; reason: string }>>([])
+
+const prerequisiteDialogVisible = ref(false)
+const prerequisiteFailures = ref<Array<{ field: string; message: string }>>([])
+const transitionLoadingMap = ref<Record<number, boolean>>({})
+
+const cancelDialogVisible = ref(false)
+const cancelForm = reactive({
+  orderId: 0,
+  reason: '',
+  cancelType: 1 as number
+})
+const cancelLoading = ref(false)
+const cancelResponsibilityMap: Record<number, { label: string; type: string; hint: string }> = {
+  1: { label: '乘客责任', type: 'warning', hint: '将记录乘客取消次数' },
+  2: { label: '司机责任', type: 'danger', hint: '将扣减司机评分并记录' },
+  3: { label: '平台责任', type: 'info', hint: '无惩罚措施' }
+}
+
+const abnormalType = ref('')
+const abnormalStats = reactive({
+  total: 0,
+  timeout: 0,
+  lost: 0,
+  unsettled: 0
+})
+
+const expandedRowKeys = ref<Set<number>>(new Set())
+const flowDetailMap = ref<Record<number, FlowDetailData>>({})
+const flowLoadingMap = ref<Record<number, boolean>>({})
 
 const getList = async () => {
   loading.value = true
@@ -1081,24 +1305,72 @@ const handleBatchDelete = () => {
   })
 }
 
-const handleDispatch = (row: Order) => {
-  ElMessage.info('派单功能开发中')
+const handleDispatch = async (row: Order) => {
+  transitionLoadingMap.value[row.id] = true
+  try {
+    const res = await getTransitionPrerequisitesApi(row.id, OrderStatus.DISPATCHED)
+    if (!res.data.valid) {
+      prerequisiteFailures.value = res.data.failures
+      prerequisiteDialogVisible.value = true
+      return
+    }
+    await new Promise(resolve => setTimeout(resolve, 300))
+    ElMessage.info('派单功能开发中')
+  } catch (error: any) {
+    if (error?.status === 429) {
+      ElMessage.warning('操作处理中，请勿重复提交')
+    } else {
+      ElMessage.error(error.message || '派单失败')
+    }
+  } finally {
+    transitionLoadingMap.value[row.id] = false
+  }
 }
 
-const handleCancel = (row: Order) => {
-  ElMessageBox.prompt('请输入取消原因', '取消订单', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async ({ value }) => {
-    try {
-      await cancelOrderApi(row.id, value)
-      ElMessage.success('取消成功')
-      getList()
-    } catch (error: any) {
+const handleCancel = async (row: Order) => {
+  transitionLoadingMap.value[row.id] = true
+  try {
+    const res = await getTransitionPrerequisitesApi(row.id, OrderStatus.CANCELLED)
+    if (!res.data.valid) {
+      prerequisiteFailures.value = res.data.failures
+      prerequisiteDialogVisible.value = true
+      return
+    }
+    cancelForm.orderId = row.id
+    cancelForm.reason = ''
+    cancelForm.cancelType = 1
+    cancelDialogVisible.value = true
+  } catch (error: any) {
+    if (error?.status === 429) {
+      ElMessage.warning('操作处理中，请勿重复提交')
+    } else {
+      ElMessage.error(error.message || '取消校验失败')
+    }
+  } finally {
+    transitionLoadingMap.value[row.id] = false
+  }
+}
+
+const handleCancelSubmit = async () => {
+  if (!cancelForm.reason.trim()) {
+    ElMessage.warning('请输入取消原因')
+    return
+  }
+  cancelLoading.value = true
+  try {
+    await cancelOrderApi(cancelForm.orderId, cancelForm.reason, cancelForm.cancelType)
+    ElMessage.success('取消成功')
+    cancelDialogVisible.value = false
+    getList()
+  } catch (error: any) {
+    if (error?.status === 429) {
+      ElMessage.warning('操作处理中，请勿重复提交')
+    } else {
       ElMessage.error(error.message || '取消失败')
     }
-  }).catch(() => {})
+  } finally {
+    cancelLoading.value = false
+  }
 }
 
 const handlePickup = (row: Order) => {
@@ -1113,8 +1385,26 @@ const handleStartTrip = (row: Order) => {
   ElMessage.info('开始行程功能开发中')
 }
 
-const handleComplete = (row: Order) => {
-  ElMessage.info('完成订单功能开发中')
+const handleComplete = async (row: Order) => {
+  transitionLoadingMap.value[row.id] = true
+  try {
+    const res = await getTransitionPrerequisitesApi(row.id, OrderStatus.COMPLETED)
+    if (!res.data.valid) {
+      prerequisiteFailures.value = res.data.failures
+      prerequisiteDialogVisible.value = true
+      return
+    }
+    await new Promise(resolve => setTimeout(resolve, 300))
+    ElMessage.info('完成订单功能开发中')
+  } catch (error: any) {
+    if (error?.status === 429) {
+      ElMessage.warning('操作处理中，请勿重复提交')
+    } else {
+      ElMessage.error(error.message || '完成订单失败')
+    }
+  } finally {
+    transitionLoadingMap.value[row.id] = false
+  }
 }
 
 const handleSettle = (row: Order) => {
@@ -1152,6 +1442,11 @@ const handleTraceSearch = async () => {
 const handleBatchCommand = async (command: string) => {
   const orders = selectedRows.value
   if (orders.length === 0) return
+
+  if (['retry_dispatch', 'mark_abnormal', 'force_close', 'reset_status'].includes(command)) {
+    await handleBatchAbnormalCommand(command)
+    return
+  }
 
   switch (command) {
     case 'updatePriceRule':
@@ -1258,8 +1553,120 @@ const runBatchOperation = async (
   }
 }
 
+const handleAbnormalTypeChange = async (type: string) => {
+  if (!type) {
+    getList()
+    return
+  }
+  loading.value = true
+  try {
+    const res = await getAbnormalOrdersApi({ type })
+    tableData.value = res.data.list || res.data
+    total.value = res.data.total || tableData.value.length
+  } catch (error: any) {
+    ElMessage.error(error.message || '获取异常订单失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleBatchAbnormalCommand = async (command: string) => {
+  const orders = selectedRows.value
+  if (orders.length === 0) return
+
+  const commandLabelMap: Record<string, string> = {
+    retry_dispatch: '批量重试流转',
+    mark_abnormal: '批量标记异常',
+    force_close: '批量关闭订单',
+    reset_status: '批量重置状态'
+  }
+
+  if (command === 'retry_dispatch') {
+    const hasNonTimeout = orders.some(o => o.abnormalType !== 'timeout_no_accept')
+    if (hasNonTimeout) {
+      ElMessage.warning('批量重试流转仅适用于"超时未接单"类型的异常订单')
+      return
+    }
+  }
+
+  await ElMessageBox.confirm(
+    `确定要对选中的 ${orders.length} 条订单执行"${commandLabelMap[command]}"操作吗？`,
+    '提示',
+    { type: 'warning' }
+  )
+
+  const ids = orders.map(o => o.id)
+  batchOpTitle.value = commandLabelMap[command]
+  batchProgressVisible.value = true
+  batchProgress.value = 0
+  batchProgressStatus.value = ''
+  batchStats.total = orders.length
+  batchStats.success = 0
+  batchStats.failed = 0
+  batchFailedList.value = []
+
+  try {
+    const res = await batchAbnormalOperationApi(ids, command)
+    batchStats.success = res.data.success
+    batchStats.failed = res.data.failed
+    if (res.data.failedOrders) {
+      batchFailedList.value = res.data.failedOrders
+    }
+    batchProgress.value = 100
+    batchProgressStatus.value = batchStats.failed === 0 ? 'success' : 'warning'
+    ElMessage.success(`操作完成，成功${batchStats.success}条，失败${batchStats.failed}条`)
+    getList()
+    loadAbnormalStats()
+  } catch (error: any) {
+    batchProgressStatus.value = 'danger'
+    batchProgress.value = 100
+    ElMessage.error(error.message || '批量异常操作失败')
+  }
+}
+
+const loadAbnormalStats = async () => {
+  try {
+    const res = await getAbnormalOrdersApi({ type: 'all' })
+    const list = res.data.list || res.data
+    abnormalStats.total = list.length
+    abnormalStats.timeout = list.filter((o: Order) => o.abnormalType === 'timeout_no_accept').length
+    abnormalStats.lost = list.filter((o: Order) => o.abnormalType === 'midway_lost').length
+    abnormalStats.unsettled = list.filter((o: Order) => o.abnormalType === 'unsettled').length
+  } catch {
+    // ignore
+  }
+}
+
+const handleRowDblClick = async (row: Order) => {
+  const elTable = tableRef.value?.elTableRef
+  if (!elTable) return
+
+  const isExpanded = expandedRowKeys.value.has(row.id)
+  if (isExpanded) {
+    expandedRowKeys.value.delete(row.id)
+    elTable.toggleRowExpansion(row, false)
+    return
+  }
+
+  expandedRowKeys.value.add(row.id)
+  elTable.toggleRowExpansion(row, true)
+
+  if (flowDetailMap.value[row.id]) return
+
+  flowLoadingMap.value[row.id] = true
+  try {
+    const res = await getFlowDetailApi(row.id)
+    flowDetailMap.value[row.id] = res.data
+  } catch (error: any) {
+    ElMessage.error(error.message || '获取流转详情失败')
+  } finally {
+    flowLoadingMap.value[row.id] = false
+  }
+}
+
 onMounted(() => {
   getList()
+  loadAbnormalStats()
 })
 
 defineExpose({
@@ -1392,6 +1799,82 @@ defineExpose({
     padding: 10px 0;
   }
 
+  .status-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .status-tag-animate {
+    animation: statusZoomIn 0.3s ease;
+  }
+
+  .abnormal-tag {
+    font-size: 11px;
+  }
+
+  .flow-expand-area {
+    padding: 16px 24px;
+  }
+
+  .flow-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #909399;
+    padding: 20px 0;
+  }
+
+  .flow-detail-content {
+    .el-timeline {
+      padding-left: 0;
+    }
+
+    .el-card {
+      margin-bottom: 4px;
+
+      h4 {
+        margin: 0 0 8px;
+        font-size: 14px;
+      }
+
+      p {
+        margin: 4px 0;
+        font-size: 13px;
+        color: #606266;
+      }
+    }
+  }
+
+  .violation-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 13px;
+    flex-wrap: wrap;
+
+    .violation-operator,
+    .violation-ip {
+      color: #909399;
+    }
+
+    .violation-detail {
+      color: #606266;
+    }
+  }
+
+  .prerequisite-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .prerequisite-tag {
+    font-size: 13px;
+  }
+
   .batch-progress {
     padding: 20px 0;
 
@@ -1440,6 +1923,17 @@ defineExpose({
         }
       }
     }
+  }
+}
+
+@keyframes statusZoomIn {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 </style>
