@@ -17,6 +17,8 @@ import RiskAlert from './RiskAlert';
 import OperationLog from './OperationLog';
 import QuoteThreshold from './QuoteThreshold';
 import QuoteThresholdHistory from './QuoteThresholdHistory';
+import ReplaySession from './ReplaySession';
+import ReplayConclusion from './ReplayConclusion';
 
 const db = {
   sequelize,
@@ -38,6 +40,8 @@ const db = {
   OperationLog,
   QuoteThreshold,
   QuoteThresholdHistory,
+  ReplaySession,
+  ReplayConclusion,
 };
 
 const setupAssociations = () => {
@@ -47,6 +51,8 @@ const setupAssociations = () => {
   Permission.belongsToMany(Role, { through: RolePermission, foreignKey: 'perm_id', otherKey: 'role_id', as: 'roles' });
   QuoteThreshold.hasMany(QuoteThresholdHistory, { foreignKey: 'threshold_id', as: 'history' });
   QuoteThresholdHistory.belongsTo(QuoteThreshold, { foreignKey: 'threshold_id', as: 'threshold' });
+  ReplaySession.hasMany(ReplayConclusion, { as: 'conclusions', foreignKey: 'session_id' });
+  ReplayConclusion.belongsTo(ReplaySession, { foreignKey: 'session_id', as: 'session' });
 };
 
 setupAssociations();

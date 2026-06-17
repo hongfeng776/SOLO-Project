@@ -1,0 +1,86 @@
+.volatility-pattern-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #EBEEF5;
+}
+
+.pattern-badge-stable {
+  background: #409EFF;
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+.pattern-badge-volatile {
+  background: #F56C6C;
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+.pattern-badge-upward {
+  background: #67C23A;
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+.pattern-badge-downward {
+  background: #E6A23C;
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+.completeness-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #EBEEF5;
+}
+
+.sector-compare-bar {
+  height: 24px;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.sector-compare-current {
+  background: #E6F0FA;
+  border: 2px solid #1A3A5C;
+}
+
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 280px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.conclusion-drawer {
+  border-top: 1px solid #EBEEF5;
+  background: #FAFBFC;
+  padding: 20px;
+  margin-top: 12px;
+}
+
+.slide-expand-enter-active,
+.slide-expand-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.slide-expand-enter-from,
+.slide-expand-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+
+.slide-expand-enter-to,
+.slide-expand-leave-from {
+  max-height: 800px;
+  opacity: 1;
+}

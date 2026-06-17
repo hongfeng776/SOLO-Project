@@ -705,3 +705,120 @@ export interface IBatchUpdateThresholdsParams {
   ids: number[]
   patch: Partial<IThresholdUpdateData>
 }
+
+export type ReplayStatus = 'normal' | 'abnormal' | 'suspended'
+export type ReplaySessionStatus = 'normal' | 'abnormal' | 'suspended'
+
+export interface IPeriodSegment {
+  label: string
+  start: string
+  end: string
+  count: number
+  avgChangeRate: number
+}
+
+export interface IHistoryRecord {
+  id: number
+  stockId: number
+  stockCode: string
+  stockName: string
+  tradeDate: string
+  openPrice: number
+  closePrice: number
+  highPrice: number
+  lowPrice: number
+  currentPrice: number
+  changeAmount: number
+  changeRate: number
+  volume: number
+  turnover: number
+  replayStatus: ReplayStatus
+}
+
+export interface IReplaySession {
+  id: number
+  sessionName: string
+  startDate: string
+  endDate: string
+  sector: string
+  changeRateMin: number
+  changeRateMax: number
+  status: ReplaySessionStatus
+  completenessScore: number
+  conclusion: string
+  createdBy: number
+  createdByName?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface IReplayConclusion {
+  id: number
+  sessionId: number
+  stockCode: string
+  stockName: string
+  sector: string
+  periodLabel: string
+  normalDays: number
+  abnormalDays: number
+  suspendedDays: number
+  peakPrice: number
+  valleyPrice: number
+  avgChangeRate: number
+  volatilityIndex: number
+  comparisonScore: number
+  conclusionText: string
+  suggestion: string
+  createdAt: string
+}
+
+export interface IVolatilityPattern {
+  pattern: string
+  similarity: number
+  referencePeriod: string
+  avgChangeRate: number
+  volatilityIndex: number
+  maxDrawdown: number
+}
+
+export interface IDataCompleteness {
+  score: number
+  missingDates: string[]
+  isComplete: boolean
+  totalTradingDays: number
+  availableDays: number
+}
+
+export interface ISectorComparison {
+  stockCode: string
+  stockName: string
+  avgChangeRate: number
+  volatilityIndex: number
+  rank: number
+}
+
+export interface IReplayQueryParams {
+  stockCode?: string
+  sector?: string
+  startDate: string
+  endDate: string
+  changeRateMin?: number
+  changeRateMax?: number
+  page: number
+  pageSize: number
+}
+
+export interface IReplayExportParams {
+  stockCodes: string[]
+  startDate: string
+  endDate: string
+  fields?: string[]
+  orderBy?: string
+  isFullExport?: boolean
+  format?: 'csv' | 'xlsx'
+}
+
+export interface IReplaySessionDetail extends IReplaySession {
+  conclusions: IReplayConclusion[]
+  volatilityStats: IVolatilityPattern
+}

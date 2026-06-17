@@ -45,6 +45,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '行情管理', icon: 'TrendCharts', keepAlive: true }
       },
       {
+        path: 'replay',
+        name: 'Replay',
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "replay" */ '@views/stock/ReplayPage.vue'),
+        meta: { title: '历史复盘', icon: 'Clock', keepAlive: false }
+      },
+      {
         path: 'product',
         name: 'Product',
         component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/product/index.vue'),

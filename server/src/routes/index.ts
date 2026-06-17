@@ -14,6 +14,7 @@ import riskAlertRoutes from './riskAlert';
 import operationLogRoutes from './operationLog';
 import dashboardRoutes from './dashboard';
 import thresholdRoutes from './threshold';
+import replayRoutes from './replay';
 
 const router = Router();
 
@@ -32,5 +33,6 @@ router.use('/risk-alerts', riskAlertRoutes);
 router.use('/operation-logs', operationLogRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/thresholds', thresholdRoutes);
+router.use('/replay', replayRoutes);
 
 export default router;
