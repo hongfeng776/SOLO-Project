@@ -51,7 +51,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'content-audit',
         name: 'ContentAudit',
-        component: () => import('@/views/content/audit.vue'),
+        component: () => import('@/views/content/audit-v2.vue'),
         meta: { title: '内容审核', icon: 'Checked', roles: ['content:audit'] },
       },
       {

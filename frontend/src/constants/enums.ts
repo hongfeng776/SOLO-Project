@@ -336,3 +336,53 @@ export const COVER_CATEGORY = {
 } as const
 
 export const DATE_FORMAT_STRING = DATE_FORMAT
+
+export const RISK_LEVEL = {
+  LOW: { value: 1, label: '低风险', color: '#67C23A', type: 'success' },
+  MEDIUM: { value: 2, label: '中风险', color: '#E6A23C', type: 'warning' },
+  HIGH: { value: 3, label: '高风险', color: '#F56C6C', type: 'danger' },
+  VERY_HIGH: { value: 4, label: '极高风险', color: '#C0392B', type: 'danger' },
+} as const
+
+export const AUDIT_REVIEW_LEVEL = {
+  FIRST: { value: 1, label: '初审', color: '#409EFF', type: 'primary' },
+  SECOND: { value: 2, label: '复审', color: '#E6A23C', type: 'warning' },
+  THIRD: { value: 3, label: '终审', color: '#F56C6C', type: 'danger' },
+} as const
+
+export const AUDIT_TASK_PRIORITY = {
+  NORMAL: { value: 0, label: '普通', color: '#909399', type: 'info' },
+  URGENT: { value: 1, label: '加急', color: '#E6A23C', type: 'warning' },
+  SUPER_URGENT: { value: 2, label: '特急', color: '#F56C6C', type: 'danger' },
+} as const
+
+export const REJECT_REASON_CATEGORY = {
+  COPYRIGHT: { value: 'copyright', label: '版权问题', examples: ['无版权证明', '版权过期', '版权归属不清'] },
+  QUALITY: { value: 'quality', label: '内容质量', examples: ['画质模糊', '音画不同步', '画面抖动'] },
+  POLICY: { value: 'policy', label: '违规内容', examples: ['含敏感内容', '违反社区规范', '广告营销'] },
+  METADATA: { value: 'metadata', label: '信息错误', examples: ['标题错误', '分类错误', '标签不规范'] },
+  OTHER: { value: 'other', label: '其他原因', examples: [] },
+} as const
+
+export const AUDIT_EXCEPTION_TYPE = {
+  DUPLICATE_SUBMIT: { value: 'duplicate_submit', label: '重复提交', color: '#E6A23C' },
+  STATUS_ABNORMAL: { value: 'status_abnormal', label: '状态异常', color: '#F56C6C' },
+  OMISSION: { value: 'omission', label: '审核疏漏', color: '#409EFF' },
+  VIOLATION_AUDIT: { value: 'violation_audit', label: '违规审核', color: '#C0392B' },
+  SPEED_ABNORMAL: { value: 'speed_abnormal', label: '审核速度异常', color: '#722ed1' },
+} as const
+
+export const QC_REPORT_STATUS = {
+  PENDING: { value: 0, label: '待处理', color: '#E6A23C', type: 'warning' },
+  PROCESSING: { value: 1, label: '处理中', color: '#409EFF', type: 'primary' },
+  RESOLVED: { value: 2, label: '已处理', color: '#67C23A', type: 'success' },
+  IGNORED: { value: 3, label: '已忽略', color: '#909399', type: 'info' },
+} as const
+
+export const BATCH_AUDIT_ACTION = {
+  APPROVE: { value: 'approve', label: '批量通过', icon: 'CircleCheck', type: 'success' },
+  REJECT: { value: 'reject', label: '批量驳回', icon: 'CircleClose', type: 'danger' },
+  PENDING: { value: 'pending', label: '批量待定', icon: 'Clock', type: 'warning' },
+  URGENT: { value: 'urgent', label: '批量加急', icon: 'Lightning', type: 'primary' },
+  ARCHIVE: { value: 'archive', label: '批量归档', icon: 'Folder', type: 'info' },
+} as const

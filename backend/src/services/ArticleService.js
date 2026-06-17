@@ -13,19 +13,20 @@ const cacheService = require('./CacheService');
 const ARTICLE_CATEGORY = 7;
 const ARTICLE_CODE_PREFIX = 'ART';
 
-const ARTICLE_TYPES = [1, 2, 3, 4];
+const ARTICLE_TYPES = [0, 1, 2, 3, 4];
 const QUALITY_LEVELS = [0, 1, 2, 3];
-const PUBLISH_CHANNELS = ['app', 'web', 'mp', 'all'];
-const PUBLISH_PERMISSIONS = [0, 1, 2];
+const PUBLISH_CHANNELS = [1, 2, 3, 4];
+const PUBLISH_PERMISSIONS = [0, 1, 2, 3];
 
 const TEMPLATE_WORD_LIMITS = {
-  default: { min: 500, max: 5000 },
-  magazine: { min: 800, max: 10000 },
-  news: { min: 300, max: 3000 },
-  blog: { min: 200, max: 8000 },
+  'default': { min: 500, max: 5000 },
+  'full-width': { min: 300, max: 3000 },
+  'magazine': { min: 800, max: 10000 },
+  'elegant': { min: 500, max: 8000 },
+  'tech-style': { min: 500, max: 5000 },
 };
 
-const SENSITIVE_WORDS = ['违禁词1', '违禁词2', '敏感词', '色情', '赌博'];
+const SENSITIVE_WORDS = ['违禁', '敏感', '色情', '赌博', '暴力', '政治敏感', '广告推销'];
 
 const STATUS_DRAFT = 0;
 const STATUS_PUBLISHED = 1;
@@ -169,7 +170,7 @@ class ArticleService {
 
     const articleCode = this._generateArticleCode();
 
-    const publishChannel = data.publishChannel || data.publish_channel || 'app';
+    const publishChannel = data.publishChannel ?? data.publish_channel ?? 1;
     const defaultTemplate = this._getDefaultTemplateByChannel(publishChannel);
 
     let resourcePosition = null;
@@ -905,10 +906,10 @@ class ArticleService {
 
   _getDefaultTemplateByChannel(channel) {
     const templateMap = {
-      app: 'default',
-      web: 'news',
-      mp: 'magazine',
-      all: 'default',
+      1: 'default',
+      2: 'full-width',
+      3: 'magazine',
+      4: 'elegant',
     };
     return templateMap[channel] || 'default';
   }

@@ -648,3 +648,243 @@ export interface TopicBatchMountItem {
   weightScore?: number
   isRecommended?: number
 }
+
+export interface AuditTaskAssignRule {
+  id: number
+  name: string
+  category?: number
+  minDuration?: number
+  maxDuration?: number
+  riskLevel?: number
+  reviewerIds: number[]
+  reviewerNames: string[]
+  reviewLevel: number
+  priority: number
+  status: number
+  createdAt?: string
+}
+
+export interface AuditHistoryRecord {
+  id: number
+  auditNo: string
+  contentId: number
+  reviewLevel: number
+  auditStatus: number
+  auditRemark?: string
+  rejectReasonCategory?: string
+  rejectReasonDetail?: string
+  auditorId?: number
+  auditorName?: string
+  auditorRole?: string
+  auditTime?: string
+  fromStatus: number
+  toStatus: number
+  ipAddress?: string
+  extraData?: Record<string, any>
+}
+
+export interface AuditDetailInfo {
+  basicInfo: {
+    id: number
+    title: string
+    category: number
+    coverImage?: string
+    videoUrl?: string
+    duration?: number
+    description?: string
+    director?: string
+    actors?: string
+    releaseYear?: number
+    area?: string
+    language?: string
+    tags: string[]
+    totalEpisodes: number
+    updatedEpisodes: number
+    resolution?: string
+    clarityLevel?: number
+    fileSize?: number
+    bitrate?: number
+    frameRate?: number
+    videoFormat?: string
+  }
+  copyrightInfo: {
+    exists: boolean
+    id?: number
+    code?: string
+    name?: string
+    type?: number
+    supplierName?: string
+    startDate?: string
+    endDate?: string
+    status?: number
+    missingFields?: string[]
+  }
+  riskInfo: {
+    riskLevel: number
+    riskScore: number
+    riskTags: string[]
+    autoDetectedIssues: string[]
+    requiresMultiLevelReview: boolean
+    reviewLevel: number
+  }
+  assignInfo: {
+    taskId: string
+    priority: number
+    assignedAt?: string
+    deadline?: string
+    currentReviewer?: {
+      id: number
+      name: string
+      department?: string
+    }
+    reviewHistory: AuditHistoryRecord[]
+  }
+  completeness: {
+    isComplete: boolean
+    missingFields: string[]
+    canStartAudit: boolean
+  }
+}
+
+export interface AuditSubmitData {
+  contentId: number
+  auditStatus: number
+  auditRemark?: string
+  rejectReasonCategory?: string
+  rejectReasonDetail?: string
+  reviewLevel?: number
+  nextReviewerId?: number
+}
+
+export interface BatchAuditParams {
+  ids: number[]
+  action: string
+  auditStatus?: number
+  auditRemark?: string
+  rejectReasonCategory?: string
+  rejectReasonDetail?: string
+  priority?: number
+}
+
+export interface AuditTaskPoolItem {
+  taskId: string
+  contentId: number
+  contentTitle: string
+  category: number
+  coverImage?: string
+  riskLevel: number
+  priority: number
+  auditStatus: number
+  reviewLevel: number
+  assignedTo?: number
+  assignedName?: string
+  deadline?: string
+  submittedAt?: string
+  createdAt?: string
+  isArchived?: boolean
+  archivedAt?: string
+  videoDuration?: number
+  creatorName?: string
+  creatorLevel?: number
+}
+
+export interface AuditTraceRecord {
+  auditNo: string
+  contentId: number
+  contentTitle: string
+  status: string
+  currentReviewer: string
+  totalSteps: number
+  currentStep: number
+  steps: Array<{
+    level: number
+    name: string
+    reviewer?: string
+    status: string
+    result?: string
+    remark?: string
+    time?: string
+  }>
+  timeline: Array<{
+    time: string
+    action: string
+    operator: string
+    detail: string
+    status: string
+  }>
+  creatorInfo?: {
+    id: number
+    name: string
+    level?: number
+    historyViolationCount: number
+  }
+}
+
+export interface QualityCheckReport {
+  id: number
+  reportNo: string
+  reportDate: string
+  period: string
+  totalAudited: number
+  exceptionCount: number
+  exceptionRate: number
+  passRate: number
+  auditorStats: Array<{
+    auditorId: number
+    auditorName: string
+    totalCount: number
+    exceptionCount: number
+    avgDuration: number
+    approvalRate: number
+    efficiencyScore: number
+  }>
+  exceptionList: Array<{
+    id: number
+    type: string
+    typeLabel: string
+    severity: string
+    contentId: number
+    contentTitle: string
+    auditNo: string
+    auditorId?: number
+    auditorName?: string
+    description: string
+    suggestedAction?: string
+    status: number
+    createdAt: string
+  }>
+  summary: {
+    strengths: string[]
+    weaknesses: string[]
+    suggestions: string[]
+  }
+}
+
+export interface AssignPreviewResult {
+  reviewerId: number
+  reviewerName: string
+  reviewerRole: string
+  department: string
+  matchScore: number
+  matchReasons: string[]
+  currentWorkload: number
+  avgHandleTime: number
+}
+
+export interface DuplicateCheckResult {
+  isDuplicate: boolean
+  duplicateTaskIds?: string[]
+  recentAuditRecords?: Array<{
+    auditNo: string
+    auditorId: number
+    auditorName: string
+    auditTime: string
+    result: string
+  }>
+}
+
+export interface RejectReasonTemplate {
+  value: string
+  label: string
+  examples: string[]
+}
