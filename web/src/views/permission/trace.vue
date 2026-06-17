@@ -523,12 +523,17 @@ const changedFieldsList = computed(() => {
   }))
 })
 
-function formatTime(time: string) {
-  return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
+function formatTime(time: string | number | Date | null | undefined) {
+  if (!time) return '-'
+  const d = dayjs(time)
+  return d.isValid() ? d.format('YYYY-MM-DD HH:mm:ss') : '-'
 }
 
-function formatNumber(num: number) {
-  return num.toLocaleString('zh-CN')
+function formatNumber(num: number | string | null | undefined) {
+  if (num === null || num === undefined || num === '') return '0'
+  const n = typeof num === 'string' ? Number(num) : num
+  if (Number.isNaN(n)) return '0'
+  return n.toLocaleString('zh-CN')
 }
 
 function formatValue(val: any) {
@@ -545,23 +550,30 @@ function disabledDate(time: Date) {
   return dayjs(time).isAfter(now) || dayjs(time).isBefore(ninetyDaysAgo)
 }
 
-function handleDateChange(val: string[]) {
-  if (val && val.length === 2) {
-    const start = dayjs(val[0])
-    const end = dayjs(val[1])
-    if (end.diff(start, 'day') > 90) {
-      ElMessage.error('时间区间不能超过 90 天')
-      dateRange.value = []
-      searchForm.startTime = undefined
-      searchForm.endTime = undefined
-      return
-    }
-    searchForm.startTime = val[0]
-    searchForm.endTime = val[1]
-  } else {
+function handleDateChange(val: string[] | null | undefined) {
+  if (!val || !Array.isArray(val) || val.length !== 2 || !val[0] || !val[1]) {
     searchForm.startTime = undefined
     searchForm.endTime = undefined
+    return
   }
+  const start = dayjs(val[0])
+  const end = dayjs(val[1])
+  if (!start.isValid() || !end.isValid()) {
+    ElMessage.error('日期格式无效')
+    dateRange.value = []
+    searchForm.startTime = undefined
+    searchForm.endTime = undefined
+    return
+  }
+  if (end.diff(start, 'day') > 90) {
+    ElMessage.error('时间区间不能超过 90 天')
+    dateRange.value = []
+    searchForm.startTime = undefined
+    searchForm.endTime = undefined
+    return
+  }
+  searchForm.startTime = val[0]
+  searchForm.endTime = val[1]
 }
 
 const fetchData = async () => {
