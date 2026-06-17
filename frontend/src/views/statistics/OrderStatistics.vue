@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="order-statistics-page">
     <div class="page-header">
       <h2>
@@ -1031,13 +1031,12 @@ const handleExport = async () => {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
 
-      setTimeout(() => {
+    setTimeout(() => {
         exportStatus.value = ExportStatusEnum.SUCCESS.value
         setTimeout(() => {
           exportStatus.value = ExportStatusEnum.IDLE.value
         }, 3000)
       }, 300)
-    }, 800)
   } catch (err) {
     clearInterval(exportTimer)
     exportStatus.value = ExportStatusEnum.FAILED.value

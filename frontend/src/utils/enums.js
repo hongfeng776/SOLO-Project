@@ -233,12 +233,39 @@ export const StatsDimensionEnum = {
 }
 
 export const UserLevelEnum = {
-  NORMAL: { value: 1, label: '普通用户', color: '#909399' },
-  SILVER: { value: 2, label: '银卡', color: '#c0c4cc' },
-  GOLD: { value: 3, label: '金卡', color: '#faad14' },
-  PLATINUM: { value: 4, label: '白金', color: '#722ed1' },
-  DIAMOND: { value: 5, label: '钻石', color: '#1890ff' }
+  NORMAL: { value: 1, label: '普通用户', color: '#909399', type: 'info' },
+  BUSINESS: { value: 2, label: '商旅用户', color: '#1890ff', type: 'primary' },
+  VIP: { value: 3, label: 'VIP用户', color: '#faad14', type: 'warning' }
 }
+
+export const UserStatusEnum = {
+  ENABLED: { value: 1, label: '启用', color: '#52c41a', type: 'success', gradient: 'linear-gradient(135deg, #52c41a, #73d13d)' },
+  DISABLED: { value: 0, label: '禁用', color: '#909399', type: 'info', gradient: 'linear-gradient(135deg, #909399, #c0c4cc)' },
+  FROZEN: { value: 2, label: '冻结', color: '#ff4d4f', type: 'danger', gradient: 'linear-gradient(135deg, #ff4d4f, #ff7875)' }
+}
+
+export const UserAbnormalTypeEnum = {
+  FAKE_REG: { value: 'fake_reg', label: '虚假注册', color: '#ff4d4f' },
+  INFO_MISSING: { value: 'info_missing', label: '信息缺失', color: '#faad14' },
+  DUPLICATE: { value: 'duplicate', label: '重复注册', color: '#722ed1' }
+}
+
+export const RegisterChannelEnum = {
+  APP: { value: 'app', label: 'APP端', color: '#1890ff' },
+  WECHAT: { value: 'wechat', label: '微信端', color: '#52c41a' },
+  WEB: { value: 'web', label: 'PC端', color: '#722ed1' },
+  OFFLINE: { value: 'offline', label: '线下门店', color: '#faad14' },
+  THIRD_PARTY: { value: 'third_party', label: '第三方渠道', color: '#eb2f96' }
+}
+
+export const UserTagOptions = [
+  { value: 'frequent', label: '高频用户', color: '#1890ff' },
+  { value: 'high_value', label: '高价值', color: '#faad14' },
+  { value: 'new_user', label: '新用户', color: '#52c41a' },
+  { value: 'potential', label: '潜力用户', color: '#722ed1' },
+  { value: 'lost', label: '流失预警', color: '#ff4d4f' },
+  { value: 'complaint', label: '投诉用户', color: '#eb2f96' }
+]
 
 export const MerchantTypeEnum = {
   INDIVIDUAL: { value: 1, label: '个人商家' },
@@ -287,6 +314,10 @@ export default {
   StatsPeriodEnum,
   StatsDimensionEnum,
   UserLevelEnum,
+  UserStatusEnum,
+  UserAbnormalTypeEnum,
+  RegisterChannelEnum,
+  UserTagOptions,
   MerchantTypeEnum,
   ExportStatusEnum,
   getEnumLabel,

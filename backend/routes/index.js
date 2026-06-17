@@ -49,6 +49,13 @@ router.get('/auth/userinfo', auth(), authController.getUserInfo);
 router.post('/auth/logout', auth(), authController.logout);
 
 registerCrudRoutes('users', userController);
+router.get('/users/trace/search', auth(), userController.trace.bind(userController));
+router.get('/users/validate/uniqueness', auth(), userController.validateUniqueness.bind(userController));
+router.put('/users/:id/status', auth(), userController.updateStatus.bind(userController));
+router.post('/users/batch/status', auth(['admin', 'risk_operator']), userController.batchUpdateStatus.bind(userController));
+router.post('/users/batch/info', auth(['admin']), userController.batchUpdateInfo.bind(userController));
+router.post('/users/batch/freeze', auth(['admin', 'risk_operator']), userController.batchFreeze.bind(userController));
+router.post('/users/batch/unfreeze', auth(['admin', 'risk_operator']), userController.batchUnfreeze.bind(userController));
 registerCrudRoutes('roles', roleController);
 registerCrudRoutes('flights', flightController);
 registerCrudRoutes('hotels', hotelController);
