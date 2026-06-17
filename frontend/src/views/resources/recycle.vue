@@ -41,34 +41,29 @@
       </el-form>
     </div>
 
-    <div class="table-card">
-      <div class="toolbar">
-        <el-tag type="warning" effect="dark">待审核：{{ pendingCount }}</el-tag>
-        <div class="actions">
-          <el-button
-            size="small"
-            :disabled="selectedIds.length === 0"
-            type="success"
-            @click="openBatchRestore"
-          >
-            批量恢复
-          </el-button>
-        </div>
-      </div>
-
-      <el-table
+    <div class="table-card card-wrapper">
+      <DataTable
+        ref="dataTableRef"
         :data="tableData"
-        border
-        stripe
+        :loading="loading"
+        :total="total"
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :stripe="false"
+        :border="true"
         :resizable="true"
+        :height="640"
+        show-selection
+        :show-index="false"
+        :action-width="220"
         @selection-change="onSelectionChange"
         @row-dblclick="openDetail"
-        :row-style="getRowStyle"
-        :header-cell-style="{ background: '#fafafa', position: 'sticky', top: 0, zIndex: 10 }"
-        height="600"
-        v-loading="loading"
+        @refresh="fetchList"
       >
-        <el-table-column type="selection" width="55" fixed="left" />
+        <template #toolbar>
+          <el-tag type="warning" effect="dark">待审核：{{ pendingCount }}</el-tag>
+        </template>
+
         <el-table-column prop="id" label="ID" width="70" align="center" />
         <el-table-column prop="resourceTitle" label="素材名称" min-width="200" :show-overflow-tooltip="true">
           <template #default="{ row }">
@@ -89,7 +84,7 @@
         </el-table-column>
         <el-table-column label="原始状态" width="100" align="center">
           <template #default="{ row }">
-            <StatusTag :status="row.originalStatus" />
+            <StatusTag :status="row.originalStatus" type="resource" />
           </template>
         </el-table-column>
         <el-table-column
@@ -109,17 +104,20 @@
           </template>
         </el-table-column>
         <el-table-column prop="applicantName" label="申请人" width="100" />
-        <el-table-column prop="applyTime" label="申请时间" width="160" />
-        <el-table-column prop="expireAt" label="销毁时间" width="160">
+        <el-table-column label="申请时间" width="160">
+          <template #default="{ row }">{{ formatDate(row.applyTime) }}</template>
+        </el-table-column>
+        <el-table-column label="销毁时间" width="160">
           <template #default="{ row }">
             <el-tooltip v-if="isExpiring(row)" content="即将到期" placement="top">
-              <span class="expire-warning">{{ row.expireAt }}</span>
+              <span class="expire-warning">{{ formatDate(row.expireAt) }}</span>
             </el-tooltip>
-            <span v-else>{{ row.expireAt }}</span>
+            <span v-else>{{ formatDate(row.expireAt) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right" align="center">
-          <template #default="{ row }">
+
+        <template #action="{ row }">
+          <div class="action-btns">
             <el-button
               v-if="row.reviewStatus === 'pending'"
               size="small"
@@ -142,9 +140,9 @@
               @click="restoreItem(row)"
             >恢复</el-button>
             <el-button size="small" link @click="openDetail(row)">详情</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+          </div>
+        </template>
+      </DataTable>
 
       <div v-if="selectedIds.length > 0" class="batch-bar">
         已选择 <b>{{ selectedIds.length }}</b> 项
@@ -158,18 +156,11 @@
           type="danger"
           @click="batchRejectSelected"
         >批量驳回</el-button>
-      </div>
-
-      <div class="pagination-wrapper">
-        <el-pagination
-          v-model:current-page="page"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="fetchList"
-          @current-change="fetchList"
-        />
+        <el-button
+          size="small"
+          type="primary"
+          @click="openBatchRestore"
+        >批量恢复</el-button>
       </div>
     </div>
 
@@ -189,7 +180,7 @@
             <span style="color: #606266">{{ currentReviewItem.discardReason }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="申请人">{{ currentReviewItem.applicantName }}</el-descriptions-item>
-          <el-descriptions-item label="申请时间">{{ currentReviewItem.applyTime }}</el-descriptions-item>
+          <el-descriptions-item label="申请时间">{{ formatDate(currentReviewItem.applyTime) }}</el-descriptions-item>
         </el-descriptions>
         <el-form label-width="80px">
           <el-form-item label="审核意见">
@@ -228,17 +219,17 @@
           <el-descriptions-item label="素材编码">{{ currentDetailItem.materialCode }}</el-descriptions-item>
           <el-descriptions-item label="素材类型">{{ typeLabel[currentDetailItem.resourceType] }}</el-descriptions-item>
           <el-descriptions-item label="原始状态">
-            <StatusTag :status="currentDetailItem.originalStatus" />
+            <StatusTag :status="currentDetailItem.originalStatus" type="resource" />
           </el-descriptions-item>
           <el-descriptions-item label="原始分类">{{ currentDetailItem.originalCategoryName }}</el-descriptions-item>
           <el-descriptions-item label="作者">{{ currentDetailItem.authorName }}</el-descriptions-item>
           <el-descriptions-item label="关联作品数">{{ currentDetailItem.relatedWorks }}</el-descriptions-item>
-          <el-descriptions-item label="申请时间">{{ currentDetailItem.applyTime }}</el-descriptions-item>
+          <el-descriptions-item label="申请时间">{{ formatDate(currentDetailItem.applyTime) }}</el-descriptions-item>
           <el-descriptions-item label="销毁时间">
             <span v-if="isExpiring(currentDetailItem)" class="expire-warning">
-              {{ currentDetailItem.expireAt }}
+              {{ formatDate(currentDetailItem.expireAt) }}
             </span>
-            <span v-else>{{ currentDetailItem.expireAt }}</span>
+            <span v-else>{{ formatDate(currentDetailItem.expireAt) }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="是否已销毁">
             <el-tag :type="currentDetailItem.isDestroyed ? 'danger' : 'info'" size="small">
@@ -271,7 +262,7 @@
             </div>
             <div class="review-info">
               <span>审核人：{{ currentDetailItem.reviewerName }}</span>
-              <span style="margin-left: 16px">审核时间：{{ currentDetailItem.reviewTime }}</span>
+              <span style="margin-left: 16px">审核时间：{{ formatDate(currentDetailItem.reviewTime) }}</span>
             </div>
             <div v-if="currentDetailItem.reviewOpinion" class="review-opinion">
               审核意见：{{ currentDetailItem.reviewOpinion }}
@@ -365,13 +356,14 @@ import {
   CircleClose
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { StatusTag } from '@/components/business'
+import { StatusTag, DataTable } from '@/components/business'
 import { FileTypeLabel } from '@/constants'
 import * as recycleApi from '@/api/recycle'
 import type { RecycleItem } from '@/types'
 
 const loading = ref(false)
 const detailLoading = ref(false)
+const dataTableRef = ref<any>(null)
 const tableData = ref<RecycleItem[]>([])
 const total = ref(0)
 const page = ref(1)
@@ -421,6 +413,11 @@ const batchResult = reactive({
   failedItems: [] as { title: string; reason: string }[]
 })
 
+const formatDate = (date: string) => {
+  if (!date) return '-'
+  return date.replace('T', ' ').substring(0, 16)
+}
+
 const fetchPendingCount = async () => {
   try {
     const res = await recycleApi.getPendingCount()
@@ -465,13 +462,6 @@ const handleReset = () => {
 const onSelectionChange = (rows: RecycleItem[]) => {
   selectedRows.value = rows
   selectedIds.value = rows.map((r) => r.id)
-}
-
-const getRowStyle = ({ row }: { row: RecycleItem }) => {
-  if (selectedIds.value.includes(row.id)) {
-    return { backgroundColor: '#e1f3d8', fontWeight: '500' }
-  }
-  return {}
 }
 
 const isExpiring = (row: RecycleItem) => {
@@ -607,6 +597,7 @@ const batchApproveSelected = async () => {
       }
     }
     showBatchResult(successCount, failedItems)
+    dataTableRef.value?.clearSelection()
     fetchList()
     fetchPendingCount()
   } catch (e) {
@@ -644,6 +635,7 @@ const batchRejectSelected = async () => {
       }
     }
     showBatchResult(successCount, failedItems)
+    dataTableRef.value?.clearSelection()
     fetchList()
     fetchPendingCount()
   } catch (e) {
@@ -668,6 +660,7 @@ const doBatchRestore = async () => {
     batchResult.failedItems = data?.failedItems ?? []
     batchRestoreDialogVisible.value = false
     batchResultDialogVisible.value = true
+    dataTableRef.value?.clearSelection()
     fetchList()
     fetchPendingCount()
   } catch (e: any) {
@@ -709,22 +702,6 @@ onMounted(() => {
   }
 
   .table-card {
-    background: $bg-color-ffffff;
-    border-radius: $border-radius-large;
-    padding: 20px;
-
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-
-      .actions {
-        display: flex;
-        gap: 8px;
-      }
-    }
-
     .batch-bar {
       display: flex;
       align-items: center;
@@ -738,12 +715,6 @@ onMounted(() => {
       b {
         color: $primary-color;
       }
-    }
-
-    .pagination-wrapper {
-      margin-top: 16px;
-      display: flex;
-      justify-content: flex-end;
     }
   }
 }
@@ -760,6 +731,13 @@ onMounted(() => {
     color: $primary-color;
     text-decoration: underline;
   }
+}
+
+.action-btns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
 }
 
 .review-status {
@@ -926,10 +904,5 @@ onMounted(() => {
   h4 {
     font-size: $font-size-small;
   }
-}
-
-:deep(.el-table__row.selected-row) {
-  background-color: #e1f3d8 !important;
-  font-weight: 500;
 }
 </style>

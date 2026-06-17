@@ -19,16 +19,18 @@
     </div>
 
     <el-table
-      ref="tableRef"
-      :data="tableData"
-      v-loading="loading"
-      :height="height"
-      :stripe="stripe"
-      :border="border"
-      @selection-change="handleSelectionChange"
-      @sort-change="handleSortChange"
-      style="width: 100%"
-    >
+        ref="tableRef"
+        :data="tableData"
+        v-loading="loading"
+        :height="height"
+        :stripe="stripe"
+        :border="border"
+        :resizable="resizable"
+        @selection-change="handleSelectionChange"
+        @sort-change="handleSortChange"
+        @row-dblclick="(row: any, column: any, event: any) => emit('row-dblclick', row, column, event)"
+        style="width: 100%"
+      >
       <el-table-column
         v-if="showSelection"
         type="selection"
@@ -87,6 +89,7 @@ interface Props {
   height?: string | number
   stripe?: boolean
   border?: boolean
+  resizable?: boolean
   showSelection?: boolean
   showIndex?: boolean
   showSearch?: boolean
@@ -107,6 +110,7 @@ const props = withDefaults(defineProps<Props>(), {
   height: 'auto',
   stripe: false,
   border: false,
+  resizable: true,
   showSelection: false,
   showIndex: true,
   showSearch: false,
@@ -124,6 +128,7 @@ const emit = defineEmits<{
   'sort-change': [sort: { prop: string; order: string | null }]
   'search': [keyword: string]
   'refresh': []
+  'row-dblclick': [row: any, column: any, event: any]
 }>()
 
 const tableRef = ref<any>(null)
