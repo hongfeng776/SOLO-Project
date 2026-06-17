@@ -37,9 +37,9 @@ const STATUS_TRANSITIONS = {
 };
 
 class BusinessLinkageService {
-  async createOrderLog(orderId, action, fromStatus, toStatus, operator) {
+  async createOrderLog(orderId, action, fromStatus, toStatus, operator, changes = null, remark = null) {
     const order = await Order.findByPk(orderId);
-    return await OrderLog.create({
+    const logData = {
       orderId,
       orderNo: order ? order.orderNo : '',
       action,
@@ -47,8 +47,13 @@ class BusinessLinkageService {
       toStatus,
       operatorId: operator?.id || null,
       operatorName: operator?.name || '',
-      remark: `状态从 ${fromStatus} 变更为 ${toStatus}`
-    });
+      operatorRole: operator?.role || '',
+      remark: remark || `状态从 ${fromStatus} 变更为 ${toStatus}`
+    };
+    if (changes) {
+      logData.changes = typeof changes === 'string' ? changes : JSON.stringify(changes);
+    }
+    return await OrderLog.create(logData);
   }
 
   async checkInventory(category, productId, quantity) {
@@ -195,6 +200,108 @@ class BusinessLinkageService {
       throw new ValidationError(`品类"${category}"不允许从状态${fromStatus}变更为${toStatus}`);
     }
     return true;
+  }
+
+  async autoStatusLinkage(orderId, triggerType) {
+    const order = await Order.findByPk(orderId);
+    if (!order) {
+      throw new ValidationError('订单不存在');
+    }
+
+    const fromStatus = order.status;
+    let toStatus = null;
+    let action = '';
+
+    switch (triggerType) {
+      case 'pay_success':
+        toStatus = 1;
+        action = 'pay';
+        await order.update({ status: 1, payTime: new Date() });
+        await this.deductInventory(order.category, order.productId, order.quantity || 1);
+        break;
+      case 'refund_success':
+        toStatus = 6;
+        action = 'refund';
+        await order.update({ status: 6, refundTime: new Date() });
+        await this.restoreInventory(order.category, order.productId, order.quantity || 1);
+        break;
+      case 'fulfill_complete':
+        toStatus = order.category === 'flight' ? 3 : 4;
+        action = 'complete';
+        await order.update({ status: toStatus });
+        break;
+      case 'cancel':
+        toStatus = 2;
+        action = 'cancel';
+        await order.update({ status: 2 });
+        await this.restoreInventory(order.category, order.productId, order.quantity || 1);
+        break;
+      default:
+        throw new ValidationError(`不支持的触发类型: ${triggerType}`);
+    }
+
+    await this.createOrderLog(orderId, action, fromStatus, toStatus, {
+      id: null,
+      name: '系统自动',
+      role: 'system'
+    });
+
+    await this.updateMerchantStats(order.merchantId);
+
+    return order;
+  }
+
+  async validateOrderDataConsistency(orderId) {
+    const order = await Order.findByPk(orderId);
+    if (!order) {
+      throw new ValidationError('订单不存在');
+    }
+
+    const logs = await OrderLog.findAll({
+      where: { orderId },
+      order: [['createdAt', 'ASC']]
+    });
+
+    const gaps = [];
+    const nodes = {
+      create: null,
+      pay: null,
+      fulfill: null,
+      refund: null
+    };
+
+    for (const log of logs) {
+      if (log.action === 'create') nodes.create = log;
+      else if (log.action === 'pay') nodes.pay = log;
+      else if (log.action === 'complete' || log.toStatus === 3 || log.toStatus === 4) nodes.fulfill = log;
+      else if (log.action === 'refund' || log.toStatus === 5 || log.toStatus === 6) nodes.refund = log;
+    }
+
+    if (!nodes.create) {
+      gaps.push({ node: 'create', reason: '缺少订单创建日志' });
+    } else if (!order.createdAt) {
+      gaps.push({ node: 'create', reason: '订单创建时间缺失' });
+    }
+
+    if (order.status >= 1 && !nodes.pay) {
+      gaps.push({ node: 'pay', reason: '已支付订单缺少支付日志' });
+    }
+    if (order.status >= 1 && !order.payTime) {
+      gaps.push({ node: 'pay', reason: '订单支付时间缺失' });
+    }
+
+    if ((order.status === 3 || order.status === 4) && !nodes.fulfill) {
+      gaps.push({ node: 'fulfill', reason: '已履约订单缺少履约日志' });
+    }
+
+    if ((order.status === 5 || order.status === 6) && !nodes.refund) {
+      gaps.push({ node: 'refund', reason: '退款订单缺少退款日志' });
+    }
+
+    return {
+      isConsistent: gaps.length === 0,
+      gaps
+    };
   }
 }
 

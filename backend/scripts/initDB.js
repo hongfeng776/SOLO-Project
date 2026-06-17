@@ -50,6 +50,22 @@ const initDB = async () => {
     });
     console.log('创建角色：商家');
 
+    const operatorRole = await Role.create({
+      name: '运营人员',
+      code: 'operator',
+      description: '普通运营人员权限',
+      permissions: JSON.stringify(['order:view', 'order:edit', 'order:confirm'])
+    });
+    console.log('创建角色：运营人员');
+
+    const riskOperatorRole = await Role.create({
+      name: '风控人员',
+      code: 'risk_operator',
+      description: '风控人员权限',
+      permissions: JSON.stringify(['order:view', 'order:abnormal'])
+    });
+    console.log('创建角色：风控人员');
+
     const hashedPassword = await encrypt('123456');
     const admin = await User.create({
       username: 'admin',
@@ -57,7 +73,8 @@ const initDB = async () => {
       nickname: '超级管理员',
       roleId: adminRole.id,
       status: 1,
-      avatar: ''
+      avatar: '',
+      phone: '13800000000'
     });
     console.log('创建默认管理员账户：admin/123456');
 
@@ -67,9 +84,32 @@ const initDB = async () => {
       nickname: '测试用户',
       roleId: userRole.id,
       status: 1,
-      avatar: ''
+      avatar: '',
+      phone: '13800001111'
     });
     console.log('创建测试用户：user1/123456');
+
+    const operatorUser = await User.create({
+      username: 'operator1',
+      password: hashedPassword,
+      nickname: '运营专员小王',
+      roleId: operatorRole.id,
+      status: 1,
+      avatar: '',
+      phone: '13800002222'
+    });
+    console.log('创建运营人员：operator1/123456');
+
+    const riskOperatorUser = await User.create({
+      username: 'risk1',
+      password: hashedPassword,
+      nickname: '风控专员小李',
+      roleId: riskOperatorRole.id,
+      status: 1,
+      avatar: '',
+      phone: '13800003333'
+    });
+    console.log('创建风控人员：risk1/123456');
 
     const merchant = await Merchant.create({
       name: '测试商家',
@@ -207,7 +247,11 @@ const initDB = async () => {
         unitPrice: 680.00,
         status: 1,
         payTime: new Date(),
-        merchantId: merchant.id
+        merchantId: merchant.id,
+        source: 'app',
+        isAbnormal: 0,
+        isLocked: 0,
+        archiveStatus: 0
       },
       {
         orderNo: 'ORD20240620002',
@@ -221,7 +265,128 @@ const initDB = async () => {
         quantity: 1,
         unitPrice: 588.00,
         status: 0,
-        merchantId: merchant.id
+        merchantId: merchant.id,
+        source: 'wechat',
+        isAbnormal: 0,
+        isLocked: 0,
+        archiveStatus: 0
+      },
+      {
+        orderNo: 'ORD20240620003',
+        userId: normalUser.id,
+        category: 'car',
+        productId: 1,
+        productName: '丰田凯美瑞',
+        amount: 864.00,
+        contactName: '测试用户',
+        contactPhone: '13800001111',
+        quantity: 3,
+        unitPrice: 288.00,
+        status: 1,
+        payTime: new Date(),
+        merchantId: merchant2.id,
+        source: 'web',
+        isAbnormal: 0,
+        isLocked: 0,
+        archiveStatus: 0
+      },
+      {
+        orderNo: 'ORD20240620004',
+        userId: normalUser.id,
+        category: 'ticket',
+        productId: 1,
+        productName: '故宫博物院门票',
+        amount: 120.00,
+        contactName: '测试用户',
+        contactPhone: '13800001111',
+        quantity: 2,
+        unitPrice: 60.00,
+        status: 4,
+        payTime: new Date(),
+        merchantId: merchant.id,
+        source: 'offline',
+        isAbnormal: 0,
+        isLocked: 0,
+        archiveStatus: 0
+      },
+      {
+        orderNo: 'ORD20240620005',
+        userId: normalUser.id,
+        category: 'flight',
+        productId: 2,
+        productName: 'MU5678 北京-广州',
+        amount: 890.00,
+        contactName: '测试用户',
+        contactPhone: '13800001111',
+        quantity: 1,
+        unitPrice: 890.00,
+        status: 3,
+        payTime: new Date(),
+        merchantId: merchant.id,
+        source: 'third_party',
+        isAbnormal: 0,
+        isLocked: 0,
+        archiveStatus: 0
+      },
+      {
+        orderNo: 'ORD20240620006',
+        userId: normalUser.id,
+        category: 'hotel',
+        productId: 2,
+        productName: '上海商务酒店',
+        amount: 776.00,
+        contactName: '测试用户',
+        contactPhone: '13800001111',
+        quantity: 2,
+        unitPrice: 388.00,
+        status: 1,
+        payTime: new Date(),
+        merchantId: merchant.id,
+        source: 'app',
+        isAbnormal: 1,
+        abnormalReason: '价格异常，低于市场价30%',
+        isLocked: 0,
+        archiveStatus: 0
+      },
+      {
+        orderNo: 'ORD20240620007',
+        userId: normalUser.id,
+        category: 'flight',
+        productId: 1,
+        productName: 'CA1234 北京-上海',
+        amount: 680.00,
+        contactName: '测试用户',
+        contactPhone: '13800001111',
+        quantity: 1,
+        unitPrice: 680.00,
+        status: 2,
+        merchantId: merchant.id,
+        source: 'wechat',
+        isAbnormal: 0,
+        isLocked: 0,
+        archiveStatus: 1,
+        archiveTime: new Date()
+      },
+      {
+        orderNo: 'ORD20240620008',
+        userId: normalUser.id,
+        category: 'car',
+        productId: 2,
+        productName: '奔驰E300',
+        amount: 1764.00,
+        contactName: '测试用户',
+        contactPhone: '13800001111',
+        quantity: 3,
+        unitPrice: 588.00,
+        status: 1,
+        payTime: new Date(),
+        merchantId: merchant2.id,
+        source: 'app',
+        isAbnormal: 0,
+        isLocked: 1,
+        lockReason: '核心字段变更自动锁定：amount',
+        lockTime: new Date(),
+        archiveStatus: 0
       }
     ]);
     console.log('创建测试订单数据');
@@ -302,6 +467,7 @@ const initDB = async () => {
         toStatus: 0,
         operatorId: normalUser.id,
         operatorName: '测试用户',
+        operatorRole: 'user',
         remark: '用户下单'
       },
       {
@@ -312,7 +478,65 @@ const initDB = async () => {
         toStatus: 1,
         operatorId: normalUser.id,
         operatorName: '测试用户',
+        operatorRole: 'user',
         remark: '支付成功'
+      },
+      {
+        orderId: 2,
+        orderNo: 'ORD20240620002',
+        action: 'create',
+        fromStatus: null,
+        toStatus: 0,
+        operatorId: normalUser.id,
+        operatorName: '测试用户',
+        operatorRole: 'user',
+        remark: '用户下单'
+      },
+      {
+        orderId: 3,
+        orderNo: 'ORD20240620003',
+        action: 'create',
+        fromStatus: null,
+        toStatus: 0,
+        operatorId: normalUser.id,
+        operatorName: '测试用户',
+        operatorRole: 'user',
+        remark: '用户下单'
+      },
+      {
+        orderId: 3,
+        orderNo: 'ORD20240620003',
+        action: 'pay',
+        fromStatus: 0,
+        toStatus: 1,
+        operatorId: normalUser.id,
+        operatorName: '测试用户',
+        operatorRole: 'user',
+        remark: '支付成功'
+      },
+      {
+        orderId: 6,
+        orderNo: 'ORD20240620006',
+        action: 'mark_abnormal',
+        fromStatus: 1,
+        toStatus: 1,
+        operatorId: riskOperatorUser.id,
+        operatorName: '风控专员小李',
+        operatorRole: 'risk_operator',
+        changes: JSON.stringify({ isAbnormal: { old: 0, new: 1 }, abnormalReason: { old: '', new: '价格异常，低于市场价30%' } }),
+        remark: '批量标记异常'
+      },
+      {
+        orderId: 8,
+        orderNo: 'ORD20240620008',
+        action: 'edit',
+        fromStatus: 1,
+        toStatus: 1,
+        operatorId: admin.id,
+        operatorName: '超级管理员',
+        operatorRole: 'admin',
+        changes: JSON.stringify({ amount: { old: 1500, new: 1764 } }),
+        remark: '订单信息编辑'
       }
     ]);
     console.log('创建测试订单日志数据');

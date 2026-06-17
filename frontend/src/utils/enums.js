@@ -1,10 +1,34 @@
 export const OrderStatusEnum = {
-  PENDING_PAYMENT: { value: 1, label: '待支付', type: 'warning' },
-  PAID: { value: 2, label: '已支付', type: 'primary' },
-  COMPLETED: { value: 3, label: '已完成', type: 'success' },
-  CANCELLED: { value: 4, label: '已取消', type: 'info' },
-  REFUNDING: { value: 5, label: '退款中', type: 'warning' },
-  REFUNDED: { value: 6, label: '已退款', type: 'danger' }
+  PENDING_PAYMENT: { value: 1, label: '待支付', type: 'warning', color: '#faad14' },
+  PAID: { value: 2, label: '已支付', type: 'primary', color: '#1890ff' },
+  COMPLETED: { value: 3, label: '已完成', type: 'success', color: '#52c41a' },
+  CANCELLED: { value: 4, label: '已取消', type: 'info', color: '#909399' },
+  REFUNDING: { value: 5, label: '退款中', type: 'warning', color: '#ff7a45' },
+  REFUNDED: { value: 6, label: '已退款', type: 'danger', color: '#ff4d4f' }
+}
+
+export const OrderSourceEnum = {
+  APP: { value: 'app', label: 'APP端' },
+  WECHAT: { value: 'wechat', label: '微信端' },
+  WEB: { value: 'web', label: 'PC端' },
+  OFFLINE: { value: 'offline', label: '线下门店' },
+  THIRD_PARTY: { value: 'third_party', label: '第三方渠道' }
+}
+
+export const OrderAbnormalEnum = {
+  NORMAL: { value: 0, label: '正常', type: 'success' },
+  ABNORMAL: { value: 1, label: '异常', type: 'warning' },
+  INVALID: { value: 2, label: '作废', type: 'danger' }
+}
+
+export const OrderLockEnum = {
+  UNLOCKED: { value: 0, label: '未锁定', type: 'info' },
+  LOCKED: { value: 1, label: '已锁定', type: 'danger' }
+}
+
+export const OrderArchiveEnum = {
+  UNARCHIVED: { value: 0, label: '未归档' },
+  ARCHIVED: { value: 1, label: '已归档' }
 }
 
 export const TravelCategoryEnum = {
@@ -90,8 +114,17 @@ export const getEnumOptions = (enumObj) => {
   }))
 }
 
+export const getEnumColor = (enumObj, value) => {
+  const item = Object.values(enumObj).find((item) => item.value === value)
+  return item ? item.color : '#909399'
+}
+
 export default {
   OrderStatusEnum,
+  OrderSourceEnum,
+  OrderAbnormalEnum,
+  OrderLockEnum,
+  OrderArchiveEnum,
   TravelCategoryEnum,
   AuditStatusEnum,
   CommonStatusEnum,
@@ -104,5 +137,6 @@ export default {
   NotificationTypeEnum,
   getEnumLabel,
   getEnumType,
-  getEnumOptions
+  getEnumOptions,
+  getEnumColor
 }

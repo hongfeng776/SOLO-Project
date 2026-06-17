@@ -3,6 +3,8 @@ const { success } = require('../utils/result');
 const auth = require('../middleware/auth');
 const pagination = require('../middleware/pagination');
 const { checkOrderRisk, checkInventoryBeforeOrder } = require('../middleware/riskControl');
+const orderPermission = require('../middleware/orderPermission');
+const { preventDuplicateTrace } = require('../middleware/duplicateRequest');
 
 const authController = require('../controllers/AuthController');
 const userController = require('../controllers/UserController');
@@ -57,6 +59,19 @@ router.get('/orders/:id/logs', auth(), orderController.getOrderLogs.bind(orderCo
 router.post('/orders/:id/cancel', auth(), orderController.cancelOrder.bind(orderController));
 router.post('/orders/:id/refund', auth(), orderController.refundOrder.bind(orderController));
 router.post('/orders/batch-export', auth(), orderController.batchExport.bind(orderController));
+
+router.get('/orders/:id/edit', auth(), orderPermission.checkOrderEditPermission, orderController.getEditDetail.bind(orderController));
+router.post('/orders/:id/validate', auth(), orderPermission.checkOrderEditPermission, orderController.validateEdit.bind(orderController));
+router.put('/orders/:id/info', auth(), orderPermission.checkOrderEditPermission, orderController.updateOrderInfo.bind(orderController));
+
+router.put('/orders/:id/status', auth(), orderPermission.checkOrderStatusPermission, orderController.updateOrderStatus.bind(orderController));
+router.put('/orders/:id/reset', auth(['admin']), orderPermission.checkOrderStatusPermission, orderController.resetOrderStatus.bind(orderController));
+
+router.post('/orders/batch/confirm', auth(['admin', 'operator']), orderPermission.checkBatchOperationPermission, orderController.batchConfirmFulfill.bind(orderController));
+router.post('/orders/batch/abnormal', auth(['admin', 'risk_operator']), orderPermission.checkBatchOperationPermission, orderController.batchMarkAbnormal.bind(orderController));
+router.post('/orders/batch/archive', auth(['admin']), orderPermission.checkBatchOperationPermission, orderController.batchArchive.bind(orderController));
+
+router.get('/orders/trace', auth(), preventDuplicateTrace, orderController.traceOrder.bind(orderController));
 
 router.post('/business-travel', auth(), businessTravelController.create.bind(businessTravelController));
 router.get('/business-travel', auth(), pagination, businessTravelController.list.bind(businessTravelController));

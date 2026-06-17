@@ -41,6 +41,14 @@ const OrderLog = sequelize.define('OrderLog', {
   remark: {
     type: DataTypes.STRING(500),
     comment: '备注'
+  },
+  operatorRole: {
+    type: DataTypes.STRING(20),
+    comment: '操作人角色'
+  },
+  changes: {
+    type: DataTypes.TEXT,
+    comment: '变更字段JSON'
   }
 }, {
   tableName: 'order_logs',

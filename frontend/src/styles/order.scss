@@ -1,0 +1,55 @@
+.input-glow-focus:focus {
+  border-color: #1890ff !important;
+  box-shadow: 0 0 8px rgba(24, 144, 255, 0.6) !important;
+  transition: all 0.3s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.input-error-shake {
+  animation: shake 0.4s ease-in-out;
+  border-color: #ff4d4f !important;
+  box-shadow: 0 0 8px rgba(255, 77, 79, 0.4) !important;
+}
+
+@keyframes scaleFadeIn {
+  0% { transform: scale(1.1); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.status-transition {
+  animation: scaleFadeIn 0.3s ease-out;
+}
+
+.row-selected-highlight {
+  background: linear-gradient(90deg, #e6f7ff 0%, #f0f5ff 100%) !important;
+  transition: background 0.3s ease;
+}
+
+.batch-btn-hover:hover {
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4) !important;
+  transform: translateY(-1px);
+  transition: all 0.3s ease;
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.skeleton-item {
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+.data-gap-marker {
+  border: 2px dashed #ff4d4f;
+  background: rgba(255, 77, 79, 0.1);
+}
+
+.w-full {
+  width: 100%;
+}

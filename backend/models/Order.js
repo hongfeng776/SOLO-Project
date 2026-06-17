@@ -94,6 +94,41 @@ const Order = sequelize.define('Order', {
   remark: {
     type: DataTypes.STRING(500),
     comment: '备注'
+  },
+  source: {
+    type: DataTypes.STRING(20),
+    comment: '订单来源渠道: app, wechat, web, offline, third_party'
+  },
+  isAbnormal: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '是否异常: 0-正常, 1-异常, 2-作废'
+  },
+  abnormalReason: {
+    type: DataTypes.STRING(500),
+    comment: '异常原因'
+  },
+  isLocked: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '是否已锁定: 0-未锁定, 1-已锁定'
+  },
+  lockReason: {
+    type: DataTypes.STRING(500),
+    comment: '锁定原因'
+  },
+  lockTime: {
+    type: DataTypes.DATE,
+    comment: '锁定时间'
+  },
+  archiveStatus: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '归档状态: 0-未归档, 1-已归档'
+  },
+  archiveTime: {
+    type: DataTypes.DATE,
+    comment: '归档时间'
   }
 }, {
   tableName: 'orders',
