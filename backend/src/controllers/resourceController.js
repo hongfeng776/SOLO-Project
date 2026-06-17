@@ -143,6 +143,69 @@ class ResourceController {
       next(error)
     }
   }
+
+  async validateCreate(req, res, next) {
+    try {
+      const userId = req.user?.id
+      const result = await resourceService.validateBeforeCreate(req.body, userId)
+      res.json(ApiResponse.success(result))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async createWithValidation(req, res, next) {
+    try {
+      const userId = req.user?.id
+      const resource = await resourceService.createWithValidation(req.body, userId)
+      res.json(ApiResponse.success(resource, '录入成功'))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async updateWithConstraint(req, res, next) {
+    try {
+      const { id } = req.params
+      const userId = req.user?.id
+      const resource = await resourceService.updateWithConstraint(parseInt(id), req.body, userId)
+      res.json(ApiResponse.success(resource, '编辑成功'))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async batchUpdateWeight(req, res, next) {
+    try {
+      const { ids, sortWeight } = req.body
+      const userId = req.user?.id
+      const result = await resourceService.batchUpdateWeight(ids, sortWeight, userId)
+      res.json(ApiResponse.success(result, '批量修改权重成功'))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async batchToggleStatus(req, res, next) {
+    try {
+      const { ids, targetStatus } = req.body
+      const userId = req.user?.id
+      const result = await resourceService.batchToggleStatus(ids, targetStatus, userId)
+      res.json(ApiResponse.success(result, '批量启停操作完成'))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async traceMaterial(req, res, next) {
+    try {
+      const { keyword } = req.query
+      const result = await resourceService.traceMaterial(keyword)
+      res.json(ApiResponse.success(result))
+    } catch (error) {
+      next(error)
+    }
+  }
 }
 
 module.exports = new ResourceController()

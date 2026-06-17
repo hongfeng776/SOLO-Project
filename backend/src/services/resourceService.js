@@ -1,6 +1,6 @@
-const { Resource, Category } = require('../models')
+const { Resource, Category, User, OperationLog, AuditRecord, Violation } = require('../models')
 const { Op } = require('sequelize')
-const { getPagination, buildFuzzyWhere } = require('../utils/common')
+const { getPagination, buildFuzzyWhere, generateMaterialCode } = require('../utils/common')
 const ApiError = require('../utils/apiError')
 const cache = require('../utils/cache')
 
@@ -14,6 +14,11 @@ const STATUS_TRANSITIONS = {
   violation: ['offline'],
   blocked: ['pending', 'rejected']
 }
+
+const CORE_FIELDS = ['title', 'fileUrl', 'fileType', 'fileSize', 'width', 'height', 'duration', 'categoryId']
+const ALLOWED_EDIT_FIELDS_WHEN_APPROVED = ['sortWeight', 'remark', 'tags', 'description']
+
+const MB = 1024 * 1024
 
 class ResourceService {
   async getList(params = {}) {
@@ -366,6 +371,353 @@ class ResourceService {
 
   async incrementDownloadCount(id) {
     await Resource.increment('downloadCount', { where: { id } })
+  }
+
+  async validateBeforeCreate(data, userId) {
+    const errors = []
+
+    const user = await User.findByPk(userId)
+    if (!user || user.status !== 'active' || !['super_admin', 'admin', 'operator'].includes(user.role)) {
+      errors.push('上传账号无权限，需operator及以上角色且状态为active')
+    }
+
+    if (data.fileType === 'image') {
+      if (!data.width || !data.height || data.width < 200 || data.height < 200) {
+        errors.push('image类型素材宽高均需>=200像素')
+      }
+    }
+    if (data.fileType === 'video') {
+      if (!data.width || !data.height || data.width < 480 || data.height < 480) {
+        errors.push('video类型素材宽高均需>=480像素')
+      }
+      if (!data.duration || data.duration <= 0) {
+        errors.push('video类型素材时长需大于0秒')
+      }
+    }
+
+    if (data.fileType === 'image' && data.fileSize && data.fileSize > 10 * MB) {
+      errors.push('image类型素材文件大小不能超过10MB')
+    }
+    if (data.fileType === 'video' && data.fileSize && data.fileSize > 500 * MB) {
+      errors.push('video类型素材文件大小不能超过500MB')
+    }
+
+    const existing = await Resource.findOne({
+      where: {
+        title: data.title,
+        fileType: data.fileType,
+        categoryId: data.categoryId
+      }
+    })
+    if (existing) {
+      return {
+        valid: errors.length === 0,
+        errors,
+        duplicate: true,
+        existingResource: existing.toJSON()
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    }
+  }
+
+  async createWithValidation(data, userId) {
+    const validation = await this.validateBeforeCreate(data, userId)
+    if (!validation.valid) {
+      throw ApiError.badRequest('录入校验不通过', validation.errors)
+    }
+
+    let materialCode = generateMaterialCode()
+    let exists = await Resource.findOne({ where: { materialCode } })
+    while (exists) {
+      materialCode = generateMaterialCode()
+      exists = await Resource.findOne({ where: { materialCode } })
+    }
+
+    const resolution = data.width && data.height ? `${data.width}x${data.height}` : null
+
+    const resource = await Resource.create({
+      ...data,
+      authorId: userId,
+      status: 'draft',
+      materialCode,
+      resolution
+    })
+
+    const user = await User.findByPk(userId)
+    await OperationLog.create({
+      userId,
+      username: user ? user.username : '',
+      module: 'resource',
+      action: 'create',
+      targetId: resource.id,
+      target: resource.title,
+      detail: JSON.stringify({ materialCode, title: resource.title, fileType: resource.fileType }),
+      result: 'success'
+    })
+
+    this._clearListCache()
+
+    return resource
+  }
+
+  async updateWithConstraint(id, data, userId) {
+    const resource = await Resource.findByPk(id)
+    if (!resource) {
+      throw ApiError.notFound('资源不存在')
+    }
+
+    const isApproved = ['approved', 'published'].includes(resource.status)
+
+    if (isApproved) {
+      const attemptedCoreFields = CORE_FIELDS.filter((f) => data[f] !== undefined && data[f] !== resource[f])
+      if (attemptedCoreFields.length > 0) {
+        const filtered = {}
+        for (const key of ALLOWED_EDIT_FIELDS_WHEN_APPROVED) {
+          if (data[key] !== undefined) {
+            filtered[key] = data[key]
+          }
+        }
+        data = filtered
+      } else {
+        const filtered = {}
+        for (const key of ALLOWED_EDIT_FIELDS_WHEN_APPROVED) {
+          if (data[key] !== undefined) {
+            filtered[key] = data[key]
+          }
+        }
+        data = filtered
+      }
+    }
+
+    let oldCategoryId = null
+    if (data.categoryId !== undefined && data.categoryId !== resource.categoryId) {
+      oldCategoryId = resource.categoryId
+    }
+
+    if (data.width !== undefined || data.height !== undefined) {
+      const newWidth = data.width !== undefined ? data.width : resource.width
+      const newHeight = data.height !== undefined ? data.height : resource.height
+      if (newWidth && newHeight) {
+        data.resolution = `${newWidth}x${newHeight}`
+      }
+    }
+
+    const changedFields = Object.keys(data).filter((k) => data[k] !== resource[k])
+
+    await resource.update(data)
+
+    const user = await User.findByPk(userId)
+    await OperationLog.create({
+      userId,
+      username: user ? user.username : '',
+      module: 'resource',
+      action: 'update',
+      targetId: resource.id,
+      target: resource.title,
+      detail: JSON.stringify({
+        changedFields,
+        oldCategoryId,
+        materialCode: resource.materialCode
+      }),
+      result: 'success'
+    })
+
+    cache.delete('resource_detail_' + id)
+    this._clearListCache()
+
+    return resource
+  }
+
+  async batchUpdateWeight(ids, sortWeight, userId) {
+    let updated = 0
+    for (const id of ids) {
+      const [affected] = await Resource.update({ sortWeight }, { where: { id } })
+      updated += affected
+    }
+
+    const user = await User.findByPk(userId)
+    await OperationLog.create({
+      userId,
+      username: user ? user.username : '',
+      module: 'resource',
+      action: 'batch_update_weight',
+      target: `批量修改权重 ids:[${ids.join(',')}]`,
+      detail: JSON.stringify({ ids, sortWeight, updated }),
+      result: 'success'
+    })
+
+    for (const id of ids) {
+      cache.delete('resource_detail_' + id)
+    }
+    this._clearListCache()
+
+    return { updated, total: ids.length }
+  }
+
+  async batchToggleStatus(ids, targetStatus, userId) {
+    const resources = await Resource.findAll({
+      where: { id: { [Op.in]: ids } }
+    })
+
+    const successIds = []
+    const failedItems = []
+
+    for (const resource of resources) {
+      if (!this.validateTransition(resource.status, targetStatus)) {
+        failedItems.push({ id: resource.id, reason: `状态不能从 ${resource.status} 变更为 ${targetStatus}` })
+        continue
+      }
+
+      if (targetStatus === 'published') {
+        if (resource.isBlocked) {
+          failedItems.push({ id: resource.id, reason: '素材已被风控拦截，无法上架' })
+          continue
+        }
+        if (resource.status !== 'approved') {
+          failedItems.push({ id: resource.id, reason: '未审核素材不能直接上架发布' })
+          continue
+        }
+      }
+
+      successIds.push(resource.id)
+
+      const updateData = { status: targetStatus }
+      if (targetStatus === 'published') {
+        updateData.publishedAt = new Date()
+      }
+      if (targetStatus === 'offline') {
+        updateData.offlineAt = new Date()
+        updateData.offlineReason = '批量下架'
+      }
+
+      await resource.update(updateData)
+    }
+
+    const user = await User.findByPk(userId)
+    await OperationLog.create({
+      userId,
+      username: user ? user.username : '',
+      module: 'resource',
+      action: 'batch_toggle_status',
+      target: `批量状态变更 ids:[${ids.join(',')}]`,
+      detail: JSON.stringify({
+        targetStatus,
+        successIds,
+        failedItems: failedItems.map((f) => ({ id: f.id, reason: f.reason }))
+      }),
+      result: 'success'
+    })
+
+    for (const id of successIds) {
+      cache.delete('resource_detail_' + id)
+    }
+    cache.delete('hot_resources')
+    this._clearListCache()
+
+    return {
+      successIds,
+      failedItems,
+      updated: successIds.length
+    }
+  }
+
+  async traceMaterial(keyword) {
+    let resource = null
+    if (keyword) {
+      resource = await Resource.findOne({ where: { materialCode: keyword } })
+    }
+    if (!resource && keyword) {
+      resource = await Resource.findOne({
+        where: { title: { [Op.like]: `%${keyword}%` } }
+      })
+    }
+
+    if (!resource) {
+      throw ApiError.notFound('未找到匹配的素材')
+    }
+
+    const resourceId = resource.id
+
+    const editLogs = await OperationLog.findAll({
+      where: { targetId: resourceId, module: 'resource' },
+      order: [['createdAt', 'DESC']]
+    })
+
+    const auditRecords = await AuditRecord.findAll({
+      where: { resourceId },
+      order: [['auditTime', 'DESC']]
+    })
+
+    const violations = await Violation.findAll({
+      where: { resourceId },
+      order: [['createdAt', 'DESC']]
+    })
+
+    const conflicts = []
+
+    if (auditRecords.length > 0) {
+      const latestAudit = auditRecords[0]
+      const expectedStatus = latestAudit.auditResult === 'approved' ? 'approved' : 'rejected'
+      if (resource.status !== expectedStatus && resource.status !== 'published' && resource.status !== 'offline') {
+        conflicts.push({
+          field: 'status',
+          expected: expectedStatus,
+          actual: resource.status,
+          description: `审核最终结果为${latestAudit.auditResult}，但资源状态为${resource.status}`
+        })
+      }
+    }
+
+    if (violations.length > 0) {
+      const hasActive = violations.some((v) => v.status === 'pending' || v.status === 'processed')
+      if (hasActive && !resource.isBlocked && resource.status !== 'offline') {
+        conflicts.push({
+          field: 'isBlocked',
+          expected: true,
+          actual: resource.isBlocked,
+          description: '存在未处理的违规记录，但资源未被拦截或下架'
+        })
+      }
+    }
+
+    if (resource.categoryId) {
+      const categoryExists = await Category.findByPk(resource.categoryId)
+      if (!categoryExists) {
+        conflicts.push({
+          field: 'categoryId',
+          expected: '存在的分类ID',
+          actual: resource.categoryId,
+          description: `分类ID ${resource.categoryId} 在分类表中不存在`
+        })
+      }
+    }
+
+    if (resource.authorId) {
+      const authorExists = await User.findByPk(resource.authorId)
+      if (!authorExists) {
+        conflicts.push({
+          field: 'authorId',
+          expected: '存在的用户ID',
+          actual: resource.authorId,
+          description: `作者ID ${resource.authorId} 在用户表中不存在`
+        })
+      }
+    }
+
+    return {
+      resource: resource.toJSON(),
+      editLogs: editLogs.map((l) => l.toJSON()),
+      auditRecords: auditRecords.map((a) => a.toJSON()),
+      violations: violations.map((v) => v.toJSON()),
+      consistencyCheck: {
+        consistent: conflicts.length === 0,
+        conflicts
+      }
+    }
   }
 
   _clearListCache() {

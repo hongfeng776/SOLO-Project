@@ -54,6 +54,11 @@ export interface ImageResource {
   offlineReason: string
   createdAt: string
   updatedAt: string
+  materialCode: string
+  sortWeight: number
+  source: string
+  remark: string
+  resolution: string
 }
 
 export interface Category {
@@ -272,4 +277,35 @@ export interface ConversionStatsData {
   todayTotalAudited: number
   todayRegistered: number
   todayTotalVisitors: number
+}
+
+export interface ValidateResult {
+  valid: boolean
+  errors: string[]
+  duplicate?: boolean
+  existingResource?: ImageResource
+}
+
+export interface BatchResult {
+  successIds: number[]
+  failedItems: { id: number; reason: string }[]
+  updated: number
+}
+
+export interface ConflictNode {
+  field: string
+  expected: string
+  actual: string
+  description: string
+}
+
+export interface TraceResult {
+  resource: ImageResource
+  editLogs: OperationLog[]
+  auditRecords: AuditRecord[]
+  violations: Violation[]
+  consistencyCheck: {
+    consistent: boolean
+    conflicts: ConflictNode[]
+  }
 }

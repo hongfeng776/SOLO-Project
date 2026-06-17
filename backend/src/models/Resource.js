@@ -154,6 +154,33 @@ const Resource = sequelize.define(
       type: DataTypes.STRING(500),
       allowNull: true,
       comment: '下架原因'
+    },
+    materialCode: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      unique: true,
+      comment: '素材编码(唯一)'
+    },
+    sortWeight: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+      comment: '展示权重'
+    },
+    source: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: '素材来源'
+    },
+    remark: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: '备注'
+    },
+    resolution: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+      comment: '分辨率(如1920x1080)'
     }
   },
   {
@@ -166,7 +193,9 @@ const Resource = sequelize.define(
       { fields: ['authorId'] },
       { fields: ['status', 'createdAt'] },
       { fields: ['status', 'fileType'] },
-      { fields: ['authorId', 'status'] }
+      { fields: ['authorId', 'status'] },
+      { fields: ['materialCode'], unique: true },
+      { fields: ['sortWeight'] }
     ]
   }
 )

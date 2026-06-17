@@ -47,11 +47,22 @@ const generateRandomString = (length = 8) => {
   return result
 }
 
+const generateMaterialCode = (prefix = 'MT') => {
+  const datePart = dayjs().format('YYYYMMDD')
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let randomPart = ''
+  for (let i = 0; i < 6; i++) {
+    randomPart += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return `${prefix}${datePart}${randomPart}`
+}
+
 module.exports = {
   formatDate,
   formatDateTime,
   getPagination,
   buildWhere,
   buildFuzzyWhere,
-  generateRandomString
+  generateRandomString,
+  generateMaterialCode
 }
