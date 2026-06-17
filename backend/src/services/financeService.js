@@ -174,11 +174,54 @@ const batchSettlement = async (driverIds) => {
   return { successCount, failCount, results }
 }
 
+const recalculateOrderFee = async (orderId) => {
+  const order = await Order.findByPk(orderId)
+  if (!order) {
+    throw new AppError('订单不存在', 404, 404)
+  }
+
+  const oldPrice = parseFloat(order.actualPrice || order.estimatedPrice || 0)
+  const feeResult = await calculateOrderFee(orderId)
+  const priceDiff = feeResult.actualPrice - oldPrice
+
+  if (Math.abs(priceDiff) > 0.01) {
+    await order.update({ actualPrice: feeResult.actualPrice })
+
+    if (order.driverId && order.status === 5) {
+      const driver = await Driver.findByPk(order.driverId)
+      if (driver) {
+        const newBalance = Math.max(0, parseFloat(driver.balance || 0) + priceDiff)
+        const newIncome = Math.max(0, parseFloat(driver.totalIncome || 0) + priceDiff)
+
+        await driver.update({
+          balance: Math.round(newBalance * 100) / 100,
+          totalIncome: Math.round(newIncome * 100) / 100
+        })
+
+        await createStatement({
+          orderNo: order.orderNo,
+          type: priceDiff > 0 ? 1 : 2,
+          amount: Math.abs(priceDiff),
+          balance: Math.round(newBalance * 100) / 100,
+          relatedId: order.id,
+          relatedType: 'order',
+          accountType: 1,
+          accountId: order.driverId,
+          remark: `订单${order.orderNo}重新核算${priceDiff > 0 ? '补收' : '退还'}${Math.abs(priceDiff).toFixed(2)}元`
+        })
+      }
+    }
+  }
+
+  return { orderId, oldPrice, newPrice: feeResult.actualPrice, priceDiff }
+}
+
 module.exports = {
   calculateOrderFee,
   createStatement,
   autoSettleOnComplete,
   createRefundOnCancel,
   generateSettlement,
-  batchSettlement
+  batchSettlement,
+  recalculateOrderFee
 }

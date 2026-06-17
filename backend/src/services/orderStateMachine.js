@@ -1,5 +1,5 @@
 const { Op } = require('sequelize')
-const { Order, Driver, Passenger, FinanceStatement } = require('../models')
+const { Order, Driver, Passenger, FinanceStatement, OrderStatusLog } = require('../models')
 const { AppError } = require('../utils/response')
 
 const VALID_TRANSITIONS = {
@@ -12,13 +12,40 @@ const VALID_TRANSITIONS = {
   7: []
 }
 
+const ORDER_SOURCE_MAP = {
+  1: 'APP下单',
+  2: '小程序',
+  3: '客服代下',
+  4: '企业用车'
+}
+
 const validateTransition = (currentStatus, targetStatus) => {
   const allowed = VALID_TRANSITIONS[currentStatus]
   if (!allowed) return false
   return allowed.includes(targetStatus)
 }
 
-const transitionOrder = async (orderId, targetStatus, extraData = {}) => {
+const generateTraceId = () => {
+  return 'TRACE-' + Date.now() + '-' + Math.random().toString(36).substring(2, 10).toUpperCase()
+}
+
+const recordStatusLog = async (order, oldStatus, newStatus, options = {}) => {
+  const { operatorId, operatorName, operatorType = 1, changeReason, remark } = options
+  await OrderStatusLog.create({
+    orderId: order.id,
+    orderNo: order.orderNo,
+    oldStatus,
+    newStatus,
+    operatorId,
+    operatorName,
+    operatorType,
+    changeReason,
+    remark,
+    traceId: generateTraceId()
+  })
+}
+
+const transitionOrder = async (orderId, targetStatus, extraData = {}, options = {}) => {
   const order = await Order.findByPk(orderId)
   if (!order) {
     throw new AppError('订单不存在', 404, 404)
@@ -37,6 +64,7 @@ const transitionOrder = async (orderId, targetStatus, extraData = {}) => {
 
   await order.update(updateData)
   await triggerLinkage(order, oldStatus, targetStatus)
+  await recordStatusLog(order, oldStatus, targetStatus, options)
 
   return order
 }
@@ -140,5 +168,8 @@ module.exports = {
   VALID_TRANSITIONS,
   validateTransition,
   transitionOrder,
-  triggerLinkage
+  triggerLinkage,
+  recordStatusLog,
+  generateTraceId,
+  ORDER_SOURCE_MAP
 }
