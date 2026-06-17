@@ -20,6 +20,10 @@ import GoodsValidateService, { goodsValidateService } from './GoodsValidateServi
 import GoodsEditorService, { goodsEditorService } from './GoodsEditorService';
 import GoodsBatchService, { goodsBatchService } from './GoodsBatchService';
 import GoodsTraceService, { goodsTraceService } from './GoodsTraceService';
+import CategoryValidateService, { categoryValidateService } from './CategoryValidateService';
+import CategoryLinkageService, { categoryLinkageService } from './CategoryLinkageService';
+import CategoryBatchService, { categoryBatchService } from './CategoryBatchService';
+import CategoryTraceService, { categoryTraceService } from './CategoryTraceService';
 
 export {
   AfterSaleAuditService,
@@ -44,6 +48,10 @@ export {
   GoodsEditorService,
   GoodsBatchService,
   GoodsTraceService,
+  CategoryValidateService,
+  CategoryLinkageService,
+  CategoryBatchService,
+  CategoryTraceService,
 };
 
 export const services = {
@@ -69,6 +77,10 @@ export const services = {
   goodsEditorService,
   goodsBatchService,
   goodsTraceService,
+  categoryValidateService,
+  categoryLinkageService,
+  categoryBatchService,
+  categoryTraceService,
 };
 
 export default services;

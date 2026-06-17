@@ -20,6 +20,9 @@ import { PenaltyDao } from './PenaltyDao';
 import { GoodsEditLogDao } from './GoodsEditLogDao';
 import { MerchantQualificationDao } from './MerchantQualificationDao';
 import { BrandAuthorizationDao } from './BrandAuthorizationDao';
+import { CategoryDao } from './CategoryDao';
+import { CategoryLogDao } from './CategoryLogDao';
+import { CategoryPermissionDao } from './CategoryPermissionDao';
 
 export {
   BaseDao,
@@ -46,6 +49,9 @@ export {
   GoodsEditLogDao,
   MerchantQualificationDao,
   BrandAuthorizationDao,
+  CategoryDao,
+  CategoryLogDao,
+  CategoryPermissionDao,
 };
 
 export const daos = {
@@ -70,6 +76,9 @@ export const daos = {
   goodsEditLogDao: new GoodsEditLogDao(),
   merchantQualificationDao: new MerchantQualificationDao(),
   brandAuthorizationDao: new BrandAuthorizationDao(),
+  categoryDao: new CategoryDao(),
+  categoryLogDao: new CategoryLogDao(),
+  categoryPermissionDao: new CategoryPermissionDao(),
 };
 
 export default daos;

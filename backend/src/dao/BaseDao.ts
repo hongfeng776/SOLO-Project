@@ -80,6 +80,10 @@ export class BaseDao<T extends Model<T>> {
       ...options,
     });
   }
+
+  getModel(): ModelCtor<T> {
+    return this.model;
+  }
 }
 
 export default BaseDao;

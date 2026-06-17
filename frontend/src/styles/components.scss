@@ -208,3 +208,52 @@
   }
 }
 
+.category-form {
+  .el-input__wrapper.is-focus,
+  .el-textarea__inner:focus {
+    box-shadow: 0 0 0 1px #409EFF inset, 0 0 8px rgba(64, 158, 255, 0.45) !important;
+  }
+}
+
+.dialog-center-zoom {
+  animation: dialogZoomIn 0.32s cubic-bezier(0.3, 0, 0, 1);
+  transform-origin: center;
+}
+
+@keyframes dialogZoomIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.el-dialog.is-center .el-dialog__header {
+  justify-content: center;
+  display: flex;
+}
+
+.el-button.is-disabled,
+.el-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  filter: grayscale(0.2);
+}
+
+.column-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+}
+
+.column-resize-handle:hover {
+  background: rgba(64, 158, 255, 0.15);
+}
+

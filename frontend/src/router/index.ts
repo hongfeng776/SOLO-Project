@@ -25,8 +25,22 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'goods',
         name: 'Goods',
-        component: () => import('@/views/goods/index.vue'),
-        meta: { title: '商品管理', icon: 'Goods', requiresAuth: true }
+        redirect: '/goods/list',
+        meta: { title: '商品管理', icon: 'Goods', requiresAuth: true },
+        children: [
+          {
+            path: 'list',
+            name: 'GoodsList',
+            component: () => import('@/views/goods/index.vue'),
+            meta: { title: '商品列表', icon: 'Goods', requiresAuth: true }
+          },
+          {
+            path: 'category',
+            name: 'GoodsCategory',
+            component: () => import('@/views/goods/category.vue'),
+            meta: { title: '类目分类', icon: 'Menu', requiresAuth: true }
+          }
+        ]
       },
       {
         path: 'order',

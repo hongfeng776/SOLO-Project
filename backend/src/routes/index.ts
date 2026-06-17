@@ -20,6 +20,11 @@ import goodsValidateRouter from './goodsValidate';
 import goodsEditorRouter from './goodsEditor';
 import goodsBatchRouter from './goodsBatch';
 import goodsTraceRouter from './goodsTrace';
+import categoryRouter from './category';
+import categoryValidateRouter from './categoryValidate';
+import categoryLinkageRouter from './categoryLinkage';
+import categoryBatchRouter from './categoryBatch';
+import categoryTraceRouter from './categoryTrace';
 
 const router = Router();
 
@@ -44,5 +49,10 @@ router.use('/goodsValidate', goodsValidateRouter);
 router.use('/goodsEditor', goodsEditorRouter);
 router.use('/goodsBatch', goodsBatchRouter);
 router.use('/goodsTrace', goodsTraceRouter);
+router.use('/category', categoryRouter);
+router.use('/categoryValidate', categoryValidateRouter);
+router.use('/categoryLinkage', categoryLinkageRouter);
+router.use('/categoryBatch', categoryBatchRouter);
+router.use('/categoryTrace', categoryTraceRouter);
 
 export default router;

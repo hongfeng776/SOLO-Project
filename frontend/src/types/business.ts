@@ -264,3 +264,123 @@ export interface BrandCategoryCheckResult {
   message?: string
 }
 
+export interface CategoryTree {
+  id: number
+  parentId: number | null
+  name: string
+  code: string
+  level: number
+  sort: number
+  status: number
+  icon?: string
+  children: CategoryTree[]
+  productCount?: number
+  hasChildren?: boolean
+  requiredFieldsJson?: string
+  complianceRulesJson?: string
+}
+
+export interface CategoryCreateData {
+  parentId?: number
+  name: string
+  code: string
+  icon?: string
+  sort?: number
+  status?: number
+  requiredFieldsJson?: string
+  complianceRulesJson?: string
+  levelLimit?: number
+}
+
+export interface CategoryUpdateData {
+  name?: string
+  code?: string
+  parentId?: number | null
+  icon?: string
+  sort?: number
+  status?: number
+  requiredFieldsJson?: string
+}
+
+export interface QualificationRule {
+  level: number
+  title: string
+  required: boolean
+  fields: string[]
+}
+
+export interface ValidateCreateResult {
+  valid: boolean
+  errors: ValidateError[]
+  canSubmit: boolean
+  levelRules: QualificationRule[]
+}
+
+export interface EditPermissionType {
+  type: 'empty' | 'hasProducts'
+  productCount: number
+  needConfirm: boolean
+  confirmTips: string
+}
+
+export interface BatchProgressEvent {
+  total: number
+  success: number
+  fail: number
+  percent: number
+  currentItem?: string
+}
+
+export interface TimelineItem {
+  id: number
+  timestamp: string
+  title: string
+  content?: string
+  operator?: string
+  type?: 'primary' | 'success' | 'warning' | 'danger' | 'info'
+}
+
+export interface PermissionConfig {
+  id: number
+  roleId: number
+  roleName: string
+  permission: string
+  permissionName: string
+  enabled: boolean
+}
+
+export interface CategoryFullTrace {
+  basicInfo: CategoryTree
+  hierarchyLogs: TimelineItem[]
+  productStats: {
+    count: number
+    topGoods: {
+      id: number
+      name: string
+      sales: number
+      price: number
+      coverImage?: string
+    }[]
+  }
+  permissionConfigs: PermissionConfig[]
+}
+
+export interface CategoryConstraintError {
+  code: string
+  message: string
+}
+
+export enum RoleType {
+  SUPER_ADMIN = 1,
+  OPERATOR = 2,
+  MERCHANT = 3,
+  READONLY = 4
+}
+
+export const RoleTypeMap: Record<number, { label: string; type: TagType }> = {
+  [RoleType.SUPER_ADMIN]: { label: '超级管理员', type: 'danger' },
+  [RoleType.OPERATOR]: { label: '普通运维', type: 'primary' },
+  [RoleType.MERCHANT]: { label: '商家', type: 'warning' },
+  [RoleType.READONLY]: { label: '只读用户', type: 'info' }
+}
+

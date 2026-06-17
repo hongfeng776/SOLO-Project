@@ -16,6 +16,9 @@ import { MerchantAudit } from './MerchantAudit';
 import { GoodsEditLog } from './GoodsEditLog';
 import { MerchantQualification } from './MerchantQualification';
 import { BrandAuthorization } from './BrandAuthorization';
+import { Category } from './Category';
+import { CategoryLog } from './CategoryLog';
+import { CategoryPermission } from './CategoryPermission';
 
 export {
   Admin,
@@ -36,6 +39,9 @@ export {
   GoodsEditLog,
   MerchantQualification,
   BrandAuthorization,
+  Category,
+  CategoryLog,
+  CategoryPermission,
 };
 
 export const models = {
@@ -57,6 +63,9 @@ export const models = {
   GoodsEditLog,
   MerchantQualification,
   BrandAuthorization,
+  Category,
+  CategoryLog,
+  CategoryPermission,
 };
 
 export default models;

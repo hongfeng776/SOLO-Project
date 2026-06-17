@@ -15,16 +15,38 @@
         router
         unique-opened
       >
-        <el-menu-item
-          v-for="route in menuRoutes"
-          :key="route.path"
-          :index="`/${route.path}`"
-        >
-          <el-icon v-if="route.meta?.icon">
-            <component :is="route.meta.icon as string" />
-          </el-icon>
-          <template #title>{{ route.meta?.title }}</template>
-        </el-menu-item>
+        <template v-for="route in menuRoutes" :key="route.path">
+          <el-sub-menu
+            v-if="route.children && route.children.length > 0"
+            :index="`/${route.path}`"
+          >
+            <template #title>
+              <el-icon v-if="route.meta?.icon">
+                <component :is="route.meta.icon as string" />
+              </el-icon>
+              <span>{{ route.meta?.title }}</span>
+            </template>
+            <el-menu-item
+              v-for="child in route.children.filter((c: any) => c.meta?.title && !c.meta?.hidden)"
+              :key="child.path"
+              :index="`/${route.path}/${child.path}`"
+            >
+              <el-icon v-if="child.meta?.icon">
+                <component :is="child.meta.icon as string" />
+              </el-icon>
+              <template #title>{{ child.meta?.title }}</template>
+            </el-menu-item>
+          </el-sub-menu>
+          <el-menu-item
+            v-else
+            :index="`/${route.path}`"
+          >
+            <el-icon v-if="route.meta?.icon">
+              <component :is="route.meta.icon as string" />
+            </el-icon>
+            <template #title>{{ route.meta?.title }}</template>
+          </el-menu-item>
+        </template>
       </el-menu>
     </el-aside>
 
