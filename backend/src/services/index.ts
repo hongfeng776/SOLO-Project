@@ -12,3 +12,4 @@ export { RiskControlService } from './RiskControlService';
 export { CustomerService } from './CustomerService';
 export { AccountService } from './AccountService';
 export { AccountOpeningService } from './AccountOpeningService';
+export { CorporateAccountOpeningService } from './CorporateAccountOpeningService';

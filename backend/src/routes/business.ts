@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -8,6 +8,7 @@ const productController = new ProductController();
 const customerController = new CustomerController();
 const riskController = new RiskController();
 const accountOpeningController = new AccountOpeningController();
+const corporateOpeningController = new CorporateAccountOpeningController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -61,5 +62,19 @@ router.get('/risk/violation/:id', requirePermission('risk:violation:query'), (re
 router.post('/risk/violation', requirePermission('risk:violation:create'), (req, res, next) => riskController.violationCreate(req, res, next));
 router.post('/risk/violation/:id/handle', requirePermission('risk:violation:update'), (req, res, next) => riskController.violationHandle(req, res, next));
 router.get('/risk/statistics', requirePermission('risk:violation:query'), (req, res, next) => riskController.statistics(req, res, next));
+
+router.get('/corporate/config', requireAuth, (req, res, next) => corporateOpeningController.getConfig(req, res));
+router.post('/corporate/precheck', requireAuth, (req, res, next) => corporateOpeningController.precheck(req, res));
+router.post('/corporate/trace', requireAuth, (req, res, next) => corporateOpeningController.traceCheck(req, res));
+router.get('/corporate/list', requirePermission('business:corporate:query'), (req, res, next) => corporateOpeningController.list(req, res));
+router.get('/corporate/:id', requirePermission('business:corporate:query'), (req, res, next) => corporateOpeningController.detail(req, res));
+router.post('/corporate', requirePermission('business:corporate:create'), (req, res, next) => corporateOpeningController.create(req, res));
+router.put('/corporate/:id', requirePermission('business:corporate:update'), (req, res, next) => corporateOpeningController.update(req, res));
+router.post('/corporate/:id/cancel', requirePermission('business:corporate:update'), (req, res, next) => corporateOpeningController.cancel(req, res));
+router.post('/corporate/:id/review', requirePermission('business:corporate:review'), (req, res, next) => corporateOpeningController.review(req, res));
+router.post('/corporate/:id/open', requirePermission('business:corporate:open'), (req, res, next) => corporateOpeningController.openAccount(req, res));
+router.post('/corporate/:id/refresh', requirePermission('business:corporate:query'), (req, res, next) => corporateOpeningController.refresh(req, res));
+router.post('/corporate/batch/import', requirePermission('business:corporate:create'), (req, res, next) => corporateOpeningController.batchImport(req, res));
+router.post('/corporate/batch/review', requirePermission('business:corporate:review'), (req, res, next) => corporateOpeningController.batchReview(req, res));
 
 export default router;

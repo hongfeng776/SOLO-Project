@@ -13,3 +13,4 @@ export { Customer } from './Customer';
 export { ViolationRecord } from './ViolationRecord';
 export { Account } from './Account';
 export { AccountOpening } from './AccountOpening';
+export { CorporateAccountOpening } from './CorporateAccountOpening';

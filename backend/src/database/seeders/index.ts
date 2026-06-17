@@ -1,4 +1,4 @@
-import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction, Account, AccountOpening } from '../../models';
+import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction, Account, AccountOpening, CorporateAccountOpening } from '../../models';
 import { hashPasswordSync } from '../../utils/password';
 import { sequelize, syncDatabase } from '../../config/database';
 import { v4 as uuidv4 } from 'uuid';
@@ -202,6 +202,15 @@ export async function seedPermissions(): Promise<void> {
     { id: 'perm058', parent_id: 'perm057', name: '账户查询', code: 'business:account:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:account:query' },
     { id: 'perm059', parent_id: 'perm057', name: '账户更新', code: 'business:account:update', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:account:update' },
 
+    { id: 'perm060', parent_id: 'perm023', name: '对公开户申请', code: 'business:corporate', type: 2, path: 'corporate/index', component: 'business/corporate/index', icon: 'OfficeBuilding', sort: 8, visible: 1, status: 1, perms: '' },
+    { id: 'perm061', parent_id: 'perm060', name: '对公查询', code: 'business:corporate:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:corporate:query' },
+    { id: 'perm062', parent_id: 'perm060', name: '对公创建', code: 'business:corporate:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:corporate:create' },
+    { id: 'perm063', parent_id: 'perm060', name: '对公修改', code: 'business:corporate:update', type: 3, sort: 3, visible: 1, status: 1, perms: 'business:corporate:update' },
+    { id: 'perm064', parent_id: 'perm060', name: '对公审核', code: 'business:corporate:review', type: 3, sort: 4, visible: 1, status: 1, perms: 'business:corporate:review' },
+    { id: 'perm065', parent_id: 'perm060', name: '对公开户', code: 'business:corporate:open', type: 3, sort: 5, visible: 1, status: 1, perms: 'business:corporate:open' },
+    { id: 'perm066', parent_id: 'perm023', name: '对公批量材料', code: 'business:corporate:batch', type: 2, path: 'corporate/batch', component: 'business/corporate/batch', icon: 'Folder', sort: 9, visible: 1, status: 1, perms: '' },
+    { id: 'perm067', parent_id: 'perm023', name: '企业开户溯源', code: 'business:corporate:trace', type: 2, path: 'corporate/trace', component: 'business/corporate/trace', icon: 'Connection', sort: 10, visible: 1, status: 1, perms: '' },
+
     { id: 'perm032', parent_id: null, name: '审核管理', code: 'audit', type: 1, path: '/audit', component: 'Layout', icon: 'Stamp', sort: 3, visible: 1, status: 1 },
     { id: 'perm033', parent_id: 'perm032', name: '待审核列表', code: 'audit:pending', type: 2, path: 'pending', component: 'audit/pending/index', icon: 'Tickets', sort: 1, visible: 1, status: 1, perms: '' },
     { id: 'perm034', parent_id: 'perm032', name: '审核记录', code: 'audit:record', type: 2, path: 'record', component: 'audit/record/index', icon: 'Document', sort: 2, visible: 1, status: 1, perms: '' },
@@ -262,6 +271,7 @@ export async function seedRolePermissions(): Promise<void> {
       'business:transaction:query', 'business:transaction:create', 'business:transaction:update',
       'business:product:create', 'business:product:update',
       'business:opening:query', 'business:opening:create', 'business:opening:update', 'business:opening:open',
+      'business:corporate:query', 'business:corporate:create', 'business:corporate:update', 'business:corporate:open',
       'business:account:query', 'business:account:update',
       'audit:record:query', 'audit:record:submit', 'audit:record:cancel',
       'log:operation:query'
@@ -279,11 +289,12 @@ export async function seedRolePermissions(): Promise<void> {
     const operatorCodes = [
       'business:transaction:query', 'business:transaction:create', 'business:transaction:update',
       'business:opening:query', 'business:opening:create', 'business:opening:update',
+      'business:corporate:query', 'business:corporate:create', 'business:corporate:update',
       'business:account:query',
       'audit:record:query', 'audit:record:submit', 'audit:record:cancel',
       'log:operation:query'
     ];
-    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation')));
+    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation')));
     const operatorRPs = perms.map(p => ({
       id: `rp_${operatorRole.id}_${p.id}`,
       role_id: operatorRole.id,
@@ -296,11 +307,12 @@ export async function seedRolePermissions(): Promise<void> {
     const auditorCodes = [
       'business:transaction:query',
       'business:opening:query',
+      'business:corporate:query',
       'business:account:query',
       'audit:record:query', 'audit:record:audit',
       'log:operation:query'
     ];
-    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation')));
+    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation')));
     const auditorRPs = perms.map(p => ({
       id: `rp_${auditorRole.id}_${p.id}`,
       role_id: auditorRole.id,
@@ -1307,6 +1319,104 @@ export async function seedAccounts(): Promise<void> {
   console.log('[Seeder] Accounts seeded successfully.');
 }
 
+export async function seedCorporateAccountOpenings(): Promise<void> {
+  console.log('[Seeder] Seeding corporate account openings...');
+  const existing = await CorporateAccountOpening.count();
+  if (existing > 0) {
+    console.log('[Seeder] Corporate openings already exist, skipping...');
+    return;
+  }
+
+  const org1 = 'org0000000000000000000000000000002';
+  const org2 = 'org0000000000000000000000000000003';
+  const operatorId = 'user000000000000000000000000000003';
+  const adminId = 'user000000000000000000000000000001';
+  const managerId = 'user000000000000000000000000000002';
+
+  const enterpriseCustomers = await Customer.findAll({
+    where: { customer_type: 2 },
+    order: [['id', 'ASC']],
+    raw: true
+  });
+
+  const enterpriseList = [
+    { enterprise_name: '上海恒信科技有限公司', credit_code: '91310115MA1K3E2X8Q', legal_representative: '张建国', legal_id_card_no: '310101197008151234', legal_verified: 1, industry_type: '软件和信息技术服务业', registered_capital: 500, business_years: 8, agent_name: '李明', agent_id_card_no: '310101198805055678', agent_mobile: '13900000010', registered_address: '上海市浦东新区张江高科技园区博云路2号', business_address: '上海市浦东新区张江高科技园区博云路2号5楼', license_valid_from: new Date('2016-03-15'), license_valid_to: new Date('2046-03-14'), license_permanent: 0, authorization_complete: 1, customer: enterpriseCustomers[0] || null },
+    { enterprise_name: '北京盛达贸易股份有限公司', credit_code: '91110105MA01A2BC3D', legal_representative: '王桂英', legal_id_card_no: '110101196505052234', legal_verified: 1, industry_type: '批发和零售业', registered_capital: 2000, business_years: 15, agent_name: '赵伟', agent_id_card_no: '110101199006064321', agent_mobile: '13900000020', registered_address: '北京市朝阳区建国路93号万达广场', business_address: '北京市朝阳区建国路93号万达广场15层', license_valid_from: new Date('2009-08-20'), license_valid_to: new Date('2039-08-19'), license_permanent: 0, authorization_complete: 1, customer: enterpriseCustomers[1] || null },
+    { enterprise_name: '广州华南建筑工程有限公司', credit_code: '91440101MA59K8P74J', legal_representative: '陈建华', legal_id_card_no: '440101197203036677', legal_verified: 1, industry_type: '房屋建筑业', registered_capital: 8000, business_years: 20, agent_name: '周强', agent_id_card_no: '440101199208083344', agent_mobile: '13900000030', registered_address: '广州市天河区珠江新城华夏路16号', business_address: '广州市天河区珠江新城华夏路16号保利国际广场', license_valid_from: new Date('2004-06-10'), license_valid_to: new Date('2034-06-09'), license_permanent: 0, authorization_complete: 1, customer: enterpriseCustomers[2] || null },
+    { enterprise_name: '深圳前海金融投资有限公司', credit_code: '91440300MA5EL4KH5W', legal_representative: '林振华', legal_id_card_no: '440301197812128899', legal_verified: 2, industry_type: '资本市场服务', registered_capital: 50000, business_years: 6, agent_name: '吴芳', agent_id_card_no: '440301199401012233', agent_mobile: '13900000040', registered_address: '深圳市前海深港合作区前湾一路1号', business_address: '深圳市福田区益田路5033号平安金融中心', license_valid_from: new Date('2018-05-01'), license_valid_to: new Date('2048-04-30'), license_permanent: 0, authorization_complete: 2, customer: enterpriseCustomers[3] || null },
+    { enterprise_name: '成都西部生物医药有限公司', credit_code: '91510100MA61C2XN5Y', legal_representative: '刘婷婷', legal_id_card_no: '510101198210103344', legal_verified: 1, industry_type: '医药制造业', registered_capital: 3000, business_years: 12, agent_name: '孙磊', agent_id_card_no: '510101199302025566', agent_mobile: '13900000050', registered_address: '成都市高新区科园南路88号', business_address: '成都市高新区科园南路88号天府生命科技园', license_valid_from: new Date('2012-11-15'), license_valid_to: new Date('2042-11-14'), license_permanent: 0, authorization_complete: 1, customer: enterpriseCustomers[4] || null },
+    { enterprise_name: '杭州东方电子商务有限公司', credit_code: '91330100MA27W29K8L', legal_representative: '何晓峰', legal_id_card_no: '330101198507077788', legal_verified: 1, industry_type: '互联网和相关服务', registered_capital: 1500, business_years: 10, agent_name: '郑敏', agent_id_card_no: '330101199409098899', agent_mobile: '13900000060', registered_address: '杭州市西湖区文三路90号', business_address: '杭州市西湖区文三路90号东部软件园', license_valid_from: new Date('2014-09-20'), license_valid_to: new Date('2034-09-19'), license_permanent: 0, authorization_complete: 1, customer: enterpriseCustomers[5] || null }
+  ];
+
+  const openings = [
+    { account_type: 1, open_purpose: '日常经营结算', channel_code: 'counter', status: 5, risk_level: 1, submit_org_id: org1, submitter_id: operatorId, reviewer_id: managerId, precheck_result: 1, is_dishonest: 0, is_abnormal: 0, is_paused: 0, is_isolated: 0, idx: 0 },
+    { account_type: 2, open_purpose: '流动资金贷款', channel_code: 'counter', status: 3, risk_level: 2, submit_org_id: org2, submitter_id: adminId, reviewer_id: null, precheck_result: 1, is_dishonest: 0, is_abnormal: 0, is_paused: 0, is_isolated: 0, idx: 1 },
+    { account_type: 3, open_purpose: '项目建设专用资金', channel_code: 'counter', status: 5, risk_level: 2, submit_org_id: org1, submitter_id: operatorId, reviewer_id: managerId, precheck_result: 1, is_dishonest: 0, is_abnormal: 0, is_paused: 0, is_isolated: 0, idx: 2 },
+    { account_type: 1, open_purpose: '募集资金专户', channel_code: 'ebank', status: 6, risk_level: 4, submit_org_id: org2, submitter_id: adminId, reviewer_id: managerId, precheck_result: 1, is_dishonest: 0, is_abnormal: 0, is_paused: 0, is_isolated: 0, reject_reason: '募集资金用途说明不完整，请补充项目可行性报告', idx: 3 },
+    { account_type: 4, open_purpose: '异地项目部临时结算', channel_code: 'counter', status: 4, risk_level: 2, submit_org_id: org1, submitter_id: operatorId, reviewer_id: managerId, precheck_result: 1, is_dishonest: 0, is_abnormal: 0, is_paused: 0, is_isolated: 0, idx: 4 },
+    { account_type: 1, open_purpose: '经营结算', channel_code: 'counter', status: 2, risk_level: 1, submit_org_id: org2, submitter_id: adminId, reviewer_id: null, precheck_result: 1, is_dishonest: 0, is_abnormal: 0, is_paused: 0, is_isolated: 0, idx: 5 }
+  ];
+
+  const records = openings.map((o, i) => {
+    const ent = enterpriseList[o.idx];
+    return {
+      id: `corp${String(i + 1).padStart(5, '0')}`,
+      opening_no: `CO202406${String(i + 1).padStart(6, '0')}`,
+      customer_id: ent.customer?.id,
+      customer_no: ent.customer?.customer_no,
+      account_type: o.account_type,
+      enterprise_name: ent.enterprise_name,
+      credit_code: ent.credit_code,
+      license_valid_from: ent.license_valid_from,
+      license_valid_to: ent.license_valid_to,
+      license_permanent: ent.license_permanent,
+      legal_representative: ent.legal_representative,
+      legal_id_card_no: ent.legal_id_card_no,
+      legal_verified: ent.legal_verified,
+      agent_name: ent.agent_name,
+      agent_id_card_no: ent.agent_id_card_no,
+      agent_mobile: ent.agent_mobile,
+      agent_verified: 1,
+      registered_address: ent.registered_address,
+      business_address: ent.business_address,
+      business_status: 1,
+      tax_registration_no: ent.credit_code,
+      tax_info_consistent: 1,
+      industry_type: ent.industry_type,
+      registered_capital: ent.registered_capital,
+      business_years: ent.business_years,
+      authorization_complete: ent.authorization_complete,
+      target_org_id: o.submit_org_id,
+      open_purpose: o.open_purpose,
+      supporting_materials: JSON.stringify(['营业执照.pdf', '法人身份证.pdf', '授权委托书.pdf']),
+      approval_level: String([3, 2, 2, 1][o.account_type - 1]),
+      risk_level: o.risk_level,
+      risk_tags: o.risk_level >= 3 ? '高风险行业,注册资本较大' : '',
+      channel_code: o.channel_code,
+      status: o.status,
+      precheck_result: o.precheck_result,
+      precheck_reasons: JSON.stringify([{ name: '营业执照有效期', field: 'license_valid_to', passed: true, score: 25, message: '营业执照有效期正常' }]),
+      reject_reason: o.reject_reason || null,
+      reviewer_id: o.reviewer_id,
+      review_time: o.status >= 4 ? new Date(`2024-06-${10 + i} 10:${30 + i}:00`) : null,
+      submit_org_id: o.submit_org_id,
+      submitter_id: o.submitter_id,
+      submit_time: new Date(`2024-06-${5 + i} 09:${15 + i}:00`),
+      account_id: o.status === 5 ? `corpack${String(i + 1).padStart(5, '0')}` : null,
+      account_no: o.status === 5 ? `CC${i + 1}202406${String(10 + i).padStart(2, '0')}${String(i + 1).padStart(2, '0')}` : null,
+      is_dishonest: o.is_dishonest,
+      is_abnormal: o.is_abnormal,
+      is_paused: o.is_paused,
+      is_isolated: o.is_isolated,
+      isolate_reason: null,
+      remark: null
+    };
+  });
+
+  await bulkCreateInBatches(CorporateAccountOpening, records as any);
+  console.log('[Seeder] Corporate account openings seeded successfully.');
+}
+
 export async function runAllSeeders(options?: { force?: boolean; closeOnFinish?: boolean }): Promise<void> {
   const force = options?.force ?? false;
   const closeOnFinish = options?.closeOnFinish ?? false;
@@ -1331,6 +1441,7 @@ export async function runAllSeeders(options?: { force?: boolean; closeOnFinish?:
     await seedCustomers();
     await seedAccounts();
     await seedAccountOpenings();
+    await seedCorporateAccountOpenings();
     await seedViolationRecords();
     await seedTransactions();
 

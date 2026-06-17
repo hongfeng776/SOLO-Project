@@ -11,3 +11,4 @@ export { DashboardController } from './DashboardController';
 export { CustomerController } from './CustomerController';
 export { RiskController } from './RiskController';
 export { AccountOpeningController } from './AccountOpeningController';
+export { CorporateAccountOpeningController } from './CorporateAccountOpeningController';
