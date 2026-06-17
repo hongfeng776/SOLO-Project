@@ -25,6 +25,10 @@ import notificationRoutes from '@routes/notification'
 import feedbackRoutes from '@routes/feedback'
 import settlementRoutes from '@routes/settlement'
 import statsRoutes from '@routes/stats'
+import userAccountRoutes from '@routes/user-account'
+import noteComplianceRoutes from '@routes/note-compliance'
+import notePublishRoutes from '@routes/note-publish'
+import noteBatchRoutes from '@routes/note-batch'
 
 const app = express()
 
@@ -61,6 +65,10 @@ app.use('/api/notifications', notificationRoutes)
 app.use('/api/feedbacks', feedbackRoutes)
 app.use('/api/settlements', settlementRoutes)
 app.use('/api/stats', statsRoutes)
+app.use('/api/user-account', userAccountRoutes)
+app.use('/api/note-compliance', noteComplianceRoutes)
+app.use('/api/note-publish', notePublishRoutes)
+app.use('/api/note-batch', noteBatchRoutes)
 
 app.use(celebrateErrors())
 app.use(errorHandler)

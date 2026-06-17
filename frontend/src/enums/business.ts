@@ -3,7 +3,39 @@ export enum NoteStatus {
   PENDING_REVIEW = 1,
   PUBLISHED = 2,
   REJECTED = 3,
-  OFF_SHELF = 4
+  OFF_SHELF = 4,
+  SCHEDULED = 5
+}
+
+export enum NoteType {
+  IMAGE_TEXT = 1,
+  VIDEO = 2
+}
+
+export enum ComplianceCheckResult {
+  PASSED = 1,
+  BLOCKED = 2,
+  WARNING = 3
+}
+
+export enum AbnormalType {
+  CONTENT_VIOLATION = 'content_violation',
+  DUPLICATE_PUBLISH = 'duplicate_publish',
+  SCHEDULE_CONFLICT = 'schedule_conflict',
+  AUTH_FAILED = 'auth_failed'
+}
+
+export enum BatchStatus {
+  PROCESSING = 1,
+  COMPLETED = 2,
+  FAILED = 3
+}
+
+export enum RealNameStatus {
+  UNVERIFIED = 0,
+  VERIFYING = 1,
+  VERIFIED = 2,
+  REJECTED = 3
 }
 
 export enum ReviewLevel {

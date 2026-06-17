@@ -10,6 +10,11 @@ class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare email: string
   declare phone: string
   declare status: CreationOptional<number>
+  declare realNameVerified: CreationOptional<number>
+  declare realName: CreationOptional<string>
+  declare idCard: CreationOptional<string>
+  declare banExpireTime: CreationOptional<Date | null>
+  declare flowLimitExpireTime: CreationOptional<Date | null>
   declare createTime: CreationOptional<Date>
   declare updateTime: CreationOptional<Date>
   declare deleteTime: CreationOptional<Date | null>
@@ -54,6 +59,30 @@ User.init(
       type: DataTypes.TINYINT,
       allowNull: false,
       defaultValue: 1
+    },
+    realNameVerified: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '0未认证 1审核中 2已认证 3已拒绝'
+    },
+    realName: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      defaultValue: ''
+    },
+    idCard: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      defaultValue: ''
+    },
+    banExpireTime: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    flowLimitExpireTime: {
+      type: DataTypes.DATE,
+      allowNull: true
     },
     createTime: DataTypes.DATE,
     updateTime: DataTypes.DATE,

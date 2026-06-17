@@ -247,3 +247,120 @@ export interface TrendDataItem {
   orderCount?: number
   revenue?: number
 }
+
+export interface ComplianceViolation {
+  type: string
+  field: string
+  message: string
+  level: number
+}
+
+export interface ComplianceCheckResult {
+  passed: boolean
+  violations: ComplianceViolation[]
+  wordCount: number
+  tagCount: number
+  hasExternalLinks: boolean
+}
+
+export interface SimilarNote {
+  id: number
+  title: string
+  similarity: number
+  diff: string
+}
+
+export interface SimilarityCheckResult {
+  isDuplicate: boolean
+  similarNotes: SimilarNote[]
+  fingerprint: string
+}
+
+export interface ScheduleConflictResult {
+  hasConflict: boolean
+  conflictingNotes: Array<{
+    id: number
+    title: string
+    scheduleTime: string
+  }>
+}
+
+export interface PublishEligibilityResult {
+  eligible: boolean
+  reasons: string[]
+  accountStatus: {
+    status: number
+    realNameVerified: number
+    isBanned: boolean
+    isFlowLimited: boolean
+    recentViolations: number
+  }
+}
+
+export interface NoteDraftData {
+  id?: number
+  title: string
+  content: string
+  coverImage?: string
+  videoUrl?: string
+  noteType?: number
+  externalLinks?: string[]
+  tagIds?: number[]
+}
+
+export interface NotePublishData extends NoteDraftData {
+  contentFingerprint?: string
+}
+
+export interface NoteScheduleData extends NotePublishData {
+  scheduleTime: string
+}
+
+export interface BatchPublishResult {
+  batchNo: string
+  total: number
+  success: number
+  fail: number
+  results: Array<{
+    index: number
+    success: boolean
+    id?: number
+    error?: string
+  }>
+}
+
+export interface NoteBatchRecord {
+  id: number
+  batchNo: string
+  userId: number
+  userName: string
+  totalCount: number
+  successCount: number
+  failCount: number
+  pendingCount: number
+  status: number
+  failDetails: string
+  createTime: string
+}
+
+export interface PublishAbnormalLog {
+  id: number
+  userId: number
+  userName: string
+  abnormalType: string
+  abnormalDetail: string
+  targetNoteId?: number
+  ip: string
+  handled: number
+  createTime: string
+}
+
+export interface AccountStatus {
+  status: number
+  realNameVerified: number
+  isBanned: boolean
+  isFlowLimited: boolean
+  banExpireTime?: string
+  flowLimitExpireTime?: string
+  realName?: string
+}

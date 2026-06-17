@@ -57,6 +57,12 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: 'Comment',
         component: () => import(/* webpackChunkName: "content" */ '@views/content/comment/index.vue'),
         meta: { title: '评论管理', icon: 'ChatDotRound', roles: ['admin', 'editor'] }
+      },
+      {
+        path: 'batch-publish',
+        name: 'BatchPublish',
+        component: () => import(/* webpackChunkName: "content" */ '@views/content/batch-publish/index.vue'),
+        meta: { title: '批量发布', icon: 'UploadFilled', roles: ['admin', 'editor'] }
       }
     ]
   },
