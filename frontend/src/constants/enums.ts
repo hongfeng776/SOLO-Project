@@ -31,6 +31,24 @@ export const CONTENT_CATEGORY = {
   LIVE: { value: 7, label: '直播' },
 } as const
 
+export const CLARITY_LEVEL = {
+  SD: { value: 1, label: '标清480P' },
+  HD: { value: 2, label: '高清720P' },
+  FHD: { value: 3, label: '全高清1080P' },
+  UHD_4K: { value: 4, label: '超清4K' },
+  UHD_8K: { value: 5, label: '极致8K' },
+} as const
+
+export const RESOLUTION_OPTIONS = [
+  { value: '480x360', label: '480P (480×360)' },
+  { value: '640x480', label: '480P (640×480)' },
+  { value: '1280x720', label: '720P (1280×720)' },
+  { value: '1920x1080', label: '1080P (1920×1080)' },
+  { value: '2560x1440', label: '2K (2560×1440)' },
+  { value: '3840x2160', label: '4K (3840×2160)' },
+  { value: '7680x4320', label: '8K (7680×4320)' },
+] as const
+
 export const AD_STATUS = {
   DRAFT: { value: 0, label: '草稿', color: '#909399', type: 'info' },
   PENDING: { value: 1, label: '待投放', color: '#E6A23C', type: 'warning' },

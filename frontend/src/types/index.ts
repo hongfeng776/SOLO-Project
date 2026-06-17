@@ -118,6 +118,10 @@ export interface ContentItem {
   updatedEpisodes: number
   copyrightId?: number
   copyrightType?: number
+  resolution?: string
+  bitrate?: number
+  clarityLevel?: number
+  qualificationFiles?: string[]
   rating: number
   playCount: number
   likeCount: number
@@ -134,6 +138,8 @@ export interface ContentItem {
     id: number
     name: string
     type: number
+    status?: number
+    endDate?: string
   }
   createdAt?: string
 }

@@ -258,6 +258,77 @@ class ContentService {
     }
     return true;
   }
+  async batchOfflineContents(ids) {
+    if (!ids || ids.length === 0) {
+      throw new BadRequestError('请选择要下架的内容');
+    }
+    const contents = await Content.findAll({ where: { id: { [Op.in]: ids } } });
+    const operableIds = contents.filter(c => c.status === 1).map(c => c.id);
+    const skippedCount = ids.length - operableIds.length;
+    if (operableIds.length === 0) {
+      throw new BadRequestError('所选内容均未上架，无法执行下架操作');
+    }
+    await Content.update({
+      status: 0,
+      audit_status: 4,
+    }, { where: { id: { [Op.in]: operableIds } } });
+    for (const id of operableIds) {
+      await cacheService.invalidateContent(id);
+    }
+    return { successCount: operableIds.length, skippedCount, operableIds };
+  }
+
+  async batchTopContents(ids) {
+    if (!ids || ids.length === 0) {
+      throw new BadRequestError('请选择要置顶的内容');
+    }
+    const maxSort = await Content.max('sort_order') || 0;
+    const contents = await Content.findAll({ where: { id: { [Op.in]: ids } } });
+    const operableIds = contents.filter(c => c.status === 1).map(c => c.id);
+    const skippedCount = ids.length - operableIds.length;
+    if (operableIds.length === 0) {
+      throw new BadRequestError('所选内容均未上架，无法执行置顶操作');
+    }
+    for (let i = 0; i < operableIds.length; i++) {
+      await Content.update({ sort_order: maxSort + operableIds.length - i }, { where: { id: operableIds[i] } });
+    }
+    for (const id of operableIds) {
+      await cacheService.invalidateContent(id);
+    }
+    return { successCount: operableIds.length, skippedCount, operableIds };
+  }
+
+  async batchUpdateCategory(ids, category) {
+    if (!ids || ids.length === 0) {
+      throw new BadRequestError('请选择要修改分类的内容');
+    }
+    const contents = await Content.findAll({ where: { id: { [Op.in]: ids } } });
+    const operableIds = contents.filter(c => c.audit_status !== 2 || c.status === 1).map(c => c.id);
+    const skippedCount = ids.length - operableIds.length;
+    if (operableIds.length === 0) {
+      throw new BadRequestError('所选内容均不可修改分类');
+    }
+    await Content.update({ content_category: category }, { where: { id: { [Op.in]: operableIds } } });
+    for (const id of operableIds) {
+      await cacheService.invalidateContent(id);
+    }
+    return { successCount: operableIds.length, skippedCount, operableIds };
+  }
+
+  async checkTitleUnique(title, excludeId) {
+    const where = { content_title: title };
+    if (excludeId) where.id = { [Op.ne]: excludeId };
+    const count = await Content.count({ where });
+    return count === 0;
+  }
+
+  async checkCopyrightIdUnique(copyrightId, excludeId) {
+    if (!copyrightId) return true;
+    const where = { copyright_id: copyrightId };
+    if (excludeId) where.id = { [Op.ne]: excludeId };
+    const count = await Content.count({ where });
+    return count === 0;
+  }
 }
 
 module.exports = new ContentService();

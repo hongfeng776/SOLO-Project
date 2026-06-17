@@ -32,3 +32,23 @@ export const auditContentApi = (id: number, data: { auditStatus: number; auditRe
 export const batchAuditContentsApi = (ids: number[], data: { auditStatus: number; auditRemark?: string }): Promise<void> => {
   return http.post<void>('/api/v1/contents/batch-audit', { ids, ...data })
 }
+
+export const batchOfflineContentsApi = (ids: number[]): Promise<{ successCount: number; skippedCount: number; operableIds: number[] }> => {
+  return http.post<{ successCount: number; skippedCount: number; operableIds: number[] }>('/api/v1/contents/batch-offline', { ids })
+}
+
+export const batchTopContentsApi = (ids: number[]): Promise<{ successCount: number; skippedCount: number; operableIds: number[] }> => {
+  return http.post<{ successCount: number; skippedCount: number; operableIds: number[] }>('/api/v1/contents/batch-top', { ids })
+}
+
+export const batchUpdateCategoryApi = (ids: number[], category: number): Promise<{ successCount: number; skippedCount: number; operableIds: number[] }> => {
+  return http.post<{ successCount: number; skippedCount: number; operableIds: number[] }>('/api/v1/contents/batch-update-category', { ids, category })
+}
+
+export const checkTitleUniqueApi = (title: string, excludeId?: number): Promise<{ isUnique: boolean }> => {
+  return http.get<{ isUnique: boolean }>('/api/v1/contents/check-title-unique', { title, excludeId: excludeId || '' })
+}
+
+export const checkCopyrightUniqueApi = (copyrightId: number, excludeId?: number): Promise<{ isUnique: boolean }> => {
+  return http.get<{ isUnique: boolean }>('/api/v1/contents/check-copyright-unique', { copyrightId, excludeId: excludeId || '' })
+}

@@ -166,6 +166,78 @@ class ContentController {
       }
     }
   ];
+  batchOffline = [
+    validate(Joi.object({
+      ids: Joi.array().items(Joi.number().integer()).min(1).required(),
+    })),
+    async (req, res, next) => {
+      try {
+        const result = await ContentService.batchOfflineContents(req.body.ids);
+        return success(res, result, `批量下架完成：成功${result.successCount}条，跳过${result.skippedCount}条`);
+      } catch (error) {
+        next(error);
+      }
+    }
+  ];
+
+  batchTop = [
+    validate(Joi.object({
+      ids: Joi.array().items(Joi.number().integer()).min(1).required(),
+    })),
+    async (req, res, next) => {
+      try {
+        const result = await ContentService.batchTopContents(req.body.ids);
+        return success(res, result, `批量置顶完成：成功${result.successCount}条，跳过${result.skippedCount}条`);
+      } catch (error) {
+        next(error);
+      }
+    }
+  ];
+
+  batchUpdateCategory = [
+    validate(Joi.object({
+      ids: Joi.array().items(Joi.number().integer()).min(1).required(),
+      category: Joi.number().integer().required(),
+    })),
+    async (req, res, next) => {
+      try {
+        const result = await ContentService.batchUpdateCategory(req.body.ids, req.body.category);
+        return success(res, result, `批量修改分类完成：成功${result.successCount}条，跳过${result.skippedCount}条`);
+      } catch (error) {
+        next(error);
+      }
+    }
+  ];
+
+  checkTitleUnique = [
+    validate(Joi.object({
+      title: Joi.string().required(),
+      excludeId: Joi.number().integer().allow(null, ''),
+    }), 'query'),
+    async (req, res, next) => {
+      try {
+        const isUnique = await ContentService.checkTitleUnique(req.query.title, req.query.excludeId);
+        return success(res, { isUnique });
+      } catch (error) {
+        next(error);
+      }
+    }
+  ];
+
+  checkCopyrightUnique = [
+    validate(Joi.object({
+      copyrightId: Joi.number().integer().required(),
+      excludeId: Joi.number().integer().allow(null, ''),
+    }), 'query'),
+    async (req, res, next) => {
+      try {
+        const isUnique = await ContentService.checkCopyrightIdUnique(req.query.copyrightId, req.query.excludeId);
+        return success(res, { isUnique });
+      } catch (error) {
+        next(error);
+      }
+    }
+  ];
 }
 
 module.exports = new ContentController();
