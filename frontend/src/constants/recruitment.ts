@@ -143,5 +143,53 @@ export const EducationLabel: Record<Education, string> = {
   [Education.DOCTOR]: '博士',
 };
 
+export enum QualificationAuditStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  EXPIRED = 'expired',
+}
+
+export const QualificationAuditStatusLabel: Record<QualificationAuditStatus, string> = {
+  [QualificationAuditStatus.PENDING]: '待审核',
+  [QualificationAuditStatus.APPROVED]: '审核通过',
+  [QualificationAuditStatus.REJECTED]: '审核驳回',
+  [QualificationAuditStatus.EXPIRED]: '资质过期',
+};
+
+export const QualificationAuditStatusType: Record<QualificationAuditStatus, string> = {
+  [QualificationAuditStatus.PENDING]: 'warning',
+  [QualificationAuditStatus.APPROVED]: 'success',
+  [QualificationAuditStatus.REJECTED]: 'danger',
+  [QualificationAuditStatus.EXPIRED]: 'info',
+};
+
+export enum BusinessStatus {
+  ACTIVE = 'active',
+  REVOKED = 'revoked',
+  CANCELLED = 'cancelled',
+  RELOCATED = 'relocated',
+}
+
+export const BusinessStatusLabel: Record<BusinessStatus, string> = {
+  [BusinessStatus.ACTIVE]: '存续',
+  [BusinessStatus.REVOKED]: '吊销',
+  [BusinessStatus.CANCELLED]: '注销',
+  [BusinessStatus.RELOCATED]: '迁出',
+};
+
+export const INDUSTRY_OPTIONS = [
+  { label: '信息技术', value: '信息技术' },
+  { label: '金融', value: '金融' },
+  { label: '制造业', value: '制造业' },
+  { label: '教育', value: '教育' },
+  { label: '医疗健康', value: '医疗健康' },
+  { label: '房地产', value: '房地产' },
+  { label: '贸易', value: '贸易' },
+  { label: '服务业', value: '服务业' },
+  { label: '农业', value: '农业' },
+  { label: '其他', value: '其他' },
+];
+
 export const DATE_FORMAT = 'YYYY-MM-DD';
 export const DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';

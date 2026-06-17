@@ -54,6 +54,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '入职管理', icon: 'UserFilled' },
       },
       {
+        path: 'qualification',
+        name: 'Qualification',
+        component: () => import('@/views/qualification/index.vue'),
+        meta: { title: '资质审核', icon: 'Stamp' },
+      },
+      {
         path: 'system',
         name: 'System',
         component: () => import('@/views/system/user/index.vue'),

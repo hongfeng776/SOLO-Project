@@ -42,6 +42,7 @@ const menuList = ref([
   { path: '/resume', title: '简历管理', icon: 'Document' },
   { path: '/interview', title: '面试管理', icon: 'ChatDotRound' },
   { path: '/onboard', title: '入职管理', icon: 'UserFilled' },
+  { path: '/qualification', title: '资质审核', icon: 'Stamp' },
   { path: '/system', title: '系统管理', icon: 'Setting' },
 ]);
 </script>

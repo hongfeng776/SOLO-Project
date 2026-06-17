@@ -98,6 +98,55 @@ export const GenderLabel: Record<Gender, string> = {
   [Gender.OTHER]: '其他',
 };
 
+export enum QualificationAuditStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  EXPIRED = 'expired',
+}
+
+export const QualificationAuditStatusLabel: Record<QualificationAuditStatus, string> = {
+  [QualificationAuditStatus.PENDING]: '待审核',
+  [QualificationAuditStatus.APPROVED]: '审核通过',
+  [QualificationAuditStatus.REJECTED]: '审核驳回',
+  [QualificationAuditStatus.EXPIRED]: '资质过期',
+};
+
+export enum QualificationAuditAction {
+  SUBMIT = 'submit',
+  APPROVE = 'approve',
+  REJECT = 'reject',
+  INVALIDATE = 'invalidate',
+  RESUBMIT = 'resubmit',
+}
+
+export enum BusinessStatus {
+  ACTIVE = 'active',
+  REVOKED = 'revoked',
+  CANCELLED = 'cancelled',
+  RELOCATED = 'relocated',
+}
+
+export const BusinessStatusLabel: Record<BusinessStatus, string> = {
+  [BusinessStatus.ACTIVE]: '存续',
+  [BusinessStatus.REVOKED]: '吊销',
+  [BusinessStatus.CANCELLED]: '注销',
+  [BusinessStatus.RELOCATED]: '迁出',
+};
+
+export enum IndustryCategory {
+  IT = '信息技术',
+  FINANCE = '金融',
+  MANUFACTURING = '制造业',
+  EDUCATION = '教育',
+  HEALTHCARE = '医疗健康',
+  REAL_ESTATE = '房地产',
+  TRADE = '贸易',
+  SERVICES = '服务业',
+  AGRICULTURE = '农业',
+  OTHER = '其他',
+}
+
 export enum Education {
   HIGH_SCHOOL = 'high_school',
   COLLEGE = 'college',

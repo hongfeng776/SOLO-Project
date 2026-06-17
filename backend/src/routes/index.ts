@@ -5,6 +5,7 @@ import jobRoutes from './job.routes';
 import resumeRoutes from './resume.routes';
 import interviewRoutes from './interview.routes';
 import onboardRoutes from './onboard.routes';
+import qualificationRoutes from './qualification.routes';
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use('/jobs', jobRoutes);
 router.use('/resumes', resumeRoutes);
 router.use('/interviews', interviewRoutes);
 router.use('/onboards', onboardRoutes);
+router.use('/qualifications', qualificationRoutes);
 
 export default router;
