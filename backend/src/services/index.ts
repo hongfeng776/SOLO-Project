@@ -28,6 +28,9 @@ import GoodsAuditValidateService, { goodsAuditValidateService } from './GoodsAud
 import GoodsAuditReviewService, { goodsAuditReviewService } from './GoodsAuditReviewService';
 import GoodsAuditBatchService, { goodsAuditBatchService } from './GoodsAuditBatchService';
 import GoodsAuditTraceService, { goodsAuditTraceService } from './GoodsAuditTraceService';
+import OrderValidateService, { orderValidateService } from './OrderValidateService';
+import OrderBatchService, { orderBatchService } from './OrderBatchService';
+import OrderTraceService, { orderTraceService } from './OrderTraceService';
 
 export {
   AfterSaleAuditService,
@@ -60,6 +63,9 @@ export {
   GoodsAuditReviewService,
   GoodsAuditBatchService,
   GoodsAuditTraceService,
+  OrderValidateService,
+  OrderBatchService,
+  OrderTraceService,
 };
 
 export const services = {
@@ -93,6 +99,9 @@ export const services = {
   goodsAuditReviewService,
   goodsAuditBatchService,
   goodsAuditTraceService,
+  orderValidateService,
+  orderBatchService,
+  orderTraceService,
 };
 
 export default services;

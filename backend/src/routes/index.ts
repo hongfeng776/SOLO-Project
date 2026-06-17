@@ -34,6 +34,9 @@ import articleValidateRouter from './articleValidate';
 import articleEditorRouter from './articleEditor';
 import articleBatchRouter from './articleBatch';
 import articleTraceRouter from './articleTrace';
+import orderValidateRouter from './orderValidate';
+import orderBatchRouter from './orderBatch';
+import orderTraceRouter from './orderTrace';
 
 const router = Router();
 
@@ -72,5 +75,8 @@ router.use('/articleValidate', articleValidateRouter);
 router.use('/articleEditor', articleEditorRouter);
 router.use('/articleBatch', articleBatchRouter);
 router.use('/articleTrace', articleTraceRouter);
+router.use('/orderValidate', orderValidateRouter);
+router.use('/orderBatch', orderBatchRouter);
+router.use('/orderTrace', orderTraceRouter);
 
 export default router;

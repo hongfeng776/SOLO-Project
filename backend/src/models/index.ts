@@ -28,6 +28,10 @@ import { GoodsAuditMain } from './GoodsAuditMain';
 import { GoodsAuditItem } from './GoodsAuditItem';
 import { GoodsAuditTimeout } from './GoodsAuditTimeout';
 import { GoodsAuditResubmit } from './GoodsAuditResubmit';
+import { PaymentFlow } from './PaymentFlow';
+import { MerchantOrderRecord } from './MerchantOrderRecord';
+import { OrderException } from './OrderException';
+import { GoodsSnapshot } from './GoodsSnapshot';
 
 export {
   Admin,
@@ -60,6 +64,10 @@ export {
   GoodsAuditItem,
   GoodsAuditTimeout,
   GoodsAuditResubmit,
+  GoodsSnapshot,
+  PaymentFlow,
+  MerchantOrderRecord,
+  OrderException,
 };
 
 export const models = {
@@ -93,6 +101,10 @@ export const models = {
   GoodsAuditItem,
   GoodsAuditTimeout,
   GoodsAuditResubmit,
+  GoodsSnapshot,
+  PaymentFlow,
+  MerchantOrderRecord,
+  OrderException,
 };
 
 export default models;

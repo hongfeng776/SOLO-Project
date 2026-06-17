@@ -1,23 +1,67 @@
 export type TagType = 'primary' | 'success' | 'warning' | 'danger' | 'info'
 
 export enum OrderStatus {
-  PENDING_PAYMENT = 1,
-  PAID = 2,
-  SHIPPED = 3,
-  COMPLETED = 4,
-  CANCELLED = 5,
-  REFUNDING = 6,
-  REFUNDED = 7
+  PENDING_PAYMENT = 0,
+  PENDING_SHIPMENT = 1,
+  SHIPPED = 2,
+  COMPLETED = 3,
+  CANCELLED = 4
 }
 
 export const OrderStatusMap: Record<number, { label: string; type: TagType }> = {
-  [OrderStatus.PENDING_PAYMENT]: { label: '待付款', type: 'warning' },
-  [OrderStatus.PAID]: { label: '已付款', type: 'primary' },
+  [OrderStatus.PENDING_PAYMENT]: { label: '待支付', type: 'warning' },
+  [OrderStatus.PENDING_SHIPMENT]: { label: '待发货', type: 'primary' },
   [OrderStatus.SHIPPED]: { label: '已发货', type: 'info' },
   [OrderStatus.COMPLETED]: { label: '已完成', type: 'success' },
-  [OrderStatus.CANCELLED]: { label: '已取消', type: 'danger' },
-  [OrderStatus.REFUNDING]: { label: '退款中', type: 'warning' },
-  [OrderStatus.REFUNDED]: { label: '已退款', type: 'danger' }
+  [OrderStatus.CANCELLED]: { label: '已取消', type: 'danger' }
+}
+
+export enum PayType {
+  UNKNOWN = 0,
+  WECHAT = 1,
+  ALIPAY = 2,
+  BANK_CARD = 3
+}
+
+export const PayTypeMap: Record<number, string> = {
+  [PayType.UNKNOWN]: '未知',
+  [PayType.WECHAT]: '微信支付',
+  [PayType.ALIPAY]: '支付宝',
+  [PayType.BANK_CARD]: '银行卡'
+}
+
+export enum ExceptionType {
+  PAY_STATUS = 1,
+  STOCK_INSUFFICIENT = 2,
+  MERCHANT_NO_PERMISSION = 3,
+  LOGISTICS_UNSUPPORTED = 4,
+  DUPLICATE_ORDER = 5,
+  AMOUNT_ABNORMAL = 6,
+  OTHER = 7
+}
+
+export const ExceptionTypeMap: Record<number, { label: string; type: TagType }> = {
+  [ExceptionType.PAY_STATUS]: { label: '支付状态异常', type: 'danger' },
+  [ExceptionType.STOCK_INSUFFICIENT]: { label: '库存不足', type: 'warning' },
+  [ExceptionType.MERCHANT_NO_PERMISSION]: { label: '商家无权限', type: 'danger' },
+  [ExceptionType.LOGISTICS_UNSUPPORTED]: { label: '物流不支持', type: 'warning' },
+  [ExceptionType.DUPLICATE_ORDER]: { label: '重复订单', type: 'danger' },
+  [ExceptionType.AMOUNT_ABNORMAL]: { label: '金额异常', type: 'warning' },
+  [ExceptionType.OTHER]: { label: '其他异常', type: 'info' }
+}
+
+export enum ExceptionStatus {
+  PENDING = 0,
+  PROCESSING = 1,
+  HANDLED = 2,
+  IGNORED = 3
+}
+
+export const ExceptionStatusMap: Record<number, { label: string; type: TagType }> = {
+  [ExceptionStatus.PENDING]: { label: '待处理', type: 'warning' },
+  [ExceptionStatus.PROCESSING]: { label: '处理中', type: 'primary' },
+  [ExceptionStatus.HANDLED]: { label: '已处理', type: 'success' },
+  [ExceptionStatus.IGNORED]: { label: '已忽略', type: 'info' }
 }
 
 export enum LogisticsStatus {

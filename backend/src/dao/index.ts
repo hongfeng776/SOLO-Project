@@ -32,6 +32,10 @@ import { GoodsAuditMainDao } from './GoodsAuditMainDao';
 import { GoodsAuditItemDao } from './GoodsAuditItemDao';
 import { GoodsAuditTimeoutDao } from './GoodsAuditTimeoutDao';
 import { GoodsAuditResubmitDao } from './GoodsAuditResubmitDao';
+import { OrderExceptionDao } from './OrderExceptionDao';
+import { PaymentFlowDao } from './PaymentFlowDao';
+import { GoodsSnapshotDao } from './GoodsSnapshotDao';
+import { MerchantOrderRecordDao } from './MerchantOrderRecordDao';
 
 export {
   BaseDao,
@@ -70,6 +74,10 @@ export {
   GoodsAuditItemDao,
   GoodsAuditTimeoutDao,
   GoodsAuditResubmitDao,
+  OrderExceptionDao,
+  PaymentFlowDao,
+  GoodsSnapshotDao,
+  MerchantOrderRecordDao,
 };
 
 export const daos = {
@@ -106,6 +114,10 @@ export const daos = {
   goodsAuditItemDao: new GoodsAuditItemDao(),
   goodsAuditTimeoutDao: new GoodsAuditTimeoutDao(),
   goodsAuditResubmitDao: new GoodsAuditResubmitDao(),
+  orderExceptionDao: new OrderExceptionDao(),
+  paymentFlowDao: new PaymentFlowDao(),
+  goodsSnapshotDao: new GoodsSnapshotDao(),
+  merchantOrderRecordDao: new MerchantOrderRecordDao(),
 };
 
 export default daos;

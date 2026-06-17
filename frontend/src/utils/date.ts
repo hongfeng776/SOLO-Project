@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 
 export const DATE_FORMAT = 'YYYY-MM-DD'
 export const DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss'
+export const ORDER_DATETIME_FORMAT = 'YYYY-MM-DD HH:mm'
 export const TIME_FORMAT = 'HH:mm:ss'
 
 export function formatDate(date: Date | string | number, format: string = DATE_FORMAT): string {
@@ -28,4 +29,8 @@ export function formatRelativeTime(date: Date | string | number): string {
   if (diff < 1440) return `${Math.floor(diff / 60)}小时前`
   if (diff < 43200) return `${Math.floor(diff / 1440)}天前`
   return formatDateTime(date)
+}
+
+export function formatOrderDateTime(date: Date | string | number): string {
+  return formatDate(date, ORDER_DATETIME_FORMAT)
 }
