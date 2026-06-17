@@ -180,6 +180,62 @@ export const OPERATION_MODULE = {
   MEMBER: { value: 'member', label: '会员管理' },
   AUTH: { value: 'auth', label: '认证授权' },
   SYSTEM: { value: 'system', label: '系统管理' },
+  SHORT_VIDEO: { value: 'shortVideo', label: '短视频管理' },
+} as const
+
+export const CREATOR_LEVEL = {
+  NORMAL: { value: 0, label: '普通创作者', color: '#909399', type: 'info' },
+  JUNIOR: { value: 1, label: '初级创作者', color: '#67C23A', type: 'success' },
+  INTERMEDIATE: { value: 2, label: '中级创作者', color: '#409EFF', type: 'primary' },
+  SENIOR: { value: 3, label: '高级创作者', color: '#E6A23C', type: 'warning' },
+  HEAD: { value: 4, label: '头部创作者', color: '#F56C6C', type: 'danger' },
+} as const
+
+export const CONTENT_RATING = {
+  ALL_AGE: { value: 0, label: '全年龄', color: '#67C23A', type: 'success' },
+  TEEN: { value: 1, label: '青少年', color: '#409EFF', type: 'primary' },
+  ADULT: { value: 2, label: '成人', color: '#F56C6C', type: 'danger' },
+} as const
+
+export const VIDEO_QUALITY = {
+  SD: { value: 0, label: '标清', color: '#909399', type: 'info' },
+  HD: { value: 1, label: '高清', color: '#67C23A', type: 'success' },
+  UHD: { value: 2, label: '超清', color: '#409EFF', type: 'primary' },
+  BLU_RAY: { value: 3, label: '蓝光', color: '#E6A23C', type: 'warning' },
+} as const
+
+export const VIDEO_FORMAT = {
+  MP4: { value: 'mp4', label: 'MP4' },
+  WEBM: { value: 'webm', label: 'WebM' },
+  MOV: { value: 'mov', label: 'MOV' },
+  AVI: { value: 'avi', label: 'AVI' },
+} as const
+
+export const SHORT_VIDEO_STATUS = {
+  DRAFT: { value: 0, label: '草稿', color: '#909399', type: 'info' },
+  REVIEWING: { value: 1, label: '审核中', color: '#409EFF', type: 'primary' },
+  PUBLISHED: { value: 2, label: '已上架', color: '#67C23A', type: 'success' },
+  OFFLINE: { value: 3, label: '已下架', color: '#E6A23C', type: 'warning' },
+  VIOLATION: { value: 5, label: '违规封禁', color: '#F56C6C', type: 'danger' },
+  ARCHIVED: { value: 6, label: '已归档', color: '#C0C4CC', type: 'info' },
+} as const
+
+export const STATUS_CHANGE_TYPE = {
+  CREATE: { value: 'CREATE', label: '创建' },
+  AUDIT: { value: 'AUDIT', label: '审核' },
+  MANUAL: { value: 'MANUAL', label: '手动变更' },
+  BATCH: { value: 'BATCH', label: '批量操作' },
+  SYSTEM: { value: 'SYSTEM', label: '系统触发' },
+} as const
+
+export const VIOLATION_TYPE = {
+  COPYRIGHT: { value: 'copyright', label: '版权侵权' },
+  PORN: { value: 'porn', label: '色情低俗' },
+  VIOLENCE: { value: 'violence', label: '暴力血腥' },
+  POLITICS: { value: 'politics', label: '政治敏感' },
+  SPAM: { value: 'spam', label: '垃圾广告' },
+  PLAGIARISM: { value: 'plagiarism', label: '抄袭搬运' },
+  OTHER: { value: 'other', label: '其他违规' },
 } as const
 
 export const DATE_FORMAT_STRING = DATE_FORMAT

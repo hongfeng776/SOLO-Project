@@ -1,5 +1,6 @@
 const { User, Role } = require('./User');
 const { Content } = require('./Content');
+const { ContentStatusLog } = require('./ContentStatusLog');
 const { Copyright } = require('./Copyright');
 const { Advertisement } = require('./Advertisement');
 const { Activity } = require('./Activity');
@@ -27,6 +28,7 @@ module.exports = {
   User,
   Role,
   Content,
+  ContentStatusLog,
   Copyright,
   Advertisement,
   Activity,

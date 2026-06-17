@@ -395,3 +395,74 @@ export interface CommentStatsResult {
   byStatus: Array<{ status: number; count: number }>
   violationCount: number
 }
+
+export interface ShortVideoItem {
+  id: number
+  title: string
+  category: number
+  coverImage: string
+  videoUrl: string
+  description: string
+  tags: string[]
+  videoFingerprint?: string
+  creatorId?: number
+  creatorUid?: string
+  creatorLevel: number
+  hotScore: number
+  hotRanking: number
+  publishBatch?: string
+  contentRating: number
+  videoDuration: number
+  videoFormat?: string
+  videoQuality: number
+  fileSize: number
+  bitrateKbps: number
+  frameRate: number
+  violationCount: number
+  lastViolationType?: string
+  lastViolationAt?: string
+  isArchived: number
+  archivedAt?: string
+  playCount: number
+  likeCount: number
+  commentCount: number
+  shareCount: number
+  danmakuCount: number
+  collectCount: number
+  auditStatus: number
+  auditRemark?: string
+  status: number
+  statusLogs: StatusLogItem[]
+  trafficStats?: Record<string, any>
+  isVip: number
+  sortOrder: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface StatusLogItem {
+  id: number
+  contentId: number
+  fromStatus: number
+  toStatus: number
+  operatorId?: number
+  operatorName?: string
+  changeReason?: string
+  remark?: string
+  operationType: string
+  extraData?: Record<string, any>
+  ipAddress?: string
+  createdAt: string
+}
+
+export interface VideoFingerprintCheckResult {
+  isUnique: boolean
+  duplicateContent?: { id: number; title: string }
+}
+
+export interface BatchOperationResult {
+  successCount: number
+  skippedCount: number
+  successIds: number[]
+  skippedIds: number[]
+}

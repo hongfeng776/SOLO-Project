@@ -190,6 +190,135 @@ const Content = sequelize.define('content', {
     allowNull: true,
     comment: '备注',
   },
+  video_fingerprint: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    comment: '视频指纹(MD5/SHA1，用于去重)',
+  },
+  creator_id: {
+    type: DataTypes.BIGINT.UNSIGNED,
+    allowNull: true,
+    comment: '创作者ID(关联平台用户)',
+  },
+  creator_uid: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: '创作者UID(第三方/显示用)',
+  },
+  creator_level: {
+    type: DataTypes.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '创作者等级 0:普通 1:初级 2:中级 3:高级 4:头部',
+  },
+  hot_score: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0,
+    comment: '热度评分',
+  },
+  hot_ranking: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '热度排名',
+  },
+  publish_batch: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: '发布批次号',
+  },
+  content_rating: {
+    type: DataTypes.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '内容分级 0:全年龄 1:青少年 2:成人',
+  },
+  video_duration: {
+    type: DataTypes.DECIMAL(8, 2),
+    defaultValue: 0,
+    comment: '视频时长(秒，短视频专用精确到秒)',
+  },
+  video_format: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+    comment: '视频格式:mp4/webm/mov/avi等',
+  },
+  video_quality: {
+    type: DataTypes.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '画质等级 0:标清 1:高清 2:超清 3:蓝光',
+  },
+  file_size: {
+    type: DataTypes.BIGINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '文件大小(字节)',
+  },
+  bitrate_kbps: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '视频码率(kbps)',
+  },
+  frame_rate: {
+    type: DataTypes.TINYINT.UNSIGNED,
+    defaultValue: 30,
+    comment: '帧率(fps)',
+  },
+  violation_count: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '违规次数',
+  },
+  last_violation_type: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: '最近一次违规类型',
+  },
+  last_violation_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '最近一次违规时间',
+  },
+  is_archived: {
+    type: DataTypes.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '是否归档 1:已归档 0:正常',
+  },
+  archived_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '归档时间',
+  },
+  share_count: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '分享次数',
+  },
+  danmaku_count: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '弹幕数',
+  },
+  traffic_stats: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: '流量统计数据(JSON)',
+    get() {
+      const value = this.getDataValue('traffic_stats');
+      return value ? JSON.parse(value) : null;
+    },
+    set(value) {
+      this.setDataValue('traffic_stats', value ? JSON.stringify(value) : null);
+    },
+  },
+  status_logs: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: '状态变更日志(JSON数组)',
+    get() {
+      const value = this.getDataValue('status_logs');
+      return value ? JSON.parse(value) : [];
+    },
+    set(value) {
+      this.setDataValue('status_logs', value ? JSON.stringify(value || []) : null);
+    },
+  },
   created_by: {
     type: DataTypes.BIGINT.UNSIGNED,
     allowNull: true,
@@ -209,6 +338,14 @@ const Content = sequelize.define('content', {
     { fields: ['audit_status'] },
     { fields: ['release_year'] },
     { fields: ['status'] },
+    { fields: ['video_fingerprint'] },
+    { fields: ['creator_id'] },
+    { fields: ['creator_level'] },
+    { fields: ['hot_score'] },
+    { fields: ['publish_batch'] },
+    { fields: ['content_rating'] },
+    { fields: ['is_archived'] },
+    { fields: ['violation_count'] },
   ],
 });
 
