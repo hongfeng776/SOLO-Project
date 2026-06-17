@@ -22,7 +22,26 @@ service.interceptors.request.use(
 )
 
 service.interceptors.response.use(
-  (response) => {
+  async (response) => {
+    if (response.config.responseType === 'blob') {
+      const contentType = response.headers['content-type']
+      if (contentType && contentType.includes('application/json')) {
+        const text = await response.data.text()
+        const jsonData = JSON.parse(text)
+        if (jsonData.code !== 200) {
+          ElMessage.error(jsonData.message || '请求失败')
+          if (jsonData.code === 401) {
+            const userStore = useUserStore()
+            userStore.logout()
+            router.push('/login')
+          }
+          return Promise.reject(new Error(jsonData.message || '请求失败'))
+        }
+        return jsonData.data
+      }
+      return response
+    }
+
     const res = response.data
     if (res.code !== 200) {
       ElMessage.error(res.message || '请求失败')

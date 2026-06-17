@@ -759,24 +759,36 @@ const fetchStatistics = async () => {
 
   if (cached) {
     statCards[0].value = cached.totalOrders
-    statCards[1].value = cached.totalAmount
+    statCards[1].value = cached.totalSales
     statCards[2].value = cached.refundRate
-    statCards[3].value = cached.fulfillmentRate
+    statCards[3].value = cached.fulfillRate
     Object.keys(cardRefreshKey).forEach(key => refreshCardKey(key))
     return
   }
 
   try {
-    await getOrderStatistics(params)
-    mockStatCards()
+    const res = await getOrderStatistics(params)
+    const data = res.data
+
+    statCards[0].value = data.totalOrders
+    statCards[1].value = data.totalSales
+    statCards[2].value = data.refundRate
+    statCards[3].value = data.fulfillRate
+
+    Object.keys(cardRefreshKey).forEach(key => refreshCardKey(key))
+
     setCache(cacheKey, {
-      totalOrders: statCards[0].value,
-      totalAmount: statCards[1].value,
-      refundRate: statCards[2].value,
-      fulfillmentRate: statCards[3].value
+      totalOrders: data.totalOrders,
+      totalSales: data.totalSales,
+      refundRate: data.refundRate,
+      fulfillRate: data.fulfillRate
     })
   } catch (err) {
-    mockStatCards()
+    statCards[0].value = 0
+    statCards[1].value = 0
+    statCards[2].value = '0.00'
+    statCards[3].value = '0.00'
+    ElMessage.error('统计数据加载失败')
   }
 }
 
@@ -856,12 +868,92 @@ const applyCustomDate = () => {
 
 const validateFilter = () => {
   let valid = true
+  const errorMessages = []
 
-  if (filterForm.minAmount !== null && filterForm.maxAmount !== null) {
-    if (filterForm.minAmount > filterForm.maxAmount) {
-      triggerFieldError('amountRange')
+  if (filterForm.status && filterForm.status.length > 0) {
+    const validStatuses = [0, 1, 2, 3, 4, 5, 6]
+    const invalid = filterForm.status.some((s) => !validStatuses.includes(Number(s)))
+    if (invalid) {
+      triggerFieldError('status')
+      errorMessages.push('订单状态包含无效值')
       valid = false
     }
+  }
+
+  if (filterForm.userLevel && filterForm.userLevel.length > 0) {
+    const validLevels = [1, 2, 3, 4, 5]
+    const invalid = filterForm.userLevel.some((l) => !validLevels.includes(Number(l)))
+    if (invalid) {
+      triggerFieldError('userLevel')
+      errorMessages.push('用户等级包含无效值')
+      valid = false
+    }
+  }
+
+  if (filterForm.merchantType && filterForm.merchantType.length > 0) {
+    if (!isAdmin.value) {
+      triggerFieldError('merchantType')
+      errorMessages.push('您无权限按商家类型筛选')
+      valid = false
+    } else {
+      const validTypes = [1, 2, 3, 4]
+      const invalid = filterForm.merchantType.some((t) => !validTypes.includes(Number(t)))
+      if (invalid) {
+        triggerFieldError('merchantType')
+        errorMessages.push('商家类型包含无效值')
+        valid = false
+      }
+    }
+  }
+
+  if (filterForm.paymentChannel && filterForm.paymentChannel.length > 0) {
+    const validChannels = ['wechat', 'alipay', 'unionpay', 'credit_card', 'balance']
+    const invalid = filterForm.paymentChannel.some((c) => !validChannels.includes(c))
+    if (invalid) {
+      triggerFieldError('paymentChannel')
+      errorMessages.push('支付渠道包含无效值')
+      valid = false
+    }
+  }
+
+  if (filterForm.category && filterForm.category.length > 0) {
+    const validCategories = ['flight', 'hotel', 'car', 'ticket', 'business_travel']
+    const invalid = filterForm.category.some((c) => !validCategories.includes(c))
+    if (invalid) {
+      triggerFieldError('category')
+      errorMessages.push('品类包含无效值')
+      valid = false
+    }
+  }
+
+  if (filterForm.minAmount !== null && filterForm.maxAmount !== null) {
+    if (filterForm.minAmount < 0) {
+      triggerFieldError('amountRange')
+      errorMessages.push('金额最小值不能为负数')
+      valid = false
+    } else if (filterForm.maxAmount < 0) {
+      triggerFieldError('amountRange')
+      errorMessages.push('金额最大值不能为负数')
+      valid = false
+    } else if (filterForm.minAmount > filterForm.maxAmount) {
+      triggerFieldError('amountRange')
+      errorMessages.push('金额区间最小值不能大于最大值')
+      valid = false
+    }
+  }
+
+  if (filterForm.dateRange && filterForm.dateRange.length === 2) {
+    const start = new Date(filterForm.dateRange[0])
+    const end = new Date(filterForm.dateRange[1])
+    if (start > end) {
+      triggerFieldError('amountRange')
+      errorMessages.push('开始日期不能晚于结束日期')
+      valid = false
+    }
+  }
+
+  if (!valid && errorMessages.length > 0) {
+    ElMessage.warning(errorMessages[0])
   }
 
   return valid
@@ -869,7 +961,6 @@ const validateFilter = () => {
 
 const applyFilter = () => {
   if (!validateFilter()) {
-    ElMessage.warning('请检查筛选条件，金额区间最小值不能大于最大值')
     return
   }
   pagination.page = 1
@@ -904,29 +995,41 @@ const handleExport = async () => {
   exportProgress.value = 0
 
   exportTimer = setInterval(() => {
-    if (exportProgress.value < 90) {
-      exportProgress.value += Math.floor(Math.random() * 15) + 5
+    if (exportProgress.value < 70) {
+      exportProgress.value += Math.floor(Math.random() * 10) + 5
     }
   }, 200)
 
   try {
     const params = { ...filterForm, period: period.value, customDateRange: customDateRange.value }
-    await exportOrders(params)
+    const response = await exportOrders(params)
+    const blobData = response.data
 
-    setTimeout(() => {
-      clearInterval(exportTimer)
-      exportProgress.value = 100
+    clearInterval(exportTimer)
+    exportProgress.value = 100
 
-      const filename = generateExportFilename(period.value)
-      const blob = new Blob(['mock excel data'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = filename
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
+    const disposition = response.headers['content-disposition']
+    let filename = disposition
+      ? decodeURIComponent(disposition.split('filename=')[1]?.replace(/"/g, '') || '')
+      : generateExportFilename(period.value)
+
+    if (!filename) {
+      filename = generateExportFilename(period.value)
+    }
+
+    const total = response.headers['x-total-count']
+    const abnormal = response.headers['x-abnormal-count']
+    const exported = response.headers['x-exported-count']
+
+    const blob = new Blob([blobData], { type: 'text/csv; charset=utf-8' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
 
       setTimeout(() => {
         exportStatus.value = ExportStatusEnum.SUCCESS.value

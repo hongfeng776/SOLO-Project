@@ -25,8 +25,15 @@ class OrderStatisticsController {
   async exportOrders(req, res, next) {
     try {
       const result = await orderStatisticsService.exportOrders(req.body, req.user);
-      res.json(success(result));
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(result.filename)}"`);
+      res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
+      res.setHeader('X-Total-Count', result.total);
+      res.setHeader('X-Abnormal-Count', result.abnormalCount);
+      res.setHeader('X-Exported-Count', result.exportedCount);
+      res.send(result.csvContent);
     } catch (error) {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
       next(error);
     }
   }
