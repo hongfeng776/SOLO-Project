@@ -63,6 +63,12 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: 'BatchPublish',
         component: () => import(/* webpackChunkName: "content" */ '@views/content/batch-publish/index.vue'),
         meta: { title: '批量发布', icon: 'UploadFilled', roles: ['admin', 'editor'] }
+      },
+      {
+        path: 'ops',
+        name: 'NoteOps',
+        component: () => import(/* webpackChunkName: "content" */ '@views/content/ops/index.vue'),
+        meta: { title: '状态运维', icon: 'Operation', roles: ['admin', 'editor', 'super_ops'] }
       }
     ]
   },

@@ -30,6 +30,13 @@ class Note extends Model<InferAttributes<Note>, InferCreationAttributes<Note>> {
   declare lastReviewerId: CreationOptional<number | null>
   declare lastReviewerName: CreationOptional<string>
   declare lastReviewTime: CreationOptional<Date | null>
+  declare flowLevel: CreationOptional<number>
+  declare isPinned: CreationOptional<number>
+  declare isHot: CreationOptional<number>
+  declare lastOpsTime: CreationOptional<Date | null>
+  declare lastOpsUserId: CreationOptional<number | null>
+  declare lastOpsUserName: CreationOptional<string>
+  declare hiddenReason: CreationOptional<string>
   declare createTime: CreationOptional<Date>
   declare updateTime: CreationOptional<Date>
   declare deleteTime: CreationOptional<Date | null>
@@ -59,7 +66,7 @@ Note.init(
       type: DataTypes.TINYINT,
       allowNull: false,
       defaultValue: 0,
-      comment: '0草稿 1待审核 2已发布 3已拒绝 4已下架 5定时待发布 6暂缓审核'
+      comment: '0草稿 1待审核 2已发布 3已拒绝 4已下架 5定时待发布 6暂缓审核 7限流'
     },
     authorId: {
       type: DataTypes.INTEGER.UNSIGNED,
@@ -179,6 +186,46 @@ Note.init(
       allowNull: true,
       comment: '最后审核时间'
     },
+    flowLevel: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 1,
+      comment: '流量池等级 1普通 2优质 3热门'
+    },
+    isPinned: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '是否置顶 0否 1是'
+    },
+    isHot: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '是否在热门推送中 0否 1是'
+    },
+    lastOpsTime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '最后运维时间'
+    },
+    lastOpsUserId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: '最后运维人ID'
+    },
+    lastOpsUserName: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      defaultValue: '',
+      comment: '最后运维人姓名'
+    },
+    hiddenReason: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      defaultValue: '',
+      comment: '隐藏原因'
+    },
     createTime: DataTypes.DATE,
     updateTime: DataTypes.DATE,
     deleteTime: DataTypes.DATE
@@ -192,7 +239,8 @@ Note.init(
       { fields: ['author_id', 'status'] },
       { fields: ['review_level', 'status'] },
       { fields: ['author_id', 'schedule_time'] },
-      { fields: ['review_weight', 'create_time'] }
+      { fields: ['review_weight', 'create_time'] },
+      { fields: ['flow_level', 'is_hot', 'status'] }
     ]
   }
 )

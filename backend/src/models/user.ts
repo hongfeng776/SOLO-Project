@@ -17,6 +17,7 @@ class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare flowLimitExpireTime: CreationOptional<Date | null>
   declare reviewLevel: CreationOptional<number>
   declare reviewCount: CreationOptional<number>
+  declare opsCount: CreationOptional<number>
   declare isSeniorReviewer: CreationOptional<number>
   declare createTime: CreationOptional<Date>
   declare updateTime: CreationOptional<Date>
@@ -98,6 +99,12 @@ User.init(
       allowNull: false,
       defaultValue: 0,
       comment: '累计审核数'
+    },
+    opsCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '累计运维操作数'
     },
     isSeniorReviewer: {
       type: DataTypes.TINYINT,

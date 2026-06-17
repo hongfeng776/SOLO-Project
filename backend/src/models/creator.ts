@@ -14,6 +14,8 @@ class Creator extends Model<InferAttributes<Creator>, InferCreationAttributes<Cr
   declare rejectReason: CreationOptional<string>
   declare contactName: string
   declare contactPhone: string
+  declare accountWeight: CreationOptional<number>
+  declare flowPoolLevel: CreationOptional<number>
   declare createTime: CreationOptional<Date>
   declare updateTime: CreationOptional<Date>
   declare deleteTime: CreationOptional<Date | null>
@@ -80,6 +82,18 @@ Creator.init(
       type: DataTypes.STRING(20),
       allowNull: true,
       defaultValue: ''
+    },
+    accountWeight: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 50,
+      comment: '账号权重 0-100'
+    },
+    flowPoolLevel: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 1,
+      comment: '内容流量池等级 1普通 2优质 3热门'
     },
     createTime: DataTypes.DATE,
     updateTime: DataTypes.DATE,

@@ -150,3 +150,64 @@ export interface ReviewerStats {
   rejectionRate: number
   abnormalCount: number
 }
+
+export interface NoteOpsData {
+  noteId: number
+  newStatus: number
+  newFlowLevel?: number
+  newFlowUnlocked?: number
+  newIsHot?: number
+  reason?: string
+}
+
+export interface BatchNoteOpsData {
+  ids: number[]
+  newStatus: number
+  newFlowLevel?: number
+  newFlowUnlocked?: number
+  reason?: string
+}
+
+export interface NoteOpsResult {
+  success: boolean
+  noteId: number
+  previousStatus: number
+  newStatus: number
+  message?: string
+}
+
+export interface NoteOpsComplianceResult {
+  allowed: boolean
+  blockedReason?: string
+  warnings?: string[]
+  isAbnormal?: boolean
+  abnormalReason?: string
+}
+
+export type OperatorRole = 'admin' | 'super_ops' | 'normal_ops'
+
+export interface NoteOpsLogListParams {
+  page: number
+  pageSize: number
+  noteId?: number
+  operatorId?: number
+  operatorRole?: OperatorRole
+  startTime?: string
+  endTime?: string
+}
+
+export interface NoteOpsStats {
+  totalToday: number
+  abnormalCount: number
+  byOperator: Array<{
+    operatorId: number
+    operatorName: string
+    count: number
+  }>
+}
+
+export interface NoteAbnormalOpsListParams {
+  page: number
+  pageSize: number
+  handled?: number
+}

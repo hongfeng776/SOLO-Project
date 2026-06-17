@@ -25,6 +25,74 @@ export interface Note {
   lastReviewerName?: string
   lastReviewTime?: string
   isAbnormal?: number
+  noteType?: number
+  flowLevel?: number
+  isPinned?: number
+  isHot?: number
+  lastOpsTime?: string
+  lastOpsUserName?: string
+  hiddenReason?: string
+}
+
+export interface NoteOpsData {
+  noteId: number
+  newStatus: number
+  newFlowLevel?: number
+  newFlowUnlocked?: number
+  newIsHot?: number
+  reason?: string
+}
+
+export interface BatchNoteOpsData {
+  ids: number[]
+  newStatus: number
+  newFlowLevel?: number
+  newFlowUnlocked?: number
+  reason?: string
+}
+
+export interface NoteOpsResult {
+  success: boolean
+  noteId: number
+  previousStatus: number
+  newStatus: number
+  message?: string
+}
+
+export interface BatchNoteOpsResult {
+  total: number
+  success: number
+  fail: number
+  results: NoteOpsResult[]
+}
+
+export interface NoteOpsComplianceResult {
+  allowed: boolean
+  blockedReason?: string
+  warnings?: string[]
+  isAbnormal?: boolean
+  abnormalReason?: string
+}
+
+export interface NoteOpsLog {
+  id: number
+  noteId: number
+  noteTitle: string
+  operatorId: number
+  operatorName: string
+  operatorRole: string
+  previousStatus: number
+  newStatus: number
+  previousFlowLevel?: number
+  newFlowLevel?: number
+  previousFlowUnlocked?: number
+  newFlowUnlocked?: number
+  previousIsHot?: number
+  newIsHot?: number
+  reason: string
+  isAbnormal: number
+  abnormalReason: string
+  createTime: string
 }
 
 export interface ReviewActionData {

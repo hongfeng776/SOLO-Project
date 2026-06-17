@@ -32,6 +32,8 @@ import noteBatchRoutes from '@routes/note-batch'
 import reviewRoutes from '@routes/review'
 import reviewLogRoutes from '@routes/review-log'
 import reviewComplianceRoutes from '@routes/review-compliance'
+import noteOpsRoutes from '@routes/note-ops'
+import noteOpsLogRoutes from '@routes/note-ops-log'
 
 const app = express()
 
@@ -75,6 +77,8 @@ app.use('/api/note-batch', noteBatchRoutes)
 app.use('/api/review', reviewRoutes)
 app.use('/api/review-logs', reviewLogRoutes)
 app.use('/api/review-compliance', reviewComplianceRoutes)
+app.use('/api/note-ops', noteOpsRoutes)
+app.use('/api/note-ops-logs', noteOpsLogRoutes)
 
 app.use(celebrateErrors())
 app.use(errorHandler)

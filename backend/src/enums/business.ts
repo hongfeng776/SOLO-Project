@@ -5,7 +5,8 @@ export enum NoteStatus {
   REJECTED = 3,
   OFF_SHELF = 4,
   SCHEDULED = 5,
-  POSTPONED = 6
+  POSTPONED = 6,
+  FLOW_LIMITED = 7
 }
 
 export enum NoteType {
@@ -20,7 +21,8 @@ export const NOTE_STATUS_NAMES: Record<number, string> = {
   [NoteStatus.REJECTED]: '已拒绝',
   [NoteStatus.OFF_SHELF]: '已下架',
   [NoteStatus.SCHEDULED]: '定时待发布',
-  [NoteStatus.POSTPONED]: '暂缓审核'
+  [NoteStatus.POSTPONED]: '暂缓审核',
+  [NoteStatus.FLOW_LIMITED]: '限流'
 }
 
 export const NOTE_TYPE_NAMES: Record<number, string> = {

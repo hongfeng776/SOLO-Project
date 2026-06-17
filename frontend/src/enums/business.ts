@@ -4,7 +4,58 @@ export enum NoteStatus {
   PUBLISHED = 2,
   REJECTED = 3,
   OFF_SHELF = 4,
-  SCHEDULED = 5
+  SCHEDULED = 5,
+  FLOW_LIMITED = 7
+}
+
+export enum FlowLevel {
+  NORMAL = 1,
+  PREMIUM = 2,
+  HOT = 3
+}
+
+export enum OperatorRole {
+  NORMAL_OPS = 'normal_ops',
+  SUPER_OPS = 'super_ops',
+  ADMIN = 'admin'
+}
+
+export enum NoteOpsAction {
+  PUBLISH = 'publish',
+  OFF_SHELF = 'off_shelf',
+  FLOW_LIMIT = 'flow_limit',
+  RESTORE = 'restore',
+  PROMOTE_FLOW = 'promote_flow',
+  DEMOTE_FLOW = 'demote_flow',
+  PIN = 'pin',
+  UNPIN = 'unpin',
+  SET_HOT = 'set_hot',
+  REMOVE_HOT = 'remove_hot'
+}
+
+export const NOTE_OPS_ACTION_NAMES: Record<string, string> = {
+  publish: '发布',
+  off_shelf: '下架',
+  flow_limit: '限流',
+  restore: '恢复',
+  promote_flow: '升级流量池',
+  demote_flow: '降级流量池',
+  pin: '置顶',
+  unpin: '取消置顶',
+  set_hot: '设为热门',
+  remove_hot: '取消热门'
+}
+
+export const FLOW_LEVEL_NAMES: Record<number, string> = {
+  1: '普通',
+  2: '优质',
+  3: '热门'
+}
+
+export const OPERATOR_ROLE_NAMES: Record<string, string> = {
+  normal_ops: '普通运营',
+  super_ops: '超级运营',
+  admin: '管理员'
 }
 
 export enum NoteType {
