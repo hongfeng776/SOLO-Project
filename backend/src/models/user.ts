@@ -19,6 +19,15 @@ class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare reviewCount: CreationOptional<number>
   declare opsCount: CreationOptional<number>
   declare isSeniorReviewer: CreationOptional<number>
+  declare registerSource: CreationOptional<string>
+  declare lastActiveTime: CreationOptional<Date | null>
+  declare phoneVerified: CreationOptional<number>
+  declare isAbnormal: CreationOptional<number>
+  declare abnormalType: CreationOptional<string>
+  declare abnormalReason: CreationOptional<string>
+  declare infoCompleteness: CreationOptional<number>
+  declare lastLoginTime: CreationOptional<Date | null>
+  declare loginCount: CreationOptional<number>
   declare createTime: CreationOptional<Date>
   declare updateTime: CreationOptional<Date>
   declare deleteTime: CreationOptional<Date | null>
@@ -111,6 +120,58 @@ User.init(
       allowNull: false,
       defaultValue: 0,
       comment: '是否高级审核员 0否 1是'
+    },
+    registerSource: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      defaultValue: 'manual',
+      comment: '注册来源'
+    },
+    lastActiveTime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '最后活跃时间'
+    },
+    phoneVerified: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '手机号是否已绑定 0否 1是'
+    },
+    isAbnormal: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '是否异常用户 0否 1是'
+    },
+    abnormalType: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      defaultValue: '',
+      comment: '异常类型'
+    },
+    abnormalReason: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      defaultValue: '',
+      comment: '异常原因'
+    },
+    infoCompleteness: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '信息完整度 0-100'
+    },
+    lastLoginTime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '最后登录时间'
+    },
+    loginCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '登录次数'
     },
     createTime: DataTypes.DATE,
     updateTime: DataTypes.DATE,

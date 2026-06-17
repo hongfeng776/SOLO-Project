@@ -25,7 +25,8 @@ export const authService = {
     const payload: JwtPayload = {
       userId: user.id,
       username: user.username,
-      roles
+      roles,
+      permissions
     }
 
     const token = generateToken(payload)

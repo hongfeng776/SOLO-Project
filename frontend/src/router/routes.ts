@@ -170,7 +170,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     path: '/system',
     component: Layout,
     redirect: '/system/user',
-    meta: { title: '系统设置', icon: 'Setting', roles: ['admin'] },
+    meta: { title: '系统设置', icon: 'Setting', roles: ['admin', 'operator', 'senior_operator'] },
     children: [
       {
         path: 'user',
@@ -195,6 +195,38 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: 'SystemNotification',
         component: () => import(/* webpackChunkName: "system" */ '@views/system/notification/index.vue'),
         meta: { title: '消息通知', icon: 'Bell', roles: ['admin'] }
+      }
+    ]
+  },
+  {
+    path: '/user-account',
+    component: Layout,
+    redirect: '/user-account/list',
+    meta: { title: '账号管理', icon: 'User', roles: ['admin', 'operator', 'senior_operator'] },
+    children: [
+      {
+        path: 'list',
+        name: 'UserAccountList',
+        component: () => import(/* webpackChunkName: "user-account" */ '@views/user-account/list/index.vue'),
+        meta: { title: '账号查询', icon: 'Search', roles: ['admin', 'operator', 'senior_operator'] }
+      },
+      {
+        path: 'batch',
+        name: 'UserAccountBatch',
+        component: () => import(/* webpackChunkName: "user-account" */ '@views/user-account/batch/index.vue'),
+        meta: { title: '批量规整', icon: 'Operation', roles: ['admin', 'senior_operator'] }
+      },
+      {
+        path: 'trace',
+        name: 'UserAccountTrace',
+        component: () => import(/* webpackChunkName: "user-account" */ '@views/user-account/trace/index.vue'),
+        meta: { title: '账号溯源', icon: 'View', roles: ['admin', 'operator', 'senior_operator'] }
+      },
+      {
+        path: 'abnormal',
+        name: 'UserAccountAbnormal',
+        component: () => import(/* webpackChunkName: "user-account" */ '@views/user-account/abnormal/index.vue'),
+        meta: { title: '异常台账', icon: 'Warning', roles: ['admin', 'operator', 'senior_operator'] }
       }
     ]
   },

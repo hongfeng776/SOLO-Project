@@ -574,3 +574,169 @@ export interface AccountStatus {
   flowLimitExpireTime?: string
   realName?: string
 }
+
+export interface UserAccount {
+  id: number
+  username: string
+  nickname: string
+  avatar: string
+  email: string
+  phone: string
+  status: number
+  realNameVerified: number
+  realName?: string
+  idCard?: string
+  registerSource: string
+  phoneVerified: number
+  isAbnormal: number
+  abnormalType: string
+  abnormalReason: string
+  infoCompleteness: number
+  lastActiveTime?: string
+  lastLoginTime?: string
+  loginCount: number
+  roles: Role[]
+  createTime: string
+  updateTime: string
+}
+
+export interface UserAccountPermission {
+  canViewPrivate: boolean
+  canEdit: boolean
+}
+
+export interface UserPreCheckResult {
+  valid: boolean
+  issues: string[]
+  data?: UserAccount
+}
+
+export interface UserDerivedData {
+  recentViolations: ViolationRecord[]
+  recentAccountLogs: UserAccountLog[]
+  recentAbnormalLogs: UserAbnormalLog[]
+  infoCompleteness: number
+  missingFields: string[]
+}
+
+export interface UserAccountDetail {
+  user: UserAccount
+  preCheck: UserPreCheckResult
+  permission: UserAccountPermission
+  derivedData: UserDerivedData
+}
+
+export interface ValidateResult {
+  valid: boolean
+  message?: string
+}
+
+export interface UserUpdateResult {
+  success: boolean
+  message: string
+  updatedFields?: string[]
+  user?: Partial<UserAccount>
+}
+
+export interface BatchOperationParams {
+  userIds?: number[]
+  filterType?: string
+  scope: string
+  updates: {
+    nickname?: string
+    avatar?: string
+    phone?: string
+    email?: string
+    realName?: string
+  }
+  reason?: string
+}
+
+export interface BatchOperationResult {
+  total: number
+  success: number
+  fail: number
+  results: Array<{
+    userId: number
+    success: boolean
+    error?: string
+  }>
+}
+
+export interface UserTraceItem {
+  type: string
+  title: string
+  time: string
+  data: Record<string, any>
+}
+
+export interface UserAnomaly {
+  type: string
+  severity: number
+  title: string
+  detail: string
+  relatedUsers?: Array<{ id: number; username: string }>
+  missingFields?: string[]
+}
+
+export interface UserIntegrityCheck {
+  name: string
+  passed: boolean
+  message?: string
+}
+
+export interface UserIntegrityResult {
+  valid: boolean
+  checks: UserIntegrityCheck[]
+  completeness: number
+  issues: string[]
+}
+
+export interface UserTraceResult {
+  user: UserAccount
+  traces: UserTraceItem[]
+  anomalies: UserAnomaly[]
+  integrityCheck: UserIntegrityResult
+  permission: UserAccountPermission
+}
+
+export interface UserAccountLog {
+  id: number
+  userId: number
+  userName: string
+  operatorId: number
+  operatorName: string
+  logType: string
+  fieldName: string
+  oldValue: string
+  newValue: string
+  reason: string
+  ip: string
+  userAgent: string
+  status: number
+  errorMsg: string
+  createTime: string
+}
+
+export interface UserAbnormalLog {
+  id: number
+  userId: number
+  userName: string
+  abnormalType: string
+  abnormalDetail: string
+  severity: number
+  traceData: string
+  detectedTime: string
+  handled: number
+  handlerId?: number
+  handlerName?: string
+  handleTime?: string
+  handleResult?: string
+  user?: Partial<UserAccount>
+  createTime: string
+}
+
+export interface UserAbnormalStats {
+  abnormalType: string
+  count: number
+}

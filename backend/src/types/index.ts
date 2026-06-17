@@ -18,12 +18,19 @@ export interface PageResult<T> {
   total: number
   page: number
   pageSize: number
+  stats?: Array<{ abnormalType: string; count: number }>
+  permission?: {
+    canEdit: boolean
+    canViewSensitive: boolean
+    canBatch: boolean
+  }
 }
 
 export interface JwtPayload {
   userId: number
   username: string
   roles: string[]
+  permissions: string[]
 }
 
 export interface AuthenticatedRequest extends Request {

@@ -15,13 +15,15 @@ export const paginate = <T = unknown>(
   list: T[],
   total: number,
   page: number,
-  pageSize: number
+  pageSize: number,
+  extra?: Partial<PageResult<T>>
 ): Response => {
   const data: PageResult<T> = {
     list,
     total,
     page,
-    pageSize
+    pageSize,
+    ...extra
   }
   return success(res, data)
 }
