@@ -293,3 +293,28 @@
   cursor: help;
 }
 
+.audit-status-tag { transition: all 0.3s cubic-bezier(0.4,0,0.2,1); display: inline-flex; align-items: center; }
+.audit-status-tag.is-updating { transform: scale(1.1); opacity: 0.7; filter: brightness(1.15); }
+
+.audit-table .el-table__body tr.checked-row > td {
+  background: linear-gradient(90deg, #ecf5ff, #e6f7ff) !important;
+  position: relative;
+}
+.audit-table .el-table__body tr.checked-row > td:first-child::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: #409EFF; border-radius: 0 2px 2px 0;
+}
+
+.timeout-bell { animation: bellShake 0.6s ease-in-out infinite alternate; display: inline-block; }
+@keyframes bellShake { 0% { transform: rotate(0deg); } 25% { transform: rotate(12deg); } 75% { transform: rotate(-12deg); } 100% { transform: rotate(0deg); } }
+
+.audit-missing-highlight .el-input__wrapper,
+.audit-missing-highlight .el-textarea__inner {
+  box-shadow: 0 0 0 1px #E6A23C inset, 0 0 6px rgba(230,162,60,0.35) !important;
+  animation: highlightPulse 1.2s ease-in-out 2;
+}
+@keyframes highlightPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+.audit-steps .el-step.is-error .el-step__title { color: #f56c6c; font-weight: 600; }
+.audit-steps .el-step.is-success .el-step__title { color: #67C23A; }
+

@@ -39,6 +39,12 @@ const routes: RouteRecordRaw[] = [
             name: 'GoodsCategory',
             component: () => import('@/views/goods/category.vue'),
             meta: { title: '类目分类', icon: 'Menu', requiresAuth: true }
+          },
+          {
+            path: 'audit',
+            name: 'GoodsAudit',
+            component: () => import('@/views/goods/audit.vue'),
+            meta: { title: '审核管理', icon: 'Checked', requiresAuth: true }
           }
         ]
       },

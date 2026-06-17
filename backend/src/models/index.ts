@@ -24,6 +24,10 @@ import { ArticleVersion } from './ArticleVersion';
 import { ArticleTopic } from './ArticleTopic';
 import { SensitiveWord } from './SensitiveWord';
 import { ArticleReviewLog } from './ArticleReviewLog';
+import { GoodsAuditMain } from './GoodsAuditMain';
+import { GoodsAuditItem } from './GoodsAuditItem';
+import { GoodsAuditTimeout } from './GoodsAuditTimeout';
+import { GoodsAuditResubmit } from './GoodsAuditResubmit';
 
 export {
   Admin,
@@ -52,6 +56,10 @@ export {
   ArticleTopic,
   SensitiveWord,
   ArticleReviewLog,
+  GoodsAuditMain,
+  GoodsAuditItem,
+  GoodsAuditTimeout,
+  GoodsAuditResubmit,
 };
 
 export const models = {
@@ -81,6 +89,10 @@ export const models = {
   ArticleTopic,
   SensitiveWord,
   ArticleReviewLog,
+  GoodsAuditMain,
+  GoodsAuditItem,
+  GoodsAuditTimeout,
+  GoodsAuditResubmit,
 };
 
 export default models;

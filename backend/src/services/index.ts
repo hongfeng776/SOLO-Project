@@ -24,6 +24,10 @@ import CategoryValidateService, { categoryValidateService } from './CategoryVali
 import CategoryLinkageService, { categoryLinkageService } from './CategoryLinkageService';
 import CategoryBatchService, { categoryBatchService } from './CategoryBatchService';
 import CategoryTraceService, { categoryTraceService } from './CategoryTraceService';
+import GoodsAuditValidateService, { goodsAuditValidateService } from './GoodsAuditValidateService';
+import GoodsAuditReviewService, { goodsAuditReviewService } from './GoodsAuditReviewService';
+import GoodsAuditBatchService, { goodsAuditBatchService } from './GoodsAuditBatchService';
+import GoodsAuditTraceService, { goodsAuditTraceService } from './GoodsAuditTraceService';
 
 export {
   AfterSaleAuditService,
@@ -52,6 +56,10 @@ export {
   CategoryLinkageService,
   CategoryBatchService,
   CategoryTraceService,
+  GoodsAuditValidateService,
+  GoodsAuditReviewService,
+  GoodsAuditBatchService,
+  GoodsAuditTraceService,
 };
 
 export const services = {
@@ -81,6 +89,10 @@ export const services = {
   categoryLinkageService,
   categoryBatchService,
   categoryTraceService,
+  goodsAuditValidateService,
+  goodsAuditReviewService,
+  goodsAuditBatchService,
+  goodsAuditTraceService,
 };
 
 export default services;

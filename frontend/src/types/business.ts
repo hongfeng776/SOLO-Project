@@ -557,3 +557,153 @@ export interface QualityReport {
   }[]
 }
 
+export type RiskLevel = 1 | 2 | 3
+
+export enum AuditStatus {
+  DRAFT = 0,
+  PENDING_INITIAL = 1,
+  INITIAL_REJECTED = 2,
+  PENDING_FINAL = 3,
+  FINAL_REJECTED = 4,
+  SUPPLEMENT_REQUIRED = 5,
+  APPROVED = 6,
+  FROZEN = 7
+}
+
+export const AuditStatusMap: Record<number, { label: string; type: TagType }> = {
+  [AuditStatus.DRAFT]: { label: '草稿', type: 'info' },
+  [AuditStatus.PENDING_INITIAL]: { label: '待初审', type: 'warning' },
+  [AuditStatus.INITIAL_REJECTED]: { label: '初审驳回', type: 'danger' },
+  [AuditStatus.PENDING_FINAL]: { label: '待复审', type: 'primary' },
+  [AuditStatus.FINAL_REJECTED]: { label: '复审驳回', type: 'danger' },
+  [AuditStatus.SUPPLEMENT_REQUIRED]: { label: '待补充', type: 'warning' },
+  [AuditStatus.APPROVED]: { label: '已通过', type: 'success' },
+  [AuditStatus.FROZEN]: { label: '已冻结', type: 'info' }
+}
+
+export const RiskLevelMap: Record<RiskLevel, { label: string; type: TagType }> = {
+  1: { label: '低风险', type: 'success' },
+  2: { label: '中风险', type: 'warning' },
+  3: { label: '高风险', type: 'danger' }
+}
+
+export interface AuditMainInfo {
+  id: number
+  goodsId: number
+  auditNo: string
+  merchantId: number
+  riskLevel: RiskLevel
+  merchantCreditScore: number
+  status: AuditStatus
+  initialReviewerId?: number
+  initialResult?: string
+  initialRemark?: string
+  initialReviewedAt?: string
+  finalReviewerId?: number
+  finalResult?: string
+  finalRemark?: string
+  finalReviewedAt?: string
+  rejectReasons?: string[]
+  supplementDeadline?: string
+  supplementCount: number
+  submitAt: string
+  timeoutHours: number
+  timeoutFlag: boolean
+}
+
+export interface AuditCheckItem {
+  id: number
+  auditId: number
+  category: string
+  itemName: string
+  itemCode: string
+  checkResult: boolean
+  required: boolean
+  detail?: string
+  suggestion?: string
+}
+
+export interface AuditFullTrace {
+  submitInfo: {
+    auditNo: string
+    submitterId: number
+    submitAt: string
+    riskLevel: RiskLevel
+    merchantCreditScore: number
+  }
+  initialReview?: {
+    reviewerId: number
+    reviewedAt: string
+    result: string
+    remark?: string
+  }
+  finalReview?: {
+    reviewerId: number
+    reviewedAt: string
+    result: string
+    remark?: string
+    rejectReasons?: string[]
+  }
+  resubmitTimeline: AuditResubmit[]
+  timeoutAlerts: AuditTimeout[]
+}
+
+export interface AuditResubmit {
+  id: number
+  auditId: number
+  goodsId: number
+  resubmitNo: number
+  previousStatus: AuditStatus
+  changeFields: string[]
+  supplementMaterials: string[]
+  submitterId: number
+  submitAt: string
+}
+
+export interface AuditTimeout {
+  id: number
+  auditId: number
+  goodsId: number
+  timeoutType: string
+  deadline: string
+  actualTime?: string
+  status: number
+  handlerId?: number
+  handleRemark?: string
+}
+
+export interface BatchAuditScope {
+  scope: 'limited' | 'full'
+  maxRiskLevel: RiskLevel
+  canFreeze: boolean
+  canSupplement: boolean
+}
+
+export interface AuditAbility {
+  canApprove: boolean
+  canReject: boolean
+  canSupplement: boolean
+  canFreeze: boolean
+  reason?: string
+}
+
+export interface AuditStats {
+  total: number
+  byStatus: Record<number, number>
+  avgReviewHours: number
+  rejectRate: number
+  timeoutRate: number
+  todayPending: number
+}
+
+export interface PreSubmitResult {
+  canSubmit: boolean
+  conditions: AuditCondition[]
+}
+
+export interface AuditCondition {
+  category: 'info_complete' | 'qualification' | 'category_compliance' | 'image_text_compliance'
+  passed: boolean
+  items: AuditCheckItem[]
+}
+

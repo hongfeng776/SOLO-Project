@@ -7,10 +7,9 @@ const router = Router();
 router.use(authMiddleware);
 
 router.post('/submit', GoodsAuditController.submitAudit);
-router.post('/:id/approve', GoodsAuditController.approveAudit);
-router.post('/:id/reject', GoodsAuditController.rejectAudit);
-router.post('/batchApprove', GoodsAuditController.batchApprove);
-router.post('/batchReject', GoodsAuditController.batchReject);
+router.post('/:id/withdraw', GoodsAuditController.withdrawAudit);
+router.post('/:id/resubmit', GoodsAuditController.resubmitAudit);
 router.get('/list', GoodsAuditController.getAuditList);
+router.get('/:id', GoodsAuditController.getAuditDetail);
 
 export default router;

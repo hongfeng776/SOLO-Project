@@ -28,6 +28,10 @@ import { ArticleVersionDao } from './ArticleVersionDao';
 import { ArticleTopicDao } from './ArticleTopicDao';
 import { SensitiveWordDao } from './SensitiveWordDao';
 import { ArticleReviewLogDao } from './ArticleReviewLogDao';
+import { GoodsAuditMainDao } from './GoodsAuditMainDao';
+import { GoodsAuditItemDao } from './GoodsAuditItemDao';
+import { GoodsAuditTimeoutDao } from './GoodsAuditTimeoutDao';
+import { GoodsAuditResubmitDao } from './GoodsAuditResubmitDao';
 
 export {
   BaseDao,
@@ -62,6 +66,10 @@ export {
   ArticleTopicDao,
   SensitiveWordDao,
   ArticleReviewLogDao,
+  GoodsAuditMainDao,
+  GoodsAuditItemDao,
+  GoodsAuditTimeoutDao,
+  GoodsAuditResubmitDao,
 };
 
 export const daos = {
@@ -94,6 +102,10 @@ export const daos = {
   articleTopicDao: new ArticleTopicDao(),
   sensitiveWordDao: new SensitiveWordDao(),
   articleReviewLogDao: new ArticleReviewLogDao(),
+  goodsAuditMainDao: new GoodsAuditMainDao(),
+  goodsAuditItemDao: new GoodsAuditItemDao(),
+  goodsAuditTimeoutDao: new GoodsAuditTimeoutDao(),
+  goodsAuditResubmitDao: new GoodsAuditResubmitDao(),
 };
 
 export default daos;

@@ -46,6 +46,13 @@ export class Merchant extends Model<Merchant> {
   })
   status?: number;
 
+  @Column({
+    type: DataType.INTEGER,
+    defaultValue: 100,
+    comment: '商家信用分',
+  })
+  credit_score?: number;
+
   @CreatedAt
   @Column({
     type: DataType.DATE,
