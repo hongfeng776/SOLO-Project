@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
-import { PromoterLevel, PromoterStatus, AuditStage, AuditStatus, VerifyStatus, PromoteStatus, SettleStatus } from '../constants/enum';
+import { PromoterLevel, PromoterStatus, AuditStage, AuditStatus, VerifyStatus, PromoteStatus, SettleStatus, RiskControlStatus, RiskLevel, RiskType } from '../constants/enum';
 import { v4 as uuidv4 } from 'uuid';
 
 interface PromoterAttributes {
@@ -60,12 +60,21 @@ interface PromoterAttributes {
   isCorePromoter?: boolean;
   levelChangedCount?: number;
   lastLevelChangedAt?: Date;
+  riskControlStatus?: number;
+  riskLevel?: string;
+  riskType?: string;
+  riskMarkedAt?: Date;
+  riskMarkedBy?: string;
+  riskMarkedReason?: string;
+  riskExpireAt?: Date;
+  riskControlPermissions?: any;
+  lastRiskWarningAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
 }
 
-interface PromoterCreationAttributes extends Optional<PromoterAttributes, 'id' | 'channelId' | 'nickname' | 'avatar' | 'phone' | 'email' | 'wechatId' | 'idCard' | 'idCardFrontImg' | 'idCardBackImg' | 'level' | 'status' | 'auditStage' | 'auditStatus' | 'firstAuditorId' | 'firstAuditAt' | 'firstAuditRemark' | 'secondAuditorId' | 'secondAuditAt' | 'secondAuditRemark' | 'rejectReasonCode' | 'rejectCustomRemark' | 'rejectedAt' | 'lockUntil' | 'applyCount' | 'lastApplyAt' | 'dataHash' | 'riskFlagged' | 'riskReason' | 'parentId' | 'totalOrders' | 'totalAmount' | 'totalCommission' | 'availableCommission' | 'frozenCommission' | 'registerAt' | 'lastActiveAt' | 'remark' | 'verifyStatus' | 'verifiedAt' | 'realName' | 'promoteStatus' | 'settleStatus' | 'commissionRate' | 'qualificationImgs' | 'qualificationExpireAt' | 'qualificationRemark' | 'monthlyOrders' | 'monthlyAmount' | 'activeDays' | 'reputationScore' | 'isCorePromoter' | 'levelChangedCount' | 'lastLevelChangedAt' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
+interface PromoterCreationAttributes extends Optional<PromoterAttributes, 'id' | 'channelId' | 'nickname' | 'avatar' | 'phone' | 'email' | 'wechatId' | 'idCard' | 'idCardFrontImg' | 'idCardBackImg' | 'level' | 'status' | 'auditStage' | 'auditStatus' | 'firstAuditorId' | 'firstAuditAt' | 'firstAuditRemark' | 'secondAuditorId' | 'secondAuditAt' | 'secondAuditRemark' | 'rejectReasonCode' | 'rejectCustomRemark' | 'rejectedAt' | 'lockUntil' | 'applyCount' | 'lastApplyAt' | 'dataHash' | 'riskFlagged' | 'riskReason' | 'parentId' | 'totalOrders' | 'totalAmount' | 'totalCommission' | 'availableCommission' | 'frozenCommission' | 'registerAt' | 'lastActiveAt' | 'remark' | 'verifyStatus' | 'verifiedAt' | 'realName' | 'promoteStatus' | 'settleStatus' | 'commissionRate' | 'qualificationImgs' | 'qualificationExpireAt' | 'qualificationRemark' | 'monthlyOrders' | 'monthlyAmount' | 'activeDays' | 'reputationScore' | 'isCorePromoter' | 'levelChangedCount' | 'lastLevelChangedAt' | 'riskControlStatus' | 'riskLevel' | 'riskType' | 'riskMarkedAt' | 'riskMarkedBy' | 'riskMarkedReason' | 'riskExpireAt' | 'riskControlPermissions' | 'lastRiskWarningAt' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
 
 class Promoter extends Model<PromoterAttributes, PromoterCreationAttributes> implements PromoterAttributes {
   public id!: string;
@@ -124,6 +133,15 @@ class Promoter extends Model<PromoterAttributes, PromoterCreationAttributes> imp
   public isCorePromoter?: boolean;
   public levelChangedCount?: number;
   public lastLevelChangedAt?: Date;
+  public riskControlStatus?: number;
+  public riskLevel?: string;
+  public riskType?: string;
+  public riskMarkedAt?: Date;
+  public riskMarkedBy?: string;
+  public riskMarkedReason?: string;
+  public riskExpireAt?: Date;
+  public riskControlPermissions?: any;
+  public lastRiskWarningAt?: Date;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
   public readonly deletedAt?: Date;
@@ -396,6 +414,50 @@ Promoter.init(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    riskControlStatus: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: RiskControlStatus.NORMAL,
+    },
+    riskLevel: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+    },
+    riskType: {
+      type: DataTypes.STRING(30),
+      allowNull: true,
+    },
+    riskMarkedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    riskMarkedBy: {
+      type: DataTypes.STRING(36),
+      allowNull: true,
+    },
+    riskMarkedReason: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
+    riskExpireAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    riskControlPermissions: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      get() {
+        const raw = this.getDataValue('riskControlPermissions');
+        return raw ? JSON.parse(raw) : null;
+      },
+      set(value: any) {
+        this.setDataValue('riskControlPermissions', value ? JSON.stringify(value) : undefined as any);
+      },
+    },
+    lastRiskWarningAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -475,6 +537,18 @@ Promoter.init(
       {
         name: 'idx_reputation_score',
         fields: ['reputation_score'],
+      },
+      {
+        name: 'idx_risk_control_status',
+        fields: ['risk_control_status'],
+      },
+      {
+        name: 'idx_risk_level',
+        fields: ['risk_level'],
+      },
+      {
+        name: 'idx_risk_type',
+        fields: ['risk_type'],
       },
     ],
   }

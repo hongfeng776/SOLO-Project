@@ -370,3 +370,93 @@ export const LEVEL_CHANGE_SOURCE_LABELS: Record<LevelChangeSource, string> = {
   batch: '批量重置',
   rule_change: '规则变更触发',
 };
+
+export enum RiskLevel {
+  MILD = 'mild',
+  MODERATE = 'moderate',
+  SEVERE = 'severe',
+}
+
+export enum RiskType {
+  ABNORMAL_PROMOTION = 'abnormal_promotion',
+  BRUSH_ORDER = 'brush_order',
+  FAKE_ORDER = 'fake_order',
+  COMPLAINT = 'complaint',
+  FRAUD = 'fraud',
+  OTHER = 'other',
+}
+
+export enum RiskControlStatus {
+  NORMAL = 0,
+  MILD_CONTROL = 1,
+  MODERATE_CONTROL = 2,
+  SEVERE_CONTROL = 3,
+}
+
+export enum RiskReleaseStatus {
+  PENDING = 0,
+  APPROVED = 1,
+  REJECTED = -1,
+}
+
+export enum RiskWarningLevel {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+}
+
+export const RISK_LEVEL_LABELS: Record<RiskLevel, { label: string; type: 'warning' | 'danger' | 'error'; color: string }> = {
+  mild: { label: '轻度风控', type: 'warning', color: '#e6a23c' },
+  moderate: { label: '中度风控', type: 'danger', color: '#f56c6c' },
+  severe: { label: '重度风控', type: 'error', color: '#c0392b' },
+};
+
+export const RISK_TYPE_LABELS: Record<RiskType, string> = {
+  abnormal_promotion: '异常推广',
+  brush_order: '刷单',
+  fake_order: '虚假订单',
+  complaint: '投诉举报',
+  fraud: '欺诈风险',
+  other: '其他',
+};
+
+export const RISK_CONTROL_PERMISSIONS: Record<RiskLevel, {
+  canPromote: boolean;
+  canJoinActivity: boolean;
+  canWithdraw: boolean;
+  canLogin: boolean;
+}> = {
+  mild: {
+    canPromote: true,
+    canJoinActivity: false,
+    canWithdraw: true,
+    canLogin: true,
+  },
+  moderate: {
+    canPromote: true,
+    canJoinActivity: false,
+    canWithdraw: false,
+    canLogin: true,
+  },
+  severe: {
+    canPromote: false,
+    canJoinActivity: false,
+    canWithdraw: false,
+    canLogin: false,
+  },
+};
+
+export const RISK_RELEASE_STAGE_LABELS = [
+  '提交申请',
+  '材料核验',
+  '问题整改',
+  '权限恢复1级',
+  '权限恢复2级',
+  '完全恢复',
+] as const;
+
+export const HIGH_FREQUENCY_THRESHOLD = {
+  riskCountIn30Days: 3,
+  abnormalOrdersIn7Days: 10,
+  complaintCountIn30Days: 2,
+};

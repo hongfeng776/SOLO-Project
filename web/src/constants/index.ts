@@ -530,3 +530,93 @@ export const PROMOTER_LEVEL_SYSTEM_TABS = [
   { value: 'batch', label: '批量重评', icon: 'Operation' },
   { value: 'trace', label: '变更溯源', icon: 'Connection' },
 ] as const
+
+export const RISK_LEVEL_OPTIONS = [
+  { value: 'mild', label: '轻度风控', type: 'warning', color: '#e6a23c' },
+  { value: 'moderate', label: '中度风控', type: 'danger', color: '#f56c6c' },
+  { value: 'severe', label: '重度风控', type: 'danger', color: '#c0392b' },
+] as const
+
+export const RISK_LEVEL_MAP: Record<string, { label: string; type: string; color: string }> = {
+  mild: { label: '轻度风控', type: 'warning', color: '#e6a23c' },
+  moderate: { label: '中度风控', type: 'danger', color: '#f56c6c' },
+  severe: { label: '重度风控', type: 'danger', color: '#c0392b' },
+}
+
+export const RISK_TYPE_OPTIONS = [
+  { value: 'abnormal_promotion', label: '异常推广' },
+  { value: 'brush_order', label: '刷单' },
+  { value: 'fake_order', label: '虚假订单' },
+  { value: 'complaint', label: '投诉举报' },
+  { value: 'fraud', label: '欺诈风险' },
+  { value: 'other', label: '其他' },
+] as const
+
+export const RISK_TYPE_MAP: Record<string, string> = {
+  abnormal_promotion: '异常推广',
+  brush_order: '刷单',
+  fake_order: '虚假订单',
+  complaint: '投诉举报',
+  fraud: '欺诈风险',
+  other: '其他',
+}
+
+export const RISK_CONTROL_STATUS_OPTIONS = [
+  { value: 0, label: '正常', type: 'success' },
+  { value: 1, label: '轻度风控', type: 'warning' },
+  { value: 2, label: '中度风控', type: 'danger' },
+  { value: 3, label: '重度风控', type: 'danger' },
+]
+
+export const RISK_CONTROL_STATUS_MAP: Record<number, { label: string; type: string }> = {
+  0: { label: '正常', type: 'success' },
+  1: { label: '轻度风控', type: 'warning' },
+  2: { label: '中度风控', type: 'danger' },
+  3: { label: '重度风控', type: 'danger' },
+}
+
+export const RISK_RELEASE_STATUS_OPTIONS = [
+  { value: 0, label: '待审核', type: 'warning' },
+  { value: 1, label: '已通过', type: 'success' },
+  { value: -1, label: '已驳回', type: 'danger' },
+] as const
+
+export const RISK_RELEASE_STATUS_MAP: Record<number, { label: string; type: string }> = {
+  0: { label: '待审核', type: 'warning' },
+  1: { label: '已通过', type: 'success' },
+  '-1': { label: '已驳回', type: 'danger' },
+}
+
+export const RISK_WARNING_LEVEL_OPTIONS = [
+  { value: 'low', label: '低危', type: 'info' },
+  { value: 'medium', label: '中危', type: 'warning' },
+  { value: 'high', label: '高危', type: 'danger' },
+] as const
+
+export const RISK_WARNING_LEVEL_MAP: Record<string, { label: string; type: string }> = {
+  low: { label: '低危', type: 'info' },
+  medium: { label: '中危', type: 'warning' },
+  high: { label: '高危', type: 'danger' },
+}
+
+export const RISK_RELEASE_STAGES = ['提交申请', '材料核验', '问题整改', '权限恢复1级', '权限恢复2级', '完全恢复'] as const
+
+export const RISK_PERMISSION_LABELS: Record<string, string> = {
+  canPromote: '推广权限',
+  canJoinActivity: '活动参与',
+  canWithdraw: '提现权限',
+  canLogin: '登录权限',
+}
+
+export const HIGH_FREQUENCY_THRESHOLD = {
+  riskCountIn30Days: 3,
+  abnormalOrdersIn7Days: 10,
+  complaintCountIn30Days: 2,
+}
+
+export const PROMOTER_RISK_TABS = [
+  { value: 'control', label: '风险管控', icon: 'WarningFilled' },
+  { value: 'release', label: '解除申请', icon: 'CircleCheck' },
+  { value: 'batch', label: '批量处理', icon: 'Operation' },
+  { value: 'trace', label: '行为溯源', icon: 'Connection' },
+] as const

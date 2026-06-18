@@ -16,6 +16,7 @@ import notificationService from './Notification.service';
 import promoterAuditService from './PromoterAudit.service';
 import promoterManageService from './PromoterManage.service';
 import promoterLevelService from './PromoterLevel.service';
+import promoterRiskService from './PromoterRisk.service';
 
 export {
   authService,
@@ -36,4 +37,5 @@ export {
   promoterAuditService,
   promoterManageService,
   promoterLevelService,
+  promoterRiskService,
 };

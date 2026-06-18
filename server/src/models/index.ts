@@ -20,6 +20,10 @@ import PromoterQualification from './PromoterQualification.model';
 import PromoterLevelRule from './PromoterLevelRule.model';
 import PromoterLevelAdjustRequest from './PromoterLevelAdjustRequest.model';
 import PromoterLevelChangeLog from './PromoterLevelChangeLog.model';
+import PromoterRiskRecord from './PromoterRiskRecord.model';
+import PromoterRiskRelease from './PromoterRiskRelease.model';
+import PromoterRiskBehavior from './PromoterRiskBehavior.model';
+import PromoterRiskWarning from './PromoterRiskWarning.model';
 
 const models = {
   User,
@@ -44,6 +48,10 @@ const models = {
   PromoterLevelRule,
   PromoterLevelAdjustRequest,
   PromoterLevelChangeLog,
+  PromoterRiskRecord,
+  PromoterRiskRelease,
+  PromoterRiskBehavior,
+  PromoterRiskWarning,
 };
 
 const associate = (): void => {
@@ -86,10 +94,18 @@ const associate = (): void => {
 
   Promoter.hasMany(PromoterLevelAdjustRequest, { foreignKey: 'promoterId', as: 'levelAdjustRequests' });
   Promoter.hasMany(PromoterLevelChangeLog, { foreignKey: 'promoterId', as: 'levelChangeLogs' });
+  Promoter.hasMany(PromoterRiskRecord, { foreignKey: 'promoterId', as: 'riskRecords' });
+  Promoter.hasMany(PromoterRiskRelease, { foreignKey: 'promoterId', as: 'riskReleases' });
+  Promoter.hasMany(PromoterRiskBehavior, { foreignKey: 'promoterId', as: 'riskBehaviors' });
+  Promoter.hasMany(PromoterRiskWarning, { foreignKey: 'promoterId', as: 'riskWarnings' });
   PromoterLevelAdjustRequest.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
   PromoterLevelChangeLog.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
+  PromoterRiskRecord.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
+  PromoterRiskRelease.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
+  PromoterRiskBehavior.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
+  PromoterRiskWarning.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
 };
 
 export { associate };
-export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog };
+export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning };
 export default models;

@@ -13,6 +13,7 @@ import commissionRuleController from './CommissionRule.controller';
 import promoterAuditController from './PromoterAudit.controller';
 import promoterManageController from './PromoterManage.controller';
 import promoterLevelController from './PromoterLevel.controller';
+import promoterRiskController from './PromoterRisk.controller';
 
 export {
   authController,
@@ -30,4 +31,5 @@ export {
   promoterAuditController,
   promoterManageController,
   promoterLevelController,
+  promoterRiskController,
 };

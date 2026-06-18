@@ -10,5 +10,9 @@ import roleController from './Role.controller';
 import permissionController from './Permission.controller';
 import operationLogController from './OperationLog.controller';
 import commissionRuleController from './CommissionRule.controller';
-export { authController, userController, channelController, promoterController, orderController, commissionController, marketingController, withdrawController, roleController, permissionController, operationLogController, commissionRuleController, };
+import promoterAuditController from './PromoterAudit.controller';
+import promoterManageController from './PromoterManage.controller';
+import promoterLevelController from './PromoterLevel.controller';
+import promoterRiskController from './PromoterRisk.controller';
+export { authController, userController, channelController, promoterController, orderController, commissionController, marketingController, withdrawController, roleController, permissionController, operationLogController, commissionRuleController, promoterAuditController, promoterManageController, promoterLevelController, promoterRiskController, };
 //# sourceMappingURL=index.d.ts.map

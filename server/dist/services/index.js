@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.notificationService = exports.commissionRuleService = exports.riskControlService = exports.operationLogService = exports.permissionService = exports.roleService = exports.withdrawService = exports.marketingService = exports.commissionEngineService = exports.commissionService = exports.orderService = exports.promoterService = exports.channelService = exports.userService = exports.authService = void 0;
+exports.promoterRiskService = exports.promoterLevelService = exports.promoterManageService = exports.promoterAuditService = exports.notificationService = exports.commissionRuleService = exports.riskControlService = exports.operationLogService = exports.permissionService = exports.roleService = exports.withdrawService = exports.marketingService = exports.commissionEngineService = exports.commissionService = exports.orderService = exports.promoterService = exports.channelService = exports.userService = exports.authService = void 0;
 const Auth_service_1 = __importDefault(require("./Auth.service"));
 exports.authService = Auth_service_1.default;
 const User_service_1 = __importDefault(require("./User.service"));
@@ -34,4 +34,12 @@ const CommissionRule_service_1 = __importDefault(require("./CommissionRule.servi
 exports.commissionRuleService = CommissionRule_service_1.default;
 const Notification_service_1 = __importDefault(require("./Notification.service"));
 exports.notificationService = Notification_service_1.default;
+const PromoterAudit_service_1 = __importDefault(require("./PromoterAudit.service"));
+exports.promoterAuditService = PromoterAudit_service_1.default;
+const PromoterManage_service_1 = __importDefault(require("./PromoterManage.service"));
+exports.promoterManageService = PromoterManage_service_1.default;
+const PromoterLevel_service_1 = __importDefault(require("./PromoterLevel.service"));
+exports.promoterLevelService = PromoterLevel_service_1.default;
+const PromoterRisk_service_1 = __importDefault(require("./PromoterRisk.service"));
+exports.promoterRiskService = PromoterRisk_service_1.default;
 //# sourceMappingURL=index.js.map

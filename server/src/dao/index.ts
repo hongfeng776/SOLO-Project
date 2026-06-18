@@ -16,6 +16,10 @@ import promoterQualificationDao from './PromoterQualification.dao';
 import promoterLevelRuleDao from './PromoterLevelRule.dao';
 import promoterLevelAdjustRequestDao from './PromoterLevelAdjustRequest.dao';
 import promoterLevelChangeLogDao from './PromoterLevelChangeLog.dao';
+import promoterRiskRecordDao from './PromoterRiskRecord.dao';
+import promoterRiskReleaseDao from './PromoterRiskRelease.dao';
+import promoterRiskBehaviorDao from './PromoterRiskBehavior.dao';
+import promoterRiskWarningDao from './PromoterRiskWarning.dao';
 
 export {
   userDao,
@@ -36,4 +40,8 @@ export {
   promoterLevelRuleDao,
   promoterLevelAdjustRequestDao,
   promoterLevelChangeLogDao,
+  promoterRiskRecordDao,
+  promoterRiskReleaseDao,
+  promoterRiskBehaviorDao,
+  promoterRiskWarningDao,
 };

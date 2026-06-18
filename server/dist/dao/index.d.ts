@@ -9,5 +9,16 @@ import roleDao from './Role.dao';
 import permissionDao from './Permission.dao';
 import operationLogDao from './OperationLog.dao';
 import permissionChangeLogDao from './PermissionChangeLog.dao';
-export { userDao, channelDao, promoterDao, orderDao, commissionDao, marketingDao, withdrawDao, roleDao, permissionDao, operationLogDao, permissionChangeLogDao, };
+import promoterBlacklistDao from './PromoterBlacklist.dao';
+import promoterAuditLogDao from './PromoterAuditLog.dao';
+import promoterChangeLogDao from './PromoterChangeLog.dao';
+import promoterQualificationDao from './PromoterQualification.dao';
+import promoterLevelRuleDao from './PromoterLevelRule.dao';
+import promoterLevelAdjustRequestDao from './PromoterLevelAdjustRequest.dao';
+import promoterLevelChangeLogDao from './PromoterLevelChangeLog.dao';
+import promoterRiskRecordDao from './PromoterRiskRecord.dao';
+import promoterRiskReleaseDao from './PromoterRiskRelease.dao';
+import promoterRiskBehaviorDao from './PromoterRiskBehavior.dao';
+import promoterRiskWarningDao from './PromoterRiskWarning.dao';
+export { userDao, channelDao, promoterDao, orderDao, commissionDao, marketingDao, withdrawDao, roleDao, permissionDao, operationLogDao, permissionChangeLogDao, promoterBlacklistDao, promoterAuditLogDao, promoterChangeLogDao, promoterQualificationDao, promoterLevelRuleDao, promoterLevelAdjustRequestDao, promoterLevelChangeLogDao, promoterRiskRecordDao, promoterRiskReleaseDao, promoterRiskBehaviorDao, promoterRiskWarningDao, };
 //# sourceMappingURL=index.d.ts.map

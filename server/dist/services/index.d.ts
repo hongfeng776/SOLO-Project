@@ -13,5 +13,9 @@ import operationLogService from './OperationLog.service';
 import riskControlService from './RiskControl.service';
 import commissionRuleService from './CommissionRule.service';
 import notificationService from './Notification.service';
-export { authService, userService, channelService, promoterService, orderService, commissionService, commissionEngineService, marketingService, withdrawService, roleService, permissionService, operationLogService, riskControlService, commissionRuleService, notificationService, };
+import promoterAuditService from './PromoterAudit.service';
+import promoterManageService from './PromoterManage.service';
+import promoterLevelService from './PromoterLevel.service';
+import promoterRiskService from './PromoterRisk.service';
+export { authService, userService, channelService, promoterService, orderService, commissionService, commissionEngineService, marketingService, withdrawService, roleService, permissionService, operationLogService, riskControlService, commissionRuleService, notificationService, promoterAuditService, promoterManageService, promoterLevelService, promoterRiskService, };
 //# sourceMappingURL=index.d.ts.map

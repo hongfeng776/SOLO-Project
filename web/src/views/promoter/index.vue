@@ -8,6 +8,7 @@
         <el-tab-pane label="批量操作" name="batch" />
         <el-tab-pane label="变更溯源" name="trace" />
         <el-tab-pane label="等级体系" name="level" />
+        <el-tab-pane label="风控管控" name="risk" />
       </el-tabs>
     </el-card>
 
@@ -830,6 +831,10 @@
     <div v-show="activeTab === 'level'" style="margin-top: 16px">
       <PromoterLevelSystem />
     </div>
+
+    <div v-show="activeTab === 'risk'" style="margin-top: 16px">
+      <PromoterRiskControl />
+    </div>
   </div>
 </template>
 
@@ -861,6 +866,7 @@ import {
 import BaseTable from '@/components/common/BaseTable.vue'
 import BaseBatchOperation from '@/components/common/BaseBatchOperation.vue'
 import PromoterLevelSystem from './level-system.vue'
+import PromoterRiskControl from './risk-control.vue'
 import { useTable } from '@/composables/useTable'
 import {
   PROMOTER_LEVEL_OPTIONS,

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RoleDeletionLog = exports.CommissionRule = exports.ChannelExtension = exports.OperationLog = exports.UserRole = exports.RolePermission = exports.Permission = exports.Role = exports.Withdraw = exports.Marketing = exports.Commission = exports.Order = exports.Promoter = exports.Channel = exports.User = exports.associate = void 0;
+exports.PromoterRiskWarning = exports.PromoterRiskBehavior = exports.PromoterRiskRelease = exports.PromoterRiskRecord = exports.PromoterLevelChangeLog = exports.PromoterLevelAdjustRequest = exports.PromoterLevelRule = exports.PromoterQualification = exports.PromoterChangeLog = exports.PromoterAuditLog = exports.PromoterBlacklist = exports.RoleDeletionLog = exports.CommissionRule = exports.ChannelExtension = exports.OperationLog = exports.UserRole = exports.RolePermission = exports.Permission = exports.Role = exports.Withdraw = exports.Marketing = exports.Commission = exports.Order = exports.Promoter = exports.Channel = exports.User = exports.associate = void 0;
 const User_model_1 = __importDefault(require("./User.model"));
 exports.User = User_model_1.default;
 const Channel_model_1 = __importDefault(require("./Channel.model"));
@@ -34,6 +34,28 @@ const CommissionRule_model_1 = __importDefault(require("./CommissionRule.model")
 exports.CommissionRule = CommissionRule_model_1.default;
 const RoleDeletionLog_model_1 = __importDefault(require("./RoleDeletionLog.model"));
 exports.RoleDeletionLog = RoleDeletionLog_model_1.default;
+const PromoterBlacklist_model_1 = __importDefault(require("./PromoterBlacklist.model"));
+exports.PromoterBlacklist = PromoterBlacklist_model_1.default;
+const PromoterAuditLog_model_1 = __importDefault(require("./PromoterAuditLog.model"));
+exports.PromoterAuditLog = PromoterAuditLog_model_1.default;
+const PromoterChangeLog_model_1 = __importDefault(require("./PromoterChangeLog.model"));
+exports.PromoterChangeLog = PromoterChangeLog_model_1.default;
+const PromoterQualification_model_1 = __importDefault(require("./PromoterQualification.model"));
+exports.PromoterQualification = PromoterQualification_model_1.default;
+const PromoterLevelRule_model_1 = __importDefault(require("./PromoterLevelRule.model"));
+exports.PromoterLevelRule = PromoterLevelRule_model_1.default;
+const PromoterLevelAdjustRequest_model_1 = __importDefault(require("./PromoterLevelAdjustRequest.model"));
+exports.PromoterLevelAdjustRequest = PromoterLevelAdjustRequest_model_1.default;
+const PromoterLevelChangeLog_model_1 = __importDefault(require("./PromoterLevelChangeLog.model"));
+exports.PromoterLevelChangeLog = PromoterLevelChangeLog_model_1.default;
+const PromoterRiskRecord_model_1 = __importDefault(require("./PromoterRiskRecord.model"));
+exports.PromoterRiskRecord = PromoterRiskRecord_model_1.default;
+const PromoterRiskRelease_model_1 = __importDefault(require("./PromoterRiskRelease.model"));
+exports.PromoterRiskRelease = PromoterRiskRelease_model_1.default;
+const PromoterRiskBehavior_model_1 = __importDefault(require("./PromoterRiskBehavior.model"));
+exports.PromoterRiskBehavior = PromoterRiskBehavior_model_1.default;
+const PromoterRiskWarning_model_1 = __importDefault(require("./PromoterRiskWarning.model"));
+exports.PromoterRiskWarning = PromoterRiskWarning_model_1.default;
 const models = {
     User: User_model_1.default,
     Channel: Channel_model_1.default,
@@ -50,6 +72,17 @@ const models = {
     ChannelExtension: ChannelExtension_model_1.default,
     CommissionRule: CommissionRule_model_1.default,
     RoleDeletionLog: RoleDeletionLog_model_1.default,
+    PromoterBlacklist: PromoterBlacklist_model_1.default,
+    PromoterAuditLog: PromoterAuditLog_model_1.default,
+    PromoterChangeLog: PromoterChangeLog_model_1.default,
+    PromoterQualification: PromoterQualification_model_1.default,
+    PromoterLevelRule: PromoterLevelRule_model_1.default,
+    PromoterLevelAdjustRequest: PromoterLevelAdjustRequest_model_1.default,
+    PromoterLevelChangeLog: PromoterLevelChangeLog_model_1.default,
+    PromoterRiskRecord: PromoterRiskRecord_model_1.default,
+    PromoterRiskRelease: PromoterRiskRelease_model_1.default,
+    PromoterRiskBehavior: PromoterRiskBehavior_model_1.default,
+    PromoterRiskWarning: PromoterRiskWarning_model_1.default,
 };
 const associate = () => {
     Channel_model_1.default.hasMany(Promoter_model_1.default, { foreignKey: 'channelId', as: 'promoters' });
@@ -62,6 +95,11 @@ const associate = () => {
     Promoter_model_1.default.hasMany(Withdraw_model_1.default, { foreignKey: 'promoterId', as: 'withdraws' });
     Promoter_model_1.default.hasMany(Promoter_model_1.default, { foreignKey: 'parentId', as: 'children' });
     Promoter_model_1.default.belongsTo(Promoter_model_1.default, { foreignKey: 'parentId', as: 'parent' });
+    Promoter_model_1.default.hasMany(PromoterAuditLog_model_1.default, { foreignKey: 'promoterId', as: 'auditLogs' });
+    Promoter_model_1.default.hasMany(PromoterChangeLog_model_1.default, { foreignKey: 'promoterId', as: 'changeLogs' });
+    Promoter_model_1.default.hasMany(PromoterQualification_model_1.default, { foreignKey: 'promoterId', as: 'qualifications' });
+    Promoter_model_1.default.belongsTo(User_model_1.default, { foreignKey: 'firstAuditorId', as: 'firstAuditor' });
+    Promoter_model_1.default.belongsTo(User_model_1.default, { foreignKey: 'secondAuditorId', as: 'secondAuditor' });
     Order_model_1.default.belongsTo(Channel_model_1.default, { foreignKey: 'channelId', as: 'channel' });
     Order_model_1.default.belongsTo(Promoter_model_1.default, { foreignKey: 'promoterId', as: 'promoter' });
     Order_model_1.default.belongsTo(User_model_1.default, { foreignKey: 'userId', as: 'user' });
@@ -73,6 +111,21 @@ const associate = () => {
     Permission_model_1.default.belongsToMany(Role_model_1.default, { through: RolePermission_model_1.default, foreignKey: 'permissionId', otherKey: 'roleId', as: 'roles' });
     User_model_1.default.belongsToMany(Role_model_1.default, { through: UserRole_model_1.default, foreignKey: 'userId', otherKey: 'roleId', as: 'roles' });
     Role_model_1.default.belongsToMany(User_model_1.default, { through: UserRole_model_1.default, foreignKey: 'roleId', otherKey: 'userId', as: 'users' });
+    PromoterAuditLog_model_1.default.belongsTo(Promoter_model_1.default, { foreignKey: 'promoterId', as: 'promoter' });
+    PromoterChangeLog_model_1.default.belongsTo(Promoter_model_1.default, { foreignKey: 'promoterId', as: 'promoter' });
+    PromoterQualification_model_1.default.belongsTo(Promoter_model_1.default, { foreignKey: 'promoterId', as: 'promoter' });
+    Promoter_model_1.default.hasMany(PromoterLevelAdjustRequest_model_1.default, { foreignKey: 'promoterId', as: 'levelAdjustRequests' });
+    Promoter_model_1.default.hasMany(PromoterLevelChangeLog_model_1.default, { foreignKey: 'promoterId', as: 'levelChangeLogs' });
+    Promoter_model_1.default.hasMany(PromoterRiskRecord_model_1.default, { foreignKey: 'promoterId', as: 'riskRecords' });
+    Promoter_model_1.default.hasMany(PromoterRiskRelease_model_1.default, { foreignKey: 'promoterId', as: 'riskReleases' });
+    Promoter_model_1.default.hasMany(PromoterRiskBehavior_model_1.default, { foreignKey: 'promoterId', as: 'riskBehaviors' });
+    Promoter_model_1.default.hasMany(PromoterRiskWarning_model_1.default, { foreignKey: 'promoterId', as: 'riskWarnings' });
+    PromoterLevelAdjustRequest_model_1.default.belongsTo(Promoter_model_1.default, { foreignKey: 'promoterId', as: 'promoter' });
+    PromoterLevelChangeLog_model_1.default.belongsTo(Promoter_model_1.default, { foreignKey: 'promoterId', as: 'promoter' });
+    PromoterRiskRecord_model_1.default.belongsTo(Promoter_model_1.default, { foreignKey: 'promoterId', as: 'promoter' });
+    PromoterRiskRelease_model_1.default.belongsTo(Promoter_model_1.default, { foreignKey: 'promoterId', as: 'promoter' });
+    PromoterRiskBehavior_model_1.default.belongsTo(Promoter_model_1.default, { foreignKey: 'promoterId', as: 'promoter' });
+    PromoterRiskWarning_model_1.default.belongsTo(Promoter_model_1.default, { foreignKey: 'promoterId', as: 'promoter' });
 };
 exports.associate = associate;
 exports.default = models;
