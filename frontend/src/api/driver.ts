@@ -12,7 +12,17 @@ import type {
   RiskLevelResult,
   StatusDashboard,
   BatchOperationStatusResult,
-  BatchPreCheckResult
+  BatchPreCheckResult,
+  ServiceDataListResult,
+  ServiceTrendResult,
+  DriverServiceDetail,
+  ServiceStatistics,
+  DriverLevelInfo,
+  ServiceDataValidity,
+  ExportResult,
+  ExportParams,
+  BatchLevelUpdateResult,
+  DriverServiceLog
 } from '@/types/driver'
 import type { PageResult } from '@/utils/request'
 
@@ -152,4 +162,44 @@ export const batchRestoreNormalApi = (ids: number[], changeReason?: string) => {
 
 export const preCheckBatchOperationApi = (ids: number[], newStatus: number) => {
   return request.post<BatchPreCheckResult>('/driver/status/pre-check-batch', { ids, newStatus })
+}
+
+export const getServiceDataListApi = (params: any) => {
+  return request.get<ServiceDataListResult>('/driver/service/list', params)
+}
+
+export const getServiceTrendApi = (id: number, period: string, startDate?: string, endDate?: string) => {
+  return request.get<ServiceTrendResult>(`/driver/${id}/service/trend`, { period, startDate, endDate })
+}
+
+export const getDriverServiceDetailApi = (id: number, period?: string) => {
+  return request.get<DriverServiceDetail>(`/driver/${id}/service/detail`, { period })
+}
+
+export const getServiceLogsApi = (id: number, limit?: number) => {
+  return request.get<DriverServiceLog[]>(`/driver/${id}/service/logs`, { limit })
+}
+
+export const getServiceStatisticsApi = (period?: string) => {
+  return request.get<ServiceStatistics>('/driver/service/statistics', { period })
+}
+
+export const calculateDriverLevelApi = (id: number, period?: string) => {
+  return request.get<DriverLevelInfo>(`/driver/${id}/service/level`, { period })
+}
+
+export const updateDriverLevelApi = (id: number) => {
+  return request.put(`/driver/${id}/service/level`)
+}
+
+export const batchUpdateLevelsApi = (ids: number[]) => {
+  return request.post<BatchLevelUpdateResult>('/driver/service/batch-update-level', { ids })
+}
+
+export const exportServiceDataApi = (params: ExportParams) => {
+  return request.post<ExportResult>('/driver/service/export', params)
+}
+
+export const checkServiceDataValidityApi = (period: string, startDate?: string, endDate?: string) => {
+  return request.get<ServiceDataValidity>('/driver/service/validity', { period, startDate, endDate })
 }

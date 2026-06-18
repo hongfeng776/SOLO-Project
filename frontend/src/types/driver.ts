@@ -178,6 +178,246 @@ export interface BatchPreCheckResult {
   }
 }
 
+export interface ServiceTrendData {
+  date: string
+  totalOrders: number
+  completedOrders: number
+  completionRate: number
+  serviceScore: number
+  complaintRate: number
+  totalIncome: number
+  onlineHours: number
+  isAbnormal: boolean
+  abnormalType?: string
+}
+
+export interface AbnormalItem {
+  type: string
+  field: string
+  fieldName: string
+  oldValue: number
+  newValue: number
+  changeRate: string
+  direction: 'up' | 'down'
+  severity: 'high' | 'medium' | 'low'
+  message: string
+}
+
+export interface TrendAbnormality {
+  date: string
+  isAbnormal: boolean
+  abnormalities: AbnormalItem[]
+  abnormalType?: string
+}
+
+export interface ServiceAvgData {
+  avgOrders: string
+  avgScore: string
+  avgComplaintRate: string
+  avgIncome: string
+}
+
+export interface ServiceTrendResult {
+  trendData: ServiceTrendData[]
+  abnormalities: TrendAbnormality[]
+  avgData: ServiceAvgData
+  dateRange: { start: string; end: string }
+  totalDays: number
+}
+
+export interface DataSource {
+  name: string
+  field: string
+  status: 'ok' | 'warning' | 'error'
+}
+
+export interface DataAccuracy {
+  accurate: boolean
+  missingSources: string[]
+  inconsistencies: string[]
+  dataSources: DataSource[]
+}
+
+export interface DriverServiceLog {
+  id: number
+  driverId: number
+  statDate: string
+  operationType: number
+  operationTypeName: string
+  dataField?: string
+  oldValue?: string
+  newValue?: string
+  dataSource?: string
+  statisticBasis?: string
+  isAbnormal: number
+  abnormalType?: string
+  abnormalReason?: string
+  missingDataSource?: any[]
+  operatorId?: number
+  operatorName?: string
+  remark?: string
+  createTime: string
+}
+
+export interface DriverLevelInfo {
+  level: number
+  levelName: string
+  description: string
+  minServiceScore: number
+  minCompletionRate: number
+  maxComplaintRate: number
+  minOrders: number
+  trafficWeight: number
+  subsidyLevel: number
+  orderPriority: number
+  config: any
+}
+
+export interface DriverServiceDetail {
+  id: number
+  driverId: number
+  statDate: string
+  statType: number
+  totalOrders: number
+  completedOrders: number
+  completionRate: number
+  cancelledOrders: number
+  complaintCount: number
+  complaintRate: number
+  serviceScore: number
+  totalIncome: number
+  onlineHours: number
+  orderAcceptRate: number
+  avgOrderAmount: number
+  mileage: number
+  driverLevel: number
+  isAbnormal: number
+  abnormalType?: string
+  abnormalReason?: string
+  dataSources?: any
+  trafficWeight: number
+  subsidyLevel: number
+  orderPriority: number
+  levelInfo: DriverLevelInfo
+  accuracy: DataAccuracy
+  updateLogs: DriverServiceLog[]
+}
+
+export interface ServiceStatistics {
+  summary: {
+    totalOrders: number
+    completedOrders: number
+    avgServiceScore: number
+    avgCompletionRate: number
+    avgComplaintRate: number
+    totalIncome: number
+    driverCount: number
+  }
+  levelDistribution: {
+    '优质': number
+    '普通': number
+    '待整改': number
+    '劣质': number
+  }
+  dateRange: { start: string; end: string }
+  period: string
+}
+
+export interface ExportProgress {
+  percent: number
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  message: string
+  total: number
+  processed: number
+}
+
+export interface ExportFieldConfig {
+  key: string
+  label: string
+  category: string
+  permissionRequired?: boolean
+  desensitized?: boolean
+}
+
+export interface ExportParams {
+  period?: string
+  startDate?: string
+  endDate?: string
+  driverIds?: number[]
+  driverLevel?: number
+  city?: string
+  vehicleType?: string
+  fields?: string[]
+  sortField?: string
+  sortOrder?: string
+}
+
+export interface ExportResult {
+  data: any[]
+  total: number
+  dateRange: { start: string; end: string }
+  allowedFields: string[]
+  desensitizedFields: string[]
+  hasPermission: boolean
+}
+
+export interface ServiceDataValidity {
+  valid: boolean
+  warnings: string[]
+  dataCompleteness: number
+}
+
+export interface ServiceDataItem {
+  id: number
+  driverId: number
+  statDate: string
+  totalOrders: number
+  completedOrders: number
+  completionRate: number
+  complaintCount: number
+  complaintRate: number
+  serviceScore: number
+  totalIncome: number
+  onlineHours: number
+  driverLevel: number
+  isAbnormal: number
+  abnormalType?: string
+  trafficWeight: number
+  driver?: {
+    name: string
+    phone: string
+    city: string
+    vehicleType: string
+    avatar?: string
+  }
+}
+
+export interface ServiceDataListResult {
+  list: ServiceDataItem[]
+  total: number
+  page: number
+  pageSize: number
+  dateRange: { start: string; end: string }
+  validity: ServiceDataValidity
+}
+
+export interface BatchLevelResult {
+  id: number
+  success: boolean
+  changed: boolean
+  oldLevel?: number
+  newLevel?: number
+  message?: string
+}
+
+export interface BatchLevelUpdateResult {
+  total: number
+  successCount: number
+  changedCount: number
+  failCount: number
+  results: BatchLevelResult[]
+}
+
 export interface Driver {
   id: number
   name: string

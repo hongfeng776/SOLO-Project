@@ -23,6 +23,8 @@ const TicketAuditLog = require('./TicketAuditLog')
 const ReputationRecord = require('./ReputationRecord')
 const DriverAuditLog = require('./DriverAuditLog')
 const DriverStatusLog = require('./DriverStatusLog')
+const DriverServiceData = require('./DriverServiceData')
+const DriverServiceLog = require('./DriverServiceLog')
 
 Driver.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
 Vehicle.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
@@ -61,6 +63,12 @@ DriverAuditLog.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
 Driver.hasMany(DriverStatusLog, { foreignKey: 'driverId', as: 'statusLogs' })
 DriverStatusLog.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
 
+Driver.hasMany(DriverServiceData, { foreignKey: 'driverId', as: 'serviceData' })
+DriverServiceData.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
+
+Driver.hasMany(DriverServiceLog, { foreignKey: 'driverId', as: 'serviceLogs' })
+DriverServiceLog.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
+
 module.exports = {
   User,
   Role,
@@ -86,5 +94,7 @@ module.exports = {
   TicketAuditLog,
   ReputationRecord,
   DriverAuditLog,
-  DriverStatusLog
+  DriverStatusLog,
+  DriverServiceData,
+  DriverServiceLog
 }

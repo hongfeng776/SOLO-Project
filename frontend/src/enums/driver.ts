@@ -192,3 +192,112 @@ export const CityMap: Record<string, string> = {
   'shenzhen': '深圳',
   'default': '其他城市'
 }
+
+export enum DriverServiceLevel {
+  EXCELLENT = 1,
+  NORMAL = 2,
+  NEED_RECTIFICATION = 3,
+  POOR = 4
+}
+
+export const DriverServiceLevelMap: Record<number, string> = {
+  [DriverServiceLevel.EXCELLENT]: '优质',
+  [DriverServiceLevel.NORMAL]: '普通',
+  [DriverServiceLevel.NEED_RECTIFICATION]: '待整改',
+  [DriverServiceLevel.POOR]: '劣质'
+}
+
+export const DriverServiceLevelColorMap: Record<number, string> = {
+  [DriverServiceLevel.EXCELLENT]: '#67c23a',
+  [DriverServiceLevel.NORMAL]: '#409eff',
+  [DriverServiceLevel.NEED_RECTIFICATION]: '#e6a23c',
+  [DriverServiceLevel.POOR]: '#f56c6c'
+}
+
+export const DriverServiceLevelTypeMap: Record<number, 'success' | 'primary' | 'warning' | 'danger'> = {
+  [DriverServiceLevel.EXCELLENT]: 'success',
+  [DriverServiceLevel.NORMAL]: 'primary',
+  [DriverServiceLevel.NEED_RECTIFICATION]: 'warning',
+  [DriverServiceLevel.POOR]: 'danger'
+}
+
+export enum StatPeriod {
+  DAY = 'day',
+  WEEK = 'week',
+  MONTH = 'month',
+  CUSTOM = 'custom'
+}
+
+export const StatPeriodMap: Record<string, string> = {
+  [StatPeriod.DAY]: '今日',
+  [StatPeriod.WEEK]: '本周',
+  [StatPeriod.MONTH]: '本月',
+  [StatPeriod.CUSTOM]: '自定义'
+}
+
+export enum ServiceOperationType {
+  DATA_UPDATE = 1,
+  LEVEL_CHANGE = 2,
+  DATA_CORRECTION = 3,
+  ABNORMAL_DETECTION = 4,
+  DATA_EXPORT = 5
+}
+
+export const ServiceOperationTypeMap: Record<number, string> = {
+  [ServiceOperationType.DATA_UPDATE]: '数据更新',
+  [ServiceOperationType.LEVEL_CHANGE]: '等级变更',
+  [ServiceOperationType.DATA_CORRECTION]: '数据修正',
+  [ServiceOperationType.ABNORMAL_DETECTION]: '异常检测',
+  [ServiceOperationType.DATA_EXPORT]: '数据导出'
+}
+
+export const ServiceOperationTypeColorMap: Record<number, string> = {
+  [ServiceOperationType.DATA_UPDATE]: '#409eff',
+  [ServiceOperationType.LEVEL_CHANGE]: '#67c23a',
+  [ServiceOperationType.DATA_CORRECTION]: '#e6a23c',
+  [ServiceOperationType.ABNORMAL_DETECTION]: '#f56c6c',
+  [ServiceOperationType.DATA_EXPORT]: '#909399'
+}
+
+export enum SubsidyLevel {
+  HIGH = 1,
+  NORMAL = 2,
+  NONE = 3
+}
+
+export const SubsidyLevelMap: Record<number, string> = {
+  [SubsidyLevel.HIGH]: '高补贴',
+  [SubsidyLevel.NORMAL]: '正常补贴',
+  [SubsidyLevel.NONE]: '无补贴'
+}
+
+export enum OrderPriority {
+  HIGHEST = 1,
+  HIGH = 2,
+  NORMAL = 3,
+  LOW = 4
+}
+
+export const OrderPriorityMap: Record<number, string> = {
+  [OrderPriority.HIGHEST]: '最高优先级',
+  [OrderPriority.HIGH]: '较高优先级',
+  [OrderPriority.NORMAL]: '普通优先级',
+  [OrderPriority.LOW]: '较低优先级'
+}
+
+export const ServiceSortFieldOptions = [
+  { value: 'totalOrders', label: '接单量' },
+  { value: 'completedOrders', label: '完单量' },
+  { value: 'completionRate', label: '完单率' },
+  { value: 'serviceScore', label: '服务评分' },
+  { value: 'complaintRate', label: '投诉率' },
+  { value: 'totalIncome', label: '收入' },
+  { value: 'onlineHours', label: '在线时长' }
+]
+
+export const ExportFieldCategories = [
+  { key: 'basic', label: '基础信息', fields: ['name', 'phone', 'city', 'vehicleType'] },
+  { key: 'service', label: '服务数据', fields: ['totalOrders', 'completedOrders', 'completionRate', 'serviceScore', 'complaintRate', 'onlineHours'] },
+  { key: 'finance', label: '财务数据', fields: ['totalIncome', 'avgOrderAmount'] },
+  { key: 'sensitive', label: '敏感信息', fields: ['idCard', 'driverLicenseNo'], permissionRequired: true }
+]

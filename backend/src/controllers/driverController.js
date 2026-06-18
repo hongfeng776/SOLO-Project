@@ -3,6 +3,7 @@ const { Driver } = require('../models')
 const { success, pageResult, AppError } = require('../utils/response')
 const driverAuditService = require('../services/driverAuditService')
 const driverStatusService = require('../services/driverStatusService')
+const driverServiceDataService = require('../services/driverServiceDataService')
 
 const getList = async (req, res, next) => {
   try {
@@ -506,6 +507,129 @@ const preCheckBatchOperation = async (req, res, next) => {
   }
 }
 
+const getServiceDataList = async (req, res, next) => {
+  try {
+    const result = await driverServiceDataService.getServiceDataList(req.query)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getServiceTrend = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { period, startDate, endDate } = req.query
+    const result = await driverServiceDataService.getServiceTrend(id, period, startDate, endDate)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getDriverServiceDetail = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { period } = req.query
+    const result = await driverServiceDataService.getDriverServiceDetail(id, period)
+    if (!result) {
+      throw new AppError('服务数据不存在', 404, 404)
+    }
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const updateDriverLevel = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { userId, userName } = req.user || {}
+    const result = await driverServiceDataService.updateDriverLevel(id, userId, userName)
+    res.json(success(result, result.changed ? '等级更新成功' : '等级未发生变化'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchUpdateLevels = async (req, res, next) => {
+  try {
+    const { ids } = req.body
+    const { userId, userName } = req.user || {}
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      throw new AppError('请选择要操作的记录', 400, 400)
+    }
+
+    const result = await driverServiceDataService.batchUpdateLevels(ids, userId, userName)
+    res.json(success(result, '批量等级更新完成'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const exportServiceData = async (req, res, next) => {
+  try {
+    const { userId, userName, role } = req.user || {}
+    const result = await driverServiceDataService.generateExportData({
+      ...req.body,
+      userRole: role || 'admin'
+    })
+
+    await driverServiceDataService.getDriverServiceLogs // 预留日志记录
+
+    res.json(success(result, '导出数据生成成功'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getServiceLogs = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { limit } = req.query
+    const logs = await driverServiceDataService.getDriverServiceLogs(id, limit ? parseInt(limit) : 20)
+    res.json(success(logs))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getServiceStatistics = async (req, res, next) => {
+  try {
+    const { period } = req.query
+    const stats = await driverServiceDataService.getServiceStatistics(period)
+    res.json(success(stats))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const calculateDriverLevel = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { period } = req.query
+    const data = await driverServiceDataService.getDriverServiceDetail(id, period)
+    if (!data) {
+      throw new AppError('服务数据不存在', 404, 404)
+    }
+    const result = driverServiceDataService.calculateDriverLevel(data)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const checkServiceDataValidity = async (req, res, next) => {
+  try {
+    const { period, startDate, endDate } = req.query
+    const result = driverServiceDataService.checkDataValidity(req.params.id || 0, period, startDate, endDate)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   getList,
   getDetail,
@@ -535,5 +659,15 @@ module.exports = {
   batchRestoreNormal,
   getStatusLogs,
   getStatusDashboard,
-  preCheckBatchOperation
+  preCheckBatchOperation,
+  getServiceDataList,
+  getServiceTrend,
+  getDriverServiceDetail,
+  updateDriverLevel,
+  batchUpdateLevels,
+  exportServiceData,
+  getServiceLogs,
+  getServiceStatistics,
+  calculateDriverLevel,
+  checkServiceDataValidity
 }
