@@ -1,5 +1,13 @@
 import request from '@/utils/request'
-import type { PageResult, UserInfo, PageParams, Member, AccountValidationResult, UserEditLog, TraceResultItem, AccountComplianceLog, BatchUpdateResult, UserStatusLog, RiskPreview, ChangeStatusResult, BatchChangeStatusResult, ChangeStats } from '@/types'
+import type {
+  PageResult, UserInfo, PageParams, Member, AccountValidationResult, UserEditLog,
+  TraceResultItem, AccountComplianceLog, BatchUpdateResult, UserStatusLog, RiskPreview,
+  ChangeStatusResult, BatchChangeStatusResult, ChangeStats,
+  TagDefinition, MemberLevelLog, MemberTagLog, BenefitItem,
+  LevelPreviewResult, ChangeLevelResult, AddTagsResult,
+  BatchApplyTagsResult, TagTraceResult, CleanTagsResult,
+  LevelCriteriaMeta, TagMeta, TagMatchResult
+} from '@/types'
 
 interface UserListParams extends PageParams {
   keyword?: string
@@ -124,3 +132,76 @@ export const getMemberDetail = (id: number) => {
 export const updateMemberLevel = (id: number, level: string) => {
   return request.put(`/members/${id}/level`, { level })
 }
+
+// ================ 用户层级管理 ================
+
+export const getLevelCriteriaMeta = () => {
+  return request.get<LevelCriteriaMeta>('/users/level/criteria-meta')
+}
+
+export const getLevelPreview = (userId: number, targetLevel: string, force = false) => {
+  return request.get<LevelPreviewResult>(`/users/${userId}/level-preview`, { targetLevel, force })
+}
+
+export const changeMemberLevel = (userId: number, data: { targetLevel: string; force?: boolean; reason?: string }) => {
+  return request.put<ChangeLevelResult>(`/users/${userId}/level`, data)
+}
+
+export const getMemberLevelLogs = (userId: number, params?: PageParams & { changeType?: string }) => {
+  return request.get<PageResult<MemberLevelLog>>(`/users/${userId}/level-logs`, params)
+}
+
+// ================ 用户标签管理 ================
+
+export const getTagMeta = () => {
+  return request.get<TagMeta>('/users/tag/meta')
+}
+
+export const validateTagName = (name: string, excludeId?: number) => {
+  return request.get<{ valid: boolean; reason?: string }>('/users/tag/validate-name', { name, excludeId })
+}
+
+export const listTagDefinitions = (params?: PageParams & { status?: string; dimension?: string; keyword?: string }) => {
+  return request.get<PageResult<TagDefinition>>('/users/tag/definitions', params)
+}
+
+export const createTagDefinition = (data: Partial<TagDefinition> & { name: string; applicableLevels: string[] }) => {
+  return request.post<TagDefinition>('/users/tag/definitions', data)
+}
+
+export const updateTagDefinition = (id: number, data: Partial<TagDefinition>) => {
+  return request.put<TagDefinition>(`/users/tag/definitions/${id}`, data)
+}
+
+export const checkUserTagMatch = (userId: number, tagName: string) => {
+  return request.get<TagMatchResult>(`/users/${userId}/tag-match`, { tagName })
+}
+
+export const addUserTags = (userId: number, data: { tagNames: string[]; reason?: string }) => {
+  return request.post<AddTagsResult>(`/users/${userId}/tags`, data)
+}
+
+export const removeUserTags = (userId: number, data: { tagNames: string[]; reason?: string }) => {
+  return request.delete<AddTagsResult>(`/users/${userId}/tags`, data)
+}
+
+export const batchApplyTags = (data: {
+  userIds?: number[]
+  tagNames: string[]
+  filterBy?: string | null
+  activeRange?: [number | null, number | null] | null
+  consumeLevel?: string | null
+}) => {
+  return request.post<BatchApplyTagsResult>('/users/tag/batch-apply', data)
+}
+
+export const getMemberTagLogs = (userId: number, params?: PageParams & { changeType?: string }) => {
+  return request.get<PageResult<MemberTagLog>>(`/users/${userId}/tag-logs`, params)
+}
+
+export const getTagTrace = (userId: number) => {
+  return request.get<TagTraceResult>(`/users/${userId}/tag-trace`)
+}
+
+export const cleanRedundantTags = (userId: number) => {
+  return request.post<CleanTagsResult>(`/users/${userId}/tag-clean`)

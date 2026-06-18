@@ -20,4 +20,24 @@ router.post('/batch-update', authMiddleware(), roleMiddleware(['super_admin', 'a
 router.post('/batch-change-status', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.batchChangeStatus)
 router.put('/:id/status', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.updateStatus)
 
+// 层级管理
+router.get('/level/criteria-meta', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.getLevelCriteriaMeta)
+router.get('/:userId/level-preview', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.getLevelPreview)
+router.put('/:userId/level', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.changeLevel)
+router.get('/:userId/level-logs', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.getLevelLogs)
+
+// 标签管理
+router.get('/tag/meta', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.getTagMeta)
+router.get('/tag/validate-name', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.validateTagName)
+router.get('/tag/definitions', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.listTagDefinitions)
+router.post('/tag/definitions', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.createTagDefinition)
+router.put('/tag/definitions/:id', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.updateTagDefinition)
+router.get('/:userId/tag-match', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.checkUserTagMatch)
+router.post('/:userId/tags', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.addUserTags)
+router.delete('/:userId/tags', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.removeUserTags)
+router.post('/tag/batch-apply', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor']), userController.batchApplyTags)
+router.get('/:userId/tag-logs', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.getTagLogs)
+router.get('/:userId/tag-trace', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.getTagTrace)
+router.post('/:userId/tag-clean', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.cleanRedundantTags)
+
 module.exports = router

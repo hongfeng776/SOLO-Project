@@ -406,7 +406,7 @@ class AccountService {
     }
 
     if (Object.keys(where).length === 0) {
-      throw ApiError.badRequest('请提供至少一个检索条件(UID/手机号/用户名/注册时间)')
+      throw ApiError.badRequest('请提供至少一个检索条件UID/手机号用户名注册时间)')
     }
 
     const { page, pageSize, offset, limit } = getPagination(params.page, params.pageSize)
@@ -497,7 +497,7 @@ class AccountService {
       })
     }
 
-    delete rows
+
 
     return {
       list: traceResults,

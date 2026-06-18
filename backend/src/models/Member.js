@@ -55,6 +55,23 @@ const Member = sequelize.define(
       defaultValue: 0,
       allowNull: false,
       comment: '累计消费金额'
+    },
+    totalActiveHours: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+      comment: '累计活跃时长(小时)'
+    },
+    totalCreateCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+      comment: '累计创作数量'
+    },
+    levelUpdatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '层级最后变更时间'
     }
   },
   {

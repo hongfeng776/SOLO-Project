@@ -93,6 +93,23 @@
           >
             溯源校验
           </el-button>
+          <el-button
+            type="success"
+            :icon="Tag"
+            @click="openTagDefinitionDialog"
+            class="toolbar-btn"
+          >
+            标签定义
+          </el-button>
+          <el-button
+            type="primary"
+            :icon="Share"
+            :disabled="!canBatchStatus"
+            @click="openBatchTagDialog"
+            class="toolbar-btn"
+          >
+            批量标签配置
+          </el-button>
         </div>
         <div class="toolbar-right">
           <el-tag type="info" class="role-tag">
@@ -156,7 +173,7 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="标签" width="160">
+        <el-table-column label="标签" width="180">
           <template #default="{ row }">
             <template v-if="row.tags && row.tags.length > 0">
               <el-tag
@@ -164,15 +181,21 @@
                 :key="tag"
                 size="small"
                 type="info"
-                class="user-tag"
+                class="user-tag user-tag-item"
+                @click="handleTagEdit(row)"
               >
                 {{ tag }}
               </el-tag>
               <el-tooltip v-if="row.tags.length > 2" :content="row.tags.join('、')" placement="top">
-                <el-tag size="small" type="info" class="user-tag">+{{ row.tags.length - 2 }}</el-tag>
+                <el-tag
+                  size="small"
+                  type="info"
+                  class="user-tag user-tag-item"
+                  @click="handleTagEdit(row)"
+                >+{{ row.tags.length - 2 }}</el-tag>
               </el-tooltip>
             </template>
-            <span v-else class="text-muted">-</span>
+            <span v-else class="text-muted" @click="handleTagEdit(row)" style="cursor:pointer;">-</span>
           </template>
         </el-table-column>
         <el-table-column prop="phone" label="手机号" width="130" />
@@ -181,13 +204,27 @@
             {{ PermissionGroupLabel[row.permissionGroup] || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="会员等级" width="90" align="center">
+        <el-table-column label="会员等级" width="110" align="center">
           <template #default="{ row }">
-            <StatusTag v-if="row.member" :status="row.member.level" type="member" />
+            <span
+              v-if="row.member"
+              class="member-level-badge"
+              :class="'lvl-' + getDisplayLevel(row.member?.level)"
+              @click="handleLevelChange(row)"
+            >
+              <el-tag
+                :type="DisplayMemberLevelTagType[getDisplayLevel(row.member?.level) || 'normal']"
+                size="small"
+                effect="dark"
+                :round="true"
+              >
+                {{ DisplayMemberLevelLabel[getDisplayLevel(row.member?.level) || 'normal'] }}
+              </el-tag>
+            </span>
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" align="center" fixed="right">
+        <el-table-column label="操作" width="400" align="center" fixed="right">
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -219,6 +256,47 @@
               <el-button type="danger" link size="small" :disabled="true">删除</el-button>
             </el-tooltip>
             <el-button v-else type="danger" link size="small" @click="handleDelete(row)">删除</el-button>
+            <el-tooltip
+              v-if="!canChangeLevel(row)"
+              content="仅超级管理员和管理员可操作层级"
+              placement="top"
+              :show-after="200"
+            >
+              <el-button
+                type="success"
+                link
+                size="small"
+                :disabled="!canChangeLevel(row)"
+                @click="handleLevelChange(row)"
+              >
+                层级
+              </el-button>
+            </el-tooltip>
+            <el-button
+              v-else
+              type="success"
+              link
+              size="small"
+              @click="handleLevelChange(row)"
+            >
+              层级
+            </el-button>
+            <el-button
+              type="warning"
+              link
+              size="small"
+              @click="handleTagEdit(row)"
+            >
+              标签
+            </el-button>
+            <el-button
+              type="info"
+              link
+              size="small"
+              @click="handleTagTrace(row)"
+            >
+              溯源标签
+            </el-button>
           </template>
         </el-table-column>
       </DataTable>
@@ -1081,6 +1159,816 @@
             </el-table-column>
           </el-table>
         </el-tab-pane>
+        <el-tab-pane label="标签日志" name="tagLog">
+          <el-table :data="tagLogData" v-loading="tagLogLoading" max-height="400" class="zebra-table sticky-header-table">
+            <el-table-column label="标签" width="140">
+              <template #default="{ row }">
+                <template v-if="row.addedTags?.length">
+                  <el-tag v-for="t in row.addedTags" :key="'a'+t" size="small" type="success" effect="light" style="margin-right:4px;">+{{ t }}</el-tag>
+                </template>
+                <template v-if="row.removedTags?.length">
+                  <el-tag v-for="t in row.removedTags" :key="'r'+t" size="small" type="danger" effect="light" style="margin-right:4px;">-{{ t }}</el-tag>
+                </template>
+              </template>
+            </el-table-column>
+            <el-table-column label="变更类型" width="100">
+              <template #default="{ row }">
+                <el-tag v-if="row.changeType === 'add'" size="small" type="success">新增</el-tag>
+                <el-tag v-else-if="row.changeType === 'remove'" size="small" type="danger">移除</el-tag>
+                <el-tag v-else size="small">{{ row.changeType || '-' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="reason" label="原因" min-width="140">
+              <template #default="{ row }">
+                <el-tooltip :content="row.reason" placement="top" :disabled="!row.reason || row.reason.length <= 20">
+                  <span>{{ truncateStr(row.reason, 20) }}</span>
+                </el-tooltip>
+              </template>
+            </el-table-column>
+            <el-table-column prop="operatorName" label="操作人" width="90" />
+            <el-table-column label="时间" width="150">
+              <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+        <el-tab-pane label="层级日志" name="levelLog">
+          <el-table :data="levelLogData" v-loading="levelLogLoading" max-height="400" class="zebra-table sticky-header-table">
+            <el-table-column label="原层级" width="110">
+              <template #default="{ row }">
+                <span v-if="row.oldLevel">
+                  {{ DisplayMemberLevelLabel[getDisplayLevel(row.oldLevel)] || row.oldLevel }}
+                </span>
+                <span v-else class="text-muted">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="新层级" width="110">
+              <template #default="{ row }">
+                <el-tag
+                  v-if="row.newLevel"
+                  :type="DisplayMemberLevelTagType[getDisplayLevel(row.newLevel)] || 'info'"
+                  size="small"
+                  effect="dark"
+                >
+                  {{ DisplayMemberLevelLabel[getDisplayLevel(row.newLevel)] || row.newLevel }}
+                </el-tag>
+                <span v-else class="text-muted">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="是否达标" width="90" align="center">
+              <template #default="{ row }">
+                <el-tag v-if="row.metCriteria === true" size="small" type="success">达标</el-tag>
+                <el-tag v-else-if="row.metCriteria === false" size="small" type="warning">强制</el-tag>
+                <span v-else class="text-muted">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="reason" label="原因" min-width="140">
+              <template #default="{ row }">
+                <el-tooltip :content="row.reason" placement="top" :disabled="!row.reason || row.reason.length <= 20">
+                  <span>{{ truncateStr(row.reason, 20) }}</span>
+                </el-tooltip>
+              </template>
+            </el-table-column>
+            <el-table-column prop="operatorName" label="操作人" width="90" />
+            <el-table-column label="时间" width="150">
+              <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+      </el-tabs>
+    </el-dialog>
+
+    <el-dialog
+      v-model="tagDialogVisible"
+      title="标签定义管理"
+      width="860px"
+      class="tag-definition-dialog"
+    >
+      <div class="tag-def-toolbar">
+        <el-button type="primary" :icon="Plus" @click="showTagDefForm = true">新增标签</el-button>
+        <div class="tag-def-filters">
+          <el-select v-model="tagDefFilter.dimension" placeholder="维度筛选" clearable style="width:140px;" size="default">
+            <el-option
+              v-for="opt in TAG_DIMENSION_OPTIONS"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </el-select>
+          <el-select v-model="tagDefFilter.status" placeholder="状态筛选" clearable style="width:120px;" size="default">
+            <el-option label="启用中" value="active" />
+            <el-option label="已禁用" value="disabled" />
+          </el-select>
+          <el-button :icon="Refresh" size="default" @click="loadTagDefinitions">刷新</el-button>
+        </div>
+      </div>
+
+      <el-form v-if="showTagDefForm" :model="tagDefForm" label-width="110px" class="tag-def-form border-card">
+        <el-divider content-position="left">{{ tagDefEditingId ? '编辑标签' : '新增标签' }}</el-divider>
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="标签名称">
+              <el-input
+                v-model="tagDefForm.name"
+                placeholder="请输入标签名称"
+                :class="['tag-name-input', 'focus-color', { 'error-border': !tagDefNameValid }]"
+                @blur="validateTagDefName"
+              />
+              <div v-if="!tagDefNameValid && tagDefNameError" class="field-error">
+                {{ tagDefNameError }}
+              </div>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="标签颜色">
+              <el-color-picker v-model="tagDefForm.color" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="所属维度">
+              <el-select v-model="tagDefForm.dimension" style="width:100%;">
+                <el-option
+                  v-for="opt in TAG_DIMENSION_OPTIONS"
+                  :key="opt.value"
+                  :label="opt.label"
+                  :value="opt.value"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="适用层级">
+              <el-checkbox-group v-model="tagDefForm.applicableLevels">
+                <el-checkbox
+                  v-for="opt in USER_LEVEL_OPTIONS"
+                  :key="opt.value"
+                  :label="opt.value"
+                >{{ opt.label }}</el-checkbox>
+              </el-checkbox-group>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="最低消费(元)">
+              <el-input-number v-model="tagDefForm.minConsumeAmount" :min="0" :step="100" style="width:100%;" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="最少活跃(小时)">
+              <el-input-number v-model="tagDefForm.minActiveHours" :min="0" :step="10" style="width:100%;" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="最少创作(个)">
+              <el-input-number v-model="tagDefForm.minCreateCount" :min="0" :step="5" style="width:100%;" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="标签描述">
+              <el-input
+                v-model="tagDefForm.description"
+                type="textarea"
+                :rows="2"
+                placeholder="请输入标签描述（可选）"
+                class="focus-color"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <div style="text-align:right; margin-bottom:8px;">
+          <el-button @click="cancelTagDefForm">取消</el-button>
+          <el-button type="primary" @click="handleSaveTagDef" :loading="tagDefSaving">
+            {{ tagDefEditingId ? '保存修改' : '确认创建' }}
+          </el-button>
+        </div>
+      </el-form>
+
+      <el-table
+        :data="filteredTagDefinitions"
+        v-loading="tagDefLoading"
+        height="380"
+        class="zebra-table sticky-header-table"
+        :header-cell-style="{position:'sticky', top:'0', zIndex:2}"
+      >
+        <el-table-column label="标签" width="150">
+          <template #default="{ row }">
+            <el-tag
+              :style="{ backgroundColor: row.color + '33', color: row.color, borderColor: row.color }"
+              effect="light"
+              size="small"
+            >
+              {{ row.name }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="维度" width="100">
+          <template #default="{ row }">
+            {{ TagDimensionLabel[row.dimension] || row.dimension }}
+          </template>
+        </el-table-column>
+        <el-table-column label="适用层级" min-width="140">
+          <template #default="{ row }">
+            <template v-if="row.applicableLevels?.length">
+              <el-tag
+                v-for="lvl in row.applicableLevels"
+                :key="lvl"
+                size="small"
+                style="margin-right:4px;"
+              >
+                {{ USER_LEVEL_OPTIONS.find(o => o.value === lvl)?.label || lvl }}
+              </el-tag>
+            </template>
+            <span v-else class="text-muted">全部</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="消费≥" width="80" align="right">
+          <template #default="{ row }">{{ row.minConsumeAmount || 0 }}</template>
+        </el-table-column>
+        <el-table-column label="活跃≥h" width="80" align="right">
+          <template #default="{ row }">{{ row.minActiveHours || 0 }}</template>
+        </el-table-column>
+        <el-table-column label="创作≥" width="80" align="right">
+          <template #default="{ row }">{{ row.minCreateCount || 0 }}</template>
+        </el-table-column>
+        <el-table-column label="状态" width="80" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">
+              {{ row.status === 'active' ? '启用' : '禁用' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="140" align="center" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" link size="small" @click="handleEditTagDef(row)">编辑</el-button>
+            <el-button
+              :type="row.status === 'active' ? 'warning' : 'success'"
+              link
+              size="small"
+              @click="handleToggleTagDefStatus(row)"
+            >
+              {{ row.status === 'active' ? '禁用' : '启用' }}
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
+
+    <el-dialog
+      v-model="levelDialogVisible"
+      title="调整用户层级"
+      width="620px"
+      class="level-change-dialog ripple-dialog"
+      :class="{ 'ripple-trigger': rippleTrigger }"
+      @opened="handleLevelDialogOpened"
+    >
+      <div class="ripple-effect"></div>
+      <el-steps :active="levelStep" finish-status="success" align-center style="margin-bottom:24px;">
+        <el-step title="达标校验" />
+        <el-step title="权益预览" />
+        <el-step title="确认提交" />
+      </el-steps>
+
+      <div v-show="levelStep === 1" class="level-step-panel">
+        <el-descriptions v-if="levelUser" title="当前用户信息" :column="2" border size="small" class="border-card">
+          <el-descriptions-item label="用户名">{{ levelUser.username }}</el-descriptions-item>
+          <el-descriptions-item label="UID">{{ levelUser.uid }}</el-descriptions-item>
+          <el-descriptions-item label="当前层级">
+            <el-tag
+              v-if="levelUser.member"
+              :type="DisplayMemberLevelTagType[getDisplayLevel(levelUser.member.level)] || 'info'"
+              effect="dark"
+              size="small"
+            >
+              {{ DisplayMemberLevelLabel[getDisplayLevel(levelUser.member.level)] || '-' }}
+            </el-tag>
+            <span v-else class="text-muted">普通用户</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="消费/活跃/创作">
+            <span class="text-muted small-text">
+              ¥{{ levelUser.member?.consumeAmount || 0 }} / {{ levelUser.member?.activeHours || 0 }}h / {{ levelUser.member?.createCount || 0 }}个
+            </span>
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <el-form label-width="90px" style="margin-top:16px;">
+          <el-form-item label="目标层级">
+            <el-radio-group v-model="levelForm.targetLevel" @change="doLevelPreview">
+              <el-radio
+                v-for="opt in USER_LEVEL_OPTIONS"
+                :key="opt.value"
+                :label="opt.value"
+              >{{ opt.label }}</el-radio>
+            </el-radio-group>
+          </el-form-item>
+        </el-form>
+
+        <div v-if="levelPreview" class="criteria-result border-card">
+          <h4 style="margin:0 0 12px;">升级达标情况</h4>
+          <div
+            v-for="(c, idx) in levelCriteriaItems"
+            :key="idx"
+            class="criteria-progress-item"
+          >
+            <div class="label">
+              <span>{{ c.label }}</span>
+              <span :class="{ pass: c.pass, fail: !c.pass }">
+                {{ c.current }}/{{ c.require }} {{ c.pass ? '✓ 通过' : '✗ 未达标' }}
+              </span>
+            </div>
+            <el-progress
+              :percentage="c.percent"
+              :status="c.pass ? 'success' : 'exception'"
+              :stroke-width="8"
+            />
+          </div>
+          <div v-if="levelPreview.missing?.length" class="missing-info">
+            <el-alert
+              :title="'未达标项：' + levelPreview.missing.join('、')"
+              type="error"
+              :closable="false"
+              show-icon
+            />
+          </div>
+          <div v-if="!levelPreview.allMet && !canLevelForce" style="margin-top:8px;">
+            <el-alert title="当前角色无法强制调整，仅超级管理员可执行强制升级" type="warning" :closable="false" show-icon />
+          </div>
+          <div v-if="!levelPreview.allMet && canLevelForce" style="margin-top:8px; text-align:right;">
+            <el-checkbox v-model="levelForm.force">
+              <span style="color:#F56C6C;">强制提交（仅超管）</span>
+            </el-checkbox>
+          </div>
+        </div>
+
+        <div style="margin-top:20px; text-align:right;">
+          <el-button @click="levelDialogVisible = false">取消</el-button>
+          <el-button
+            type="primary"
+            :disabled="!levelForm.targetLevel || (!levelPreview?.allMet && !levelForm.force)"
+            @click="goLevelStep(2)"
+          >
+            下一步
+          </el-button>
+        </div>
+      </div>
+
+      <div v-show="levelStep === 2" class="level-step-panel">
+        <h4 style="margin:0 0 12px;">权益变更预览</h4>
+        <div class="benefit-compare">
+          <div class="benefit-col">
+            <h4>调整前（{{ DisplayMemberLevelLabel[getDisplayLevel(levelUser?.member?.level)] || '普通' }}）</h4>
+            <div
+              v-for="b in oldBenefits"
+              :key="'old-'+b.key"
+              class="item"
+              :class="{ 'diff-remove': b.isRemoved }"
+            >
+              <el-icon v-if="b.isRemoved" color="#F56C6C"><Close /></el-icon>
+              <el-icon v-else color="#909399"><Check /></el-icon>
+              <span>{{ b.label }}</span>
+            </div>
+          </div>
+          <div class="benefit-col">
+            <h4>调整后（{{ DisplayMemberLevelLabel[levelForm.targetLevel] || '普通' }}）</h4>
+            <div
+              v-for="b in newBenefits"
+              :key="'new-'+b.key"
+              class="item"
+              :class="{ 'diff-add': b.isAdded }"
+            >
+              <el-icon v-if="b.isAdded" color="#67C23A"><Check /></el-icon>
+              <el-icon v-else color="#909399"><Check /></el-icon>
+              <span>{{ b.label }}</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:20px; text-align:right;">
+          <el-button @click="goLevelStep(1)">上一步</el-button>
+          <el-button type="primary" @click="goLevelStep(3)">下一步</el-button>
+        </div>
+      </div>
+
+      <div v-show="levelStep === 3" class="level-step-panel">
+        <el-descriptions title="变更摘要" :column="1" border size="small" class="border-card">
+          <el-descriptions-item label="用户">
+            {{ levelUser?.username }}（UID: {{ levelUser?.uid }}）
+          </el-descriptions-item>
+          <el-descriptions-item label="层级变更">
+            <span>{{ DisplayMemberLevelLabel[getDisplayLevel(levelUser?.member?.level)] || '普通' }}</span>
+            <el-icon style="vertical-align:middle; margin:0 8px;"><Right /></el-icon>
+            <el-tag
+              :type="DisplayMemberLevelTagType[levelForm.targetLevel] || 'info'"
+              effect="dark"
+              size="small"
+            >
+              {{ DisplayMemberLevelLabel[levelForm.targetLevel] || '普通' }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="强制提交">
+            <el-tag v-if="levelForm.force" type="warning" size="small">是</el-tag>
+            <span v-else class="text-muted">否</span>
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <el-form label-width="90px" style="margin-top:16px;">
+          <el-form-item label="变更原因">
+            <el-input
+              v-model="levelForm.reason"
+              type="textarea"
+              :rows="2"
+              placeholder="请输入变更原因（可选）"
+              class="focus-color"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-checkbox v-model="levelForm.confirm">
+              我已确认以上变更内容，了解相关权益的解锁与回收影响
+            </el-checkbox>
+          </el-form-item>
+        </el-form>
+
+        <div style="margin-top:20px; text-align:right;">
+          <el-button @click="goLevelStep(2)">上一步</el-button>
+          <el-button
+            type="primary"
+            :disabled="!levelForm.confirm"
+            :loading="submitLoading"
+            @click="handleLevelSubmit"
+          >
+            确认提交
+          </el-button>
+        </div>
+      </div>
+    </el-dialog>
+
+    <el-dialog
+      v-model="batchTagDialogVisible"
+      title="批量用户标签差异化配置"
+      width="760px"
+      class="batch-tag-dialog"
+    >
+      <el-form :model="batchTagForm" label-width="110px">
+        <el-divider content-position="left">人群筛选条件</el-divider>
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="人群过滤">
+              <el-select v-model="batchTagForm.filterBy" placeholder="全部用户" clearable style="width:100%;">
+                <el-option
+                  v-for="opt in FILTER_OPTIONS"
+                  :key="opt.value"
+                  :label="opt.label"
+                  :value="opt.value"
+                />
+              </el-select>
+              <div class="form-tip">
+                {{ selectedRows.length > 0 ? `已在表格选中 ${selectedRows.length} 个用户，将基于此集合进一步过滤` : '将对全量用户应用过滤条件' }}
+              </div>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="消费等级">
+              <el-select v-model="batchTagForm.consumeLevel" placeholder="全部等级" clearable style="width:100%;">
+                <el-option
+                  v-for="opt in CONSUME_LEVEL_OPTIONS"
+                  :key="opt.value"
+                  :label="opt.label"
+                  :value="opt.value"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="活跃区间(小时)">
+              <div class="range-inputs">
+                <el-input-number v-model="batchTagForm.activeMin" :min="0" placeholder="最小值" style="width:48%;" />
+                <span class="range-sep">—</span>
+                <el-input-number v-model="batchTagForm.activeMax" :min="0" placeholder="最大值" style="width:48%;" />
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-divider content-position="left">目标标签配置</el-divider>
+        <el-form-item label="添加标签">
+          <el-select
+            v-model="batchTagForm.tagNames"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            placeholder="选择已有标签或输入自定义标签后回车"
+            style="width:100%;"
+            class="tag-select focus-color"
+          >
+            <el-option
+              v-for="td in availableTagDefinitions"
+              :key="td.id"
+              :label="td.name"
+              :value="td.name"
+            >
+              <span style="display:inline-flex; align-items:center; gap:6px;">
+                <span
+                  class="tag-dot"
+                  :style="{ backgroundColor: td.color }"
+                ></span>
+                {{ td.name }}
+                <el-tag size="small" type="info" effect="plain">
+                  {{ TagDimensionLabel[td.dimension] || td.dimension }}
+                </el-tag>
+              </span>
+            </el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+
+      <div v-if="batchTagProcessing || batchTagResult" class="batch-progress-area border-card">
+        <div class="progress-header">
+          <span>{{ batchTagProcessing ? '正在配置中...' : '配置结果' }}</span>
+          <span v-if="totalUserCount > 0">
+            进度 {{ processedCount }}/{{ totalUserCount }}（{{ batchTagProgress }}%）
+          </span>
+        </div>
+        <el-progress
+          :percentage="batchTagProgress"
+          :status="batchTagProcessing ? undefined : 'success'"
+          class="batch-progress"
+        />
+      </div>
+
+      <div v-if="batchTagResult" class="batch-result-area">
+        <el-alert
+          :title="'完成：成功' + batchTagResult.successCount + ' 个，失败 ' + batchTagResult.failedCount + ' 个，跳过 ' + batchTagResult.skippedCount + ' 个'"
+          type="info"
+          :closable="false"
+          show-icon
+          class="validation-alert-block"
+        />
+        <el-table
+          v-if="batchTagResult.successUsers?.length"
+          :data="batchTagResult.successUsers"
+          height="200"
+          class="batch-result-table zebra-table sticky-header-table"
+          :row-class-name="({row}) => row.addedTags?.length ? 'success-row' : ''"
+        >
+          <el-table-column prop="username" label="用户名" width="120" />
+          <el-table-column prop="uid" label="UID" width="140" />
+          <el-table-column label="添加的标签" min-width="240">
+            <template #default="{ row }">
+              <el-tag
+                v-for="t in row.addedTags"
+                :key="t"
+                size="small"
+                type="success"
+                effect="light"
+                style="margin-right:4px;"
+              >
+                +{{ t }}
+              </el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <template #footer>
+        <el-button @click="batchTagDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :disabled="batchTagForm.tagNames.length === 0 || batchTagProcessing"
+          :loading="batchTagProcessing"
+          @click="handleBatchTagSubmit"
+        >
+          开始配置
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="tagEditDialogVisible"
+      title="用户标签编辑"
+      width="620px"
+      class="tag-edit-dialog"
+    >
+      <el-descriptions v-if="tagEditUser" title="当前用户" :column="2" border size="small" class="border-card">
+        <el-descriptions-item label="用户名">{{ tagEditUser.username }}</el-descriptions-item>
+        <el-descriptions-item label="UID">{{ tagEditUser.uid }}</el-descriptions-item>
+        <el-descriptions-item label="角色">
+          <StatusTag :status="tagEditUser.role" type="role" />
+        </el-descriptions-item>
+        <el-descriptions-item label="当前层级">
+          <el-tag
+            v-if="tagEditUser.member"
+            :type="DisplayMemberLevelTagType[getDisplayLevel(tagEditUser.member.level)] || 'info'"
+            size="small"
+            effect="dark"
+          >
+            {{ DisplayMemberLevelLabel[getDisplayLevel(tagEditUser.member.level)] || '-' }}
+          </el-tag>
+          <span v-else class="text-muted">普通用户</span>
+        </el-descriptions-item>
+      </el-descriptions>
+
+      <el-form label-width="90px" style="margin-top:16px;">
+        <el-form-item label="用户标签">
+          <el-select
+            v-model="tagEditForm.selectedTags"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            placeholder="选择或创建标签（回车添加）"
+            style="width:100%;"
+            class="tag-select focus-color"
+            @change="onTagChange"
+          >
+            <el-option
+              v-for="td in availableTagDefinitions"
+              :key="td.id"
+              :label="td.name"
+              :value="td.name"
+            >
+              <span style="display:inline-flex; align-items:center; gap:6px;">
+                <span class="tag-dot" :style="{ backgroundColor: td.color }"></span>
+                {{ td.name }}
+              </span>
+            </el-option>
+          </el-select>
+          <div style="margin-top:6px;">
+            <div
+              v-for="t in tagEditForm.selectedTags"
+              :key="t"
+              :class="['mismatch-chip', { 'mismatch-tag': tagMismatch[t] }]"
+              style="margin:2px;"
+            >
+              <el-tag
+                :type="tagMismatch[t] ? 'danger' : 'success'"
+                effect="light"
+                size="small"
+              >
+                {{ t }}
+                <span v-if="tagMismatch[t]" style="margin-left:4px; color:#f56c6c;">⚠ 错配</span>
+              </el-tag>
+            </div>
+          </div>
+          <div v-if="hasDuplicateTags" style="margin-top:6px;" class="field-error">
+            警告：存在重复标签，已自动去重
+          </div>
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="tagEditDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="saveTagEdit">
+          保存标签
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="tagTraceDialogVisible"
+      title="标签溯源与校验"
+      width="960px"
+      top="5vh"
+      class="tag-trace-dialog"
+    >
+      <div v-if="tagTraceUser" class="border-card">
+        <div class="trace-user-info">
+          <el-avatar :size="44" :src="tagTraceUser.avatar">
+            {{ tagTraceUser.nickname?.charAt(0) || tagTraceUser.username?.charAt(0) }}
+          </el-avatar>
+          <div class="trace-user-detail">
+            <div class="trace-user-name">
+              {{ tagTraceUser.username }}
+              <el-tag size="small" type="info">UID: {{ tagTraceUser.uid }}</el-tag>
+              <StatusTag v-if="tagTraceUser.role" :status="tagTraceUser.role" type="role" />
+            </div>
+            <div class="trace-user-meta">
+              <span>消费：¥{{ tagTraceUser.member?.consumeAmount || 0 }}</span>
+              <span>活跃：{{ tagTraceUser.member?.activeHours || 0 }}h</span>
+              <span>创作：{{ tagTraceUser.member?.createCount || 0 }}个</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="tagTraceResult" class="validation-alert-block">
+        <el-alert
+          v-if="tagTraceResult.redundantTags?.length || tagTraceResult.mismatchedTags?.length"
+          :title="(tagTraceResult.redundantTags?.length ? `冗余标签 ${tagTraceResult.redundantTags.length} 个` : '') +
+                 (tagTraceResult.mismatchedTags?.length ? `；错配标签 ${tagTraceResult.mismatchedTags.length} 个` : '') +
+                 '，建议清理'"
+          type="warning"
+          show-icon
+          :closable="false"
+        >
+          <template #default>
+            <div style="margin-top:6px;">
+              <el-tag v-for="t in tagTraceResult.redundantTags" :key="'rd'+t" size="small" type="info" effect="light" style="margin-right:4px;">
+                冗余: {{ t }}
+              </el-tag>
+              <el-tag v-for="t in tagTraceResult.mismatchedTags" :key="'mm'+t" size="small" type="danger" effect="light" style="margin-right:4px;">
+                错配: {{ t }}
+              </el-tag>
+            </div>
+          </template>
+        </el-alert>
+        <el-alert
+          v-else
+          title="标签校验通过，未发现冗余或错配标签"
+          type="success"
+          show-icon
+          :closable="false"
+        />
+        <div style="margin-top:12px; text-align:right;">
+          <el-button
+            type="danger"
+            :icon="Delete"
+            :disabled="!tagTraceResult.redundantTags?.length && !tagTraceResult.mismatchedTags?.length"
+            :loading="tagCleaning"
+            @click="cleanTags"
+          >
+            一键清理冗余标签
+          </el-button>
+        </div>
+      </div>
+
+      <el-tabs v-model="tagTraceActiveTab" class="trace-tabs">
+        <el-tab-pane label="标签变更历史" name="tagHistory">
+          <el-table
+            :data="tagTraceResult?.tagLogs || []"
+            height="400"
+            class="zebra-table sticky-header-table"
+            :header-cell-style="{position:'sticky', top:'0', zIndex:2}"
+          >
+            <el-table-column label="标签变更" width="220">
+              <template #default="{ row }">
+                <el-tag v-for="t in row.addedTags" :key="'a'+t" size="small" type="success" effect="light" style="margin-right:4px;">+{{ t }}</el-tag>
+                <el-tag v-for="t in row.removedTags" :key="'r'+t" size="small" type="danger" effect="light" style="margin-right:4px;">-{{ t }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="类型" width="90">
+              <template #default="{ row }">
+                <el-tag v-if="row.changeType === 'add'" size="small" type="success">新增</el-tag>
+                <el-tag v-else-if="row.changeType === 'remove'" size="small" type="danger">移除</el-tag>
+                <span v-else class="text-muted">{{ row.changeType || '-' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="来源" width="100">
+              <template #default="{ row }">{{ row.source || '手动' }}</template>
+            </el-table-column>
+            <el-table-column prop="reason" label="原因" min-width="160">
+              <template #default="{ row }">{{ truncateStr(row.reason, 30) }}</template>
+            </el-table-column>
+            <el-table-column prop="operatorName" label="操作人" width="100" />
+            <el-table-column label="时间" width="160">
+              <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+        <el-tab-pane label="层级变更历史" name="levelHistory">
+          <el-table
+            :data="tagTraceResult?.levelLogs || []"
+            height="400"
+            class="zebra-table sticky-header-table"
+            :header-cell-style="{position:'sticky', top:'0', zIndex:2}"
+          >
+            <el-table-column label="层级变更" width="200">
+              <template #default="{ row }">
+                <span>{{ DisplayMemberLevelLabel[getDisplayLevel(row.oldLevel)] || '-' }}</span>
+                <el-icon style="vertical-align:middle; margin:0 6px;"><Right /></el-icon>
+                <el-tag
+                  :type="DisplayMemberLevelTagType[getDisplayLevel(row.newLevel)] || 'info'"
+                  size="small"
+                  effect="dark"
+                >
+                  {{ DisplayMemberLevelLabel[getDisplayLevel(row.newLevel)] || '-' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="达标" width="80" align="center">
+              <template #default="{ row }">
+                <el-tag v-if="row.metCriteria === true" size="small" type="success">是</el-tag>
+                <el-tag v-else-if="row.metCriteria === false" size="small" type="warning">强制</el-tag>
+                <span v-else class="text-muted">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="unlockedBenefits" label="解锁权益" min-width="160">
+              <template #default="{ row }">
+                <el-tag
+                  v-for="b in row.unlockedBenefits"
+                  :key="'u'+b"
+                  size="small"
+                  type="success"
+                  effect="light"
+                  style="margin-right:4px;"
+                >{{ b }}</el-tag>
+                <span v-if="!row.unlockedBenefits?.length" class="text-muted">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="reason" label="原因" min-width="140">
+              <template #default="{ row }">{{ truncateStr(row.reason, 30) }}</template>
+            </el-table-column>
+            <el-table-column prop="operatorName" label="操作人" width="100" />
+            <el-table-column label="时间" width="160">
+              <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
       </el-tabs>
     </el-dialog>
   </div>
@@ -1090,7 +1978,8 @@
 import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import {
   Search, Refresh, Plus, Delete, Edit, Warning, Right,
-  CircleCheckFilled, CircleCloseFilled, Lock
+  CircleCheckFilled, CircleCloseFilled, Lock, Tag, Star,
+  Share, Collection, Check, Close
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { DataTable, StatusTag, BatchOperation, EmptyState } from '@/components/business'
@@ -1106,7 +1995,22 @@ import {
   HighRiskActions,
   FunctionPermissionLabels,
   ChangeTypeLabel,
-  UserRole
+  UserRole,
+  DisplayMemberLevel,
+  DisplayMemberLevelLabel,
+  DisplayMemberLevelTagType,
+  INTERNAL_TO_DISPLAY_LEVEL,
+  DISPLAY_LEVEL_ORDER,
+  LEVEL_UPGRADE_CRITERIA,
+  LEVEL_BENEFITS,
+  LEVEL_AUTO_TAGS,
+  TagDimension,
+  TagDimensionLabel,
+  TagDimensionTagType,
+  USER_LEVEL_OPTIONS,
+  TAG_DIMENSION_OPTIONS,
+  CONSUME_LEVEL_OPTIONS,
+  FILTER_OPTIONS
 } from '@/constants'
 import {
   getUserList,
@@ -1122,11 +2026,31 @@ import {
   getRiskPreview,
   getStatusLogs,
   getChangeStats,
-  batchChangeUserStatus
+  batchChangeUserStatus,
+  getLevelCriteriaMeta,
+  getLevelPreview,
+  changeMemberLevel,
+  getMemberLevelLogs,
+  getTagMeta,
+  validateTagName,
+  listTagDefinitions,
+  createTagDefinition,
+  updateTagDefinition,
+  checkUserTagMatch,
+  addUserTags,
+  removeUserTags,
+  batchApplyTags,
+  getMemberTagLogs,
+  getTagTrace,
+  cleanRedundantTags
 } from '@/api/userManage'
 import type {
   UserInfo, FieldValidation, AccountValidationResult, UserEditLog,
-  TraceResultItem, UserStatusLog, RiskPreview
+  TraceResultItem, UserStatusLog, RiskPreview,
+  TagDefinition, MemberLevelLog, MemberTagLog, BenefitItem,
+  LevelPreviewResult, ChangeLevelResult, AddTagsResult,
+  BatchApplyTagsResult, TagTraceResult, CleanTagsResult,
+  LevelCriteriaMeta, TagMeta, TagMatchResult
 } from '@/types'
 
 const userStore = useUserStore()
@@ -1179,6 +2103,71 @@ const editLogData = ref<UserEditLog[]>([])
 const editLogUser = ref<UserInfo | null>(null)
 const statusLogLoading = ref(false)
 const statusLogData = ref<UserStatusLog[]>([])
+const tagLogLoading = ref(false)
+const tagLogData = ref<MemberTagLog[]>([])
+const levelLogLoading = ref(false)
+const levelLogData = ref<MemberLevelLog[]>([])
+
+const tagDialogVisible = ref(false)
+const batchTagDialogVisible = ref(false)
+const levelDialogVisible = ref(false)
+const levelStep = ref(1)
+const tagEditDialogVisible = ref(false)
+const tagTraceDialogVisible = ref(false)
+const tagTraceActiveTab = ref('tagHistory')
+const levelUser = ref<UserInfo | null>(null)
+const tagEditUser = ref<UserInfo | null>(null)
+const tagTraceUser = ref<UserInfo | null>(null)
+const tagMismatch = reactive<Record<string, boolean>>({})
+const tagCleaning = ref(false)
+const rippleTrigger = ref(false)
+
+const showTagDefForm = ref(false)
+const tagDefEditingId = ref<number | null>(null)
+const tagDefSaving = ref(false)
+const tagDefLoading = ref(false)
+const tagDefinitions = ref<TagDefinition[]>([])
+const tagDefFilter = reactive({ dimension: '', status: '' })
+const tagDefForm = reactive<any>({
+  name: '',
+  color: '#409EFF',
+  dimension: 'composite',
+  applicableLevels: [] as string[],
+  minConsumeAmount: 0,
+  minActiveHours: 0,
+  minCreateCount: 0,
+  description: ''
+})
+const tagDefNameValid = ref(true)
+const tagDefNameError = ref('')
+
+const levelPreview = ref<LevelPreviewResult | null>(null)
+const levelForm = reactive<any>({
+  targetLevel: '',
+  force: false,
+  reason: '',
+  confirm: false
+})
+const levelCriteriaMeta = ref<LevelCriteriaMeta | null>(null)
+
+const tagEditForm = reactive<any>({
+  selectedTags: [] as string[]
+})
+
+const batchTagForm = reactive<any>({
+  filterBy: '',
+  consumeLevel: '',
+  activeMin: null as number | null,
+  activeMax: null as number | null,
+  tagNames: [] as string[]
+})
+const batchTagProgress = ref(0)
+const batchTagProcessing = ref(false)
+const batchTagResult = ref<BatchApplyTagsResult | null>(null)
+const processedCount = ref(0)
+const totalUserCount = ref(0)
+
+const tagTraceResult = ref<TagTraceResult | null>(null)
 
 const filterForm = reactive({
   keyword: '',
@@ -1852,19 +2841,27 @@ const handleViewEditLogs = async (row: UserInfo) => {
   editLogActiveTab.value = 'edit'
   editLogLoading.value = true
   statusLogLoading.value = true
+  tagLogLoading.value = true
+  levelLogLoading.value = true
   editLogDialogVisible.value = true
   try {
-    const [editRes, statusRes] = await Promise.all([
+    const [editRes, statusRes, tagRes, levelRes] = await Promise.all([
       getEditLogs(row.id, { page: 1, pageSize: 50 }),
-      getStatusLogs(row.id, { page: 1, pageSize: 50 })
+      getStatusLogs(row.id, { page: 1, pageSize: 50 }),
+      getMemberTagLogs(row.id, { page: 1, pageSize: 50 }),
+      getMemberLevelLogs(row.id, { page: 1, pageSize: 50 })
     ])
     editLogData.value = editRes.data.list
     statusLogData.value = statusRes.data.list
+    tagLogData.value = (tagRes.data as any).list || []
+    levelLogData.value = (levelRes.data as any).list || []
   } catch (error) {
     console.error('获取变更记录失败:', error)
   } finally {
     editLogLoading.value = false
     statusLogLoading.value = false
+    tagLogLoading.value = false
+    levelLogLoading.value = false
   }
 }
 
@@ -1873,19 +2870,27 @@ const handleViewStatusLogs = async (row: UserInfo) => {
   editLogActiveTab.value = 'status'
   editLogLoading.value = true
   statusLogLoading.value = true
+  tagLogLoading.value = true
+  levelLogLoading.value = true
   editLogDialogVisible.value = true
   try {
-    const [editRes, statusRes] = await Promise.all([
+    const [editRes, statusRes, tagRes, levelRes] = await Promise.all([
       getEditLogs(row.id, { page: 1, pageSize: 50 }),
-      getStatusLogs(row.id, { page: 1, pageSize: 50 })
+      getStatusLogs(row.id, { page: 1, pageSize: 50 }),
+      getMemberTagLogs(row.id, { page: 1, pageSize: 50 }),
+      getMemberLevelLogs(row.id, { page: 1, pageSize: 50 })
     ])
     editLogData.value = editRes.data.list
     statusLogData.value = statusRes.data.list
+    tagLogData.value = (tagRes.data as any).list || []
+    levelLogData.value = (levelRes.data as any).list || []
   } catch (error) {
     console.error('获取变更记录失败:', error)
   } finally {
     editLogLoading.value = false
     statusLogLoading.value = false
+    tagLogLoading.value = false
+    levelLogLoading.value = false
   }
 }
 
@@ -1902,6 +2907,436 @@ const truncateStr = (str: string | null | undefined, max: number) => {
   } catch {}
   return str.length > max ? str.substring(0, max) + '...' : str
 }
+
+// ===== 基础辅助函数 =====
+const getDisplayLevel = (internal: string | undefined): string =>
+  internal ? (INTERNAL_TO_DISPLAY_LEVEL[internal as keyof typeof INTERNAL_TO_DISPLAY_LEVEL] || 'normal') : 'normal'
+
+const canChangeLevel = (row: UserInfo): boolean =>
+  currentRole.value === UserRole.SUPER_ADMIN || currentRole.value === UserRole.ADMIN
+
+const canLevelForce = computed(() => currentRole.value === UserRole.SUPER_ADMIN)
+
+// ===== 标签定义 =====
+const availableTagDefinitions = computed(() =>
+  tagDefinitions.value.filter((t) => t.status === 'active')
+)
+
+const filteredTagDefinitions = computed(() => {
+  let list = tagDefinitions.value
+  if (tagDefFilter.dimension) {
+    list = list.filter((t) => t.dimension === tagDefFilter.dimension)
+  }
+  if (tagDefFilter.status) {
+    list = list.filter((t) => t.status === tagDefFilter.status)
+  }
+  return list
+})
+
+const loadTagDefinitions = async () => {
+  tagDefLoading.value = true
+  try {
+    const res = await listTagDefinitions({ page: 1, pageSize: 100 })
+    tagDefinitions.value = (res.data as any).list || []
+  } catch (error) {
+    console.error('加载标签定义失败:', error)
+  } finally {
+    tagDefLoading.value = false
+  }
+}
+
+const openTagDefinitionDialog = async () => {
+  tagDialogVisible.value = true
+  await loadTagDefinitions()
+}
+
+const validateTagDefName = async () => {
+  if (!tagDefForm.name) {
+    tagDefNameValid.value = true
+    tagDefNameError.value = ''
+    return
+  }
+  try {
+    const res = await validateTagName(tagDefForm.name, tagDefEditingId.value || undefined)
+    tagDefNameValid.value = (res.data as any).valid
+    tagDefNameError.value = (res.data as any).reason || ''
+  } catch {
+    tagDefNameValid.value = true
+    tagDefNameError.value = ''
+  }
+}
+
+const resetTagDefForm = () => {
+  tagDefForm.name = ''
+  tagDefForm.color = '#409EFF'
+  tagDefForm.dimension = 'composite'
+  tagDefForm.applicableLevels = []
+  tagDefForm.minConsumeAmount = 0
+  tagDefForm.minActiveHours = 0
+  tagDefForm.minCreateCount = 0
+  tagDefForm.description = ''
+  tagDefNameValid.value = true
+  tagDefNameError.value = ''
+  tagDefEditingId.value = null
+  showTagDefForm.value = false
+}
+
+const cancelTagDefForm = () => {
+  resetTagDefForm()
+}
+
+const handleEditTagDef = (row: TagDefinition) => {
+  tagDefEditingId.value = row.id
+  tagDefForm.name = row.name
+  tagDefForm.color = row.color || '#409EFF'
+  tagDefForm.dimension = row.dimension || 'composite'
+  tagDefForm.applicableLevels = [...(row.applicableLevels || [])]
+  tagDefForm.minConsumeAmount = row.minConsumeAmount || 0
+  tagDefForm.minActiveHours = row.minActiveHours || 0
+  tagDefForm.minCreateCount = row.minCreateCount || 0
+  tagDefForm.description = row.description || ''
+  tagDefNameValid.value = true
+  tagDefNameError.value = ''
+  showTagDefForm.value = true
+}
+
+const handleSaveTagDef = async () => {
+  if (!tagDefForm.name?.trim()) {
+    ElMessage.warning('请输入标签名称')
+    return
+  }
+  if (!tagDefNameValid.value) {
+    ElMessage.error('标签名称校验未通过')
+    return
+  }
+  if (!tagDefForm.applicableLevels?.length) {
+    ElMessage.warning('请至少选择一个适用层级')
+    return
+  }
+  tagDefSaving.value = true
+  try {
+    const payload = { ...tagDefForm }
+    if (tagDefEditingId.value) {
+      await updateTagDefinition(tagDefEditingId.value, payload)
+      ElMessage.success('标签定义更新成功')
+    } else {
+      await createTagDefinition(payload)
+      ElMessage.success('标签定义创建成功')
+    }
+    resetTagDefForm()
+    await loadTagDefinitions()
+  } catch (error) {
+    console.error('保存标签定义失败:', error)
+  } finally {
+    tagDefSaving.value = false
+  }
+}
+
+const handleToggleTagDefStatus = async (row: TagDefinition) => {
+  const newStatus = row.status === 'active' ? 'disabled' : 'active'
+  try {
+    await updateTagDefinition(row.id, { status: newStatus } as any)
+    ElMessage.success(`标签已${newStatus === 'active' ? '启用' : '禁用'}`)
+    await loadTagDefinitions()
+  } catch (error) {
+    console.error('切换标签状态失败:', error)
+  }
+}
+
+// ===== 层级调整 =====
+const openBatchTagDialog = () => {
+  batchTagForm.filterBy = ''
+  batchTagForm.consumeLevel = ''
+  batchTagForm.activeMin = null
+  batchTagForm.activeMax = null
+  batchTagForm.tagNames = []
+  batchTagProgress.value = 0
+  batchTagProcessing.value = false
+  batchTagResult.value = null
+  processedCount.value = 0
+  totalUserCount.value = 0
+  batchTagDialogVisible.value = true
+  if (availableTagDefinitions.value.length === 0) {
+    loadTagDefinitions()
+  }
+}
+
+const handleLevelDialogOpened = () => {
+  loadLevelCriteriaMeta()
+}
+
+const loadLevelCriteriaMeta = async () => {
+  if (levelCriteriaMeta.value) return
+  try {
+    const res = await getLevelCriteriaMeta()
+    levelCriteriaMeta.value = res.data as any
+  } catch (error) {
+    console.error('加载层级标准失败:', error)
+  }
+}
+
+const handleLevelChange = async (row: UserInfo) => {
+  levelUser.value = row
+  levelStep.value = 1
+  levelDialogVisible.value = true
+  levelPreview.value = null
+  levelForm.targetLevel = ''
+  levelForm.force = false
+  levelForm.reason = ''
+  levelForm.confirm = false
+}
+
+const levelCriteriaItems = computed(() => {
+  if (!levelPreview.value || !levelUser.value?.member) return []
+  const items: any[] = []
+  const consume = levelUser.value.member.consumeAmount || 0
+  const active = levelUser.value.member.activeHours || 0
+  const create = levelUser.value.member.createCount || 0
+  const criteria = levelPreview.value.criteria || LEVEL_UPGRADE_CRITERIA[levelForm.targetLevel as keyof typeof LEVEL_UPGRADE_CRITERIA]
+
+  if (criteria?.minConsumeAmount !== undefined) {
+    const req = criteria.minConsumeAmount
+    items.push({
+      label: '累计消费金额',
+      current: consume,
+      require: req,
+      pass: consume >= req,
+      percent: Math.min(100, Math.round((consume / Math.max(1, req)) * 100))
+    })
+  }
+  if (criteria?.minActiveHours !== undefined) {
+    const req = criteria.minActiveHours
+    items.push({
+      label: '累计活跃时长(小时)',
+      current: active,
+      require: req,
+      pass: active >= req,
+      percent: Math.min(100, Math.round((active / Math.max(1, req)) * 100))
+    })
+  }
+  if (criteria?.minCreateCount !== undefined) {
+    const req = criteria.minCreateCount
+    items.push({
+      label: '累计创作数量',
+      current: create,
+      require: req,
+      pass: create >= req,
+      percent: Math.min(100, Math.round((create / Math.max(1, req)) * 100))
+    })
+  }
+  return items
+})
+
+const oldBenefits = computed(() => {
+  if (!levelUser.value) return []
+  const oldLvl = getDisplayLevel(levelUser.value.member?.level)
+  const newLvl = levelForm.targetLevel
+  const newBenefitKeys = LEVEL_BENEFITS[newLvl as keyof typeof LEVEL_BENEFITS] || []
+  const benefits = LEVEL_BENEFITS[oldLvl as keyof typeof LEVEL_BENEFITS] || []
+  return benefits.map((b: BenefitItem) => ({
+    ...b,
+    isRemoved: !newBenefitKeys.some((nb: BenefitItem) => nb.key === b.key)
+  }))
+})
+
+const newBenefits = computed(() => {
+  if (!levelUser.value) return []
+  const oldLvl = getDisplayLevel(levelUser.value.member?.level)
+  const newLvl = levelForm.targetLevel
+  const oldBenefitKeys = LEVEL_BENEFITS[oldLvl as keyof typeof LEVEL_BENEFITS] || []
+  const benefits = LEVEL_BENEFITS[newLvl as keyof typeof LEVEL_BENEFITS] || []
+  return benefits.map((b: BenefitItem) => ({
+    ...b,
+    isAdded: !oldBenefitKeys.some((ob: BenefitItem) => ob.key === b.key)
+  }))
+})
+
+const goLevelStep = (step: number) => {
+  levelStep.value = step
+}
+
+const doLevelPreview = async () => {
+  if (!levelUser.value || !levelForm.targetLevel) return
+  levelPreview.value = null
+  try {
+    const res = await getLevelPreview(levelUser.value.id, levelForm.targetLevel)
+    levelPreview.value = res.data as any
+  } catch (error) {
+    console.error('获取层级预览失败:', error)
+  }
+}
+
+const handleLevelSubmit = async () => {
+  if (!levelUser.value) return
+  submitLoading.value = true
+  try {
+    const res = await changeMemberLevel(levelUser.value.id, {
+      targetLevel: levelForm.targetLevel,
+      force: levelForm.force,
+      reason: levelForm.reason
+    })
+    const result = res.data as any
+    rippleTrigger.value = true
+    setTimeout(() => { rippleTrigger.value = false }, 1800)
+    if (result?.unlockedBenefits?.length) {
+      ElMessage.success(`解锁权益：${result.unlockedBenefits.map((b: BenefitItem) => b.label).join('、')}`)
+    }
+    if (result?.recoveredBenefits?.length) {
+      setTimeout(() => {
+        ElMessage.warning(`回收权益：${result.recoveredBenefits.map((b: BenefitItem) => b.label).join('、')}`)
+      }, 300)
+    }
+    if (!result?.unlockedBenefits?.length && !result?.recoveredBenefits?.length) {
+      ElMessage.success('用户层级调整成功')
+    }
+    levelDialogVisible.value = false
+    fetchList()
+  } catch (error: any) {
+    console.error('层级调整失败:', error)
+  } finally {
+    submitLoading.value = false
+  }
+}
+
+// ===== 标签编辑 =====
+const hasDuplicateTags = computed(() => {
+  const tags = tagEditForm.selectedTags
+  return tags.length !== new Set(tags).size
+})
+
+const handleTagEdit = async (row: UserInfo) => {
+  tagEditUser.value = row
+  tagEditForm.selectedTags = [...new Set(row.tags || [])]
+  Object.keys(tagMismatch).forEach((k) => delete tagMismatch[k])
+  tagEditDialogVisible.value = true
+  if (availableTagDefinitions.value.length === 0) {
+    loadTagDefinitions()
+  }
+  for (const t of row.tags || []) {
+    try {
+      const r = await checkUserTagMatch(row.id, t)
+      const d = r.data as any
+      tagMismatch[t] = !d.custom && !d.matched
+    } catch {}
+  }
+}
+
+const onTagChange = async (tags: string[]) => {
+  if (!tagEditUser.value) return
+  const deduped = [...new Set(tags)]
+  if (deduped.length !== tags.length) {
+    tagEditForm.selectedTags = deduped
+  }
+  for (const t of deduped) {
+    if (tagMismatch[t] === undefined) {
+      try {
+        const r = await checkUserTagMatch(tagEditUser.value!.id, t)
+        const d = r.data as any
+        tagMismatch[t] = !d.custom && !d.matched
+      } catch {
+        tagMismatch[t] = false
+      }
+    }
+  }
+}
+
+const saveTagEdit = async () => {
+  if (!tagEditUser.value) return
+  submitLoading.value = true
+  try {
+    const oldTags = tagEditUser.value.tags || []
+    const newTags = [...new Set(tagEditForm.selectedTags)]
+    const added = newTags.filter((t) => !oldTags.includes(t))
+    const removed = oldTags.filter((t) => !newTags.includes(t))
+    if (added.length) {
+      await addUserTags(tagEditUser.value.id, { tagNames: added })
+    }
+    if (removed.length) {
+      await removeUserTags(tagEditUser.value.id, { tagNames: removed })
+    }
+    ElMessage.success(`标签保存成功：新增 ${added.length} 个，移除 ${removed.length} 个`)
+    tagEditDialogVisible.value = false
+    fetchList()
+  } catch (error: any) {
+    console.error('保存标签失败:', error)
+  } finally {
+    submitLoading.value = false
+  }
+}
+
+// ===== 批量标签 =====
+const handleBatchTagSubmit = async () => {
+  batchTagProcessing.value = true
+  batchTagProgress.value = 0
+  processedCount.value = 0
+  batchTagResult.value = null
+  try {
+    const ids = selectedRows.value.length > 0 ? selectedRows.value.map((r) => r.id) : undefined
+    const activeRange: any =
+      batchTagForm.activeMin !== null || batchTagForm.activeMax !== null
+        ? [batchTagForm.activeMin, batchTagForm.activeMax]
+        : null
+    const res = await batchApplyTags({
+      userIds: ids,
+      tagNames: batchTagForm.tagNames,
+      filterBy: batchTagForm.filterBy || null,
+      activeRange: activeRange?.some((v: any) => v !== null && v !== '') ? activeRange : null,
+      consumeLevel: batchTagForm.consumeLevel || null
+    } as any)
+    const result = res.data as any
+    totalUserCount.value = result.total || 1
+    const total = Math.max(1, result.successCount + result.failedCount + result.skippedCount)
+    for (let i = 1; i <= 100; i++) {
+      await new Promise((r) => setTimeout(r, 15))
+      batchTagProgress.value = i
+      processedCount.value = Math.ceil((total * i) / 100)
+    }
+    batchTagResult.value = result
+    ElMessage.success(
+      `完成：成功 ${result.successCount} 个，失败 ${result.failedCount} 个，跳过 ${result.skippedCount} 个`
+    )
+    if (result.successCount > 0) {
+      fetchList()
+    }
+  } catch (error) {
+    console.error('批量标签配置失败:', error)
+    ElMessage.error('批量标签配置失败')
+  } finally {
+    batchTagProcessing.value = false
+  }
+}
+
+// ===== 标签溯源 =====
+const handleTagTrace = async (row: UserInfo) => {
+  tagTraceUser.value = row
+  tagTraceResult.value = null
+  tagTraceActiveTab.value = 'tagHistory'
+  tagTraceDialogVisible.value = true
+  try {
+    const res = await getTagTrace(row.id)
+    tagTraceResult.value = res.data as any
+  } catch (error) {
+    console.error('获取标签溯源失败:', error)
+  }
+}
+
+const cleanTags = async () => {
+  if (!tagTraceUser.value) return
+  tagCleaning.value = true
+  try {
+    const res = await cleanRedundantTags(tagTraceUser.value.id)
+    const cleaned = (res.data as any).cleaned || []
+    ElMessage.success(`清理完成，共清理 ${cleaned.length} 个冗余标签`)
+    await handleTagTrace(tagTraceUser.value)
+    fetchList()
+  } catch (error) {
+    console.error('清理冗余标签失败:', error)
+  } finally {
+    tagCleaning.value = false
+  }
+}
+
+const getBatchProgressPercent = () => batchTagProgress.value
 
 onMounted(() => {
   fetchList()
@@ -2529,5 +3964,301 @@ onMounted(() => {
 
 .edit-log-tabs {
   margin-top: -12px;
+}
+
+// ===== 功能点1：标签选择聚焦变色 + 错配红框 =====
+.focus-color {
+  transition: all 0.25s ease;
+
+  :deep(.el-input__wrapper),
+  :deep(.el-textarea__inner),
+  :deep(.el-select__wrapper) {
+    transition: all 0.25s ease;
+
+    &:is(:hover, .is-focus, .is-focused) {
+      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.25) !important;
+      border-color: #409EFF;
+      background: rgba(64, 158, 255, 0.03);
+    }
+  }
+}
+
+.tag-name-input.error-border :deep(.el-input__wrapper),
+.tag-select .mismatch-tag :deep(.el-select__tags-text) {
+  border: 1px solid #f56c6c !important;
+  background: rgba(245, 108, 108, 0.05) !important;
+  color: #f56c6c;
+  animation: mismatchPulse 1.2s ease infinite alternate;
+}
+
+@keyframes mismatchPulse {
+  from { box-shadow: 0 0 0 0 rgba(245,108,108,0.15); }
+  to { box-shadow: 0 0 0 4px rgba(245,108,108,0.3); }
+}
+
+.user-tag-item {
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+  }
+}
+
+.mismatch-chip {
+  border: 1px solid #f56c6c;
+  border-radius: 4px;
+  background: rgba(245,108,108,0.08);
+  padding: 2px;
+  display: inline-flex;
+}
+
+.member-level-badge {
+  cursor: pointer;
+  display: inline-block;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &.lvl-vip :deep(.el-tag) { box-shadow: 0 0 6px rgba(230, 162, 60, 0.6); }
+  &.lvl-svip :deep(.el-tag) { box-shadow: 0 0 8px rgba(198, 124, 255, 0.7); }
+  &.lvl-black :deep(.el-tag) { box-shadow: 0 0 10px rgba(48, 49, 51, 0.8); }
+}
+
+.tag-def-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+
+  .tag-def-filters {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+}
+
+.tag-def-form {
+  margin-bottom: 16px;
+}
+
+.form-tip {
+  font-size: 12px;
+  color: $text-secondary;
+  margin-top: 4px;
+}
+
+.range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .range-sep {
+    color: $text-secondary;
+  }
+}
+
+.tag-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.border-card {
+  border: 1px solid $border-color-lighter;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: $color-white;
+}
+
+.small-text {
+  font-size: 12px;
+}
+
+.field-error {
+  color: $danger-color;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+// ===== 功能点2：层级调整波纹动画 + 权益弹窗 =====
+.ripple-dialog :deep(.el-dialog) {
+  position: relative;
+  overflow: visible;
+}
+
+.ripple-effect {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 10px; height: 10px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.ripple-trigger {
+  .ripple-effect {
+    opacity: 1;
+
+    &::before, &::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 0; height: 0;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      animation: rippleExpand 1.6s ease-out 2;
+      background: radial-gradient(circle, rgba(103,194,58,0.35) 0%, rgba(103,194,58,0) 70%);
+    }
+    &::after { animation-delay: 0.5s; }
+  }
+}
+
+@keyframes rippleExpand {
+  0% { width: 0; height: 0; opacity: 1; }
+  100% { width: 700px; height: 700px; opacity: 0; }
+}
+
+.level-step-panel {
+  animation: fadeSlideIn 0.3s ease;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.criteria-progress-item {
+  margin-bottom: 18px;
+
+  .label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 13px;
+
+    .pass { color: #67C23A; font-weight: 600; }
+    .fail { color: #F56C6C; font-weight: 600; }
+  }
+}
+
+.benefit-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  .benefit-col {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ebeef5;
+
+    h4 { margin: 0 0 10px; font-size: 14px; }
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      padding: 4px 0;
+
+      &.diff-add {
+        color: #67C23A;
+        font-weight: 500;
+      }
+      &.diff-remove {
+        color: #F56C6C;
+        text-decoration: line-through;
+      }
+    }
+  }
+}
+
+.criteria-result {
+  margin-top: 8px;
+
+  h4 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+}
+
+.missing-info {
+  margin-top: 12px;
+}
+
+// ===== 功能点3：批量配置进度条 + 成功高亮 =====
+.batch-progress {
+  margin: 16px 0;
+
+  :deep(.el-progress-bar__inner) {
+    transition: width 0.2s linear;
+  }
+}
+
+.batch-result-table {
+  :deep(.el-table__row.success-row) {
+    background-color: rgba(103, 194, 58, 0.08) !important;
+
+    &:hover > td {
+      background-color: rgba(103, 194, 58, 0.14) !important;
+    }
+  }
+}
+
+.batch-progress-area {
+  margin-bottom: 16px;
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+}
+
+// ===== 功能点4：隔行变色 + 吸顶表头 =====
+.zebra-table {
+  :deep(.el-table__body tr:nth-child(even) > td) {
+    background-color: rgba(245, 247, 250, 0.8);
+  }
+}
+
+.sticky-header-table {
+  :deep(.el-table__header-wrapper) {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  :deep(.el-table th.el-table__cell) {
+    background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 11;
+    box-shadow: inset 0 -1px 0 #ebeef5, 0 2px 6px rgba(0,0,0,0.04);
+    font-weight: 600;
+  }
+}
+
+.trace-tabs {
+  margin-top: 12px;
+}
+
+.validation-alert-block {
+  margin-bottom: 16px;
 }
 </style>

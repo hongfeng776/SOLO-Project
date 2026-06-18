@@ -320,3 +320,121 @@ export const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/avi', 'video/mov']
 export const LAZY_LOAD_THRESHOLD = 0.1
 export const VIRTUAL_LIST_ITEM_HEIGHT = 80
 export const VIRTUAL_LIST_BUFFER = 5
+
+// ================ 用户层级标签管理 ================
+
+export enum DisplayMemberLevel {
+  NORMAL = 'normal',
+  VIP = 'vip',
+  PREMIUM_VIP = 'premium_vip'
+}
+
+export const DisplayMemberLevelLabel: Record<string, string> = {
+  [DisplayMemberLevel.NORMAL]: '普通用户',
+  [DisplayMemberLevel.VIP]: 'VIP用户',
+  [DisplayMemberLevel.PREMIUM_VIP]: '高级VIP用户'
+}
+
+export const DisplayMemberLevelTagType: Record<string, string> = {
+  [DisplayMemberLevel.NORMAL]: 'info',
+  [DisplayMemberLevel.VIP]: 'warning',
+  [DisplayMemberLevel.PREMIUM_VIP]: 'danger'
+}
+
+export const INTERNAL_TO_DISPLAY_LEVEL: Record<string, string> = {
+  normal: 'normal',
+  bronze: 'vip',
+  silver: 'vip',
+  gold: 'vip',
+  platinum: 'premium_vip'
+}
+
+export const DISPLAY_TO_MIN_INTERNAL: Record<string, string> = {
+  normal: 'normal',
+  vip: 'bronze',
+  premium_vip: 'platinum'
+}
+
+export const DISPLAY_LEVEL_ORDER: Record<string, number> = {
+  normal: 1,
+  vip: 2,
+  premium_vip: 3
+}
+
+export const LEVEL_UPGRADE_CRITERIA: Record<string, { minConsume: number; minActiveHours: number; minCreateCount: number }> = {
+  vip: { minConsume: 100, minActiveHours: 10, minCreateCount: 3 },
+  premium_vip: { minConsume: 1000, minActiveHours: 100, minCreateCount: 20 }
+}
+
+export const LEVEL_BENEFITS: Record<string, { key: string; label: string; value: boolean | string | number }[]> = {
+  normal: [
+    { key: 'basic_download', label: '基础下载(5次/天)', value: true },
+    { key: 'watermark', label: '下载带水印', value: true }
+  ],
+  vip: [
+    { key: 'basic_download', label: '基础下载(50次/天)', value: true },
+    { key: 'hd_download', label: '高清下载', value: true },
+    { key: 'no_watermark', label: '无水印下载', value: true },
+    { key: 'vip_template', label: 'VIP模板专区', value: true }
+  ],
+  premium_vip: [
+    { key: 'basic_download', label: '无限次下载', value: true },
+    { key: 'hd_download', label: '高清/4K下载', value: true },
+    { key: 'no_watermark', label: '无水印下载', value: true },
+    { key: 'vip_template', label: '全模板专区', value: true },
+    { key: 'priority_audit', label: '优先审核通道', value: true },
+    { key: 'exclusive_service', label: '专属客服', value: true },
+    { key: 'marketing_priority', label: '营销活动优先权', value: true }
+  ]
+}
+
+export const LEVEL_AUTO_TAGS: Record<string, string[]> = {
+  vip: ['VIP用户'],
+  premium_vip: ['高级VIP', '尊享用户']
+}
+
+export enum TagDimension {
+  CONSUME = 'consume',
+  CREATE = 'create',
+  ACTIVE = 'active',
+  COMPOSITE = 'composite'
+}
+
+export const TagDimensionLabel: Record<string, string> = {
+  [TagDimension.CONSUME]: '消费维度',
+  [TagDimension.CREATE]: '创作维度',
+  [TagDimension.ACTIVE]: '活跃维度',
+  [TagDimension.COMPOSITE]: '综合维度'
+}
+
+export const TagDimensionTagType: Record<string, string> = {
+  [TagDimension.CONSUME]: 'danger',
+  [TagDimension.CREATE]: 'success',
+  [TagDimension.ACTIVE]: 'primary',
+  [TagDimension.COMPOSITE]: 'warning'
+}
+
+export const USER_LEVEL_OPTIONS = [
+  { value: 'normal', label: '普通用户' },
+  { value: 'vip', label: 'VIP用户' },
+  { value: 'premium_vip', label: '高级VIP用户' }
+]
+
+export const TAG_DIMENSION_OPTIONS = [
+  { value: 'consume', label: '消费维度' },
+  { value: 'create', label: '创作维度' },
+  { value: 'active', label: '活跃维度' },
+  { value: 'composite', label: '综合维度' }
+]
+
+export const CONSUME_LEVEL_OPTIONS = [
+  { value: 'low', label: '低消费(<100元)' },
+  { value: 'mid', label: '中消费(100-999元)' },
+  { value: 'high', label: '高消费(≥1000元)' }
+]
+
+export const FILTER_OPTIONS = [
+  { value: '', label: '全部用户' },
+  { value: 'vip_only', label: '仅VIP及以上' },
+  { value: 'premium_only', label: '仅高级VIP' }
+]

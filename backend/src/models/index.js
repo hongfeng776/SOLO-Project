@@ -12,6 +12,9 @@ const Recycle = require('./Recycle')
 const UserEditLog = require('./UserEditLog')
 const AccountComplianceLog = require('./AccountComplianceLog')
 const UserStatusLog = require('./UserStatusLog')
+const TagDefinition = require('./TagDefinition')
+const MemberLevelLog = require('./MemberLevelLog')
+const MemberTagLog = require('./MemberTagLog')
 
 User.hasMany(Resource, { foreignKey: 'authorId', as: 'resources' })
 Resource.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
@@ -64,6 +67,12 @@ AccountComplianceLog.belongsTo(User, { foreignKey: 'userId', as: 'user' })
 User.hasMany(UserStatusLog, { foreignKey: 'userId', as: 'statusLogs' })
 UserStatusLog.belongsTo(User, { foreignKey: 'userId', as: 'user' })
 
+User.hasOne(MemberLevelLog, { foreignKey: 'userId', as: 'memberLevelLogs' })
+MemberLevelLog.belongsTo(User, { foreignKey: 'userId', as: 'user' })
+
+User.hasMany(MemberTagLog, { foreignKey: 'userId', as: 'memberTagLogs' })
+MemberTagLog.belongsTo(User, { foreignKey: 'userId', as: 'user' })
+
 module.exports = {
   User,
   Category,
@@ -78,5 +87,8 @@ module.exports = {
   Recycle,
   UserEditLog,
   AccountComplianceLog,
-  UserStatusLog
+  UserStatusLog,
+  TagDefinition,
+  MemberLevelLog,
+  MemberTagLog
 }

@@ -231,12 +231,15 @@ export interface Member {
   id: number
   userId: number
   username: string
-  level: string
+  level: 'normal' | 'bronze' | 'silver' | 'gold' | 'platinum'
   points: number
   balance: number
   expireTime: string
   totalDownload: number
   totalConsume: number
+  totalActiveHours: number
+  totalCreateCount: number
+  levelUpdatedAt?: string
   createdAt: string
   updatedAt: string
 }
@@ -559,4 +562,194 @@ export interface ChangeStats {
   last7days: UserStatusLog[]
   statusCounts: Record<string, number>
   total: number
+}
+
+// ================ 层级标签管理 ================
+
+export interface TagDefinition {
+  id: number
+  name: string
+  color: string
+  icon?: string
+  dimension: 'consume' | 'create' | 'active' | 'composite'
+  applicableLevels: string[]
+  minConsumeAmount: number
+  minActiveHours: number
+  minCreateCount: number
+  description?: string
+  createdById?: number
+  createdByName?: string
+  status: 'active' | 'inactive'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface MemberLevelLog {
+  id: number
+  userId: number
+  uid: string
+  username: string
+  oldLevel: string
+  newLevel: string
+  oldDisplayLevel: 'normal' | 'vip' | 'premium_vip'
+  newDisplayLevel: 'normal' | 'vip' | 'premium_vip'
+  changeType: 'upgrade' | 'downgrade' | 'manual'
+  criteriaSnapshot?: { totalConsume: number; totalActiveHours: number; totalCreateCount: number }
+  criteriaResult?: {
+    allPass: boolean
+    consumePass: boolean
+    activePass: boolean
+    createPass: boolean
+    missing: string[]
+  }
+  unlockedBenefits: BenefitItem[]
+  recoveredBenefits: BenefitItem[]
+  autoSyncedTags: string[]
+  operatorId?: number
+  operatorName?: string
+  operatorRole?: string
+  reason?: string
+  ip?: string
+  createdAt: string
+}
+
+export interface MemberTagLog {
+  id: number
+  userId: number
+  uid: string
+  username: string
+  changeType: 'add' | 'remove' | 'replace' | 'batch_add' | 'batch_remove' | 'auto_clean' | 'auto_sync'
+  oldTags: string[]
+  newTags: string[]
+  addedTags: string[]
+  removedTags: string[]
+  matchValidation?: Record<string, TagMatchResult>
+  duplicates: string[]
+  mismatches: { name: string; reason: string }[]
+  operatorId?: number
+  operatorName?: string
+  operatorRole?: string
+  batchId?: string
+  reason?: string
+  ip?: string
+  createdAt: string
+}
+
+export interface BenefitItem {
+  key: string
+  label: string
+  value: boolean | string | number
+}
+
+export interface TagMatchResult {
+  matched: boolean
+  custom?: boolean
+  reason?: string
+  dimension?: string
+  tagId?: number
+  userSnapshot?: { displayLevel: string; consume: number; hours: number; count: number }
+}
+
+export interface LevelCriteriaItem {
+  minConsume: number
+  minActiveHours: number
+  minCreateCount: number
+}
+
+export interface LevelPreviewResult {
+  userId: number
+  username: string
+  oldLevel: string
+  newLevel: string
+  oldDisplayLevel: string
+  newDisplayLevel: string
+  changeType: 'upgrade' | 'downgrade' | 'same'
+  criteria: {
+    allPass: boolean
+    consumePass: boolean
+    activePass: boolean
+    createPass: boolean
+    missing: string[]
+    snapshot?: { totalConsume: number; totalActiveHours: number; totalCreateCount: number }
+    criteria?: LevelCriteriaItem | null
+  }
+  canChange: boolean
+  unlockedBenefits: BenefitItem[]
+  recoveredBenefits: BenefitItem[]
+  autoSyncedTags: string[]
+  currentTags: string[]
+}
+
+export interface ChangeLevelResult {
+  member: Member
+  user: { id: number; tags: string[] }
+  levelLog: MemberLevelLog
+  unlockedBenefits: BenefitItem[]
+  recoveredBenefits: BenefitItem[]
+  autoSyncedTags: string[]
+}
+
+export interface AddTagsResult {
+  user: { id: number; tags: string[] }
+  log: MemberTagLog
+  added: string[]
+  duplicates: string[]
+  mismatches: { name: string; reason: string }[]
+}
+
+export interface BatchApplyTagsResult {
+  batchId: string
+  total: number
+  successCount: number
+  failedCount: number
+  skippedCount: number
+  success: { userId: number; username: string; added: string[] }[]
+  failed: { userId: number; reason: string }[]
+  skipped: { userId: number; username?: string; duplicates: string[]; mismatches: any[] }[]
+}
+
+export interface TagTraceResult {
+  user: {
+    id: number
+    uid: string
+    username: string
+    displayLevel: string
+    currentTags: string[]
+  }
+  member: {
+    totalConsume: number
+    totalActiveHours: number
+    totalCreateCount: number
+  }
+  tagLogs: MemberTagLog[]
+  levelLogs: MemberLevelLog[]
+  validation: {
+    duplicates: string[]
+    mismatches: { name: string; reason: string; dimension: string }[]
+    cleanedSuggestions: string[]
+  }
+  tagDefinitions: TagDefinition[]
+}
+
+export interface CleanTagsResult {
+  cleaned: string[]
+  removed: string[]
+  user: { id: number; tags: string[] }
+  log?: MemberTagLog
+}
+
+export interface LevelCriteriaMeta {
+  displayLevels: string[]
+  levelOrder: Record<string, number>
+  upgradeCriteria: Record<string, LevelCriteriaItem>
+  levelBenefits: Record<string, BenefitItem[]>
+  autoTags: Record<string, string[]>
+  internalToDisplay: Record<string, string>
+}
+
+export interface TagMeta {
+  dimensions: string[]
+  userLevels: string[]
+  consumeLevels: { value: string; label: string }[]
+  filterOptions: { value: string | null; label: string }[]
 }
