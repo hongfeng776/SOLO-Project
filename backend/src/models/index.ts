@@ -8,6 +8,7 @@ import Creator from './creator'
 import Activity from './activity'
 import Order from './order'
 import Comment from './comment'
+import CommentAuditLog from './comment-audit-log'
 import ViolationRecord from './violation-record'
 import ResourceSlot from './resource-slot'
 import OperationLog from './operation-log'
@@ -34,6 +35,9 @@ import ActivityOperationRecord from './activity-operation-record'
 import CreatorQualificationApply from './creator-qualification-apply'
 import CreatorQualificationLog from './creator-qualification-log'
 import CreatorBenefitConfig from './creator-benefit-config'
+import MerchantOnboardingApply from './merchant-onboarding-apply'
+import MerchantOnboardingLog from './merchant-onboarding-log'
+import MerchantCreditArchive from './merchant-credit-archive'
 
 const UserRole = User.sequelize!.define('sys_user_role', {}, { tableName: 'sys_user_role', timestamps: false })
 const NoteTag = Note.sequelize!.define('biz_note_tag', {}, { tableName: 'biz_note_tag', timestamps: false })
@@ -83,4 +87,16 @@ CreatorQualificationLog.belongsTo(CreatorQualificationApply, { as: 'apply', fore
 Creator.hasOne(CreatorBenefitConfig, { as: 'benefitConfig', foreignKey: 'creatorId' })
 CreatorBenefitConfig.belongsTo(Creator, { as: 'creator', foreignKey: 'creatorId' })
 
-export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, UserRole, NoteTag }
+MerchantOnboardingApply.hasMany(MerchantOnboardingLog, { as: 'logs', foreignKey: 'applyId' })
+MerchantOnboardingLog.belongsTo(MerchantOnboardingApply, { as: 'apply', foreignKey: 'applyId' })
+
+MerchantOnboardingApply.hasOne(MerchantCreditArchive, { as: 'creditArchive', foreignKey: 'applyId' })
+MerchantCreditArchive.belongsTo(MerchantOnboardingApply, { as: 'apply', foreignKey: 'applyId' })
+
+Note.hasMany(Comment, { as: 'comments', foreignKey: 'noteId' })
+Comment.belongsTo(Note, { as: 'note', foreignKey: 'noteId' })
+
+Comment.hasMany(CommentAuditLog, { as: 'auditLogs', foreignKey: 'commentId' })
+CommentAuditLog.belongsTo(Comment, { as: 'comment', foreignKey: 'commentId' })
+
+export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, CommentAuditLog, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, MerchantOnboardingApply, MerchantOnboardingLog, MerchantCreditArchive, UserRole, NoteTag }

@@ -105,6 +105,20 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/merchant',
+    component: Layout,
+    redirect: '/merchant/onboarding',
+    meta: { title: '商家入驻管控', icon: 'Shop', roles: ['admin', 'operation_manager'] },
+    children: [
+      {
+        path: 'onboarding',
+        name: 'MerchantOnboarding',
+        component: () => import(/* webpackChunkName: "merchant" */ '@views/merchant/onboarding/index.vue'),
+        meta: { title: '入驻管控管理', icon: 'Stamp', roles: ['admin', 'operation_manager'] }
+      }
+    ]
+  },
+  {
     path: '/activity',
     component: Layout,
     redirect: '/activity/list',

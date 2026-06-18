@@ -13,6 +13,8 @@ class Comment extends Model<InferAttributes<Comment>, InferCreationAttributes<Co
   declare replyTo: CreationOptional<string>
   declare likeCount: CreationOptional<number>
   declare violationType: CreationOptional<string>
+  declare ip: CreationOptional<string>
+  declare riskLevel: CreationOptional<number>
   declare createTime: CreationOptional<Date>
   declare updateTime: CreationOptional<Date>
   declare deleteTime: CreationOptional<Date | null>
@@ -72,6 +74,17 @@ Comment.init(
       allowNull: true,
       defaultValue: ''
     },
+    ip: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      defaultValue: ''
+    },
+    riskLevel: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '0正常 1轻微 2中度 3重度'
+    },
     createTime: DataTypes.DATE,
     updateTime: DataTypes.DATE,
     deleteTime: DataTypes.DATE
@@ -83,7 +96,8 @@ Comment.init(
     indexes: [
       { fields: ['note_id', 'status'] },
       { fields: ['user_id', 'status'] },
-      { fields: ['parent_id'] }
+      { fields: ['parent_id'] },
+      { fields: ['risk_level', 'status'] }
     ]
   }
 )

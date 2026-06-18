@@ -40,6 +40,7 @@ import userLevelRoutes from '@routes/user-level'
 import riskControlRoutes from '@routes/risk-control'
 import activityOperationRoutes from '@routes/activity-operation'
 import creatorQualificationRoutes from '@routes/creator-qualification'
+import merchantOnboardingRoutes from '@routes/merchant-onboarding'
 
 const app = express()
 
@@ -91,6 +92,7 @@ app.use('/api/user-level', userLevelRoutes)
 app.use('/api/risk-control', riskControlRoutes)
 app.use('/api/activity-operation', activityOperationRoutes)
 app.use('/api/creator-qualification', creatorQualificationRoutes)
+app.use('/api/merchant-onboarding', merchantOnboardingRoutes)
 
 app.use(celebrateErrors())
 app.use(errorHandler)

@@ -322,8 +322,76 @@ export interface Comment {
   likeCount: number
   status: number
   violationType: string
+  ip: string
+  riskLevel: number
   createTime: string
   updateTime: string
+}
+
+export interface ComplianceViolation {
+  type: string
+  typeName: string
+  matched: string[]
+  level: number
+  message: string
+}
+
+export interface ComplianceCheckResult {
+  passed: boolean
+  violations: ComplianceViolation[]
+  sensitiveMatches: string[]
+  riskLevel: number
+  intercepted: boolean
+}
+
+export interface CommentTraceResult {
+  comment: {
+    id: number
+    content: string
+    status: number
+    violationType: string
+    riskLevel: number
+    createTime: string
+    ip: string
+  }
+  source: {
+    userId: number
+    userName: string
+    ip: string
+    publishTime: string
+    content: string
+  }
+  note: {
+    id: number
+    title: string
+    authorName: string
+  } | null
+  riskAnalysis: {
+    isAbnormal: boolean
+    sameUserRecentCount: number
+    sameContentCount: number
+    sameIpCount: number
+    riskLevel: number
+    reasons: string[]
+  }
+  auditLogs: CommentAuditLogItem[]
+}
+
+export interface CommentAuditLogItem {
+  id: number
+  commentId: number
+  action: number
+  violationType: string
+  violationDetail: string
+  sensitiveWords: string
+  handlerName: string
+  handleNote: string
+  createTime: string
+}
+
+export interface HighlightPart {
+  text: string
+  isSensitive: boolean
 }
 
 export interface ViolationRecord {

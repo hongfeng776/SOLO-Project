@@ -654,3 +654,163 @@ export const CREATOR_BENEFIT_NAMES: Record<string, string> = {
   [CreatorBenefit.VERIFIED_BADGE]: '认证标识',
   [CreatorBenefit.FLOW_BOOST]: '流量扶持'
 }
+
+export enum MerchantApplyStatus {
+  DRAFT = 0,
+  PENDING_INITIAL = 1,
+  PENDING_FINAL = 2,
+  INITIAL_PASSED = 3,
+  APPROVED = 4,
+  REJECTED = 5,
+  RETURNED = 6
+}
+
+export const MERCHANT_APPLY_STATUS_NAMES: Record<number, string> = {
+  [MerchantApplyStatus.DRAFT]: '草稿',
+  [MerchantApplyStatus.PENDING_INITIAL]: '待初审',
+  [MerchantApplyStatus.PENDING_FINAL]: '待终审',
+  [MerchantApplyStatus.INITIAL_PASSED]: '初审通过',
+  [MerchantApplyStatus.APPROVED]: '终审通过',
+  [MerchantApplyStatus.REJECTED]: '已驳回',
+  [MerchantApplyStatus.RETURNED]: '已退回'
+}
+
+export const MERCHANT_APPLY_STATUS_TAG_TYPES: Record<number, string> = {
+  [MerchantApplyStatus.DRAFT]: 'info',
+  [MerchantApplyStatus.PENDING_INITIAL]: 'warning',
+  [MerchantApplyStatus.PENDING_FINAL]: 'warning',
+  [MerchantApplyStatus.INITIAL_PASSED]: '',
+  [MerchantApplyStatus.APPROVED]: 'success',
+  [MerchantApplyStatus.REJECTED]: 'danger',
+  [MerchantApplyStatus.RETURNED]: 'info'
+}
+
+export enum MerchantType {
+  NORMAL = 'normal',
+  BRAND = 'brand'
+}
+
+export const MERCHANT_TYPE_NAMES: Record<string, string> = {
+  [MerchantType.NORMAL]: '普通商家',
+  [MerchantType.BRAND]: '品牌商家'
+}
+
+export enum MerchantRiskLevel {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high'
+}
+
+export const MERCHANT_RISK_LEVEL_NAMES: Record<string, string> = {
+  [MerchantRiskLevel.LOW]: '低风险',
+  [MerchantRiskLevel.MEDIUM]: '中风险',
+  [MerchantRiskLevel.HIGH]: '高风险'
+}
+
+export const MERCHANT_RISK_LEVEL_COLORS: Record<string, string> = {
+  [MerchantRiskLevel.LOW]: '#67c23a',
+  [MerchantRiskLevel.MEDIUM]: '#e6a23c',
+  [MerchantRiskLevel.HIGH]: '#f56c6c'
+}
+
+export enum MerchantOnboardingLogType {
+  SUBMIT = 'submit',
+  PRE_CHECK = 'pre_check',
+  INITIAL_PASS = 'initial_pass',
+  INITIAL_REJECT = 'initial_reject',
+  FINAL_PASS = 'final_pass',
+  FINAL_REJECT = 'final_reject',
+  BATCH_PASS = 'batch_pass',
+  BATCH_REJECT = 'batch_reject',
+  BATCH_RETURN = 'batch_return',
+  RETURN = 'return',
+  STATUS_CHANGE = 'status_change',
+  PERMISSION_CHANGE = 'permission_change',
+  DUPLICATE_DETECT = 'duplicate_detect',
+  FAKE_DETECT = 'fake_detect',
+  CROSS_INDUSTRY_DETECT = 'cross_industry_detect',
+  CREDIT_UPDATE = 'credit_update'
+}
+
+export const MERCHANT_ONBOARDING_LOG_TYPE_NAMES: Record<string, string> = {
+  [MerchantOnboardingLogType.SUBMIT]: '提交申请',
+  [MerchantOnboardingLogType.PRE_CHECK]: '前置校验',
+  [MerchantOnboardingLogType.INITIAL_PASS]: '初审通过',
+  [MerchantOnboardingLogType.INITIAL_REJECT]: '初审驳回',
+  [MerchantOnboardingLogType.FINAL_PASS]: '终审通过',
+  [MerchantOnboardingLogType.FINAL_REJECT]: '终审驳回',
+  [MerchantOnboardingLogType.BATCH_PASS]: '批量通过',
+  [MerchantOnboardingLogType.BATCH_REJECT]: '批量驳回',
+  [MerchantOnboardingLogType.BATCH_RETURN]: '批量退回',
+  [MerchantOnboardingLogType.RETURN]: '退回补充',
+  [MerchantOnboardingLogType.STATUS_CHANGE]: '状态变更',
+  [MerchantOnboardingLogType.PERMISSION_CHANGE]: '权限变更',
+  [MerchantOnboardingLogType.DUPLICATE_DETECT]: '重复入驻检测',
+  [MerchantOnboardingLogType.FAKE_DETECT]: '虚假资质检测',
+  [MerchantOnboardingLogType.CROSS_INDUSTRY_DETECT]: '跨行业违规检测',
+  [MerchantOnboardingLogType.CREDIT_UPDATE]: '信用评分更新'
+}
+
+export const MERCHANT_CREDIT_LEVEL_COLORS: Record<string, string> = {
+  A: '#67c23a',
+  B: '#409eff',
+  C: '#e6a23c',
+  D: '#f56c6c'
+}
+
+export enum CommentStatus {
+  PENDING = 0,
+  APPROVED = 1,
+  REJECTED = 2
+}
+
+export const COMMENT_STATUS_NAMES: Record<number, string> = {
+  [CommentStatus.PENDING]: '待审核',
+  [CommentStatus.APPROVED]: '已通过',
+  [CommentStatus.REJECTED]: '已驳回'
+}
+
+export const COMMENT_STATUS_TAG_TYPES: Record<number, string> = {
+  [CommentStatus.PENDING]: 'warning',
+  [CommentStatus.APPROVED]: 'success',
+  [CommentStatus.REJECTED]: 'danger'
+}
+
+export enum CommentRiskLevel {
+  NONE = 0,
+  LOW = 1,
+  MEDIUM = 2,
+  HIGH = 3
+}
+
+export const COMMENT_RISK_LEVEL_NAMES: Record<number, string> = {
+  [CommentRiskLevel.NONE]: '正常',
+  [CommentRiskLevel.LOW]: '轻微',
+  [CommentRiskLevel.MEDIUM]: '中度',
+  [CommentRiskLevel.HIGH]: '重度'
+}
+
+export const COMMENT_RISK_LEVEL_COLORS: Record<number, string> = {
+  [CommentRiskLevel.NONE]: '#67c23a',
+  [CommentRiskLevel.LOW]: '#e6a23c',
+  [CommentRiskLevel.MEDIUM]: '#f56c6c',
+  [CommentRiskLevel.HIGH]: '#c45656'
+}
+
+export enum ComplianceViolationType {
+  SENSITIVE_WORD = 'sensitive_word',
+  VIOLATION_PHRASE = 'violation_phrase',
+  TRAFFIC_KEYWORD = 'traffic_keyword',
+  HIGH_FREQUENCY = 'high_frequency',
+  DUPLICATE_CONTENT = 'duplicate_content',
+  IRRELEVANT = 'irrelevant'
+}
+
+export const COMPLIANCE_VIOLATION_TYPE_NAMES: Record<string, string> = {
+  [ComplianceViolationType.SENSITIVE_WORD]: '敏感词',
+  [ComplianceViolationType.VIOLATION_PHRASE]: '违规话术',
+  [ComplianceViolationType.TRAFFIC_KEYWORD]: '引流关键词',
+  [ComplianceViolationType.HIGH_FREQUENCY]: '高频评论',
+  [ComplianceViolationType.DUPLICATE_CONTENT]: '重复评论',
+  [ComplianceViolationType.IRRELEVANT]: '无关评论'
+}
