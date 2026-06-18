@@ -15,6 +15,8 @@ import CommissionRule from './CommissionRule.model';
 import RoleDeletionLog from './RoleDeletionLog.model';
 import PromoterBlacklist from './PromoterBlacklist.model';
 import PromoterAuditLog from './PromoterAuditLog.model';
+import PromoterChangeLog from './PromoterChangeLog.model';
+import PromoterQualification from './PromoterQualification.model';
 
 const models = {
   User,
@@ -34,6 +36,8 @@ const models = {
   RoleDeletionLog,
   PromoterBlacklist,
   PromoterAuditLog,
+  PromoterChangeLog,
+  PromoterQualification,
 };
 
 const associate = (): void => {
@@ -50,6 +54,8 @@ const associate = (): void => {
   Promoter.hasMany(Promoter, { foreignKey: 'parentId', as: 'children' });
   Promoter.belongsTo(Promoter, { foreignKey: 'parentId', as: 'parent' });
   Promoter.hasMany(PromoterAuditLog, { foreignKey: 'promoterId', as: 'auditLogs' });
+  Promoter.hasMany(PromoterChangeLog, { foreignKey: 'promoterId', as: 'changeLogs' });
+  Promoter.hasMany(PromoterQualification, { foreignKey: 'promoterId', as: 'qualifications' });
   Promoter.belongsTo(User, { foreignKey: 'firstAuditorId', as: 'firstAuditor' });
   Promoter.belongsTo(User, { foreignKey: 'secondAuditorId', as: 'secondAuditor' });
 
@@ -69,8 +75,10 @@ const associate = (): void => {
   Role.belongsToMany(User, { through: UserRole, foreignKey: 'roleId', otherKey: 'userId', as: 'users' });
 
   PromoterAuditLog.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
+  PromoterChangeLog.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
+  PromoterQualification.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
 };
 
 export { associate };
-export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog };
+export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification };
 export default models;

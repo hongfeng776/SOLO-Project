@@ -190,3 +190,108 @@ export const PERMISSION_MUTUAL_EXCLUSIONS: PermissionMutualExclusion[] = [
     reason: '佣金结算与提现审批互斥，防止财务操作风险',
   },
 ];
+
+export enum VerifyStatus {
+  UNVERIFIED = 0,
+  PENDING = 1,
+  VERIFIED = 2,
+  REJECTED = -1,
+}
+
+export enum QualificationType {
+  ID_CARD = 'id_card',
+  BUSINESS_LICENSE = 'business_license',
+  AGENCY_AGREEMENT = 'agency_agreement',
+  OTHER = 'other',
+}
+
+export enum SettleStatus {
+  NORMAL = 1,
+  FROZEN = 0,
+  CLOSED = -1,
+}
+
+export enum PromoteStatus {
+  ACTIVE = 1,
+  RESTRICTED = 0,
+  BANNED = -1,
+}
+
+export const PROMOTER_LEVEL_CONFIGS: {
+  level: PromoterLevel;
+  commissionRate: number;
+  maxChannels: number;
+  canUseCoupon: boolean;
+  canUseCashback: boolean;
+  minOrderAmount: number;
+  dailyWithdrawLimit: number;
+}[] = [
+  {
+    level: PromoterLevel.L1,
+    commissionRate: 0.05,
+    maxChannels: 1,
+    canUseCoupon: false,
+    canUseCashback: false,
+    minOrderAmount: 100,
+    dailyWithdrawLimit: 500,
+  },
+  {
+    level: PromoterLevel.L2,
+    commissionRate: 0.08,
+    maxChannels: 3,
+    canUseCoupon: false,
+    canUseCashback: true,
+    minOrderAmount: 80,
+    dailyWithdrawLimit: 2000,
+  },
+  {
+    level: PromoterLevel.L3,
+    commissionRate: 0.12,
+    maxChannels: 5,
+    canUseCoupon: true,
+    canUseCashback: true,
+    minOrderAmount: 50,
+    dailyWithdrawLimit: 5000,
+  },
+  {
+    level: PromoterLevel.L4,
+    commissionRate: 0.15,
+    maxChannels: 10,
+    canUseCoupon: true,
+    canUseCashback: true,
+    minOrderAmount: 30,
+    dailyWithdrawLimit: 20000,
+  },
+  {
+    level: PromoterLevel.L5,
+    commissionRate: 0.2,
+    maxChannels: 999,
+    canUseCoupon: true,
+    canUseCashback: true,
+    minOrderAmount: 0,
+    dailyWithdrawLimit: 999999,
+  },
+];
+
+export const BASIC_EDIT_FIELDS = [
+  'name',
+  'nickname',
+  'avatar',
+  'email',
+  'phone',
+  'wechatId',
+  'idCardFrontImg',
+  'idCardBackImg',
+] as const;
+
+export const ADMIN_EDIT_FIELDS = [
+  ...BASIC_EDIT_FIELDS,
+  'level',
+  'channelId',
+  'parentId',
+  'status',
+  'promoteStatus',
+  'settleStatus',
+  'commissionRate',
+  'remark',
+] as const;

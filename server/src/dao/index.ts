@@ -11,6 +11,8 @@ import operationLogDao from './OperationLog.dao';
 import permissionChangeLogDao from './PermissionChangeLog.dao';
 import promoterBlacklistDao from './PromoterBlacklist.dao';
 import promoterAuditLogDao from './PromoterAuditLog.dao';
+import promoterChangeLogDao from './PromoterChangeLog.dao';
+import promoterQualificationDao from './PromoterQualification.dao';
 
 export {
   userDao,
@@ -26,4 +28,6 @@ export {
   permissionChangeLogDao,
   promoterBlacklistDao,
   promoterAuditLogDao,
+  promoterChangeLogDao,
+  promoterQualificationDao,
 };

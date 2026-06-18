@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
-import { PromoterLevel, PromoterStatus, AuditStage, AuditStatus } from '../constants/enum';
+import { PromoterLevel, PromoterStatus, AuditStage, AuditStatus, VerifyStatus, PromoteStatus, SettleStatus } from '../constants/enum';
 import { v4 as uuidv4 } from 'uuid';
 
 interface PromoterAttributes {
@@ -44,12 +44,21 @@ interface PromoterAttributes {
   registerAt?: Date;
   lastActiveAt?: Date;
   remark?: string;
+  verifyStatus?: number;
+  verifiedAt?: Date;
+  realName?: string;
+  promoteStatus?: number;
+  settleStatus?: number;
+  commissionRate?: number;
+  qualificationImgs?: string;
+  qualificationExpireAt?: Date;
+  qualificationRemark?: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
 }
 
-interface PromoterCreationAttributes extends Optional<PromoterAttributes, 'id' | 'channelId' | 'nickname' | 'avatar' | 'phone' | 'email' | 'wechatId' | 'idCard' | 'idCardFrontImg' | 'idCardBackImg' | 'level' | 'status' | 'auditStage' | 'auditStatus' | 'firstAuditorId' | 'firstAuditAt' | 'firstAuditRemark' | 'secondAuditorId' | 'secondAuditAt' | 'secondAuditRemark' | 'rejectReasonCode' | 'rejectCustomRemark' | 'rejectedAt' | 'lockUntil' | 'applyCount' | 'lastApplyAt' | 'dataHash' | 'riskFlagged' | 'riskReason' | 'parentId' | 'totalOrders' | 'totalAmount' | 'totalCommission' | 'availableCommission' | 'frozenCommission' | 'registerAt' | 'lastActiveAt' | 'remark' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
+interface PromoterCreationAttributes extends Optional<PromoterAttributes, 'id' | 'channelId' | 'nickname' | 'avatar' | 'phone' | 'email' | 'wechatId' | 'idCard' | 'idCardFrontImg' | 'idCardBackImg' | 'level' | 'status' | 'auditStage' | 'auditStatus' | 'firstAuditorId' | 'firstAuditAt' | 'firstAuditRemark' | 'secondAuditorId' | 'secondAuditAt' | 'secondAuditRemark' | 'rejectReasonCode' | 'rejectCustomRemark' | 'rejectedAt' | 'lockUntil' | 'applyCount' | 'lastApplyAt' | 'dataHash' | 'riskFlagged' | 'riskReason' | 'parentId' | 'totalOrders' | 'totalAmount' | 'totalCommission' | 'availableCommission' | 'frozenCommission' | 'registerAt' | 'lastActiveAt' | 'remark' | 'verifyStatus' | 'verifiedAt' | 'realName' | 'promoteStatus' | 'settleStatus' | 'commissionRate' | 'qualificationImgs' | 'qualificationExpireAt' | 'qualificationRemark' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
 
 class Promoter extends Model<PromoterAttributes, PromoterCreationAttributes> implements PromoterAttributes {
   public id!: string;
@@ -92,6 +101,15 @@ class Promoter extends Model<PromoterAttributes, PromoterCreationAttributes> imp
   public registerAt?: Date;
   public lastActiveAt?: Date;
   public remark?: string;
+  public verifyStatus?: number;
+  public verifiedAt?: Date;
+  public realName?: string;
+  public promoteStatus?: number;
+  public settleStatus?: number;
+  public commissionRate?: number;
+  public qualificationImgs?: string;
+  public qualificationExpireAt?: Date;
+  public qualificationRemark?: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
   public readonly deletedAt?: Date;
@@ -291,6 +309,45 @@ Promoter.init(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    verifyStatus: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: VerifyStatus.UNVERIFIED,
+    },
+    verifiedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    realName: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    promoteStatus: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: PromoteStatus.ACTIVE,
+    },
+    settleStatus: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: SettleStatus.NORMAL,
+    },
+    commissionRate: {
+      type: DataTypes.DECIMAL(5, 4),
+      allowNull: true,
+    },
+    qualificationImgs: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    qualificationExpireAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    qualificationRemark: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -350,6 +407,18 @@ Promoter.init(
       {
         name: 'idx_risk_flagged',
         fields: ['risk_flagged'],
+      },
+      {
+        name: 'idx_verify_status',
+        fields: ['verify_status'],
+      },
+      {
+        name: 'idx_promote_status',
+        fields: ['promote_status'],
+      },
+      {
+        name: 'idx_settle_status',
+        fields: ['settle_status'],
       },
     ],
   }

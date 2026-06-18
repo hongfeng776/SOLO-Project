@@ -14,6 +14,7 @@ import riskControlService from './RiskControl.service';
 import commissionRuleService from './CommissionRule.service';
 import notificationService from './Notification.service';
 import promoterAuditService from './PromoterAudit.service';
+import promoterManageService from './PromoterManage.service';
 
 export {
   authService,
@@ -32,4 +33,5 @@ export {
   commissionRuleService,
   notificationService,
   promoterAuditService,
+  promoterManageService,
 };

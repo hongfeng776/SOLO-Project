@@ -11,6 +11,7 @@ import permissionController from './Permission.controller';
 import operationLogController from './OperationLog.controller';
 import commissionRuleController from './CommissionRule.controller';
 import promoterAuditController from './PromoterAudit.controller';
+import promoterManageController from './PromoterManage.controller';
 
 export {
   authController,
@@ -26,4 +27,5 @@ export {
   operationLogController,
   commissionRuleController,
   promoterAuditController,
+  promoterManageController,
 };

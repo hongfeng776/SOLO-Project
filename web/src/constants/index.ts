@@ -416,3 +416,71 @@ export const LOCK_WINDOW_DAYS_OPTIONS = [
   { label: '15天', value: 15 },
   { label: '30天', value: 30 },
 ]
+
+export const VERIFY_STATUS_OPTIONS = [
+  { value: 0, label: '未认证', type: 'info' },
+  { value: 1, label: '认证中', type: 'warning' },
+  { value: 2, label: '已认证', type: 'success' },
+  { value: -1, label: '已驳回', type: 'danger' },
+] as const
+
+export const VERIFY_STATUS_MAP: Record<number, { label: string; type: string }> = {
+  0: { label: '未认证', type: 'info' },
+  1: { label: '认证中', type: 'warning' },
+  2: { label: '已认证', type: 'success' },
+  '-1': { label: '已驳回', type: 'danger' },
+}
+
+export const QUALIFICATION_TYPE_OPTIONS = [
+  { value: 'id_card', label: '身份证' },
+  { value: 'business_license', label: '营业执照' },
+  { value: 'agency_agreement', label: '代理协议' },
+  { value: 'other', label: '其他' },
+] as const
+
+export const QUALIFICATION_TYPE_MAP: Record<string, string> = {
+  id_card: '身份证',
+  business_license: '营业执照',
+  agency_agreement: '代理协议',
+  other: '其他',
+}
+
+export const PROMOTE_STATUS_OPTIONS = [
+  { value: 1, label: '正常推广', type: 'success' },
+  { value: 0, label: '推广受限', type: 'warning' },
+  { value: -1, label: '禁止推广', type: 'danger' },
+]
+
+export const PROMOTE_STATUS_MAP: Record<number, { label: string; type: string }> = {
+  1: { label: '正常推广', type: 'success' },
+  0: { label: '推广受限', type: 'warning' },
+  '-1': { label: '禁止推广', type: 'danger' },
+}
+
+export const SETTLE_STATUS_OPTIONS = [
+  { value: 1, label: '结算正常', type: 'success' },
+  { value: 0, label: '结算冻结', type: 'warning' },
+  { value: -1, label: '结算关闭', type: 'danger' },
+]
+
+export const SETTLE_STATUS_MAP: Record<number, { label: string; type: string }> = {
+  1: { label: '结算正常', type: 'success' },
+  0: { label: '结算冻结', type: 'warning' },
+  '-1': { label: '结算关闭', type: 'danger' },
+}
+
+export const CHANGE_TYPE_OPTIONS = [
+  { value: 'update', label: '信息修改', type: '' },
+  { value: 'batch_update', label: '批量修改', type: '' },
+  { value: 'level_up', label: '等级升级', type: 'success' },
+  { value: 'level_down', label: '等级降级', type: 'warning' },
+  { value: 'status_change', label: '状态变更', type: '' },
+]
+
+export const PROMOTER_TAB_OPTIONS = [
+  { value: 'list', label: '推客列表', icon: 'List' },
+  { value: 'edit', label: '编辑管控', icon: 'Edit' },
+  { value: 'qualification', label: '资质审核', icon: 'Document' },
+  { value: 'batch', label: '批量操作', icon: 'Operation' },
+  { value: 'trace', label: '变更溯源', icon: 'Connection' },
+] as const
