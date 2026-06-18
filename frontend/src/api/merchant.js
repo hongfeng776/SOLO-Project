@@ -160,3 +160,128 @@ export function saveQualifications(id, qualifications) {
     data: { qualifications }
   })
 }
+
+export function getOpsStats(params) {
+  return request({
+    url: '/merchants/ops/stats',
+    method: 'get',
+    params
+  })
+}
+
+export function getOpsMerchantList(params) {
+  return request({
+    url: '/merchants/ops/list',
+    method: 'get',
+    params
+  })
+}
+
+export function verifyFieldUnique(params) {
+  return request({
+    url: '/merchants/ops/verify-unique',
+    method: 'get',
+    params
+  })
+}
+
+export function getOpsDetail(id) {
+  return request({
+    url: `/merchants/${id}/ops/detail`,
+    method: 'get'
+  })
+}
+
+export function preOpsCheck(id) {
+  return request({
+    url: `/merchants/${id}/ops/precheck`,
+    method: 'get'
+  })
+}
+
+export function updateBasicInfo(id, data) {
+  return request({
+    url: `/merchants/${id}/ops/basic-info`,
+    method: 'put',
+    data
+  })
+}
+
+export function updateBusinessInfo(id, data) {
+  return request({
+    url: `/merchants/${id}/ops/business-info`,
+    method: 'put',
+    data
+  })
+}
+
+export function updateContactInfo(id, data) {
+  return request({
+    url: `/merchants/${id}/ops/contact-info`,
+    method: 'put',
+    data
+  })
+}
+
+export function updateSettlementInfo(id, data) {
+  return request({
+    url: `/merchants/${id}/ops/settlement-info`,
+    method: 'put',
+    data
+  })
+}
+
+export function updateBusinessStatus(id, data) {
+  return request({
+    url: `/merchants/${id}/ops/business-status`,
+    method: 'put',
+    data
+  })
+}
+
+export function updateOperationStatus(id, data) {
+  return request({
+    url: `/merchants/${id}/ops/operation-status`,
+    method: 'put',
+    data
+  })
+}
+
+export function batchUpdateTags(data) {
+  return request({
+    url: '/merchants/batch/ops/update-tags',
+    method: 'post',
+    data
+  })
+}
+
+export function batchUpdateNotice(data) {
+  return request({
+    url: '/merchants/batch/ops/update-notice',
+    method: 'post',
+    data
+  })
+}
+
+export function batchLockAccounts(data) {
+  return request({
+    url: '/merchants/batch/ops/lock-accounts',
+    method: 'post',
+    data
+  })
+}
+
+export function getChangeLogs(id, params) {
+  return request({
+    url: `/merchants/${id}/ops/change-logs`,
+    method: 'get',
+    params
+  })
+}
+
+export function getCompleteTrace(id) {
+  return request({
+    url: `/merchants/${id}/ops/complete-trace`,
+    method: 'get'
+  })
+}

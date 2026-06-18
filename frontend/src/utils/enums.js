@@ -592,6 +592,161 @@ export const ApplyScopeEnum = {
   PARTIAL: { value: 'partial', label: '局部生效', color: '#1890ff' }
 }
 
+export const BusinessStatusEnum = {
+  CLOSED: { value: 0, label: '停业', type: 'info', color: '#909399', gradient: 'linear-gradient(135deg, #909399, #c0c4cc)' },
+  OPERATING: { value: 1, label: '营业中', type: 'success', color: '#52c41a', gradient: 'linear-gradient(135deg, #52c41a, #95de64)' },
+  SUSPENDED: { value: 2, label: '暂停营业', type: 'warning', color: '#faad14', gradient: 'linear-gradient(135deg, #faad14, #ffd666)' },
+  DECORATING: { value: 3, label: '装修中', type: 'primary', color: '#1890ff', gradient: 'linear-gradient(135deg, #1890ff, #69c0ff)' },
+  OUT_OF_BUSINESS: { value: 4, label: '已结业', type: 'danger', color: '#ff4d4f', gradient: 'linear-gradient(135deg, #ff4d4f, #ff7875)' }
+}
+
+export const OperationStatusEnum = {
+  ABNORMAL: { value: 0, label: '异常', type: 'danger', color: '#f5222d', gradient: 'linear-gradient(135deg, #f5222d, #ff4d4f)' },
+  NORMAL: { value: 1, label: '正常运营', type: 'success', color: '#52c41a', gradient: 'linear-gradient(135deg, #52c41a, #95de64)' },
+  TEMP_LOCKED: { value: 2, label: '临时锁定', type: 'warning', color: '#faad14', gradient: 'linear-gradient(135deg, #faad14, #ffd666)' },
+  PERM_LOCKED: { value: 3, label: '永久锁定', type: 'danger', color: '#ff4d4f', gradient: 'linear-gradient(135deg, #ff4d4f, #ff7875)' }
+}
+
+export const MerchantLevelEnum = {
+  LEVEL1: { value: 1, label: '一星', color: '#909399', icon: 'StarFilled' },
+  LEVEL2: { value: 2, label: '二星', color: '#67c23a', icon: 'StarFilled' },
+  LEVEL3: { value: 3, label: '三星', color: '#909399', icon: 'StarFilled' },
+  LEVEL4: { value: 4, label: '四星', color: '#e6a23c', icon: 'StarFilled' },
+  LEVEL5: { value: 5, label: '五星', color: '#f56c6c', icon: 'StarFilled' }
+}
+
+export const MerchantTagOptions = [
+  { value: 'official', label: '官方直营', color: '#1890ff', type: 'primary' },
+  { value: 'brand_authorized', label: '品牌授权', color: '#722ed1', type: '' },
+  { value: 'high_quality', label: '优质商家', color: '#52c41a', type: 'success' },
+  { value: 'new_merchant', label: '新商家', color: '#faad14', type: 'warning' },
+  { value: 'hot', label: '热门商家', color: '#f5222d', type: 'danger' },
+  { value: 'recommended', label: '平台推荐', color: '#13c2c2', type: '' },
+  { value: 'credit', label: '诚信商家', color: '#2f54eb', type: '' },
+  { value: 'eco_friendly', label: '绿色环保', color: '#52c41a', type: '' }
+]
+
+export const ChangeTypeEnum = {
+  BASIC_INFO: { value: 1, label: '基础工商信息', color: '#1890ff', icon: 'Document' },
+  BUSINESS_INFO: { value: 2, label: '经营品类信息', color: '#52c41a', icon: 'ShoppingCart' },
+  CONTACT_INFO: { value: 3, label: '联系方式', color: '#faad14', icon: 'Phone' },
+  SETTLEMENT_INFO: { value: 4, label: '结算信息', color: '#722ed1', icon: 'Money' },
+  BUSINESS_STATUS: { value: 5, label: '经营状态', color: '#13c2c2', icon: 'Clock' },
+  OPERATION_STATUS: { value: 6, label: '运营状态', color: '#f5222d', icon: 'Lock' },
+  TAGS: { value: 7, label: '商家标签', color: '#eb2f96', icon: 'PriceTag' },
+  NOTICE: { value: 8, label: '公示信息', color: '#fa8c16', icon: 'Bell' },
+  BATCH: { value: 9, label: '批量更新', color: '#909399', icon: 'Files' }
+}
+
+export const VerifyStatusEnum = {
+  FAILED: { value: 0, label: '校验未通过', type: 'danger', color: '#ff4d4f' },
+  PASSED: { value: 1, label: '校验通过', type: 'success', color: '#52c41a' },
+  NEED_REVIEW: { value: 2, label: '需复核', type: 'warning', color: '#faad14' }
+}
+
+export const SettleCycleEnum = {
+  DAILY: { value: 1, label: '日结', color: '#52c41a' },
+  WEEKLY: { value: 2, label: '周结', color: '#1890ff' },
+  BI_WEEKLY: { value: 3, label: '半月结', color: '#13c2c2' },
+  MONTHLY: { value: 4, label: '月结', color: '#722ed1' },
+  QUARTERLY: { value: 5, label: '季结', color: '#faad14' }
+}
+
+export const DepositStatusEnum = {
+  UNPAID: { value: 0, label: '未缴纳', type: 'danger', color: '#ff4d4f' },
+  PAID: { value: 1, label: '已缴纳', type: 'success', color: '#52c41a' },
+  PARTIAL: { value: 2, label: '部分缴纳', type: 'warning', color: '#faad14' },
+  REFUNDED: { value: 3, label: '已退还', type: 'info', color: '#909399' }
+}
+
+export const OperationModeEnum = {
+  SELF_OPERATED: { value: 1, label: '自营', color: '#1890ff' },
+  JOINT_OPERATION: { value: 2, label: '联营', color: '#52c41a' },
+  COMMISSION_ONLY: { value: 3, label: '纯佣金', color: '#722ed1' }
+}
+
+export const InfoEditBranchEnum = {
+  BASIC: { key: 'basic', label: '基础工商信息', icon: 'OfficeBuilding', color: '#1890ff' },
+  BUSINESS: { key: 'business', label: '经营品类信息', icon: 'ShoppingCart', color: '#52c41a' },
+  CONTACT: { key: 'contact', label: '联系方式', icon: 'Phone', color: '#faad14' },
+  SETTLEMENT: { key: 'settlement', label: '结算信息', icon: 'Money', color: '#722ed1' }
+}
+
+export const CompletenessStatusEnum = {
+  EXCELLENT: { min: 90, label: '信息完整', color: '#52c41a', type: 'success' },
+  GOOD: { min: 70, label: '基本完整', color: '#1890ff', type: 'primary' },
+  FAIR: { min: 50, label: '部分缺失', color: '#faad14', type: 'warning' },
+  POOR: { min: 0, label: '严重缺失', color: '#ff4d4f', type: 'danger' }
+}
+
+export const FlightTypeEnum = {
+  DOMESTIC: { value: 1, label: '国内航班', type: 'primary', color: '#1890ff', icon: 'Airplane' },
+  INTERNATIONAL: { value: 2, label: '国际航班', type: 'success', color: '#52c41a', icon: 'Global' },
+  TRANSFER: { value: 3, label: '中转航班', type: 'warning', color: '#faad14', icon: 'Connection' },
+  CHARTER: { value: 4, label: '包机航班', type: '', color: '#722ed1', icon: 'Promotion' }
+}
+
+export const FlightOperationStatusEnum = {
+  NORMAL: { value: 1, label: '正常', type: 'success', color: '#52c41a', dotColor: '#52c41a' },
+  DELAYED: { value: 2, label: '延误', type: 'warning', color: '#faad14', dotColor: '#faad14' },
+  CANCELLED: { value: 3, label: '取消', type: 'danger', color: '#ff4d4f', dotColor: '#ff4d4f' },
+  DIVERTED: { value: 4, label: '备降', type: 'info', color: '#1890ff', dotColor: '#1890ff' },
+  RETURNED: { value: 5, label: '返航', type: 'info', color: '#722ed1', dotColor: '#722ed1' }
+}
+
+export const FlightDisplayStatusEnum = {
+  OFFLINE: { value: 0, label: '已下架', type: 'info', color: '#909399' },
+  ONLINE: { value: 1, label: '已上架', type: 'success', color: '#52c41a' }
+}
+
+export const FlightSaleStatusEnum = {
+  NOT_ON_SALE: { value: 0, label: '不可售', type: 'info', color: '#909399' },
+  ON_SALE: { value: 1, label: '可售', type: 'success', color: '#52c41a' }
+}
+
+export const CabinClassEnum = {
+  ECONOMY: { value: 'economy', label: '经济舱', color: '#1890ff' },
+  BUSINESS: { value: 'business', label: '商务舱', color: '#faad14' },
+  FIRST: { value: 'first', label: '头等舱', color: '#722ed1' }
+}
+
+export const FlightLogTypeEnum = {
+  CREATE: { value: 1, label: '创建航班', color: '#52c41a', icon: 'Plus' },
+  UPDATE: { value: 2, label: '修改航班', color: '#1890ff', icon: 'Edit' },
+  ONLINE: { value: 3, label: '上架', color: '#52c41a', icon: 'Upload' },
+  OFFLINE: { value: 4, label: '下架', color: '#909399', icon: 'Download' },
+  STATUS_CHANGE: { value: 5, label: '状态变更', color: '#faad14', icon: 'Refresh' },
+  BATCH: { value: 6, label: '批量操作', color: '#722ed1', icon: 'Files' },
+  DELETE: { value: 7, label: '删除', color: '#ff4d4f', icon: 'Delete' },
+  QUALIFICATION: { value: 8, label: '资质变更', color: '#13c2c2', icon: 'Stamp' },
+  INVENTORY: { value: 9, label: '库存调整', color: '#eb2f96', icon: 'Goods' }
+}
+
+export const FlightValidateFieldEnum = {
+  flightNo: '航班号',
+  airline: '航空公司',
+  routeCode: '航线编码',
+  departure: '出发地',
+  departureAirport: '出发机场',
+  departureAirportCode: '出发机场三字码',
+  arrival: '目的地',
+  arrivalAirport: '到达机场',
+  arrivalAirportCode: '到达机场三字码',
+  departureTime: '出发时间',
+  arrivalTime: '到达时间',
+  aircraftType: '机型',
+  aircraftModel: '机型型号',
+  price: '价格',
+  seats: '剩余座位数',
+  seatCount: '总座位数',
+  departureCountry: '出发国家',
+  arrivalCountry: '到达国家',
+  transferCity: '中转城市',
+  transferAirportCode: '中转机场三字码',
+  charterContractNo: '包机合同编号',
+  qualificationCode: '运营资质编码'
+}
+
 export default {
   OrderStatusEnum,
   OrderSourceEnum,
@@ -659,6 +814,25 @@ export default {
   BenefitTemplateOptions,
   BatchModeEnum,
   ApplyScopeEnum,
+  BusinessStatusEnum,
+  OperationStatusEnum,
+  MerchantLevelEnum,
+  MerchantTagOptions,
+  ChangeTypeEnum,
+  RiskLevelEnum,
+  VerifyStatusEnum,
+  SettleCycleEnum,
+  DepositStatusEnum,
+  OperationModeEnum,
+  InfoEditBranchEnum,
+  CompletenessStatusEnum,
+  FlightTypeEnum,
+  FlightOperationStatusEnum,
+  FlightDisplayStatusEnum,
+  FlightSaleStatusEnum,
+  CabinClassEnum,
+  FlightLogTypeEnum,
+  FlightValidateFieldEnum,
   getEnumLabel,
   getEnumType,
   getEnumOptions,

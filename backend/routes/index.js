@@ -96,6 +96,15 @@ router.get('/benefits/trace/:userId', auth(), benefitController.trace.bind(benef
 router.post('/benefits/check-expired', auth(['admin']), benefitController.checkExpired.bind(benefitController));
 registerCrudRoutes('roles', roleController);
 registerCrudRoutes('flights', flightController);
+router.post('/flights/validate', auth(), flightController.validate.bind(flightController));
+router.get('/flights/validate/field', auth(), flightController.validateField.bind(flightController));
+router.put('/flights/:id/operation-status', auth(), flightController.updateOperationStatus.bind(flightController));
+router.put('/flights/:id/display-status', auth(), flightController.updateDisplayStatus.bind(flightController));
+router.post('/flights/batch/time', auth(['admin', 'operator']), flightController.batchUpdateTime.bind(flightController));
+router.post('/flights/batch/display-status', auth(['admin', 'operator']), flightController.batchUpdateDisplayStatus.bind(flightController));
+router.post('/flights/batch/offline-abnormal', auth(['admin', 'operator', 'international_operator']), flightController.batchOfflineAbnormal.bind(flightController));
+router.get('/flights/:id/logs', auth(), pagination, flightController.getLogs.bind(flightController));
+router.get('/flights/stats/summary', auth(), flightController.getStats.bind(flightController));
 registerCrudRoutes('hotels', hotelController);
 registerCrudRoutes('cars', carController);
 registerCrudRoutes('tickets', ticketController);
@@ -158,6 +167,26 @@ router.post('/merchants/audit/check-expired', auth(['admin']), merchantControlle
 router.get('/merchants/:id/audit/trace', auth(), pagination, merchantController.getAuditTrace.bind(merchantController))
 router.get('/merchants/:id/qualifications', auth(), merchantController.getQualifications.bind(merchantController))
 router.put('/merchants/:id/qualifications', auth(), merchantController.saveQualifications.bind(merchantController))
+
+router.get('/merchants/ops/stats', auth(), merchantController.getOpsStats.bind(merchantController))
+router.get('/merchants/ops/list', auth(), pagination, merchantController.getOpsMerchantList.bind(merchantController))
+router.get('/merchants/ops/verify-unique', auth(), merchantController.verifyFieldUnique.bind(merchantController))
+router.get('/merchants/:id/ops/detail', auth(), merchantController.getOpsDetail.bind(merchantController))
+router.get('/merchants/:id/ops/precheck', auth(), merchantController.preOpsCheck.bind(merchantController))
+
+router.put('/merchants/:id/ops/basic-info', auth(['admin', 'merchant_operator', 'senior_operator']), merchantController.updateBasicInfo.bind(merchantController))
+router.put('/merchants/:id/ops/business-info', auth(['admin', 'senior_operator']), merchantController.updateBusinessInfo.bind(merchantController))
+router.put('/merchants/:id/ops/contact-info', auth(['admin', 'merchant_operator', 'senior_operator']), merchantController.updateContactInfo.bind(merchantController))
+router.put('/merchants/:id/ops/settlement-info', auth(['admin', 'finance_operator', 'senior_operator']), merchantController.updateSettlementInfo.bind(merchantController))
+router.put('/merchants/:id/ops/business-status', auth(['admin', 'senior_operator']), merchantController.updateBusinessStatus.bind(merchantController))
+router.put('/merchants/:id/ops/operation-status', auth(['admin', 'senior_operator']), merchantController.updateOperationStatus.bind(merchantController))
+
+router.post('/merchants/batch/ops/update-tags', auth(['admin', 'senior_operator']), merchantController.batchUpdateTags.bind(merchantController))
+router.post('/merchants/batch/ops/update-notice', auth(['admin', 'senior_operator']), merchantController.batchUpdateNotice.bind(merchantController))
+router.post('/merchants/batch/ops/lock-accounts', auth(['admin']), merchantController.batchLockAccounts.bind(merchantController))
+
+router.get('/merchants/:id/ops/change-logs', auth(), pagination, merchantController.getChangeLogs.bind(merchantController))
+router.get('/merchants/:id/ops/complete-trace', auth(), merchantController.getCompleteTrace.bind(merchantController))
 
 router.post('/payments/initiate', auth(), paymentValidator.checkPaymentPreconditions, paymentValidator.validatePaymentParams, paymentController.initiatePayment.bind(paymentController))
 router.put('/payments/:flowId/confirm', auth(), paymentController.confirmPayment.bind(paymentController))

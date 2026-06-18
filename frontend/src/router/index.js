@@ -153,6 +153,12 @@ export const routes = [
         name: 'MerchantQualificationAudit',
         component: () => import('@/views/merchant/QualificationAudit.vue'),
         meta: { title: '入驻资质审核', icon: 'Stamp', roles: ['admin', 'merchant_auditor', 'senior_auditor'] }
+      },
+      {
+        path: 'info-ops',
+        name: 'MerchantInfoOps',
+        component: () => import('@/views/merchant/InfoOperations.vue'),
+        meta: { title: '基础信息运维', icon: 'Edit', roles: ['admin', 'merchant_operator', 'senior_operator', 'finance_operator'] }
       }
     ]
   },

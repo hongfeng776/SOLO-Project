@@ -1,6 +1,7 @@
 const BaseController = require('./BaseController');
 const merchantService = require('../services/MerchantService');
 const merchantAuditService = require('../services/MerchantAuditService');
+const merchantOpsService = require('../services/MerchantOpsService');
 const approvalService = require('../services/ApprovalService');
 const Merchant = require('../models/Merchant');
 const Order = require('../models/Order');
@@ -273,6 +274,296 @@ class MerchantController extends BaseController {
       res.json(success(result, '查询成功'));
     } catch (error) {
       next(error);
+    }
+  }
+
+  async getOpsDetail(req, res, next) {
+    try {
+      const { id } = req.params;
+      const result = await merchantService.getDetail(id);
+      res.json(success(result, '查询成功'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async preOpsCheck(req, res, next) {
+    try {
+      const { id } = req.params;
+      const operator = {
+        id: req.user?.id,
+        name: req.user?.nickname || req.user?.username || '',
+        role: req.user?.roleCode
+      };
+      const merchant = await Merchant.findByPk(id);
+      if (!merchant) throw new NotFoundError('商家不存在');
+      const permissions = {
+        canEditBasic: ['admin', 'merchant_operator', 'senior_operator'].includes(operator.role),
+        canEditBusiness: ['admin', 'senior_operator'].includes(operator.role),
+        canEditContact: ['admin', 'merchant_operator', 'senior_operator'].includes(operator.role),
+        canEditSettlement: ['admin', 'finance_operator', 'senior_operator'].includes(operator.role),
+        canEditStatus: ['admin', 'senior_operator'].includes(operator.role),
+        canBatch: ['admin', 'senior_operator'].includes(operator.role),
+        canEditHighRisk: operator.role === 'admin'
+      };
+      const statusEditable = merchant.operationStatus !== 3;
+      const isLocked = merchant.operationStatus === 2 || merchant.settleStatus === 5;
+      res.json(success({
+        merchant: merchant.toJSON(),
+        permissions,
+        statusEditable,
+        isLocked,
+        isHighRisk: merchant.merchantCategory === 2
+      }, '前置校验完成'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateBasicInfo(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { fields, reason = '', remark = '' } = req.body;
+      if (!fields || Object.keys(fields).length === 0) {
+        throw new ValidationError('请填写要修改的信息');
+      }
+      const operator = {
+        id: req.user?.id,
+        name: req.user?.nickname || req.user?.username || '',
+        role: req.user?.roleCode
+      };
+      const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      const result = await merchantOpsService.updateMerchantInfo(id, 'BASIC', fields, operator, ip, reason, remark);
+      res.json(success(result, '基础工商信息更新成功'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateBusinessInfo(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { fields, reason = '', remark = '' } = req.body;
+      if (!fields || Object.keys(fields).length === 0) {
+        throw new ValidationError('请填写要修改的信息');
+      }
+      const operator = {
+        id: req.user?.id,
+        name: req.user?.nickname || req.user?.username || '',
+        role: req.user?.roleCode
+      };
+      const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      const result = await merchantOpsService.updateMerchantInfo(id, 'BUSINESS', fields, operator, ip, reason, remark);
+      res.json(success(result, '经营品类信息更新成功'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateContactInfo(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { fields, reason = '', remark = '' } = req.body;
+      if (!fields || Object.keys(fields).length === 0) {
+        throw new ValidationError('请填写要修改的信息');
+      }
+      const operator = {
+        id: req.user?.id,
+        name: req.user?.nickname || req.user?.username || '',
+        role: req.user?.roleCode
+      };
+      const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      const result = await merchantOpsService.updateMerchantInfo(id, 'CONTACT', fields, operator, ip, reason, remark);
+      res.json(success(result, '联系方式更新成功'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateSettlementInfo(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { fields, reason = '', remark = '' } = req.body;
+      if (!fields || Object.keys(fields).length === 0) {
+        throw new ValidationError('请填写要修改的信息');
+      }
+      const operator = {
+        id: req.user?.id,
+        name: req.user?.nickname || req.user?.username || '',
+        role: req.user?.roleCode
+      };
+      const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      const result = await merchantOpsService.updateMerchantInfo(id, 'SETTLEMENT', fields, operator, ip, reason, remark);
+      res.json(success(result, '结算信息更新成功'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateBusinessStatus(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { status, reason = '' } = req.body;
+      if (status === undefined) throw new ValidationError('请选择经营状态');
+      if ((status === 2 || status === 3) && !reason) {
+        throw new ValidationError('请填写状态变更原因');
+      }
+      const operator = {
+        id: req.user?.id,
+        name: req.user?.nickname || req.user?.username || '',
+        role: req.user?.roleCode
+      };
+      const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      const result = await merchantOpsService.updateBusinessStatus(id, status, reason, operator, ip);
+      res.json(success(result, '经营状态更新成功'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateOperationStatus(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { status, reason = '', unlockTime } = req.body;
+      if (status === undefined) throw new ValidationError('请选择运营状态');
+      if ((status === 2 || status === 3) && !reason) {
+        throw new ValidationError('请填写锁定原因');
+      }
+      const operator = {
+        id: req.user?.id,
+        name: req.user?.nickname || req.user?.username || '',
+        role: req.user?.roleCode
+      };
+      const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      const result = await merchantOpsService.updateOperationStatus(id, status, reason, unlockTime, operator, ip);
+      res.json(success(result, '运营状态更新成功'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async batchUpdateTags(req, res, next) {
+    try {
+      const { ids = [], tags = [] } = req.body;
+      if (ids.length === 0) throw new ValidationError('请选择要操作的商家');
+      const operator = {
+        id: req.user?.id,
+        name: req.user?.nickname || req.user?.username || '',
+        role: req.user?.roleCode
+      };
+      const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      const result = await merchantOpsService.batchUpdateTags(ids, tags, operator, ip);
+      res.json(success(result, `批量更新标签完成：成功${result.success}条，失败${result.failed}条，跳过${result.skipped}条`));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async batchUpdateNotice(req, res, next) {
+    try {
+      const { ids = [], notice = '' } = req.body;
+      if (ids.length === 0) throw new ValidationError('请选择要操作的商家');
+      if (!notice || notice.trim().length === 0) {
+        throw new ValidationError('请填写公示信息');
+      }
+      const operator = {
+        id: req.user?.id,
+        name: req.user?.nickname || req.user?.username || '',
+        role: req.user?.roleCode
+      };
+      const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      const result = await merchantOpsService.batchUpdateNotice(ids, notice, operator, ip);
+      res.json(success(result, `批量修正公示信息完成：成功${result.success}条，失败${result.failed}条`));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async batchLockAccounts(req, res, next) {
+    try {
+      const { ids = [], reason = '' } = req.body;
+      if (ids.length === 0) throw new ValidationError('请选择要操作的商家');
+      if (!reason || reason.trim().length === 0) {
+        throw new ValidationError('请填写锁定原因');
+      }
+      const operator = {
+        id: req.user?.id,
+        name: req.user?.nickname || req.user?.username || '',
+        role: req.user?.roleCode
+      };
+      const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      const result = await merchantOpsService.batchLockAccounts(ids, reason, operator, ip);
+      res.json(success(result, `批量锁定账号完成：成功${result.success}条，失败${result.failed}条，跳过${result.skipped}条`));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getChangeLogs(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { page = 1, pageSize = 20, changeType, startDate, endDate, operatorId, riskLevel } = req.query;
+      const result = await merchantOpsService.getChangeLogs(id, {
+        page: parseInt(page),
+        pageSize: parseInt(pageSize),
+        changeType: changeType ? parseInt(changeType) : undefined,
+        startDate,
+        endDate,
+        operatorId: operatorId ? parseInt(operatorId) : undefined,
+        riskLevel: riskLevel !== undefined ? parseInt(riskLevel) : undefined
+      });
+      res.json(pagination(result.list, result.total, result.page, result.pageSize));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getCompleteTrace(req, res, next) {
+    try {
+      const { id } = req.params;
+      const result = await merchantOpsService.getCompleteTrace(id);
+      res.json(success(result, '查询成功'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getOpsStats(req, res, next) {
+    try {
+      const { businessType, merchantLevel, operationStatus } = req.query;
+      const result = await merchantOpsService.getOpsStats({
+        businessType,
+        merchantLevel: merchantLevel ? parseInt(merchantLevel) : undefined,
+        operationStatus: operationStatus !== undefined ? parseInt(operationStatus) : undefined
+      });
+      res.json(success(result, '统计查询成功'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getOpsMerchantList(req, res, next) {
+    try {
+      const { pageNum = 1, pageSize = 10 } = req.pagination;
+      const result = await merchantService.getList({
+        ...req.query,
+        pageNum: parseInt(pageNum),
+        pageSize: parseInt(pageSize)
+      });
+      res.json(pagination(result.list, result.total, result.pageNum, result.pageSize));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async verifyFieldUnique(req, res, next) {
+    try {
+      const { fieldName, value, excludeId } = req.query;
+      if (!fieldName || !value) throw new ValidationError('请填写校验字段和值');
+      await merchantOpsService.validateFieldUniqueness(fieldName, value, excludeId ? parseInt(excludeId) : null);
+      res.json(success({ unique: true }, '校验通过，该值可用'));
+    } catch (error) {
+      res.json(success({ unique: false, message: error.message }, '校验完成'));
     }
   }
 }
