@@ -295,3 +295,78 @@ export const ADMIN_EDIT_FIELDS = [
   'commissionRate',
   'remark',
 ] as const;
+
+export enum ManualLevelAdjustStatus {
+  PENDING = 0,
+  APPROVED = 1,
+  REJECTED = -1,
+}
+
+export enum LevelChangeSource {
+  AUTO = 'auto',
+  MANUAL = 'manual',
+  BATCH = 'batch',
+  RULE_CHANGE = 'rule_change',
+}
+
+export interface LevelRuleThreshold {
+  minMonthlyAmount: number;
+  minMonthlyOrders: number;
+  minActiveDays: number;
+  minReputationScore: number;
+}
+
+export const LEVEL_RULE_THRESHOLDS: { level: PromoterLevel; threshold: LevelRuleThreshold }[] = [
+  {
+    level: PromoterLevel.L1,
+    threshold: {
+      minMonthlyAmount: 0,
+      minMonthlyOrders: 0,
+      minActiveDays: 0,
+      minReputationScore: 0,
+    },
+  },
+  {
+    level: PromoterLevel.L2,
+    threshold: {
+      minMonthlyAmount: 10000,
+      minMonthlyOrders: 50,
+      minActiveDays: 10,
+      minReputationScore: 90,
+    },
+  },
+  {
+    level: PromoterLevel.L3,
+    threshold: {
+      minMonthlyAmount: 50000,
+      minMonthlyOrders: 200,
+      minActiveDays: 20,
+      minReputationScore: 95,
+    },
+  },
+  {
+    level: PromoterLevel.L4,
+    threshold: {
+      minMonthlyAmount: 200000,
+      minMonthlyOrders: 800,
+      minActiveDays: 25,
+      minReputationScore: 97,
+    },
+  },
+  {
+    level: PromoterLevel.L5,
+    threshold: {
+      minMonthlyAmount: 1000000,
+      minMonthlyOrders: 3000,
+      minActiveDays: 28,
+      minReputationScore: 99,
+    },
+  },
+];
+
+export const LEVEL_CHANGE_SOURCE_LABELS: Record<LevelChangeSource, string> = {
+  auto: '自动评级',
+  manual: '手动调整',
+  batch: '批量重置',
+  rule_change: '规则变更触发',
+};

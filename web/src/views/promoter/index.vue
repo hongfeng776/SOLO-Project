@@ -7,6 +7,7 @@
         <el-tab-pane label="资质审核" name="qualification" />
         <el-tab-pane label="批量操作" name="batch" />
         <el-tab-pane label="变更溯源" name="trace" />
+        <el-tab-pane label="等级体系" name="level" />
       </el-tabs>
     </el-card>
 
@@ -825,6 +826,10 @@
         <el-button @click="changeDiffVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <div v-show="activeTab === 'level'" style="margin-top: 16px">
+      <PromoterLevelSystem />
+    </div>
   </div>
 </template>
 
@@ -855,6 +860,7 @@ import {
 } from '@element-plus/icons-vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import BaseBatchOperation from '@/components/common/BaseBatchOperation.vue'
+import PromoterLevelSystem from './level-system.vue'
 import { useTable } from '@/composables/useTable'
 import {
   PROMOTER_LEVEL_OPTIONS,

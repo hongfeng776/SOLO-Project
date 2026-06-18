@@ -53,12 +53,19 @@ interface PromoterAttributes {
   qualificationImgs?: string;
   qualificationExpireAt?: Date;
   qualificationRemark?: string;
+  monthlyOrders?: number;
+  monthlyAmount?: number;
+  activeDays?: number;
+  reputationScore?: number;
+  isCorePromoter?: boolean;
+  levelChangedCount?: number;
+  lastLevelChangedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
 }
 
-interface PromoterCreationAttributes extends Optional<PromoterAttributes, 'id' | 'channelId' | 'nickname' | 'avatar' | 'phone' | 'email' | 'wechatId' | 'idCard' | 'idCardFrontImg' | 'idCardBackImg' | 'level' | 'status' | 'auditStage' | 'auditStatus' | 'firstAuditorId' | 'firstAuditAt' | 'firstAuditRemark' | 'secondAuditorId' | 'secondAuditAt' | 'secondAuditRemark' | 'rejectReasonCode' | 'rejectCustomRemark' | 'rejectedAt' | 'lockUntil' | 'applyCount' | 'lastApplyAt' | 'dataHash' | 'riskFlagged' | 'riskReason' | 'parentId' | 'totalOrders' | 'totalAmount' | 'totalCommission' | 'availableCommission' | 'frozenCommission' | 'registerAt' | 'lastActiveAt' | 'remark' | 'verifyStatus' | 'verifiedAt' | 'realName' | 'promoteStatus' | 'settleStatus' | 'commissionRate' | 'qualificationImgs' | 'qualificationExpireAt' | 'qualificationRemark' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
+interface PromoterCreationAttributes extends Optional<PromoterAttributes, 'id' | 'channelId' | 'nickname' | 'avatar' | 'phone' | 'email' | 'wechatId' | 'idCard' | 'idCardFrontImg' | 'idCardBackImg' | 'level' | 'status' | 'auditStage' | 'auditStatus' | 'firstAuditorId' | 'firstAuditAt' | 'firstAuditRemark' | 'secondAuditorId' | 'secondAuditAt' | 'secondAuditRemark' | 'rejectReasonCode' | 'rejectCustomRemark' | 'rejectedAt' | 'lockUntil' | 'applyCount' | 'lastApplyAt' | 'dataHash' | 'riskFlagged' | 'riskReason' | 'parentId' | 'totalOrders' | 'totalAmount' | 'totalCommission' | 'availableCommission' | 'frozenCommission' | 'registerAt' | 'lastActiveAt' | 'remark' | 'verifyStatus' | 'verifiedAt' | 'realName' | 'promoteStatus' | 'settleStatus' | 'commissionRate' | 'qualificationImgs' | 'qualificationExpireAt' | 'qualificationRemark' | 'monthlyOrders' | 'monthlyAmount' | 'activeDays' | 'reputationScore' | 'isCorePromoter' | 'levelChangedCount' | 'lastLevelChangedAt' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
 
 class Promoter extends Model<PromoterAttributes, PromoterCreationAttributes> implements PromoterAttributes {
   public id!: string;
@@ -110,6 +117,13 @@ class Promoter extends Model<PromoterAttributes, PromoterCreationAttributes> imp
   public qualificationImgs?: string;
   public qualificationExpireAt?: Date;
   public qualificationRemark?: string;
+  public monthlyOrders?: number;
+  public monthlyAmount?: number;
+  public activeDays?: number;
+  public reputationScore?: number;
+  public isCorePromoter?: boolean;
+  public levelChangedCount?: number;
+  public lastLevelChangedAt?: Date;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
   public readonly deletedAt?: Date;
@@ -348,6 +362,40 @@ Promoter.init(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    monthlyOrders: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    monthlyAmount: {
+      type: DataTypes.DECIMAL(14, 2),
+      allowNull: false,
+      defaultValue: 0,
+    },
+    activeDays: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    reputationScore: {
+      type: DataTypes.DECIMAL(5, 2),
+      allowNull: false,
+      defaultValue: 100,
+    },
+    isCorePromoter: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    levelChangedCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    lastLevelChangedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -419,6 +467,14 @@ Promoter.init(
       {
         name: 'idx_settle_status',
         fields: ['settle_status'],
+      },
+      {
+        name: 'idx_is_core_promoter',
+        fields: ['is_core_promoter'],
+      },
+      {
+        name: 'idx_reputation_score',
+        fields: ['reputation_score'],
       },
     ],
   }

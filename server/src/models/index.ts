@@ -17,6 +17,9 @@ import PromoterBlacklist from './PromoterBlacklist.model';
 import PromoterAuditLog from './PromoterAuditLog.model';
 import PromoterChangeLog from './PromoterChangeLog.model';
 import PromoterQualification from './PromoterQualification.model';
+import PromoterLevelRule from './PromoterLevelRule.model';
+import PromoterLevelAdjustRequest from './PromoterLevelAdjustRequest.model';
+import PromoterLevelChangeLog from './PromoterLevelChangeLog.model';
 
 const models = {
   User,
@@ -38,6 +41,9 @@ const models = {
   PromoterAuditLog,
   PromoterChangeLog,
   PromoterQualification,
+  PromoterLevelRule,
+  PromoterLevelAdjustRequest,
+  PromoterLevelChangeLog,
 };
 
 const associate = (): void => {
@@ -77,8 +83,13 @@ const associate = (): void => {
   PromoterAuditLog.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
   PromoterChangeLog.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
   PromoterQualification.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
+
+  Promoter.hasMany(PromoterLevelAdjustRequest, { foreignKey: 'promoterId', as: 'levelAdjustRequests' });
+  Promoter.hasMany(PromoterLevelChangeLog, { foreignKey: 'promoterId', as: 'levelChangeLogs' });
+  PromoterLevelAdjustRequest.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
+  PromoterLevelChangeLog.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
 };
 
 export { associate };
-export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification };
+export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog };
 export default models;

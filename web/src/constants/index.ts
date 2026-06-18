@@ -484,3 +484,49 @@ export const PROMOTER_TAB_OPTIONS = [
   { value: 'batch', label: '批量操作', icon: 'Operation' },
   { value: 'trace', label: '变更溯源', icon: 'Connection' },
 ] as const
+
+export const LEVEL_RULE_THRESHOLDS = {
+  L1: { minMonthlyAmount: 0, minMonthlyOrders: 0, minActiveDays: 0, minReputationScore: 0 },
+  L2: { minMonthlyAmount: 10000, minMonthlyOrders: 50, minActiveDays: 10, minReputationScore: 90 },
+  L3: { minMonthlyAmount: 50000, minMonthlyOrders: 200, minActiveDays: 20, minReputationScore: 95 },
+  L4: { minMonthlyAmount: 200000, minMonthlyOrders: 800, minActiveDays: 25, minReputationScore: 97 },
+  L5: { minMonthlyAmount: 1000000, minMonthlyOrders: 3000, minActiveDays: 28, minReputationScore: 99 },
+}
+
+export const MANUAL_ADJUST_STATUS_OPTIONS = [
+  { value: 0, label: '待审核', type: 'warning' },
+  { value: 1, label: '已通过', type: 'success' },
+  { value: -1, label: '已驳回', type: 'danger' },
+] as const
+
+export const MANUAL_ADJUST_STATUS_MAP: Record<number, { label: string; type: string }> = {
+  0: { label: '待审核', type: 'warning' },
+  1: { label: '已通过', type: 'success' },
+  '-1': { label: '已驳回', type: 'danger' },
+}
+
+export const LEVEL_CHANGE_SOURCE_OPTIONS = [
+  { value: 'auto', label: '自动评级', type: 'primary' },
+  { value: 'manual', label: '手动调整', type: 'warning' },
+  { value: 'batch', label: '批量重置', type: 'info' },
+  { value: 'rule_change', label: '规则变更', type: '' },
+]
+
+export const LEVEL_CHANGE_SOURCE_MAP: Record<string, { label: string; type: string }> = {
+  auto: { label: '自动评级', type: 'primary' },
+  manual: { label: '手动调整', type: 'warning' },
+  batch: { label: '批量重置', type: 'info' },
+  rule_change: { label: '规则变更', type: '' },
+}
+
+export const LOW_PERFORMANCE_THRESHOLD = {
+  minOrders: 10,
+  minAmount: 5000,
+}
+
+export const PROMOTER_LEVEL_SYSTEM_TABS = [
+  { value: 'rules', label: '等级规则', icon: 'Setting' },
+  { value: 'adjust', label: '手动调整', icon: 'Promotion' },
+  { value: 'batch', label: '批量重评', icon: 'Operation' },
+  { value: 'trace', label: '变更溯源', icon: 'Connection' },
+] as const

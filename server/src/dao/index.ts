@@ -13,6 +13,9 @@ import promoterBlacklistDao from './PromoterBlacklist.dao';
 import promoterAuditLogDao from './PromoterAuditLog.dao';
 import promoterChangeLogDao from './PromoterChangeLog.dao';
 import promoterQualificationDao from './PromoterQualification.dao';
+import promoterLevelRuleDao from './PromoterLevelRule.dao';
+import promoterLevelAdjustRequestDao from './PromoterLevelAdjustRequest.dao';
+import promoterLevelChangeLogDao from './PromoterLevelChangeLog.dao';
 
 export {
   userDao,
@@ -30,4 +33,7 @@ export {
   promoterAuditLogDao,
   promoterChangeLogDao,
   promoterQualificationDao,
+  promoterLevelRuleDao,
+  promoterLevelAdjustRequestDao,
+  promoterLevelChangeLogDao,
 };
