@@ -15,6 +15,9 @@ const UserStatusLog = require('./UserStatusLog')
 const TagDefinition = require('./TagDefinition')
 const MemberLevelLog = require('./MemberLevelLog')
 const MemberTagLog = require('./MemberTagLog')
+const LoginLog = require('./LoginLog')
+const LoginDevice = require('./LoginDevice')
+const LoginRiskReport = require('./LoginRiskReport')
 
 User.hasMany(Resource, { foreignKey: 'authorId', as: 'resources' })
 Resource.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
@@ -73,6 +76,17 @@ MemberLevelLog.belongsTo(User, { foreignKey: 'userId', as: 'user' })
 User.hasMany(MemberTagLog, { foreignKey: 'userId', as: 'memberTagLogs' })
 MemberTagLog.belongsTo(User, { foreignKey: 'userId', as: 'user' })
 
+User.hasMany(LoginLog, { foreignKey: 'userId', as: 'loginLogs' })
+LoginLog.belongsTo(User, { foreignKey: 'userId', as: 'user' })
+
+User.hasMany(LoginDevice, { foreignKey: 'userId', as: 'loginDevices' })
+LoginDevice.belongsTo(User, { foreignKey: 'userId', as: 'user' })
+
+User.hasMany(LoginRiskReport, { foreignKey: 'userId', as: 'loginRiskReports' })
+LoginRiskReport.belongsTo(User, { foreignKey: 'userId', as: 'user' })
+
+LoginRiskReport.belongsTo(LoginLog, { foreignKey: 'loginLogId', as: 'loginLog' })
+
 module.exports = {
   User,
   Category,
@@ -90,5 +104,8 @@ module.exports = {
   UserStatusLog,
   TagDefinition,
   MemberLevelLog,
-  MemberTagLog
+  MemberTagLog,
+  LoginLog,
+  LoginDevice,
+  LoginRiskReport
 }

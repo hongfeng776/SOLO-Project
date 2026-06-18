@@ -110,6 +110,12 @@
           >
             批量标签配置
           </el-button>
+          <el-button
+            class="toolbar-btn"
+            type="danger"
+            :icon="Warning"
+            @click="openLoginLogDialog(null)"
+          >登录日志</el-button>
         </div>
         <div class="toolbar-right">
           <el-tag type="info" class="role-tag">
@@ -297,6 +303,21 @@
             >
               溯源标签
             </el-button>
+            <el-tooltip content="登录记录" placement="top" :show-after="100">
+              <el-button link type="primary" @click="openLoginLogDialog(row)">
+                <el-icon><View /></el-icon>&nbsp;登录
+              </el-button>
+            </el-tooltip>
+            <el-tooltip content="设备管控" placement="top" :show-after="100">
+              <el-button link type="warning" @click="openDeviceDialog(row)">
+                <el-icon><Monitor /></el-icon>&nbsp;设备
+              </el-button>
+            </el-tooltip>
+            <el-tooltip content="登录风控" placement="top" :show-after="100">
+              <el-button link type="danger" @click="openLoginRiskDialog(row)">
+                <el-icon><DataAnalysis /></el-icon>&nbsp;风控
+              </el-button>
+            </el-tooltip>
           </template>
         </el-table-column>
       </DataTable>
@@ -1971,15 +1992,576 @@
         </el-tab-pane>
       </el-tabs>
     </el-dialog>
+
+    <el-dialog
+      v-model="loginLogDialogVisible"
+      :title="loginDialogTargetUser ? `${loginDialogTargetUser.username} - 登录记录` : '全平台登录日志'"
+      width="1100px"
+      top="5vh"
+      class="scale-fade-dialog"
+      destroy-on-close
+    >
+      <el-form :inline="true" :model="loginQuery" size="default" class="login-filter-form">
+        <el-form-item label="时间范围">
+          <el-date-picker
+            v-model="loginQuery.timeRange"
+            type="datetimerange"
+            range-separator="至"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            class="login-filter-datetime focus-color"
+            @change="fetchLoginLogs(1)"
+          />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="loginQuery.status" placeholder="全部" class="w-36 focus-color" clearable @change="fetchLoginLogs(1)">
+            <el-option v-for="opt in LOGIN_STATUS_OPTIONS" :key="opt.value" :value="opt.value" :label="opt.label" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="风险等级">
+          <el-select v-model="loginQuery.riskLevel" placeholder="全部" class="w-36 focus-color" clearable @change="fetchLoginLogs(1)">
+            <el-option v-for="opt in RISK_LEVEL_OPTIONS" :key="opt.value" :value="opt.value" :label="opt.label" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="IP">
+          <el-input v-model="loginQuery.ip" placeholder="模糊搜索IP" class="w-44 focus-color" clearable @change="fetchLoginLogs(1)" />
+        </el-form-item>
+        <el-form-item label="操作系统">
+          <el-select v-model="loginQuery.os" placeholder="全部" class="w-36 focus-color" clearable @change="fetchLoginLogs(1)">
+            <el-option v-for="opt in OS_OPTIONS" :key="opt.value" :value="opt.value" :label="opt.label" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="仅看风险">
+          <el-switch v-model="loginQuery.isMarkedRisk" @change="fetchLoginLogs(1)" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :icon="Refresh" circle @click="fetchLoginLogs(1)" />
+        </el-form-item>
+      </el-form>
+
+      <div v-if="loginLogsSelection.length" class="login-batch-bar">
+        <el-space>
+          <span style="color:#909399">已选 {{ loginLogsSelection.length }} 条：</span>
+          <el-button
+            size="small"
+            type="danger"
+            :icon="Warning"
+            @click="batchProcessLoginLogs('mark')"
+          >批量标记风险</el-button>
+          <el-button
+            size="small"
+            type="success"
+            :icon="CircleCheckFilled"
+            @click="batchProcessLoginLogs('clear')"
+          >批量清除标记</el-button>
+          <el-checkbox v-model="batchLockDevices" label="同时锁定关联设备" />
+        </el-space>
+      </div>
+
+      <div
+        v-loading="loginLogsLoading"
+        class="login-log-table-wrap sticky-header-table"
+        ref="loginLogTableWrap"
+        @scroll="onLoginLogScroll"
+      >
+        <el-table
+          :data="loginLogs"
+          height="480"
+          @selection-change="loginLogsSelection = $event"
+          :row-class-name="getLoginLogRowClass"
+          class="zebra-table login-log-table"
+          @row-click="handleLoginRowClick"
+        >
+          <el-table-column type="selection" width="48" reserve-selection />
+          <el-table-column label="时间" prop="createdAt" width="170" show-overflow-tooltip />
+          <el-table-column label="账号" prop="username" width="140" show-overflow-tooltip />
+          <el-table-column label="状态" width="110">
+            <template #default="{ row }">
+              <el-tag :type="LoginStatusTagType[row.status]" effect="dark" size="small" round>{{ LoginStatusLabel[row.status] }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="风险" width="100">
+            <template #default="{ row }">
+              <span
+                v-if="row.riskLevel !== 'none'"
+                class="risk-level-dot"
+                :style="{ background: RiskLevelColor[row.riskLevel] }"
+              ></span>
+              <el-tag
+                :type="RiskLevelTagType[row.riskLevel]"
+                size="small"
+                effect="plain"
+                :class="{'risk-highlight': row.isMarkedRisk || row.riskLevel === 'high' || row.riskLevel === 'critical'}"
+              >{{ RiskLevelLabel[row.riskLevel] }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="IP地址" width="150" prop="ip" show-overflow-tooltip />
+          <el-table-column label="地理位置" width="180" show-overflow-tooltip>
+            <template #default="{ row }">
+              <span>{{ row.ipLocation || `${row.country||''}/${row.region||''}/${row.city||''}` }}</span>
+              <el-icon v-if="row.isAbroad || row.isProxy || row.isVpn || row.isTor" color="#F56C6C" title="异常网络"><WarningFilled /></el-icon>
+            </template>
+          </el-table-column>
+          <el-table-column label="设备信息" min-width="220" show-overflow-tooltip>
+            <template #default="{ row }">
+              <span>{{ row.os || '-' }}{{ row.osVersion ? ' '+row.osVersion : '' }}</span>
+              <span style="color:#909399;margin:0 4px">|</span>
+              <span>{{ row.browser || '-' }}{{ row.browserVersion ? ' '+row.browserVersion : '' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="频次/检测" width="200" show-overflow-tooltip>
+            <template #default="{ row }">
+              <el-tag
+                v-if="row.frequencyFlag !== 'normal'"
+                size="small"
+                type="danger"
+                effect="plain"
+              >{{ FrequencyFlagLabel[row.frequencyFlag] }}</el-tag>
+              <el-tag
+                v-if="row.scriptDetected || row.seleniumDetected || row.headlessDetected"
+                size="small"
+                type="danger"
+                effect="dark"
+              >脚本/伪造检测</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="200" fixed="right">
+            <template #default="{ row }">
+              <el-button link type="primary" @click.stop="viewLoginDetail(row)">查看详情</el-button>
+              <el-button
+                v-if="!row.isMarkedRisk"
+                link type="danger"
+                @click.stop="markLoginRisk(row)"
+              >标记风险</el-button>
+              <el-button
+                v-else
+                link type="success"
+                @click.stop="clearLoginRisk(row)"
+              >清除标记</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <transition name="fade">
+        <div
+          v-show="showBackToTop"
+          class="back-to-top-btn"
+          @click="scrollLoginLogTop"
+        >
+          <el-icon :size="18"><Top /></el-icon>
+        </div>
+      </transition>
+
+      <el-pagination
+        v-model:current-page="loginQuery.page"
+        v-model:page-size="loginQuery.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="loginLogsTotal"
+        layout="total, sizes, prev, pager, next, jumper"
+        class="mt-4"
+        @size-change="fetchLoginLogs(1)"
+        @current-change="fetchLoginLogs"
+      />
+    </el-dialog>
+
+    <el-dialog
+      v-model="loginDetailDialogVisible"
+      title="登录详情"
+      width="820px"
+      class="scale-fade-dialog login-detail-dialog"
+      destroy-on-close
+    >
+      <div v-if="loginDetail" class="login-detail-wrap">
+        <el-row :gutter="16">
+          <el-col :span="18">
+            <el-descriptions :column="2" border size="default">
+              <el-descriptions-item label="登录时间">{{ loginDetail.log.createdAt }}</el-descriptions-item>
+              <el-descriptions-item label="登录账号">{{ loginDetail.log.username }}</el-descriptions-item>
+              <el-descriptions-item label="登录状态">
+                <el-tag :type="LoginStatusTagType[loginDetail.log.status]" effect="dark" round>{{ LoginStatusLabel[loginDetail.log.status] }}</el-tag>
+                <span v-if="loginDetail.log.failReason" style="color:#F56C6C;margin-left:8px">失败原因：{{ loginDetail.log.failReason }}</span>
+              </el-descriptions-item>
+              <el-descriptions-item label="是否二次验证">
+                {{ loginDetail.log.twoFaPassed ? '是' : '否' }}（{{ loginDetail.log.twoFaMethod || '-' }}）
+              </el-descriptions-item>
+              <el-descriptions-item label="IP地址" :span="2">
+                {{ loginDetail.log.ip }}
+                <el-tag v-if="loginDetail.log.ipv6" type="info" size="small" style="margin-left:8px">IPv6: {{ loginDetail.log.ipv6 }}</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="地理位置" :span="2">
+                {{ loginDetail.log.ipLocation || '-' }}
+                <el-space style="margin-left:8px">
+                  <el-tag v-if="loginDetail.log.isProxy" size="small" type="danger">代理</el-tag>
+                  <el-tag v-if="loginDetail.log.isVpn" size="small" type="danger">VPN</el-tag>
+                  <el-tag v-if="loginDetail.log.isTor" size="small" type="danger">Tor</el-tag>
+                  <el-tag v-if="loginDetail.log.isDatacenter" size="small" type="warning">机房IP</el-tag>
+                  <el-tag v-if="loginDetail.log.isAbroad" size="small" type="danger">境外</el-tag>
+                  <el-tag v-if="loginDetail.log.isOffsite" size="small" type="warning">异地</el-tag>
+                </el-space>
+              </el-descriptions-item>
+              <el-descriptions-item label="操作系统">{{ loginDetail.log.os || '-' }} {{ loginDetail.log.osVersion || '' }}</el-descriptions-item>
+              <el-descriptions-item label="浏览器">{{ loginDetail.log.browser || '-' }} {{ loginDetail.log.browserVersion || '' }}</el-descriptions-item>
+              <el-descriptions-item label="设备名称" :span="2">{{ loginDetail.log.deviceName || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="新设备/新IP">
+                <el-tag v-if="loginDetail.log.isNewDevice" size="small" type="warning">新设备</el-tag>
+                <el-tag v-if="loginDetail.log.isNewIp" size="small" type="warning" style="margin-left:4px">新IP</el-tag>
+                <span v-if="!loginDetail.log.isNewDevice && !loginDetail.log.isNewIp">否</span>
+              </el-descriptions-item>
+              <el-descriptions-item label="在线时长">{{ loginDetail.log.onlineDuration }}秒</el-descriptions-item>
+            </el-descriptions>
+          </el-col>
+          <el-col :span="6" v-if="loginDetail.report">
+            <div class="risk-score-ring">
+              <el-progress
+                type="dashboard"
+                :percentage="loginDetail.report.overallScore"
+                :color="RiskLevelColor[loginDetail.report.riskLevel]"
+                :stroke-width="10"
+              />
+              <div class="risk-score-center" :style="{ color: RiskLevelColor[loginDetail.report.riskLevel] }">
+                {{ RiskLevelLabel[loginDetail.report.riskLevel] }}
+              </div>
+            </div>
+            <div class="mt-2" style="text-align:center">
+              <el-tag :type="RiskLevelTagType[loginDetail.report.riskLevel]" effect="dark" round>
+                决策：{{ FinalDecisionLabel[loginDetail.report.finalDecision] }}
+              </el-tag>
+            </div>
+            <div v-if="loginDetail.device" class="mt-3" style="text-align:center">
+              <el-tag :type="DeviceStatusTagType[loginDetail.device.status]" size="small">
+                设备状态：{{ DeviceStatusLabel[loginDetail.device.status] }}
+              </el-tag>
+              <div style="margin-top:8px">
+                <el-button
+                  v-if="loginDetail.device && !loginDetail.device.isLocked"
+                  size="small"
+                  type="danger"
+                  @click="lockDeviceFromDetail"
+                >锁定此设备</el-button>
+                <el-button
+                  v-if="loginDetail.device && loginDetail.device.isLocked"
+                  size="small"
+                  type="success"
+                  @click="unlockDeviceFromDetail"
+                >解锁此设备</el-button>
+              </div>
+            </div>
+          </el-col>
+        </el-row>
+
+        <el-collapse v-if="loginDetail.report" class="mt-4">
+          <el-collapse-item title="风险评分明细（点击展开）" name="score">
+            <el-table :data="loginDetail.report.riskScoreDetails" size="small" border>
+              <el-table-column label="检测项" prop="description" />
+              <el-table-column label="检测键" prop="key" width="120" />
+              <el-table-column label="是否触发" width="90" align="center">
+                <template #default="{ row }">
+                  <el-icon v-if="row.applied" color="#F56C6C"><CircleCloseFilled /></el-icon>
+                  <el-icon v-else color="#67C23A"><CircleCheckFilled /></el-icon>
+                </template>
+              </el-table-column>
+              <el-table-column label="扣分项" prop="score" width="80" align="center" />
+            </el-table>
+          </el-collapse-item>
+          <el-collapse-item title="触发的风险规则" name="rules" v-if="loginDetail.report.riskRulesTriggered.length">
+            <el-tag
+              v-for="(rule, idx) in loginDetail.report.riskRulesTriggered"
+              :key="idx"
+              closable
+              type="danger"
+              disable-transitions
+              style="margin:4px"
+            >{{ rule.description }} (+{{ rule.score }}分)</el-tag>
+          </el-collapse-item>
+          <el-collapse-item title="处理建议" name="suggestion">
+            <el-alert
+              v-if="loginDetail.report.suggestion"
+              :title="loginDetail.report.suggestion"
+              :type="loginDetail.report.finalDecision === 'block' ? 'error' : loginDetail.report.finalDecision === 'verify' ? 'warning' : 'success'"
+              show-icon
+            />
+          </el-collapse-item>
+        </el-collapse>
+      </div>
+      <template #footer>
+        <el-button @click="loginDetailDialogVisible = false">关闭</el-button>
+        <el-button
+          v-if="loginDetail && !loginDetail.log.isMarkedRisk && (loginDetail.log.status === 'pending' || loginDetail.log.status === 'blocked')"
+          class="verify-btn"
+          type="primary"
+          @click="verifyLoginFromDetail"
+        >
+          <el-icon><CircleCheckFilled /></el-icon>&nbsp;人工验证通过
+        </el-button>
+        <el-button
+          v-if="loginDetail && !loginDetail.log.isMarkedRisk"
+          type="danger"
+          @click="markLoginRisk(loginDetail.log)"
+        >标记风险</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="loginAlertDialogVisible"
+      title="⚠ 异常登录预警"
+      width="480px"
+      :class="['login-alert-dialog', { 'shake-dialog': loginAlertShake }]"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      show-close
+    >
+      <div class="login-alert-content">
+        <el-alert
+          title="检测到异常登录行为"
+          type="error"
+          :closable="false"
+          show-icon
+          description="请仔细确认以下登录信息，如非本人操作请立即锁定账号并修改密码"
+        />
+        <div v-if="loginAlertLog" class="login-alert-info mt-4">
+          <el-descriptions size="small" :column="1" border>
+            <el-descriptions-item label="时间">{{ loginAlertLog.createdAt }}</el-descriptions-item>
+            <el-descriptions-item label="IP">{{ loginAlertLog.ip }}</el-descriptions-item>
+            <el-descriptions-item label="位置">{{ loginAlertLog.ipLocation || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="设备">{{ loginAlertLog.deviceName || loginAlertLog.os || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="风险">
+              <el-tag :type="RiskLevelTagType[loginAlertLog.riskLevel]" effect="dark" size="small" round>
+                {{ RiskLevelLabel[loginAlertLog.riskLevel] }}
+              </el-tag>
+            </el-descriptions-item>
+          </el-descriptions>
+        </div>
+      </div>
+      <template #footer>
+        <el-button
+          class="alert-danger-btn"
+          type="danger"
+          @click="handleAlertLockDevice"
+        >
+          <el-icon><Lock /></el-icon>&nbsp;锁定该设备
+        </el-button>
+        <el-button
+          :class="['alert-verify-btn', { 'verify-btn-hovered': verifyBtnHovered }]"
+          type="primary"
+          @mouseenter="verifyBtnHovered = true"
+          @mouseleave="verifyBtnHovered = false"
+          @mousedown="verifyBtnPressed = true"
+          @mouseup="verifyBtnPressed = false"
+          @click="handleAlertVerify"
+        >
+          <el-icon><CircleCheckFilled /></el-icon>&nbsp;确认为本人登录
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="deviceDialogVisible"
+      :title="`${deviceDialogUser?.username || ''} - 设备管控`"
+      width="900px"
+      class="scale-fade-dialog"
+      destroy-on-close
+    >
+      <el-table :data="deviceList" v-loading="deviceLoading" border size="default" class="zebra-table sticky-header-table" height="480">
+        <el-table-column label="设备标识" prop="deviceId" width="150" show-overflow-tooltip />
+        <el-table-column label="设备名称" prop="deviceName" width="160" show-overflow-tooltip />
+        <el-table-column label="操作系统" width="150">
+          <template #default="{ row }">{{ row.os || '-' }} {{ row.osVersion || '' }}</template>
+        </el-table-column>
+        <el-table-column label="浏览器" width="150">
+          <template #default="{ row }">{{ row.browser || '-' }} {{ row.browserVersion || '' }}</template>
+        </el-table-column>
+        <el-table-column label="状态" width="110">
+          <template #default="{ row }">
+            <el-tag :type="DeviceStatusTagType[row.status]" effect="dark" size="small" round>
+              {{ DeviceStatusLabel[row.status] }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="在线" width="80" align="center">
+          <template #default="{ row }">
+            <el-icon v-if="row.isOnline" color="#67C23A" :size="16"><CircleCheckFilled /></el-icon>
+            <span v-else style="color:#C0C4CC">离线</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="登录次数" width="90" align="center" prop="totalLoginCount" />
+        <el-table-column label="风险次数" width="90" align="center" prop="riskCount" />
+        <el-table-column label="最后登录" prop="lastLoginAt" width="170" show-overflow-tooltip />
+        <el-table-column label="操作" width="200" fixed="right">
+          <template #default="{ row }">
+            <el-button
+              v-if="!row.isLocked"
+              link type="danger"
+              @click="lockDevice(row)"
+            >锁定</el-button>
+            <el-button
+              v-else
+              link type="success"
+              @click="unlockDevice(row)"
+            >解锁</el-button>
+            <el-button link type="primary" @click="openLoginLogDialogByDevice(row)">相关记录</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-pagination
+        v-model:current-page="devicePage"
+        v-model:page-size="devicePageSize"
+        :page-sizes="[10, 20, 50]"
+        :total="deviceTotal"
+        layout="total, sizes, prev, pager, next"
+        class="mt-4"
+        @size-change="fetchDevices(1)"
+        @current-change="fetchDevices"
+      />
+    </el-dialog>
+
+    <el-dialog
+      v-model="loginRiskDialogVisible"
+      :title="`${loginRiskDialogUser?.username || ''} - 登录风控总览`"
+      width="1000px"
+      top="5vh"
+      class="scale-fade-dialog"
+      destroy-on-close
+    >
+      <div v-if="loginRiskSummary">
+        <el-row :gutter="12" class="risk-summary-cards">
+          <el-col :span="6">
+            <el-card shadow="hover">
+              <div class="stat-card">
+                <div class="label">总登录次数</div>
+                <div class="value highlight-1">{{ loginRiskSummary.totalCount }}</div>
+              </div>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card shadow="hover">
+              <div class="stat-card">
+                <div class="label">成功/验证</div>
+                <div class="value highlight-2">{{ loginRiskSummary.successCount }}</div>
+              </div>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card shadow="hover">
+              <div class="stat-card">
+                <div class="label">失败次数</div>
+                <div class="value" style="color:#E6A23C">{{ loginRiskSummary.failCount }}</div>
+              </div>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card shadow="hover">
+              <div class="stat-card">
+                <div class="label">拦截/风险</div>
+                <div class="value" style="color:#F56C6C">{{ loginRiskSummary.blockOrRiskCount }}</div>
+              </div>
+            </el-card>
+          </el-col>
+        </el-row>
+
+        <el-card shadow="never" class="mt-4">
+          <template #header>风险等级分布</template>
+          <el-space wrap>
+            <div
+              v-for="(lv, idx) in ['none', 'low', 'medium', 'high', 'critical']"
+              :key="idx"
+              class="risk-dist-item"
+            >
+              <span class="risk-level-dot" :style="{ background: RiskLevelColor[lv] }"></span>
+              <span>{{ RiskLevelLabel[lv] }}</span>
+              <span style="font-weight:600;margin-left:6px">{{ loginRiskSummary.byLevel[lv] || 0 }}</span>
+            </div>
+          </el-space>
+        </el-card>
+
+        <el-card shadow="never" class="mt-4">
+          <template #header>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span>最近风险登录记录（全链路溯源）</span>
+              <el-button type="primary" size="small" link @click="openLoginLogDialog(loginRiskDialogUser)">查看全部 <el-icon><ArrowRight /></el-icon></el-button>
+            </div>
+          </template>
+          <el-table
+            :data="loginRiskSummary.recentRiskLogs"
+            border size="small"
+            class="zebra-table sticky-header-table"
+            max-height="260"
+          >
+            <el-table-column label="时间" prop="createdAt" width="170" />
+            <el-table-column label="状态" width="100">
+              <template #default="{ row }">
+                <el-tag :type="LoginStatusTagType[row.status]" effect="dark" size="small" round>
+                  {{ LoginStatusLabel[row.status] }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="风险等级" width="100">
+              <template #default="{ row }">
+                <el-tag :type="RiskLevelTagType[row.riskLevel]" size="small">
+                  {{ RiskLevelLabel[row.riskLevel] }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="IP" prop="ip" width="140" show-overflow-tooltip />
+            <el-table-column label="位置" min-width="180" show-overflow-tooltip>
+              <template #default="{ row }">{{ row.ipLocation || `${row.country||''}/${row.region||''}/${row.city||''}` }}</template>
+            </el-table-column>
+            <el-table-column label="设备/OS" width="150" show-overflow-tooltip>
+              <template #default="{ row }">{{ row.deviceName || row.os || '-' }}</template>
+            </el-table-column>
+            <el-table-column label="检测结果" min-width="180" show-overflow-tooltip>
+              <template #default="{ row }">
+                <el-tag v-if="row.frequencyFlag!=='normal'" size="small" type="warning" style="margin-right:4px">{{ FrequencyFlagLabel[row.frequencyFlag] }}</el-tag>
+                <el-tag v-if="row.scriptDetected" size="small" type="danger" style="margin-right:4px">脚本检测</el-tag>
+                <el-tag v-if="row.seleniumDetected" size="small" type="danger" style="margin-right:4px">Selenium</el-tag>
+                <el-tag v-if="row.headlessDetected" size="small" type="danger" style="margin-right:4px">无头浏览器</el-tag>
+                <el-tag v-if="row.isMultiDevice" size="small" type="warning">多设备</el-tag>
+                <el-tag v-if="row.isOffsite" size="small" type="warning">异地</el-tag>
+                <el-tag v-if="row.isAbroad" size="small" type="danger">境外</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="100" fixed="right">
+              <template #default="{ row }">
+                <el-button link type="primary" size="small" @click="viewLoginDetail(row)">详情</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </div>
+    </el-dialog>
+
+    <el-dialog
+      v-model="loginBatchResultDialog"
+      title="批量处理结果"
+      width="520px"
+      class="scale-fade-dialog"
+      destroy-on-close
+    >
+      <el-result
+        :icon="loginBatchResult?.failedCount ? 'warning' : 'success'"
+        :title="`成功${loginBatchResult?.successCount || 0}条`"
+        :sub-title="loginBatchResult?.failedCount ? `失败${loginBatchResult.failedCount}条，点击展开查看` : '全部处理完成'"
+      />
+      <el-alert
+        v-if="loginBatchResult?.failed?.length"
+        :title="`失败原因：${loginBatchResult.failed.map(f => f.id + ':' + f.reason).join('；')}`"
+        type="error"
+        show-icon
+        :closable="false"
+      />
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
 import {
   Search, Refresh, Plus, Delete, Edit, Warning, Right,
   CircleCheckFilled, CircleCloseFilled, Lock, Tag, Star,
-  Share, Collection, Check, Close
+  Share, Collection, Check, Close, Monitor, UserFilled,
+  Unlock, View, CirclePlus, CircleClose, DataAnalysis, Top,
+  ArrowRight, WarningFilled
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { DataTable, StatusTag, BatchOperation, EmptyState } from '@/components/business'
@@ -2010,7 +2592,23 @@ import {
   USER_LEVEL_OPTIONS,
   TAG_DIMENSION_OPTIONS,
   CONSUME_LEVEL_OPTIONS,
-  FILTER_OPTIONS
+  FILTER_OPTIONS,
+  LoginStatusLabel,
+  LoginStatusTagType,
+  RiskLevelLabel,
+  RiskLevelTagType,
+  RiskLevelColor,
+  DeviceStatusLabel,
+  DeviceStatusTagType,
+  FrequencyFlagLabel,
+  FinalDecisionLabel,
+  RISK_SCORE_RULES_DESC,
+  LOGIN_STATUS_OPTIONS,
+  RISK_LEVEL_OPTIONS,
+  DEVICE_STATUS_OPTIONS,
+  OS_OPTIONS,
+  BROWSER_OPTIONS,
+  SCROLL_BACK_TO_TOP_THRESHOLD
 } from '@/constants'
 import {
   getUserList,
@@ -2042,7 +2640,18 @@ import {
   batchApplyTags,
   getMemberTagLogs,
   getTagTrace,
-  cleanRedundantTags
+  cleanRedundantTags,
+  getLoginThresholdsMeta,
+  queryLoginLogs,
+  getLoginDetail,
+  markRiskLoginLog,
+  clearRiskLoginLog,
+  verifyLoginRecord,
+  batchProcessLoginLogs,
+  listLoginDevices,
+  lockLoginDevice,
+  unlockLoginDevice,
+  getLoginRiskSummary
 } from '@/api/userManage'
 import type {
   UserInfo, FieldValidation, AccountValidationResult, UserEditLog,
@@ -2050,7 +2659,11 @@ import type {
   TagDefinition, MemberLevelLog, MemberTagLog, BenefitItem,
   LevelPreviewResult, ChangeLevelResult, AddTagsResult,
   BatchApplyTagsResult, TagTraceResult, CleanTagsResult,
-  LevelCriteriaMeta, TagMeta, TagMatchResult
+  LevelCriteriaMeta, TagMeta, TagMatchResult,
+  LoginLog, LoginDevice, LoginRiskReport, RiskRuleItem, RiskScoreDetail,
+  VerifyLoginResult, LoginDetailResult, BatchProcessLoginResult,
+  LoginRiskSummary, LoginThresholdsMeta, LoginQueryParams,
+  LoginStatus, RiskLevel, DeviceStatus, FrequencyFlag, FinalDecision
 } from '@/types'
 
 const userStore = useUserStore()
@@ -3338,6 +3951,239 @@ const cleanTags = async () => {
 
 const getBatchProgressPercent = () => batchTagProgress.value
 
+// ========= 登录行为管控 - 响应式变量 =========
+const loginLogDialogVisible = ref(false)
+const loginDialogTargetUser = ref<UserInfo | null>(null)
+const loginLogs = ref<LoginLog[]>([])
+const loginLogsTotal = ref(0)
+const loginLogsLoading = ref(false)
+const loginLogsSelection = ref<LoginLog[]>([])
+const batchLockDevices = ref(false)
+const loginBatchResultDialog = ref(false)
+const loginBatchResult = ref<BatchProcessLoginResult | null>(null)
+const loginDetailDialogVisible = ref(false)
+const loginDetail = ref<LoginDetailResult | null>(null)
+const loginAlertDialogVisible = ref(false)
+const loginAlertShake = ref(false)
+const loginAlertLog = ref<LoginLog | null>(null)
+const verifyBtnHovered = ref(false)
+const verifyBtnPressed = ref(false)
+const deviceDialogVisible = ref(false)
+const deviceDialogUser = ref<UserInfo | null>(null)
+const deviceList = ref<LoginDevice[]>([])
+const deviceTotal = ref(0)
+const devicePage = ref(1)
+const devicePageSize = ref(10)
+const deviceLoading = ref(false)
+const loginRiskDialogVisible = ref(false)
+const loginRiskDialogUser = ref<UserInfo | null>(null)
+const loginRiskSummary = ref<LoginRiskSummary | null>(null)
+const showBackToTop = ref(false)
+const loginLogTableWrap = ref<any>(null)
+
+const loginQuery = reactive<LoginQueryParams & { timeRange?: [string, string] }>({
+  page: 1, pageSize: 20,
+  username: '', status: '', riskLevel: '',
+  ip: '', os: '', browser: '',
+  isMarkedRisk: false
+})
+
+// ========= 登录行为管控 - 核心方法 =========
+const openLoginLogDialog = (user: UserInfo | null) => {
+  loginDialogTargetUser.value = user
+  loginQuery.page = 1
+  if (user) {
+    loginQuery.userId = user.id
+    loginQuery.username = ''
+  } else {
+    delete loginQuery.userId
+  }
+  fetchLoginLogs(1)
+  loginLogDialogVisible.value = true
+}
+const openLoginLogDialogByDevice = (device: LoginDevice) => {
+  deviceDialogVisible.value = false
+  loginQuery.deviceId = device.deviceId
+  if (deviceDialogUser.value) loginQuery.userId = deviceDialogUser.value.id
+  fetchLoginLogs(1)
+  loginLogDialogVisible.value = true
+}
+const fetchLoginLogs = async (page?: number) => {
+  if (page) loginQuery.page = page
+  const params: LoginQueryParams = { ...loginQuery }
+  if (loginQuery.timeRange && loginQuery.timeRange.length === 2) {
+    params.startTime = loginQuery.timeRange[0]
+    params.endTime = loginQuery.timeRange[1]
+  }
+  loginLogsLoading.value = true
+  try {
+    const res = await queryLoginLogs(params)
+    loginLogs.value = res.data.list
+    loginLogsTotal.value = res.data.total
+  } finally { loginLogsLoading.value = false }
+}
+const getLoginLogRowClass = ({ row }: { row: LoginLog }) => {
+  const classes = []
+  if (row.isMarkedRisk) classes.push('risk-row-red')
+  if (row.riskLevel === 'high' || row.riskLevel === 'critical') classes.push('risk-row-highlight')
+  if (loginLogsSelection.value.some(s => s.id === row.id)) classes.push('selected-row-highlight')
+  return classes.join(' ')
+}
+const handleLoginRowClick = (row: LoginLog) => {
+  if ((row.riskLevel === 'high' || row.riskLevel === 'critical') && row.status !== 'success' && row.status !== 'verified') {
+    triggerLoginAlert(row)
+  }
+}
+const viewLoginDetail = async (row: LoginLog) => {
+  try {
+    const res = await getLoginDetail(row.id)
+    loginDetail.value = res.data
+    loginDetailDialogVisible.value = true
+  } catch (e) { /* ignore */ }
+}
+const markLoginRisk = async (row: LoginLog) => {
+  await ElMessageBox.prompt('请输入标记原因（可选）', '标记为风险登录', {
+    confirmButtonText: '确认标记',
+    cancelButtonText: '取消',
+    inputPlaceholder: '例如：疑似脚本登录',
+    type: 'warning'
+  }).then(async ({ value }) => {
+    const res = await markRiskLoginLog(row.id, value || '人工标记风险')
+    ElMessage.success(res.data.deviceLocked ? `标记成功，已同步锁定关联设备` : '标记成功')
+    await fetchLoginLogs()
+    if (loginDetail.value && loginDetail.value.log.id === row.id) viewLoginDetail(row)
+  }).catch(() => {})
+}
+const clearLoginRisk = async (row: LoginLog) => {
+  const { value } = await ElMessageBox.prompt('请输入清除原因（可选）', '清除风险标记', {
+    confirmButtonText: '确认清除', cancelButtonText: '取消',
+    inputPlaceholder: '例如：确认为本人正常登录', type: 'success'
+  }).catch(() => ({}))
+  const res = await clearRiskLoginLog(row.id, value || '人工清除标记')
+  ElMessage.success('清除成功')
+  await fetchLoginLogs()
+  if (loginDetail.value && loginDetail.value.log.id === row.id) viewLoginDetail(row)
+}
+const verifyLoginFromDetail = async () => {
+  if (!loginDetail.value) return
+  await verifyLoginRecord(loginDetail.value.log.id)
+  ElMessage.success('已验证通过')
+  viewLoginDetail(loginDetail.value.log)
+}
+const batchProcessLoginLogs = async (action: 'mark' | 'clear' | 'delete') => {
+  if (!loginLogsSelection.value.length) return
+  const ids = loginLogsSelection.value.map(r => r.id)
+  let needConfirm = true, title = '', type: any = 'warning'
+  if (action === 'mark') { title = `确定要将选中的 ${ids.length} 条记录标记为风险吗？${batchLockDevices.value ? '将同步锁定关联设备' : ''}` }
+  else if (action === 'clear') { title = `确定要清除选中的 ${ids.length} 条记录的风险标记吗？` }
+  else { title = `确定要删除选中的 ${ids.length} 条记录吗？此操作不可恢复`, type = 'error' }
+  await ElMessageBox.confirm(title, '批量操作确认', { type, confirmButtonText: '确认执行', cancelButtonText: '取消' }).catch(() => { needConfirm = false })
+  if (!needConfirm) return
+  const res = await batchProcessLoginLogs({ ids, action, lockDevices: action === 'mark' && batchLockDevices.value })
+  loginBatchResult.value = res.data
+  loginBatchResultDialog.value = true
+  await fetchLoginLogs()
+  loginLogsSelection.value = []
+}
+const onLoginLogScroll = (e: Event) => {
+  const target = e.target as HTMLElement
+  showBackToTop.value = target.scrollTop > (typeof SCROLL_BACK_TO_TOP_THRESHOLD === 'number' ? SCROLL_BACK_TO_TOP_THRESHOLD : 500)
+}
+const scrollLoginLogTop = () => {
+  if (loginLogTableWrap.value?.$el) loginLogTableWrap.value.$el.scrollTop = 0
+  else if (loginLogTableWrap.value) loginLogTableWrap.value.scrollTop = 0
+}
+const triggerLoginAlert = (row: LoginLog) => {
+  loginAlertLog.value = row
+  loginAlertDialogVisible.value = true
+  loginAlertShake.value = true
+  setTimeout(() => loginAlertShake.value = false, 500)
+}
+const handleAlertLockDevice = async () => {
+  if (!loginAlertLog.value?.userId || !loginAlertLog.value.deviceId) return
+  await lockLoginDevice(loginAlertLog.value.userId, loginAlertLog.value.deviceId, { reason: loginAlertLog.value.failReason || '异常登录锁定' })
+  ElMessage.success('设备已锁定')
+  loginAlertDialogVisible.value = false
+  fetchLoginLogs()
+}
+const handleAlertVerify = async () => {
+  if (!loginAlertLog.value) return
+  await verifyLoginRecord(loginAlertLog.value.id)
+  ElMessage.success('已确认为本人登录')
+  loginAlertDialogVisible.value = false
+  fetchLoginLogs()
+}
+// ========= 设备管控 =========
+const openDeviceDialog = async (user: UserInfo) => {
+  deviceDialogUser.value = user
+  devicePage.value = 1
+  await fetchDevices(1)
+  deviceDialogVisible.value = true
+}
+const fetchDevices = async (page?: number) => {
+  if (!deviceDialogUser.value) return
+  if (page) devicePage.value = page
+  deviceLoading.value = true
+  try {
+    const res = await listLoginDevices(deviceDialogUser.value.id, { page: devicePage.value, pageSize: devicePageSize.value })
+    deviceList.value = res.data.list
+    deviceTotal.value = res.data.total
+  } finally { deviceLoading.value = false }
+}
+const lockDevice = async (device: LoginDevice, reason?: string) => {
+  if (!deviceDialogUser.value) return
+  let level: 'temporary' | 'permanent' = 'temporary'
+  try {
+    const { value } = await ElMessageBox.prompt(
+      `锁定原因（可选），关闭时取消`,
+      '锁定设备 - ' + (device.deviceName || device.deviceId.slice(0, 16)),
+      { confirmButtonText: '临时锁定(24h)', cancelButtonText: '永久锁定', inputPlaceholder: '例如：疑似被盗', type: 'warning' }
+    ).catch(() => ({}))
+    if (value === undefined) {
+      level = 'permanent'
+    }
+    await lockLoginDevice(deviceDialogUser.value.id, device.deviceId, {
+      level, reason: reason || value || '人工锁定',
+      lockHours: level === 'temporary' ? 24 : undefined
+    })
+    ElMessage.success(level === 'permanent' ? '已永久锁定' : '已临时锁定24小时')
+  } catch (e) { /* skip cancel */ return }
+  fetchDevices()
+}
+const unlockDevice = async (device: LoginDevice) => {
+  if (!deviceDialogUser.value) return
+  await unlockLoginDevice(deviceDialogUser.value.id, device.deviceId)
+  ElMessage.success('设备已解锁')
+  fetchDevices()
+}
+const lockDeviceFromDetail = () => {
+  if (!loginDetail.value?.device || !loginDetail.value.userId) return
+  lockDevice(loginDetail.value.device)
+  if (loginDetail.value) viewLoginDetail(loginDetail.value.log)
+}
+const unlockDeviceFromDetail = () => {
+  if (!loginDetail.value?.device || !loginDetail.value.log.userId) return
+  unlockDevice(loginDetail.value.log.userId, loginDetail.value.device.deviceId)
+  if (loginDetail.value) viewLoginDetail(loginDetail.value.log)
+}
+// ========= 登录风控总览 =========
+const openLoginRiskDialog = async (user: UserInfo) => {
+  loginRiskDialogUser.value = user
+  const res = await getLoginRiskSummary(user.id)
+  loginRiskSummary.value = res.data
+  loginRiskDialogVisible.value = true
+}
+
+watch(loginLogs, (list) => {
+  const highRisk = list.find(l =>
+    (l.riskLevel === 'high' || l.riskLevel === 'critical')
+    && !l.isCleared && (l.status === 'blocked' || l.status === 'pending')
+  )
+  if (highRisk && loginLogDialogVisible.value) {
+    setTimeout(() => triggerLoginAlert(highRisk), 400)
+  }
+}, { once: false })
+
 onMounted(() => {
   fetchList()
 })
@@ -4261,4 +5107,176 @@ onMounted(() => {
 .validation-alert-block {
   margin-bottom: 16px;
 }
+
+/* ===== 登录异常抖动 (功能点1) ===== */
+.shake-dialog :deep(.el-dialog) {
+  animation: loginShake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes loginShake {
+  10%, 90% { transform: translate(-1px, 0); }
+  20%, 80% { transform: translate(2px, 0); }
+  30%, 50%, 70% { transform: translate(-4px, 0); }
+  40%, 60% { transform: translate(4px, 0); }
+  100% { transform: translate(0, 0); }
+}
+
+.login-alert-content :deep(.el-alert) { margin-bottom: 8px; }
+
+.verify-btn {
+  transition: all 0.15s ease !important;
+}
+
+.alert-verify-btn {
+  position: relative;
+  transition: all 0.18s ease !important;
+
+  &.verify-btn-hovered {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(64, 158, 255, 0.35);
+  }
+
+  &:active,
+  &:focus-visible {
+    transform: translate(2px, 2px) scale(0.985) !important;
+    background-color: #67c23a !important;
+    border-color: #67c23a !important;
+    box-shadow: 0 2px 4px rgba(103, 194, 58, 0.35) !important;
+  }
+}
+
+/* ===== 登录日志表格 风险红色高亮 (功能点2) ===== */
+.login-log-table {
+  :deep(.el-table__row.risk-row-red) > td {
+    background-color: rgba(245, 108, 108, 0.06) !important;
+    color: #c45656 !important;
+  }
+  :deep(.el-table__row.risk-row-highlight) > td {
+    background-color: rgba(245, 108, 108, 0.03);
+  }
+  :deep(.el-table__row.risk-row-red.risk-row-highlight) > td {
+    background-color: rgba(245, 108, 108, 0.1) !important;
+  }
+  :deep(.el-table__body tr.risk-row-red:hover > td) {
+    background-color: rgba(245, 108, 108, 0.12) !important;
+  }
+}
+
+.risk-highlight {
+  animation: riskBlink 2s ease infinite alternate;
+}
+
+@keyframes riskBlink {
+  from { filter: brightness(1); }
+  to { filter: brightness(1.2); }
+}
+
+.login-log-table :deep(.el-table__row.selected-row-highlight) > td {
+  background-color: rgba(64, 158, 255, 0.06) !important;
+}
+
+.risk-level-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.04);
+  vertical-align: middle;
+}
+
+/* ===== 批量操作栏 ===== */
+.login-batch-bar {
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg, rgba(253, 246, 236, 0.9) 0%, rgba(254, 240, 240, 0.9) 100%);
+  border: 1px solid rgba(230, 162, 60, 0.3);
+  border-radius: 6px;
+}
+
+/* ===== 登录筛选 ===== */
+.login-filter-form {
+  padding: 8px 4px 16px 4px;
+  border-bottom: 1px dashed #ebeef5;
+  margin-bottom: 12px;
+}
+
+/* ===== 返回顶部按钮 (功能点4) ===== */
+.back-to-top-btn {
+  position: absolute;
+  right: 24px;
+  bottom: 70px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #409EFF 0%, #66b1ff 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
+  z-index: 20;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(64, 158, 255, 0.55);
+    filter: brightness(1.1);
+  }
+  &:active {
+    transform: translate(1px, 1px) scale(0.97);
+  }
+}
+
+.fade-enter-active, .fade-leave-active { transition: all 0.3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(6px); }
+
+/* ===== 登录详情弹窗 缩放淡入 ===== */
+.login-detail-dialog {
+  .risk-score-ring {
+    position: relative;
+    text-align: center;
+  }
+  .risk-score-center {
+    position: absolute;
+    top: 62%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: 700;
+    font-size: 14px;
+  }
+}
+
+.login-log-table-wrap {
+  position: relative;
+  max-height: 520px;
+  overflow: auto;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+}
+
+/* ===== 统计卡片 ===== */
+.risk-summary-cards { margin-bottom: 8px; }
+.stat-card {
+  text-align: center;
+  .label { font-size: 13px; color: #909399; margin-bottom: 6px; }
+  .value { font-size: 28px; font-weight: 700; line-height: 1.3; }
+  .highlight-1 { color: #409EFF; background: linear-gradient(135deg, #409EFF, #66b1ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .highlight-2 { color: #67C23A; }
+}
+
+.risk-dist-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  &:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.05); transform: translateY(-1px); }
+}
+
+.mt-4 { margin-top: 16px; } .mt-2 { margin-top: 8px; } .mt-3 { margin-top: 12px; }
 </style>

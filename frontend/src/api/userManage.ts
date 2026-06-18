@@ -6,7 +6,11 @@ import type {
   TagDefinition, MemberLevelLog, MemberTagLog, BenefitItem,
   LevelPreviewResult, ChangeLevelResult, AddTagsResult,
   BatchApplyTagsResult, TagTraceResult, CleanTagsResult,
-  LevelCriteriaMeta, TagMeta, TagMatchResult
+  LevelCriteriaMeta, TagMeta, TagMatchResult,
+  LoginLog, LoginDevice, LoginRiskReport, RiskRuleItem, RiskScoreDetail,
+  VerifyLoginResult, LoginDetailResult, BatchProcessLoginResult,
+  LoginRiskSummary, LoginThresholdsMeta, LoginQueryParams,
+  LoginStatus, RiskLevel, DeviceStatus, FrequencyFlag, FinalDecision
 } from '@/types'
 
 interface UserListParams extends PageParams {
@@ -205,3 +209,57 @@ export const getTagTrace = (userId: number) => {
 
 export const cleanRedundantTags = (userId: number) => {
   return request.post<CleanTagsResult>(`/users/${userId}/tag-clean`)
+}
+
+// ================ 登录行为管控 ================
+
+export const getLoginThresholdsMeta = () => {
+  return request.get<LoginThresholdsMeta>('/users/login/thresholds-meta')
+}
+
+export const queryLoginLogs = (params: LoginQueryParams) => {
+  return request.get<PageResult<LoginLog>>('/users/login/logs', params)
+}
+
+export const getLoginDetail = (loginId: number) => {
+  return request.get<LoginDetailResult>(`/users/login/${loginId}/detail`)
+}
+
+export const markRiskLoginLog = (loginId: number, reason?: string) => {
+  return request.put<{ log: LoginLog; deviceLocked: boolean }>(`/users/login/${loginId}/mark-risk`, { reason })
+}
+
+export const clearRiskLoginLog = (loginId: number, reason?: string) => {
+  return request.put<LoginLog>(`/users/login/${loginId}/clear-risk`, { reason })
+}
+
+export const verifyLoginRecord = (loginId: number) => {
+  return request.put<{ log: LoginLog }>(`/users/login/${loginId}/verify`)
+}
+
+export const batchProcessLoginLogs = (data: {
+  ids: number[]
+  action: 'mark' | 'clear' | 'delete'
+  reason?: string
+  lockDevices?: boolean
+}) => {
+  return request.post<BatchProcessLoginResult>('/users/login/batch-process', data)
+}
+
+export const listLoginDevices = (userId: number, params?: PageParams & { status?: string; isLocked?: boolean; isOnline?: boolean }) => {
+  return request.get<PageResult<LoginDevice>>(`/users/${userId}/login-devices`, params)
+}
+
+export const lockLoginDevice = (userId: number, deviceId: string, data?: { level?: 'temporary' | 'permanent'; reason?: string; lockHours?: number }) => {
+  const enc = encodeURIComponent(deviceId)
+  return request.put<LoginDevice>(`/users/${userId}/login-devices/${enc}/lock`, data)
+}
+
+export const unlockLoginDevice = (userId: number, deviceId: string) => {
+  const enc = encodeURIComponent(deviceId)
+  return request.put<LoginDevice>(`/users/${userId}/login-devices/${enc}/unlock`)
+}
+
+export const getLoginRiskSummary = (userId: number, params?: { startTime?: string; endTime?: string }) => {
+  return request.get<LoginRiskSummary>(`/users/${userId}/login-risk-summary`, params)
+}

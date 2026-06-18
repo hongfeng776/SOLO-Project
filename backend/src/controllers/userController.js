@@ -3,6 +3,7 @@ const accountService = require('../services/accountService')
 const riskControlService = require('../services/riskControlService')
 const memberLevelService = require('../services/memberLevelService')
 const memberTagService = require('../services/memberTagService')
+const loginService = require('../services/loginService')
 const ApiResponse = require('../utils/response')
 
 class UserController {
@@ -404,6 +405,107 @@ class UserController {
     } catch (error) {
       next(error)
     }
+  }
+
+  // ================= 登录行为管控 =================
+  async getLoginThresholdsMeta(req, res, next) {
+    try { res.json(ApiResponse.success(await loginService.getThresholdsMeta())) }
+    catch (e) { next(e) }
+  }
+
+  async queryLoginLogs(req, res, next) {
+    try {
+      const result = await loginService.queryLoginLogs(req.query)
+      res.json(ApiResponse.page(result.list, result.total, result.page, result.pageSize))
+    } catch (e) { next(e) }
+  }
+
+  async getLoginDetail(req, res, next) {
+    try {
+      const { loginId } = req.params
+      const result = await loginService.getLoginDetail(parseInt(loginId))
+      res.json(ApiResponse.success(result))
+    } catch (e) { next(e) }
+  }
+
+  async markRiskLog(req, res, next) {
+    try {
+      const { loginId } = req.params
+      const operatorInfo = { id: req.user?.id, username: req.user?.username, role: req.user?.role, ip: req.ip }
+      const result = await loginService.markRiskLog(parseInt(loginId), req.body.reason || '人工标记风险', operatorInfo)
+      res.json(ApiResponse.success(result, '标记风险成功'))
+    } catch (e) { next(e) }
+  }
+
+  async clearRiskLog(req, res, next) {
+    try {
+      const { loginId } = req.params
+      const operatorInfo = { id: req.user?.id, username: req.user?.username, role: req.user?.role, ip: req.ip }
+      const result = await loginService.clearRiskLog(parseInt(loginId), req.body.reason || '人工清除标记', operatorInfo)
+      res.json(ApiResponse.success(result, '清除标记成功'))
+    } catch (e) { next(e) }
+  }
+
+  async batchProcessLoginLogs(req, res, next) {
+    try {
+      const operatorInfo = { id: req.user?.id, username: req.user?.username, role: req.user?.role, ip: req.ip }
+      const result = await loginService.batchProcessLoginLogs(req.body, operatorInfo)
+      res.json(ApiResponse.success(result, `批量处理完成：成功${result.successCount}，失败${result.failedCount}`))
+    } catch (e) { next(e) }
+  }
+
+  async listLoginDevices(req, res, next) {
+    try {
+      const { userId } = req.params
+      const result = await loginService.listDevices(parseInt(userId), req.query)
+      res.json(ApiResponse.page(result.list, result.total, result.page, result.pageSize))
+    } catch (e) { next(e) }
+  }
+
+  async lockLoginDevice(req, res, next) {
+    try {
+      const { userId, deviceId } = req.params
+      const operatorInfo = { id: req.user?.id, username: req.user?.username, role: req.user?.role, ip: req.ip }
+      const result = await loginService.lockDevice(parseInt(userId), decodeURIComponent(deviceId), req.body, operatorInfo)
+      res.json(ApiResponse.success(result, '设备锁定成功'))
+    } catch (e) { next(e) }
+  }
+
+  async unlockLoginDevice(req, res, next) {
+    try {
+      const { userId, deviceId } = req.params
+      const operatorInfo = { id: req.user?.id, username: req.user?.username, role: req.user?.role, ip: req.ip }
+      const result = await loginService.unlockDevice(parseInt(userId), decodeURIComponent(deviceId), operatorInfo)
+      res.json(ApiResponse.success(result, '设备解锁成功'))
+    } catch (e) { next(e) }
+  }
+
+  async getLoginRiskSummary(req, res, next) {
+    try {
+      const { userId } = req.params
+      const result = await loginService.getRiskSummary(parseInt(userId), req.query)
+      res.json(ApiResponse.success(result))
+    } catch (e) { next(e) }
+  }
+
+  async verifyLoginRecord(req, res, next) {
+    try {
+      const { loginId } = req.params
+      const operatorInfo = { id: req.user?.id, username: req.user?.username, role: req.user?.role, ip: req.ip }
+      const log = await require('../models').LoginLog.findByPk(parseInt(loginId))
+      if (!log) throw new Error('记录不存在')
+      await log.update({ status: 'verified', twoFaPassed: true, captchaPassed: true })
+      if (log.userId) {
+        const user = await require('../models').User.findByPk(log.userId)
+        if (user) await user.update({ isOnline: true, lastLoginAt: new Date(), lastLoginIp: log.ip })
+      }
+      await require('../models').OperationLog.create({
+        userId: operatorInfo.id, username: operatorInfo.username, module: 'login', action: 'verify_log',
+        target: `Login#${loginId}`, targetId: parseInt(loginId),
+        detail: JSON.stringify({ manualVerify: true }), ip: operatorInfo.ip, result: 'success'
+      })
+      res.json(ApiResponse.success({ log }, '人工验证登录记录成功'))
+    } catch (e) { next(e) }
   }
 }
 

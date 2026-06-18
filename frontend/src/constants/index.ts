@@ -438,3 +438,187 @@ export const FILTER_OPTIONS = [
   { value: 'vip_only', label: '仅VIP及以上' },
   { value: 'premium_only', label: '仅高级VIP' }
 ]
+
+// ================ 登录行为管控 ================
+
+export enum LoginStatus {
+  PENDING = 'pending',
+  SUCCESS = 'success',
+  FAILED = 'failed',
+  BLOCKED = 'blocked',
+  VERIFIED = 'verified',
+  RISK = 'risk'
+}
+
+export const LoginStatusLabel: Record<string, string> = {
+  [LoginStatus.PENDING]: '待验证',
+  [LoginStatus.SUCCESS]: '登录成功',
+  [LoginStatus.FAILED]: '登录失败',
+  [LoginStatus.BLOCKED]: '风控拦截',
+  [LoginStatus.VERIFIED]: '验证通过',
+  [LoginStatus.RISK]: '标记风险'
+}
+
+export const LoginStatusTagType: Record<string, string> = {
+  [LoginStatus.PENDING]: 'warning',
+  [LoginStatus.SUCCESS]: 'success',
+  [LoginStatus.FAILED]: 'info',
+  [LoginStatus.BLOCKED]: 'danger',
+  [LoginStatus.VERIFIED]: 'primary',
+  [LoginStatus.RISK]: 'danger'
+}
+
+export enum RiskLevel {
+  NONE = 'none',
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical'
+}
+
+export const RiskLevelLabel: Record<string, string> = {
+  [RiskLevel.NONE]: '无风险',
+  [RiskLevel.LOW]: '低风险',
+  [RiskLevel.MEDIUM]: '中风险',
+  [RiskLevel.HIGH]: '高风险',
+  [RiskLevel.CRITICAL]: '严重风险'
+}
+
+export const RiskLevelTagType: Record<string, string> = {
+  [RiskLevel.NONE]: 'info',
+  [RiskLevel.LOW]: 'warning',
+  [RiskLevel.MEDIUM]: 'warning',
+  [RiskLevel.HIGH]: 'danger',
+  [RiskLevel.CRITICAL]: 'danger'
+}
+
+export const RiskLevelColor: Record<string, string> = {
+  [RiskLevel.NONE]: '#909399',
+  [RiskLevel.LOW]: '#E6A23C',
+  [RiskLevel.MEDIUM]: '#F59E0B',
+  [RiskLevel.HIGH]: '#F56C6C',
+  [RiskLevel.CRITICAL]: '#D9363E'
+}
+
+export enum DeviceStatus {
+  TRUSTED = 'trusted',
+  NORMAL = 'normal',
+  RESTRICTED = 'restricted',
+  BLOCKED = 'blocked',
+  LOCKED = 'locked'
+}
+
+export const DeviceStatusLabel: Record<string, string> = {
+  [DeviceStatus.TRUSTED]: '可信白名单',
+  [DeviceStatus.NORMAL]: '正常',
+  [DeviceStatus.RESTRICTED]: '受限登录',
+  [DeviceStatus.BLOCKED]: '已拦截',
+  [DeviceStatus.LOCKED]: '永久锁定'
+}
+
+export const DeviceStatusTagType: Record<string, string> = {
+  [DeviceStatus.TRUSTED]: 'success',
+  [DeviceStatus.NORMAL]: 'primary',
+  [DeviceStatus.RESTRICTED]: 'warning',
+  [DeviceStatus.BLOCKED]: 'danger',
+  [DeviceStatus.LOCKED]: 'danger'
+}
+
+export enum FrequencyFlag {
+  NORMAL = 'normal',
+  HIGH_HOUR = 'high_hour',
+  HIGH_DAY = 'high_day',
+  BURST = 'burst'
+}
+
+export const FrequencyFlagLabel: Record<string, string> = {
+  [FrequencyFlag.NORMAL]: '正常频次',
+  [FrequencyFlag.HIGH_HOUR]: '小时级高频',
+  [FrequencyFlag.HIGH_DAY]: '日级高频',
+  [FrequencyFlag.BURST]: '突发登录'
+}
+
+export enum FinalDecision {
+  PASS = 'pass',
+  VERIFY = 'verify',
+  BLOCK = 'block'
+}
+
+export const FinalDecisionLabel: Record<string, string> = {
+  [FinalDecision.PASS]: '通过',
+  [FinalDecision.VERIFY]: '需二次验证',
+  [FinalDecision.BLOCK]: '拦截'
+}
+
+export const RISK_SCORE_RULES_DESC: Record<string, string> = {
+  newDevice: '新设备首次登录',
+  newIp: '新IP地址登录',
+  offsite: '异地登录',
+  abroad: '境外登录',
+  proxy: '代理IP登录',
+  vpn: 'VPN登录',
+  tor: 'Tor网络登录',
+  datacenter: '机房IP登录',
+  highFreqHour: '1小时内高频登录',
+  highFreqDay: '24小时内高频登录',
+  burst: '突发登录(30s内多次)',
+  multiDevice: '多设备同时在线',
+  selenium: 'Selenium自动化检测',
+  headless: '无头浏览器检测',
+  script: '脚本登录检测',
+  forged: '伪造登录检测'
+}
+
+export const LOGIN_STATUS_OPTIONS = [
+  { value: '', label: '全部状态' },
+  { value: 'success', label: '登录成功' },
+  { value: 'verified', label: '验证通过' },
+  { value: 'pending', label: '待验证' },
+  { value: 'failed', label: '登录失败' },
+  { value: 'blocked', label: '风控拦截' },
+  { value: 'risk', label: '标记风险' }
+]
+
+export const RISK_LEVEL_OPTIONS = [
+  { value: '', label: '全部等级' },
+  { value: 'none', label: '无风险' },
+  { value: 'low', label: '低风险' },
+  { value: 'medium', label: '中风险' },
+  { value: 'high', label: '高风险' },
+  { value: 'critical', label: '严重风险' }
+]
+
+export const DEVICE_STATUS_OPTIONS = [
+  { value: '', label: '全部状态' },
+  { value: 'trusted', label: '可信白名单' },
+  { value: 'normal', label: '正常' },
+  { value: 'restricted', label: '受限登录' },
+  { value: 'blocked', label: '已拦截' },
+  { value: 'locked', label: '永久锁定' }
+]
+
+export const OS_OPTIONS = [
+  { value: '', label: '全部系统' },
+  { value: 'Windows', label: 'Windows' },
+  { value: 'Mac', label: 'Mac' },
+  { value: 'iOS', label: 'iOS' },
+  { value: 'Android', label: 'Android' },
+  { value: 'Linux', label: 'Linux' }
+]
+
+export const BROWSER_OPTIONS = [
+  { value: '', label: '全部浏览器' },
+  { value: 'Chrome', label: 'Chrome' },
+  { value: 'Safari', label: 'Safari' },
+  { value: 'Firefox', label: 'Firefox' },
+  { value: 'Edge', label: 'Edge' },
+  { value: 'WeChat', label: '微信内置' }
+]
+
+export const SCROLL_BACK_TO_TOP_THRESHOLD = 500
+
+export enum BatchLoginAction {
+  MARK_RISK = 'mark',
+  CLEAR_RISK = 'clear',
+  DELETE = 'delete'
+}

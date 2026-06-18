@@ -40,4 +40,17 @@ router.get('/:userId/tag-logs', authMiddleware(), roleMiddleware(['super_admin',
 router.get('/:userId/tag-trace', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.getTagTrace)
 router.post('/:userId/tag-clean', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.cleanRedundantTags)
 
+// 登录行为管控
+router.get('/login/thresholds-meta', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.getLoginThresholdsMeta)
+router.get('/login/logs', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.queryLoginLogs)
+router.get('/login/:loginId/detail', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.getLoginDetail)
+router.put('/login/:loginId/mark-risk', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor']), userController.markRiskLog)
+router.put('/login/:loginId/clear-risk', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.clearRiskLog)
+router.put('/login/:loginId/verify', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.verifyLoginRecord)
+router.post('/login/batch-process', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor']), userController.batchProcessLoginLogs)
+router.get('/:userId/login-devices', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.listLoginDevices)
+router.put('/:userId/login-devices/:deviceId/lock', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.lockLoginDevice)
+router.put('/:userId/login-devices/:deviceId/unlock', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userController.unlockLoginDevice)
+router.get('/:userId/login-risk-summary', authMiddleware(), roleMiddleware(['super_admin', 'admin', 'auditor', 'operator']), userController.getLoginRiskSummary)
+
 module.exports = router

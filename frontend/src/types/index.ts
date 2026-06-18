@@ -753,3 +753,286 @@ export interface TagMeta {
   consumeLevels: { value: string; label: string }[]
   filterOptions: { value: string | null; label: string }[]
 }
+
+// ================ 登录行为管控 ================
+
+export type LoginStatus = 'pending' | 'success' | 'failed' | 'blocked' | 'verified' | 'risk'
+export type RiskLevel = 'none' | 'low' | 'medium' | 'high' | 'critical'
+export type DeviceStatus = 'trusted' | 'normal' | 'restricted' | 'blocked' | 'locked'
+export type FrequencyFlag = 'normal' | 'high_hour' | 'high_day' | 'burst'
+export type FinalDecision = 'pass' | 'verify' | 'block'
+
+export interface LoginLog {
+  id: number
+  userId?: number
+  uid?: string
+  username: string
+  status: LoginStatus
+  riskLevel: RiskLevel
+  failReason?: string
+
+  deviceId?: string
+  deviceName?: string
+  deviceBrand?: string
+  deviceModel?: string
+  os?: string
+  osVersion?: string
+  browser?: string
+  browserVersion?: string
+  screenSize?: string
+  deviceLanguage?: string
+  timezone?: string
+  userAgent?: string
+  fingerprint?: string
+
+  ip: string
+  ipv6?: string
+  ipLocation?: string
+  country?: string
+  region?: string
+  city?: string
+  isp?: string
+  lat?: number
+  lng?: number
+  isProxy: boolean
+  isVpn: boolean
+  isTor: boolean
+  isDatacenter: boolean
+
+  isNewDevice: boolean
+  isNewIp: boolean
+  isAbroad: boolean
+  isOffsite: boolean
+  isMultiDevice: boolean
+  multiDeviceIds: string[]
+  frequencyFlag: FrequencyFlag
+  scriptDetected: boolean
+  forgedDetected: boolean
+  seleniumDetected: boolean
+  headlessDetected: boolean
+  captchaPassed: boolean
+  twoFaPassed: boolean
+  twoFaMethod?: string
+  twoFaCodeId?: string
+
+  onlineDuration: number
+  logoutAt?: string
+  logoutType?: 'manual' | 'expired' | 'kicked' | 'forced'
+  sessionId?: string
+  tokenId?: string
+  isMarkedRisk: boolean
+  riskMarkedById?: number
+  riskMarkedByName?: string
+  riskMarkedAt?: string
+  riskMarkedReason?: string
+  isCleared: boolean
+  clearedById?: number
+  clearedByName?: string
+  clearedAt?: string
+  riskReportId?: number
+  referer?: string
+  loginEndpoint?: string
+
+  createdAt: string
+  updatedAt: string
+}
+
+export interface LoginDevice {
+  id: number
+  userId: number
+  uid: string
+  deviceId: string
+  deviceName?: string
+  deviceBrand?: string
+  deviceModel?: string
+  os?: string
+  osVersion?: string
+  browser?: string
+  browserVersion?: string
+  fingerprint?: string
+  screenSize?: string
+
+  status: DeviceStatus
+  statusUpdatedAt?: string
+
+  firstLoginAt: string
+  lastLoginAt: string
+  lastLoginIp?: string
+  lastLoginLocation?: string
+  totalLoginCount: number
+  totalSuccessCount: number
+  totalFailCount: number
+
+  isTrusted: boolean
+  trustedById?: number
+  trustedByName?: string
+  trustedAt?: string
+
+  isLocked: boolean
+  lockedById?: number
+  lockedByName?: string
+  lockedAt?: string
+  lockReason?: string
+  lockExpireAt?: string
+
+  isOnline: boolean
+  lastOnlineAt?: string
+  activeIpList: string[]
+  commonLocation?: string
+  riskCount: number
+  remark?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface LoginRiskReport {
+  id: number
+  loginLogId?: number
+  userId?: number
+  uid?: string
+  username: string
+  ip: string
+  deviceId?: string
+
+  overallScore: number
+  riskLevel: RiskLevel
+  finalDecision: FinalDecision
+
+  deviceChecks?: Record<string, any>
+  ipChecks?: Record<string, any>
+  frequencyChecks?: Record<string, any>
+  behaviorChecks?: Record<string, any>
+  geoChecks?: Record<string, any>
+
+  riskRulesTriggered: RiskRuleItem[]
+  riskScoreDetails: RiskScoreDetail[]
+
+  deviceRiskScore: number
+  ipRiskScore: number
+  frequencyRiskScore: number
+  behaviorRiskScore: number
+  geoRiskScore: number
+
+  historicalContext?: Record<string, any>
+  userBaseline?: Record<string, any>
+
+  suggestion?: string
+  processedBy?: number
+  processedByName?: string
+  processedAt?: string
+  processingResult?: string
+  remark?: string
+  createdAt: string
+}
+
+export interface RiskRuleItem {
+  rule: string
+  description: string
+  score: number
+}
+
+export interface RiskScoreDetail {
+  key: string
+  description: string
+  score: number
+  applied: boolean
+}
+
+export interface RiskChecks {
+  isNewDevice: boolean
+  isNewIp: boolean
+  isOffsite: boolean
+  isAbroad: boolean
+  isProxy: boolean
+  isVpn: boolean
+  isTor: boolean
+  isDatacenter: boolean
+  seleniumDetected: boolean
+  headlessDetected: boolean
+  scriptDetected: boolean
+  detected: string[]
+  frequencyFlag: FrequencyFlag
+  frequencyStats: { lastHour: number; lastDay: number; last5Min: number; last30s: number }
+  isMultiDevice: boolean
+  otherDeviceIds: string[]
+  country: string
+  region: string
+  city: string
+  isp: string
+  lat: number
+  lng: number
+}
+
+export interface VerifyLoginResult {
+  log: LoginLog
+  report: LoginRiskReport
+  success: boolean
+  status: LoginStatus
+  needTwoFa: boolean
+  blocked: boolean
+  failReason?: string
+  riskLevel: RiskLevel
+  riskScore: number
+  needTwoFaMethod: string
+  checks: RiskChecks
+}
+
+export interface LoginDetailResult {
+  log: LoginLog
+  report: LoginRiskReport | null
+  device: LoginDevice | null
+}
+
+export interface BatchProcessLoginResult {
+  success: { id: number; type: string; deviceLocked?: boolean }[]
+  failed: { id: number; reason: string }[]
+  total: number
+  successCount: number
+  failedCount: number
+}
+
+export interface LoginRiskSummary {
+  totalCount: number
+  successCount: number
+  failCount: number
+  blockOrRiskCount: number
+  byLevel: Partial<Record<RiskLevel, number>>
+  frequencyTrend: Record<string, number>
+  recentRiskLogs: LoginLog[]
+  devices: LoginDevice[]
+  riskCount: number
+}
+
+export interface LoginThresholdsMeta {
+  riskThresholds: {
+    highFrequency: { perHour: number; perDay: number; per5Min: number }
+    burstLogin: { count: number; windowSeconds: number }
+    offsiteLogin: { kmDistance: number }
+    multiDevice: { maxOnlineDevices: number }
+  }
+  riskScoreRules: Record<string, number>
+  scoreLevelMapping: { min: number; max: number; level: string }[]
+  logStatuses: string[]
+  riskLevels: string[]
+  deviceStatuses: string[]
+  decisions: string[]
+}
+
+export interface LoginQueryParams extends PageParams {
+  userId?: number
+  username?: string
+  status?: LoginStatus
+  riskLevel?: RiskLevel
+  ip?: string
+  deviceId?: string
+  os?: string
+  browser?: string
+  country?: string
+  city?: string
+  isMarkedRisk?: boolean
+  isCleared?: boolean
+  startTime?: string
+  endTime?: string
+  orderBy?: string
+  orderDir?: string
+}
