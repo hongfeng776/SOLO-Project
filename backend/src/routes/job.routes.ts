@@ -40,4 +40,16 @@ router.put('/:id/rollback', authMiddleware, roleMiddleware(UserRole.ADMIN, UserR
 router.post('/calculate-match-weight', authMiddleware, jobController.calculateMatchWeight);
 router.post('/validate-industry-norm', authMiddleware, jobController.validateIndustryNorm);
 
+router.get('/:id/online-permission', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), jobController.checkOnlinePermission);
+router.get('/:id/offline-permission', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), jobController.checkOfflinePermission);
+router.put('/:id/online', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), jobController.onlineJob);
+router.put('/:id/offline', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), jobController.offlineJob);
+
+router.post('/batch-online', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), jobController.batchOnline);
+router.post('/batch-offline', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), jobController.batchOffline);
+
+router.get('/:id/online-offline-history', authMiddleware, jobController.getOnlineOfflineHistory);
+router.put('/:id/risk-warning', authMiddleware, roleMiddleware(UserRole.ADMIN), jobController.updateRiskWarning);
+router.get('/stats/online-offline', authMiddleware, jobController.getOnlineOfflineStats);
+
 export default router;

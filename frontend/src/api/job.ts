@@ -42,6 +42,20 @@ export interface JobItem {
   lastEditTime?: string;
   lastEditorId?: number;
   lastEditorName?: string;
+  resumeCollectEnabled?: boolean;
+  smartMatchEnabled?: boolean;
+  exposurePushEnabled?: boolean;
+  onlineTime?: string;
+  offlineTime?: string;
+  onlineOfflineCount?: number;
+  riskWarningFlag?: boolean;
+  riskWarningReason?: string;
+  violationFlag?: boolean;
+  expireTime?: string;
+  resumeDeliveryCount?: number;
+  hireCompletedCount?: number;
+  interviewInProgressCount?: number;
+  onboardInProgressCount?: number;
   company?: any;
   operationLogs?: OperationLogItem[];
 }
@@ -102,6 +116,48 @@ export interface BatchResult {
   success: number;
   failed: number;
   errors: { jobId?: number; title?: string; message: string }[];
+}
+
+export interface OnlineCheckResult {
+  canOnline: boolean;
+  reason?: string;
+}
+
+export interface OfflineCheckResult {
+  canOffline: boolean;
+  reason?: string;
+  blockedItems?: string[];
+}
+
+export interface OnlineOfflineLogItem {
+  id: number;
+  action: string;
+  actionLabel: string;
+  fromStatus?: string;
+  toStatus?: string;
+  operatorId?: number;
+  operatorName?: string;
+  remark?: string;
+  createdAt: string;
+}
+
+export interface BatchOnlineOfflineFilter {
+  category?: string;
+  publishDaysMin?: number;
+  publishDaysMax?: number;
+  deliveryCountMin?: number;
+  deliveryCountMax?: number;
+  hireCompleteRateMin?: number;
+  hireCompleteRateMax?: number;
+  status?: string;
+  companyId?: number;
+}
+
+export interface OnlineOfflineStats {
+  totalCount: number;
+  onlineCount: number;
+  offlineCount: number;
+  riskCount: number;
 }
 
 export const getJobListApi = (params: any): Promise<PaginationResult<JobItem>> => {
@@ -218,4 +274,40 @@ export const calculateMatchWeightApi = (data: Partial<JobItem>): Promise<{ match
 
 export const validateIndustryNormApi = (data: Partial<JobItem>, category?: string): Promise<ValidateResult> => {
   return request.post<ValidateResult>('/jobs/validate-industry-norm', { data, category });
+};
+
+export const checkJobOnlinePermissionApi = (id: number): Promise<OnlineCheckResult> => {
+  return request.get<OnlineCheckResult>(`/jobs/${id}/online-permission`);
+};
+
+export const checkJobOfflinePermissionApi = (id: number): Promise<OfflineCheckResult> => {
+  return request.get<OfflineCheckResult>(`/jobs/${id}/offline-permission`);
+};
+
+export const onlineJobApi = (id: number, remark?: string): Promise<any> => {
+  return request.put<any>(`/jobs/${id}/online`, { remark });
+};
+
+export const offlineJobApi = (id: number, remark?: string, force?: boolean): Promise<any> => {
+  return request.put<any>(`/jobs/${id}/offline`, { remark, force });
+};
+
+export const batchOnlineJobApi = (ids: number[], filter?: BatchOnlineOfflineFilter, remark?: string): Promise<BatchResult> => {
+  return request.post<BatchResult>('/jobs/batch-online', { ids, filter, remark });
+};
+
+export const batchOfflineJobApi = (ids: number[], filter?: BatchOnlineOfflineFilter, remark?: string, force?: boolean): Promise<BatchResult> => {
+  return request.post<BatchResult>('/jobs/batch-offline', { ids, filter, remark, force });
+};
+
+export const getJobOnlineOfflineHistoryApi = (id: number): Promise<OnlineOfflineLogItem[]> => {
+  return request.get<OnlineOfflineLogItem[]>(`/jobs/${id}/online-offline-history`);
+};
+
+export const updateJobRiskWarningApi = (id: number, isWarning: boolean, reason?: string): Promise<any> => {
+  return request.put<any>(`/jobs/${id}/risk-warning`, { isWarning, reason });
+};
+
+export const getOnlineOfflineStatsApi = (): Promise<OnlineOfflineStats> => {
+  return request.get<OnlineOfflineStats>('/jobs/stats/online-offline');
 };

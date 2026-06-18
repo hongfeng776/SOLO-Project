@@ -1,5 +1,36 @@
 <template>
   <div class="job-page">
+    <div class="stats-cards">
+      <div class="stat-card stat-total">
+        <div class="stat-icon">📊</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ onlineOfflineStats.totalCount }}</div>
+          <div class="stat-label">岗位总数</div>
+        </div>
+      </div>
+      <div class="stat-card stat-online">
+        <div class="stat-icon">✅</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ onlineOfflineStats.onlineCount }}</div>
+          <div class="stat-label">已上架</div>
+        </div>
+      </div>
+      <div class="stat-card stat-offline">
+        <div class="stat-icon">⏸️</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ onlineOfflineStats.offlineCount }}</div>
+          <div class="stat-label">已下架</div>
+        </div>
+      </div>
+      <div class="stat-card stat-risk" @click="handleRiskCardClick">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ onlineOfflineStats.riskCount }}</div>
+          <div class="stat-label">风控预警</div>
+        </div>
+      </div>
+    </div>
+
     <SearchForm @search="handleSearch" @reset="handleReset">
       <el-form-item label="岗位名称" prop="title">
         <el-input v-model="searchForm.title" placeholder="请输入岗位名称" clearable style="width: 200px" />
@@ -24,6 +55,24 @@
         <el-button type="primary" :icon="Plus" class="action-btn" @click="handleAdd">新增岗位</el-button>
         <el-button type="success" :icon="DocumentAdd" class="action-btn" @click="handleBatchCreate">批量新增</el-button>
         <el-button type="warning" :icon="Edit" class="action-btn" @click="openBatchEditDialog">批量编辑</el-button>
+        <el-button
+          type="success"
+          plain
+          class="action-btn"
+          :disabled="selectedIds.length === 0"
+          @click="openBatchOnlineDialog"
+        >
+          批量上架
+        </el-button>
+        <el-button
+          type="danger"
+          plain
+          class="action-btn"
+          :disabled="selectedIds.length === 0"
+          @click="openBatchOfflineDialog"
+        >
+          批量下架
+        </el-button>
         <el-dropdown v-if="isAdmin" @command="handleBatchCommand">
           <el-button type="primary" plain class="action-btn">
             批量操作<el-icon class="el-icon--right"><ArrowDown /></el-icon>
@@ -131,7 +180,84 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="400" fixed="right" align="center" resizable>
+        <el-table-column label="上下架状态" width="100" align="center" resizable>
+          <template #default="{ row }">
+            <el-tag :type="getOnlineStatusType(row)" size="small">
+              {{ getOnlineStatusLabel(row) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="风控预警" width="90" align="center" resizable>
+          <template #default="{ row }">
+            <el-tag
+              v-if="row.riskWarningFlag"
+              type="danger"
+              size="small"
+              effect="dark"
+              class="risk-tag"
+              :class="{ 'risk-tag-clickable': isAdmin }"
+              @click.stop="handleToggleRiskWarning(row)"
+            >
+              风控
+            </el-tag>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="业务功能" width="200" align="center" resizable>
+          <template #default="{ row }">
+            <div class="biz-tags">
+              <el-tag
+                v-if="row.resumeCollectEnabled"
+                type="success"
+                size="small"
+                effect="plain"
+                class="biz-tag"
+              >
+                简历收录
+              </el-tag>
+              <el-tag
+                v-if="row.smartMatchEnabled"
+                type="primary"
+                size="small"
+                effect="plain"
+                class="biz-tag"
+              >
+                智能匹配
+              </el-tag>
+              <el-tag
+                v-if="row.exposurePushEnabled"
+                type="warning"
+                size="small"
+                effect="plain"
+                class="biz-tag"
+              >
+                曝光推送
+              </el-tag>
+              <span
+                v-if="!row.resumeCollectEnabled && !row.smartMatchEnabled && !row.exposurePushEnabled"
+                class="text-secondary"
+              >
+                -
+              </span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="最近操作" width="160" align="center" resizable>
+          <template #default="{ row }">
+            <el-tooltip
+              v-if="getLatestOnlineOfflineInfo(row)"
+              placement="top"
+              :content="getLatestOnlineOfflineTooltip(row)"
+            >
+              <span class="latest-op-info">
+                {{ getLatestOnlineOfflineInfo(row)?.operatorName || '系统' }}
+                <span class="text-secondary ml-5">{{ formatShortTime(getLatestOnlineOfflineInfo(row)?.createdAt) }}</span>
+              </span>
+            </el-tooltip>
+            <span v-else class="text-secondary">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="500" fixed="right" align="center" resizable>
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="handleView(row)">查看</el-button>
             <el-button
@@ -142,6 +268,28 @@
               @click="handleEdit(row)"
             >
               {{ row.status === JobStatus.PENDING_AUDIT ? '编辑排序' : '编辑' }}
+            </el-button>
+            <el-button
+              v-if="canOnline(row)"
+              type="success"
+              link
+              size="small"
+              class="action-btn online-btn"
+              :disabled="onlineOfflineBtnDisabled[row.id]"
+              @click="handleOnline(row)"
+            >
+              上架
+            </el-button>
+            <el-button
+              v-if="canOffline(row)"
+              type="warning"
+              link
+              size="small"
+              class="action-btn offline-btn"
+              :disabled="onlineOfflineBtnDisabled[row.id]"
+              @click="handleOffline(row)"
+            >
+              下架
             </el-button>
             <el-button
               v-if="row.pendingChanges"
@@ -717,6 +865,35 @@
             <el-empty v-if="operationLogs.length === 0" description="暂无操作记录" />
           </div>
         </el-tab-pane>
+
+        <el-tab-pane label="上下架历史" name="onlineOfflineHistory">
+          <div class="online-offline-summary" v-if="onlineOfflineHistory.length > 0">
+            <el-alert type="info" :closable="false" show-icon style="margin-bottom: 16px">
+              <template #title>
+                该岗位累计上下架频次：<strong>{{ detailData.onlineOfflineCount || 0 }}</strong> 次
+              </template>
+            </el-alert>
+          </div>
+          <div v-if="onlineOfflineHistoryLoading" class="loading-wrapper">
+            <el-skeleton :rows="8" animated />
+          </div>
+          <div v-else class="operation-logs">
+            <div v-for="log in onlineOfflineHistory" :key="log.id" class="log-item">
+              <div class="log-time">{{ formatTime(log.createdAt) }}</div>
+              <div class="log-content">
+                <el-tag :type="log.action === 'online' ? 'success' : 'warning'" size="small">
+                  {{ log.actionLabel }}
+                </el-tag>
+                <span class="log-operator">{{ log.operatorName || '系统' }}</span>
+                <span v-if="log.fromStatus" class="log-status">
+                  {{ getOnlineStatusLabelByStatus(log.fromStatus) }} → {{ getOnlineStatusLabelByStatus(log.toStatus) }}
+                </span>
+                <span v-if="log.remark" class="log-remark">备注：{{ log.remark }}</span>
+              </div>
+            </div>
+            <el-empty v-if="onlineOfflineHistory.length === 0" description="暂无上下架历史" />
+          </div>
+        </el-tab-pane>
       </el-tabs>
     </el-dialog>
 
@@ -755,6 +932,314 @@
       <template #footer>
         <el-button @click="rejectChangeDialogVisible = false">取消</el-button>
         <el-button type="primary" :disabled="!rejectChangeForm.rejectReason" @click="confirmRejectChange">确认驳回</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="offlineBlockedVisible" title="下架操作被拦截" width="500px" :close-on-click-modal="false">
+      <el-alert type="warning" :closable="false" show-icon style="margin-bottom: 16px">
+        <template #title>该岗位存在未完结的业务流程</template>
+        <template #default>
+          以下业务未完成，下架可能会影响招聘进度
+        </template>
+      </el-alert>
+      <div class="blocked-items-list">
+        <div v-for="(item, index) in offlineBlockedItems" :key="index" class="blocked-item">
+          <el-icon class="text-warning"><WarningFilled /></el-icon>
+          <span>{{ item }}</span>
+        </div>
+      </div>
+      <el-form :model="offlineRemarkForm" label-width="80px" style="margin-top: 16px">
+        <el-form-item label="操作备注">
+          <el-input
+            v-model="offlineRemarkForm.remark"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入下架原因（可选）"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="offlineBlockedVisible = false">取消</el-button>
+        <el-button type="danger" @click="confirmForceOffline">强制下架</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="batchOnlineVisible" title="批量上架岗位" width="600px" :close-on-click-modal="false">
+      <el-alert type="info" :closable="false" show-icon style="margin-bottom: 16px">
+        <template #title>批量上架说明</template>
+        <template #default>
+          {{ isAdmin ? '管理员可对全公司岗位进行批量上架操作' : '仅可操作本部门岗位，非本部门岗位将被自动跳过' }}
+        </template>
+      </el-alert>
+
+      <div class="batch-summary">
+        <p>已选择 <strong class="text-primary">{{ selectedIds.length }}</strong> 个岗位</p>
+      </div>
+
+      <el-divider content-position="left">筛选条件（可选，留空则不限制）</el-divider>
+
+      <el-form :model="batchOnlineFilter" label-width="100px">
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="岗位类别">
+              <el-select v-model="batchOnlineFilter.category" placeholder="全部" clearable style="width: 100%">
+                <el-option v-for="(label, key) in JobCategoryLabel" :key="key" :label="label" :value="key" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="招聘状态">
+              <el-select v-model="batchOnlineFilter.status" placeholder="全部" clearable style="width: 100%">
+                <el-option v-for="(label, key) in JobStatusLabel" :key="key" :label="label" :value="key" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="发布时长">
+              <div class="range-input">
+                <el-input-number
+                  v-model="batchOnlineFilter.publishDaysMin"
+                  :min="0"
+                  :controls="false"
+                  placeholder="最短天数"
+                  style="width: 45%"
+                />
+                <span class="range-separator">至</span>
+                <el-input-number
+                  v-model="batchOnlineFilter.publishDaysMax"
+                  :min="0"
+                  :controls="false"
+                  placeholder="最长天数"
+                  style="width: 45%"
+                />
+              </div>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="简历投递量">
+              <div class="range-input">
+                <el-input-number
+                  v-model="batchOnlineFilter.deliveryCountMin"
+                  :min="0"
+                  :controls="false"
+                  placeholder="最少数"
+                  style="width: 45%"
+                />
+                <span class="range-separator">至</span>
+                <el-input-number
+                  v-model="batchOnlineFilter.deliveryCountMax"
+                  :min="0"
+                  :controls="false"
+                  placeholder="最多数"
+                  style="width: 45%"
+                />
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="招聘完成度">
+              <div class="range-input">
+                <el-input-number
+                  v-model="batchOnlineFilter.hireCompleteRateMin"
+                  :min="0"
+                  :max="100"
+                  :controls="false"
+                  placeholder="最低%"
+                  style="width: 45%"
+                />
+                <span class="range-separator">至</span>
+                <el-input-number
+                  v-model="batchOnlineFilter.hireCompleteRateMax"
+                  :min="0"
+                  :max="100"
+                  :controls="false"
+                  placeholder="最高%"
+                  style="width: 45%"
+                />
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+
+      <el-form :model="batchOnlineForm" label-width="100px">
+        <el-form-item label="操作备注">
+          <el-input
+            v-model="batchOnlineForm.remark"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入操作备注（可选）"
+          />
+        </el-form-item>
+      </el-form>
+
+      <div v-if="batchOnlineResult" class="batch-result">
+        <el-alert :type="batchOnlineResult.failed > 0 ? 'warning' : 'success'" :closable="false" show-icon>
+          <template #title>
+            批量操作完成：成功 {{ batchOnlineResult.success }} 个，失败 {{ batchOnlineResult.failed }} 个
+          </template>
+          <template #default>
+            <div v-if="batchOnlineResult.errors.length > 0" class="error-list">
+              <div v-for="(err, index) in batchOnlineResult.errors" :key="index" class="error-item">
+                <span>{{ err.title || ('岗位ID:' + err.jobId) }}：</span>
+                <span class="text-danger">{{ err.message }}</span>
+              </div>
+            </div>
+          </template>
+        </el-alert>
+      </div>
+
+      <template #footer>
+        <el-button @click="closeBatchOnlineDialog">{{ batchOnlineResult ? '关闭' : '取消' }}</el-button>
+        <el-button type="primary" :loading="batchOnlineLoading" :disabled="!!batchOnlineResult" @click="confirmBatchOnline">
+          确认批量上架
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="batchOfflineVisible" title="批量下架岗位" width="600px" :close-on-click-modal="false">
+      <el-alert type="warning" :closable="false" show-icon style="margin-bottom: 16px">
+        <template #title>批量下架说明</template>
+        <template #default>
+          {{ isAdmin ? '管理员可对全公司岗位进行批量下架操作' : '仅可操作本部门岗位，非本部门岗位将被自动跳过' }}
+        </template>
+      </el-alert>
+
+      <div class="batch-summary">
+        <p>已选择 <strong class="text-primary">{{ selectedIds.length }}</strong> 个岗位</p>
+      </div>
+
+      <el-divider content-position="left">筛选条件（可选，留空则不限制）</el-divider>
+
+      <el-form :model="batchOfflineFilter" label-width="100px">
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="岗位类别">
+              <el-select v-model="batchOfflineFilter.category" placeholder="全部" clearable style="width: 100%">
+                <el-option v-for="(label, key) in JobCategoryLabel" :key="key" :label="label" :value="key" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="招聘状态">
+              <el-select v-model="batchOfflineFilter.status" placeholder="全部" clearable style="width: 100%">
+                <el-option v-for="(label, key) in JobStatusLabel" :key="key" :label="label" :value="key" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="发布时长">
+              <div class="range-input">
+                <el-input-number
+                  v-model="batchOfflineFilter.publishDaysMin"
+                  :min="0"
+                  :controls="false"
+                  placeholder="最短天数"
+                  style="width: 45%"
+                />
+                <span class="range-separator">至</span>
+                <el-input-number
+                  v-model="batchOfflineFilter.publishDaysMax"
+                  :min="0"
+                  :controls="false"
+                  placeholder="最长天数"
+                  style="width: 45%"
+                />
+              </div>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="简历投递量">
+              <div class="range-input">
+                <el-input-number
+                  v-model="batchOfflineFilter.deliveryCountMin"
+                  :min="0"
+                  :controls="false"
+                  placeholder="最少数"
+                  style="width: 45%"
+                />
+                <span class="range-separator">至</span>
+                <el-input-number
+                  v-model="batchOfflineFilter.deliveryCountMax"
+                  :min="0"
+                  :controls="false"
+                  placeholder="最多数"
+                  style="width: 45%"
+                />
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="招聘完成度">
+              <div class="range-input">
+                <el-input-number
+                  v-model="batchOfflineFilter.hireCompleteRateMin"
+                  :min="0"
+                  :max="100"
+                  :controls="false"
+                  placeholder="最低%"
+                  style="width: 45%"
+                />
+                <span class="range-separator">至</span>
+                <el-input-number
+                  v-model="batchOfflineFilter.hireCompleteRateMax"
+                  :min="0"
+                  :max="100"
+                  :controls="false"
+                  placeholder="最高%"
+                  style="width: 45%"
+                />
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+
+      <el-form :model="batchOfflineForm" label-width="100px">
+        <el-form-item label="强制下架">
+          <el-checkbox v-model="batchOfflineForm.force">
+            忽略未完结业务，强制下架
+          </el-checkbox>
+        </el-form-item>
+        <el-form-item label="操作备注">
+          <el-input
+            v-model="batchOfflineForm.remark"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入下架原因（可选）"
+          />
+        </el-form-item>
+      </el-form>
+
+      <div v-if="batchOfflineResult" class="batch-result">
+        <el-alert :type="batchOfflineResult.failed > 0 ? 'warning' : 'success'" :closable="false" show-icon>
+          <template #title>
+            批量操作完成：成功 {{ batchOfflineResult.success }} 个，失败 {{ batchOfflineResult.failed }} 个
+          </template>
+          <template #default>
+            <div v-if="batchOfflineResult.errors.length > 0" class="error-list">
+              <div v-for="(err, index) in batchOfflineResult.errors" :key="index" class="error-item">
+                <span>{{ err.title || ('岗位ID:' + err.jobId) }}：</span>
+                <span class="text-danger">{{ err.message }}</span>
+              </div>
+            </div>
+          </template>
+        </el-alert>
+      </div>
+
+      <template #footer>
+        <el-button @click="closeBatchOfflineDialog">{{ batchOfflineResult ? '关闭' : '取消' }}</el-button>
+        <el-button type="danger" :loading="batchOfflineLoading" :disabled="!!batchOfflineResult" @click="confirmBatchOffline">
+          确认批量下架
+        </el-button>
       </template>
     </el-dialog>
 
@@ -1015,6 +1500,15 @@ import {
   rollbackJobVersionApi,
   calculateMatchWeightApi,
   validateIndustryNormApi,
+  checkJobOnlinePermissionApi,
+  checkJobOfflinePermissionApi,
+  onlineJobApi,
+  offlineJobApi,
+  batchOnlineJobApi,
+  batchOfflineJobApi,
+  getJobOnlineOfflineHistoryApi,
+  updateJobRiskWarningApi,
+  getOnlineOfflineStatsApi,
   type JobItem,
   type OperationLogItem,
   type BatchResult,
@@ -1022,6 +1516,9 @@ import {
   type EditCheckResult,
   type VersionDiff,
   type BatchEditFilter,
+  type OnlineOfflineLogItem,
+  type OnlineOfflineStats,
+  type BatchOnlineOfflineFilter,
 } from '@/api/job';
 import {
   JobStatus,
@@ -1187,6 +1684,44 @@ const batchEditForm = reactive<Partial<JobItem>>({
 });
 const batchEditFilteredIds = ref<number[]>([]);
 
+const onlineOfflineStats = reactive<OnlineOfflineStats>({
+  totalCount: 0,
+  onlineCount: 0,
+  offlineCount: 0,
+  riskCount: 0,
+});
+
+const onlineOfflineBtnDisabled = reactive<Record<number, boolean>>({});
+
+const offlineBlockedVisible = ref(false);
+const offlineBlockedItems = ref<string[]>([]);
+const offlineTargetId = ref<number | null>(null);
+const offlineRemarkForm = reactive({
+  remark: '',
+});
+
+const onlineOfflineHistoryLoading = ref(false);
+const onlineOfflineHistory = ref<OnlineOfflineLogItem[]>([]);
+
+const batchOnlineVisible = ref(false);
+const batchOnlineLoading = ref(false);
+const batchOnlineResult = ref<BatchResult | null>(null);
+const batchOnlineFilter = reactive<BatchOnlineOfflineFilter>({});
+const batchOnlineForm = reactive({
+  remark: '',
+});
+
+const batchOfflineVisible = ref(false);
+const batchOfflineLoading = ref(false);
+const batchOfflineResult = ref<BatchResult | null>(null);
+const batchOfflineFilter = reactive<BatchOnlineOfflineFilter>({});
+const batchOfflineForm = reactive({
+  force: false,
+  remark: '',
+});
+
+const latestOnlineOfflineMap = reactive<Record<number, OnlineOfflineLogItem>>({});
+
 const canSubmitBatchEdit = computed(() => {
   const hasData = batchEditForm.salaryMin !== undefined ||
     batchEditForm.salaryMax !== undefined ||
@@ -1220,9 +1755,13 @@ const fetchList = async (showSkeleton = false) => {
     };
     if (!params.status) delete (params as any).status;
     if (!params.category) delete (params as any).category;
-    const res = await getJobListApi(params);
-    tableData.value = res.list;
-    total.value = res.total;
+    const [listRes, statsRes] = await Promise.all([
+      getJobListApi(params),
+      getOnlineOfflineStatsApi(),
+    ]);
+    tableData.value = listRes.list;
+    total.value = listRes.total;
+    Object.assign(onlineOfflineStats, statsRes);
     checkDuplicateJobs();
   } finally {
     loading.value = false;
@@ -1385,6 +1924,7 @@ const handleView = async (row: JobItem) => {
     
     loadVersionDiff(row.id);
     loadEditHistory(row.id);
+    loadOnlineOfflineHistory(row.id);
   } catch (error) {
     console.error(error);
   }
@@ -1464,6 +2004,347 @@ const loadEditHistory = async (jobId: number) => {
     editHistoryList.value = [];
   } finally {
     editHistoryLoading.value = false;
+  }
+};
+
+const loadOnlineOfflineHistory = async (jobId: number) => {
+  onlineOfflineHistoryLoading.value = true;
+  try {
+    const data = await getJobOnlineOfflineHistoryApi(jobId);
+    onlineOfflineHistory.value = data;
+    if (data.length > 0) {
+      latestOnlineOfflineMap[jobId] = data[0];
+    }
+  } catch (error) {
+    onlineOfflineHistory.value = [];
+  } finally {
+    onlineOfflineHistoryLoading.value = false;
+  }
+};
+
+const getOnlineStatusLabel = (row: JobItem): string => {
+  if (row.status === JobStatus.PAUSED) return '已暂停';
+  if (row.onlineTime && !row.offlineTime) return '已上架';
+  if (row.offlineTime) return '已下架';
+  if (row.status === JobStatus.PUBLISHED) return '已上架';
+  return '未上架';
+};
+
+const getOnlineStatusType = (row: JobItem): string => {
+  if (row.status === JobStatus.PAUSED) return 'warning';
+  if (row.onlineTime && !row.offlineTime) return 'success';
+  if (row.offlineTime) return 'info';
+  if (row.status === JobStatus.PUBLISHED) return 'success';
+  return 'info';
+};
+
+const getOnlineStatusLabelByStatus = (status: string): string => {
+  const map: Record<string, string> = {
+    online: '已上架',
+    offline: '已下架',
+    paused: '已暂停',
+  };
+  return map[status] || status;
+};
+
+const formatShortTime = (time?: string) => {
+  if (!time) return '';
+  const d = new Date(time);
+  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+};
+
+const getLatestOnlineOfflineInfo = (row: JobItem): OnlineOfflineLogItem | null => {
+  if (latestOnlineOfflineMap[row.id]) {
+    return latestOnlineOfflineMap[row.id];
+  }
+  if (row.operationLogs && row.operationLogs.length > 0) {
+    const log = row.operationLogs.find(l => l.action === 'online' || l.action === 'offline');
+    if (log) {
+      return log as unknown as OnlineOfflineLogItem;
+    }
+  }
+  return null;
+};
+
+const getLatestOnlineOfflineTooltip = (row: JobItem): string => {
+  const log = getLatestOnlineOfflineInfo(row);
+  if (!log) return '';
+  const parts: string[] = [];
+  parts.push(`操作：${log.actionLabel}`);
+  parts.push(`操作人：${log.operatorName || '系统'}`);
+  parts.push(`时间：${formatTime(log.createdAt)}`);
+  if (log.remark) {
+    parts.push(`原因：${log.remark}`);
+  }
+  return parts.join(' | ');
+};
+
+const canOnline = (row: JobItem): boolean => {
+  if (row.status !== JobStatus.PUBLISHED && row.status !== JobStatus.PAUSED) return false;
+  if (row.onlineTime && !row.offlineTime) return false;
+  if (row.riskWarningFlag) return false;
+  if (isAdmin.value) return true;
+  if (row.creatorId && userStore.userInfo && row.creatorId !== userStore.userInfo.id) {
+    return false;
+  }
+  if (row.department && userStore.userInfo?.department && row.department !== userStore.userInfo.department) {
+    return false;
+  }
+  return true;
+};
+
+const canOffline = (row: JobItem): boolean => {
+  if (!row.onlineTime) return false;
+  if (row.offlineTime) return false;
+  if (isAdmin.value) return true;
+  if (row.creatorId && userStore.userInfo && row.creatorId !== userStore.userInfo.id) {
+    return false;
+  }
+  if (row.department && userStore.userInfo?.department && row.department !== userStore.userInfo.department) {
+    return false;
+  }
+  return true;
+};
+
+const setBtnDisabledTemporarily = (rowId: number) => {
+  onlineOfflineBtnDisabled[rowId] = true;
+  setTimeout(() => {
+    onlineOfflineBtnDisabled[rowId] = false;
+  }, 300);
+};
+
+const handleOnline = async (row: JobItem) => {
+  if (onlineOfflineBtnDisabled[row.id]) return;
+  setBtnDisabledTemporarily(row.id);
+
+  try {
+    const checkResult = await checkJobOnlinePermissionApi(row.id);
+    if (!checkResult.canOnline) {
+      ElMessage.warning(checkResult.reason || '该岗位不满足上架条件');
+      return;
+    }
+
+    ElMessageBox.confirm('确定要上架该岗位吗？上架后将自动开启简历收录、智能匹配和曝光推送功能', '上架确认', {
+      confirmButtonText: '确认上架',
+      cancelButtonText: '取消',
+      type: 'success',
+    })
+      .then(async () => {
+        try {
+          await onlineJobApi(row.id);
+          ElMessage.success('上架成功');
+          fetchList(true);
+        } catch (error: any) {
+          ElMessage.error(error.message || '上架失败');
+        }
+      })
+      .catch(() => {});
+  } catch (error: any) {
+    ElMessage.error(error.message || '检查上架权限失败');
+  }
+};
+
+const handleOffline = async (row: JobItem) => {
+  if (onlineOfflineBtnDisabled[row.id]) return;
+  setBtnDisabledTemporarily(row.id);
+
+  try {
+    const checkResult = await checkJobOfflinePermissionApi(row.id);
+    if (!checkResult.canOffline) {
+      if (checkResult.blockedItems && checkResult.blockedItems.length > 0) {
+        offlineTargetId.value = row.id;
+        offlineBlockedItems.value = checkResult.blockedItems;
+        offlineRemarkForm.remark = '';
+        offlineBlockedVisible.value = true;
+        return;
+      }
+      ElMessage.warning(checkResult.reason || '该岗位暂不可下架');
+      return;
+    }
+
+    ElMessageBox.confirm('确定要下架该岗位吗？下架后将暂停所有关联业务', '下架确认', {
+      confirmButtonText: '确认下架',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+      .then(async () => {
+        try {
+          await offlineJobApi(row.id);
+          ElMessage.success('下架成功');
+          fetchList(true);
+        } catch (error: any) {
+          ElMessage.error(error.message || '下架失败');
+        }
+      })
+      .catch(() => {});
+  } catch (error: any) {
+    ElMessage.error(error.message || '检查下架权限失败');
+  }
+};
+
+const confirmForceOffline = async () => {
+  if (!offlineTargetId.value) return;
+  try {
+    await offlineJobApi(offlineTargetId.value, offlineRemarkForm.remark, true);
+    ElMessage.success('强制下架成功');
+    offlineBlockedVisible.value = false;
+    offlineTargetId.value = null;
+    fetchList(true);
+  } catch (error: any) {
+    ElMessage.error(error.message || '强制下架失败');
+  }
+};
+
+const handleToggleRiskWarning = async (row: JobItem) => {
+  if (!isAdmin.value) {
+    ElMessage.warning('仅管理员可操作风控标记');
+    return;
+  }
+  const action = row.riskWarningFlag ? '解除' : '标记';
+  ElMessageBox.confirm(`确定要${action}该岗位的风控预警标记吗？`, '风控操作确认', {
+    confirmButtonText: '确认',
+    cancelButtonText: '取消',
+    type: row.riskWarningFlag ? 'success' : 'warning',
+  })
+    .then(async () => {
+      try {
+        await updateJobRiskWarningApi(row.id, !row.riskWarningFlag);
+        ElMessage.success(`${action}风控预警成功`);
+        fetchList(true);
+      } catch (error: any) {
+        ElMessage.error(error.message || '操作失败');
+      }
+    })
+    .catch(() => {});
+};
+
+const handleRiskCardClick = () => {
+  searchForm.status = '';
+  fetchList(true);
+  ElMessage.info('已展示所有岗位，风控预警岗位已用红色Tag标记');
+};
+
+const openBatchOnlineDialog = () => {
+  if (selectedIds.value.length === 0) {
+    ElMessage.warning('请先选择要上架的岗位');
+    return;
+  }
+  Object.assign(batchOnlineFilter, {
+    category: undefined,
+    publishDaysMin: undefined,
+    publishDaysMax: undefined,
+    deliveryCountMin: undefined,
+    deliveryCountMax: undefined,
+    hireCompleteRateMin: undefined,
+    hireCompleteRateMax: undefined,
+    status: undefined,
+    companyId: isAdmin.value ? undefined : (userStore.userInfo?.companyId || undefined),
+  });
+  batchOnlineForm.remark = '';
+  batchOnlineResult.value = null;
+  batchOnlineVisible.value = true;
+};
+
+const closeBatchOnlineDialog = () => {
+  batchOnlineVisible.value = false;
+  if (batchOnlineResult.value) {
+    fetchList(true);
+  }
+};
+
+const confirmBatchOnline = async () => {
+  if (selectedIds.value.length === 0) {
+    ElMessage.warning('请先选择岗位');
+    return;
+  }
+  batchOnlineLoading.value = true;
+  try {
+    const filter: BatchOnlineOfflineFilter = {};
+    if (batchOnlineFilter.category) filter.category = batchOnlineFilter.category;
+    if (batchOnlineFilter.publishDaysMin !== undefined) filter.publishDaysMin = batchOnlineFilter.publishDaysMin;
+    if (batchOnlineFilter.publishDaysMax !== undefined) filter.publishDaysMax = batchOnlineFilter.publishDaysMax;
+    if (batchOnlineFilter.deliveryCountMin !== undefined) filter.deliveryCountMin = batchOnlineFilter.deliveryCountMin;
+    if (batchOnlineFilter.deliveryCountMax !== undefined) filter.deliveryCountMax = batchOnlineFilter.deliveryCountMax;
+    if (batchOnlineFilter.hireCompleteRateMin !== undefined) filter.hireCompleteRateMin = batchOnlineFilter.hireCompleteRateMin;
+    if (batchOnlineFilter.hireCompleteRateMax !== undefined) filter.hireCompleteRateMax = batchOnlineFilter.hireCompleteRateMax;
+    if (batchOnlineFilter.status) filter.status = batchOnlineFilter.status;
+    if (!isAdmin.value && userStore.userInfo?.companyId) {
+      filter.companyId = userStore.userInfo.companyId;
+    }
+
+    const result = await batchOnlineJobApi(
+      selectedIds.value,
+      Object.keys(filter).length > 0 ? filter : undefined,
+      batchOnlineForm.remark || undefined
+    );
+    batchOnlineResult.value = result;
+  } catch (error: any) {
+    ElMessage.error(error.message || '批量上架失败');
+  } finally {
+    batchOnlineLoading.value = false;
+  }
+};
+
+const openBatchOfflineDialog = () => {
+  if (selectedIds.value.length === 0) {
+    ElMessage.warning('请先选择要下架的岗位');
+    return;
+  }
+  Object.assign(batchOfflineFilter, {
+    category: undefined,
+    publishDaysMin: undefined,
+    publishDaysMax: undefined,
+    deliveryCountMin: undefined,
+    deliveryCountMax: undefined,
+    hireCompleteRateMin: undefined,
+    hireCompleteRateMax: undefined,
+    status: undefined,
+    companyId: isAdmin.value ? undefined : (userStore.userInfo?.companyId || undefined),
+  });
+  batchOfflineForm.remark = '';
+  batchOfflineForm.force = false;
+  batchOfflineResult.value = null;
+  batchOfflineVisible.value = true;
+};
+
+const closeBatchOfflineDialog = () => {
+  batchOfflineVisible.value = false;
+  if (batchOfflineResult.value) {
+    fetchList(true);
+  }
+};
+
+const confirmBatchOffline = async () => {
+  if (selectedIds.value.length === 0) {
+    ElMessage.warning('请先选择岗位');
+    return;
+  }
+  batchOfflineLoading.value = true;
+  try {
+    const filter: BatchOnlineOfflineFilter = {};
+    if (batchOfflineFilter.category) filter.category = batchOfflineFilter.category;
+    if (batchOfflineFilter.publishDaysMin !== undefined) filter.publishDaysMin = batchOfflineFilter.publishDaysMin;
+    if (batchOfflineFilter.publishDaysMax !== undefined) filter.publishDaysMax = batchOfflineFilter.publishDaysMax;
+    if (batchOfflineFilter.deliveryCountMin !== undefined) filter.deliveryCountMin = batchOfflineFilter.deliveryCountMin;
+    if (batchOfflineFilter.deliveryCountMax !== undefined) filter.deliveryCountMax = batchOfflineFilter.deliveryCountMax;
+    if (batchOfflineFilter.hireCompleteRateMin !== undefined) filter.hireCompleteRateMin = batchOfflineFilter.hireCompleteRateMin;
+    if (batchOfflineFilter.hireCompleteRateMax !== undefined) filter.hireCompleteRateMax = batchOfflineFilter.hireCompleteRateMax;
+    if (batchOfflineFilter.status) filter.status = batchOfflineFilter.status;
+    if (!isAdmin.value && userStore.userInfo?.companyId) {
+      filter.companyId = userStore.userInfo.companyId;
+    }
+
+    const result = await batchOfflineJobApi(
+      selectedIds.value,
+      Object.keys(filter).length > 0 ? filter : undefined,
+      batchOfflineForm.remark || undefined,
+      batchOfflineForm.force
+    );
+    batchOfflineResult.value = result;
+  } catch (error: any) {
+    ElMessage.error(error.message || '批量下架失败');
+  } finally {
+    batchOfflineLoading.value = false;
   }
 };
 
@@ -2537,6 +3418,175 @@ onMounted(() => {
     .el-table {
       margin-bottom: $spacing-base;
     }
+  }
+
+  .stats-cards {
+    display: flex;
+    gap: $spacing-base;
+    margin-bottom: $spacing-base;
+
+    .stat-card {
+      flex: 1;
+      background: $bg-white;
+      border-radius: $border-radius;
+      padding: $spacing-lg $spacing-xl;
+      display: flex;
+      align-items: center;
+      gap: $spacing-base;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+      transition: all 0.2s ease;
+      cursor: default;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      .stat-icon {
+        font-size: 36px;
+        width: 56px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background: rgba($color-primary, 0.08);
+      }
+
+      .stat-info {
+        flex: 1;
+
+        .stat-value {
+          font-size: 28px;
+          font-weight: 600;
+          color: $text-primary;
+          line-height: 1.2;
+        }
+
+        .stat-label {
+          font-size: $font-size-sm;
+          color: $text-secondary;
+          margin-top: 4px;
+        }
+      }
+
+      &.stat-total .stat-icon {
+        background: rgba($color-primary, 0.1);
+      }
+      &.stat-total .stat-value {
+        color: $color-primary;
+      }
+
+      &.stat-online .stat-icon {
+        background: rgba($color-success, 0.1);
+      }
+      &.stat-online .stat-value {
+        color: $color-success;
+      }
+
+      &.stat-offline .stat-icon {
+        background: rgba($color-warning, 0.1);
+      }
+      &.stat-offline .stat-value {
+        color: $color-warning;
+      }
+
+      &.stat-risk {
+        cursor: pointer;
+        .stat-icon {
+          background: rgba($color-danger, 0.1);
+        }
+        .stat-value {
+          color: $color-danger;
+        }
+      }
+    }
+  }
+
+  .biz-tags {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+
+    .biz-tag {
+      margin: 0;
+    }
+  }
+
+  .risk-tag {
+    cursor: default;
+
+    &.risk-tag-clickable {
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(245, 108, 108, 0.4);
+      }
+
+      &:active {
+        transform: translateX(2px) translateY(2px);
+        opacity: 0.85;
+      }
+    }
+  }
+
+  .latest-op-info {
+    font-size: $font-size-sm;
+    color: $text-primary;
+  }
+
+  .online-btn,
+  .offline-btn {
+    transition: all 0.15s ease;
+
+    &:active {
+      transform: translateX(2px) translateY(2px);
+      opacity: 0.85;
+      filter: brightness(0.95);
+    }
+  }
+
+  .blocked-items-list {
+    background: rgba($color-warning, 0.06);
+    border-radius: $border-radius;
+    padding: $spacing-base;
+    margin-bottom: $spacing-base;
+
+    .blocked-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      font-size: $font-size-sm;
+      color: $text-primary;
+
+      & + .blocked-item {
+        border-top: 1px dashed rgba($color-warning, 0.2);
+      }
+    }
+  }
+
+  .range-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .range-separator {
+      color: $text-secondary;
+      flex-shrink: 0;
+    }
+  }
+
+  .online-offline-summary {
+    margin-bottom: $spacing-base;
+  }
+
+  .log-status {
+    color: $text-secondary;
+    font-size: $font-size-sm;
   }
 }
 </style>

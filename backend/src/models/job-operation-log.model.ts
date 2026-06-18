@@ -23,6 +23,18 @@ export enum JobOperationAction {
   UPDATE_MATCH_WEIGHT = 'update_match_weight',
   MARK_ABNORMAL = 'mark_abnormal',
   CLEAR_ABNORMAL = 'clear_abnormal',
+  ONLINE = 'online',
+  OFFLINE = 'offline',
+  BATCH_ONLINE = 'batch_online',
+  BATCH_OFFLINE = 'batch_offline',
+  MARK_RISK_WARNING = 'mark_risk_warning',
+  CLEAR_RISK_WARNING = 'clear_risk_warning',
+  ENABLE_RESUME_COLLECT = 'enable_resume_collect',
+  DISABLE_RESUME_COLLECT = 'disable_resume_collect',
+  ENABLE_SMART_MATCH = 'enable_smart_match',
+  DISABLE_SMART_MATCH = 'disable_smart_match',
+  ENABLE_EXPOSURE_PUSH = 'enable_exposure_push',
+  DISABLE_EXPOSURE_PUSH = 'disable_exposure_push',
 }
 
 export const JobOperationActionLabel: Record<JobOperationAction, string> = {
@@ -47,6 +59,18 @@ export const JobOperationActionLabel: Record<JobOperationAction, string> = {
   [JobOperationAction.UPDATE_MATCH_WEIGHT]: '更新匹配权重',
   [JobOperationAction.MARK_ABNORMAL]: '标记异常',
   [JobOperationAction.CLEAR_ABNORMAL]: '解除异常',
+  [JobOperationAction.ONLINE]: '岗位上架',
+  [JobOperationAction.OFFLINE]: '岗位下架',
+  [JobOperationAction.BATCH_ONLINE]: '批量上架',
+  [JobOperationAction.BATCH_OFFLINE]: '批量下架',
+  [JobOperationAction.MARK_RISK_WARNING]: '标记风控预警',
+  [JobOperationAction.CLEAR_RISK_WARNING]: '解除风控预警',
+  [JobOperationAction.ENABLE_RESUME_COLLECT]: '开启简历收录',
+  [JobOperationAction.DISABLE_RESUME_COLLECT]: '关闭简历收录',
+  [JobOperationAction.ENABLE_SMART_MATCH]: '开启智能匹配',
+  [JobOperationAction.DISABLE_SMART_MATCH]: '关闭智能匹配',
+  [JobOperationAction.ENABLE_EXPOSURE_PUSH]: '开启曝光推送',
+  [JobOperationAction.DISABLE_EXPOSURE_PUSH]: '关闭曝光推送',
 };
 
 interface JobOperationLogAttributes {

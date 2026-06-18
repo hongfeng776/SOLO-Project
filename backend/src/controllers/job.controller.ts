@@ -304,6 +304,98 @@ class JobController {
       next(error);
     }
   }
+
+  async checkOnlinePermission(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const result = await jobService.checkOnlinePermission(Number(id));
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async checkOfflinePermission(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const result = await jobService.checkOfflinePermission(Number(id));
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async onlineJob(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { remark } = req.body;
+      const result = await jobService.onlineJob(Number(id), remark, (req as any).currentUser);
+      res.json(Result.success(result, '岗位已上架'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async offlineJob(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { remark, force } = req.body;
+      const result = await jobService.offlineJob(Number(id), remark, force, (req as any).currentUser);
+      res.json(Result.success(result, '岗位已下架'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async batchOnline(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { ids, filter, remark } = req.body;
+      const result = await jobService.batchOnline(ids, filter || {}, remark, (req as any).currentUser);
+      res.json(Result.success(result, '批量上架完成'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async batchOffline(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { ids, filter, remark, force } = req.body;
+      const result = await jobService.batchOffline(ids, filter || {}, remark, force, (req as any).currentUser);
+      res.json(Result.success(result, '批量下架完成'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getOnlineOfflineHistory(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const result = await jobService.getOnlineOfflineHistory(Number(id));
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateRiskWarning(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { isWarning, reason } = req.body;
+      const result = await jobService.updateRiskWarning(Number(id), isWarning, reason, (req as any).currentUser);
+      res.json(Result.success(result, isWarning ? '已标记风控预警' : '已解除风控预警'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getOnlineOfflineStats(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await jobService.getOnlineOfflineStats();
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new JobController();

@@ -1534,6 +1534,381 @@ class JobService {
 
     return result;
   }
+
+  async checkOnlinePermission(id: number): Promise<{ canOnline: boolean; reason?: string }> {
+    const job: any = await this.getById(id);
+
+    if (job.status !== JobStatus.PUBLISHED) {
+      return { canOnline: false, reason: '仅已发布状态的岗位可上架' };
+    }
+
+    const company: any = await companyDao.findById(job.companyId);
+    if (!company) {
+      return { canOnline: false, reason: '企业不存在' };
+    }
+    if (!company.isQualificationApproved) {
+      return { canOnline: false, reason: '企业资质未审核通过' };
+    }
+
+    const config = await recruitmentConfigDao.findByCompanyId(job.companyId);
+    if (!config || config.configStatus !== ConfigStatus.ENABLED) {
+      return { canOnline: false, reason: '企业招聘配置未启用' };
+    }
+
+    if (job.violationFlag) {
+      return { canOnline: false, reason: '岗位存在违规风控标记，需先解除' };
+    }
+
+    if (job.expireTime && new Date(job.expireTime) < new Date()) {
+      return { canOnline: false, reason: '岗位已过期' };
+    }
+
+    return { canOnline: true };
+  }
+
+  async checkOfflinePermission(id: number): Promise<{ canOffline: boolean; reason?: string; blockedItems?: string[] }> {
+    const job: any = await this.getById(id);
+
+    if (job.status !== JobStatus.PUBLISHED) {
+      return { canOffline: false, reason: '仅已发布状态的岗位可下架' };
+    }
+
+    const blockedItems: string[] = [];
+
+    try {
+      const { Interview } = await import('../models');
+      const interviewCount = await Interview.count({
+        where: { jobId: id, result: 'pending' },
+      });
+      if (interviewCount > 0) {
+        blockedItems.push(`存在 ${interviewCount} 个正在进行的面试流程`);
+      }
+    } catch {
+      // ignore
+    }
+
+    try {
+      const { Onboard } = await import('../models');
+      const onboardCount = await Onboard.count({
+        where: { jobId: id, status: { [Op.in]: ['pending', 'confirmed'] } },
+      });
+      if (onboardCount > 0) {
+        blockedItems.push(`存在 ${onboardCount} 个正在进行的入职流程`);
+      }
+    } catch {
+      // ignore
+    }
+
+    if (blockedItems.length > 0) {
+      return { canOffline: false, reason: '存在未完结业务流程', blockedItems };
+    }
+
+    return { canOffline: true };
+  }
+
+  async onlineJob(id: number, remark?: string, currentUser?: CurrentUser): Promise<any> {
+    const job: any = await this.getById(id);
+
+    if (currentUser && currentUser.role !== UserRole.ADMIN) {
+      if (job.creatorId && job.creatorId !== currentUser.id) {
+        throw new ForbiddenError('仅可操作本人创建的岗位');
+      }
+    }
+
+    const check = await this.checkOnlinePermission(id);
+    if (!check.canOnline) {
+      throw new ForbiddenError(check.reason || '不满足上架条件');
+    }
+
+    const newCount = (job.onlineOfflineCount || 0) + 1;
+
+    const result = await jobDao.updateById(id, {
+      status: JobStatus.PUBLISHED,
+      resumeCollectEnabled: true,
+      smartMatchEnabled: true,
+      exposurePushEnabled: true,
+      onlineTime: new Date(),
+      onlineOfflineCount: newCount,
+    });
+
+    await this.writeOperationLog({
+      jobId: id,
+      action: JobOperationAction.ONLINE,
+      fromStatus: job.status,
+      toStatus: JobStatus.PUBLISHED,
+      operatorId: currentUser?.id,
+      operatorName: currentUser?.realName || currentUser?.username,
+      remark: remark || '岗位上架，开启简历收录、智能匹配、曝光推送',
+    });
+
+    await this.writeOperationLog({
+      jobId: id,
+      action: JobOperationAction.ENABLE_RESUME_COLLECT,
+      fromStatus: job.status,
+      toStatus: JobStatus.PUBLISHED,
+      operatorId: currentUser?.id,
+      operatorName: currentUser?.realName || currentUser?.username,
+      remark: '开启简历收录功能',
+    });
+
+    await this.writeOperationLog({
+      jobId: id,
+      action: JobOperationAction.ENABLE_SMART_MATCH,
+      fromStatus: job.status,
+      toStatus: JobStatus.PUBLISHED,
+      operatorId: currentUser?.id,
+      operatorName: currentUser?.realName || currentUser?.username,
+      remark: '开启智能匹配功能',
+    });
+
+    await this.writeOperationLog({
+      jobId: id,
+      action: JobOperationAction.ENABLE_EXPOSURE_PUSH,
+      fromStatus: job.status,
+      toStatus: JobStatus.PUBLISHED,
+      operatorId: currentUser?.id,
+      operatorName: currentUser?.realName || currentUser?.username,
+      remark: '开启曝光推送功能',
+    });
+
+    await this.checkAndMarkRiskWarning(id, newCount, currentUser);
+
+    return result;
+  }
+
+  async offlineJob(id: number, remark?: string, force?: boolean, currentUser?: CurrentUser): Promise<any> {
+    const job: any = await this.getById(id);
+
+    if (currentUser && currentUser.role !== UserRole.ADMIN) {
+      if (job.creatorId && job.creatorId !== currentUser.id) {
+        throw new ForbiddenError('仅可操作本人创建的岗位');
+      }
+    }
+
+    if (!force) {
+      const check = await this.checkOfflinePermission(id);
+      if (!check.canOffline) {
+        throw new ForbiddenError(check.reason || '不满足下架条件');
+      }
+    }
+
+    const newCount = (job.onlineOfflineCount || 0) + 1;
+
+    const result = await jobDao.updateById(id, {
+      status: JobStatus.PAUSED,
+      resumeCollectEnabled: false,
+      smartMatchEnabled: false,
+      exposurePushEnabled: false,
+      offlineTime: new Date(),
+      onlineOfflineCount: newCount,
+    });
+
+    await this.writeOperationLog({
+      jobId: id,
+      action: JobOperationAction.OFFLINE,
+      fromStatus: job.status,
+      toStatus: JobStatus.PAUSED,
+      operatorId: currentUser?.id,
+      operatorName: currentUser?.realName || currentUser?.username,
+      remark: remark || `岗位下架，暂停简历收录、智能匹配、曝光推送${force ? '（强制下架）' : ''}`,
+    });
+
+    await this.writeOperationLog({
+      jobId: id,
+      action: JobOperationAction.DISABLE_RESUME_COLLECT,
+      fromStatus: job.status,
+      toStatus: JobStatus.PAUSED,
+      operatorId: currentUser?.id,
+      operatorName: currentUser?.realName || currentUser?.username,
+      remark: '关闭简历收录功能',
+    });
+
+    await this.writeOperationLog({
+      jobId: id,
+      action: JobOperationAction.DISABLE_SMART_MATCH,
+      fromStatus: job.status,
+      toStatus: JobStatus.PAUSED,
+      operatorId: currentUser?.id,
+      operatorName: currentUser?.realName || currentUser?.username,
+      remark: '关闭智能匹配功能',
+    });
+
+    await this.writeOperationLog({
+      jobId: id,
+      action: JobOperationAction.DISABLE_EXPOSURE_PUSH,
+      fromStatus: job.status,
+      toStatus: JobStatus.PAUSED,
+      operatorId: currentUser?.id,
+      operatorName: currentUser?.realName || currentUser?.username,
+      remark: '关闭曝光推送功能',
+    });
+
+    await this.checkAndMarkRiskWarning(id, newCount, currentUser);
+
+    return result;
+  }
+
+  interface BatchOnlineOfflineFilter {
+    category?: string;
+    publishDaysMin?: number;
+    publishDaysMax?: number;
+    deliveryCountMin?: number;
+    deliveryCountMax?: number;
+    hireCompleteRateMin?: number;
+    hireCompleteRateMax?: number;
+    status?: string;
+    companyId?: number;
+  }
+
+  async batchOnline(ids: number[], filter: BatchOnlineOfflineFilter, remark?: string, currentUser?: CurrentUser): Promise<BatchResult> {
+    const result: BatchResult = {
+      total: ids.length,
+      success: 0,
+      failed: 0,
+      errors: [],
+    };
+
+    for (const id of ids) {
+      try {
+        const job: any = await jobDao.findById(id);
+        if (!job) {
+          result.failed++;
+          result.errors.push({ jobId: id, message: '岗位不存在' });
+          continue;
+        }
+
+        if (currentUser && currentUser.role !== UserRole.ADMIN) {
+          if (job.creatorId && job.creatorId !== currentUser.id) {
+            result.failed++;
+            result.errors.push({ jobId: id, title: job.title, message: '仅可操作本人创建的岗位' });
+            continue;
+          }
+        }
+
+        const check = await this.checkOnlinePermission(id);
+        if (!check.canOnline) {
+          result.failed++;
+          result.errors.push({ jobId: id, title: job.title, message: check.reason || '不满足上架条件' });
+          continue;
+        }
+
+        await this.onlineJob(id, remark, currentUser);
+        result.success++;
+      } catch (error: any) {
+        result.failed++;
+        result.errors.push({
+          jobId: id,
+          message: error.message || '上架失败',
+        });
+      }
+    }
+
+    return result;
+  }
+
+  async batchOffline(ids: number[], filter: BatchOnlineOfflineFilter, remark?: string, force?: boolean, currentUser?: CurrentUser): Promise<BatchResult> {
+    const result: BatchResult = {
+      total: ids.length,
+      success: 0,
+      failed: 0,
+      errors: [],
+    };
+
+    for (const id of ids) {
+      try {
+        const job: any = await jobDao.findById(id);
+        if (!job) {
+          result.failed++;
+          result.errors.push({ jobId: id, message: '岗位不存在' });
+          continue;
+        }
+
+        if (currentUser && currentUser.role !== UserRole.ADMIN) {
+          if (job.creatorId && job.creatorId !== currentUser.id) {
+            result.failed++;
+            result.errors.push({ jobId: id, title: job.title, message: '仅可操作本人创建的岗位' });
+            continue;
+          }
+        }
+
+        await this.offlineJob(id, remark, force, currentUser);
+        result.success++;
+      } catch (error: any) {
+        result.failed++;
+        result.errors.push({
+          jobId: id,
+          message: error.message || '下架失败',
+        });
+      }
+    }
+
+    return result;
+  }
+
+  async getOnlineOfflineHistory(jobId: number): Promise<any[]> {
+    const logs = await jobOperationLogDao.findByJobId(jobId);
+    return logs.filter((l: any) =>
+      [JobOperationAction.ONLINE, JobOperationAction.OFFLINE].includes(l.action)
+    ).map((l: any) => ({
+      id: l.id,
+      action: l.action,
+      actionLabel: JobOperationActionLabel[l.action as JobOperationAction],
+      fromStatus: l.fromStatus,
+      toStatus: l.toStatus,
+      operatorId: l.operatorId,
+      operatorName: l.operatorName,
+      remark: l.remark,
+      createdAt: l.created_at,
+    }));
+  }
+
+  private async checkAndMarkRiskWarning(jobId: number, count: number, currentUser?: CurrentUser): Promise<void> {
+    const RISK_THRESHOLD = 5;
+    if (count >= RISK_THRESHOLD) {
+      await jobDao.updateById(jobId, {
+        riskWarningFlag: true,
+        riskWarningReason: `岗位上下架切换频繁，近${count}次操作，可能存在异常`,
+      });
+
+      await this.writeOperationLog({
+        jobId,
+        action: JobOperationAction.MARK_RISK_WARNING,
+        operatorId: currentUser?.id,
+        operatorName: currentUser?.realName || currentUser?.username,
+        remark: `岗位上下架频次达${count}次，自动标记风控预警`,
+      });
+    }
+  }
+
+  async updateRiskWarning(id: number, isWarning: boolean, reason?: string, currentUser?: CurrentUser): Promise<any> {
+    const job: any = await this.getById(id);
+
+    const result = await jobDao.updateById(id, {
+      riskWarningFlag: isWarning,
+      riskWarningReason: isWarning ? reason : '',
+    });
+
+    await this.writeOperationLog({
+      jobId: id,
+      action: isWarning ? JobOperationAction.MARK_RISK_WARNING : JobOperationAction.CLEAR_RISK_WARNING,
+      fromStatus: job.status,
+      toStatus: job.status,
+      operatorId: currentUser?.id,
+      operatorName: currentUser?.realName || currentUser?.username,
+      remark: isWarning ? `标记风控预警：${reason || ''}` : '解除风控预警',
+    });
+
+    return result;
+  }
+
+  async getOnlineOfflineStats(): Promise<{ totalCount: number; onlineCount: number; offlineCount: number; riskCount: number }> {
+    const totalCount = await jobDao.count();
+    const onlineCount = await jobDao.count({ where: { status: JobStatus.PUBLISHED } });
+    const offlineCount = await jobDao.count({ where: { status: { [Op.in]: [JobStatus.PAUSED, JobStatus.CLOSED] } } });
+    const riskCount = await jobDao.count({ where: { riskWarningFlag: true } });
+
+    return { totalCount, onlineCount, offlineCount, riskCount };
+  }
 }
 
 export default new JobService();

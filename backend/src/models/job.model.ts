@@ -43,6 +43,20 @@ interface JobAttributes {
   lastEditTime?: Date;
   lastEditorId?: number;
   lastEditorName?: string;
+  resumeCollectEnabled?: boolean;
+  smartMatchEnabled?: boolean;
+  exposurePushEnabled?: boolean;
+  onlineTime?: Date;
+  offlineTime?: Date;
+  onlineOfflineCount?: number;
+  riskWarningFlag?: boolean;
+  riskWarningReason?: string;
+  violationFlag?: boolean;
+  expireTime?: Date;
+  resumeDeliveryCount?: number;
+  hireCompletedCount?: number;
+  interviewInProgressCount?: number;
+  onboardInProgressCount?: number;
 }
 
 interface JobCreationAttributes extends Optional<JobAttributes, 'id' | 'status' | 'sort' | 'recruitNum'> {}
@@ -88,6 +102,20 @@ class Job extends Model<JobAttributes, JobCreationAttributes> implements JobAttr
   public lastEditTime?: Date;
   public lastEditorId?: number;
   public lastEditorName?: string;
+  public resumeCollectEnabled?: boolean;
+  public smartMatchEnabled?: boolean;
+  public exposurePushEnabled?: boolean;
+  public onlineTime?: Date;
+  public offlineTime?: Date;
+  public onlineOfflineCount?: number;
+  public riskWarningFlag?: boolean;
+  public riskWarningReason?: string;
+  public violationFlag?: boolean;
+  public expireTime?: Date;
+  public resumeDeliveryCount?: number;
+  public hireCompletedCount?: number;
+  public interviewInProgressCount?: number;
+  public onboardInProgressCount?: number;
 
   public readonly created_at!: Date;
   public readonly updated_at!: Date;
@@ -267,6 +295,72 @@ Job.init(
     lastEditorName: {
       type: DataTypes.STRING(50),
       comment: '最后编辑人姓名',
+    },
+    resumeCollectEnabled: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: '是否开启简历收录',
+    },
+    smartMatchEnabled: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: '是否开启智能匹配',
+    },
+    exposurePushEnabled: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: '是否开启曝光推送',
+    },
+    onlineTime: {
+      type: DataTypes.DATE,
+      comment: '最后上架时间',
+    },
+    offlineTime: {
+      type: DataTypes.DATE,
+      comment: '最后下架时间',
+    },
+    onlineOfflineCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: '上下架切换次数',
+    },
+    riskWarningFlag: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: '风控预警标记',
+    },
+    riskWarningReason: {
+      type: DataTypes.TEXT,
+      comment: '风控预警原因',
+    },
+    violationFlag: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: '违规风控标记',
+    },
+    expireTime: {
+      type: DataTypes.DATE,
+      comment: '岗位过期时间',
+    },
+    resumeDeliveryCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: '简历投递数量',
+    },
+    hireCompletedCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: '已入职人数',
+    },
+    interviewInProgressCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: '面试中人数',
+    },
+    onboardInProgressCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: '入职流程中人数',
     },
   },
   {
