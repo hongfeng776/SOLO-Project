@@ -24,6 +24,10 @@ import PromoterRiskRecord from './PromoterRiskRecord.model';
 import PromoterRiskRelease from './PromoterRiskRelease.model';
 import PromoterRiskBehavior from './PromoterRiskBehavior.model';
 import PromoterRiskWarning from './PromoterRiskWarning.model';
+import ChannelAudit from './ChannelAudit.model';
+import ChannelAuditLog from './ChannelAuditLog.model';
+import ChannelBlacklist from './ChannelBlacklist.model';
+import ChannelQualification from './ChannelQualification.model';
 
 const models = {
   User,
@@ -52,14 +56,29 @@ const models = {
   PromoterRiskRelease,
   PromoterRiskBehavior,
   PromoterRiskWarning,
+  ChannelAudit,
+  ChannelAuditLog,
+  ChannelBlacklist,
+  ChannelQualification,
 };
 
 const associate = (): void => {
   Channel.hasMany(Promoter, { foreignKey: 'channelId', as: 'promoters' });
   Channel.hasMany(Order, { foreignKey: 'channelId', as: 'orders' });
   Channel.hasMany(ChannelExtension, { foreignKey: 'channelId', as: 'extensions' });
+  Channel.hasMany(ChannelAudit, { foreignKey: 'channelId', as: 'channelAudits' });
 
   ChannelExtension.belongsTo(Channel, { foreignKey: 'channelId', as: 'channel' });
+
+  ChannelAudit.belongsTo(Channel, { foreignKey: 'channelId', as: 'channel' });
+  ChannelAudit.hasMany(ChannelAuditLog, { foreignKey: 'channelAuditId', as: 'auditLogs' });
+  ChannelAudit.hasMany(ChannelQualification, { foreignKey: 'channelAuditId', as: 'qualifications' });
+  ChannelAudit.belongsTo(User, { foreignKey: 'dataAuditorId', as: 'dataAuditor' });
+  ChannelAudit.belongsTo(User, { foreignKey: 'qualificationAuditorId', as: 'qualificationAuditor' });
+  ChannelAudit.belongsTo(User, { foreignKey: 'permissionAuditorId', as: 'permissionAuditor' });
+
+  ChannelAuditLog.belongsTo(ChannelAudit, { foreignKey: 'channelAuditId', as: 'channelAudit' });
+  ChannelQualification.belongsTo(ChannelAudit, { foreignKey: 'channelAuditId', as: 'channelAudit' });
 
   Promoter.belongsTo(Channel, { foreignKey: 'channelId', as: 'channel' });
   Promoter.hasMany(Order, { foreignKey: 'promoterId', as: 'orders' });
@@ -107,5 +126,5 @@ const associate = (): void => {
 };
 
 export { associate };
-export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning };
+export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification };
 export default models;

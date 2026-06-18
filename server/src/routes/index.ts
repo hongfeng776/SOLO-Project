@@ -16,6 +16,7 @@ import promoterAuditRoutes from './promoter-audit.routes';
 import promoterManageRoutes from './promoter-manage.routes';
 import promoterLevelRoutes from './promoter-level.routes';
 import promoterRiskRoutes from './promoter-risk.routes';
+import channelAuditRoutes from './channel-audit.routes';
 import ResponseUtils from '../utils/response';
 
 const router = Router();
@@ -27,6 +28,7 @@ router.get('/health', (_req: Request, res: Response) => {
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/channels', channelRoutes);
+router.use('/channel-audits', channelAuditRoutes);
 router.use('/promoters', promoterRoutes);
 router.use('/promoter-audits', promoterAuditRoutes);
 router.use('/promoter-manage', promoterManageRoutes);

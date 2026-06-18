@@ -32,8 +32,22 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'channel',
         name: 'Channel',
-        component: () => import('@/views/channel/index.vue'),
+        redirect: '/channel/list',
         meta: { title: '渠道管理', icon: 'Connection' },
+        children: [
+          {
+            path: 'list',
+            name: 'ChannelList',
+            component: () => import('@/views/channel/index.vue'),
+            meta: { title: '渠道列表', icon: 'List' },
+          },
+          {
+            path: 'audit',
+            name: 'ChannelAudit',
+            component: () => import('@/views/channel-audit/index.vue'),
+            meta: { title: '渠道入驻审核', icon: 'UserCheck' },
+          },
+        ],
       },
       {
         path: 'promoter',

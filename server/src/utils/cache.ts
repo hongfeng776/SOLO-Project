@@ -24,6 +24,8 @@ export enum CacheKey {
   ROLE_DETAIL = 'role:detail:',
   ROLE_PERMISSIONS = 'role:permissions:',
   ROLE_DELETION_LOGS = 'role:deletion-logs',
+  CHANNEL_AUDIT_LIST = 'channel-audit:list',
+  CHANNEL_AUDIT_DETAIL = 'channel-audit:detail:',
 }
 
 export enum CacheTTL {

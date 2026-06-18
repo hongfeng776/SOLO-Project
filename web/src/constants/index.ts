@@ -620,3 +620,104 @@ export const PROMOTER_RISK_TABS = [
   { value: 'batch', label: '批量处理', icon: 'Operation' },
   { value: 'trace', label: '行为溯源', icon: 'Connection' },
 ] as const
+
+export const CHANNEL_AUDIT_STAGE_OPTIONS = [
+  { label: '待提交', value: 0, type: 'info' },
+  { label: '资料初审', value: 1, type: 'primary' },
+  { label: '资质核验', value: 2, type: 'warning' },
+  { label: '权限开通', value: 3, type: 'success' },
+  { label: '审核完成', value: 4, type: 'success' },
+  { label: '已驳回', value: -1, type: 'danger' },
+] as const
+
+export const CHANNEL_AUDIT_STAGE_MAP: Record<number, { label: string; type: string }> = {
+  0: { label: '待提交', type: 'info' },
+  1: { label: '资料初审', type: 'primary' },
+  2: { label: '资质核验', type: 'warning' },
+  3: { label: '权限开通', type: 'success' },
+  4: { label: '审核完成', type: 'success' },
+  '-1': { label: '已驳回', type: 'danger' },
+}
+
+export const CHANNEL_AUDIT_STATUS_OPTIONS = [
+  { label: '待处理', value: 'pending', type: 'info' },
+  { label: '资料初审中', value: 'data_auditing', type: 'primary' },
+  { label: '资料初审通过', value: 'data_passed', type: 'success' },
+  { label: '资质核验中', value: 'qualification_auditing', type: 'warning' },
+  { label: '资质核验通过', value: 'qualification_passed', type: 'success' },
+  { label: '权限开通中', value: 'permission_auditing', type: 'warning' },
+  { label: '审核通过', value: 'passed', type: 'success' },
+  { label: '已驳回', value: 'rejected', type: 'danger' },
+  { label: '黑名单', value: 'blacklisted', type: 'danger' },
+  { label: '锁定中', value: 'locked', type: 'warning' },
+] as const
+
+export const CHANNEL_AUDIT_STATUS_MAP: Record<string, { label: string; type: string }> = {
+  pending: { label: '待处理', type: 'info' },
+  data_auditing: { label: '资料初审中', type: 'primary' },
+  data_passed: { label: '资料初审通过', type: 'success' },
+  qualification_auditing: { label: '资质核验中', type: 'warning' },
+  qualification_passed: { label: '资质核验通过', type: 'success' },
+  permission_auditing: { label: '权限开通中', type: 'warning' },
+  passed: { label: '审核通过', type: 'success' },
+  rejected: { label: '已驳回', type: 'danger' },
+  blacklisted: { label: '黑名单', type: 'danger' },
+  locked: { label: '锁定中', type: 'warning' },
+}
+
+export const CHANNEL_AUDIT_TAB_OPTIONS = [
+  { label: '待资料初审', value: 'data', auditStageList: [1], auditStatusList: ['data_auditing'] },
+  { label: '待资质核验', value: 'qualification', auditStageList: [2], auditStatusList: ['qualification_auditing'] },
+  { label: '待权限开通', value: 'permission', auditStageList: [3], auditStatusList: ['permission_auditing'] },
+  { label: '已驳回', value: 'rejected', auditStageList: [-1], auditStatusList: ['rejected'] },
+  { label: '已通过', value: 'passed', auditStageList: [4], auditStatusList: ['passed'] },
+  { label: '全部', value: 'all', auditStageList: undefined, auditStatusList: undefined },
+] as const
+
+export const CHANNEL_REJECT_ISSUE_OPTIONS = [
+  { code: 'missing_docs', label: '资料缺失' },
+  { code: 'expired_qualification', label: '资质过期' },
+  { code: 'false_info', label: '信息虚假' },
+  { code: 'invalid_contact', label: '联系方式无效' },
+  { code: 'duplicate_subject', label: '合作主体重复' },
+  { code: 'blacklist_match', label: '匹配黑名单' },
+  { code: 'credit_abnormal', label: '企业征信异常' },
+  { code: 'other', label: '其他问题' },
+] as const
+
+export const CHANNEL_PRIORITY_OPTIONS = [
+  { label: '普通渠道', value: 0, type: 'info' },
+  { label: '重要渠道', value: 1, type: 'warning' },
+  { label: '重点合作', value: 2, type: 'danger' },
+] as const
+
+export const CHANNEL_PRIORITY_MAP: Record<number, { label: string; type: string }> = {
+  0: { label: '普通渠道', type: 'info' },
+  1: { label: '重要渠道', type: 'warning' },
+  2: { label: '重点合作', type: 'danger' },
+}
+
+export const CHANNEL_LOCK_DAYS_OPTIONS = [
+  { label: '1天', value: 1 },
+  { label: '3天', value: 3 },
+  { label: '7天', value: 7 },
+  { label: '15天', value: 15 },
+  { label: '30天', value: 30 },
+]
+
+export const CHANNEL_AUDIT_ACTION_LABELS: Record<string, string> = {
+  submit: '提交申请',
+  data_pass: '资料初审通过',
+  data_reject: '资料初审驳回',
+  qualification_pass: '资质核验通过',
+  qualification_reject: '资质核验驳回',
+  permission_pass: '权限开通',
+  permission_reject: '权限开通驳回',
+  blacklist_block: '黑名单拦截',
+}
+
+export const CHANNEL_AUDIT_STAGES = [
+  { key: 1, label: '资料初审', description: '审核渠道基本资料完整性' },
+  { key: 2, label: '资质核验', description: '核验渠道资质文件有效性' },
+  { key: 3, label: '权限开通', description: '开通渠道合作权限' },
+] as const

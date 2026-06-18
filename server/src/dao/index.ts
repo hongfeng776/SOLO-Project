@@ -20,6 +20,10 @@ import promoterRiskRecordDao from './PromoterRiskRecord.dao';
 import promoterRiskReleaseDao from './PromoterRiskRelease.dao';
 import promoterRiskBehaviorDao from './PromoterRiskBehavior.dao';
 import promoterRiskWarningDao from './PromoterRiskWarning.dao';
+import channelAuditDao from './ChannelAudit.dao';
+import channelAuditLogDao from './ChannelAuditLog.dao';
+import channelBlacklistDao from './ChannelBlacklist.dao';
+import channelQualificationDao from './ChannelQualification.dao';
 
 export {
   userDao,
@@ -44,4 +48,8 @@ export {
   promoterRiskReleaseDao,
   promoterRiskBehaviorDao,
   promoterRiskWarningDao,
+  channelAuditDao,
+  channelAuditLogDao,
+  channelBlacklistDao,
+  channelQualificationDao,
 };
