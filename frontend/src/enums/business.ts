@@ -267,3 +267,107 @@ export const LEVEL_SCORE_THRESHOLDS: Record<number, number> = {
   [UserLevel.ACTIVE]: 60,
   [UserLevel.PREMIUM]: 85
 }
+
+export enum BehaviorType {
+  PUBLISH = 'publish',
+  COMMENT = 'comment',
+  DM = 'dm',
+  LIKE = 'like',
+  FOLLOW = 'follow',
+  SHARE = 'share',
+  REPORT = 'report',
+  EDIT = 'edit'
+}
+
+export const BEHAVIOR_TYPE_NAMES: Record<string, string> = {
+  [BehaviorType.PUBLISH]: '发布',
+  [BehaviorType.COMMENT]: '评论',
+  [BehaviorType.DM]: '私信',
+  [BehaviorType.LIKE]: '点赞',
+  [BehaviorType.FOLLOW]: '关注',
+  [BehaviorType.SHARE]: '分享',
+  [BehaviorType.REPORT]: '举报',
+  [BehaviorType.EDIT]: '编辑'
+}
+
+export enum RiskLevel {
+  NONE = 0,
+  LOW = 1,
+  MEDIUM = 2,
+  HIGH = 3
+}
+
+export const RISK_LEVEL_NAMES: Record<number, string> = {
+  [RiskLevel.NONE]: '正常',
+  [RiskLevel.LOW]: '轻微',
+  [RiskLevel.MEDIUM]: '中度',
+  [RiskLevel.HIGH]: '重度'
+}
+
+export const RISK_LEVEL_COLORS: Record<number, string> = {
+  [RiskLevel.NONE]: '#67c23a',
+  [RiskLevel.LOW]: '#e6a23c',
+  [RiskLevel.MEDIUM]: '#f56c6c',
+  [RiskLevel.HIGH]: '#c45656'
+}
+
+export enum ViolationType {
+  SPAM = 'spam',
+  BATCH_LIKE = 'batch_like',
+  MALICIOUS_TRAFFIC = 'malicious_traffic',
+  FREQUENT_OPERATION = 'frequent_operation',
+  ABNORMAL_TIME = 'abnormal_time',
+  CONTENT_VIOLATION = 'content_violation',
+  DUPLICATE_CONTENT = 'duplicate_content',
+  HARASSMENT = 'harassment'
+}
+
+export const VIOLATION_TYPE_NAMES: Record<string, string> = {
+  [ViolationType.SPAM]: '异常刷屏',
+  [ViolationType.BATCH_LIKE]: '批量点赞',
+  [ViolationType.MALICIOUS_TRAFFIC]: '恶意引流',
+  [ViolationType.FREQUENT_OPERATION]: '频繁操作',
+  [ViolationType.ABNORMAL_TIME]: '异常时段',
+  [ViolationType.CONTENT_VIOLATION]: '内容违规',
+  [ViolationType.DUPLICATE_CONTENT]: '重复内容',
+  [ViolationType.HARASSMENT]: '骚扰行为'
+}
+
+export enum PunishmentType {
+  WARNING = 'warning',
+  TEMP_RESTRICT = 'temp_restrict',
+  FLOW_LIMIT = 'flow_limit',
+  CONTENT_DOWNGRADE = 'content_downgrade',
+  TEMP_BAN = 'temp_ban',
+  PERMANENT_BAN = 'permanent_ban'
+}
+
+export const PUNISHMENT_TYPE_NAMES: Record<string, string> = {
+  [PunishmentType.WARNING]: '弹窗预警',
+  [PunishmentType.TEMP_RESTRICT]: '短时限制',
+  [PunishmentType.FLOW_LIMIT]: '账号限流',
+  [PunishmentType.CONTENT_DOWNGRADE]: '内容降权',
+  [PunishmentType.TEMP_BAN]: '临时封禁',
+  [PunishmentType.PERMANENT_BAN]: '永久封禁'
+}
+
+export const RISK_PUNISHMENT_MAP: Record<number, string[]> = {
+  [RiskLevel.NONE]: [],
+  [RiskLevel.LOW]: [PunishmentType.WARNING, PunishmentType.TEMP_RESTRICT],
+  [RiskLevel.MEDIUM]: [PunishmentType.FLOW_LIMIT, PunishmentType.CONTENT_DOWNGRADE],
+  [RiskLevel.HIGH]: [PunishmentType.TEMP_BAN, PunishmentType.PERMANENT_BAN]
+}
+
+export enum PunishmentStatus {
+  ACTIVE = 0,
+  REVOKED = 1,
+  EXPIRED = 2,
+  APPEALED = 3
+}
+
+export const PUNISHMENT_STATUS_NAMES: Record<number, string> = {
+  [PunishmentStatus.ACTIVE]: '生效中',
+  [PunishmentStatus.REVOKED]: '已解除',
+  [PunishmentStatus.EXPIRED]: '已过期',
+  [PunishmentStatus.APPEALED]: '申诉中'
+}

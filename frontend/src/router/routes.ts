@@ -263,6 +263,38 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/risk-control',
+    component: Layout,
+    redirect: '/risk-control/monitor',
+    meta: { title: '行为风控', icon: 'Warning', roles: ['admin', 'risk_admin', 'operator'] },
+    children: [
+      {
+        path: 'monitor',
+        name: 'RiskControlMonitor',
+        component: () => import(/* webpackChunkName: "risk-control" */ '@views/risk-control/monitor/index.vue'),
+        meta: { title: '行为监控', icon: 'Monitor', roles: ['admin', 'risk_admin', 'operator'] }
+      },
+      {
+        path: 'punishment',
+        name: 'RiskControlPunishment',
+        component: () => import(/* webpackChunkName: "risk-control" */ '@views/risk-control/punishment/index.vue'),
+        meta: { title: '处罚管理', icon: 'CircleClose', roles: ['admin', 'risk_admin'] }
+      },
+      {
+        path: 'batch',
+        name: 'RiskControlBatch',
+        component: () => import(/* webpackChunkName: "risk-control" */ '@views/risk-control/batch/index.vue'),
+        meta: { title: '批量处理', icon: 'Operation', roles: ['admin', 'risk_admin'] }
+      },
+      {
+        path: 'trace',
+        name: 'RiskControlTrace',
+        component: () => import(/* webpackChunkName: "risk-control" */ '@views/risk-control/trace/index.vue'),
+        meta: { title: '溯源复盘', icon: 'View', roles: ['admin', 'risk_admin', 'operator'] }
+      }
+    ]
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/404',
     meta: { hidden: true }

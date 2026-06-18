@@ -34,6 +34,13 @@ class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare isPermanentBanned: CreationOptional<number>
   declare privileges: CreationOptional<string>
   declare levelLastUpdateTime: CreationOptional<Date | null>
+  declare riskLevel: CreationOptional<number>
+  declare riskScore: CreationOptional<number>
+  declare punishmentStatus: CreationOptional<number>
+  declare punishmentExpireTime: CreationOptional<Date | null>
+  declare lastViolationTime: CreationOptional<Date | null>
+  declare violationCount: CreationOptional<number>
+  declare riskControlRemark: CreationOptional<string>
   declare createTime: CreationOptional<Date>
   declare updateTime: CreationOptional<Date>
   declare deleteTime: CreationOptional<Date | null>
@@ -211,6 +218,46 @@ User.init(
       type: DataTypes.DATE,
       allowNull: true,
       comment: '等级最后更新时间'
+    },
+    riskLevel: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '风险等级 0正常 1轻微 2中度 3重度'
+    },
+    riskScore: {
+      type: DataTypes.TINYINT.UNSIGNED,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '风险分值 0-100'
+    },
+    punishmentStatus: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '处罚状态 0生效 1解除 2过期 3申诉'
+    },
+    punishmentExpireTime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '处罚到期时间'
+    },
+    lastViolationTime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '最近违规时间'
+    },
+    violationCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '累计违规次数'
+    },
+    riskControlRemark: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      defaultValue: '',
+      comment: '风控备注'
     },
     createTime: DataTypes.DATE,
     updateTime: DataTypes.DATE,

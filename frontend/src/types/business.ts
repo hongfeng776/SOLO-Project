@@ -923,3 +923,131 @@ export interface LevelListUser extends UserAccount {
   privileges: string[]
   levelLastUpdateTime?: string
 }
+
+export interface BehaviorLog {
+  id: number
+  userId: number
+  userName: string
+  behaviorType: string
+  targetId?: number
+  targetType?: string
+  content?: string
+  ip?: string
+  userAgent?: string
+  isAbnormal: number
+  abnormalType?: string
+  riskLevel: number
+  frequency: number
+  timePeriod?: string
+  intercepted: number
+  createTime: string
+}
+
+export interface RiskControlLog {
+  id: number
+  userId: number
+  userName: string
+  violationType: string
+  riskLevel: number
+  behaviorDetail?: string
+  frequencyData?: string
+  timeRange?: string
+  contentCompliance?: string
+  intercepted: number
+  operatorId?: number
+  operatorName?: string
+  autoHandled: number
+  handleResult?: string
+  createTime: string
+}
+
+export interface PunishmentRecord {
+  id: number
+  userId: number
+  userName: string
+  punishmentType: string
+  riskLevel: number
+  violationType: string
+  reason: string
+  reasonDetail?: string
+  status: number
+  startTime?: string
+  endTime?: string
+  duration?: number
+  operatorId?: number
+  operatorName?: string
+  revokeOperatorId?: number
+  revokeOperatorName?: string
+  revokeTime?: string
+  revokeReason?: string
+  rectificationResult?: string
+  riskControlLogId?: number
+  isDuplicate: number
+  isExcessive: number
+  reviewReport?: string
+  createTime: string
+  updateTime: string
+}
+
+export interface UserRiskStatus {
+  user: UserAccount & {
+    riskLevel: number
+    riskScore: number
+    punishmentStatus: number
+    punishmentExpireTime?: string
+    lastViolationTime?: string
+    violationCount: number
+    riskControlRemark?: string
+  }
+  activePunishments: PunishmentRecord[]
+  recentRiskLogs: RiskControlLog[]
+}
+
+export interface AnomalyDetectResult {
+  hasAnomaly: boolean
+  riskLevel: number
+  violationTypes: string[]
+  frequencyData: Record<string, { count: number; limit: number; ratio: number }>
+}
+
+export interface PunishmentValidation {
+  valid: boolean
+  issues: string[]
+  isDuplicate: boolean
+  isExcessive: boolean
+  riskMatch: boolean
+  warnings: string[]
+}
+
+export interface ViolationTrace {
+  user: UserAccount
+  behaviorLogs: BehaviorLog[]
+  riskControlLogs: RiskControlLog[]
+  punishmentRecords: PunishmentRecord[]
+  rectificationRecords: PunishmentRecord[]
+}
+
+export interface ReviewReport {
+  period: { start: string; end: string }
+  violationStats: {
+    total: number
+    byType: Record<string, number>
+    byLevel: Record<number, number>
+    byTimeSlot: Record<string, number>
+  }
+  punishmentStats: {
+    total: number
+    byType: Record<string, number>
+    avgDuration: number
+  }
+  riskTrend: Array<{ date: string; count: number }>
+  suggestions: string[]
+}
+
+export interface RiskControlPermission {
+  canView: boolean
+  canHandle: boolean
+  canBatchHandle: boolean
+  canIntercept: boolean
+  canRevoke: boolean
+}
