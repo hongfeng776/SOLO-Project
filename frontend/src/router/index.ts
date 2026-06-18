@@ -121,6 +121,45 @@ const asyncRoutes: RouteRecordRaw[] = [
         }
       },
       {
+        path: 'customer-profile',
+        name: 'BusinessCustomerProfile',
+        component: () => import('@views/business/customer-profile/index.vue'),
+        meta: {
+          title: '个人客户建档',
+          icon: 'UserFilled',
+          componentName: 'BusinessCustomerProfile',
+          keepAlive: true,
+          permissions: ['customer:profile:query'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'customer-profile/batch',
+        name: 'BusinessCustomerProfileBatch',
+        component: () => import('@views/business/customer-profile/batch.vue'),
+        meta: {
+          title: '批量建档导入',
+          icon: 'Files',
+          componentName: 'BusinessCustomerProfileBatch',
+          keepAlive: true,
+          permissions: ['customer:profile:batch'],
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'customer-profile/trace',
+        name: 'BusinessCustomerProfileTrace',
+        component: () => import('@views/business/customer-profile/trace.vue'),
+        meta: {
+          title: '客户档案溯源',
+          icon: 'Search',
+          componentName: 'BusinessCustomerProfileTrace',
+          keepAlive: false,
+          permissions: ['customer:profile:trace'],
+          roles: ['admin', 'manager', 'auditor']
+        }
+      },
+      {
         path: 'opening',
         name: 'BusinessOpening',
         component: () => import('@views/business/opening/index.vue'),

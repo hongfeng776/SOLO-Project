@@ -15,3 +15,9 @@ export { DepositRepository } from './DepositRepository';
 export { LoanRepository } from './LoanRepository';
 export { SettlementRepository } from './SettlementRepository';
 export { SettlementBatchRepository } from './SettlementBatchRepository';
+export {
+  CustomerProfileRepository,
+  CustomerProfileLogRepository,
+  CustomerProfileBatchRepository,
+  CustomerProfileBatchItemRepository
+} from './CustomerProfileRepository';

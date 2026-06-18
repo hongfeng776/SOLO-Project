@@ -525,3 +525,352 @@ export function batchReviewCorporateOpeningApi(data: CorporateBatchReviewRequest
 export function traceCheckCorporateOpeningApi(data: CorporateTraceCheckRequest) {
   return post<CorporateTraceCheckResponse>('/business/corporate/opening/trace', data)
 }
+
+// ========== 个人客户档案建档管控 ==========
+
+export interface PreCheckFieldError {
+  field: string
+  message: string
+  code?: string
+}
+
+export interface PreCheckResult {
+  passed: boolean
+  blocked: boolean
+  id_verify_status: number
+  face_verify_status: number
+  mobile_verify_status: number
+  police_verify_status: number
+  info_completeness: number
+  missing_fields: string[]
+  errors: PreCheckFieldError[]
+  warnings: string[]
+  block_reason?: string
+}
+
+export interface LevelJudgeResult {
+  customer_level: number
+  customer_level_text: string
+  customer_tags: string[]
+  service_permissions: string[]
+  judge_factors: {
+    total_assets: number
+    monthly_transaction_count: number
+    retention_days: number
+  }
+  judge_rules: string[]
+}
+
+export interface CustomerProfile {
+  id: string
+  profile_no: string
+  org_id?: string
+  org_name?: string
+  customer_name: string
+  id_card_no: string
+  id_type?: number
+  id_type_text?: string
+  gender?: string
+  gender_text?: string
+  birth_date?: string
+  nation?: string
+  mobile: string
+  email?: string
+  registered_address: string
+  residential_address: string
+  occupation?: string
+  employer?: string
+  position?: string
+  education?: string
+  marital_status?: string
+  total_assets?: number
+  monthly_transaction_count?: number
+  retention_days?: number
+  customer_level: number
+  customer_level_text?: string
+  customer_tags?: string
+  customer_tag_list?: string[]
+  service_permissions?: string
+  service_permission_list?: string[]
+  id_verify_status: number
+  id_verify_status_text?: string
+  face_verify_status: number
+  face_verify_status_text?: string
+  mobile_verify_status: number
+  mobile_verify_status_text?: string
+  police_verify_status: number
+  police_verify_status_text?: string
+  police_verify_reason?: string
+  info_completeness: number
+  missing_fields?: string
+  missing_field_list?: string[]
+  need_complete: number
+  is_abnormal: number
+  abnormal_reason?: string
+  status: number
+  status_text?: string
+  related_customer_id?: string
+  creator_id?: string
+  creator_name?: string
+  profile_time?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface CustomerProfileForm {
+  id?: string
+  org_id?: string
+  customer_name: string
+  id_card_no: string
+  id_type?: number
+  gender?: string
+  birth_date?: string
+  nation?: string
+  mobile: string
+  email?: string
+  registered_address: string
+  residential_address: string
+  occupation?: string
+  employer?: string
+  position?: string
+  education?: string
+  marital_status?: string
+  total_assets?: number
+  monthly_transaction_count?: number
+  retention_days?: number
+  related_customer_id?: string
+  change_remark?: string
+  skip_precheck?: boolean
+}
+
+export interface CustomerProfileQueryParams extends PageParams {
+  keyword?: string
+  profile_no?: string
+  customer_name?: string
+  id_card_no?: string
+  mobile?: string
+  customer_level?: number
+  status?: number
+  need_complete?: number
+  is_abnormal?: number
+  org_id?: string
+  start_time?: string
+  end_time?: string
+}
+
+export interface CustomerProfileLog {
+  id: string
+  profile_id: string
+  profile_no?: string
+  change_type: string
+  change_type_name?: string
+  before_content?: string
+  after_content?: string
+  change_remark?: string
+  operator_id?: string
+  operator_name?: string
+  operator_org_id?: string
+  operator_org_name?: string
+  operate_time?: string
+  reviewer_id?: string
+  reviewer_name?: string
+  review_time?: string
+  status: number
+}
+
+export interface CustomerProfileTraceRecord {
+  id: string
+  profile_no: string
+  customer_name: string
+  id_card_no: string
+  status: number
+  status_text?: string
+  customer_level: number
+  customer_level_text?: string
+  change_type?: string
+  change_type_name?: string
+  operate_time?: string
+  operator_name?: string
+  org_name?: string
+  remark?: string
+}
+
+export interface CustomerProfileTraceRequest {
+  id_card_no: string
+  customer_name?: string
+  mobile?: string
+}
+
+export interface CustomerProfileTraceResponse {
+  id_card_no: string
+  matched: boolean
+  total_profiles: number
+  total_active: number
+  total_closed: number
+  total_abnormal: number
+  has_duplicate: boolean
+  has_fake_info: boolean
+  history_records: CustomerProfileTraceRecord[]
+  change_logs: CustomerProfileLog[]
+  risk_prompts: string[]
+  allowed: boolean
+  block_reason?: string
+}
+
+export interface BatchImportItem {
+  row_index: number
+  customer_name?: string
+  id_card_no?: string
+  id_type?: number
+  gender?: string
+  mobile?: string
+  registered_address?: string
+  residential_address?: string
+  occupation?: string
+  employer?: string
+  total_assets?: number
+  monthly_transaction_count?: number
+  retention_days?: number
+}
+
+export interface BatchImportRequest {
+  org_id?: string
+  batch_name?: string
+  file_name?: string
+  file_url?: string
+  items: BatchImportItem[]
+}
+
+export interface BatchImportResultItem {
+  row_index: number
+  profile_id?: string
+  profile_no?: string
+  customer_name?: string
+  id_card_no?: string
+  process_result: number
+  process_result_text?: string
+  process_message?: string
+  errors?: PreCheckFieldError[]
+  missing_fields?: string[]
+  warnings?: string[]
+  is_abnormal?: boolean
+  abnormal_reason?: string
+}
+
+export interface BatchImportResponse {
+  batch_id: string
+  batch_no: string
+  batch_name?: string
+  total_count: number
+  success_count: number
+  fail_count: number
+  need_complete_count: number
+  abnormal_count: number
+  status: number
+  status_text?: string
+  items: BatchImportResultItem[]
+}
+
+export interface BatchVO {
+  id: string
+  batch_no: string
+  org_id?: string
+  org_name?: string
+  batch_name?: string
+  total_count: number
+  success_count: number
+  fail_count: number
+  need_complete_count: number
+  abnormal_count: number
+  file_url?: string
+  file_name?: string
+  status: number
+  status_text?: string
+  fail_reason?: string
+  creator_id?: string
+  creator_name?: string
+  import_time?: string
+  finish_time?: string
+  createdAt?: string
+}
+
+export interface BatchItemVO {
+  id: string
+  batch_id: string
+  row_index: number
+  profile_id?: string
+  customer_name?: string
+  id_card_no?: string
+  mobile?: string
+  total_assets?: number
+  process_result: number
+  process_result_text?: string
+  process_message?: string
+  error_field_list?: PreCheckFieldError[]
+  missing_field_list?: string[]
+}
+
+export interface BatchQueryParams extends PageParams {
+  batch_no?: string
+  batch_name?: string
+  status?: number
+  org_id?: string
+  start_time?: string
+  end_time?: string
+}
+
+export interface BatchItemQueryParams extends PageParams {
+  batch_id: string
+  process_result?: number
+  keyword?: string
+}
+
+export interface ReviewAbnormalRequest {
+  profile_id: string
+  passed: boolean
+  review_remark: string
+}
+
+export function preCheckCustomerProfileApi(data: CustomerProfileForm) {
+  return post<PreCheckResult>('/business/customer-profile/precheck', data)
+}
+
+export function getCustomerProfileListApi(params: CustomerProfileQueryParams) {
+  return get<PageResult<CustomerProfile>>('/business/customer-profile/list', params)
+}
+
+export function getCustomerProfileDetailApi(id: string) {
+  return get<CustomerProfile>(`/business/customer-profile/${id}`)
+}
+
+export function createCustomerProfileApi(data: CustomerProfileForm) {
+  return post<CustomerProfile>('/business/customer-profile', data)
+}
+
+export function updateCustomerProfileApi(data: CustomerProfileForm) {
+  return put<CustomerProfile>(`/business/customer-profile/${data.id}`, data)
+}
+
+export function getCustomerProfileLogsApi(id: string) {
+  return get<CustomerProfileLog[]>(`/business/customer-profile/${id}/logs`)
+}
+
+export function traceCustomerProfileApi(data: CustomerProfileTraceRequest) {
+  return post<CustomerProfileTraceResponse>('/business/customer-profile/trace', data)
+}
+
+export function reviewAbnormalProfileApi(data: ReviewAbnormalRequest) {
+  return post<CustomerProfile>('/business/customer-profile/review-abnormal', data)
+}
+
+export function batchImportCustomerProfileApi(data: BatchImportRequest) {
+  return post<BatchImportResponse>('/business/customer-profile/batch/import', data)
+}
+
+export function getCustomerProfileBatchListApi(params: BatchQueryParams) {
+  return get<PageResult<BatchVO>>('/business/customer-profile/batch/list', params)
+}
+
+export function getCustomerProfileBatchItemsApi(params: BatchItemQueryParams) {
+  return get<PageResult<BatchItemVO>>('/business/customer-profile/batch/items', params)
+}

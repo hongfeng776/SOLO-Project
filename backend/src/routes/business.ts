@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, CustomerProfileController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -16,6 +16,7 @@ const loanController = new LoanController();
 const loanApprovalController = new LoanApprovalController();
 const loanRepaymentController = new LoanRepaymentController();
 const settlementController = new SettlementController();
+const customerProfileController = new CustomerProfileController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -217,5 +218,30 @@ router.post('/settlement/batch/:id/review', requirePermission('business:settleme
 router.get('/settlement/batch/:id/progress', requirePermission('business:settlement:query'), (req, res, next) => settlementController.batchProgress(req, res, next));
 // 溯源查询
 router.post('/settlement/trace', requirePermission('business:settlement:trace'), (req, res, next) => settlementController.trace(req, res, next));
+
+// ========== 个人客户档案建档管控 ==========
+// 功能点1：前置校验（证件有效性、人脸核验、信息完整性、公安备案校验）
+router.post('/customer-profile/precheck', requireAuth, (req, res, next) => customerProfileController.precheck(req, res, next));
+// 档案列表查询
+router.get('/customer-profile/list', requirePermission('customer:profile:query'), (req, res, next) => customerProfileController.list(req, res, next));
+// 档案详情
+router.get('/customer-profile/:id', requirePermission('customer:profile:query'), (req, res, next) => customerProfileController.detail(req, res, next));
+// 功能点1和2：新建客户档案（含等级自动判定）
+router.post('/customer-profile', requirePermission('customer:profile:create'), (req, res, next) => customerProfileController.create(req, res, next));
+// 更新档案信息
+router.put('/customer-profile/:id', requirePermission('customer:profile:update'), (req, res, next) => customerProfileController.update(req, res, next));
+// 档案变更日志
+router.get('/customer-profile/:id/logs', requirePermission('customer:profile:query'), (req, res, next) => customerProfileController.logs(req, res, next));
+// 功能点4：依托证件号码溯源客户历史建档、变更、销户记录
+router.post('/customer-profile/trace', requirePermission('customer:profile:trace'), (req, res, next) => customerProfileController.trace(req, res, next));
+// 功能点4：异常档案复核
+router.post('/customer-profile/review-abnormal', requirePermission('customer:profile:review'), (req, res, next) => customerProfileController.reviewAbnormal(req, res, next));
+
+// 功能点3：批量导入个人客户基础信息建档
+router.post('/customer-profile/batch/import', requirePermission('customer:profile:batch'), (req, res, next) => customerProfileController.batchImport(req, res, next));
+// 批量导入批次列表
+router.get('/customer-profile/batch/list', requirePermission('customer:profile:batch'), (req, res, next) => customerProfileController.batchList(req, res, next));
+// 批量导入明细列表
+router.get('/customer-profile/batch/items', requirePermission('customer:profile:batch'), (req, res, next) => customerProfileController.batchItemList(req, res, next));
 
 export default router;

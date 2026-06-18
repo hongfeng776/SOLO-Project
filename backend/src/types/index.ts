@@ -209,3 +209,31 @@ export {
   type RepaymentTraceRequest,
   type RepaymentTraceResult
 } from './loanRepayment';
+
+export {
+  type ProfileCustomerLevel,
+  type ProfileStatus,
+  type VerifyStatus,
+  type BatchStatus,
+  type ProcessResult,
+  type PreCheckFieldError,
+  type PreCheckResult,
+  type LevelJudgeResult,
+  type CreateCustomerProfileRequest,
+  type UpdateCustomerProfileRequest,
+  type CustomerProfileQueryParams,
+  type CustomerProfileVO,
+  type CustomerProfileLogVO,
+  type CustomerProfileTraceRequest,
+  type CustomerProfileTraceRecord,
+  type CustomerProfileTraceResponse,
+  type BatchImportItem,
+  type BatchImportRequest,
+  type BatchImportResultItem,
+  type BatchImportResponse,
+  type ProfileBatchQueryParams,
+  type BatchItemQueryParams,
+  type BatchVO,
+  type BatchItemVO,
+  type ReviewAbnormalRequest
+} from './customerProfile';

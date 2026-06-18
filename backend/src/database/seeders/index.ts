@@ -307,7 +307,21 @@ export async function seedPermissions(): Promise<void> {
     { id: 'perm105', parent_id: 'perm023', name: '批量转账', code: 'business:settlement:batch', type: 2, path: 'settlement/batch', component: 'business/settlement/batch', icon: 'Files', sort: 21, visible: 1, status: 1, perms: '' },
     { id: 'perm106', parent_id: 'perm105', name: '批量操作', code: 'business:settlement:batch', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:settlement:batch' },
     { id: 'perm107', parent_id: 'perm023', name: '结算溯源', code: 'business:settlement:trace', type: 2, path: 'settlement/trace', component: 'business/settlement/trace', icon: 'Search', sort: 22, visible: 1, status: 1, perms: '' },
-    { id: 'perm108', parent_id: 'perm107', name: '溯源查询', code: 'business:settlement:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:settlement:trace' }
+    { id: 'perm108', parent_id: 'perm107', name: '溯源查询', code: 'business:settlement:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:settlement:trace' },
+
+    // ========== 个人客户档案管理权限 ==========
+    { id: 'perm110', parent_id: 'perm023', name: '个人客户建档', code: 'business:customer:profile', type: 2, path: 'customer-profile/index', component: 'business/customer-profile/index', icon: 'UserFilled', sort: 10, visible: 1, status: 1, perms: '' },
+    { id: 'perm111', parent_id: 'perm110', name: '档案查询', code: 'customer:profile:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'customer:profile:query' },
+    { id: 'perm112', parent_id: 'perm110', name: '档案创建', code: 'customer:profile:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'customer:profile:create' },
+    { id: 'perm113', parent_id: 'perm110', name: '档案更新', code: 'customer:profile:update', type: 3, sort: 3, visible: 1, status: 1, perms: 'customer:profile:update' },
+    { id: 'perm114', parent_id: 'perm110', name: '档案删除', code: 'customer:profile:delete', type: 3, sort: 4, visible: 1, status: 1, perms: 'customer:profile:delete' },
+
+    { id: 'perm115', parent_id: 'perm023', name: '批量建档导入', code: 'business:customer:profile:batch', type: 2, path: 'customer-profile/batch', component: 'business/customer-profile/batch', icon: 'Files', sort: 11, visible: 1, status: 1, perms: '' },
+    { id: 'perm116', parent_id: 'perm115', name: '批量操作', code: 'customer:profile:batch', type: 3, sort: 1, visible: 1, status: 1, perms: 'customer:profile:batch' },
+
+    { id: 'perm117', parent_id: 'perm023', name: '客户档案溯源', code: 'business:customer:profile:trace', type: 2, path: 'customer-profile/trace', component: 'business/customer-profile/trace', icon: 'Search', sort: 12, visible: 1, status: 1, perms: '' },
+    { id: 'perm118', parent_id: 'perm117', name: '溯源查询', code: 'customer:profile:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'customer:profile:trace' },
+    { id: 'perm119', parent_id: 'perm117', name: '异常复核', code: 'customer:profile:review', type: 3, sort: 2, visible: 1, status: 1, perms: 'customer:profile:review' }
   ];
 
   await bulkCreateInBatches(Permission, permissions as any);
@@ -368,7 +382,9 @@ export async function seedRolePermissions(): Promise<void> {
       'loan:repayment:withhold', 'loan:repayment:manage',
       'loan:repayment:batch', 'loan:repayment:trace',
       'business:settlement:query', 'business:settlement:create', 'business:settlement:update', 'business:settlement:review',
-      'business:settlement:batch', 'business:settlement:trace'
+      'business:settlement:batch', 'business:settlement:trace',
+      'customer:profile:query', 'customer:profile:create', 'customer:profile:update', 'customer:profile:delete',
+      'customer:profile:batch', 'customer:profile:trace', 'customer:profile:review'
     ];
     const perms = allPermissions.filter(p => managerCodes.includes(p.code) || p.type !== 3);
     const managerRPs = perms.map(p => ({
@@ -398,9 +414,11 @@ export async function seedRolePermissions(): Promise<void> {
       'loan:repayment:query', 'loan:repayment:precheck', 'loan:repayment:submit',
       'loan:repayment:withhold',
       'business:settlement:query', 'business:settlement:create', 'business:settlement:update',
-      'business:settlement:batch'
+      'business:settlement:batch',
+      'customer:profile:query', 'customer:profile:create', 'customer:profile:update',
+      'customer:profile:batch'
     ];
-    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:batch' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:batch' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:batch' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:batch' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace')));
+    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:batch' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:batch' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:batch' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:batch' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace' || p.code === 'business:customer:profile' || p.code === 'business:customer:profile:batch' || p.code === 'business:customer:profile:trace')));
     const operatorRPs = perms.map(p => ({
       id: `rp_${operatorRole.id}_${p.id}`,
       role_id: operatorRole.id,
@@ -423,9 +441,10 @@ export async function seedRolePermissions(): Promise<void> {
       'business:loan:query', 'business:loan:trace',
       'loan:approval:query', 'loan:approval:level4', 'loan:approval:trace',
       'loan:repayment:query', 'loan:repayment:trace',
-      'business:settlement:query', 'business:settlement:review', 'business:settlement:trace'
+      'business:settlement:query', 'business:settlement:review', 'business:settlement:trace',
+      'customer:profile:query', 'customer:profile:trace', 'customer:profile:review'
     ];
-    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace')));
+    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace' || p.code === 'business:customer:profile' || p.code === 'business:customer:profile:batch' || p.code === 'business:customer:profile:trace')));
     const auditorRPs = perms.map(p => ({
       id: `rp_${auditorRole.id}_${p.id}`,
       role_id: auditorRole.id,

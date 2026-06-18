@@ -23,3 +23,7 @@ export { LoanApprovalLog } from './LoanApprovalLog';
 export { LoanRepayment } from './LoanRepayment';
 export { LoanWithhold } from './LoanWithhold';
 export { Settlement, SettlementBatch } from './Settlement';
+export { CustomerProfile } from './CustomerProfile';
+export { CustomerProfileLog } from './CustomerProfileLog';
+export { CustomerProfileBatch } from './CustomerProfileBatch';
+export { CustomerProfileBatchItem } from './CustomerProfileBatchItem';
