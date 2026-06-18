@@ -14,13 +14,21 @@ class ApiResponse {
     return new ApiResponse(code, message, data)
   }
 
-  static page(list = [], total = 0, page = 1, pageSize = 20) {
-    return new ApiResponse(200, '查询成功', {
+  static page(list = [], total = 0, page = 1, pageSize = 20, extra = null) {
+    const data = {
       list,
       total,
       page,
       pageSize
-    })
+    }
+    if (extra !== null && extra !== undefined) {
+      if (Array.isArray(extra)) {
+        data.warnings = extra
+      } else if (typeof extra === 'object') {
+        Object.assign(data, extra)
+      }
+    }
+    return new ApiResponse(200, '查询成功', data)
   }
 
   static badRequest(message = '请求参数错误') {

@@ -123,9 +123,23 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'role-permission',
-        name: 'RolePermission',
+        name: 'RolePermissionParent',
         component: () => import('@/views/role-permission/index.vue'),
-        meta: { title: '角色权限', icon: 'Lock', roles: ['super_admin', 'admin'] }
+        meta: { title: '角色权限', icon: 'Lock', roles: ['super_admin', 'admin'] },
+        children: [
+          {
+            path: '',
+            name: 'RolePermission',
+            component: () => import('@/views/role-permission/role.vue'),
+            meta: { title: '角色权限配置', icon: 'Lock', roles: ['super_admin', 'admin'] }
+          },
+          {
+            path: 'account',
+            name: 'AccountPermission',
+            component: () => import('@/views/role-permission/account.vue'),
+            meta: { title: '账号权限分配', icon: 'UserFilled', roles: ['super_admin', 'admin'] }
+          }
+        ]
       },
       {
         path: 'log',

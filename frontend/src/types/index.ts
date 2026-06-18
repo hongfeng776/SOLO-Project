@@ -297,16 +297,156 @@ export interface Notification {
 
 export interface OperationLog {
   id: number
+  traceId: string
   userId: number
   username: string
+  userRole: string
   module: string
   action: string
   target: string
   targetId: number
-  detail: string
+  targetType: string
+  detail: any
+  beforeData: any
+  afterData: any
+  changedFields: string[]
   ip: string
-  result: string
+  ipLocation: string
+  userAgent: string
+  deviceInfo: any
+  os: string
+  browser: string
+  requestId: string
+  parentLogId: number
+  step: number
+  duration: number
+  result: 'success' | 'fail'
+  failReason: string
+  isMalicious: boolean
+  isTampered: boolean
+  tamperCheck: string
+  riskLevel: 'none' | 'low' | 'medium' | 'high' | 'critical'
+  verifyStatus: 'pending' | 'verified' | 'warning' | 'violation'
+  evidenceHash: string
+  integrityVerified?: boolean
+  chainLogs?: OperationLog[]
+  parentLog?: OperationLog
   createdAt: string
+}
+
+export interface LogValidationResult {
+  valid: boolean
+  errors: string[]
+  warnings: string[]
+}
+
+export interface LogOperator {
+  userId: number
+  username: string
+  userRole: string
+  operationCount: number
+}
+
+export interface LogModuleOption {
+  value: string
+  label: string
+}
+
+export interface LogActionOption {
+  value: string
+  label: string
+}
+
+export interface LogListParams extends PageParams {
+  keyword?: string
+  module?: string
+  action?: string
+  username?: string
+  userId?: number
+  result?: string
+  riskLevel?: string
+  isMalicious?: boolean
+  targetId?: number
+  targetType?: string
+  startDate?: string
+  endDate?: string
+}
+
+export interface LogStatsData {
+  totalCount: number
+  todayCount: number
+  maliciousCount: number
+  byModule: { module: string; count: number }[]
+  byAction: { action: string; count: number }[]
+  byResult: { result: string; count: number }[]
+  byRiskLevel: { level: string; count: number }[]
+  last7Days: { date: string; count: number }[]
+}
+
+export interface LogTraceConsistencyIssue {
+  logId: number
+  type: string
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  message: string
+}
+
+export interface LogTraceResult {
+  traceId: string
+  totalSteps: number
+  startTime: string
+  endTime: string
+  totalDuration: number
+  operator: {
+    userId: number
+    username: string
+    userRole: string
+    ip: string
+    ipLocation: string
+  }
+  target: {
+    targetId: number
+    targetType: string
+    target: string
+    module: string
+  }
+  logs: OperationLog[]
+  consistency: {
+    isConsistent: boolean
+    issues: LogTraceConsistencyIssue[]
+    allVerified: boolean
+  }
+  evidence: {
+    evidenceHashes: { logId: number; hash: string }[]
+    chainHash: string
+  }
+}
+
+export interface LogExportParams {
+  startDate: string
+  endDate: string
+  username?: string
+  module?: string
+  action?: string
+  result?: string
+  userId?: number
+  exportFields?: string[]
+}
+
+export interface LogExportResult {
+  total: number
+  exportedCount: number
+  filteredEmpty: number
+  fields: string[]
+  data: Record<string, any>[]
+  exportTime: string
+}
+
+export interface LogQueryRecord {
+  id: string
+  params: LogListParams
+  count: number
+  viewedAt: string
+  viewedLogIds: number[]
 }
 
 export interface DashboardStatistics {
@@ -1145,4 +1285,100 @@ export interface BatchCopyResult {
 export interface BatchModifyResult {
   success: { id: number; name: string }[]
   failed: { id: number; reason: string }[]
+}
+
+// ================ 账号权限分配管理 ================
+
+export interface AccountPermissionItem {
+  id: number
+  uid: string
+  username: string
+  nickname: string
+  avatar: string
+  email: string
+  phone: string
+  role: string
+  status: 'active' | 'frozen' | 'temp_banned' | 'permanent_banned'
+  tags: string[]
+  permissionGroup: string
+  coreRoleName: string | null
+  coreRoleId: number | null
+  auxPermCount: number
+  allPermCount: number
+  lastLoginTime: string
+  createdAt: string
+}
+
+export interface AccountPermissionDetail {
+  id: number
+  uid: string
+  username: string
+  nickname: string
+  role: string
+  status: string
+  coreRole: { id: number; name: string; code: string; type: string; level: number } | null
+  coreRoleId: number | null
+  auxPermissions: { id: number; userId: number; permissionId: number; bindingType: string; source: string; permission: PermissionMenu }[]
+  effectivePermCount: number
+}
+
+export interface AccountPermConflict {
+  mutexGroup: string
+  description: string
+  permissions: { id: number; name: string; code: string }[]
+}
+
+export interface AccountRoleMatchResult {
+  matched: boolean
+  matchScore: number
+  roleName: string
+  roleLevel: number
+  totalPerms: number
+  mismatchCount: number
+}
+
+export interface AccountPermValidation {
+  score: number
+  valid: boolean
+  issues: {
+    type: 'conflict' | 'overprivileged' | 'redundant'
+    severity: 'high' | 'medium' | 'low'
+    description: string
+    permissions: { id: number; name: string; code: string; requiredLevel?: number }[]
+  }[]
+}
+
+export interface AccountTraceResult {
+  user: { id: number; uid: string; username: string; nickname: string; role: string; status: string }
+  detail: AccountPermissionDetail
+  logs: AccountPermLog[]
+  validation: AccountPermValidation
+}
+
+export interface AccountPermLog {
+  id: number
+  userId: number
+  userUid: string
+  username: string
+  changeType: 'assign_role' | 'revoke_role' | 'add_permission' | 'remove_permission' | 'batch_assign_role' | 'batch_add_permission' | 'sync_role_perms' | 'cleanup_redundant' | 'conflict_resolve'
+  beforeSnapshot: any
+  afterSnapshot: any
+  roleId: number | null
+  roleName: string | null
+  addedPermissions: number[]
+  removedPermissions: number[]
+  conflictInfo: any
+  batchId: string | null
+  operatorId: number | null
+  operatorName: string | null
+  operatorRole: string | null
+  reason: string | null
+  ip: string | null
+  createdAt: string
+}
+
+export interface BatchAssignResult {
+  success: { id: number; username: string }[]
+  failed: { id: number; username: string; reason: string }[]
+  filteredCount: number
 }

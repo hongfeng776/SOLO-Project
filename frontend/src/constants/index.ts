@@ -703,3 +703,68 @@ export const ComplianceIssueSeverityTagType: Record<string, string> = {
   medium: 'warning',
   low: 'info'
 }
+
+// ================ 账号权限分配管理 ================
+
+export const AccountStatusLabel: Record<string, string> = {
+  active: '正常',
+  frozen: '冻结',
+  temp_banned: '临时封禁',
+  permanent_banned: '永久封禁'
+}
+
+export const AccountStatusTagType: Record<string, string> = {
+  active: 'success',
+  frozen: 'warning',
+  temp_banned: 'danger',
+  permanent_banned: 'danger'
+}
+
+export const AccountStatusOption = [
+  { value: '', label: '全部状态' },
+  { value: 'active', label: '正常' },
+  { value: 'frozen', label: '冻结' },
+  { value: 'temp_banned', label: '临时封禁' },
+  { value: 'permanent_banned', label: '永久封禁' }
+]
+
+export const AccountPermChangeTypeLabel: Record<string, string> = {
+  assign_role: '分配角色',
+  revoke_role: '撤销角色',
+  add_permission: '增加权限',
+  remove_permission: '移除权限',
+  batch_assign_role: '批量分配角色',
+  batch_add_permission: '批量增加权限',
+  sync_role_perms: '同步角色权限',
+  cleanup_redundant: '清理冗余权限',
+  conflict_resolve: '冲突解决'
+}
+
+export const AccountPermChangeTypeTagType: Record<string, string> = {
+  assign_role: 'success',
+  revoke_role: 'danger',
+  add_permission: 'primary',
+  remove_permission: 'warning',
+  batch_assign_role: 'success',
+  batch_add_permission: 'primary',
+  sync_role_perms: 'info',
+  cleanup_redundant: 'warning',
+  conflict_resolve: 'danger'
+}
+
+export const AccountPermIssueTypeLabel: Record<string, string> = {
+  conflict: '权限冲突',
+  overprivileged: '越权配置',
+  redundant: '冗余权限'
+}
+
+export const BindingTypeLabel: Record<string, string> = {
+  core_role: '核心角色',
+  auxiliary: '附属权限'
+}
+
+export const BindingSourceLabel: Record<string, string> = {
+  role: '角色继承',
+  manual: '手动分配',
+  batch: '批量分配'
+}
