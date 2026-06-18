@@ -28,6 +28,12 @@ class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare infoCompleteness: CreationOptional<number>
   declare lastLoginTime: CreationOptional<Date | null>
   declare loginCount: CreationOptional<number>
+  declare userLevel: CreationOptional<number>
+  declare levelScore: CreationOptional<number>
+  declare levelScoreDetail: CreationOptional<string>
+  declare isPermanentBanned: CreationOptional<number>
+  declare privileges: CreationOptional<string>
+  declare levelLastUpdateTime: CreationOptional<Date | null>
   declare createTime: CreationOptional<Date>
   declare updateTime: CreationOptional<Date>
   declare deleteTime: CreationOptional<Date | null>
@@ -172,6 +178,39 @@ User.init(
       allowNull: false,
       defaultValue: 0,
       comment: '登录次数'
+    },
+    userLevel: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '用户等级 -1受限 0普通 1活跃 2优质'
+    },
+    levelScore: {
+      type: DataTypes.TINYINT.UNSIGNED,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '等级分值 0-100'
+    },
+    levelScoreDetail: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: '等级分值明细JSON'
+    },
+    isPermanentBanned: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '是否永久封禁 0否 1是'
+    },
+    privileges: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: '用户权益配置JSON'
+    },
+    levelLastUpdateTime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '等级最后更新时间'
     },
     createTime: DataTypes.DATE,
     updateTime: DataTypes.DATE,

@@ -10,21 +10,21 @@ export const success = <T = unknown>(res: Response, data: T, message = '操作�
   return res.json(response)
 }
 
-export const paginate = <T = unknown>(
+export const paginate = <T = unknown, P = Record<string, any>>(
   res: Response,
   list: T[],
   total: number,
   page: number,
   pageSize: number,
-  extra?: Partial<PageResult<T>>
+  extra?: Partial<PageResult<T, P>>
 ): Response => {
-  const data: PageResult<T> = {
+  const data: PageResult<T, P> = {
     list,
     total,
     page,
     pageSize,
     ...extra
-  }
+  } as PageResult<T, P>
   return success(res, data)
 }
 

@@ -740,3 +740,186 @@ export interface UserAbnormalStats {
   abnormalType: string
   count: number
 }
+
+export interface UserLevel {
+  id: number
+  userId: number
+  userLevel: number
+  levelScore: number
+  levelScoreDetail: LevelScoreDetail
+  isPermanentBanned: number
+  privileges: string[]
+  levelLastUpdateTime?: string
+  createTime: string
+  updateTime: string
+}
+
+export interface LevelScoreDetail {
+  activity: number
+  contentQuality: number
+  compliance: number
+  accountAge: number
+  realName: number
+  phoneVerified: number
+}
+
+export interface LevelScoreDetailWithNames {
+  key: string
+  name: string
+  score: number
+  weight: number
+  description: string
+}
+
+export interface UserLevelDetail {
+  user: UserAccount & {
+    userLevel: number
+    levelScore: number
+    levelScoreDetail: LevelScoreDetail
+    isPermanentBanned: number
+    privileges: string[]
+    levelLastUpdateTime?: string
+  }
+  levelInfo: {
+    levelName: string
+    levelColor: string
+    nextLevel?: string
+    nextLevelScore?: number
+    scoreToNextLevel?: number
+  }
+  benefits: UserBenefit[]
+  permission: UserLevelPermission
+  recentLevelLogs: UserLevelLog[]
+  preCheck: UserPreCheckResult
+}
+
+export interface UserLevelPermission {
+  canView: boolean
+  canEdit: boolean
+  canUpgrade: boolean
+  canDowngrade: boolean
+  canBatchUpgrade: boolean
+  canBatchDowngrade: boolean
+  maxAdjustLevel: number
+}
+
+export interface UserBenefit {
+  key: string
+  name: string
+  enabled: boolean
+  description: string
+  icon?: string
+}
+
+export interface LevelAdjustValidationResult {
+  allowed: boolean
+  reason?: string
+  isCrossLevel: boolean
+  crossLevelWarning?: string
+  scoreThresholdMet: boolean
+  currentScore: number
+  requiredScore: number
+  operatorHasPermission: boolean
+  risks: string[]
+}
+
+export interface LevelAdjustResult {
+  success: boolean
+  message: string
+  oldLevel: number
+  newLevel: number
+  oldScore: number
+  newScore: number
+  benefitsAdded: UserBenefit[]
+  benefitsRemoved: UserBenefit[]
+  logId: number
+}
+
+export interface UserLevelLog {
+  id: number
+  userId: number
+  userName: string
+  oldLevel: number
+  newLevel: number
+  oldScore: number
+  newScore: number
+  operationType: string
+  reason: string
+  reasonDetail?: string
+  scoreDetail?: string
+  benefitsChanged?: {
+    added: string[]
+    removed: string[]
+  }
+  operatorId?: number
+  operatorName?: string
+  isCrossLevel: number
+  isAutoAdjust: number
+  analysisResult?: LevelAnalysisResult
+  createTime: string
+}
+
+export interface LevelAnalysisResult {
+  changeReason: string
+  complianceStats: {
+    totalViolations: number
+    recentViolations: number
+    violationLevel: string
+  }
+  activityStats: {
+    avgLoginDays: number
+    avgPublishCount: number
+    avgInteractionCount: number
+  }
+  riskAssessment: string
+  suggestions: string[]
+  isSuspicious: boolean
+}
+
+export interface BatchLevelAdjustParams {
+  userIds: number[]
+  targetLevel: number
+  reason: string
+  reasonDetail?: string
+}
+
+export interface BatchLevelAdjustResult {
+  total: number
+  success: number
+  fail: number
+  results: Array<{
+    userId: number
+    userName: string
+    success: boolean
+    error?: string
+    oldLevel?: number
+    newLevel?: number
+  }>
+}
+
+export interface UserLevelConfig {
+  id: number
+  level: number
+  levelName: string
+  minScore: number
+  maxScore: number
+  weightActivity: number
+  weightContentQuality: number
+  weightCompliance: number
+  weightAccountAge: number
+  benefits: string[]
+  restrictions?: string[]
+  description?: string
+  isEnabled: number
+  createTime: string
+  updateTime: string
+}
+
+export interface LevelListUser extends UserAccount {
+  userLevel: number
+  levelScore: number
+  levelScoreDetail: LevelScoreDetail
+  isPermanentBanned: number
+  privileges: string[]
+  levelLastUpdateTime?: string
+}

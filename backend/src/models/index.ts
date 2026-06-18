@@ -23,6 +23,8 @@ import NoteOpsLog from './note-ops-log'
 import NoteOpsAbnormalLog from './note-ops-abnormal-log'
 import UserAccountLog from './user-account-log'
 import UserAbnormalLog from './user-abnormal-log'
+import UserLevelLog from './user-level-log'
+import UserLevelConfig from './user-level-config'
 
 const UserRole = User.sequelize!.define('sys_user_role', {}, { tableName: 'sys_user_role', timestamps: false })
 const NoteTag = Note.sequelize!.define('biz_note_tag', {}, { tableName: 'biz_note_tag', timestamps: false })
@@ -42,4 +44,7 @@ UserAccountLog.belongsTo(User, { as: 'user', foreignKey: 'userId' })
 User.hasMany(UserAbnormalLog, { as: 'abnormalLogs', foreignKey: 'userId' })
 UserAbnormalLog.belongsTo(User, { as: 'user', foreignKey: 'userId' })
 
-export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserRole, NoteTag }
+User.hasMany(UserLevelLog, { as: 'levelLogs', foreignKey: 'userId' })
+UserLevelLog.belongsTo(User, { as: 'user', foreignKey: 'userId' })
+
+export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, UserRole, NoteTag }

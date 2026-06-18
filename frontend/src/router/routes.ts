@@ -231,6 +231,38 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/user-level',
+    component: Layout,
+    redirect: '/user-level/list',
+    meta: { title: '权限分级', icon: 'Medal', roles: ['admin', 'operator', 'senior_operator'] },
+    children: [
+      {
+        path: 'list',
+        name: 'UserLevelList',
+        component: () => import(/* webpackChunkName: "user-level" */ '@views/user-level/list/index.vue'),
+        meta: { title: '等级查询', icon: 'Search', roles: ['admin', 'operator', 'senior_operator'] }
+      },
+      {
+        path: 'adjust',
+        name: 'UserLevelAdjust',
+        component: () => import(/* webpackChunkName: "user-level" */ '@views/user-level/adjust/index.vue'),
+        meta: { title: '等级调整', icon: 'Promotion', roles: ['admin', 'senior_operator'] }
+      },
+      {
+        path: 'batch',
+        name: 'UserLevelBatch',
+        component: () => import(/* webpackChunkName: "user-level" */ '@views/user-level/batch/index.vue'),
+        meta: { title: '批量调整', icon: 'Operation', roles: ['admin', 'senior_operator'] }
+      },
+      {
+        path: 'logs',
+        name: 'UserLevelLogs',
+        component: () => import(/* webpackChunkName: "user-level" */ '@views/user-level/logs/index.vue'),
+        meta: { title: '变更历史', icon: 'Clock', roles: ['admin', 'operator', 'senior_operator'] }
+      }
+    ]
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/404',
     meta: { hidden: true }

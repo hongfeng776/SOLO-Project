@@ -13,17 +13,13 @@ export interface PageParams {
   sortOrder?: 'asc' | 'desc'
 }
 
-export interface PageResult<T> {
+export interface PageResult<T, P = Record<string, any>> {
   list: T[]
   total: number
   page: number
   pageSize: number
   stats?: Array<{ abnormalType: string; count: number }>
-  permission?: {
-    canEdit: boolean
-    canViewSensitive: boolean
-    canBatch: boolean
-  }
+  permission?: P
 }
 
 export interface JwtPayload {

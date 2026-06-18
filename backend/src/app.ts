@@ -36,6 +36,7 @@ import noteOpsRoutes from '@routes/note-ops'
 import noteOpsLogRoutes from '@routes/note-ops-log'
 import categoryRoutes from '@routes/category'
 import tagManagementRoutes from '@routes/tag-management'
+import userLevelRoutes from '@routes/user-level'
 
 const app = express()
 
@@ -83,6 +84,7 @@ app.use('/api/note-ops', noteOpsRoutes)
 app.use('/api/note-ops-logs', noteOpsLogRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/tags', tagManagementRoutes)
+app.use('/api/user-level', userLevelRoutes)
 
 app.use(celebrateErrors())
 app.use(errorHandler)
