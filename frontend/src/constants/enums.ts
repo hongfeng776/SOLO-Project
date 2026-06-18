@@ -496,4 +496,73 @@ export const USER_PUNISHMENT_THRESHOLD = {
   BAN_TRIGGER: 10,
 } as const
 
+export const AUDIT_RULE_TYPE = {
+  CONTENT_AUDIT: { value: 'content_audit', label: '内容审核规则', icon: 'Film', color: '#409EFF' },
+  ARTICLE_AUDIT: { value: 'article_audit', label: '图文审核规则', icon: 'Document', color: '#67C23A' },
+  COMMENT_AUDIT: { value: 'comment_audit', label: '评论审核规则', icon: 'ChatDotRound', color: '#E6A23C' },
+  RISK_ASSESS: { value: 'risk_assess', label: '风险评估规则', icon: 'Warning', color: '#F56C6C' },
+  ASSIGN_RULE: { value: 'assign_rule', label: '任务分配规则', icon: 'UserFilled', color: '#722ed1' },
+  PUNISHMENT: { value: 'punishment', label: '处罚规则', icon: 'Lock', color: '#C0392B' },
+  AI_SCREEN: { value: 'ai_screen', label: 'AI初筛规则', icon: 'MagicStick', color: '#13c2c2' },
+} as const
+
+export const AUDIT_RULE_STATUS = {
+  DRAFT: { value: 0, label: '草稿', color: '#909399', type: 'info' },
+  ENABLED: { value: 1, label: '已启用', color: '#67C23A', type: 'success' },
+  DISABLED: { value: 2, label: '已停用', color: '#909399', type: 'info' },
+  EXPIRED: { value: 3, label: '已过期', color: '#F56C6C', type: 'danger' },
+  PENDING_REVIEW: { value: 4, label: '待审核', color: '#E6A23C', type: 'warning' },
+} as const
+
+export const AUDIT_RULE_CATEGORY = {
+  AUTO_AUDIT: { value: 'auto_audit', label: '自动审核', description: '系统自动判定规则' },
+  MANUAL_AID: { value: 'manual_aid', label: '人工辅助', description: '辅助人工审核' },
+  WORKFLOW: { value: 'workflow', label: '工作流', description: '审核流程控制' },
+  PUNISH_POLICY: { value: 'punish_policy', label: '处罚策略', description: '违规处罚配置' },
+  QUALITY_CONTROL: { value: 'quality_control', label: '质检规则', description: '审核质量控制' },
+} as const
+
+export const AUDIT_RULE_TRIGGER_CONDITION = {
+  CONTENT_CATEGORY: { value: 'content_category', label: '内容品类', fieldType: 'select', options: 'CONTENT_CATEGORY' },
+  DURATION_RANGE: { value: 'duration_range', label: '时长范围', fieldType: 'number_range', unit: '分钟' },
+  RISK_LEVEL: { value: 'risk_level', label: '风险等级', fieldType: 'select', options: 'RISK_LEVEL' },
+  TIME_PERIOD: { value: 'time_period', label: '生效时段', fieldType: 'time_range' },
+  SENSITIVE_WORD_COUNT: { value: 'sensitive_word_count', label: '敏感词数量', fieldType: 'number' },
+  USER_LEVEL: { value: 'user_level', label: '用户等级', fieldType: 'select', options: 'CREATOR_LEVEL' },
+  VIOLATION_COUNT: { value: 'violation_count', label: '违规次数', fieldType: 'number' },
+  WORD_COUNT: { value: 'word_count', label: '字数范围', fieldType: 'number_range', unit: '字' },
+  IMAGE_COUNT: { value: 'image_count', label: '图片数量', fieldType: 'number' },
+  PUBLISH_SOURCE: { value: 'publish_source', label: '发布来源', fieldType: 'select', options: 'CONTENT_SOURCE' },
+} as const
+
+export const AUDIT_RULE_ACTION = {
+  AUTO_PASS: { value: 'auto_pass', label: '自动通过', color: '#67C23A' },
+  AUTO_REJECT: { value: 'auto_reject', label: '自动驳回', color: '#F56C6C' },
+  AUTO_REVIEW: { value: 'auto_review', label: '自动复审', color: '#E6A23C' },
+  SET_PRIORITY: { value: 'set_priority', label: '设置优先级', color: '#409EFF' },
+  ASSIGN_REVIEWER: { value: 'assign_reviewer', label: '指定审核员', color: '#722ed1' },
+  ADD_TAGS: { value: 'add_tags', label: '添加标签', color: '#13c2c2' },
+  TRIGGER_MUTE: { value: 'trigger_mute', label: '触发禁言', color: '#C0392B' },
+  LOCK_CONTENT: { value: 'lock_content', label: '锁定内容', color: '#F56C6C' },
+} as const
+
+export const BATCH_RULE_ACTION = {
+  BATCH_ENABLE: { value: 'batch_enable', label: '批量启用', icon: 'CircleCheck', type: 'success' },
+  BATCH_DISABLE: { value: 'batch_disable', label: '批量停用', icon: 'SwitchButton', type: 'warning' },
+  BATCH_SYNC: { value: 'batch_sync', label: '批量同步全品类', icon: 'Refresh', type: 'primary' },
+  BATCH_DELETE: { value: 'batch_delete', label: '批量删除', icon: 'Delete', type: 'danger' },
+  BATCH_EXPORT: { value: 'batch_export', label: '批量导出', icon: 'Download', type: 'info' },
+} as const
+
+export const RULE_MODIFY_TYPE = {
+  CREATE: { value: 'create', label: '创建', color: '#67C23A' },
+  EDIT: { value: 'edit', label: '参数修改', color: '#409EFF' },
+  ENABLE: { value: 'enable', label: '启用', color: '#67C23A' },
+  DISABLE: { value: 'disable', label: '停用', color: '#909399' },
+  RESET_EFFECT: { value: 'reset_effect', label: '重置生效时间', color: '#E6A23C' },
+  CONFLICT_RESOLVE: { value: 'conflict_resolve', label: '冲突解决', color: '#F56C6C' },
+  BATCH_SYNC: { value: 'batch_sync', label: '批量同步', color: '#722ed1' },
+} as const
+
+
 

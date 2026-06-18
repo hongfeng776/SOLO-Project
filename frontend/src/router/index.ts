@@ -124,6 +124,12 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/views/system/log/index.vue'),
             meta: { title: '操作日志', icon: 'List', roles: ['log:view'] },
           },
+          {
+            path: 'audit-rules',
+            name: 'AuditRules',
+            component: () => import('@/views/system/audit-rule/index.vue'),
+            meta: { title: '审核规则', icon: 'Operation', roles: ['system:config', 'rule:manage'] },
+          },
         ],
       },
       {

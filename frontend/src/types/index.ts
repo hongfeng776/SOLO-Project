@@ -1329,3 +1329,187 @@ export interface CommentContentRelatedContent {
   auditor?: string
 }
 
+export interface AuditRuleTriggerCondition {
+  conditionKey: string
+  conditionLabel: string
+  fieldType: 'select' | 'number' | 'number_range' | 'time_range'
+  value?: any
+  valueStart?: number | string
+  valueEnd?: number | string
+  options?: Array<{ label: string; value: any }>
+  unit?: string
+  required: boolean
+}
+
+export interface AuditRuleActionConfig {
+  actionKey: string
+  actionLabel: string
+  actionParams: Record<string, any>
+  enabled: boolean
+}
+
+export interface AuditRule {
+  id: number
+  ruleCode: string
+  ruleName: string
+  ruleType: string
+  ruleCategory: string
+  ruleDescription: string
+  applicableCategory: string[]
+  applicableRiskLevels: number[]
+  effectiveStartTime?: string
+  effectiveEndTime?: string
+  effectivePeriod?: string
+  priority: number
+  ruleStatus: number
+  isCoreDefault: boolean
+  isSystemDefault: boolean
+  version: number
+  effectBatch: string
+  triggerConditions: AuditRuleTriggerCondition[]
+  actions: AuditRuleActionConfig[]
+  ruleParams: Record<string, any>
+  sortOrder: number
+  remark?: string
+  createdBy: number
+  createdByName: string
+  updatedBy: number
+  updatedByName: string
+  createdAt: string
+  updatedAt: string
+  publishedAt?: string
+  lastEnabledAt?: string
+}
+
+export interface AuditRuleListItem extends AuditRule {
+  effectStatus: 'active' | 'upcoming' | 'expired' | 'disabled' | 'draft'
+  conflictCount: number
+  affectedTasksCount: number
+}
+
+export interface AuditRuleCreateForm {
+  ruleName: string
+  ruleType: string
+  ruleCategory: string
+  ruleDescription: string
+  applicableCategory: string[]
+  applicableRiskLevels: number[]
+  effectiveStartTime?: string
+  effectiveEndTime?: string
+  priority: number
+  triggerConditions: AuditRuleTriggerCondition[]
+  actions: AuditRuleActionConfig[]
+  ruleParams: Record<string, any>
+  sortOrder: number
+  remark?: string
+}
+
+export interface AuditRuleEditForm extends AuditRuleCreateForm {
+  id: number
+  version?: number
+  resetEffectiveTime?: boolean
+}
+
+export interface RuleConflictCheckResult {
+  hasConflict: boolean
+  conflicts: Array<{
+    type: 'time_overlap' | 'condition_duplicate' | 'logic_contradict' | 'param_duplicate'
+    conflictRuleId: number
+    conflictRuleName: string
+    conflictRuleCode: string
+    description: string
+    severity: 'high' | 'medium' | 'low'
+    field?: string
+    suggestion: string
+  }>
+  hasParamsMissing: boolean
+  missingFields: string[]
+  canSubmit: boolean
+  totalIssues: number
+}
+
+export interface RuleConsistencyCheckResult {
+  consistent: boolean
+  totalRules: number
+  conflictCount: number
+  contradictionCount: number
+  gapCount: number
+  issues: Array<{
+    type: 'conflict' | 'contradiction' | 'gap' | 'duplicate'
+    level: 'high' | 'medium' | 'low'
+    ruleIds: number[]
+    ruleNames: string[]
+    description: string
+    suggestion: string
+  }>
+  coverage: {
+    totalCategories: number
+    coveredCategories: number
+    coverageRate: number
+    missingCategories: string[]
+  }
+  score: number
+}
+
+export interface AuditRuleModifyRecord {
+  id: number
+  ruleId: number
+  ruleCode: string
+  version: number
+  effectBatch: string
+  modifyType: string
+  modifyTypeLabel: string
+  modifierId: number
+  modifierName: string
+  modifyTime: string
+  changeSummary: string
+  beforeSnapshot?: Partial<AuditRule>
+  afterSnapshot?: Partial<AuditRule>
+  changedFields: string[]
+  remark?: string
+}
+
+export interface AuditRuleTraceResult {
+  traceId: string
+  ruleCode: string
+  ruleName: string
+  currentVersion: number
+  currentEffectBatch: string
+  versionHistory: Array<{
+    version: number
+    effectBatch: string
+    publishTime: string
+    publisher: string
+    changeSummary: string
+    affectedTasksCount: number
+  }>
+  modifyRecords: AuditRuleModifyRecord[]
+  conflictHistory: Array<{
+    time: string
+    type: string
+    description: string
+    resolved: boolean
+    resolution?: string
+  }>
+}
+
+export interface BatchRuleActionParams {
+  action: 'batch_enable' | 'batch_disable' | 'batch_sync' | 'batch_delete' | 'batch_export'
+  ruleIds: number[]
+  targetCategory?: string
+  syncMode?: 'copy' | 'move' | 'merge'
+}
+
+export interface BatchRuleActionResult {
+  batchId: string
+  action: string
+  total: number
+  successCount: number
+  failedCount: number
+  skippedCount: number
+  skippedReasons: Array<{ ruleId: number; ruleName: string; reason: string }>
+  generatedBatch?: string
+  newRuleCodes?: string[]
+}
+
+
