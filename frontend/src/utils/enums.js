@@ -374,6 +374,157 @@ export const ExportStatusEnum = {
   FAILED: { value: 'failed', label: '导出失败' }
 }
 
+export const BenefitTypeEnum = {
+  COUPON: { value: 1, label: '出行优惠券', color: '#1890ff', gradient: 'linear-gradient(135deg, #1890ff, #69c0ff)', icon: 'Present' },
+  POINT: { value: 2, label: '积分权益', color: '#52c41a', gradient: 'linear-gradient(135deg, #52c41a, #95de64)', icon: 'Medal' },
+  VIP: { value: 3, label: '贵宾权益', color: '#faad14', gradient: 'linear-gradient(135deg, #faad14, #ffd666)', icon: 'StarFilled' },
+  BUSINESS: { value: 4, label: '商旅专属', color: '#722ed1', gradient: 'linear-gradient(135deg, #722ed1, #b37feb)', icon: 'OfficeBuilding' }
+}
+
+export const BenefitStatusEnum = {
+  VOID: { value: 0, label: '已作废', color: '#909399', type: 'info' },
+  UNUSED: { value: 1, label: '未使用', color: '#52c41a', type: 'success' },
+  PARTIAL: { value: 2, label: '部分使用', color: '#1890ff', type: 'primary' },
+  USED_UP: { value: 3, label: '已用完', color: '#722ed1', type: '' },
+  EXPIRED: { value: 4, label: '已过期', color: '#ff4d4f', type: 'danger' }
+}
+
+export const BenefitUnitEnum = {
+  COUNT: { value: 'count', label: '次' },
+  SCORE: { value: 'score', label: '积分' },
+  AMOUNT: { value: 'amount', label: '元' },
+  DISCOUNT: { value: 'discount', label: '折' }
+}
+
+export const BenefitSourceEnum = {
+  MANUAL: { value: 'manual', label: '手动发放', color: '#1890ff' },
+  SYSTEM: { value: 'system', label: '系统自动', color: '#52c41a' },
+  BATCH: { value: 'batch', label: '批量发放', color: '#722ed1' },
+  CAMPAIGN: { value: 'campaign', label: '活动赠送', color: '#faad14' },
+  ORDER: { value: 'order', label: '订单关联', color: '#fa8c16' }
+}
+
+export const BenefitActionEnum = {
+  GRANT: { value: 'grant', label: '发放', color: '#52c41a' },
+  REISSUE: { value: 'reissue', label: '补发', color: '#1890ff' },
+  VOID: { value: 'void', label: '作废', color: '#909399' },
+  USE: { value: 'use', label: '使用', color: '#722ed1' },
+  RETURN: { value: 'return', label: '退回', color: '#13c2c2' },
+  EXTEND: { value: 'extend', label: '延期', color: '#faad14' },
+  RECYCLE: { value: 'recycle', label: '回收', color: '#ff4d4f' },
+  EXPIRE: { value: 'expire', label: '过期', color: '#f5222d' },
+  BLOCK: { value: 'block', label: '拦截', color: '#eb2f96' }
+}
+
+export const BenefitAbnormalEnum = {
+  DUPLICATE: { value: 'duplicate', label: '重复发放', color: '#fa8c16' },
+  OVER_LIMIT: { value: 'over_limit', label: '超额发放', color: '#faad14' },
+  OVER_COUNT: { value: 'over_count', label: '超次使用', color: '#ff4d4f' },
+  INVALID: { value: 'invalid', label: '无效使用', color: '#f5222d' },
+  SCENE: { value: 'scene', label: '场景不符', color: '#eb2f96' },
+  MISMATCH: { value: 'mismatch', label: '数据不一致', color: '#722ed1' },
+  OVER_FREQ: { value: 'over_frequency', label: '操作频率过高', color: '#fa541c' }
+}
+
+export const BenefitTemplateOptions = [
+  {
+    value: 'coupon_flight_50',
+    benefitType: 1,
+    label: '机票满500减50',
+    amountValue: 50,
+    minAmount: 500,
+    unitType: 'amount',
+    scenes: 'flight',
+    desc: '机票订单满500元可使用'
+  },
+  {
+    value: 'coupon_hotel_100',
+    benefitType: 1,
+    label: '酒店满1000减100',
+    amountValue: 100,
+    minAmount: 1000,
+    unitType: 'amount',
+    scenes: 'hotel',
+    desc: '酒店订单满1000元可使用'
+  },
+  {
+    value: 'coupon_all_95',
+    benefitType: 1,
+    label: '全场95折优惠券',
+    amountValue: 95,
+    unitType: 'discount',
+    scenes: 'flight,hotel,car,ticket',
+    desc: '全场通用95折，最高优惠200元'
+  },
+  {
+    value: 'point_1000',
+    benefitType: 2,
+    label: '赠送1000积分',
+    totalQuantity: 1000,
+    unitType: 'score',
+    desc: '可用于积分兑换商城商品'
+  },
+  {
+    value: 'point_double',
+    benefitType: 2,
+    label: '双倍积分特权(7天)',
+    totalQuantity: 7,
+    unitType: 'count',
+    desc: '7天内消费积分双倍返还'
+  },
+  {
+    value: 'vip_lounge',
+    benefitType: 3,
+    label: 'VIP休息室(1次)',
+    benefitType: 3,
+    levelRequired: 3,
+    totalQuantity: 1,
+    unitType: 'count',
+    scenes: 'flight',
+    desc: '机场VIP贵宾休息室，全国机场通用'
+  },
+  {
+    value: 'vip_fasttrack',
+    benefitType: 3,
+    label: '快速安检通道(3次)',
+    levelRequired: 3,
+    totalQuantity: 3,
+    unitType: 'count',
+    scenes: 'flight',
+    desc: '机场快速安检通道3次权益'
+  },
+  {
+    value: 'business_fee_waiver',
+    benefitType: 4,
+    label: '改签手续费全免(5次)',
+    levelRequired: 2,
+    totalQuantity: 5,
+    unitType: 'count',
+    scenes: 'flight,hotel',
+    desc: '机票/酒店订单改签手续费全免'
+  },
+  {
+    value: 'business_manager',
+    benefitType: 4,
+    label: '专属商旅经理',
+    levelRequired: 2,
+    totalQuantity: 1,
+    unitType: 'count',
+    scenes: 'business',
+    desc: '一对一专属商旅经理7*24小时服务'
+  }
+]
+
+export const BatchModeEnum = {
+  STRICT: { value: 'strict', label: '严格模式（超半数失败即中止）' },
+  SOFT: { value: 'soft', label: '容错模式（跳过失败继续执行）' }
+}
+
+export const ApplyScopeEnum = {
+  GLOBAL: { value: 'global', label: '全局生效', color: '#722ed1' },
+  PARTIAL: { value: 'partial', label: '局部生效', color: '#1890ff' }
+}
+
 export default {
   OrderStatusEnum,
   OrderSourceEnum,
@@ -424,6 +575,15 @@ export default {
   RestrictTypeEnum,
   MerchantTypeEnum,
   ExportStatusEnum,
+  BenefitTypeEnum,
+  BenefitStatusEnum,
+  BenefitUnitEnum,
+  BenefitSourceEnum,
+  BenefitActionEnum,
+  BenefitAbnormalEnum,
+  BenefitTemplateOptions,
+  BatchModeEnum,
+  ApplyScopeEnum,
   getEnumLabel,
   getEnumType,
   getEnumOptions,

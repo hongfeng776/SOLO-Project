@@ -12,6 +12,7 @@ const userController = require('../controllers/UserController')
 const roleController = require('../controllers/RoleController')
 const permissionController = require('../controllers/PermissionController')
 const userBehaviorController = require('../controllers/UserBehaviorController')
+const benefitController = require('../controllers/BenefitController')
 const flightController = require('../controllers/FlightController')
 const hotelController = require('../controllers/HotelController')
 const carController = require('../controllers/CarController')
@@ -79,6 +80,20 @@ router.get('/behaviors/risks/list', auth(), pagination, userBehaviorController.r
 router.post('/behaviors/batch/mark', auth(['admin', 'risk_operator']), userBehaviorController.batchMark.bind(userBehaviorController));
 router.post('/behaviors/batch/warning', auth(['admin', 'risk_operator']), userBehaviorController.batchWarning.bind(userBehaviorController));
 router.post('/behaviors/batch/restrict', auth(['admin']), userBehaviorController.batchRestrict.bind(userBehaviorController));
+
+router.get('/benefits', auth(), pagination, benefitController.getList.bind(benefitController));
+router.get('/benefits/stats/summary', auth(), benefitController.getStats.bind(benefitController));
+router.post('/benefits/validate', auth(), benefitController.validate.bind(benefitController));
+router.post('/benefits/grant', auth(['admin', 'operator']), benefitController.grant.bind(benefitController));
+router.post('/benefits/:id/reissue', auth(['admin', 'operator']), benefitController.reissue.bind(benefitController));
+router.post('/benefits/:id/void', auth(['admin', 'operator']), benefitController.voidBenefit.bind(benefitController));
+router.post('/benefits/:id/extend', auth(['admin', 'operator']), benefitController.extend.bind(benefitController));
+router.post('/benefits/:id/recycle', auth(['admin']), benefitController.recycle.bind(benefitController));
+router.post('/benefits/batch/grant', auth(['admin', 'operator']), benefitController.batchGrant.bind(benefitController));
+router.post('/benefits/batch/extend', auth(['admin', 'operator']), benefitController.batchExtend.bind(benefitController));
+router.post('/benefits/batch/recycle', auth(['admin']), benefitController.batchRecycle.bind(benefitController));
+router.get('/benefits/trace/:userId', auth(), benefitController.trace.bind(benefitController));
+router.post('/benefits/check-expired', auth(['admin']), benefitController.checkExpired.bind(benefitController));
 registerCrudRoutes('roles', roleController);
 registerCrudRoutes('flights', flightController);
 registerCrudRoutes('hotels', hotelController);

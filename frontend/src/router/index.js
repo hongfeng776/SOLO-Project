@@ -65,6 +65,20 @@ export const routes = [
     ]
   },
   {
+    path: '/benefit',
+    component: Layout,
+    redirect: '/benefit/manage',
+    meta: { title: '权益运维', icon: 'Present' },
+    children: [
+      {
+        path: 'manage',
+        name: 'BenefitManage',
+        component: () => import('@/views/benefit/BenefitManage.vue'),
+        meta: { title: '用户权益运维', icon: 'Medal', roles: ['admin', 'operator'] }
+      }
+    ]
+  },
+  {
     path: '/product',
     component: Layout,
     redirect: '/product/flight',
