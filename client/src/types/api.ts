@@ -148,20 +148,70 @@ export interface IAssetProduct {
   productDesc: string
 }
 
+export interface IValidationError {
+  field: string
+  message: string
+}
+
+export interface IValidationResult {
+  valid: boolean
+  errors: IValidationError[]
+}
+
+export interface IBatchImportResult {
+  total: number
+  success: number
+  failed: number
+  duplicate: number
+  successList: ICustomerAsset[]
+  errorList: Array<{ row: number; data: any; errors: IValidationError[]; type: string }>
+  duplicateList: any[]
+}
+
 export interface ICustomerAsset {
   id: number
+  assetAccountNo?: string
   customerName: string
-  idCard: string
-  phone: string
-  totalAsset: number
-  availableAmount: number
-  frozenAmount: number
-  totalProfit: number
-  totalCost: number
-  riskLevel: string
   customerType: string
+  idCard: string
+  phone?: string
+  email?: string
+  address?: string
+  filingStatus?: string
+  accountStatus?: string
+  archiveStatus?: string
+  institutionName?: string
+  institutionCode?: string
+  legalRepresentative?: string
+  legalRepIdCard?: string
+  businessLicense?: string
+  unifiedSocialCredit?: string
+  gender?: string
+  birthday?: string
+  occupation?: string
+  workUnit?: string
+  education?: string
+  maritalStatus?: string
+  totalAsset?: number
+  availableAmount?: number
+  frozenAmount?: number
+  totalProfit?: number
+  totalCost?: number
+  riskLevel?: string
+  tradeAccountNo?: string
+  initialDeposit?: number
+  accountOpenDate?: string
+  sourceMaterials?: string
+  createdBy?: number
+  createdByName?: string
+  archiveTime?: string
+  lastModifiedBy?: number
+  lastModifiedByName?: string
+  temporaryExpireAt?: string
   status: string
+  remark?: string
   createdAt: string
+  updatedAt?: string
 }
 
 export interface IFundFlow {

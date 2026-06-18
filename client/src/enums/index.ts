@@ -10,6 +10,18 @@ export enum CustomerType { INDIVIDUAL = 'individual', INSTITUTION = 'institution
 
 export enum CustomerStatus { NORMAL = 'normal', FROZEN = 'frozen', CLOSED = 'closed' }
 
+export enum ArchiveStatus { FORMAL = 'formal', TEMPORARY = 'temporary', EXPIRED = 'expired' }
+
+export enum FilingStatus { NOT_FILED = 'not_filed', FILING = 'filing', FILED = 'filed', REJECTED = 'rejected' }
+
+export enum AccountStatus { NOT_OPENED = 'not_opened', OPENING = 'opening', OPENED = 'opened', CLOSED = 'closed' }
+
+export enum Gender { MALE = 'male', FEMALE = 'female' }
+
+export enum Education { PRIMARY = 'primary', JUNIOR = 'junior', SENIOR = 'senior', COLLEGE = 'college', BACHELOR = 'bachelor', MASTER = 'master', DOCTOR = 'doctor' }
+
+export enum MaritalStatus { SINGLE = 'single', MARRIED = 'married', DIVORCED = 'divorced', WIDOWED = 'widowed' }
+
 export enum FlowType { DEPOSIT = 'deposit', WITHDRAW = 'withdraw', BUY = 'buy', SELL = 'sell', DIVIDEND = 'dividend', FEE = 'fee' }
 
 export enum FlowStatus { PENDING = 'pending', SUCCESS = 'success', FAILED = 'failed', CANCELLED = 'cancelled' }

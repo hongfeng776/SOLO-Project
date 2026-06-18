@@ -1,4 +1,4 @@
-import { MarketType, RiskLevel, ProductType, ProductStatus, CustomerType, CustomerStatus, FlowType, FlowStatus, FlowChannel, AuditType, AuditStatus, TargetType, PermType, UserStatus, RoleStatus, PermissionStatus, TradeType, TradeStatus, AlertType, AlertLevel, AlertStatus, LogStatus, LogModule, LogAction, StockStatus } from '@/enums'
+import { MarketType, RiskLevel, ProductType, ProductStatus, CustomerType, CustomerStatus, FlowType, FlowStatus, FlowChannel, AuditType, AuditStatus, TargetType, PermType, UserStatus, RoleStatus, PermissionStatus, TradeType, TradeStatus, AlertType, AlertLevel, AlertStatus, LogStatus, LogModule, LogAction, StockStatus, ArchiveStatus, FilingStatus, AccountStatus, Gender, Education, MaritalStatus } from '@/enums'
 import { BoardType, TradeStatus as QuoteTradeStatus } from '@/types/api'
 
 export const MARKET_LABELS: Record<MarketType, string> = {
@@ -93,6 +93,68 @@ export const CUSTOMER_STATUS_COLORS: Record<CustomerStatus, string> = {
   [CustomerStatus.NORMAL]: 'success',
   [CustomerStatus.FROZEN]: 'danger',
   [CustomerStatus.CLOSED]: 'info',
+}
+
+export const ARCHIVE_STATUS_LABELS: Record<ArchiveStatus, string> = {
+  [ArchiveStatus.FORMAL]: '正式建档',
+  [ArchiveStatus.TEMPORARY]: '临时建档',
+  [ArchiveStatus.EXPIRED]: '已失效',
+}
+
+export const ARCHIVE_STATUS_COLORS: Record<ArchiveStatus, string> = {
+  [ArchiveStatus.FORMAL]: 'success',
+  [ArchiveStatus.TEMPORARY]: 'warning',
+  [ArchiveStatus.EXPIRED]: 'info',
+}
+
+export const FILING_STATUS_LABELS: Record<FilingStatus, string> = {
+  [FilingStatus.NOT_FILED]: '未备案',
+  [FilingStatus.FILING]: '备案中',
+  [FilingStatus.FILED]: '已备案',
+  [FilingStatus.REJECTED]: '备案驳回',
+}
+
+export const FILING_STATUS_COLORS: Record<FilingStatus, string> = {
+  [FilingStatus.NOT_FILED]: 'info',
+  [FilingStatus.FILING]: 'warning',
+  [FilingStatus.FILED]: 'success',
+  [FilingStatus.REJECTED]: 'danger',
+}
+
+export const ACCOUNT_STATUS_LABELS: Record<AccountStatus, string> = {
+  [AccountStatus.NOT_OPENED]: '未开户',
+  [AccountStatus.OPENING]: '开户中',
+  [AccountStatus.OPENED]: '已开户',
+  [AccountStatus.CLOSED]: '已销户',
+}
+
+export const ACCOUNT_STATUS_COLORS: Record<AccountStatus, string> = {
+  [AccountStatus.NOT_OPENED]: 'info',
+  [AccountStatus.OPENING]: 'warning',
+  [AccountStatus.OPENED]: 'success',
+  [AccountStatus.CLOSED]: 'danger',
+}
+
+export const GENDER_LABELS: Record<Gender, string> = {
+  [Gender.MALE]: '男',
+  [Gender.FEMALE]: '女',
+}
+
+export const EDUCATION_LABELS: Record<Education, string> = {
+  [Education.PRIMARY]: '小学',
+  [Education.JUNIOR]: '初中',
+  [Education.SENIOR]: '高中',
+  [Education.COLLEGE]: '大专',
+  [Education.BACHELOR]: '本科',
+  [Education.MASTER]: '硕士',
+  [Education.DOCTOR]: '博士',
+}
+
+export const MARITAL_STATUS_LABELS: Record<MaritalStatus, string> = {
+  [MaritalStatus.SINGLE]: '未婚',
+  [MaritalStatus.MARRIED]: '已婚',
+  [MaritalStatus.DIVORCED]: '离异',
+  [MaritalStatus.WIDOWED]: '丧偶',
 }
 
 export const FLOW_TYPE_LABELS: Record<FlowType, string> = {
