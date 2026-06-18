@@ -112,6 +112,63 @@ interface IStatusTraceRecord {
   createdAt: string;
 }
 
+interface IReviewStats {
+  totalCount: number;
+  dealedCount: number;
+  dealedRate: string;
+  cancelledCount: number;
+  cancelledRate: string;
+  failedCount: number;
+  failedRate: string;
+  abnormalCount: number;
+  abnormalRate: string;
+  totalAmount: string;
+  avgOrderAmount: string;
+  avgMatchPrice: string;
+}
+
+interface ITimelinePoint {
+  date: string;
+  orderCount: number;
+  dealedCount: number;
+  amount: number;
+}
+
+interface IAbnormalOrder {
+  tradeId: number;
+  tradeNo: string;
+  stockCode: string;
+  stockName: string;
+  abnormalType: string;
+  abnormalReason: string;
+  orderPrice: number;
+  matchPrice: number;
+  marketPrice: number;
+  priceDeviation: string;
+  detectedAt: string;
+}
+
+interface IReviewConclusion {
+  orderCompliance: string;
+  priceConsistency: string;
+  riskLevel: string;
+  suggestions: string[];
+  overallScore: number;
+}
+
+interface IExportValidateResult {
+  totalCount: number;
+  validCount: number;
+  invalidCount: number;
+  missingFields: string[];
+  invalidOrders: Array<{
+    tradeId: number;
+    tradeNo: string;
+    missingFields: string[];
+    abnormalFlags: string[];
+  }>;
+}
+
 const TRADING_SESSIONS = [
   { start: '09:30', end: '11:30' },
   { start: '13:00', end: '15:00' },
@@ -1924,6 +1981,366 @@ class TradeService {
         totalHoldingChange,
         allConsistent,
       },
+    };
+  }
+
+  async validateReviewFilters(params: {
+    statusList?: string[];
+    customerIds?: number[];
+    stockCodes?: string[];
+    startDate?: string;
+    endDate?: string;
+  }): Promise<{
+    valid: boolean;
+    errors: string[];
+    warnings: string[];
+  }> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    if (!params.startDate || !params.endDate) {
+      errors.push('请指定订单时间区间');
+    }
+
+    if (params.startDate && params.endDate) {
+      const start = new Date(params.startDate).getTime();
+      const end = new Date(params.endDate).getTime();
+      const maxRange = 365 * 24 * 60 * 60 * 1000;
+      if (start > end) {
+        errors.push('开始时间不能晚于结束时间');
+      }
+      if (end - start > maxRange) {
+        errors.push('时间区间不能超过365天');
+      }
+    }
+
+    if (params.statusList && params.statusList.length > 0) {
+      const validStatuses = ['pending', 'success', 'approved', 'auditing', 'partial_dealed', 'dealed', 'cancelled', 'failed', 'rejected', 'paused'];
+      const invalidStatuses = params.statusList.filter(s => !validStatuses.includes(s));
+      if (invalidStatuses.length > 0) {
+        errors.push(`无效的订单状态：${invalidStatuses.join(', ')}`);
+      }
+    }
+
+    if (!params.statusList && !params.customerIds && !params.stockCodes) {
+      warnings.push('未指定筛选条件，将返回所有订单数据');
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings,
+    };
+  }
+
+  async getReviewStats(params: {
+    statusList?: string[];
+    customerIds?: number[];
+    stockCodes?: string[];
+    startDate: string;
+    endDate: string;
+  }): Promise<IReviewStats> {
+    const where: any = {};
+    if (params.statusList && params.statusList.length > 0) {
+      where.trade_status = { [Op.in]: params.statusList };
+    }
+    if (params.customerIds && params.customerIds.length > 0) {
+      where.customer_id = { [Op.in]: params.customerIds };
+    }
+    if (params.stockCodes && params.stockCodes.length > 0) {
+      where.stock_code = { [Op.in]: params.stockCodes };
+    }
+    if (params.startDate && params.endDate) {
+      where.created_at = {
+        [Op.gte]: new Date(params.startDate),
+        [Op.lte]: new Date(params.endDate + ' 23:59:59'),
+      };
+    }
+
+    const total = await db.Trade.count({ where });
+    const dealed = await db.Trade.count({ where: { ...where, trade_status: 'dealed' } });
+    const cancelled = await db.Trade.count({ where: { ...where, trade_status: 'cancelled' } });
+    const failed = await db.Trade.count({ where: { ...where, trade_status: 'failed' } });
+
+    const allTrades = await db.Trade.findAll({
+      where,
+      attributes: ['price', 'trade_amount', 'stock_id', 'trade_status', 'created_at'],
+    });
+
+    let abnormalCount = 0;
+    for (const trade of allTrades) {
+      const stock = await db.StockQuote.findByPk(trade.stock_id);
+      if (stock) {
+        const priceDev = Math.abs(Number(trade.price) - Number(stock.current_price)) / Number(stock.current_price);
+        if (priceDev > 0.15) {
+          abnormalCount++;
+        }
+      }
+    }
+
+    const dealedTrades = allTrades.filter(t => t.trade_status === 'dealed');
+    const totalAmount = dealedTrades.reduce((sum, t) => sum + Number(t.trade_amount || 0), 0);
+    const avgMatchPrice = dealedTrades.length > 0
+      ? dealedTrades.reduce((sum, t) => sum + Number(t.price), 0) / dealedTrades.length
+      : 0;
+
+    return {
+      totalCount: total,
+      dealedCount: dealed,
+      dealedRate: total > 0 ? ((dealed / total) * 100).toFixed(2) + '%' : '0%',
+      cancelledCount: cancelled,
+      cancelledRate: total > 0 ? ((cancelled / total) * 100).toFixed(2) + '%' : '0%',
+      failedCount: failed,
+      failedRate: total > 0 ? ((failed / total) * 100).toFixed(2) + '%' : '0%',
+      abnormalCount,
+      abnormalRate: total > 0 ? ((abnormalCount / total) * 100).toFixed(2) + '%' : '0%',
+      totalAmount: totalAmount.toFixed(2),
+      avgOrderAmount: dealedTrades.length > 0 ? (totalAmount / dealedTrades.length).toFixed(2) : '0',
+      avgMatchPrice: avgMatchPrice.toFixed(2),
+    };
+  }
+
+  async getReviewTimeline(params: {
+    statusList?: string[];
+    customerIds?: number[];
+    stockCodes?: string[];
+    startDate: string;
+    endDate: string;
+  }): Promise<ITimelinePoint[]> {
+    const where: any = {};
+    if (params.statusList && params.statusList.length > 0) {
+      where.trade_status = { [Op.in]: params.statusList };
+    }
+    if (params.customerIds && params.customerIds.length > 0) {
+      where.customer_id = { [Op.in]: params.customerIds };
+    }
+    if (params.stockCodes && params.stockCodes.length > 0) {
+      where.stock_code = { [Op.in]: params.stockCodes };
+    }
+    where.created_at = {
+      [Op.gte]: new Date(params.startDate),
+      [Op.lte]: new Date(params.endDate + ' 23:59:59'),
+    };
+
+    const allTrades = await db.Trade.findAll({
+      where,
+      attributes: ['created_at', 'trade_amount', 'trade_status'],
+      order: [['created_at', 'ASC']],
+    });
+
+    const dailyData: Record<string, ITimelinePoint> = {};
+    for (const trade of allTrades) {
+      const date = new Date(trade.created_at!).toISOString().split('T')[0];
+      if (!dailyData[date]) {
+        dailyData[date] = { date, orderCount: 0, dealedCount: 0, amount: 0 };
+      }
+      dailyData[date].orderCount++;
+      if (trade.trade_status === 'dealed') {
+        dailyData[date].dealedCount++;
+        dailyData[date].amount += Number(trade.trade_amount || 0);
+      }
+    }
+
+    return Object.values(dailyData).sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  async getAbnormalOrders(params: {
+    statusList?: string[];
+    customerIds?: number[];
+    stockCodes?: string[];
+    startDate: string;
+    endDate: string;
+  }): Promise<IAbnormalOrder[]> {
+    const where: any = {};
+    if (params.statusList && params.statusList.length > 0) {
+      where.trade_status = { [Op.in]: params.statusList };
+    }
+    if (params.customerIds && params.customerIds.length > 0) {
+      where.customer_id = { [Op.in]: params.customerIds };
+    }
+    if (params.stockCodes && params.stockCodes.length > 0) {
+      where.stock_code = { [Op.in]: params.stockCodes };
+    }
+    where.created_at = {
+      [Op.gte]: new Date(params.startDate),
+      [Op.lte]: new Date(params.endDate + ' 23:59:59'),
+    };
+
+    const trades = await db.Trade.findAll({ where });
+    const abnormalList: IAbnormalOrder[] = [];
+
+    for (const trade of trades) {
+      const stock = await db.StockQuote.findByPk(trade.stock_id);
+      if (!stock) continue;
+
+      const marketPrice = Number(stock.current_price);
+      const orderPrice = Number(trade.price);
+      const priceDev = marketPrice > 0 ? Math.abs(orderPrice - marketPrice) / marketPrice : 0;
+
+      if (priceDev > 0.15) {
+        abnormalList.push({
+          tradeId: trade.id,
+          tradeNo: trade.trade_no,
+          stockCode: trade.stock_code,
+          stockName: trade.stock_name,
+          abnormalType: '价格偏离',
+          abnormalReason: `委托价格${orderPrice}偏离市场价格${marketPrice}超过15%`,
+          orderPrice,
+          matchPrice: orderPrice,
+          marketPrice,
+          priceDeviation: (priceDev * 100).toFixed(2) + '%',
+          detectedAt: new Date().toISOString(),
+        });
+      }
+
+      const duplicates = await db.Trade.count({
+        where: {
+          customer_id: trade.customer_id,
+          stock_id: trade.stock_id,
+          price: trade.price,
+          quantity: trade.quantity,
+          direction: trade.direction,
+          created_at: {
+            [Op.gte]: new Date(new Date(trade.created_at!).getTime() - 60 * 1000),
+            [Op.lt]: trade.created_at,
+          },
+        },
+      });
+      if (duplicates > 0) {
+        abnormalList.push({
+          tradeId: trade.id,
+          tradeNo: trade.trade_no,
+          stockCode: trade.stock_code,
+          stockName: trade.stock_name,
+          abnormalType: '重复委托',
+          abnormalReason: `60秒内存在${duplicates}笔相同委托`,
+          orderPrice,
+          matchPrice: orderPrice,
+          marketPrice,
+          priceDeviation: (priceDev * 100).toFixed(2) + '%',
+          detectedAt: new Date().toISOString(),
+        });
+      }
+    }
+
+    return abnormalList;
+  }
+
+  async validateExportData(params: {
+    statusList?: string[];
+    customerIds?: number[];
+    stockCodes?: string[];
+    startDate: string;
+    endDate: string;
+    exportFields: string[];
+  }): Promise<IExportValidateResult> {
+    const where: any = {};
+    if (params.statusList && params.statusList.length > 0) {
+      where.trade_status = { [Op.in]: params.statusList };
+    }
+    if (params.customerIds && params.customerIds.length > 0) {
+      where.customer_id = { [Op.in]: params.customerIds };
+    }
+    if (params.stockCodes && params.stockCodes.length > 0) {
+      where.stock_code = { [Op.in]: params.stockCodes };
+    }
+    where.created_at = {
+      [Op.gte]: new Date(params.startDate),
+      [Op.lte]: new Date(params.endDate + ' 23:59:59'),
+    };
+
+    const trades = await db.Trade.findAll({ where });
+    const requiredFields = ['trade_no', 'stock_code', 'stock_name', 'direction', 'price', 'quantity', 'trade_amount', 'trade_status'];
+    const missingFields = requiredFields.filter(f => !params.exportFields.includes(f));
+
+    const invalidOrders: Array<{
+      tradeId: number;
+      tradeNo: string;
+      missingFields: string[];
+      abnormalFlags: string[];
+    }> = [];
+
+    for (const trade of trades) {
+      const orderMissing: string[] = [];
+      const orderAbnormal: string[] = [];
+
+      for (const field of params.exportFields) {
+        const fieldValue = (trade as any)[field];
+        if (fieldValue === null || fieldValue === undefined || fieldValue === '') {
+          orderMissing.push(field);
+        }
+      }
+
+      const stock = await db.StockQuote.findByPk(trade.stock_id);
+      if (stock) {
+        const priceDev = Math.abs(Number(trade.price) - Number(stock.current_price)) / Number(stock.current_price);
+        if (priceDev > 0.15) {
+          orderAbnormal.push('价格异常');
+        }
+      }
+
+      if (orderMissing.length > 0 || orderAbnormal.length > 0) {
+        invalidOrders.push({
+          tradeId: trade.id,
+          tradeNo: trade.trade_no,
+          missingFields: orderMissing,
+          abnormalFlags: orderAbnormal,
+        });
+      }
+    }
+
+    return {
+      totalCount: trades.length,
+      validCount: trades.length - invalidOrders.length,
+      invalidCount: invalidOrders.length,
+      missingFields,
+      invalidOrders,
+    };
+  }
+
+  async getReviewConclusion(params: {
+    statusList?: string[];
+    customerIds?: number[];
+    stockCodes?: string[];
+    startDate: string;
+    endDate: string;
+  }): Promise<IReviewConclusion> {
+    const stats = await this.getReviewStats(params);
+    const abnormalList = await this.getAbnormalOrders(params);
+
+    const abnormalRate = parseFloat(stats.abnormalRate);
+
+    let orderCompliance = '优';
+    if (abnormalRate > 5) orderCompliance = '差';
+    else if (abnormalRate > 2) orderCompliance = '中';
+    else if (abnormalRate > 0.5) orderCompliance = '良';
+
+    let priceConsistency = '高';
+    if (abnormalList.filter(a => a.abnormalType === '价格偏离').length > 3) priceConsistency = '低';
+    else if (abnormalList.filter(a => a.abnormalType === '价格偏离').length > 0) priceConsistency = '中';
+
+    let riskLevel = '低';
+    if (parseFloat(stats.failedRate) > 10 || abnormalRate > 10) riskLevel = '高';
+    else if (parseFloat(stats.failedRate) > 5 || abnormalRate > 5) riskLevel = '中';
+
+    const suggestions: string[] = [];
+    if (parseFloat(stats.cancelledRate) > 20) suggestions.push('撤单率过高，建议优化委托前校验');
+    if (abnormalRate > 2) suggestions.push('存在价格异常委托，建议加强价格监控');
+    if (abnormalList.filter(a => a.abnormalType === '重复委托').length > 0) suggestions.push('存在重复委托，建议添加去重机制');
+    if (suggestions.length === 0) suggestions.push('交易秩序良好，继续保持');
+
+    let overallScore = 100;
+    overallScore -= parseFloat(stats.failedRate);
+    overallScore -= abnormalRate * 2;
+    overallScore -= parseFloat(stats.cancelledRate) * 0.5;
+    overallScore = Math.max(0, Math.round(overallScore));
+
+    return {
+      orderCompliance,
+      priceConsistency,
+      riskLevel,
+      suggestions,
+      overallScore,
     };
   }
 }

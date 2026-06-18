@@ -376,3 +376,134 @@ export function batchChangeStatus(data: {
 export function getStatusTrace(id: number): Promise<IApiResponse<IStatusTraceInfo>> {
   return get<IStatusTraceInfo>(`/api/trades/${id}/status-trace`)
 }
+
+export interface IReviewStats {
+  totalCount: number
+  dealedCount: number
+  dealedRate: string
+  cancelledCount: number
+  cancelledRate: string
+  failedCount: number
+  failedRate: string
+  abnormalCount: number
+  abnormalRate: string
+  totalAmount: string
+  avgOrderAmount: string
+  avgMatchPrice: string
+}
+
+export interface ITimelinePoint {
+  date: string
+  orderCount: number
+  dealedCount: number
+  amount: number
+}
+
+export interface IAbnormalOrder {
+  tradeId: number
+  tradeNo: string
+  stockCode: string
+  stockName: string
+  abnormalType: string
+  abnormalReason: string
+  orderPrice: number
+  matchPrice: number
+  marketPrice: number
+  priceDeviation: string
+  detectedAt: string
+}
+
+export interface IReviewConclusion {
+  orderCompliance: string
+  priceConsistency: string
+  riskLevel: string
+  suggestions: string[]
+  overallScore: number
+}
+
+export interface IExportValidateResult {
+  totalCount: number
+  validCount: number
+  invalidCount: number
+  missingFields: string[]
+  invalidOrders: Array<{
+    tradeId: number
+    tradeNo: string
+    missingFields: string[]
+    abnormalFlags: string[]
+  }>
+}
+
+export function validateReviewFilters(params: {
+  statusList?: string[]
+  customerIds?: number[]
+  stockCodes?: string[]
+  startDate?: string
+  endDate?: string
+}): Promise<IApiResponse<{ valid: boolean; errors: string[]; warnings: string[] }>> {
+  return get<{ valid: boolean; errors: string[]; warnings: string[] }>('/api/trades/review/validate-filters', params)
+}
+
+export function getReviewStats(params: {
+  statusList?: string[]
+  customerIds?: number[]
+  stockCodes?: string[]
+  startDate: string
+  endDate: string
+}): Promise<IApiResponse<IReviewStats>> {
+  return get<IReviewStats>('/api/trades/review/stats', params)
+}
+
+export function getReviewTimeline(params: {
+  statusList?: string[]
+  customerIds?: number[]
+  stockCodes?: string[]
+  startDate: string
+  endDate: string
+}): Promise<IApiResponse<ITimelinePoint[]>> {
+  return get<ITimelinePoint[]>('/api/trades/review/timeline', params)
+}
+
+export function getAbnormalOrders(params: {
+  statusList?: string[]
+  customerIds?: number[]
+  stockCodes?: string[]
+  startDate: string
+  endDate: string
+}): Promise<IApiResponse<IAbnormalOrder[]>> {
+  return get<IAbnormalOrder[]>('/api/trades/review/abnormal', params)
+}
+
+export function getReviewConclusion(params: {
+  statusList?: string[]
+  customerIds?: number[]
+  stockCodes?: string[]
+  startDate: string
+  endDate: string
+}): Promise<IApiResponse<IReviewConclusion>> {
+  return get<IReviewConclusion>('/api/trades/review/conclusion', params)
+}
+
+export function validateExportData(params: {
+  statusList?: string[]
+  customerIds?: number[]
+  stockCodes?: string[]
+  startDate: string
+  endDate: string
+  exportFields: string[]
+}): Promise<IApiResponse<IExportValidateResult>> {
+  return post<IExportValidateResult>('/api/trades/review/validate-export', params)
+}
+
+export function exportReviewData(params: {
+  statusList?: string[]
+  customerIds?: number[]
+  stockCodes?: string[]
+  startDate: string
+  endDate: string
+  exportFields: string[]
+  sortField?: string
+  sortOrder?: string
+}): Promise<Blob> {
+  return post<Blob>('/api/trades/review/export', params, { responseType: 'blob' }) as unknown as Promise<Blob>
+}

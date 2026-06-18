@@ -31,4 +31,12 @@ router.put('/batch-status', checkPermission('trade:manage'), tradeController.bat
 router.put('/:id/audit', checkPermission('trade:manage'), tradeController.auditTrade);
 router.put('/:id/cancel', checkPermission('trade:manage'), tradeController.cancelTrade);
 
+router.get('/review/validate-filters', checkPermission('trade:view'), tradeController.validateReviewFilters);
+router.get('/review/stats', checkPermission('trade:view'), tradeController.getReviewStats);
+router.get('/review/timeline', checkPermission('trade:view'), tradeController.getReviewTimeline);
+router.get('/review/abnormal', checkPermission('trade:view'), tradeController.getAbnormalOrders);
+router.get('/review/conclusion', checkPermission('trade:view'), tradeController.getReviewConclusion);
+router.post('/review/validate-export', checkPermission('trade:view'), tradeController.validateExportData);
+router.post('/review/export', checkPermission('trade:view'), tradeController.exportReviewData);
+
 export default router;

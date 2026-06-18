@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
+import { Op } from 'sequelize';
+import { db } from '@models/index';
 import tradeService from '@services/TradeService';
 import { success, paginated } from '@utils/response';
 
@@ -279,6 +281,159 @@ export async function getStatusTrace(req: Request, res: Response, next: NextFunc
     const id = Number(req.params.id);
     const result = await tradeService.getStatusTrace(id);
     res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function validateReviewFilters(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { statusList, customerIds, stockCodes, startDate, endDate } = req.query as any;
+    const result = await tradeService.validateReviewFilters({
+      statusList: statusList ? (Array.isArray(statusList) ? statusList : [statusList]) : undefined,
+      customerIds: customerIds ? (Array.isArray(customerIds) ? customerIds : [customerIds]).map(Number) : undefined,
+      stockCodes: stockCodes ? (Array.isArray(stockCodes) ? stockCodes : [stockCodes]) : undefined,
+      startDate,
+      endDate,
+    });
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getReviewStats(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { statusList, customerIds, stockCodes, startDate, endDate } = req.query as any;
+    const result = await tradeService.getReviewStats({
+      statusList: statusList ? (Array.isArray(statusList) ? statusList : [statusList]) : undefined,
+      customerIds: customerIds ? (Array.isArray(customerIds) ? customerIds : [customerIds]).map(Number) : undefined,
+      stockCodes: stockCodes ? (Array.isArray(stockCodes) ? stockCodes : [stockCodes]) : undefined,
+      startDate,
+      endDate,
+    });
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getReviewTimeline(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { statusList, customerIds, stockCodes, startDate, endDate } = req.query as any;
+    const result = await tradeService.getReviewTimeline({
+      statusList: statusList ? (Array.isArray(statusList) ? statusList : [statusList]) : undefined,
+      customerIds: customerIds ? (Array.isArray(customerIds) ? customerIds : [customerIds]).map(Number) : undefined,
+      stockCodes: stockCodes ? (Array.isArray(stockCodes) ? stockCodes : [stockCodes]) : undefined,
+      startDate,
+      endDate,
+    });
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getAbnormalOrders(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { statusList, customerIds, stockCodes, startDate, endDate } = req.query as any;
+    const result = await tradeService.getAbnormalOrders({
+      statusList: statusList ? (Array.isArray(statusList) ? statusList : [statusList]) : undefined,
+      customerIds: customerIds ? (Array.isArray(customerIds) ? customerIds : [customerIds]).map(Number) : undefined,
+      stockCodes: stockCodes ? (Array.isArray(stockCodes) ? stockCodes : [stockCodes]) : undefined,
+      startDate,
+      endDate,
+    });
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function validateExportData(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { statusList, customerIds, stockCodes, startDate, endDate, exportFields } = req.body;
+    const result = await tradeService.validateExportData({
+      statusList,
+      customerIds,
+      stockCodes,
+      startDate,
+      endDate,
+      exportFields,
+    });
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getReviewConclusion(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { statusList, customerIds, stockCodes, startDate, endDate } = req.query as any;
+    const result = await tradeService.getReviewConclusion({
+      statusList: statusList ? (Array.isArray(statusList) ? statusList : [statusList]) : undefined,
+      customerIds: customerIds ? (Array.isArray(customerIds) ? customerIds : [customerIds]).map(Number) : undefined,
+      stockCodes: stockCodes ? (Array.isArray(stockCodes) ? stockCodes : [stockCodes]) : undefined,
+      startDate,
+      endDate,
+    });
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function exportReviewData(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { statusList, customerIds, stockCodes, startDate, endDate, exportFields, sortField, sortOrder } = req.body;
+
+    const where: any = {};
+    if (statusList && statusList.length > 0) {
+      where.trade_status = { [Op.in]: statusList };
+    }
+    if (customerIds && customerIds.length > 0) {
+      where.customer_id = { [Op.in]: customerIds };
+    }
+    if (stockCodes && stockCodes.length > 0) {
+      where.stock_code = { [Op.in]: stockCodes };
+    }
+    where.created_at = {
+      [Op.gte]: new Date(startDate),
+      [Op.lte]: new Date(endDate + ' 23:59:59'),
+    };
+
+    const order: any = [];
+    if (sortField && sortOrder) {
+      order.push([sortField, sortOrder]);
+    }
+    order.push(['created_at', 'DESC']);
+
+    const trades = await db.Trade.findAll({ where, order });
+
+    const csvRows: string[] = [];
+    const headers = exportFields;
+    csvRows.push(headers.join(','));
+
+    for (const trade of trades) {
+      const row: string[] = [];
+      for (const field of exportFields) {
+        let value = (trade as any)[field];
+        if (value === null || value === undefined) {
+          row.push('[缺失]');
+        } else {
+          row.push(`"${String(value).replace(/"/g, '""')}"`);
+        }
+      }
+      csvRows.push(row.join(','));
+    }
+
+    const csvContent = '\ufeff' + csvRows.join('\n');
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `trade-review-${timestamp}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvContent);
   } catch (err) {
     next(err);
   }
