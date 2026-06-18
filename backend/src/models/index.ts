@@ -1,5 +1,11 @@
 import { Admin } from './Admin';
 import { User } from './User';
+import { UserProfile } from './UserProfile';
+import { UserLoginTrace } from './UserLoginTrace';
+import { UserConsumptionLedger } from './UserConsumptionLedger';
+import { UserRegisterLog } from './UserRegisterLog';
+import { UserStatistic } from './UserStatistic';
+import { RegisterChannel } from './RegisterChannel';
 import { Goods } from './Goods';
 import { Order } from './Order';
 import { Marketing } from './Marketing';
@@ -42,6 +48,12 @@ import { AfterSaleOperationLog } from './AfterSaleOperationLog';
 export {
   Admin,
   User,
+  UserProfile,
+  UserLoginTrace,
+  UserConsumptionLedger,
+  UserRegisterLog,
+  UserStatistic,
+  RegisterChannel,
   Goods,
   Order,
   Marketing,
@@ -85,6 +97,12 @@ export {
 export const models = {
   Admin,
   User,
+  UserProfile,
+  UserLoginTrace,
+  UserConsumptionLedger,
+  UserRegisterLog,
+  UserStatistic,
+  RegisterChannel,
   Goods,
   Order,
   Marketing,

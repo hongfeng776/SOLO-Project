@@ -16,6 +16,10 @@ import PenaltyService, { penaltyService } from './PenaltyService';
 import RiskControlService, { riskControlService } from './RiskControlService';
 import StatisticsService, { statisticsService } from './StatisticsService';
 import UserService, { userService } from './UserService';
+import UserValidateService, { userValidateService } from './UserValidateService';
+import UserBatchService, { userBatchService } from './UserBatchService';
+import UserTraceService, { userTraceService } from './UserTraceService';
+import UserStatisticService, { userStatisticService } from './UserStatisticService';
 import GoodsValidateService, { goodsValidateService } from './GoodsValidateService';
 import GoodsEditorService, { goodsEditorService } from './GoodsEditorService';
 import GoodsBatchService, { goodsBatchService } from './GoodsBatchService';
@@ -59,6 +63,10 @@ export {
   RiskControlService,
   StatisticsService,
   UserService,
+  UserValidateService,
+  UserBatchService,
+  UserTraceService,
+  UserStatisticService,
   GoodsValidateService,
   GoodsEditorService,
   GoodsBatchService,
@@ -103,6 +111,10 @@ export const services: Record<string, any> = {
   riskControlService,
   statisticsService,
   userService,
+  userValidateService,
+  userBatchService,
+  userTraceService,
+  userStatisticService,
   goodsValidateService,
   goodsEditorService,
   goodsBatchService,

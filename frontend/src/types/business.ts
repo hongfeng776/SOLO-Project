@@ -93,13 +93,167 @@ export const GoodsStatusMap: Record<number, { label: string; type: TagType }> = 
 }
 
 export enum UserStatus {
-  DISABLED = 0,
-  ENABLED = 1
+  NORMAL = 1,
+  FROZEN = 2,
+  CANCELED = 3
 }
 
 export const UserStatusMap: Record<number, { label: string; type: TagType }> = {
-  [UserStatus.DISABLED]: { label: '禁用', type: 'danger' },
-  [UserStatus.ENABLED]: { label: '启用', type: 'success' }
+  [UserStatus.NORMAL]: { label: '正常', type: 'success' },
+  [UserStatus.FROZEN]: { label: '冻结', type: 'warning' },
+  [UserStatus.CANCELED]: { label: '注销', type: 'info' }
+}
+
+export enum UserLevel {
+  NORMAL = 1,
+  SILVER = 2,
+  GOLD = 3,
+  DIAMOND = 4,
+  PLATINUM = 5
+}
+
+export const UserLevelMap: Record<number, { label: string; type: TagType }> = {
+  [UserLevel.NORMAL]: { label: '普通', type: 'info' },
+  [UserLevel.SILVER]: { label: '银卡', type: 'primary' },
+  [UserLevel.GOLD]: { label: '金卡', type: 'warning' },
+  [UserLevel.DIAMOND]: { label: '钻石', type: 'success' },
+  [UserLevel.PLATINUM]: { label: '至尊', type: 'danger' }
+}
+
+export enum Gender {
+  UNKNOWN = 0,
+  MALE = 1,
+  FEMALE = 2
+}
+
+export const GenderMap: Record<number, string> = {
+  [Gender.UNKNOWN]: '未知',
+  [Gender.MALE]: '男',
+  [Gender.FEMALE]: '女'
+}
+
+export enum UserRiskLevel {
+  LOW = 0,
+  MEDIUM = 1,
+  HIGH = 2
+}
+
+export const UserRiskLevelMap: Record<number, { label: string; type: TagType }> = {
+  [UserRiskLevel.LOW]: { label: '低', type: 'success' },
+  [UserRiskLevel.MEDIUM]: { label: '中', type: 'warning' },
+  [UserRiskLevel.HIGH]: { label: '高', type: 'danger' }
+}
+
+export interface RegisterChannel {
+  id: number
+  code: string
+  name: string
+  status: number
+}
+
+export interface EditFieldPermission {
+  field: string
+  label: string
+  editable: boolean
+  readonlyReason?: string
+}
+
+export interface UserEditPermission {
+  canEdit: boolean
+  reason?: string
+  editableFields: EditFieldPermission[]
+}
+
+export interface UserProfileLog {
+  id: number
+  userId: number
+  field: string
+  fieldName: string
+  oldValue: string
+  newValue: string
+  operatorId: number
+  operatorName: string
+  operateTime: string
+  operateIp: string
+  remark?: string
+}
+
+export interface UserLoginTrace {
+  id: number
+  userId: number
+  loginTime: string
+  loginIp: string
+  loginLocation?: string
+  device?: string
+  browser?: string
+  status: number
+  failReason?: string
+}
+
+export interface UserConsumptionLedger {
+  id: number
+  userId: number
+  orderId: number
+  orderNo: string
+  amount: number
+  payType: number
+  payTime: string
+  status: number
+  remark?: string
+}
+
+export interface UserRegisterLog {
+  id: number
+  userId: number
+  registerTime: string
+  registerIp: string
+  registerLocation?: string
+  registerChannel: string
+  device?: string
+  source?: string
+}
+
+export interface ComplianceIssue {
+  type: 'duplicate' | 'fake' | 'risk' | 'incomplete'
+  level: 'low' | 'medium' | 'high'
+  field: string
+  message: string
+  suggestion?: string
+}
+
+export interface ComplianceCheckResult {
+  passed: boolean
+  score: number
+  issues: ComplianceIssue[]
+}
+
+export interface UserTraceInfo {
+  registerLog?: UserRegisterLog
+  profileLogs: UserProfileLog[]
+  loginTraces: UserLoginTrace[]
+  consumptionLedgers: UserConsumptionLedger[]
+  complianceCheck: ComplianceCheckResult
+}
+
+export interface UserStatistic {
+  id: number
+  statDate: string
+  totalUsers: number
+  newUsers: number
+  activeUsers: number
+  frozenUsers: number
+  canceledUsers: number
+  totalAmount: number
+  totalOrders: number
+  createdAt: string
+  updatedAt: string
+}
+
+export const REGEX_PATTERNS = {
+  PHONE: /^1[3-9]\d{9}$/,
+  EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  ID_CARD: /^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/,
+  USERNAME: /^[a-zA-Z0-9_]{3,20}$/
 }
 
 export enum AfterSaleStatus {

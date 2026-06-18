@@ -1,6 +1,12 @@
 import { BaseDao, PageResult, PageOptions } from './BaseDao';
 import { AdminDao } from './AdminDao';
 import { UserDao } from './UserDao';
+import { UserProfileDao } from './UserProfileDao';
+import { UserLoginTraceDao } from './UserLoginTraceDao';
+import { UserConsumptionLedgerDao } from './UserConsumptionLedgerDao';
+import { UserRegisterLogDao } from './UserRegisterLogDao';
+import { UserStatisticDao } from './UserStatisticDao';
+import { RegisterChannelDao } from './RegisterChannelDao';
 import { GoodsDao } from './GoodsDao';
 import { GoodsAuditDao } from './GoodsAuditDao';
 import { OrderDao } from './OrderDao';
@@ -51,6 +57,12 @@ export {
   PageOptions,
   AdminDao,
   UserDao,
+  UserProfileDao,
+  UserLoginTraceDao,
+  UserConsumptionLedgerDao,
+  UserRegisterLogDao,
+  UserStatisticDao,
+  RegisterChannelDao,
   GoodsDao,
   GoodsAuditDao,
   OrderDao,
@@ -99,6 +111,12 @@ export {
 export const daos = {
   adminDao: new AdminDao(),
   userDao: new UserDao(),
+  userProfileDao: new UserProfileDao(),
+  userLoginTraceDao: new UserLoginTraceDao(),
+  userConsumptionLedgerDao: new UserConsumptionLedgerDao(),
+  userRegisterLogDao: new UserRegisterLogDao(),
+  userStatisticDao: new UserStatisticDao(),
+  registerChannelDao: new RegisterChannelDao(),
   goodsDao: new GoodsDao(),
   goodsAuditDao: new GoodsAuditDao(),
   orderDao: new OrderDao(),
