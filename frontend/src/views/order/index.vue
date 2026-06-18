@@ -36,6 +36,37 @@
           <span style="margin: 0 8px">-</span>
           <el-input-number v-model="searchForm.maxAmount" :min="0" placeholder="最大" style="width: 120px" />
         </el-form-item>
+        <el-form-item label="支付状态">
+          <el-select v-model="searchForm.payStatus" placeholder="全部" clearable style="width: 140px">
+            <el-option label="待支付" :value="0" />
+            <el-option label="支付成功" :value="1" />
+            <el-option label="支付失败" :value="2" />
+            <el-option label="已退款" :value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="对账状态">
+          <el-select v-model="searchForm.reconcileStatus" placeholder="全部" clearable style="width: 140px">
+            <el-option label="待对账" :value="0" />
+            <el-option label="对账中" :value="1" />
+            <el-option label="对账通过" :value="2" />
+            <el-option label="对账异常" :value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="风控标记">
+          <el-select v-model="searchForm.riskFlag" placeholder="全部" clearable style="width: 140px">
+            <el-option label="正常" :value="0" />
+            <el-option label="低风险" :value="1" />
+            <el-option label="中风险" :value="2" />
+            <el-option label="高风险" :value="3" />
+            <el-option label="已拦截" :value="4" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="超时未付">
+          <el-select v-model="searchForm.isOverdue" placeholder="全部" clearable style="width: 140px">
+            <el-option label="是" :value="1" />
+            <el-option label="否" :value="0" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="异常状态">
           <el-select v-model="searchForm.isException" placeholder="全部" clearable style="width: 140px">
             <el-option label="正常订单" :value="0" />
@@ -57,6 +88,15 @@
       <span class="batch-info">已选择 {{ selectedIds.length }} 条订单</span>
       <el-button type="warning" size="small" @click="handleBatchRemind">
         <el-icon><Bell /></el-icon> 批量提醒支付
+      </el-button>
+      <el-button type="primary" size="small" @click="handleBatchVerifyPayment">
+        <el-icon><Check /></el-icon> 批量核验支付
+      </el-button>
+      <el-button type="success" size="small" @click="handleBatchResetExpire">
+        <el-icon><RefreshRight /></el-icon> 批量重置时效
+      </el-button>
+      <el-button v-if="hasFinancePermission" type="warning" size="small" @click="handleBatchMarkReconcile">
+        <el-icon><DocumentChecked /></el-icon> 批量标记对账
       </el-button>
       <el-button type="danger" size="small" @click="handleBatchMarkException">
         <el-icon><Warning /></el-icon> 批量标记异常
@@ -112,11 +152,33 @@
             {{ PayTypeMap[row.payType] || '未知' }}
           </template>
         </el-table-column>
+        <el-table-column prop="payStatus" label="支付状态" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.payStatus === 1 ? 'success' : row.payStatus === 2 ? 'danger' : 'warning'" size="small">
+              {{ PayStatusMap[row.payStatus] || '未知' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="payAmount" label="实付金额" width="120" align="right">
           <template #default="{ row }">
-            <span class="amount-text">
+            <span class="amount-text" :class="{ 'shake-animation': row.payStatus === 2 }">
               {{ formatAmount(row.payAmount) }}
             </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="风控标记" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag v-if="row.riskFlag && row.riskFlag > 0" :type="row.riskFlag === 4 ? 'danger' : row.riskFlag === 3 ? 'warning' : 'info'" size="small">
+              {{ RiskFlagMap[row.riskFlag] || '未知' }}
+            </el-tag>
+            <span v-else style="color: #909399">正常</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="对账状态" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.reconcileStatus === 2 ? 'success' : row.reconcileStatus === 3 ? 'danger' : row.reconcileStatus === 1 ? 'warning' : 'info'" size="small">
+              {{ ReconcileStatusMap[row.reconcileStatus] || '未知' }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="收货信息" min-width="200">
@@ -145,11 +207,12 @@
             {{ formatOrderDateTime(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" align="center" fixed="right">
+        <el-table-column label="操作" width="260" align="center" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click.stop="handleView(row as Order)">详情</el-button>
             <el-button link type="primary" @click.stop="handleEdit(row as Order)" :disabled="(row as Order).status >= 2">编辑</el-button>
             <el-button link type="primary" @click.stop="handleTrace(row as Order)">溯源</el-button>
+            <el-button link type="primary" @click.stop="handlePaymentTrace(row as Order)">支付溯源</el-button>
             <el-dropdown trigger="click" @command="(cmd) => handleAction(cmd, row as Order)">
               <el-button link type="primary">更多<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
               <template #dropdown>
@@ -157,6 +220,7 @@
                   <el-dropdown-item command="ship" v-if="row.status === 1">发货</el-dropdown-item>
                   <el-dropdown-item command="complete" v-if="row.status === 2">完成</el-dropdown-item>
                   <el-dropdown-item command="cancel" v-if="row.status <= 1">取消</el-dropdown-item>
+                  <el-dropdown-item command="updatePayStatus" v-if="row.status === 0">更新支付状态</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -586,6 +650,269 @@
         <el-button type="primary" @click="handleShip">确认发货</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="payStatusVisible"
+      title="更新支付状态"
+      width="500px"
+      class="dialog-slide-down"
+      destroy-on-close
+      @closed="handlePayStatusDialogClose"
+    >
+      <el-form :model="payStatusForm" label-width="100px" @submit.prevent>
+        <el-form-item label="订单编号">
+          <el-input :value="currentOrder?.orderNo" disabled />
+        </el-form-item>
+        <el-form-item label="支付方式">
+          <el-select v-model="payStatusForm.payType" style="width: 100%">
+            <el-option label="微信支付" :value="1" />
+            <el-option label="支付宝" :value="2" />
+            <el-option label="银行卡" :value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="支付金额" required>
+          <el-input-number v-model="payStatusForm.payAmount" :min="0" :precision="2" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="支付状态" required>
+          <el-select v-model="payStatusForm.payStatus" style="width: 100%">
+            <el-option label="支付成功" :value="1" />
+            <el-option label="支付失败" :value="2" />
+            <el-option label="已退款" :value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="支付场景">
+          <el-select v-model="payStatusForm.payScenario" style="width: 100%">
+            <el-option label="全额支付" :value="1" />
+            <el-option label="部分支付" :value="2" />
+            <el-option label="退款后支付" :value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="第三方交易号">
+          <el-input v-model="payStatusForm.transactionId" placeholder="请输入第三方交易号" />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="payStatusForm.remark" type="textarea" :rows="2" placeholder="请输入备注" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="payStatusVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :disabled="payBtnDisabled"
+          @click="handleUpdatePayStatus"
+        >
+          {{ payBtnDisabled ? '保存中...' : '确认' }}
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="paymentTraceVisible"
+      title="支付全链路溯源"
+      width="1100px"
+      class="dialog-center-zoom"
+      destroy-on-close
+    >
+      <el-tabs v-model="paymentTraceTab">
+        <el-tab-pane label="支付流水" name="flow">
+          <div class="trace-tab-content">
+            <el-descriptions :column="2" border size="small" v-if="paymentTraceData?.paymentFlow">
+              <el-descriptions-item label="流水号">
+                {{ paymentTraceData.paymentFlow.flowNo }}
+              </el-descriptions-item>
+              <el-descriptions-item label="订单号">
+                {{ paymentTraceData.paymentFlow.orderNo }}
+              </el-descriptions-item>
+              <el-descriptions-item label="支付方式">
+                {{ PayTypeMap[paymentTraceData.paymentFlow.payType] || '未知' }}
+              </el-descriptions-item>
+              <el-descriptions-item label="支付场景">
+                {{ PayScenarioMap[paymentTraceData.paymentFlow.payScenario] || '未知' }}
+              </el-descriptions-item>
+              <el-descriptions-item label="支付金额">
+                <span class="amount-text">{{ formatAmount(paymentTraceData.paymentFlow.amount) }}</span>
+              </el-descriptions-item>
+              <el-descriptions-item label="订单金额">
+                <span class="amount-text">{{ formatAmount(paymentTraceData.paymentFlow.orderAmount) }}</span>
+              </el-descriptions-item>
+              <el-descriptions-item label="支付状态">
+                <el-tag :type="paymentTraceData.paymentFlow.payStatus === 1 ? 'success' : paymentTraceData.paymentFlow.payStatus === 2 ? 'danger' : 'warning'">
+                  {{ PayStatusMap[paymentTraceData.paymentFlow.payStatus] || '未知' }}
+                </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="对账状态">
+                <el-tag :type="paymentTraceData.paymentFlow.reconcileStatus === 2 ? 'success' : paymentTraceData.paymentFlow.reconcileStatus === 3 ? 'danger' : 'warning'">
+                  {{ ReconcileStatusMap[paymentTraceData.paymentFlow.reconcileStatus] || '未知' }}
+                </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="风控标记">
+                <el-tag v-if="paymentTraceData.paymentFlow.riskFlag && paymentTraceData.paymentFlow.riskFlag > 0"
+                  :type="paymentTraceData.paymentFlow.riskFlag === 4 ? 'danger' : paymentTraceData.paymentFlow.riskFlag === 3 ? 'warning' : 'info'">
+                  {{ RiskFlagMap[paymentTraceData.paymentFlow.riskFlag] || '未知' }}
+                </el-tag>
+                <span v-else style="color: #909399">正常</span>
+              </el-descriptions-item>
+              <el-descriptions-item label="结算状态">
+                <el-tag :type="paymentTraceData.paymentFlow.settleStatus === 1 ? 'success' : paymentTraceData.paymentFlow.settleStatus === 2 ? 'danger' : 'warning'">
+                  {{ SettleStatusMap[paymentTraceData.paymentFlow.settleStatus] || '未知' }}
+                </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="创建时间">
+                {{ formatOrderDateTime(paymentTraceData.paymentFlow.createdAt) }}
+              </el-descriptions-item>
+              <el-descriptions-item label="支付时间" v-if="paymentTraceData.paymentFlow.payTime">
+                {{ formatOrderDateTime(paymentTraceData.paymentFlow.payTime) }}
+              </el-descriptions-item>
+              <el-descriptions-item label="第三方交易号" v-if="paymentTraceData.paymentFlow.transactionId">
+                {{ paymentTraceData.paymentFlow.transactionId }}
+              </el-descriptions-item>
+              <el-descriptions-item label="风控原因" v-if="paymentTraceData.paymentFlow.riskReason">
+                {{ paymentTraceData.paymentFlow.riskReason }}
+              </el-descriptions-item>
+              <el-descriptions-item label="备注" :span="2" v-if="paymentTraceData.paymentFlow.remark">
+                <el-tooltip v-if="paymentTraceData.paymentFlow.remark.length > 50" placement="top">
+                  <template #content>
+                    <div style="max-width: 400px; white-space: pre-wrap;">{{ paymentTraceData.paymentFlow.remark }}</div>
+                  </template>
+                  <div style="cursor: help;">{{ paymentTraceData.paymentFlow.remark.substring(0, 50) }}...</div>
+                </el-tooltip>
+                <span v-else>{{ paymentTraceData.paymentFlow.remark }}</span>
+              </el-descriptions-item>
+            </el-descriptions>
+
+            <el-divider>数据校验报告</el-divider>
+            <div v-if="paymentValidationReport">
+              <div
+                class="validation-report-card"
+                :class="paymentValidationReport.overallScore >= 80 ? 'passed' : 'failed'"
+              >
+                <div style="font-weight: 600; margin-bottom: 12px">
+                  总体校验结果：
+                  <el-tag :type="paymentValidationReport.overallScore >= 80 ? 'success' : 'danger'" effect="dark">
+                    {{ paymentValidationReport.overallScore >= 80 ? '通过' : '不通过' }}
+                  </el-tag>
+                  <span style="margin-left: 8px; font-size: 12px; color: #909399">
+                    综合得分：{{ paymentValidationReport.overallScore }}分
+                  </span>
+                </div>
+                <div class="validate-result-item" :class="{ success: paymentValidationReport.flowMatch }">
+                  <div style="font-weight: 500">订单信息匹配校验</div>
+                  <div style="font-size: 12px; color: #606266">{{ paymentValidationReport.flowMatch ? '订单号、用户ID匹配' : '订单信息不匹配' }}</div>
+                </div>
+                <div class="validate-result-item" :class="{ success: paymentValidationReport.amountMatch }">
+                  <div style="font-weight: 500">金额一致性校验</div>
+                  <div style="font-size: 12px; color: #606266">{{ paymentValidationReport.amountMatch ? '支付金额与订单金额一致' : '金额不匹配' }}</div>
+                </div>
+                <div class="validate-result-item" :class="{ success: paymentValidationReport.timeMatch }">
+                  <div style="font-weight: 500">时间逻辑校验</div>
+                  <div style="font-size: 12px; color: #606266">{{ paymentValidationReport.timeMatch ? '支付时间晚于下单时间' : '支付时间异常' }}</div>
+                </div>
+                <div class="validate-result-item" :class="{ success: paymentValidationReport.noDuplicate }">
+                  <div style="font-weight: 500">重复支付校验</div>
+                  <div style="font-size: 12px; color: #606266">{{ paymentValidationReport.noDuplicate ? '无重复支付流水' : '存在重复支付' }}</div>
+                </div>
+                <div class="validate-result-item" :class="{ success: paymentValidationReport.noFake }">
+                  <div style="font-weight: 500">虚假支付校验</div>
+                  <div style="font-size: 12px; color: #606266">{{ paymentValidationReport.noFake ? '支付金额正常' : '疑似虚假支付' }}</div>
+                </div>
+                <div v-if="paymentValidationReport.issues.length > 0" style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ebeef5">
+                  <div style="font-weight: 500; color: #f56c6c; margin-bottom: 4px">存在问题：</div>
+                  <div v-for="(issue, idx) in paymentValidationReport.issues" :key="idx" style="font-size: 12px; color: #f56c6c; margin-left: 12px">
+                    • {{ issue }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
+
+        <el-tab-pane label="对账记录" name="reconciles">
+          <div class="trace-tab-content">
+            <div v-if="paymentTraceData?.reconciles && paymentTraceData.reconciles.length > 0">
+              <div v-for="reconcile in paymentTraceData.reconciles" :key="reconcile.id" class="order-log-item">
+                <div class="log-action">{{ ReconcileStatusMap[reconcile.status] || '未知' }}</div>
+                <div style="font-size: 13px; color: #606266; margin-bottom: 4px">
+                  订单金额：{{ formatAmount(reconcile.orderAmount) }} | 支付金额：{{ formatAmount(reconcile.payAmount) }}
+                  <span v-if="reconcile.diffAmount > 0" style="color: #f56c6c"> | 差异：{{ formatAmount(reconcile.diffAmount) }}</span>
+                </div>
+                <div v-if="reconcile.remark" style="font-size: 12px; color: #909399; margin-bottom: 4px">
+                  备注：{{ reconcile.remark }}
+                </div>
+                <div v-if="reconcile.exceptionRemark" style="font-size: 12px; color: #f56c6c; margin-bottom: 4px">
+                  异常说明：{{ reconcile.exceptionRemark }}
+                </div>
+                <div class="log-meta">
+                  对账人：{{ reconcile.reconcileName || '系统' }} | {{ formatOrderDateTime(reconcile.createdAt) }}
+                </div>
+              </div>
+            </div>
+            <el-empty v-else description="暂无对账记录" />
+          </div>
+        </el-tab-pane>
+
+        <el-tab-pane label="结算记录" name="settlements">
+          <div class="trace-tab-content">
+            <div v-if="paymentTraceData?.settlements && paymentTraceData.settlements.length > 0">
+              <div v-for="settle in paymentTraceData.settlements" :key="settle.id" class="order-log-item" style="border-left-color: #67c23a">
+                <div class="log-action">{{ SettleStatusMap[settle.status] || '未知' }}</div>
+                <div style="font-size: 13px; color: #606266; margin-bottom: 4px">
+                  商家：{{ settle.merchantName }} | 支付金额：{{ formatAmount(settle.payAmount) }}
+                </div>
+                <div style="font-size: 12px; color: #909399; margin-bottom: 4px">
+                  平台手续费：{{ formatAmount(settle.platformFee) }} | 结算金额：<span class="amount-text">{{ formatAmount(settle.settleAmount) }}</span>
+                </div>
+                <div v-if="settle.remark" style="font-size: 12px; color: #909399; margin-bottom: 4px">
+                  备注：{{ settle.remark }}
+                </div>
+                <div class="log-meta">
+                  操作人：{{ settle.operatorName || '系统' }} | {{ formatOrderDateTime(settle.createdAt) }}
+                </div>
+              </div>
+            </div>
+            <el-empty v-else description="暂无结算记录" />
+          </div>
+        </el-tab-pane>
+
+        <el-tab-pane label="风控预警" name="risks">
+          <div class="trace-tab-content">
+            <div v-if="paymentTraceData?.riskAlerts && paymentTraceData.riskAlerts.length > 0">
+              <div v-for="alert in paymentTraceData.riskAlerts" :key="alert.id" class="order-log-item" style="border-left-color: #f56c6c">
+                <div class="log-action">
+                  <el-tag :type="alert.level === 3 ? 'danger' : alert.level === 2 ? 'warning' : 'info'" size="small">
+                    {{ alert.level === 3 ? '高风险' : alert.level === 2 ? '中风险' : '低风险' }}
+                  </el-tag>
+                </div>
+                <div style="font-size: 13px; color: #606266; margin-bottom: 4px">{{ alert.content }}</div>
+                <div class="log-meta">
+                  状态：{{ alert.status === 1 ? '已处理' : '未处理' }} | {{ formatOrderDateTime(alert.createdAt) }}
+                </div>
+              </div>
+            </div>
+            <el-empty v-else description="暂无风控预警记录" />
+          </div>
+        </el-tab-pane>
+
+        <el-tab-pane label="操作日志" name="logs">
+          <div class="trace-tab-content">
+            <div v-if="paymentTraceData?.orderLogs && paymentTraceData.orderLogs.length > 0">
+              <div v-for="log in paymentTraceData.orderLogs" :key="log.id" class="order-log-item">
+                <div class="log-action">{{ log.action }}</div>
+                <div v-if="log.remark" style="font-size: 13px; color: #606266; margin-bottom: 4px">
+                  {{ log.remark }}
+                </div>
+                <div class="log-meta">
+                  操作人：{{ log.operatorName || log.operator || '系统' }} | {{ formatOrderDateTime(log.createdAt) }}
+                </div>
+              </div>
+            </div>
+            <el-empty v-else description="暂无操作日志" />
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+      <template #footer>
+        <el-button @click="paymentTraceVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -601,6 +928,9 @@ import {
   ArrowDown,
   WarningFilled,
   CircleCheckFilled,
+  Check,
+  RefreshRight,
+  DocumentChecked,
 } from '@element-plus/icons-vue'
 import {
   getOrderList,
@@ -619,10 +949,29 @@ import {
   type OrderTraceData,
   type OrderValidationReport,
 } from '@/api/order'
+import {
+  verifyPayment,
+  syncPaymentStatus,
+  batchVerifyPayment,
+  batchResetExpireTime,
+  batchMarkReconcile,
+  getPaymentTraceByOrderId,
+  validatePaymentData,
+  type PaymentTraceData,
+  type PaymentVerifyData,
+  type PaymentQueryParams,
+  type PaymentValidationReport,
+  PayStatusMap,
+  ReconcileStatusMap,
+  RiskFlagMap,
+  PayScenarioMap,
+  SettleStatusMap,
+} from '@/api/payment'
 import { OrderStatusMap, PayTypeMap, OrderStatus } from '@/types/business'
 import { formatAmount } from '@/utils/amount'
 import { formatOrderDateTime } from '@/utils/date'
 import type { PageResult } from '@/types/api'
+import { useUserStore } from '@/stores/user'
 
 const loading = ref(false)
 const orderList = ref<Order[]>([])
@@ -634,6 +983,8 @@ const pagination = reactive({
   total: 0,
 })
 
+const userStore = useUserStore()
+
 const searchForm = reactive({
   orderNo: '',
   payType: undefined as number | undefined,
@@ -641,6 +992,10 @@ const searchForm = reactive({
   dateRange: [] as string[],
   minAmount: undefined as number | undefined,
   maxAmount: undefined as number | undefined,
+  payStatus: undefined as number | undefined,
+  reconcileStatus: undefined as number | undefined,
+  riskFlag: undefined as number | undefined,
+  isOverdue: undefined as number | undefined,
   isException: undefined as number | undefined,
 })
 
@@ -648,13 +1003,24 @@ const detailVisible = ref(false)
 const editVisible = ref(false)
 const traceVisible = ref(false)
 const shipVisible = ref(false)
+const payStatusVisible = ref(false)
+const paymentTraceVisible = ref(false)
 const activeTab = ref('basic')
+const paymentTraceTab = ref('flow')
 
 const currentOrder = ref<Order | null>(null)
 const currentOrderItems = ref<any[]>([])
 const traceData = ref<OrderTraceData | null>(null)
 const validationReport = ref<OrderValidationReport | null>(null)
+const paymentTraceData = ref<PaymentTraceData | null>(null)
+const paymentValidationReport = ref<PaymentValidationReport | null>(null)
 const saveBtnDisabled = ref(false)
+const payBtnDisabled = ref(false)
+
+const hasFinancePermission = computed(() => {
+  const role = userStore.userInfo?.role
+  return role === '1' || role === '2'
+})
 
 const editFormRef = ref<FormInstance>()
 const editForm = reactive<Partial<Order>>({
@@ -687,6 +1053,26 @@ const shipForm = reactive({
   logisticsNo: '',
 })
 
+const payStatusForm = reactive<{
+  orderId: number
+  flowId: number
+  payType: number
+  payAmount: number
+  payStatus: number
+  payScenario: number
+  transactionId: string
+  remark: string
+}>({
+  orderId: 0,
+  flowId: 0,
+  payType: 1,
+  payAmount: 0,
+  payStatus: 1,
+  payScenario: 1,
+  transactionId: '',
+  remark: '',
+})
+
 const canEditShipping = computed(() => (editForm.status || 0) < OrderStatus.SHIPPED)
 const canEditRemark = computed(() => {
   const status = editForm.status || 0
@@ -706,6 +1092,10 @@ const fetchOrderList = async () => {
       endTime: searchForm.dateRange?.[1],
       minAmount: searchForm.minAmount,
       maxAmount: searchForm.maxAmount,
+      payStatus: searchForm.payStatus,
+      reconcileStatus: searchForm.reconcileStatus,
+      riskFlag: searchForm.riskFlag,
+      isOverdue: searchForm.isOverdue,
       isException: searchForm.isException,
     }
 
@@ -732,6 +1122,10 @@ const handleReset = () => {
   searchForm.dateRange = []
   searchForm.minAmount = undefined
   searchForm.maxAmount = undefined
+  searchForm.payStatus = undefined
+  searchForm.reconcileStatus = undefined
+  searchForm.riskFlag = undefined
+  searchForm.isOverdue = undefined
   searchForm.isException = undefined
   pagination.pageNum = 1
   fetchOrderList()
@@ -841,6 +1235,9 @@ const handleAction = (cmd: string, row: Order) => {
       break
     case 'cancel':
       handleCancel(row)
+      break
+    case 'updatePayStatus':
+      handleUpdatePayStatusDialog(row)
       break
   }
 }
@@ -963,6 +1360,162 @@ const handleBatchArchive = async () => {
   }
 }
 
+const handleUpdatePayStatusDialog = (row: Order) => {
+  currentOrder.value = row
+  payStatusForm.orderId = row.id
+  payStatusForm.flowId = (row as any).paymentFlow?.id || 0
+  payStatusForm.payType = row.payType || 1
+  payStatusForm.payAmount = row.payAmount || (row as any).orderAmount || 0
+  payStatusForm.payStatus = 1
+  payStatusForm.payScenario = 1
+  payStatusForm.transactionId = ''
+  payStatusForm.remark = ''
+  payStatusVisible.value = true
+}
+
+const handlePayStatusDialogClose = () => {
+  payBtnDisabled.value = false
+}
+
+const handleUpdatePayStatus = async () => {
+  if (!payStatusForm.orderId) return
+  try {
+    const verifyData: PaymentVerifyData = {
+      flowNo: (currentOrder.value as any).paymentFlow?.flowNo || '',
+      orderId: payStatusForm.orderId,
+      orderNo: currentOrder.value?.orderNo || '',
+      userId: userStore.userInfo?.id || 0,
+      payAmount: payStatusForm.payAmount,
+      payType: payStatusForm.payType,
+      transactionId: payStatusForm.transactionId || undefined,
+      payScenario: payStatusForm.payScenario as any,
+    }
+    const verifyRes = await verifyPayment(verifyData)
+    if (!verifyRes.data.valid) {
+      ElMessage.warning(`支付核验不通过：${verifyRes.data.errorMessage}`)
+      return
+    }
+
+    payBtnDisabled.value = true
+    const syncRes = await syncPaymentStatus(payStatusForm.flowId, {
+      payStatus: payStatusForm.payStatus,
+      payScenario: payStatusForm.payScenario,
+    })
+    if (!syncRes.data.success) {
+      ElMessage.error(syncRes.data.errorMessage || '支付状态更新失败')
+      return
+    }
+    ElMessage.success('支付状态更新成功')
+    payStatusVisible.value = false
+    fetchOrderList()
+  } catch (error) {
+    ElMessage.error('支付状态更新失败')
+  } finally {
+    setTimeout(() => {
+      payBtnDisabled.value = false
+    }, 300)
+  }
+}
+
+const handlePaymentTrace = async (row: Order) => {
+  try {
+    const [traceRes, validateRes] = await Promise.all([
+      getPaymentTraceByOrderId(row.id),
+      validatePaymentData(row.id),
+    ])
+    paymentTraceData.value = traceRes.data
+    paymentValidationReport.value = validateRes.data
+    paymentTraceTab.value = 'flow'
+    paymentTraceVisible.value = true
+  } catch (error) {
+    ElMessage.error('获取支付溯源信息失败')
+  }
+}
+
+const handleBatchVerifyPayment = async () => {
+  if (selectedIds.value.length === 0) return
+  try {
+    await ElMessageBox.confirm(
+      `确定要对选中的 ${selectedIds.value.length} 条订单发起支付核验吗？`,
+      '批量核验',
+      { type: 'warning' }
+    )
+    const params = {
+      ids: selectedIds.value,
+      pageNum: 1,
+      pageSize: 9999,
+    } as PaymentQueryParams
+    const res = await batchVerifyPayment(params)
+    ElMessage.success(`批量核验完成，成功 ${res.data.successCount} 条，失败 ${res.data.failCount} 条`)
+    selectedIds.value = []
+    fetchOrderList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('批量核验失败')
+    }
+  }
+}
+
+const handleBatchResetExpire = async () => {
+  if (selectedIds.value.length === 0) return
+  try {
+    await ElMessageBox.confirm(
+      `确定要重置选中的 ${selectedIds.value.length} 条订单的支付时效吗？`,
+      '批量重置时效',
+      { type: 'warning' }
+    )
+    const params = {
+      ids: selectedIds.value,
+      pageNum: 1,
+      pageSize: 9999,
+    } as PaymentQueryParams
+    const res = await batchResetExpireTime(params)
+    ElMessage.success(`批量重置完成，成功 ${res.data.successCount} 条，失败 ${res.data.failCount} 条`)
+    selectedIds.value = []
+    fetchOrderList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('批量重置失败')
+    }
+  }
+}
+
+const handleBatchMarkReconcile = async () => {
+  if (selectedIds.value.length === 0) return
+  try {
+    const { value: status } = await ElMessageBox.prompt(
+      `请输入对账状态（0-待对账 1-对账中 2-对账通过 3-对账异常）`,
+      '批量标记对账',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputValidator: (value) => {
+          const num = parseInt(value)
+          if (isNaN(num) || num < 0 || num > 3) {
+            return '请输入0-3之间的数字'
+          }
+          return true
+        },
+        type: 'warning',
+      }
+    )
+    const params = {
+      ids: selectedIds.value,
+      pageNum: 1,
+      pageSize: 9999,
+      reconcileStatus: parseInt(status),
+    } as PaymentQueryParams & { reconcileStatus: number }
+    const res = await batchMarkReconcile(params)
+    ElMessage.success(`批量标记完成，成功 ${res.data.successCount} 条，失败 ${res.data.failCount} 条`)
+    selectedIds.value = []
+    fetchOrderList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('批量标记失败')
+    }
+  }
+}
+
 onMounted(() => {
   fetchOrderList()
 })
@@ -1001,5 +1554,121 @@ onMounted(() => {
 
 .receiver-info {
   line-height: 1.5;
+}
+
+.shake-animation {
+  animation: shake 0.5s ease-in-out;
+  color: #f56c6c !important;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.dialog-slide-down {
+  .el-dialog {
+    animation: slideDownIn 0.3s ease-out;
+  }
+
+  .el-dialog.is-dialog-draggable {
+    animation: slideDownIn 0.3s ease-out;
+  }
+
+  &.v-modal {
+    animation: fadeIn 0.3s ease-out;
+  }
+}
+
+@keyframes slideDownIn {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.dialog-slide-down.v-leave-active {
+  .el-dialog {
+    animation: slideDownOut 0.3s ease-in;
+  }
+
+  &.v-modal {
+    animation: fadeOut 0.3s ease-in;
+  }
+}
+
+@keyframes slideDownOut {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.trace-tab-content {
+  padding: 16px 0;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.validation-report-card {
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid;
+
+  &.passed {
+    background: #f0f9eb;
+    border-color: #e1f3d8;
+  }
+
+  &.failed {
+    background: #fef0f0;
+    border-color: #fde2e2;
+  }
+}
+
+.validate-result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  margin-top: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 6px;
+  border-left: 3px solid #909399;
+
+  &.success {
+    border-left-color: #67c23a;
+  }
+
+  &:not(.success) {
+    border-left-color: #f56c6c;
+  }
 }
 </style>

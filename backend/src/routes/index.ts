@@ -37,6 +37,9 @@ import articleTraceRouter from './articleTrace';
 import orderValidateRouter from './orderValidate';
 import orderBatchRouter from './orderBatch';
 import orderTraceRouter from './orderTrace';
+import paymentValidateRouter from './paymentValidate';
+import paymentBatchRouter from './paymentBatch';
+import paymentTraceRouter from './paymentTrace';
 
 const router = Router();
 
@@ -78,5 +81,8 @@ router.use('/articleTrace', articleTraceRouter);
 router.use('/orderValidate', orderValidateRouter);
 router.use('/orderBatch', orderBatchRouter);
 router.use('/orderTrace', orderTraceRouter);
+router.use('/paymentValidate', paymentValidateRouter);
+router.use('/paymentBatch', paymentBatchRouter);
+router.use('/paymentTrace', paymentTraceRouter);
 
 export default router;

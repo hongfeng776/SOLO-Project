@@ -49,6 +49,20 @@ export class User extends Model<User> {
   })
   status?: number;
 
+  @Column({
+    type: DataType.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '用户积分',
+  })
+  points?: number;
+
+  @Column({
+    type: DataType.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '累计支付积分',
+  })
+  total_pay_points?: number;
+
   @CreatedAt
   @Column({
     type: DataType.DATE,

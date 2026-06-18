@@ -95,6 +95,13 @@ export class Goods extends Model<Goods> {
   sales?: number;
 
   @Column({
+    type: DataType.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '销售数量',
+  })
+  sales_count?: number;
+
+  @Column({
     type: DataType.TINYINT.UNSIGNED,
     defaultValue: 0,
     comment: '合规评级：1-A 2-B 3-C 4-D',

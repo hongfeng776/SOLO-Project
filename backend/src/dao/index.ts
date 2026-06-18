@@ -36,6 +36,8 @@ import { OrderExceptionDao } from './OrderExceptionDao';
 import { PaymentFlowDao } from './PaymentFlowDao';
 import { GoodsSnapshotDao } from './GoodsSnapshotDao';
 import { MerchantOrderRecordDao } from './MerchantOrderRecordDao';
+import { PaymentReconcileDao } from './PaymentReconcileDao';
+import { FundSettlementDao } from './FundSettlementDao';
 
 export {
   BaseDao,
@@ -78,6 +80,8 @@ export {
   PaymentFlowDao,
   GoodsSnapshotDao,
   MerchantOrderRecordDao,
+  PaymentReconcileDao,
+  FundSettlementDao,
 };
 
 export const daos = {
@@ -118,6 +122,8 @@ export const daos = {
   paymentFlowDao: new PaymentFlowDao(),
   goodsSnapshotDao: new GoodsSnapshotDao(),
   merchantOrderRecordDao: new MerchantOrderRecordDao(),
+  paymentReconcileDao: new PaymentReconcileDao(),
+  fundSettlementDao: new FundSettlementDao(),
 };
 
 export default daos;

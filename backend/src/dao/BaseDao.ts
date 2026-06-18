@@ -33,6 +33,14 @@ export class BaseDao<T extends Model<T>> {
     return this.model.findAll(options);
   }
 
+  async findOne(options?: FindOptions<T>): Promise<T | null> {
+    return this.model.findOne(options);
+  }
+
+  async findAndCountAll(options?: FindOptions<T>): Promise<{ count: number; rows: T[] }> {
+    return this.model.findAndCountAll(options);
+  }
+
   async findPage(options: PageOptions): Promise<PageResult<T>> {
     const { page = 1, pageSize = 10, where, order, attributes, include } = options;
     const offset = (page - 1) * pageSize;

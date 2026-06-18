@@ -53,6 +53,27 @@ export class Merchant extends Model<Merchant> {
   })
   credit_score?: number;
 
+  @Column({
+    type: DataType.DECIMAL(12, 2),
+    defaultValue: 0,
+    comment: '待结算金额',
+  })
+  pending_settle_amount?: number;
+
+  @Column({
+    type: DataType.DECIMAL(12, 2),
+    defaultValue: 0,
+    comment: '累计已结算金额',
+  })
+  total_settle_amount?: number;
+
+  @Column({
+    type: DataType.DECIMAL(10, 2),
+    defaultValue: 0,
+    comment: '累计商品销量',
+  })
+  total_sales_count?: number;
+
   @CreatedAt
   @Column({
     type: DataType.DATE,
