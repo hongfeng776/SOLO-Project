@@ -182,6 +182,170 @@ class UserPermissionController {
       next(error);
     }
   }
+
+  async checkLoginRisk(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { username, ip, deviceFingerprint, clientInfo } = req.body;
+      const result = await userPermissionService.checkLoginRisk(username, ip, deviceFingerprint, clientInfo);
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async verifyTwoFactor(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { verificationToken, verifyCode, verifyType } = req.body;
+      const result = await userPermissionService.verifyTwoFactor(verificationToken, verifyCode, verifyType);
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getLoginLogDetail(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const currentUser = req.user!;
+      const result = await userPermissionService.getLoginLogDetail(Number(id), currentUser);
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async markLoginRisk(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      const currentUser = req.user!;
+      const result = await userPermissionService.markLoginRisk(Number(id), reason, currentUser);
+      res.json(Result.success(result, '标记成功'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async clearLoginRisk(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { remark } = req.body;
+      const currentUser = req.user!;
+      const result = await userPermissionService.clearLoginRisk(Number(id), remark, currentUser);
+      res.json(Result.success(result, '清除成功'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async batchMarkRisk(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { ids, reason } = req.body;
+      const currentUser = req.user!;
+      const result = await userPermissionService.batchMarkRisk(ids, reason, currentUser);
+      res.json(Result.success(result, '批量标记完成'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async batchClearRisk(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { ids, remark } = req.body;
+      const currentUser = req.user!;
+      const result = await userPermissionService.batchClearRisk(ids, remark, currentUser);
+      res.json(Result.success(result, '批量清除完成'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async batchClearNormalRecords(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { ids } = req.body;
+      const currentUser = req.user!;
+      const result = await userPermissionService.batchClearNormalRecords(ids, currentUser);
+      res.json(Result.success(result, '批量清除完成'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async batchLockDevices(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { deviceFingerprints, userId } = req.body;
+      const currentUser = req.user!;
+      const result = await userPermissionService.batchLockDevices(deviceFingerprints, userId, currentUser);
+      res.json(Result.success(result, '批量锁定完成'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async lockDevice(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { deviceFingerprint, userId } = req.body;
+      const currentUser = req.user!;
+      await userPermissionService.lockDevice(deviceFingerprint, userId, currentUser);
+      res.json(Result.success(null, '锁定成功'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async unlockDevice(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { deviceFingerprint, userId } = req.body;
+      const currentUser = req.user!;
+      await userPermissionService.unlockDevice(deviceFingerprint, userId, currentUser);
+      res.json(Result.success(null, '解锁成功'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getLoginTraceability(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const currentUser = req.user!;
+      const result = await userPermissionService.getLoginTraceability(Number(id), currentUser);
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async verifyLoginAuthenticity(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const currentUser = req.user!;
+      const result = await userPermissionService.verifyLoginAuthenticity(Number(id), currentUser);
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async generateRiskReport(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const currentUser = req.user!;
+      const result = await userPermissionService.generateRiskReport(req.query, currentUser);
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getUserOnlineStatus(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { userId } = req.params;
+      const currentUser = req.user!;
+      const result = await userPermissionService.getUserOnlineStatus(Number(userId), currentUser);
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new UserPermissionController();

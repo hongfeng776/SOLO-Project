@@ -77,6 +77,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/user-permission/index.vue'),
         meta: { title: '账号权限', icon: 'User' },
       },
+      {
+        path: 'login-logs',
+        name: 'LoginLogs',
+        component: () => import('@/views/login-logs/index.vue'),
+        meta: { title: '登录日志', icon: 'Monitor' },
+      },
     ],
   },
   {

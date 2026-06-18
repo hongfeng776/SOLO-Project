@@ -433,4 +433,90 @@ export const ANOMALY_LOGIN_THRESHOLDS = {
   maxFailedAttempts: 5,
   maxLoginLocations: 3,
   maxDailyLogins: 20,
+  maxConsecutiveLogins: 10,
+  maxDifferentDevices: 3,
+  frequentLoginInterval: 60000,
+};
+
+export enum LoginAnomalyType {
+  ABNORMAL_LOCATION = 'abnormal_location',
+  ABNORMAL_DEVICE = 'abnormal_device',
+  ABNORMAL_TIME = 'abnormal_time',
+  ABNORMAL_FREQUENCY = 'abnormal_frequency',
+  ABNORMAL_MULTI_DEVICE = 'abnormal_multi_device',
+  SUSPICIOUS_SCRIPT = 'suspicious_script',
+  FORGED_LOGIN = 'forged_login',
+  CREDENTIAL_STUFFING = 'credential_stuffing',
+  VIOLATION_IP = 'violation_ip',
+  HIGH_RISK_DEVICE = 'high_risk_device',
+}
+
+export const LoginAnomalyTypeLabel: Record<LoginAnomalyType, string> = {
+  [LoginAnomalyType.ABNORMAL_LOCATION]: '异地登录',
+  [LoginAnomalyType.ABNORMAL_DEVICE]: '异常设备',
+  [LoginAnomalyType.ABNORMAL_TIME]: '异常时间',
+  [LoginAnomalyType.ABNORMAL_FREQUENCY]: '高频登录',
+  [LoginAnomalyType.ABNORMAL_MULTI_DEVICE]: '多设备同时在线',
+  [LoginAnomalyType.SUSPICIOUS_SCRIPT]: '可疑脚本登录',
+  [LoginAnomalyType.FORGED_LOGIN]: '伪造登录',
+  [LoginAnomalyType.CREDENTIAL_STUFFING]: '撞库攻击',
+  [LoginAnomalyType.VIOLATION_IP]: '违规IP',
+  [LoginAnomalyType.HIGH_RISK_DEVICE]: '高风险设备',
+};
+
+export enum RiskLevel {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical',
+}
+
+export const RiskLevelLabel: Record<RiskLevel, string> = {
+  [RiskLevel.LOW]: '低风险',
+  [RiskLevel.MEDIUM]: '中风险',
+  [RiskLevel.HIGH]: '高风险',
+  [RiskLevel.CRITICAL]: '极高风险',
+};
+
+export const RiskLevelColor: Record<RiskLevel, string> = {
+  [RiskLevel.LOW]: '#909399',
+  [RiskLevel.MEDIUM]: '#e6a23c',
+  [RiskLevel.HIGH]: '#f56c6c',
+  [RiskLevel.CRITICAL]: '#c0392b',
+};
+
+export enum LoginRiskAction {
+  ALLOW = 'allow',
+  REQUIRE_VERIFY = 'require_verify',
+  BLOCK = 'block',
+  LOCK_DEVICE = 'lock_device',
+  LOCK_ACCOUNT = 'lock_account',
+}
+
+export enum TwoFactorType {
+  SMS = 'sms',
+  EMAIL = 'email',
+  TOTP = 'totp',
+  QUESTION = 'question',
+}
+
+export const TwoFactorTypeLabel: Record<TwoFactorType, string> = {
+  [TwoFactorType.SMS]: '短信验证码',
+  [TwoFactorType.EMAIL]: '邮箱验证码',
+  [TwoFactorType.TOTP]: '动态口令',
+  [TwoFactorType.QUESTION]: '安全问题',
+};
+
+export enum OnlineStatus {
+  ONLINE = 'online',
+  OFFLINE = 'offline',
+  BUSY = 'busy',
+  AWAY = 'away',
+}
+
+export const OnlineStatusLabel: Record<OnlineStatus, string> = {
+  [OnlineStatus.ONLINE]: '在线',
+  [OnlineStatus.OFFLINE]: '离线',
+  [OnlineStatus.BUSY]: '忙碌',
+  [OnlineStatus.AWAY]: '离开',
 };

@@ -62,15 +62,142 @@ export interface LoginLogItem {
   loginIp?: string;
   loginLocation?: string;
   loginDevice?: string;
+  deviceFingerprint?: string;
   userAgent?: string;
-  status: string;
+  status: 'success' | 'failed' | 'anomaly' | 'pending_verify';
   failReason?: string;
   isAnomaly: boolean;
   anomalyType?: string;
   anomalyDetail?: string;
+  riskLevel?: 'low' | 'medium' | 'high' | 'critical';
+  riskScore?: number;
+  riskAction?: string;
+  requireTwoFactor?: boolean;
+  twoFactorType?: string;
+  twoFactorVerified?: boolean;
+  twoFactorVerifyTime?: string;
+  verificationToken?: string;
   browserInfo?: string;
   osInfo?: string;
   screenResolution?: string;
+  timezone?: string;
+  language?: string;
+  networkType?: string;
+  isp?: string;
+  proxyDetected?: boolean;
+  vpnDetected?: boolean;
+  behaviorScore?: number;
+  latitude?: number;
+  longitude?: number;
+  markedRisk?: boolean;
+  markedRiskBy?: number;
+  markedRiskTime?: string;
+  markedRiskReason?: string;
+  clearedRisk?: boolean;
+  clearedRiskBy?: number;
+  clearedRiskTime?: string;
+  riskHandleRemark?: string;
+  deviceLocked?: boolean;
+  source?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LoginTraceabilityInfo {
+  login: LoginLogItem;
+  user: {
+    id: number;
+    username: string;
+    realName: string;
+    role: string;
+    accountStatus: string;
+    lastLoginTime: string;
+    lastLoginIp: string;
+    onlineStatus: string;
+    loginCount: number;
+  };
+  recentLogins: LoginLogItem[];
+  deviceInfo: {
+    device: string;
+    deviceFingerprint: string;
+    browser: string;
+    os: string;
+    screenResolution: string;
+    timezone: string;
+    language: string;
+  };
+  networkInfo: {
+    ip: string;
+    location: string;
+    isp: string;
+    networkType: string;
+    proxyDetected: boolean;
+    vpnDetected: boolean;
+    latitude: number;
+    longitude: number;
+  };
+  riskInfo: {
+    isAnomaly: boolean;
+    anomalyType: string;
+    anomalyDetail: string;
+    riskLevel: string;
+    riskScore: number;
+    markedRisk: boolean;
+    markedRiskReason: string;
+  };
+  verificationInfo: {
+    requireTwoFactor: boolean;
+    twoFactorType: string;
+    twoFactorVerified: boolean;
+    twoFactorVerifyTime: string;
+  };
+}
+
+export interface AuthenticityVerifyResult {
+  authentic: boolean;
+  score: number;
+  issues: string[];
+  recommendations: string[];
+}
+
+export interface RiskReportData {
+  summary: {
+    totalLogins: number;
+    successLogins: number;
+    failedLogins: number;
+    anomalyLogins: number;
+    markedRisks: number;
+    pendingVerifications: number;
+    successRate: string;
+    anomalyRate: string;
+    avgRiskScore: string;
+  };
+  anomalyDistribution: { type: string; label: string; count: number }[];
+  riskDistribution: { level: string; label: string; color: string; count: number }[];
+  topIps: { ip: string; count: number }[];
+  topDevices: { device: string; count: number }[];
+  topUsers: { username: string; count: number }[];
+  generatedAt: string;
+  generatedBy: string;
+  timeRange: { startTime?: string; endTime?: string };
+}
+
+export interface BatchHandleResult {
+  total: number;
+  success: number;
+  failed: number;
+  errors: { userId: number; username: string; message: string }[];
+}
+
+export interface UserOnlineStatus {
+  userId: number;
+  username: string;
+  realName: string;
+  onlineStatus: string;
+  lastOnlineTime: string;
+  lastLoginTime: string;
+  lastLoginIp: string;
+  lastLoginDevice: string;
 }
 
 export interface ValidateResult {
@@ -151,4 +278,67 @@ export const getPermissionLogsByUserIdApi = (userId: number): Promise<Pagination
 
 export const getLoginLogsApi = (params: any): Promise<PaginationResult<LoginLogItem>> => {
   return request.get<PaginationResult<LoginLogItem>>('/user-permissions/login-logs/list', { params });
+};
+
+export const getLoginLogDetailApi = (id: number): Promise<LoginLogItem> => {
+  return request.get<LoginLogItem>(`/user-permissions/login-logs/${id}`);
+};
+
+export const markLoginRiskApi = (id: number, reason: string): Promise<LoginLogItem> => {
+  return request.put<LoginLogItem>(`/user-permissions/login-logs/${id}/mark-risk`, { reason });
+};
+
+export const clearLoginRiskApi = (id: number, remark: string): Promise<LoginLogItem> => {
+  return request.put<LoginLogItem>(`/user-permissions/login-logs/${id}/clear-risk`, { remark });
+};
+
+export const batchMarkRiskApi = (ids: number[], reason: string): Promise<BatchHandleResult> => {
+  return request.post<BatchHandleResult>('/user-permissions/login-logs/batch/mark-risk', { ids, reason });
+};
+
+export const batchClearRiskApi = (ids: number[], remark: string): Promise<BatchHandleResult> => {
+  return request.post<BatchHandleResult>('/user-permissions/login-logs/batch/clear-risk', { ids, remark });
+};
+
+export const batchClearNormalRecordsApi = (ids: number[]): Promise<BatchHandleResult> => {
+  return request.post<BatchHandleResult>('/user-permissions/login-logs/batch/clear-normal', { ids });
+};
+
+export const batchLockDevicesApi = (deviceFingerprints: string[], userId: number): Promise<BatchHandleResult> => {
+  return request.post<BatchHandleResult>('/user-permissions/login-logs/batch/lock-devices', { deviceFingerprints, userId });
+};
+
+export const lockDeviceApi = (deviceFingerprint: string, userId: number): Promise<void> => {
+  return request.post<void>('/user-permissions/devices/lock', { deviceFingerprint, userId });
+};
+
+export const unlockDeviceApi = (deviceFingerprint: string, userId: number): Promise<void> => {
+  return request.post<void>('/user-permissions/devices/unlock', { deviceFingerprint, userId });
+};
+
+export const getLoginTraceabilityApi = (id: number): Promise<LoginTraceabilityInfo> => {
+  return request.get<LoginTraceabilityInfo>(`/user-permissions/login-logs/${id}/traceability`);
+};
+
+export const verifyLoginAuthenticityApi = (id: number): Promise<AuthenticityVerifyResult> => {
+  return request.get<AuthenticityVerifyResult>(`/user-permissions/login-logs/${id}/verify-authenticity`);
+};
+
+export const generateRiskReportApi = (params: any): Promise<RiskReportData> => {
+  return request.get<RiskReportData>('/user-permissions/risk-report/generate', { params });
+};
+
+export const getUserOnlineStatusApi = (userId: number): Promise<UserOnlineStatus> => {
+  return request.get<UserOnlineStatus>(`/user-permissions/${userId}/online-status`);
+};
+
+export const verifyTwoFactorApi = (data: {
+  verificationToken: string;
+  verifyCode: string;
+  verifyType: string;
+}): Promise<{ success: boolean; userId?: number; message?: string }> => {
+  return request.post<{ success: boolean; userId?: number; message?: string }>(
+    '/user-permissions/login/verify-two-factor',
+    data
+  );
 };

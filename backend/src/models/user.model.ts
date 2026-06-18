@@ -31,6 +31,20 @@ interface UserAttributes {
   remark?: string;
   lastLoginTime?: Date;
   lastLoginIp?: string;
+  onlineStatus?: string;
+  lastOnlineTime?: Date;
+  lockedDevices?: string;
+  lastLoginAnomalyType?: string;
+  lastLoginRiskLevel?: string;
+  twoFactorEnabled?: boolean;
+  twoFactorType?: string;
+  loginRiskScore?: number;
+  consecutiveFailedAttempts?: number;
+  lastFailedLoginTime?: Date;
+  trustedDevices?: string;
+  trustedIps?: string;
+  lastPasswordChangeTime?: Date;
+  passwordResetRequired?: boolean;
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'role' | 'status' | 'accountStatus' | 'isMainAccount' | 'isAnomalyLogin'> {}
@@ -63,6 +77,20 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public remark?: string;
   public lastLoginTime?: Date;
   public lastLoginIp?: string;
+  public onlineStatus?: string;
+  public lastOnlineTime?: Date;
+  public lockedDevices?: string;
+  public lastLoginAnomalyType?: string;
+  public lastLoginRiskLevel?: string;
+  public twoFactorEnabled?: boolean;
+  public twoFactorType?: string;
+  public loginRiskScore?: number;
+  public consecutiveFailedAttempts?: number;
+  public lastFailedLoginTime?: Date;
+  public trustedDevices?: string;
+  public trustedIps?: string;
+  public lastPasswordChangeTime?: Date;
+  public passwordResetRequired?: boolean;
 
   public readonly created_at!: Date;
   public readonly updated_at!: Date;
@@ -194,6 +222,67 @@ User.init(
     lastLoginIp: {
       type: DataTypes.STRING(50),
       comment: '最后登录IP',
+    },
+    onlineStatus: {
+      type: DataTypes.STRING(20),
+      defaultValue: 'offline',
+      comment: '在线状态 online-在线 offline-离线 busy-忙碌 away-离开',
+    },
+    lastOnlineTime: {
+      type: DataTypes.DATE,
+      comment: '最后在线时间',
+    },
+    lockedDevices: {
+      type: DataTypes.TEXT,
+      comment: '锁定的设备列表（JSON格式）',
+    },
+    lastLoginAnomalyType: {
+      type: DataTypes.STRING(50),
+      comment: '最后登录异常类型',
+    },
+    lastLoginRiskLevel: {
+      type: DataTypes.STRING(20),
+      comment: '最后登录风险等级',
+    },
+    twoFactorEnabled: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: '是否开启二次验证',
+    },
+    twoFactorType: {
+      type: DataTypes.STRING(20),
+      comment: '二次验证类型',
+    },
+    loginRiskScore: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: '登录风险评分 0-100',
+    },
+    consecutiveFailedAttempts: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: '连续失败登录次数',
+    },
+    lastFailedLoginTime: {
+      type: DataTypes.DATE,
+      comment: '最后失败登录时间',
+    },
+    trustedDevices: {
+      type: DataTypes.TEXT,
+      comment: '可信设备列表（JSON格式）',
+    },
+    trustedIps: {
+      type: DataTypes.TEXT,
+      comment: '可信IP列表（JSON格式）',
+    },
+    lastPasswordChangeTime: {
+      type: DataTypes.DATE,
+      comment: '最后密码修改时间',
+    },
+    passwordResetRequired: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: '是否需要重置密码',
     },
   },
   {

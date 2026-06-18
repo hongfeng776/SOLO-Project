@@ -20,6 +20,22 @@ router.post('/batch/assign-permissions', authMiddleware, roleMiddleware(UserRole
 router.post('/batch/freeze', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), userPermissionController.batchFreeze);
 router.get('/permission-logs/list', authMiddleware, userPermissionController.getPermissionLogs);
 router.get('/:userId/permission-logs', authMiddleware, userPermissionController.getPermissionLogsByUserId);
+
+router.post('/login/check-risk', userPermissionController.checkLoginRisk);
+router.post('/login/verify-two-factor', userPermissionController.verifyTwoFactor);
 router.get('/login-logs/list', authMiddleware, userPermissionController.getLoginLogs);
+router.get('/login-logs/:id', authMiddleware, userPermissionController.getLoginLogDetail);
+router.put('/login-logs/:id/mark-risk', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), userPermissionController.markLoginRisk);
+router.put('/login-logs/:id/clear-risk', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), userPermissionController.clearLoginRisk);
+router.post('/login-logs/batch/mark-risk', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), userPermissionController.batchMarkRisk);
+router.post('/login-logs/batch/clear-risk', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), userPermissionController.batchClearRisk);
+router.post('/login-logs/batch/clear-normal', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), userPermissionController.batchClearNormalRecords);
+router.post('/login-logs/batch/lock-devices', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), userPermissionController.batchLockDevices);
+router.post('/devices/lock', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), userPermissionController.lockDevice);
+router.post('/devices/unlock', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), userPermissionController.unlockDevice);
+router.get('/login-logs/:id/traceability', authMiddleware, userPermissionController.getLoginTraceability);
+router.get('/login-logs/:id/verify-authenticity', authMiddleware, userPermissionController.verifyLoginAuthenticity);
+router.get('/risk-report/generate', authMiddleware, userPermissionController.generateRiskReport);
+router.get('/:userId/online-status', authMiddleware, userPermissionController.getUserOnlineStatus);
 
 export default router;

@@ -6,6 +6,7 @@ import { UserRole } from '../constants/recruitment.enum';
 const router = Router();
 
 router.post('/login', authController.login);
+router.post('/verify-login', authController.verifyLogin);
 router.get('/userinfo', authMiddleware, authController.getUserInfo);
 
 router.get('/users', authMiddleware, roleMiddleware(UserRole.ADMIN), authController.getList);

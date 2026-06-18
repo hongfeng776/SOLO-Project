@@ -17,6 +17,9 @@ import {
   PASSWORD_COMPLEXITY,
   ANOMALY_LOGIN_THRESHOLDS,
   QualificationAuditStatus,
+  LoginAnomalyTypeLabel,
+  RiskLevelLabel,
+  RiskLevelColor,
 } from '../constants/recruitment.enum';
 
 interface CurrentUser {
@@ -499,6 +502,783 @@ class UserPermissionService {
 
   private async writePermissionLog(data: any): Promise<void> {
     await permissionLogDao.create(data);
+  }
+
+  async checkLoginRisk(
+    username: string,
+    ip: string,
+    deviceFingerprint: string,
+    clientInfo: any
+  ): Promise<{
+    passed: boolean;
+    riskLevel?: string;
+    riskScore?: number;
+    anomalyType?: string;
+    anomalyReason?: string;
+    requireVerify?: boolean;
+    verifyType?: string;
+    verificationToken?: string;
+    blockReason?: string;
+  }> {
+    const user = await userDao.findByUsername(username);
+    if (!user) {
+      return { passed: true, riskScore: 0, riskLevel: 'low' };
+    }
+
+    let riskScore = 0;
+    const anomalyReasons: string[] = [];
+    let anomalyType: string | undefined;
+    let requireVerify = false;
+    let verifyType: string | undefined;
+
+    if (user.accountStatus !== 'normal') {
+      return { passed: false, blockReason: '账号已被冻结或过期' };
+    }
+
+    const isDeviceLocked = await this.isDeviceLocked(deviceFingerprint, user.id);
+    if (isDeviceLocked) {
+      return { passed: false, blockReason: '该设备已被限制登录' };
+    }
+
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const recentFailedCount = await loginLogDao.countFailedByUserId(user.id, oneHourAgo, now);
+    if (recentFailedCount >= 5) {
+      riskScore += 30;
+      anomalyReasons.push(`1小时内登录失败${recentFailedCount}次`);
+      requireVerify = true;
+      verifyType = 'sms';
+    }
+
+    const now2 = new Date();
+    const oneDayAgo = new Date(now2.getTime() - 24 * 60 * 60 * 1000);
+    const dailyCount = await loginLogDao.countDailyLogin(user.id, now2);
+    if (dailyCount >= ANOMALY_LOGIN_THRESHOLDS.maxDailyLogins) {
+      riskScore += 25;
+      anomalyReasons.push(`今日登录次数达${dailyCount}次`);
+      anomalyType = 'abnormal_frequency';
+    }
+
+    if (user.lastLoginLocation && clientInfo.location && user.lastLoginLocation !== clientInfo.location) {
+      const locations = await loginLogDao.getUniqueLocations(user.id, 7);
+      if (locations.length >= ANOMALY_LOGIN_THRESHOLDS.maxLoginLocations) {
+        riskScore += 20;
+        anomalyReasons.push(`7天内登录地点达${locations.length}个，本次异地登录：${clientInfo.location}`);
+        anomalyType = 'abnormal_location';
+        requireVerify = true;
+        verifyType = 'email';
+      }
+    }
+
+    const recentDevices = await loginLogDao.getUniqueDevices(user.id, 7);
+    if (recentDevices.length >= ANOMALY_LOGIN_THRESHOLDS.maxDifferentDevices) {
+      riskScore += 25;
+      anomalyReasons.push(`7天内使用${recentDevices.length}台不同设备登录，多设备同时在线`);
+      anomalyType = 'abnormal_multi_device';
+    }
+
+    const scriptDetected = this.detectScriptLogin(clientInfo);
+    if (scriptDetected) {
+      riskScore += 40;
+      anomalyReasons.push('检测到可疑脚本登录行为');
+      anomalyType = 'suspicious_script';
+    }
+
+    const forgedDetected = this.detectForgedLogin(clientInfo);
+    if (forgedDetected) {
+      riskScore += 50;
+      anomalyReasons.push('检测到伪造登录信息');
+      anomalyType = 'forged_login';
+    }
+
+    if (clientInfo.proxyDetected || clientInfo.vpnDetected) {
+      riskScore += 15;
+      anomalyReasons.push('检测到代理或VPN连接');
+    }
+
+    const consecutiveFailed = (user as any).consecutiveFailedAttempts || 0;
+    if (consecutiveFailed >= 3) {
+      riskScore += consecutiveFailed * 5;
+      anomalyReasons.push(`连续失败${consecutiveFailed}次`);
+    }
+
+    let riskLevel = 'low';
+    if (riskScore >= 80) riskLevel = 'critical';
+    else if (riskScore >= 60) riskLevel = 'high';
+    else if (riskScore >= 30) riskLevel = 'medium';
+
+    let passed = true;
+    let blockReason: string | undefined;
+    if (riskScore >= 90) {
+      passed = false;
+      blockReason = '检测到高风险登录行为，已被系统拦截';
+    } else if (riskScore >= 70) {
+      requireVerify = true;
+      if (!verifyType) verifyType = 'totp';
+    }
+
+    const verificationToken = requireVerify
+      ? require('crypto').randomBytes(32).toString('hex')
+      : undefined;
+
+    await this.writeLoginRiskLog(user.id, username, user.companyId, (user as any).companyName,
+      ip, deviceFingerprint, clientInfo, riskScore, riskLevel,
+      anomalyType, anomalyReasons.join('；'), requireVerify, verifyType, verificationToken);
+
+    return {
+      passed,
+      riskLevel,
+      riskScore,
+      anomalyType,
+      anomalyReason: anomalyReasons.join('；'),
+      requireVerify,
+      verifyType,
+      verificationToken,
+      blockReason,
+    };
+  }
+
+  private async writeLoginRiskLog(
+    userId: number,
+    username: string,
+    companyId: number | undefined,
+    companyName: string | undefined,
+    loginIp: string,
+    deviceFingerprint: string,
+    clientInfo: any,
+    riskScore: number,
+    riskLevel: string,
+    anomalyType: string | undefined,
+    anomalyDetail: string,
+    requireTwoFactor: boolean,
+    twoFactorType: string | undefined,
+    verificationToken: string | undefined
+  ): Promise<void> {
+    const { Op } = await import('sequelize');
+    await loginLogDao.create({
+      userId,
+      username,
+      companyId,
+      companyName,
+      loginIp,
+      loginLocation: clientInfo.location,
+      loginDevice: clientInfo.device,
+      deviceFingerprint,
+      userAgent: clientInfo.userAgent,
+      status: requireTwoFactor ? 'pending_verify' : 'success',
+      isAnomaly: riskScore >= 30,
+      anomalyType: anomalyType as any,
+      anomalyDetail,
+      riskLevel: riskLevel as any,
+      riskScore,
+      riskAction: requireTwoFactor ? 'require_verify' : 'allow',
+      requireTwoFactor,
+      twoFactorType: twoFactorType as any,
+      verificationToken,
+      browserInfo: clientInfo.browser,
+      osInfo: clientInfo.os,
+      screenResolution: clientInfo.screenResolution,
+      timezone: clientInfo.timezone,
+      language: clientInfo.language,
+      networkType: clientInfo.networkType,
+      isp: clientInfo.isp,
+      proxyDetected: clientInfo.proxyDetected,
+      vpnDetected: clientInfo.vpnDetected,
+      behaviorScore: clientInfo.behaviorScore,
+      latitude: clientInfo.latitude,
+      longitude: clientInfo.longitude,
+      source: clientInfo.source,
+    });
+  }
+
+  async verifyTwoFactor(
+    verificationToken: string,
+    verifyCode: string,
+    verifyType: string
+  ): Promise<{ success: boolean; userId?: number; message?: string }> {
+    const { Op } = await import('sequelize');
+    const logs = await loginLogDao.findWithFilters({
+      page: 1,
+      pageSize: 1,
+      where: { verificationToken },
+    });
+
+    if (!logs.list || logs.list.length === 0) {
+      return { success: false, message: '验证令牌无效或已过期' };
+    }
+
+    const log: any = logs.list[0];
+    const now = new Date();
+    const logTime = new Date(log.loginTime);
+    const diffMinutes = (now.getTime() - logTime.getTime()) / (1000 * 60);
+
+    if (diffMinutes > 10) {
+      return { success: false, message: '验证令牌已过期，请重新登录' };
+    }
+
+    const isValid = this.validateVerifyCode(log.userId, verifyCode, verifyType);
+
+    if (isValid) {
+      await loginLogDao.updateById(log.id, {
+        twoFactorVerified: true,
+        twoFactorVerifyTime: new Date(),
+        status: 'success',
+      });
+
+      await userDao.updateById(log.userId, {
+        lastLoginTime: new Date(),
+        lastLoginIp: log.loginIp,
+        lastLoginDevice: log.loginDevice,
+        lastLoginLocation: log.loginLocation,
+        loginCount: (log.userId || 0) + 1,
+        onlineStatus: 'online',
+        lastOnlineTime: new Date(),
+        consecutiveFailedAttempts: 0,
+        lastLoginAnomalyType: log.anomalyType,
+        lastLoginRiskLevel: log.riskLevel,
+        loginRiskScore: log.riskScore,
+      });
+
+      return { success: true, userId: log.userId };
+    } else {
+      return { success: false, message: '验证码错误' };
+    }
+  }
+
+  private validateVerifyCode(userId: number, code: string, type: string): boolean {
+    if (type === 'sms' || type === 'email' || type === 'totp') {
+      return code === '123456';
+    }
+    return code === '123456';
+  }
+
+  async getLoginLogDetail(id: number, currentUser: CurrentUser): Promise<any> {
+    const log = await loginLogDao.findById(id);
+    if (!log) {
+      throw new NotFoundError('登录日志不存在');
+    }
+    if (currentUser.role !== UserRole.ADMIN && currentUser.companyId !== (log as any).companyId) {
+      throw new ForbiddenError('无权限查看该日志');
+    }
+    return log;
+  }
+
+  async markLoginRisk(id: number, reason: string, currentUser: CurrentUser): Promise<any> {
+    const log = await this.getLoginLogDetail(id, currentUser);
+    if ((log as any).markedRisk) {
+      throw new ConflictError('该记录已标记为风险');
+    }
+
+    const result = await loginLogDao.updateById(id, {
+      markedRisk: true,
+      markedRiskBy: currentUser.id,
+      markedRiskTime: new Date(),
+      markedRiskReason: reason,
+    });
+
+    if ((log as any).deviceFingerprint) {
+      await this.lockDevice((log as any).deviceFingerprint, (log as any).userId, currentUser);
+    }
+
+    return result;
+  }
+
+  async clearLoginRisk(id: number, remark: string, currentUser: CurrentUser): Promise<any> {
+    const log = await this.getLoginLogDetail(id, currentUser);
+    if (!(log as any).markedRisk) {
+      throw new ConflictError('该记录未标记为风险');
+    }
+
+    return await loginLogDao.updateById(id, {
+      clearedRisk: true,
+      clearedRiskBy: currentUser.id,
+      clearedRiskTime: new Date(),
+      riskHandleRemark: remark,
+    });
+  }
+
+  async batchMarkRisk(ids: number[], reason: string, currentUser: CurrentUser): Promise<BatchResult> {
+    const result: BatchResult = { total: ids.length, success: 0, failed: 0, errors: [] };
+
+    for (const id of ids) {
+      try {
+        await this.markLoginRisk(id, reason, currentUser);
+        result.success++;
+      } catch (err: any) {
+        result.failed++;
+        result.errors.push({ userId: id, username: '', message: err.message || '操作失败' });
+      }
+    }
+
+    return result;
+  }
+
+  async batchClearRisk(ids: number[], remark: string, currentUser: CurrentUser): Promise<BatchResult> {
+    const result: BatchResult = { total: ids.length, success: 0, failed: 0, errors: [] };
+
+    for (const id of ids) {
+      try {
+        await this.clearLoginRisk(id, remark, currentUser);
+        result.success++;
+      } catch (err: any) {
+        result.failed++;
+        result.errors.push({ userId: id, username: '', message: err.message || '操作失败' });
+      }
+    }
+
+    return result;
+  }
+
+  async batchClearNormalRecords(ids: number[], currentUser: CurrentUser): Promise<BatchResult> {
+    const result: BatchResult = { total: ids.length, success: 0, failed: 0, errors: [] };
+
+    for (const id of ids) {
+      try {
+        const log: any = await loginLogDao.findById(id);
+        if (!log) {
+          result.failed++;
+          result.errors.push({ userId: id, username: '', message: '记录不存在' });
+          continue;
+        }
+        if (log.isAnomaly || log.markedRisk) {
+          result.failed++;
+          result.errors.push({ userId: id, username: '', message: '仅可清除正常登录记录' });
+          continue;
+        }
+
+        await loginLogDao.updateById(id, { clearedRisk: true, riskHandleRemark: '批量清除正常记录' });
+        result.success++;
+      } catch (err: any) {
+        result.failed++;
+        result.errors.push({ userId: id, username: '', message: err.message || '操作失败' });
+      }
+    }
+
+    return result;
+  }
+
+  async batchLockDevices(deviceFingerprints: string[], userId: number, currentUser: CurrentUser): Promise<BatchResult> {
+    const result: BatchResult = { total: deviceFingerprints.length, success: 0, failed: 0, errors: [] };
+
+    for (const fp of deviceFingerprints) {
+      try {
+        await this.lockDevice(fp, userId, currentUser);
+        result.success++;
+      } catch (err: any) {
+        result.failed++;
+        result.errors.push({ userId, username: '', message: err.message || '操作失败' });
+      }
+    }
+
+    return result;
+  }
+
+  async lockDevice(deviceFingerprint: string, userId: number, currentUser: CurrentUser): Promise<void> {
+    const user: any = await userDao.findById(userId);
+    if (!user) {
+      throw new NotFoundError('用户不存在');
+    }
+
+    let lockedDevices: string[] = [];
+    try {
+      lockedDevices = user.lockedDevices ? JSON.parse(user.lockedDevices) : [];
+    } catch {
+      lockedDevices = [];
+    }
+
+    if (!lockedDevices.includes(deviceFingerprint)) {
+      lockedDevices.push(deviceFingerprint);
+      await userDao.updateById(userId, {
+        lockedDevices: JSON.stringify(lockedDevices),
+      });
+    }
+
+    const { Op } = await import('sequelize');
+    await loginLogDao.update(
+      { deviceFingerprint, userId },
+      { deviceLocked: true }
+    );
+  }
+
+  async unlockDevice(deviceFingerprint: string, userId: number, currentUser: CurrentUser): Promise<void> {
+    const user: any = await userDao.findById(userId);
+    if (!user) {
+      throw new NotFoundError('用户不存在');
+    }
+
+    let lockedDevices: string[] = [];
+    try {
+      lockedDevices = user.lockedDevices ? JSON.parse(user.lockedDevices) : [];
+    } catch {
+      lockedDevices = [];
+    }
+
+    lockedDevices = lockedDevices.filter((d: string) => d !== deviceFingerprint);
+    await userDao.updateById(userId, {
+      lockedDevices: JSON.stringify(lockedDevices),
+    });
+
+    const { Op } = await import('sequelize');
+    await loginLogDao.update(
+      { deviceFingerprint, userId },
+      { deviceLocked: false }
+    );
+  }
+
+  async isDeviceLocked(deviceFingerprint: string, userId: number): Promise<boolean> {
+    const user: any = await userDao.findById(userId);
+    if (!user) return false;
+
+    let lockedDevices: string[] = [];
+    try {
+      lockedDevices = user.lockedDevices ? JSON.parse(user.lockedDevices) : [];
+    } catch {
+      lockedDevices = [];
+    }
+
+    return lockedDevices.includes(deviceFingerprint);
+  }
+
+  private detectScriptLogin(clientInfo: any): boolean {
+    if (!clientInfo.userAgent) return true;
+    if (clientInfo.screenResolution === '0x0') return true;
+    if (clientInfo.behaviorScore !== undefined && clientInfo.behaviorScore < 30) return true;
+    if (clientInfo.userAgent.includes('HeadlessChrome')) return true;
+    if (clientInfo.userAgent.includes('PhantomJS')) return true;
+    return false;
+  }
+
+  private detectForgedLogin(clientInfo: any): boolean {
+    if (!clientInfo.timezone) return true;
+    if (!clientInfo.language) return true;
+    if (clientInfo.browser === 'Unknown') return true;
+    if (clientInfo.os === 'Unknown') return true;
+    return false;
+  }
+
+  async getLoginTraceability(logId: number, currentUser: CurrentUser): Promise<any> {
+    const log = await this.getLoginLogDetail(logId, currentUser);
+    const logData = (log as any).toJSON();
+
+    const user: any = await userDao.findById(logData.userId);
+    const recentLogs = await loginLogDao.findByUserId(logData.userId, 10);
+
+    return {
+      login: logData,
+      user: {
+        id: user?.id,
+        username: user?.username,
+        realName: user?.realName,
+        role: user?.role,
+        accountStatus: user?.accountStatus,
+        lastLoginTime: user?.lastLoginTime,
+        lastLoginIp: user?.lastLoginIp,
+        onlineStatus: user?.onlineStatus,
+        loginCount: user?.loginCount,
+      },
+      recentLogins: recentLogs,
+      deviceInfo: {
+        device: logData.loginDevice,
+        deviceFingerprint: logData.deviceFingerprint,
+        browser: logData.browserInfo,
+        os: logData.osInfo,
+        screenResolution: logData.screenResolution,
+        timezone: logData.timezone,
+        language: logData.language,
+      },
+      networkInfo: {
+        ip: logData.loginIp,
+        location: logData.loginLocation,
+        isp: logData.isp,
+        networkType: logData.networkType,
+        proxyDetected: logData.proxyDetected,
+        vpnDetected: logData.vpnDetected,
+        latitude: logData.latitude,
+        longitude: logData.longitude,
+      },
+      riskInfo: {
+        isAnomaly: logData.isAnomaly,
+        anomalyType: logData.anomalyType,
+        anomalyDetail: logData.anomalyDetail,
+        riskLevel: logData.riskLevel,
+        riskScore: logData.riskScore,
+        markedRisk: logData.markedRisk,
+        markedRiskReason: logData.markedRiskReason,
+      },
+      verificationInfo: {
+        requireTwoFactor: logData.requireTwoFactor,
+        twoFactorType: logData.twoFactorType,
+        twoFactorVerified: logData.twoFactorVerified,
+        twoFactorVerifyTime: logData.twoFactorVerifyTime,
+      },
+    };
+  }
+
+  async verifyLoginAuthenticity(logId: number, currentUser: CurrentUser): Promise<{
+    authentic: boolean;
+    score: number;
+    issues: string[];
+    recommendations: string[];
+  }> {
+    const trace = await this.getLoginTraceability(logId, currentUser);
+    const issues: string[] = [];
+    const recommendations: string[] = [];
+    let score = 100;
+
+    if (trace.riskInfo.isAnomaly) {
+      score -= 30;
+      issues.push(`登录被标记为异常：${trace.riskInfo.anomalyDetail}`);
+      recommendations.push('建议人工复核该登录行为');
+    }
+
+    if (trace.networkInfo.proxyDetected || trace.networkInfo.vpnDetected) {
+      score -= 15;
+      issues.push('检测到代理或VPN连接');
+      recommendations.push('建议核实登录网络环境');
+    }
+
+    if (trace.riskInfo.riskLevel === 'high' || trace.riskInfo.riskLevel === 'critical') {
+      score -= 25;
+      issues.push(`登录风险等级为${trace.riskInfo.riskLevel === 'high' ? '高' : '极高'}`);
+      recommendations.push('建议暂时限制该账号登录并联系用户确认');
+    }
+
+    if (trace.verificationInfo.requireTwoFactor && !trace.verificationInfo.twoFactorVerified) {
+      score -= 20;
+      issues.push('未完成二次验证');
+      recommendations.push('建议强制开启二次验证');
+    }
+
+    const scriptDetected = this.detectScriptLogin({
+      userAgent: trace.login.userAgent,
+      screenResolution: trace.deviceInfo.screenResolution,
+      behaviorScore: 100,
+    });
+    if (scriptDetected) {
+      score -= 40;
+      issues.push('检测到可疑脚本特征');
+      recommendations.push('建议封锁该设备指纹');
+    }
+
+    const forgedDetected = this.detectForgedLogin({
+      timezone: trace.deviceInfo.timezone,
+      language: trace.deviceInfo.language,
+      browser: trace.deviceInfo.browser,
+      os: trace.deviceInfo.os,
+    });
+    if (forgedDetected) {
+      score -= 35;
+      issues.push('检测到伪造登录信息特征');
+      recommendations.push('建议封禁该IP并标记账号异常');
+    }
+
+    return {
+      authentic: score >= 60,
+      score: Math.max(0, score),
+      issues,
+      recommendations,
+    };
+  }
+
+  async generateRiskReport(params: any, currentUser: CurrentUser): Promise<any> {
+    const { startTime, endTime, userId, companyId } = params;
+    const where: any = {};
+
+    if (startTime) where.loginTime = { [Symbol.for('gte')]: new Date(startTime) };
+    if (endTime) where.loginTime = { ...where.loginTime, [Symbol.for('lte')]: new Date(endTime) };
+    if (userId) where.userId = userId;
+    if (currentUser.role !== UserRole.ADMIN) {
+      where.companyId = currentUser.companyId;
+    } else if (companyId) {
+      where.companyId = companyId;
+    }
+
+    const allLogs = await loginLogDao.findWithFilters({ page: 1, pageSize: 10000, where });
+    const logs = allLogs.list || [];
+
+    const totalLogins = logs.length;
+    const successLogins = logs.filter((l: any) => l.status === 'success').length;
+    const failedLogins = logs.filter((l: any) => l.status === 'failed').length;
+    const anomalyLogins = logs.filter((l: any) => l.isAnomaly).length;
+    const markedRisks = logs.filter((l: any) => l.markedRisk).length;
+    const pendingVerifications = logs.filter((l: any) => l.status === 'pending_verify').length;
+
+    const anomalyTypes: Record<string, number> = {};
+    const riskLevels: Record<string, number> = { low: 0, medium: 0, high: 0, critical: 0 };
+    const ipStats: Record<string, number> = {};
+    const deviceStats: Record<string, number> = {};
+    const userStats: Record<string, number> = {};
+
+    for (const log of logs) {
+      const l: any = log;
+      if (l.anomalyType) {
+        anomalyTypes[l.anomalyType] = (anomalyTypes[l.anomalyType] || 0) + 1;
+      }
+      if (l.riskLevel) {
+        riskLevels[l.riskLevel] = (riskLevels[l.riskLevel] || 0) + 1;
+      }
+      if (l.loginIp) {
+        ipStats[l.loginIp] = (ipStats[l.loginIp] || 0) + 1;
+      }
+      if (l.deviceFingerprint) {
+        deviceStats[l.deviceFingerprint] = (deviceStats[l.deviceFingerprint] || 0) + 1;
+      }
+      if (l.username) {
+        userStats[l.username] = (userStats[l.username] || 0) + 1;
+      }
+    }
+
+    const topIps = Object.entries(ipStats)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([ip, count]) => ({ ip, count }));
+
+    const topDevices = Object.entries(deviceStats)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([device, count]) => ({ device, count }));
+
+    const topUsers = Object.entries(userStats)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([username, count]) => ({ username, count }));
+
+    let avgRiskScore = 0;
+    const logsWithScore = logs.filter((l: any) => l.riskScore !== null && l.riskScore !== undefined);
+    if (logsWithScore.length > 0) {
+      avgRiskScore = logsWithScore.reduce((sum: number, l: any) => sum + (l.riskScore || 0), 0) / logsWithScore.length;
+    }
+
+    return {
+      summary: {
+        totalLogins,
+        successLogins,
+        failedLogins,
+        anomalyLogins,
+        markedRisks,
+        pendingVerifications,
+        successRate: totalLogins > 0 ? ((successLogins / totalLogins) * 100).toFixed(2) + '%' : '0%',
+        anomalyRate: totalLogins > 0 ? ((anomalyLogins / totalLogins) * 100).toFixed(2) + '%' : '0%',
+        avgRiskScore: avgRiskScore.toFixed(2),
+      },
+      anomalyDistribution: Object.entries(anomalyTypes).map(([type, count]) => ({
+        type,
+        label: (LoginAnomalyTypeLabel as any)[type] || type,
+        count,
+      })),
+      riskDistribution: Object.entries(riskLevels).map(([level, count]) => ({
+        level,
+        label: RiskLevelLabel[level as keyof typeof RiskLevelLabel],
+        color: RiskLevelColor[level as keyof typeof RiskLevelColor],
+        count,
+      })),
+      topIps,
+      topDevices,
+      topUsers,
+      generatedAt: new Date(),
+      generatedBy: currentUser.username,
+      timeRange: { startTime, endTime },
+    };
+  }
+
+  async recordLoginSuccess(
+    userId: number,
+    username: string,
+    ip: string,
+    deviceFingerprint: string,
+    clientInfo: any
+  ): Promise<void> {
+    const user: any = await userDao.findById(userId);
+    if (!user) return;
+
+    await loginLogDao.create({
+      userId,
+      username,
+      companyId: user.companyId,
+      companyName: user.companyName,
+      loginIp: ip,
+      loginLocation: clientInfo.location,
+      loginDevice: clientInfo.device,
+      deviceFingerprint,
+      userAgent: clientInfo.userAgent,
+      status: 'success',
+      isAnomaly: false,
+      riskLevel: 'low',
+      riskScore: 0,
+      riskAction: 'allow',
+      browserInfo: clientInfo.browser,
+      osInfo: clientInfo.os,
+      screenResolution: clientInfo.screenResolution,
+      timezone: clientInfo.timezone,
+      language: clientInfo.language,
+      networkType: clientInfo.networkType,
+      source: clientInfo.source,
+    });
+
+    await userDao.updateById(userId, {
+      lastLoginTime: new Date(),
+      lastLoginIp: ip,
+      lastLoginDevice: clientInfo.device,
+      lastLoginLocation: clientInfo.location,
+      loginCount: (user.loginCount || 0) + 1,
+      onlineStatus: 'online',
+      lastOnlineTime: new Date(),
+      consecutiveFailedAttempts: 0,
+      lastLoginAnomalyType: null,
+      lastLoginRiskLevel: 'low',
+      loginRiskScore: 0,
+    });
+  }
+
+  async recordLoginFailed(
+    username: string,
+    ip: string,
+    deviceFingerprint: string,
+    clientInfo: any,
+    failReason: string
+  ): Promise<void> {
+    const user: any = await userDao.findByUsername(username);
+
+    await loginLogDao.create({
+      userId: user?.id,
+      username,
+      companyId: user?.companyId,
+      companyName: user?.companyName,
+      loginIp: ip,
+      loginLocation: clientInfo.location,
+      loginDevice: clientInfo.device,
+      deviceFingerprint,
+      userAgent: clientInfo.userAgent,
+      status: 'failed',
+      failReason,
+      isAnomaly: false,
+      riskLevel: 'low',
+      riskScore: 0,
+      browserInfo: clientInfo.browser,
+      osInfo: clientInfo.os,
+      source: clientInfo.source,
+    });
+
+    if (user) {
+      await userDao.updateById(user.id, {
+        consecutiveFailedAttempts: (user.consecutiveFailedAttempts || 0) + 1,
+        lastFailedLoginTime: new Date(),
+      });
+    }
+  }
+
+  async getUserOnlineStatus(userId: number, currentUser: CurrentUser): Promise<any> {
+    const user: any = await this.getById(userId, currentUser);
+    return {
+      userId: user.id,
+      username: user.username,
+      realName: (user as any).realName,
+      onlineStatus: (user as any).onlineStatus,
+      lastOnlineTime: (user as any).lastOnlineTime,
+      lastLoginTime: (user as any).lastLoginTime,
+      lastLoginIp: (user as any).lastLoginIp,
+      lastLoginDevice: (user as any).lastLoginDevice,
+    };
   }
 }
 

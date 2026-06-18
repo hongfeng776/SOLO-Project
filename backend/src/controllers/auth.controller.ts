@@ -5,9 +5,19 @@ import authService, { userService } from '../services/auth.service';
 class AuthController {
   async login(req: Request, res: Response, next: NextFunction) {
     try {
-      const { username, password } = req.body;
-      const result = await authService.login(username, password);
+      const { username, password, clientInfo } = req.body;
+      const result = await authService.login(username, password, clientInfo);
       res.json(Result.success(result, '登录成功'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async verifyLogin(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { verificationToken, verifyCode, verifyType } = req.body;
+      const result = await authService.verifyLogin(verificationToken, verifyCode, verifyType);
+      res.json(Result.success(result, '验证成功'));
     } catch (error) {
       next(error);
     }
