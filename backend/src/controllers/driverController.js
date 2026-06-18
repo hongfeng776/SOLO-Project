@@ -2,6 +2,7 @@ const { Op } = require('sequelize')
 const { Driver } = require('../models')
 const { success, pageResult, AppError } = require('../utils/response')
 const driverAuditService = require('../services/driverAuditService')
+const driverStatusService = require('../services/driverStatusService')
 
 const getList = async (req, res, next) => {
   try {
@@ -17,7 +18,12 @@ const getList = async (req, res, next) => {
       reputationLevel,
       qualificationStatus,
       isUrgent,
-      driverLevel
+      driverLevel,
+      accountRiskLevel,
+      minServiceScore,
+      maxServiceScore,
+      minComplaintRate,
+      minViolationCount
     } = req.query
 
     const where = {}
@@ -32,6 +38,11 @@ const getList = async (req, res, next) => {
     if (qualificationStatus !== undefined && qualificationStatus !== '') where.qualificationStatus = qualificationStatus
     if (isUrgent !== undefined && isUrgent !== '') where.isUrgent = isUrgent
     if (driverLevel !== undefined && driverLevel !== '') where.driverLevel = driverLevel
+    if (accountRiskLevel !== undefined && accountRiskLevel !== '') where.accountRiskLevel = accountRiskLevel
+    if (minServiceScore) where.serviceScore = { [Op.gte]: parseFloat(minServiceScore) }
+    if (maxServiceScore) where.serviceScore = { ...where.serviceScore, [Op.lte]: parseFloat(maxServiceScore) }
+    if (minComplaintRate) where.complaintRate = { [Op.gte]: parseFloat(minComplaintRate) }
+    if (minViolationCount) where.violationCount = { [Op.gte]: parseInt(minViolationCount) }
 
     const order = []
     if (isUrgent === '1') {
@@ -309,6 +320,192 @@ const getPendingAuditCount = async (req, res, next) => {
   }
 }
 
+const preCheckStatusChange = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { newStatus } = req.body
+    const driver = await Driver.findByPk(id)
+    if (!driver) throw new AppError('司机不存在', 404, 404)
+
+    const result = await driverStatusService.preCheckStatusChange(driver, newStatus)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const changeAccountStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { newStatus, changeReason, banEndTime } = req.body
+    const { userId, userName, role } = req.user || {}
+
+    if (newStatus === undefined || newStatus === null) {
+      throw new AppError('请选择目标状态', 400, 400)
+    }
+
+    const result = await driverStatusService.changeDriverStatus(id, newStatus, {
+      changeReason,
+      banEndTime,
+      operatorId: userId,
+      operatorName: userName,
+      operatorRole: role || 'admin'
+    })
+
+    res.json(success(result, '状态变更成功'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getRiskLevel = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const driver = await Driver.findByPk(id)
+    if (!driver) throw new AppError('司机不存在', 404, 404)
+
+    const result = driverStatusService.calculateRiskLevel(driver)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const autoJudgeRiskLevel = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const result = await driverStatusService.autoJudgeRiskLevel(id)
+    res.json(success(result, '风险等级判定完成'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchChangeAccountStatus = async (req, res, next) => {
+  try {
+    const { ids, newStatus, changeReason, banEndTime } = req.body
+    const { userId, userName, role } = req.user || {}
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      throw new AppError('请选择要操作的记录', 400, 400)
+    }
+    if (newStatus === undefined || newStatus === null) {
+      throw new AppError('请选择目标状态', 400, 400)
+    }
+
+    const results = await driverStatusService.batchChangeStatus(ids, newStatus, {
+      changeReason,
+      banEndTime,
+      operatorId: userId,
+      operatorName: userName,
+      operatorRole: role || 'admin'
+    })
+
+    res.json(success(results, '批量操作完成'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchTempBan = async (req, res, next) => {
+  try {
+    const { ids, changeReason, banEndTime } = req.body
+    const { userId, userName, role } = req.user || {}
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      throw new AppError('请选择要操作的记录', 400, 400)
+    }
+
+    const results = await driverStatusService.batchChangeStatus(ids, 2, {
+      changeReason: changeReason || '批量临时封禁',
+      banEndTime,
+      operatorId: userId,
+      operatorName: userName,
+      operatorRole: role || 'admin'
+    })
+
+    res.json(success(results, '批量临时封禁完成'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchRemindRectification = async (req, res, next) => {
+  try {
+    const { ids } = req.body
+    const { userId, userName } = req.user || {}
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      throw new AppError('请选择要操作的记录', 400, 400)
+    }
+
+    const results = await driverStatusService.batchRemindRectification(ids, {
+      operatorId: userId,
+      operatorName: userName
+    })
+
+    res.json(success(results, '批量整改提醒完成'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchRestoreNormal = async (req, res, next) => {
+  try {
+    const { ids, changeReason } = req.body
+    const { userId, userName, role } = req.user || {}
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      throw new AppError('请选择要操作的记录', 400, 400)
+    }
+
+    const results = await driverStatusService.batchChangeStatus(ids, 0, {
+      changeReason: changeReason || '批量恢复正常',
+      operatorId: userId,
+      operatorName: userName,
+      operatorRole: role || 'admin'
+    })
+
+    res.json(success(results, '批量恢复完成'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getStatusLogs = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const logs = await driverStatusService.getDriverStatusLogs(id)
+    res.json(success(logs))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getStatusDashboard = async (req, res, next) => {
+  try {
+    const dashboard = await driverStatusService.getStatusDashboard()
+    res.json(success(dashboard))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const preCheckBatchOperation = async (req, res, next) => {
+  try {
+    const { ids, newStatus } = req.body
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      throw new AppError('请选择要操作的记录', 400, 400)
+    }
+
+    const result = await driverStatusService.preCheckBatchOperation(ids, newStatus)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   getList,
   getDetail,
@@ -327,5 +524,16 @@ module.exports = {
   getAuditDashboard,
   updateUploadProgress,
   checkExpiredQualifications,
-  getPendingAuditCount
+  getPendingAuditCount,
+  preCheckStatusChange,
+  changeAccountStatus,
+  getRiskLevel,
+  autoJudgeRiskLevel,
+  batchChangeAccountStatus,
+  batchTempBan,
+  batchRemindRectification,
+  batchRestoreNormal,
+  getStatusLogs,
+  getStatusDashboard,
+  preCheckBatchOperation
 }

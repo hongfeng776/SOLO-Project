@@ -65,6 +65,119 @@ export interface AuditDashboard {
   todayStart: string
 }
 
+export interface PreCheckViolation {
+  type: string
+  message: string
+  severity: 'high' | 'medium' | 'low'
+}
+
+export interface PreCheckResult {
+  passed: boolean
+  violations: PreCheckViolation[]
+  warnings: PreCheckViolation[]
+  violationCount: number
+  complaintRate: number
+  serviceScore: number
+}
+
+export interface PermissionChange {
+  old: number
+  new: number
+}
+
+export interface PermissionChanges {
+  canAcceptOrder: PermissionChange
+  canWithdraw: PermissionChange
+  canGoOnline: PermissionChange
+  trafficWeight: PermissionChange
+}
+
+export interface DriverStatusLog {
+  id: number
+  driverId: number
+  operationType: number
+  operationTypeName: string
+  oldStatus?: number
+  newStatus?: number
+  oldRiskLevel?: number
+  newRiskLevel?: number
+  changeReason?: string
+  preCheckResult?: PreCheckResult
+  permissionChanges?: PermissionChanges
+  effectiveTime?: string
+  expireTime?: string
+  isAbnormal: number
+  abnormalReason?: string
+  operatorId?: number
+  operatorName?: string
+  operatorRole?: string
+  createTime: string
+}
+
+export interface RiskLevelResult {
+  driverId: number
+  riskLevel: number
+  riskScore: number
+  description: string
+  oldRiskLevel?: number
+  newRiskLevel?: number
+}
+
+export interface StatusDashboard {
+  statusDistribution: {
+    normal: number
+    restricted: number
+    tempBan: number
+    permanentBan: number
+  }
+  riskDistribution: {
+    low: number
+    medium: number
+    high: number
+  }
+  problemDrivers: {
+    lowScore: number
+    highComplaint: number
+    highViolation: number
+  }
+  todayChangeCount: number
+  total: number
+}
+
+export interface BatchStatusResult {
+  id: number
+  name: string
+  success: boolean
+  message: string
+}
+
+export interface BatchOperationStatusResult {
+  total: number
+  successCount: number
+  failCount: number
+  results: BatchStatusResult[]
+}
+
+export interface BlockedDriver {
+  id: number
+  name: string
+  reason: string
+}
+
+export interface BatchPreCheckResult {
+  canProceed: boolean
+  warningMessages: string[]
+  blockedDrivers: BlockedDriver[]
+  statistics: {
+    total: number
+    normal: number
+    restricted: number
+    tempBan: number
+    permanentBan: number
+    highRisk: number
+  }
+}
+
 export interface Driver {
   id: number
   name: string
@@ -97,6 +210,21 @@ export interface Driver {
   uploadProgress: number
   violationPoints: ViolationPoint[]
   status: number
+  accountRiskLevel: number
+  violationCount: number
+  complaintCount: number
+  complaintRate: number
+  serviceScore: number
+  onlineHours: number
+  todayOnlineHours: number
+  trafficWeight: number
+  canWithdraw: number
+  canGoOnline: number
+  statusBanReason?: string
+  statusBanStartTime?: string
+  statusBanEndTime?: string
+  abnormalStatusAlert: number
+  abnormalStatusReason?: string
   auditStatus: number
   auditRemark: string
   auditTime: string
@@ -125,6 +253,11 @@ export interface DriverQueryParams {
   qualificationStatus?: number
   isUrgent?: number
   driverLevel?: number
+  accountRiskLevel?: number
+  minServiceScore?: number
+  maxServiceScore?: number
+  minComplaintRate?: number
+  minViolationCount?: number
 }
 
 export interface BatchOperationResult {

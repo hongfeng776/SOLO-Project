@@ -1,22 +1,80 @@
 export enum DriverStatus {
-  OFFLINE = 0,
-  ONLINE = 1,
-  IN_ORDER = 2,
-  SUSPENDED = 3
+  NORMAL = 0,
+  RESTRICTED = 1,
+  TEMP_BAN = 2,
+  PERMANENT_BAN = 3
 }
 
 export const DriverStatusMap: Record<number, string> = {
-  [DriverStatus.OFFLINE]: '离线',
-  [DriverStatus.ONLINE]: '在线',
-  [DriverStatus.IN_ORDER]: '接单中',
-  [DriverStatus.SUSPENDED]: '已封禁'
+  [DriverStatus.NORMAL]: '正常',
+  [DriverStatus.RESTRICTED]: '限制接单',
+  [DriverStatus.TEMP_BAN]: '临时封禁',
+  [DriverStatus.PERMANENT_BAN]: '永久封禁'
 }
 
 export const DriverStatusColorMap: Record<number, string> = {
-  [DriverStatus.OFFLINE]: '#909399',
-  [DriverStatus.ONLINE]: '#67c23a',
-  [DriverStatus.IN_ORDER]: '#409eff',
-  [DriverStatus.SUSPENDED]: '#f56c6c'
+  [DriverStatus.NORMAL]: '#67c23a',
+  [DriverStatus.RESTRICTED]: '#e6a23c',
+  [DriverStatus.TEMP_BAN]: '#f56c6c',
+  [DriverStatus.PERMANENT_BAN]: '#909399'
+}
+
+export const DriverStatusTypeMap: Record<number, 'success' | 'warning' | 'danger' | 'info'> = {
+  [DriverStatus.NORMAL]: 'success',
+  [DriverStatus.RESTRICTED]: 'warning',
+  [DriverStatus.TEMP_BAN]: 'danger',
+  [DriverStatus.PERMANENT_BAN]: 'info'
+}
+
+export enum AccountRiskLevel {
+  LOW = 1,
+  MEDIUM = 2,
+  HIGH = 3
+}
+
+export const AccountRiskLevelMap: Record<number, string> = {
+  [AccountRiskLevel.LOW]: '低风险',
+  [AccountRiskLevel.MEDIUM]: '中风险',
+  [AccountRiskLevel.HIGH]: '高风险'
+}
+
+export const AccountRiskLevelColorMap: Record<number, string> = {
+  [AccountRiskLevel.LOW]: '#67c23a',
+  [AccountRiskLevel.MEDIUM]: '#e6a23c',
+  [AccountRiskLevel.HIGH]: '#f56c6c'
+}
+
+export const AccountRiskLevelTypeMap: Record<number, 'success' | 'warning' | 'danger'> = {
+  [AccountRiskLevel.LOW]: 'success',
+  [AccountRiskLevel.MEDIUM]: 'warning',
+  [AccountRiskLevel.HIGH]: 'danger'
+}
+
+export enum StatusOperationType {
+  STATUS_CHANGE = 1,
+  BATCH_STATUS_CHANGE = 2,
+  AUTO_JUDGE = 3,
+  ABNORMAL_INTERCEPT = 4,
+  UNBAN = 5,
+  RECTIFICATION_REMIND = 6
+}
+
+export const StatusOperationTypeMap: Record<number, string> = {
+  [StatusOperationType.STATUS_CHANGE]: '状态修改',
+  [StatusOperationType.BATCH_STATUS_CHANGE]: '批量状态修改',
+  [StatusOperationType.AUTO_JUDGE]: '自动判定',
+  [StatusOperationType.ABNORMAL_INTERCEPT]: '异常拦截',
+  [StatusOperationType.UNBAN]: '解封操作',
+  [StatusOperationType.RECTIFICATION_REMIND]: '整改提醒'
+}
+
+export const StatusOperationTypeColorMap: Record<number, string> = {
+  [StatusOperationType.STATUS_CHANGE]: '#409eff',
+  [StatusOperationType.BATCH_STATUS_CHANGE]: '#909399',
+  [StatusOperationType.AUTO_JUDGE]: '#67c23a',
+  [StatusOperationType.ABNORMAL_INTERCEPT]: '#f56c6c',
+  [StatusOperationType.UNBAN]: '#67c23a',
+  [StatusOperationType.RECTIFICATION_REMIND]: '#e6a23c'
 }
 
 export enum DriverAuditStatus {

@@ -156,7 +156,82 @@ const Driver = sequelize.define('Driver', {
   status: {
     type: DataTypes.TINYINT,
     defaultValue: 0,
-    comment: '状态：0离线 1在线 2接单中 3已封禁'
+    comment: '账号状态：0正常 1限制接单 2临时封禁 3永久封禁'
+  },
+  accountRiskLevel: {
+    type: DataTypes.TINYINT,
+    defaultValue: 2,
+    comment: '账号风险等级：1低风险 2中风险 3高风险'
+  },
+  violationCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: '违规次数'
+  },
+  complaintCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: '投诉次数'
+  },
+  complaintRate: {
+    type: DataTypes.DECIMAL(5, 2),
+    defaultValue: 0,
+    comment: '投诉率（%）'
+  },
+  serviceScore: {
+    type: DataTypes.DECIMAL(3, 2),
+    defaultValue: 5.0,
+    comment: '服务评分'
+  },
+  onlineHours: {
+    type: DataTypes.DECIMAL(8, 2),
+    defaultValue: 0,
+    comment: '累计在线时长（小时）'
+  },
+  todayOnlineHours: {
+    type: DataTypes.DECIMAL(6, 2),
+    defaultValue: 0,
+    comment: '今日在线时长（小时）'
+  },
+  trafficWeight: {
+    type: DataTypes.DECIMAL(3, 2),
+    defaultValue: 1.0,
+    comment: '流量分配权重'
+  },
+  canWithdraw: {
+    type: DataTypes.TINYINT,
+    defaultValue: 1,
+    comment: '提现权限：0否 1是'
+  },
+  canGoOnline: {
+    type: DataTypes.TINYINT,
+    defaultValue: 1,
+    comment: '上线权限：0否 1是'
+  },
+  statusBanReason: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    comment: '封禁原因'
+  },
+  statusBanStartTime: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '封禁开始时间'
+  },
+  statusBanEndTime: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '封禁结束时间'
+  },
+  abnormalStatusAlert: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '异常状态告警：0否 1是'
+  },
+  abnormalStatusReason: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    comment: '异常状态原因'
   },
   auditStatus: {
     type: DataTypes.TINYINT,
@@ -217,7 +292,11 @@ const Driver = sequelize.define('Driver', {
     { fields: ['auditStatus'] },
     { fields: ['city'] },
     { fields: ['reputationLevel'] },
-    { fields: ['qualificationStatus'] }
+    { fields: ['qualificationStatus'] },
+    { fields: ['accountRiskLevel'] },
+    { fields: ['serviceScore'] },
+    { fields: ['complaintRate'] },
+    { fields: ['violationCount'] }
   ]
 })
 
