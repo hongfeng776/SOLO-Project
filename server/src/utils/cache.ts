@@ -26,6 +26,10 @@ export enum CacheKey {
   ROLE_DELETION_LOGS = 'role:deletion-logs',
   CHANNEL_AUDIT_LIST = 'channel-audit:list',
   CHANNEL_AUDIT_DETAIL = 'channel-audit:detail:',
+  PRODUCT_LIST = 'product:list',
+  PRODUCT_DETAIL = 'product:detail:',
+  PRODUCT_AUDIT_LIST = 'product-audit:list',
+  PRODUCT_SUBMIT_LOCK = 'product:submit:lock:',
 }
 
 export enum CacheTTL {

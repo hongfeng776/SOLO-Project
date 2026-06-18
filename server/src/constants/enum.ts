@@ -549,3 +549,378 @@ export const CHANNEL_AUDIT_STAGES = [
   { key: ChannelAuditStage.QUALIFICATION_VERIFY, label: '资质核验', description: '核验渠道资质文件有效性' },
   { key: ChannelAuditStage.PERMISSION_ACTIVATE, label: '权限开通', description: '开通渠道合作权限' },
 ] as const;
+
+export enum ChannelLevel {
+  STAR = 'STAR',
+  BRONZE = 'BRONZE',
+  SILVER = 'SILVER',
+  GOLD = 'GOLD',
+  PLATINUM = 'PLATINUM',
+  DIAMOND = 'DIAMOND',
+}
+
+export const CHANNEL_LEVEL_ORDER: ChannelLevel[] = [
+  ChannelLevel.STAR,
+  ChannelLevel.BRONZE,
+  ChannelLevel.SILVER,
+  ChannelLevel.GOLD,
+  ChannelLevel.PLATINUM,
+  ChannelLevel.DIAMOND,
+];
+
+export const CHANNEL_LEVEL_LABELS: Record<ChannelLevel, { label: string; type: 'info' | 'primary' | 'success' | 'warning' | 'danger' }> = {
+  [ChannelLevel.STAR]: { label: '星级渠道', type: 'info' },
+  [ChannelLevel.BRONZE]: { label: '铜牌渠道', type: 'primary' },
+  [ChannelLevel.SILVER]: { label: '银牌渠道', type: 'success' },
+  [ChannelLevel.GOLD]: { label: '金牌渠道', type: 'warning' },
+  [ChannelLevel.PLATINUM]: { label: '铂金渠道', type: 'danger' },
+  [ChannelLevel.DIAMOND]: { label: '钻石渠道', type: 'danger' },
+};
+
+export interface ChannelLevelThreshold {
+  minMonthlyAmount: number;
+  minMonthlyOrders: number;
+  minCooperationMonths: number;
+  minFulfillmentRate: number;
+  minPromotionScore: number;
+}
+
+export interface ChannelLevelBenefits {
+  commissionRateBonus: number;
+  resourceSupportLevel: number;
+  canExclusiveActivity: boolean;
+  canCustomSettle: boolean;
+  prioritySupport: boolean;
+  dedicatedManager: boolean;
+}
+
+export const CHANNEL_LEVEL_CONFIGS: Array<{
+  level: ChannelLevel;
+  threshold: ChannelLevelThreshold;
+  benefits: ChannelLevelBenefits;
+}> = [
+  {
+    level: ChannelLevel.STAR,
+    threshold: {
+      minMonthlyAmount: 0,
+      minMonthlyOrders: 0,
+      minCooperationMonths: 0,
+      minFulfillmentRate: 0,
+      minPromotionScore: 0,
+    },
+    benefits: {
+      commissionRateBonus: 0,
+      resourceSupportLevel: 1,
+      canExclusiveActivity: false,
+      canCustomSettle: false,
+      prioritySupport: false,
+      dedicatedManager: false,
+    },
+  },
+  {
+    level: ChannelLevel.BRONZE,
+    threshold: {
+      minMonthlyAmount: 10000,
+      minMonthlyOrders: 30,
+      minCooperationMonths: 1,
+      minFulfillmentRate: 80,
+      minPromotionScore: 60,
+    },
+    benefits: {
+      commissionRateBonus: 0.02,
+      resourceSupportLevel: 2,
+      canExclusiveActivity: false,
+      canCustomSettle: false,
+      prioritySupport: false,
+      dedicatedManager: false,
+    },
+  },
+  {
+    level: ChannelLevel.SILVER,
+    threshold: {
+      minMonthlyAmount: 50000,
+      minMonthlyOrders: 150,
+      minCooperationMonths: 3,
+      minFulfillmentRate: 85,
+      minPromotionScore: 70,
+    },
+    benefits: {
+      commissionRateBonus: 0.05,
+      resourceSupportLevel: 3,
+      canExclusiveActivity: true,
+      canCustomSettle: false,
+      prioritySupport: true,
+      dedicatedManager: false,
+    },
+  },
+  {
+    level: ChannelLevel.GOLD,
+    threshold: {
+      minMonthlyAmount: 200000,
+      minMonthlyOrders: 600,
+      minCooperationMonths: 6,
+      minFulfillmentRate: 90,
+      minPromotionScore: 80,
+    },
+    benefits: {
+      commissionRateBonus: 0.08,
+      resourceSupportLevel: 4,
+      canExclusiveActivity: true,
+      canCustomSettle: true,
+      prioritySupport: true,
+      dedicatedManager: true,
+    },
+  },
+  {
+    level: ChannelLevel.PLATINUM,
+    threshold: {
+      minMonthlyAmount: 500000,
+      minMonthlyOrders: 1500,
+      minCooperationMonths: 12,
+      minFulfillmentRate: 95,
+      minPromotionScore: 90,
+    },
+    benefits: {
+      commissionRateBonus: 0.12,
+      resourceSupportLevel: 5,
+      canExclusiveActivity: true,
+      canCustomSettle: true,
+      prioritySupport: true,
+      dedicatedManager: true,
+    },
+  },
+  {
+    level: ChannelLevel.DIAMOND,
+    threshold: {
+      minMonthlyAmount: 2000000,
+      minMonthlyOrders: 5000,
+      minCooperationMonths: 24,
+      minFulfillmentRate: 98,
+      minPromotionScore: 95,
+    },
+    benefits: {
+      commissionRateBonus: 0.18,
+      resourceSupportLevel: 6,
+      canExclusiveActivity: true,
+      canCustomSettle: true,
+      prioritySupport: true,
+      dedicatedManager: true,
+    },
+  },
+];
+
+export enum ChannelLevelChangeSource {
+  AUTO_EVALUATE = 'auto_evaluate',
+  MANUAL_ADJUST = 'manual_adjust',
+  BATCH_ADJUST = 'batch_adjust',
+  RULE_CHANGE = 'rule_change',
+}
+
+export const CHANNEL_LEVEL_CHANGE_SOURCE_LABELS: Record<ChannelLevelChangeSource, string> = {
+  [ChannelLevelChangeSource.AUTO_EVALUATE]: '系统自动评级',
+  [ChannelLevelChangeSource.MANUAL_ADJUST]: '人工手动调整',
+  [ChannelLevelChangeSource.BATCH_ADJUST]: '批量调整',
+  [ChannelLevelChangeSource.RULE_CHANGE]: '分级规则变更触发',
+};
+
+export enum ChannelLevelAdjustStatus {
+  PENDING = 0,
+  APPROVED = 1,
+  REJECTED = -1,
+}
+
+export const CHANNEL_LEVEL_ADJUST_STATUS_LABELS: Record<ChannelLevelAdjustStatus, { label: string; type: 'info' | 'warning' | 'success' | 'danger' }> = {
+  [ChannelLevelAdjustStatus.PENDING]: { label: '待审批', type: 'warning' },
+  [ChannelLevelAdjustStatus.APPROVED]: { label: '已通过', type: 'success' },
+  [ChannelLevelAdjustStatus.REJECTED]: { label: '已拒绝', type: 'danger' },
+};
+
+export enum ResourceSupportLevel {
+  NONE = 0,
+  BASIC = 1,
+  STANDARD = 2,
+  ENHANCED = 3,
+  PREMIUM = 4,
+  VIP = 5,
+  CUSTOM = 6,
+}
+
+export const RESOURCE_SUPPORT_LEVEL_LABELS: Record<ResourceSupportLevel, string> = {
+  [ResourceSupportLevel.NONE]: '无',
+  [ResourceSupportLevel.BASIC]: '基础扶持',
+  [ResourceSupportLevel.STANDARD]: '标准扶持',
+  [ResourceSupportLevel.ENHANCED]: '增强扶持',
+  [ResourceSupportLevel.PREMIUM]: '优质扶持',
+  [ResourceSupportLevel.VIP]: 'VIP专属',
+  [ResourceSupportLevel.CUSTOM]: '定制化扶持',
+};
+
+export enum ProductStatus {
+  DRAFT = 0,
+  PENDING_AUDIT = 1,
+  AUDIT_PASSED = 2,
+  AUDIT_REJECTED = -1,
+  LISTED = 3,
+  DELISTED = 4,
+  OFFLINE = -2,
+}
+
+export const PRODUCT_STATUS_LABELS: Record<ProductStatus, { label: string; type: 'info' | 'warning' | 'success' | 'danger' }> = {
+  [ProductStatus.DRAFT]: { label: '草稿', type: 'info' },
+  [ProductStatus.PENDING_AUDIT]: { label: '待审核', type: 'warning' },
+  [ProductStatus.AUDIT_PASSED]: { label: '审核通过', type: 'success' },
+  [ProductStatus.AUDIT_REJECTED]: { label: '审核驳回', type: 'danger' },
+  [ProductStatus.LISTED]: { label: '已上架', type: 'success' },
+  [ProductStatus.DELISTED]: { label: '已下架', type: 'info' },
+  [ProductStatus.OFFLINE]: { label: '已下线', type: 'danger' },
+};
+
+export enum ProductAuditStage {
+  PENDING_SUBMIT = 0,
+  QUALIFICATION_AUDIT = 1,
+  PRICE_AUDIT = 2,
+  COMMISSION_AUDIT = 3,
+  COMPLETED = 4,
+  REJECTED = -1,
+}
+
+export enum ProductAuditAction {
+  SUBMIT = 'submit',
+  QUALIFICATION_PASS = 'qualification_pass',
+  QUALIFICATION_REJECT = 'qualification_reject',
+  PRICE_PASS = 'price_pass',
+  PRICE_REJECT = 'price_reject',
+  COMMISSION_PASS = 'commission_pass',
+  COMMISSION_REJECT = 'commission_reject',
+  LIST = 'list',
+  DELIST = 'delist',
+  OFFLINE = 'offline',
+}
+
+export enum ProductCategory {
+  ELECTRONICS = 'electronics',
+  CLOTHING = 'clothing',
+  FOOD = 'food',
+  BEAUTY = 'beauty',
+  HOME = 'home',
+  SPORTS = 'sports',
+  BOOKS = 'books',
+  TOYS = 'toys',
+  OTHER = 'other',
+}
+
+export const PRODUCT_CATEGORY_LABELS: Record<ProductCategory, string> = {
+  [ProductCategory.ELECTRONICS]: '数码电子',
+  [ProductCategory.CLOTHING]: '服饰鞋包',
+  [ProductCategory.FOOD]: '食品生鲜',
+  [ProductCategory.BEAUTY]: '美妆个护',
+  [ProductCategory.HOME]: '家居日用',
+  [ProductCategory.SPORTS]: '运动户外',
+  [ProductCategory.BOOKS]: '图书文娱',
+  [ProductCategory.TOYS]: '母婴玩具',
+  [ProductCategory.OTHER]: '其他',
+};
+
+export const PRODUCT_CATEGORY_COMMISSION_RANGES: Record<ProductCategory, { min: number; max: number; warning: number }> = {
+  [ProductCategory.ELECTRONICS]: { min: 0.02, max: 0.15, warning: 0.12 },
+  [ProductCategory.CLOTHING]: { min: 0.05, max: 0.30, warning: 0.25 },
+  [ProductCategory.FOOD]: { min: 0.03, max: 0.20, warning: 0.15 },
+  [ProductCategory.BEAUTY]: { min: 0.08, max: 0.40, warning: 0.35 },
+  [ProductCategory.HOME]: { min: 0.05, max: 0.25, warning: 0.20 },
+  [ProductCategory.SPORTS]: { min: 0.05, max: 0.25, warning: 0.20 },
+  [ProductCategory.BOOKS]: { min: 0.05, max: 0.20, warning: 0.15 },
+  [ProductCategory.TOYS]: { min: 0.08, max: 0.30, warning: 0.25 },
+  [ProductCategory.OTHER]: { min: 0.05, max: 0.25, warning: 0.20 },
+};
+
+export const PRODUCT_AUDIT_STAGES = [
+  { key: ProductAuditStage.QUALIFICATION_AUDIT, label: '资质审核', description: '审核商品资质文件有效性' },
+  { key: ProductAuditStage.PRICE_AUDIT, label: '价格审核', description: '审核商品价格体系合理性' },
+  { key: ProductAuditStage.COMMISSION_AUDIT, label: '佣金审核', description: '审核分销佣金比例合规性' },
+] as const;
+
+export enum ProductRejectIssueType {
+  MISSING_QUALIFICATION = 'missing_qualification',
+  INVALID_QUALIFICATION = 'invalid_qualification',
+  UNREASONABLE_PRICE = 'unreasonable_price',
+  INVALID_INVENTORY = 'invalid_inventory',
+  ABNORMAL_COMMISSION = 'abnormal_commission',
+  DUPLICATE_PRODUCT = 'duplicate_product',
+  FAKE_PRODUCT = 'fake_product',
+  OTHER = 'other',
+}
+
+export const PRODUCT_REJECT_ISSUE_LABELS: Record<ProductRejectIssueType, string> = {
+  missing_qualification: '资质缺失',
+  invalid_qualification: '资质无效或过期',
+  unreasonable_price: '价格体系不合理',
+  invalid_inventory: '库存信息异常',
+  abnormal_commission: '佣金比例异常',
+  duplicate_product: '重复商品',
+  fake_product: '虚假商品',
+  other: '其他问题',
+};
+
+export interface ProductMaterial {
+  type: 'image' | 'video' | 'text';
+  url?: string;
+  content?: string;
+  title?: string;
+}
+
+export const DEFAULT_PRODUCT_MATERIALS: Record<ProductCategory, ProductMaterial[]> = {
+  [ProductCategory.ELECTRONICS]: [
+    { type: 'text', title: '产品卖点', content: '正品保障·全国联保·极速发货' },
+    { type: 'text', title: '推荐文案', content: '给大家推荐这款超好用的数码产品，性价比超高！' },
+  ],
+  [ProductCategory.CLOTHING]: [
+    { type: 'text', title: '产品卖点', content: '品质面料·舒适亲肤·潮流款式' },
+    { type: 'text', title: '推荐文案', content: '这件衣服真的太好看了，穿上超有气质！' },
+  ],
+  [ProductCategory.FOOD]: [
+    { type: 'text', title: '产品卖点', content: '新鲜直供·品质保证·美味可口' },
+    { type: 'text', title: '推荐文案', content: '吃货必入！这款美食真的绝了，吃过还想吃~' },
+  ],
+  [ProductCategory.BEAUTY]: [
+    { type: 'text', title: '产品卖点', content: '正品保障·温和不刺激·好评如潮' },
+    { type: 'text', title: '推荐文案', content: '护肤好物分享，用完皮肤真的变好了！' },
+  ],
+  [ProductCategory.HOME]: [
+    { type: 'text', title: '产品卖点', content: '品质生活·实用好物·居家必备' },
+    { type: 'text', title: '推荐文案', content: '居家好物推荐，用过都说好！' },
+  ],
+  [ProductCategory.SPORTS]: [
+    { type: 'text', title: '产品卖点', content: '专业品质·运动必备·舒适体验' },
+    { type: 'text', title: '推荐文案', content: '运动爱好者的福音，这款装备太赞了！' },
+  ],
+  [ProductCategory.BOOKS]: [
+    { type: 'text', title: '产品卖点', content: '正版书籍·知识宝库·成长必读' },
+    { type: 'text', title: '推荐文案', content: '这本书真的改变了我，强烈推荐！' },
+  ],
+  [ProductCategory.TOYS]: [
+    { type: 'text', title: '产品卖点', content: '安全材质·益智有趣·孩子最爱' },
+    { type: 'text', title: '推荐文案', content: '宝妈必入！宝宝玩得开心，妈妈放心~' },
+  ],
+  [ProductCategory.OTHER]: [
+    { type: 'text', title: '产品卖点', content: '品质保障·值得信赖' },
+    { type: 'text', title: '推荐文案', content: '好物分享，真心推荐给大家！' },
+  ],
+};
+
+export const PRODUCT_QUALIFICATION_REQUIRED: ProductCategory[] = [
+  ProductCategory.ELECTRONICS,
+  ProductCategory.FOOD,
+  ProductCategory.BEAUTY,
+];
+
+export const PRODUCT_IMPORT_TEMPLATE_FIELDS = [
+  { key: 'name', label: '商品名称', required: true },
+  { key: 'sku', label: '商品SKU', required: true },
+  { key: 'category', label: '商品分类', required: true },
+  { key: 'originalPrice', label: '原价', required: true },
+  { key: 'salePrice', label: '销售价', required: true },
+  { key: 'stock', label: '库存数量', required: true },
+  { key: 'commissionRate', label: '佣金比例', required: true },
+  { key: 'description', label: '商品描述', required: false },
+  { key: 'brand', label: '品牌', required: false },
+] as const;

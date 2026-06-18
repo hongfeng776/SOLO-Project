@@ -28,6 +28,8 @@ import ChannelAudit from './ChannelAudit.model';
 import ChannelAuditLog from './ChannelAuditLog.model';
 import ChannelBlacklist from './ChannelBlacklist.model';
 import ChannelQualification from './ChannelQualification.model';
+import Product from './Product.model';
+import ProductAuditLog from './ProductAuditLog.model';
 
 const models = {
   User,
@@ -60,6 +62,8 @@ const models = {
   ChannelAuditLog,
   ChannelBlacklist,
   ChannelQualification,
+  Product,
+  ProductAuditLog,
 };
 
 const associate = (): void => {
@@ -123,8 +127,18 @@ const associate = (): void => {
   PromoterRiskRelease.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
   PromoterRiskBehavior.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
   PromoterRiskWarning.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
+
+  Product.belongsTo(Channel, { foreignKey: 'channelId', as: 'channel' });
+  Product.belongsTo(User, { foreignKey: 'submitterId', as: 'submitter' });
+  Product.belongsTo(User, { foreignKey: 'auditorId', as: 'auditor' });
+  Product.belongsTo(User, { foreignKey: 'listerId', as: 'lister' });
+  Product.belongsTo(User, { foreignKey: 'delisterId', as: 'delister' });
+  Product.hasMany(ProductAuditLog, { foreignKey: 'productId', as: 'auditLogs' });
+
+  ProductAuditLog.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+  ProductAuditLog.belongsTo(User, { foreignKey: 'operatorId', as: 'operator' });
 };
 
 export { associate };
-export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification };
+export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification, Product, ProductAuditLog };
 export default models;

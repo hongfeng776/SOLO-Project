@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
-import { ChannelStatus, ChannelType } from '../constants/enum';
+import { ChannelStatus, ChannelType, ChannelLevel } from '../constants/enum';
 import { v4 as uuidv4 } from 'uuid';
 
 interface ChannelAttributes {
@@ -8,6 +8,7 @@ interface ChannelAttributes {
   name: string;
   code: string;
   type: ChannelType;
+  level: ChannelLevel;
   contactName?: string;
   contactPhone?: string;
   contactEmail?: string;
@@ -15,18 +16,26 @@ interface ChannelAttributes {
   status: ChannelStatus;
   remark?: string;
   sort?: number;
+  cooperationStartDate?: Date;
+  monthlyAmount?: number;
+  monthlyOrders?: number;
+  fulfillmentRate?: number;
+  promotionScore?: number;
+  resourceSupportLevel?: number;
+  levelUpdatedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
 }
 
-interface ChannelCreationAttributes extends Optional<ChannelAttributes, 'id' | 'type' | 'commissionRate' | 'status' | 'sort' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
+interface ChannelCreationAttributes extends Optional<ChannelAttributes, 'id' | 'type' | 'level' | 'commissionRate' | 'status' | 'sort' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
 
 class Channel extends Model<ChannelAttributes, ChannelCreationAttributes> implements ChannelAttributes {
   public id!: string;
   public name!: string;
   public code!: string;
   public type!: ChannelType;
+  public level!: ChannelLevel;
   public contactName?: string;
   public contactPhone?: string;
   public contactEmail?: string;
@@ -34,6 +43,13 @@ class Channel extends Model<ChannelAttributes, ChannelCreationAttributes> implem
   public status!: ChannelStatus;
   public remark?: string;
   public sort?: number;
+  public cooperationStartDate?: Date;
+  public monthlyAmount?: number;
+  public monthlyOrders?: number;
+  public fulfillmentRate?: number;
+  public promotionScore?: number;
+  public resourceSupportLevel?: number;
+  public levelUpdatedAt?: Date;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
   public readonly deletedAt?: Date;

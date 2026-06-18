@@ -17,6 +17,7 @@ import promoterManageRoutes from './promoter-manage.routes';
 import promoterLevelRoutes from './promoter-level.routes';
 import promoterRiskRoutes from './promoter-risk.routes';
 import channelAuditRoutes from './channel-audit.routes';
+import productRoutes from './product.routes';
 import ResponseUtils from '../utils/response';
 
 const router = Router();
@@ -34,6 +35,7 @@ router.use('/promoter-audits', promoterAuditRoutes);
 router.use('/promoter-manage', promoterManageRoutes);
 router.use('/promoter-levels', promoterLevelRoutes);
 router.use('/promoter-risk', promoterRiskRoutes);
+router.use('/products', productRoutes);
 router.use('/orders', orderRoutes);
 router.use('/commissions', commissionRoutes);
 router.use('/marketings', marketingRoutes);
