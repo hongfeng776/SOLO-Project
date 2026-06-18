@@ -1,5 +1,6 @@
 const userService = require('../services/userService')
 const accountService = require('../services/accountService')
+const riskControlService = require('../services/riskControlService')
 const ApiResponse = require('../utils/response')
 
 class UserController {
@@ -79,9 +80,80 @@ class UserController {
   async updateStatus(req, res, next) {
     try {
       const { id } = req.params
-      const { status } = req.body
-      await userService.updateStatus(parseInt(id), status)
-      res.json(ApiResponse.success(null, '状态更新成功'))
+      const operatorInfo = {
+        id: req.user?.id,
+        username: req.user?.username,
+        role: req.user?.role,
+        ip: req.ip
+      }
+      const result = await riskControlService.changeStatus(
+        parseInt(id),
+        {
+          newStatus: req.body.status,
+          reason: req.body.reason,
+          statusExpireAt: req.body.statusExpireAt,
+          linkedViolationId: req.body.linkedViolationId,
+          linkedAppealId: req.body.linkedAppealId,
+          force: req.body.force
+        },
+        operatorInfo
+      )
+      res.json(ApiResponse.success(result, '状态变更成功'))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async batchChangeStatus(req, res, next) {
+    try {
+      const { ids, ...rest } = req.body
+      const operatorInfo = {
+        id: req.user?.id,
+        username: req.user?.username,
+        role: req.user?.role,
+        ip: req.ip
+      }
+      const result = await riskControlService.batchChangeStatus(
+        ids,
+        rest,
+        operatorInfo
+      )
+      res.json(ApiResponse.success(result, '批量状态变更完成'))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async getRiskPreview(req, res, next) {
+    try {
+      const { id } = req.params
+      const { newStatus } = req.query
+      const result = await riskControlService.getRiskPreview(
+        parseInt(id),
+        newStatus,
+        req.user?.role
+      )
+      res.json(ApiResponse.success(result))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async getStatusLogs(req, res, next) {
+    try {
+      const { userId } = req.params
+      const result = await riskControlService.getStatusLogs(parseInt(userId), req.query)
+      res.json(ApiResponse.page(result.list, result.total, result.page, result.pageSize))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async getChangeStats(req, res, next) {
+    try {
+      const { userId } = req.params
+      const result = await riskControlService.getChangeStats(parseInt(userId))
+      res.json(ApiResponse.success(result))
     } catch (error) {
       next(error)
     }

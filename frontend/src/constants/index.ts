@@ -74,23 +74,82 @@ export const FileTypeLabel: Record<string, string> = {
 
 export enum UserStatus {
   ACTIVE = 'active',
-  DISABLED = 'disabled',
   FROZEN = 'frozen',
-  BANNED = 'banned'
+  TEMP_BANNED = 'temp_banned',
+  PERMANENT_BANNED = 'permanent_banned'
 }
 
 export const UserStatusLabel: Record<string, string> = {
   [UserStatus.ACTIVE]: '正常',
-  [UserStatus.DISABLED]: '禁用',
   [UserStatus.FROZEN]: '冻结',
-  [UserStatus.BANNED]: '封禁'
+  [UserStatus.TEMP_BANNED]: '临时封禁',
+  [UserStatus.PERMANENT_BANNED]: '永久封禁'
 }
 
 export const UserStatusTagType: Record<string, string> = {
   [UserStatus.ACTIVE]: 'success',
-  [UserStatus.DISABLED]: 'info',
   [UserStatus.FROZEN]: 'warning',
-  [UserStatus.BANNED]: 'danger'
+  [UserStatus.TEMP_BANNED]: 'warning',
+  [UserStatus.PERMANENT_BANNED]: 'danger'
+}
+
+export const UserStatusFlow: Record<string, string[]> = {
+  active: ['frozen', 'temp_banned', 'permanent_banned'],
+  frozen: ['active', 'temp_banned', 'permanent_banned'],
+  temp_banned: ['active', 'frozen', 'permanent_banned'],
+  permanent_banned: ['active']
+}
+
+export const UserStatusGlowColor: Record<string, string> = {
+  active: 'rgba(103, 194, 58, 0.4)',
+  frozen: 'rgba(230, 162, 60, 0.4)',
+  temp_banned: 'rgba(230, 162, 60, 0.5)',
+  permanent_banned: 'rgba(245, 108, 108, 0.5)'
+}
+
+export enum RoleRiskControl {
+  SUPER_ADMIN = 'super_admin',
+  ADMIN = 'admin',
+  AUDITOR = 'auditor',
+  OPERATOR = 'operator'
+}
+
+export const RoleStatusPermission: Record<string, string[]> = {
+  [RoleRiskControl.SUPER_ADMIN]: ['active', 'frozen', 'temp_banned', 'permanent_banned'],
+  [RoleRiskControl.ADMIN]: ['active', 'frozen', 'temp_banned'],
+  [RoleRiskControl.AUDITOR]: ['active', 'frozen', 'temp_banned'],
+  [RoleRiskControl.OPERATOR]: ['active', 'frozen']
+}
+
+export const RoleRiskControlLabel: Record<string, string> = {
+  [RoleRiskControl.SUPER_ADMIN]: '超级管理员',
+  [RoleRiskControl.ADMIN]: '管理员',
+  [RoleRiskControl.AUDITOR]: '审核员',
+  [RoleRiskControl.OPERATOR]: '运营员'
+}
+
+export const HighRiskActions = ['permanent_banned', 'active-from-permanent']
+
+export const StatusFunctionPermissions: Record<string, Record<string, boolean>> = {
+  active: { view: true, edit: true, create: true, audit: true, market: true },
+  frozen: { view: true, edit: false, create: false, audit: false, market: false },
+  temp_banned: { view: false, edit: false, create: false, audit: false, market: false },
+  permanent_banned: { view: false, edit: false, create: false, audit: false, market: false }
+}
+
+export const FunctionPermissionLabels: Record<string, string> = {
+  view: '查看功能',
+  edit: '编辑功能',
+  create: '创作功能',
+  audit: '审核功能',
+  market: '营销活动参与'
+}
+
+export const ChangeTypeLabel: Record<string, string> = {
+  manual: '手动变更',
+  auto_expire: '自动到期',
+  auto_appeal: '申诉通过',
+  batch: '批量变更'
 }
 
 export enum PermissionGroup {

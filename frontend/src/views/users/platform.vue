@@ -1,5 +1,5 @@
 <template>
-  <div class="platform-users">
+  <div class="platform-users" :class="{ shake: shakeTrigger }">
     <div class="filter-card card-wrapper">
       <el-form :inline="true" :model="filterForm" class="filter-form">
         <el-form-item label="关键词">
@@ -21,7 +21,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="filterForm.status" placeholder="全部" clearable style="width: 120px">
+          <el-select v-model="filterForm.status" placeholder="全部" clearable style="width: 140px">
             <el-option
               v-for="item in statusOptions"
               :key="item.value"
@@ -44,7 +44,7 @@
           <el-button
             type="danger"
             :icon="Delete"
-            :disabled="selectedRows.length === 0"
+            :disabled="!canBatchDelete"
             @click="handleBatchDelete"
             class="toolbar-btn"
           >
@@ -53,11 +53,37 @@
           <el-button
             type="warning"
             :icon="Edit"
-            :disabled="selectedRows.length === 0"
+            :disabled="!canBatchUpdate"
             @click="handleBatchUpdateOpen"
             class="toolbar-btn"
           >
             批量修改
+          </el-button>
+          <el-tooltip
+            v-if="!canBatchStatus"
+            content="当前选中用户中包含无权操作账号，仅超级管理员可操作永久封禁"
+            placement="top"
+            :show-after="200"
+          >
+            <el-button
+              type="warning"
+              :icon="Warning"
+              :disabled="selectedRows.length === 0"
+              @click="handleBatchStatusOpen"
+              class="toolbar-btn"
+            >
+              批量状态调整
+            </el-button>
+          </el-tooltip>
+          <el-button
+            v-else
+            type="warning"
+            :icon="Warning"
+            :disabled="selectedRows.length === 0"
+            @click="handleBatchStatusOpen"
+            class="toolbar-btn"
+          >
+            批量状态调整
           </el-button>
           <el-button
             type="info"
@@ -68,14 +94,19 @@
             溯源校验
           </el-button>
         </div>
+        <div class="toolbar-right">
+          <el-tag type="info" class="role-tag">
+            当前角色：{{ currentRoleLabel }}
+          </el-tag>
+        </div>
       </div>
 
       <BatchOperation :selected-count="selectedRows.length" @clear="handleClearSelection">
-        <el-button size="small" type="success" @click="handleBatchStatus('active')">
+        <el-button size="small" type="success" @click="handleBatchStatusAction('active')">
           批量启用
         </el-button>
-        <el-button size="small" type="warning" @click="handleBatchStatus('disabled')">
-          批量禁用
+        <el-button size="small" type="warning" @click="handleBatchStatusAction('frozen')">
+          批量冻结
         </el-button>
       </BatchOperation>
 
@@ -111,11 +142,18 @@
             <StatusTag :status="row.role" type="role" />
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="80" align="center">
+        <el-table-column label="状态" width="110" align="center">
           <template #default="{ row }">
-            <el-tag :type="getStatusTagType(row.status)" size="small">
-              {{ UserStatusLabel[row.status] || row.status }}
-            </el-tag>
+            <span
+              class="status-glow-tag"
+              :class="'status-' + row.status"
+              :style="{ '--glow-color': getStatusGlowColor(row.status) }"
+              @click="handleStatusChange(row)"
+            >
+              <el-tag :type="getStatusTagType(row.status)" size="small" effect="dark" :round="true">
+                {{ UserStatusLabel[row.status] || row.status }}
+              </el-tag>
+            </span>
           </template>
         </el-table-column>
         <el-table-column label="标签" width="160">
@@ -149,12 +187,38 @@
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" align="center" fixed="right">
+        <el-table-column label="操作" width="280" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button
+              type="primary"
+              link
+              size="small"
+              :disabled="isFrozenOrBanned(row) && !canUnlock(row)"
+              @click="handleEdit(row)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              type="warning"
+              link
+              size="small"
+              :disabled="!canChangeStatus(row, 'frozen') && !canChangeStatus(row, 'temp_banned') && !canChangeStatus(row, 'permanent_banned') && !canChangeStatus(row, 'active')"
+              @click="handleStatusChange(row)"
+            >
+              状态
+            </el-button>
+            <el-button type="info" link size="small" @click="handleViewStatusLogs(row)">历史</el-button>
             <el-button type="info" link size="small" @click="handleViewEditLogs(row)">变更</el-button>
-            <el-button type="warning" link size="small" @click="handleTraceOne(row)">溯源</el-button>
-            <el-button type="danger" link size="small" @click="handleDelete(row)">删除</el-button>
+            <el-button type="success" link size="small" @click="handleTraceOne(row)">溯源</el-button>
+            <el-tooltip
+              v-if="!canDelete(row)"
+              content="仅有超级管理员可执行删除操作"
+              placement="top"
+              :show-after="200"
+            >
+              <el-button type="danger" link size="small" :disabled="true">删除</el-button>
+            </el-tooltip>
+            <el-button v-else type="danger" link size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </DataTable>
@@ -312,7 +376,7 @@
         </div>
       </div>
 
-      <div class="edit-step-content" :class="'step-slide-' + editStep">
+      <div class="edit-step-content">
         <div v-show="editStep === 1" class="step-panel">
           <el-form :model="editForm" label-width="90px">
             <el-form-item label="用户名">
@@ -321,11 +385,20 @@
             <el-form-item label="UID">
               <el-input :model-value="editForm.uid" disabled />
             </el-form-item>
+            <el-alert
+              v-if="['frozen', 'temp_banned', 'permanent_banned'].includes(editForm.status)"
+              :title="'当前账号状态为【' + UserStatusLabel[editForm.status] + '】，' + (editForm.status === 'frozen' ? '仅支持查看和状态回滚' : '禁止编辑所有核心字段')"
+              type="error"
+              :closable="false"
+              show-icon
+              class="core-field-alert"
+            />
             <el-form-item label="昵称">
               <div class="validated-input-wrap">
                 <el-input
                   v-model="editForm.nickname"
                   placeholder="请输入昵称"
+                  :disabled="['temp_banned', 'permanent_banned'].includes(editForm.status)"
                   class="focus-scale-input"
                   @blur="validateEditField('nickname')"
                 />
@@ -337,13 +410,13 @@
               </div>
             </el-form-item>
             <el-form-item label="邮箱">
-              <el-input v-model="editForm.email" placeholder="请输入邮箱" class="focus-scale-input" />
+              <el-input v-model="editForm.email" placeholder="请输入邮箱" :disabled="['temp_banned', 'permanent_banned'].includes(editForm.status)" class="focus-scale-input" />
             </el-form-item>
             <el-form-item label="头像">
-              <el-input v-model="editForm.avatar" placeholder="头像URL" class="focus-scale-input" />
+              <el-input v-model="editForm.avatar" placeholder="头像URL" :disabled="['temp_banned', 'permanent_banned'].includes(editForm.status)" class="focus-scale-input" />
             </el-form-item>
             <el-form-item label="角色">
-              <el-select v-model="editForm.role" style="width: 100%">
+              <el-select v-model="editForm.role" style="width: 100%" :disabled="['temp_banned', 'permanent_banned'].includes(editForm.status)">
                 <el-option
                   v-for="item in roleOptions"
                   :key="item.value"
@@ -357,8 +430,8 @@
 
         <div v-show="editStep === 2" class="step-panel">
           <el-alert
-            v-if="['frozen', 'banned'].includes(editForm.status)"
-            :title="'当前账号状态为' + UserStatusLabel[editForm.status] + '，禁止修改手机号、登录密码等核心字段'"
+            v-if="['frozen', 'temp_banned', 'permanent_banned'].includes(editForm.status)"
+            :title="'当前账号状态为【' + UserStatusLabel[editForm.status] + '】，禁止修改手机号、登录密码等核心字段'"
             type="error"
             :closable="false"
             show-icon
@@ -378,7 +451,7 @@
                 <el-input
                   v-model="editForm.phone"
                   placeholder="请输入手机号"
-                  :disabled="['frozen', 'banned'].includes(editForm.status)"
+                  :disabled="['frozen', 'temp_banned', 'permanent_banned'].includes(editForm.status)"
                   class="focus-scale-input"
                   @blur="validateEditField('phone')"
                 />
@@ -395,11 +468,11 @@
                 type="password"
                 placeholder="留空则不修改"
                 show-password
-                :disabled="['frozen', 'banned'].includes(editForm.status)"
+                :disabled="['frozen', 'temp_banned', 'permanent_banned'].includes(editForm.status)"
                 class="focus-scale-input"
               />
             </el-form-item>
-            <el-form-item v-if="!['frozen', 'banned'].includes(editForm.status) && (editForm.phone !== editOriginal.phone || editForm.newPassword)" label="身份校验" prop="verifyPassword">
+            <el-form-item v-if="!['frozen', 'temp_banned', 'permanent_banned'].includes(editForm.status) && (editForm.phone !== editOriginal.phone || editForm.newPassword)" label="身份校验" prop="verifyPassword">
               <el-input
                 v-model="editForm.verifyPassword"
                 type="password"
@@ -407,17 +480,6 @@
                 show-password
                 class="focus-scale-input"
               />
-            </el-form-item>
-            <el-form-item label="状态">
-              <el-radio-group v-model="editForm.status">
-                <el-radio
-                  v-for="item in statusOptions"
-                  :key="item.value"
-                  :value="item.value"
-                >
-                  {{ item.label }}
-                </el-radio>
-              </el-radio-group>
             </el-form-item>
           </el-form>
         </div>
@@ -433,10 +495,11 @@
                 default-first-option
                 placeholder="输入标签后回车"
                 style="width: 100%"
+                :disabled="['temp_banned', 'permanent_banned'].includes(editForm.status)"
               />
             </el-form-item>
             <el-form-item label="权限分组">
-              <el-select v-model="editForm.permissionGroup" style="width: 100%">
+              <el-select v-model="editForm.permissionGroup" style="width: 100%" :disabled="['temp_banned', 'permanent_banned'].includes(editForm.status)">
                 <el-option
                   v-for="item in permissionGroupOptions"
                   :key="item.value"
@@ -461,7 +524,7 @@
         <div class="edit-dialog-footer">
           <el-button v-if="editStep > 1" @click="editStep--">上一步</el-button>
           <el-button v-if="editStep < 3" type="primary" @click="editStep++">下一步</el-button>
-          <el-button v-if="editStep === 3" type="primary" :loading="submitLoading" @click="handleEditSubmit">
+          <el-button v-if="editStep === 3" type="primary" :loading="submitLoading" :disabled="['temp_banned', 'permanent_banned'].includes(editForm.status)" @click="handleEditSubmit">
             确认修改
           </el-button>
           <el-button @click="editDialogVisible = false">取消</el-button>
@@ -470,10 +533,310 @@
     </el-dialog>
 
     <el-dialog
+      v-model="statusDialogVisible"
+      :title="'调整账号状态 - ' + (statusUser?.username || '')"
+      width="560px"
+      class="status-change-dialog scale-fade-dialog"
+      @open="handleStatusDialogOpen"
+    >
+      <el-steps :active="statusStep" finish-status="success" class="status-steps">
+        <el-step title="风控预检" />
+        <el-step title="原因与到期" />
+        <el-step title="权限联动预览" />
+      </el-steps>
+
+      <div v-if="statusStep === 1" class="status-step-panel">
+        <el-descriptions title="当前账号信息" :column="1" border size="small" class="status-desc">
+          <el-descriptions-item label="用户名">{{ statusUser?.username }}</el-descriptions-item>
+          <el-descriptions-item label="当前状态">
+            <span
+              class="status-glow-tag"
+              :class="'status-' + statusUser?.status"
+              :style="{ '--glow-color': getStatusGlowColor(statusUser?.status || '') }"
+            >
+              <el-tag :type="getStatusTagType(statusUser?.status || '')" size="small" effect="dark">
+                {{ UserStatusLabel[statusUser?.status || ''] }}
+              </el-tag>
+            </span>
+          </el-descriptions-item>
+          <el-descriptions-item label="会员等级">
+            <StatusTag v-if="statusUser?.member" :status="statusUser.member.level" type="member" />
+            <span v-else>-</span>
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <el-form label-width="100px" class="status-form">
+          <el-form-item label="目标状态" required>
+            <el-radio-group v-model="statusForm.newStatus" @change="handlePreviewStatusChange">
+              <div
+                v-for="opt in allowedStatusOptions"
+                :key="opt.value"
+                class="status-option"
+                :class="{
+                  disabled: !canChangeStatus(statusUser!, opt.value),
+                  selected: statusForm.newStatus === opt.value
+                }"
+              >
+                <el-radio
+                  :value="opt.value"
+                  :disabled="!canChangeStatus(statusUser!, opt.value)"
+                >
+                  {{ opt.label }}
+                </el-radio>
+                <el-tooltip
+                  v-if="!canChangeStatus(statusUser!, opt.value)"
+                  :content="getStatusDisabledReason(statusUser!, opt.value)"
+                  placement="right"
+                  :show-after="100"
+                >
+                  <el-icon class="lock-icon"><Lock /></el-icon>
+                </el-tooltip>
+              </div>
+            </el-radio-group>
+          </el-form-item>
+        </el-form>
+
+        <div v-if="riskPreview" class="risk-preview">
+          <el-alert
+            v-if="!riskPreview.mutex.valid"
+            :title="riskPreview.mutex.reason"
+            type="error"
+            show-icon
+            :closable="false"
+          />
+          <el-alert
+            v-else-if="!riskPreview.appeal.valid"
+            :title="riskPreview.appeal.reason"
+            type="error"
+            show-icon
+            :closable="false"
+          />
+          <el-alert
+            v-else-if="!riskPreview.role.valid"
+            :title="riskPreview.role.reason + '。允许: ' + (riskPreview.role.allowed || '')"
+            type="error"
+            show-icon
+            :closable="false"
+          />
+          <el-alert
+            v-else-if="riskPreview.frequency.blocked"
+            :title="'高频变更拦截：' + riskPreview.frequency.violations.map(v => v.message).join('；')"
+            type="error"
+            show-icon
+            :closable="false"
+          >
+            <template #default>
+              <el-button type="danger" plain size="small" @click="handleForceSubmitEnable">
+                强制提交（仅超级管理员）
+              </el-button>
+            </template>
+          </el-alert>
+          <el-alert
+            v-else-if="riskPreview.match.warning"
+            :title="riskPreview.match.reason"
+            type="warning"
+            show-icon
+            :closable="false"
+          />
+
+          <el-descriptions title="7天变更频次统计" :column="2" border size="small" v-if="riskPreview.frequency.stats">
+            <el-descriptions-item label="同状态变更次数">
+              <span :class="{ danger: riskPreview.frequency.stats.sameStatusCount >= 3 }">
+                {{ riskPreview.frequency.stats.sameStatusCount }} 次
+              </span>
+            </el-descriptions-item>
+            <el-descriptions-item label="总变更次数">
+              <span :class="{ danger: riskPreview.frequency.stats.totalCount >= 10 }">
+                {{ riskPreview.frequency.stats.totalCount }} 次
+              </span>
+            </el-descriptions-item>
+          </el-descriptions>
+
+          <el-descriptions title="关联未处置项" :column="1" border size="small" v-if="riskPreview.pendingAppeals.length || riskPreview.unresolvedViolations.length">
+            <el-descriptions-item v-if="riskPreview.pendingAppeals.length" label="处理中申诉">
+              <el-tag
+                v-for="a in riskPreview.pendingAppeals"
+                :key="a.id"
+                size="small"
+                type="warning"
+                class="log-tag"
+              >
+                申诉#{{ a.id }}
+              </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item v-if="riskPreview.unresolvedViolations.length" label="未处置违规">
+              <el-tag
+                v-for="v in riskPreview.unresolvedViolations"
+                :key="v.id"
+                size="small"
+                :type="v.level === 'severe' ? 'danger' : 'warning'"
+                class="log-tag"
+              >
+                {{ v.type }}({{ v.level }})
+              </el-tag>
+            </el-descriptions-item>
+          </el-descriptions>
+        </div>
+      </div>
+
+      <div v-if="statusStep === 2" class="status-step-panel">
+        <el-form :model="statusForm" label-width="100px" class="status-form">
+          <el-form-item label="变更原因" required>
+            <el-input
+              v-model="statusForm.reason"
+              type="textarea"
+              :rows="3"
+              placeholder="请填写变更原因，便于后续溯源"
+              maxlength="500"
+              show-word-limit
+            />
+          </el-form-item>
+          <el-form-item v-if="statusForm.newStatus === 'temp_banned'" label="到期时间">
+            <el-date-picker
+              v-model="statusForm.statusExpireAt"
+              type="datetime"
+              placeholder="选择临时封禁到期时间"
+              style="width: 100%"
+              value-format="YYYY-MM-DD HH:mm:ss"
+            />
+          </el-form-item>
+          <el-form-item label="操作确认">
+            <el-checkbox v-model="statusForm.confirm">
+              我已确认该状态变更符合风控规范
+            </el-checkbox>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <div v-if="statusStep === 3" class="status-step-panel">
+        <el-descriptions title="变更摘要" :column="1" border size="small">
+          <el-descriptions-item label="变更状态">
+            {{ UserStatusLabel[statusUser?.status || ''] }} →
+            <span
+              class="status-glow-tag"
+              :class="'status-' + statusForm.newStatus"
+              :style="{ '--glow-color': getStatusGlowColor(statusForm.newStatus) }"
+            >
+              <el-tag :type="getStatusTagType(statusForm.newStatus)" size="small" effect="dark">
+                {{ UserStatusLabel[statusForm.newStatus] }}
+              </el-tag>
+            </span>
+          </el-descriptions-item>
+          <el-descriptions-item label="变更原因">{{ statusForm.reason || '-' }}</el-descriptions-item>
+          <el-descriptions-item v-if="statusForm.newStatus === 'temp_banned'" label="到期时间">
+            {{ statusForm.statusExpireAt || '未设置' }}
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <div class="permission-sync-preview">
+          <h4 class="preview-title">联动同步的用户功能权限</h4>
+          <div class="perm-grid">
+            <div
+              v-for="(enabled, key) in riskPreview?.functionPermissions || {}"
+              :key="key"
+              class="perm-item"
+              :class="enabled ? 'enabled' : 'disabled'"
+            >
+              <el-icon v-if="enabled" class="perm-icon ok"><CircleCheckFilled /></el-icon>
+              <el-icon v-else class="perm-icon no"><CircleCloseFilled /></el-icon>
+              <span>{{ FunctionPermissionLabels[key as keyof typeof FunctionPermissionLabels] }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <el-button @click="statusDialogVisible = false">取消</el-button>
+        <el-button v-if="statusStep > 1" @click="statusStep--">上一步</el-button>
+        <el-button
+          v-if="statusStep < 3"
+          type="primary"
+          :disabled="statusStep === 1 && (!statusForm.newStatus || !riskPreview?.mutex.valid || !riskPreview?.appeal.valid || !riskPreview?.role.valid || (riskPreview.frequency.blocked && !statusForm.force))"
+          @click="statusStep++"
+        >
+          下一步
+        </el-button>
+        <el-button
+          v-if="statusStep === 3"
+          type="primary"
+          :loading="submitLoading"
+          :disabled="!statusForm.confirm"
+          @click="handleStatusSubmit"
+        >
+          确认提交
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="batchStatusDialogVisible"
+      title="批量调整账号状态"
+      width="560px"
+      class="batch-status-dialog scale-fade-dialog"
+    >
+      <el-alert
+        title="系统将根据操作人角色自动过滤无权操作账号，VIP用户需谨慎处理"
+        type="warning"
+        show-icon
+        :closable="false"
+        class="batch-alert"
+      />
+      <div class="batch-summary">
+        已选 <em>{{ selectedRows.length }}</em> 个用户，预计可操作 <em>{{ allowedBatchCount }}</em> 个
+      </div>
+      <el-form label-width="100px" class="status-form">
+        <el-form-item label="目标状态" required>
+          <el-radio-group v-model="batchStatusForm.newStatus">
+            <div
+              v-for="opt in batchAllowedOptions"
+              :key="opt.value"
+              class="status-option"
+              :class="{ selected: batchStatusForm.newStatus === opt.value }"
+            >
+              <el-radio :value="opt.value">
+                {{ opt.label }}
+              </el-radio>
+            </div>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="变更原因" required>
+          <el-input
+            v-model="batchStatusForm.reason"
+            type="textarea"
+            :rows="3"
+            placeholder="请填写变更原因"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+        <el-form-item v-if="batchStatusForm.newStatus === 'temp_banned'" label="到期时间">
+          <el-date-picker
+            v-model="batchStatusForm.statusExpireAt"
+            type="datetime"
+            placeholder="选择临时封禁到期时间"
+            style="width: 100%"
+            value-format="YYYY-MM-DD HH:mm:ss"
+          />
+        </el-form-item>
+        <el-form-item label="操作确认">
+          <el-checkbox v-model="batchStatusForm.confirm">
+            我已确认该批量状态变更符合风控规范
+          </el-checkbox>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="batchStatusDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" :disabled="!batchStatusForm.confirm || !batchStatusForm.newStatus" @click="handleBatchStatusSubmit">
+          确认提交
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
       v-model="batchUpdateDialogVisible"
       title="批量修改用户信息"
       width="520px"
-      class="batch-dialog"
+      class="batch-dialog scale-fade-dialog"
     >
       <el-alert
         title="批量修改将根据用户等级和账号状态差异化适配修改规则，VIP用户核心标签禁止批量修改"
@@ -524,7 +887,7 @@
       v-model="traceDialogVisible"
       title="账号信息溯源校验"
       width="900px"
-      class="trace-dialog"
+      class="trace-dialog scale-fade-dialog"
     >
       <div class="trace-search">
         <el-form :inline="true" :model="traceForm" class="trace-search-form">
@@ -581,9 +944,15 @@
               <div class="trace-user-detail">
                 <div class="trace-user-name">
                   {{ item.user.nickname || item.user.username }}
-                  <el-tag size="small" :type="getStatusTagType(item.user.status)">
-                    {{ UserStatusLabel[item.user.status] }}
-                  </el-tag>
+                  <span
+                    class="status-glow-tag"
+                    :class="'status-' + item.user.status"
+                    :style="{ '--glow-color': getStatusGlowColor(item.user.status) }"
+                  >
+                    <el-tag :type="getStatusTagType(item.user.status)" size="small" effect="dark">
+                      {{ UserStatusLabel[item.user.status] }}
+                    </el-tag>
+                  </span>
                   <StatusTag v-if="item.member" :status="item.member.level" type="member" />
                 </div>
                 <div class="trace-user-meta">
@@ -651,38 +1020,94 @@
       v-model="editLogDialogVisible"
       :title="'变更记录 - ' + (editLogUser?.username || '')"
       width="700px"
+      class="scale-fade-dialog"
     >
-      <el-table :data="editLogData" v-loading="editLogLoading" max-height="400">
-        <el-table-column prop="field" label="字段" width="100" />
-        <el-table-column label="原值" width="180">
-          <template #default="{ row }">
-            <el-tooltip :content="row.oldValue" placement="top" :disabled="!row.oldValue || row.oldValue.length <= 30">
-              <span>{{ truncateStr(row.oldValue, 30) }}</span>
-            </el-tooltip>
-          </template>
-        </el-table-column>
-        <el-table-column label="新值" width="180">
-          <template #default="{ row }">
-            <el-tooltip :content="row.newValue" placement="top" :disabled="!row.newValue || row.newValue.length <= 30">
-              <span>{{ truncateStr(row.newValue, 30) }}</span>
-            </el-tooltip>
-          </template>
-        </el-table-column>
-        <el-table-column prop="editorName" label="操作人" width="100" />
-        <el-table-column label="时间" width="160">
-          <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
-        </el-table-column>
-      </el-table>
+      <el-tabs v-model="editLogActiveTab" class="edit-log-tabs">
+        <el-tab-pane label="编辑变更" name="edit">
+          <el-table :data="editLogData" v-loading="editLogLoading" max-height="400">
+            <el-table-column prop="field" label="字段" width="100" />
+            <el-table-column label="原值" width="180">
+              <template #default="{ row }">
+                <el-tooltip :content="row.oldValue" placement="top" :disabled="!row.oldValue || row.oldValue.length <= 30">
+                  <span>{{ truncateStr(row.oldValue, 30) }}</span>
+                </el-tooltip>
+              </template>
+            </el-table-column>
+            <el-table-column label="新值" width="180">
+              <template #default="{ row }">
+                <el-tooltip :content="row.newValue" placement="top" :disabled="!row.newValue || row.newValue.length <= 30">
+                  <span>{{ truncateStr(row.newValue, 30) }}</span>
+                </el-tooltip>
+              </template>
+            </el-table-column>
+            <el-table-column prop="editorName" label="操作人" width="100" />
+            <el-table-column label="时间" width="160">
+              <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+        <el-tab-pane label="状态变更" name="status">
+          <el-table :data="statusLogData" v-loading="statusLogLoading" max-height="400">
+            <el-table-column label="原状态" width="110">
+              <template #default="{ row }">
+                <span v-if="row.oldStatus">
+                  {{ UserStatusLabel[row.oldStatus] }}
+                </span>
+                <span v-else class="text-muted">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="新状态" width="110">
+              <template #default="{ row }">
+                <el-tag :type="getStatusTagType(row.newStatus)" size="small" effect="dark">
+                  {{ UserStatusLabel[row.newStatus] }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="变更原因" min-width="140">
+              <template #default="{ row }">
+                <el-tooltip :content="row.reason" placement="top" :disabled="!row.reason || row.reason.length <= 20">
+                  <span>{{ truncateStr(row.reason, 20) }}</span>
+                </el-tooltip>
+              </template>
+            </el-table-column>
+            <el-table-column prop="operatorName" label="操作人" width="90" />
+            <el-table-column label="变更类型" width="100">
+              <template #default="{ row }">
+                {{ ChangeTypeLabel[row.changeType] || row.changeType }}
+              </template>
+            </el-table-column>
+            <el-table-column label="时间" width="150">
+              <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+      </el-tabs>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { Search, Refresh, Plus, Delete, Edit, Warning, Right, CircleCheckFilled, CircleCloseFilled } from '@element-plus/icons-vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import {
+  Search, Refresh, Plus, Delete, Edit, Warning, Right,
+  CircleCheckFilled, CircleCloseFilled, Lock
+} from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { DataTable, StatusTag, BatchOperation, EmptyState } from '@/components/business'
-import { UserRoleLabel, UserStatusLabel, UserStatusTagType, PermissionGroupLabel } from '@/constants'
+import { useUserStore } from '@/stores/user'
+import {
+  UserRoleLabel,
+  UserStatusLabel,
+  UserStatusTagType,
+  UserStatusGlowColor,
+  UserStatusFlow,
+  PermissionGroupLabel,
+  RoleStatusPermission,
+  HighRiskActions,
+  FunctionPermissionLabels,
+  ChangeTypeLabel,
+  UserRole
+} from '@/constants'
 import {
   getUserList,
   createUser,
@@ -692,9 +1117,19 @@ import {
   validateAccount,
   getEditLogs,
   batchUpdateUsers,
-  traceAccount
+  traceAccount,
+  updateUserStatus,
+  getRiskPreview,
+  getStatusLogs,
+  getChangeStats,
+  batchChangeUserStatus
 } from '@/api/userManage'
-import type { UserInfo, FieldValidation, AccountValidationResult, UserEditLog, TraceResultItem } from '@/types'
+import type {
+  UserInfo, FieldValidation, AccountValidationResult, UserEditLog,
+  TraceResultItem, UserStatusLog, RiskPreview
+} from '@/types'
+
+const userStore = useUserStore()
 
 const defaultFieldValidation = (): { phone: FieldValidation; nickname: FieldValidation; uid: FieldValidation; username: FieldValidation } => ({
   phone: { valid: true, errors: [] },
@@ -710,6 +1145,7 @@ const page = ref(1)
 const pageSize = ref(20)
 const selectedRows = ref<UserInfo[]>([])
 const submitLoading = ref(false)
+const shakeTrigger = ref(false)
 
 const createDialogVisible = ref(false)
 const createFormRef = ref<FormInstance>()
@@ -723,6 +1159,14 @@ const editFieldValidation = reactive(defaultFieldValidation())
 const batchUpdateDialogVisible = ref(false)
 const traceDialogVisible = ref(false)
 const editLogDialogVisible = ref(false)
+const editLogActiveTab = ref('edit')
+
+const statusDialogVisible = ref(false)
+const statusStep = ref(1)
+const statusUser = ref<UserInfo | null>(null)
+const riskPreview = ref<RiskPreview | null>(null)
+
+const batchStatusDialogVisible = ref(false)
 
 const traceLoading = ref(false)
 const traceSearched = ref(false)
@@ -733,6 +1177,8 @@ const tracePage = ref(1)
 const editLogLoading = ref(false)
 const editLogData = ref<UserEditLog[]>([])
 const editLogUser = ref<UserInfo | null>(null)
+const statusLogLoading = ref(false)
+const statusLogData = ref<UserStatusLog[]>([])
 
 const filterForm = reactive({
   keyword: '',
@@ -776,6 +1222,21 @@ const batchForm = reactive({
   permissionGroup: ''
 })
 
+const statusForm = reactive({
+  newStatus: '',
+  reason: '',
+  statusExpireAt: '',
+  confirm: false,
+  force: false
+})
+
+const batchStatusForm = reactive({
+  newStatus: '',
+  reason: '',
+  statusExpireAt: '',
+  confirm: false
+})
+
 const traceForm = reactive({
   uid: '',
   phone: '',
@@ -799,7 +1260,96 @@ const roleOptions = Object.entries(UserRoleLabel).map(([value, label]) => ({ val
 const statusOptions = Object.entries(UserStatusLabel).map(([value, label]) => ({ value, label }))
 const permissionGroupOptions = Object.entries(PermissionGroupLabel).map(([value, label]) => ({ value, label }))
 
+const currentRoleLabel = computed(() => UserRoleLabel[userStore.userRole as keyof typeof UserRoleLabel] || '')
+const currentRole = computed(() => userStore.userRole || '')
+
+const allowedStatusOptions = computed(() => {
+  const all = statusOptions
+  if (!statusUser.value) return all
+  const fromStatus = statusUser.value.status
+  return all.filter((opt) => {
+    if (opt.value === fromStatus) return true
+    const flow = UserStatusFlow[fromStatus] || []
+    return flow.includes(opt.value)
+  })
+})
+
+const batchAllowedOptions = computed(() => {
+  const allowed = RoleStatusPermission[currentRole.value] || []
+  return statusOptions.filter((opt) => allowed.includes(opt.value))
+})
+
+const allowedBatchCount = computed(() => {
+  const targetStatus = batchStatusForm.newStatus
+  if (!targetStatus) return selectedRows.value.length
+  return selectedRows.value.filter((r) => canChangeStatus(r, targetStatus)).length
+})
+
+const canBatchDelete = computed(() =>
+  selectedRows.value.length > 0 && currentRole.value === UserRole.SUPER_ADMIN
+)
+const canBatchUpdate = computed(() =>
+  selectedRows.value.length > 0 && (currentRole.value === UserRole.SUPER_ADMIN || currentRole.value === UserRole.ADMIN)
+)
+const canBatchStatus = computed(() => {
+  if (selectedRows.value.length === 0) return true
+  const allAllowed = selectedRows.value.every((r) => {
+    const targetStatuses = RoleStatusPermission[currentRole.value] || []
+    return ['active', 'frozen', 'temp_banned', 'permanent_banned'].every((s) => {
+      if (!UserStatusFlow[r.status]?.includes(s)) return true
+      return targetStatuses.includes(s) || s !== 'permanent_banned'
+    })
+  })
+  return allAllowed
+})
+
+const getStatusGlowColor = (status: string) => UserStatusGlowColor[status] || 'transparent'
 const getStatusTagType = (status: string) => UserStatusTagType[status] || 'info'
+
+const isFrozenOrBanned = (row: UserInfo) => ['frozen', 'temp_banned', 'permanent_banned'].includes(row.status)
+
+const canUnlock = (row: UserInfo) => {
+  if (row.status === 'active') return true
+  const allowed = RoleStatusPermission[currentRole.value] || []
+  return allowed.includes('active')
+}
+
+const canChangeStatus = (row: UserInfo, targetStatus: string) => {
+  if (row.status === targetStatus) return false
+  const flow = UserStatusFlow[row.status] || []
+  if (!flow.includes(targetStatus)) return false
+
+  const allowed = RoleStatusPermission[currentRole.value] || []
+  if (!allowed.includes(targetStatus)) return false
+
+  const fromStatus = row.status
+  const action = `${targetStatus}${fromStatus === 'permanent_banned' ? '-from-permanent' : ''}`
+  if (HighRiskActions.includes(action) && currentRole.value !== UserRole.SUPER_ADMIN) {
+    return false
+  }
+  return true
+}
+
+const getStatusDisabledReason = (row: UserInfo, targetStatus: string) => {
+  if (row.status === targetStatus) return '账号已处于此状态'
+  const flow = UserStatusFlow[row.status] || []
+  if (!flow.includes(targetStatus)) return '不符合状态流转规则'
+  const allowed = RoleStatusPermission[currentRole.value] || []
+  if (!allowed.includes(targetStatus)) return '当前角色无权操作此状态'
+  const fromStatus = row.status
+  const action = `${targetStatus}${fromStatus === 'permanent_banned' ? '-from-permanent' : ''}`
+  if (HighRiskActions.includes(action)) return '该操作仅超级管理员可执行'
+  return '无权限'
+}
+
+const canDelete = (row: UserInfo) => currentRole.value === UserRole.SUPER_ADMIN
+
+const triggerShake = () => {
+  shakeTrigger.value = true
+  setTimeout(() => {
+    shakeTrigger.value = false
+  }, 400)
+}
 
 const fetchList = async () => {
   loading.value = true
@@ -1012,6 +1562,163 @@ const handleEditDialogClosed = () => {
   editForm.remark = ''
 }
 
+const handleStatusChange = async (row: UserInfo) => {
+  statusUser.value = row
+  statusStep.value = 1
+  statusForm.newStatus = ''
+  statusForm.reason = ''
+  statusForm.statusExpireAt = ''
+  statusForm.confirm = false
+  statusForm.force = false
+  riskPreview.value = null
+  statusDialogVisible.value = true
+}
+
+const handleStatusDialogOpen = () => {
+  nextTick(() => {
+    if (statusUser.value) {
+      handlePreviewStatusChange()
+    }
+  })
+}
+
+const handlePreviewStatusChange = async () => {
+  if (!statusUser.value || !statusForm.newStatus) {
+    riskPreview.value = null
+    return
+  }
+  try {
+    const res = await getRiskPreview(statusUser.value.id, statusForm.newStatus)
+    riskPreview.value = res.data
+    if (res.data.frequency.blocked) {
+      triggerShake()
+      ElMessage.warning(res.data.frequency.violations.map((v) => v.message).join('；'))
+    }
+  } catch (error) {
+    console.error('风控预检失败:', error)
+  }
+}
+
+const handleForceSubmitEnable = () => {
+  if (currentRole.value === UserRole.SUPER_ADMIN) {
+    statusForm.force = true
+    ElMessage.success('已启用强制提交模式')
+  } else {
+    ElMessage.error('仅超级管理员可执行强制提交')
+  }
+}
+
+const handleStatusSubmit = async () => {
+  if (!statusUser.value || !statusForm.newStatus) return
+
+  submitLoading.value = true
+  try {
+    const res = await updateUserStatus(statusUser.value.id, {
+      status: statusForm.newStatus,
+      reason: statusForm.reason,
+      statusExpireAt: statusForm.statusExpireAt || undefined,
+      force: statusForm.force
+    })
+    const result = res.data
+    const msg = `状态变更成功：${UserStatusLabel[statusUser.value.status]} → ${UserStatusLabel[statusForm.newStatus]}`
+    ElMessage.success(msg + '，创作/素材/营销权限已同步')
+
+    if (result.warnings && result.warnings.length) {
+      ElMessage.warning({ message: result.warnings.join('；'), duration: 4000 })
+    }
+
+    statusDialogVisible.value = false
+    fetchList()
+  } catch (error: any) {
+    console.error('状态变更失败:', error)
+    if (error?.code === 400 && error?.details) {
+      triggerShake()
+    }
+  } finally {
+    submitLoading.value = false
+  }
+}
+
+const handleBatchStatusOpen = () => {
+  batchStatusForm.newStatus = ''
+  batchStatusForm.reason = ''
+  batchStatusForm.statusExpireAt = ''
+  batchStatusForm.confirm = false
+  batchStatusDialogVisible.value = true
+}
+
+const handleBatchStatusAction = async (status: string) => {
+  if (selectedRows.value.length === 0) return
+
+  const target = status === 'active' ? '启用' : '冻结'
+  try {
+    await ElMessageBox.confirm(
+      `确定要批量${target}选中的 ${selectedRows.value.length} 个用户吗？系统将自动过滤无权操作的账号。`,
+      '批量状态确认',
+      { type: 'warning' }
+    )
+
+    const ids = selectedRows.value.map((r) => r.id)
+    const res = await batchChangeUserStatus({
+      ids,
+      status,
+      reason: `批量${target}操作`
+    })
+    const result = res.data
+
+    let msg = `批量${target}完成，成功 ${result.success.length} 个`
+    if (result.failed.length > 0) msg += `，失败 ${result.failed.length} 个`
+    ElMessage.success(msg)
+
+    if (result.failed.length > 0) {
+      const failReasons = result.failed.map((f) => `${f.username}: ${f.reason}`).join('\n')
+      setTimeout(() => {
+        ElMessage.warning({ message: '失败详情:\n' + failReasons, duration: 5000 })
+      }, 500)
+    }
+
+    selectedRows.value = []
+    fetchList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量状态调整失败:', error)
+    }
+  }
+}
+
+const handleBatchStatusSubmit = async () => {
+  if (selectedRows.value.length === 0 || !batchStatusForm.newStatus) return
+
+  submitLoading.value = true
+  try {
+    const ids = selectedRows.value.map((r) => r.id)
+    const res = await batchChangeUserStatus({
+      ids,
+      status: batchStatusForm.newStatus,
+      reason: batchStatusForm.reason,
+      statusExpireAt: batchStatusForm.statusExpireAt || undefined
+    })
+    const result = res.data
+
+    let msg = `批量状态变更完成，成功 ${result.success.length} 个`
+    if (result.failed.length > 0) msg += `，失败 ${result.failed.length} 个`
+    ElMessage.success(msg)
+
+    if (result.failed.length > 0) {
+      const failReasons = result.failed.map((f) => `${f.username}: ${f.reason}`).join('\n')
+      ElMessage.warning({ message: '失败详情:\n' + failReasons, duration: 5000 })
+    }
+
+    batchStatusDialogVisible.value = false
+    selectedRows.value = []
+    fetchList()
+  } catch (error: any) {
+    console.error('批量状态变更失败:', error)
+  } finally {
+    submitLoading.value = false
+  }
+}
+
 const handleDelete = async (row: UserInfo) => {
   try {
     await ElMessageBox.confirm(`确定要删除用户"${row.username}"吗？`, '提示', { type: 'warning' })
@@ -1043,27 +1750,6 @@ const handleBatchDelete = async () => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量删除失败:', error)
-    }
-  }
-}
-
-const handleBatchStatus = async (status: string) => {
-  if (selectedRows.value.length === 0) return
-  try {
-    await ElMessageBox.confirm(
-      `确定要${status === 'active' ? '启用' : '禁用'}选中的 ${selectedRows.value.length} 个用户吗？`,
-      '提示',
-      { type: 'warning' }
-    )
-    for (const row of selectedRows.value) {
-      await updateUser(row.id, { status } as any)
-    }
-    ElMessage.success('操作成功')
-    selectedRows.value = []
-    fetchList()
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('操作失败:', error)
     }
   }
 }
@@ -1163,15 +1849,43 @@ const handleTraceSearch = async () => {
 
 const handleViewEditLogs = async (row: UserInfo) => {
   editLogUser.value = row
+  editLogActiveTab.value = 'edit'
   editLogLoading.value = true
+  statusLogLoading.value = true
   editLogDialogVisible.value = true
   try {
-    const res = await getEditLogs(row.id, { page: 1, pageSize: 50 })
-    editLogData.value = res.data.list
+    const [editRes, statusRes] = await Promise.all([
+      getEditLogs(row.id, { page: 1, pageSize: 50 }),
+      getStatusLogs(row.id, { page: 1, pageSize: 50 })
+    ])
+    editLogData.value = editRes.data.list
+    statusLogData.value = statusRes.data.list
   } catch (error) {
     console.error('获取变更记录失败:', error)
   } finally {
     editLogLoading.value = false
+    statusLogLoading.value = false
+  }
+}
+
+const handleViewStatusLogs = async (row: UserInfo) => {
+  editLogUser.value = row
+  editLogActiveTab.value = 'status'
+  editLogLoading.value = true
+  statusLogLoading.value = true
+  editLogDialogVisible.value = true
+  try {
+    const [editRes, statusRes] = await Promise.all([
+      getEditLogs(row.id, { page: 1, pageSize: 50 }),
+      getStatusLogs(row.id, { page: 1, pageSize: 50 })
+    ])
+    editLogData.value = editRes.data.list
+    statusLogData.value = statusRes.data.list
+  } catch (error) {
+    console.error('获取变更记录失败:', error)
+  } finally {
+    editLogLoading.value = false
+    statusLogLoading.value = false
   }
 }
 
@@ -1212,6 +1926,14 @@ onMounted(() => {
       .toolbar-left {
         display: flex;
         gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .toolbar-right {
+        .role-tag {
+          border-radius: 8px;
+          padding: 4px 12px;
+        }
       }
 
       .toolbar-btn {
@@ -1234,7 +1956,51 @@ onMounted(() => {
   .text-muted {
     color: $text-placeholder;
   }
+
+  &.shake {
+    animation: pageShake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+  }
+
+  @keyframes pageShake {
+    10%, 90% { transform: translateX(-1px); }
+    20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-4px); }
+    40%, 60% { transform: translateX(4px); }
+  }
 }
+
+.status-glow-tag {
+  display: inline-flex;
+  position: relative;
+  padding: 2px 4px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  :deep(.el-tag) {
+    box-shadow: 0 0 12px var(--glow-color, transparent);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+    animation: tagGlow 2s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes tagGlow {
+  from {
+    box-shadow: 0 0 4px var(--glow-color, transparent);
+  }
+  to {
+    box-shadow: 0 0 14px var(--glow-color, transparent);
+  }
+}
+
+.status-active :deep(.el-tag) { animation-delay: 0s; }
+.status-frozen :deep(.el-tag) { animation-delay: 0.3s; }
+.status-temp_banned :deep(.el-tag) { animation-delay: 0.6s; }
+.status-permanent_banned :deep(.el-tag) { animation-delay: 0.9s; }
 
 .validated-input-wrap {
   position: relative;
@@ -1370,8 +2136,183 @@ onMounted(() => {
   gap: 8px;
 }
 
+.scale-fade-dialog {
+  :deep(.el-dialog) {
+    animation: dialogScaleIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: opacity 0.2s ease, transform 0.25s ease;
+  }
+
+  :deep(.v-enter-active) {
+    animation: dialogScaleIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  :deep(.v-leave-active) {
+    animation: dialogSlideDown 0.25s ease;
+  }
+}
+
+@keyframes dialogScaleIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-40px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes dialogSlideDown {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.98);
+  }
+}
+
+.status-steps {
+  margin-bottom: 24px;
+  padding: 0 10px;
+}
+
+.status-desc {
+  margin-bottom: 20px;
+}
+
+.status-form {
+  .status-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: 1px solid $border-color-lighter;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    transition: all 0.25s ease;
+
+    &:hover {
+      border-color: $primary-color;
+      box-shadow: $shadow-light;
+    }
+
+    &.selected {
+      border-color: $primary-color;
+      background: rgba($primary-color, 0.05);
+    }
+
+    &.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+
+      &:hover {
+        border-color: $border-color-lighter;
+        box-shadow: none;
+      }
+    }
+
+    .lock-icon {
+      color: $text-placeholder;
+      cursor: help;
+      margin-left: auto;
+    }
+  }
+}
+
+.risk-preview {
+  margin-top: 20px;
+
+  .el-alert {
+    margin-bottom: 12px;
+  }
+
+  .el-descriptions {
+    margin-top: 16px;
+
+    :deep(.el-descriptions-item__content) {
+      .danger {
+        color: $danger-color;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .log-tag {
+    margin-right: 4px;
+    margin-bottom: 2px;
+  }
+}
+
+.status-step-panel {
+  min-height: 320px;
+  animation: fadeSlideIn 0.3s ease;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.permission-sync-preview {
+  margin-top: 20px;
+
+  .preview-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: $text-primary;
+  }
+
+  .perm-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+
+    .perm-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid $border-color-lighter;
+      transition: all 0.25s ease;
+
+      &.enabled {
+        background: rgba($success-color, 0.06);
+        border-color: rgba($success-color, 0.3);
+      }
+
+      &.disabled {
+        background: rgba($danger-color, 0.04);
+        border-color: rgba($danger-color, 0.2);
+      }
+
+      .perm-icon {
+        font-size: 16px;
+
+        &.ok { color: $success-color; }
+        &.no { color: $danger-color; }
+      }
+    }
+  }
+}
+
 .batch-alert {
   margin-bottom: 16px;
+}
+
+.batch-summary {
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: $text-regular;
+
+  em {
+    color: $primary-color;
+    font-style: normal;
+    font-weight: 600;
+  }
 }
 
 .batch-selected-info {
@@ -1480,6 +2421,7 @@ onMounted(() => {
         display: flex;
         align-items: center;
         gap: 8px;
+        flex-wrap: wrap;
       }
 
       .trace-user-meta {
@@ -1583,5 +2525,9 @@ onMounted(() => {
   margin-top: 16px;
   display: flex;
   justify-content: center;
+}
+
+.edit-log-tabs {
+  margin-top: -12px;
 }
 </style>

@@ -72,10 +72,20 @@ const User = sequelize.define(
       comment: '基础权限分组'
     },
     status: {
-      type: DataTypes.ENUM('active', 'disabled', 'frozen', 'banned'),
+      type: DataTypes.ENUM('active', 'frozen', 'temp_banned', 'permanent_banned'),
       defaultValue: 'active',
       allowNull: false,
-      comment: '状态: active-正常 disabled-禁用 frozen-冻结 banned-封禁'
+      comment: '状态: active-正常 frozen-冻结 temp_banned-临时封禁 permanent_banned-永久封禁'
+    },
+    statusExpireAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '状态到期时间(临时封禁)'
+    },
+    statusReason: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: '状态变更原因'
     },
     lastLoginTime: {
       type: DataTypes.DATE,

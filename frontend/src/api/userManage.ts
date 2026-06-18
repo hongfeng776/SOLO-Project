@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { PageResult, UserInfo, PageParams, Member, AccountValidationResult, UserEditLog, TraceResultItem, AccountComplianceLog, BatchUpdateResult } from '@/types'
+import type { PageResult, UserInfo, PageParams, Member, AccountValidationResult, UserEditLog, TraceResultItem, AccountComplianceLog, BatchUpdateResult, UserStatusLog, RiskPreview, ChangeStatusResult, BatchChangeStatusResult, ChangeStats } from '@/types'
 
 interface UserListParams extends PageParams {
   keyword?: string
@@ -33,8 +33,37 @@ export const batchDeleteUser = (ids: number[]) => {
   return request.post('/users/batch-delete', { ids })
 }
 
-export const updateUserStatus = (id: number, status: string) => {
-  return request.put(`/users/${id}/status`, { status })
+export const updateUserStatus = (id: number, data: {
+  status: string
+  reason?: string
+  statusExpireAt?: string
+  linkedViolationId?: number
+  linkedAppealId?: number
+  force?: boolean
+}) => {
+  return request.put<ChangeStatusResult>(`/users/${id}/status`, data)
+}
+
+export const batchChangeUserStatus = (data: {
+  ids: number[]
+  status: string
+  reason?: string
+  statusExpireAt?: string
+  force?: boolean
+}) => {
+  return request.post<BatchChangeStatusResult>('/users/batch-change-status', data)
+}
+
+export const getRiskPreview = (id: number, newStatus: string) => {
+  return request.get<RiskPreview>(`/users/${id}/risk-preview`, { newStatus })
+}
+
+export const getStatusLogs = (userId: number, params?: PageParams & { newStatus?: string; changeType?: string }) => {
+  return request.get<PageResult<UserStatusLog>>(`/users/${userId}/status-logs`, params)
+}
+
+export const getChangeStats = (userId: number) => {
+  return request.get<ChangeStats>(`/users/${userId}/change-stats`)
 }
 
 export const validateAccount = (params: { phone?: string; nickname?: string; uid?: string; excludeUserId?: number }) => {

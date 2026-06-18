@@ -25,9 +25,11 @@ export interface UserInfo {
   role: string
   email: string
   phone: string
-  status: 'active' | 'disabled' | 'frozen' | 'banned'
+  status: 'active' | 'frozen' | 'temp_banned' | 'permanent_banned'
   tags: string[]
   permissionGroup: string
+  statusExpireAt?: string
+  statusReason?: string
   lastLoginTime: string
   lastLoginIp: string
   member?: Member
@@ -485,5 +487,76 @@ export interface BatchDiscardResult {
 export interface BatchRestoreResult {
   success: number[]
   failed: { id: number; reason: string }[]
+  total: number
+}
+
+export interface UserStatusLog {
+  id: number
+  userId: number
+  uid: string
+  oldStatus: 'active' | 'frozen' | 'temp_banned' | 'permanent_banned' | null
+  newStatus: 'active' | 'frozen' | 'temp_banned' | 'permanent_banned'
+  statusExpireAt?: string
+  reason?: string
+  linkedViolationId?: number
+  linkedAppealId?: number
+  operatorId?: number
+  operatorName?: string
+  operatorRole?: string
+  syncPermissions?: Record<string, boolean>
+  changeType: 'manual' | 'auto_expire' | 'auto_appeal' | 'batch'
+  ip?: string
+  batchId?: string
+  createdAt: string
+}
+
+export interface FunctionPermissions {
+  view: boolean
+  edit: boolean
+  create: boolean
+  audit: boolean
+  market: boolean
+}
+
+export interface FrequencyViolation {
+  type: 'same_status_frequency' | 'total_frequency'
+  message: string
+  limit: { count: number; hours?: number; days?: number }
+}
+
+export interface RiskPreview {
+  mutex: { valid: boolean; reason?: string }
+  appeal: { valid: boolean; reason?: string; pendingAppealIds?: number[] }
+  role: { valid: boolean; reason?: string; allowed?: string; requiredRole?: string }
+  frequency: {
+    blocked: boolean
+    violations: FrequencyViolation[]
+    stats: { sameStatusCount: number; totalCount: number }
+  }
+  match: { valid: boolean; warning?: boolean; reason?: string }
+  functionPermissions: FunctionPermissions
+  pendingAppeals: { id: number; status: string }[]
+  unresolvedViolations: { id: number; level: string; type: string }[]
+}
+
+export interface ChangeStatusResult {
+  user: UserInfo
+  statusLog: UserStatusLog
+  functionPermissions: FunctionPermissions
+  warnings: string[]
+  matchCheck: { valid: boolean; warning?: boolean; reason?: string }
+}
+
+export interface BatchChangeStatusResult {
+  batchId: string
+  success: { id: number; username: string; oldStatus: string; newStatus: string }[]
+  failed: { id: number; username: string; reason: string }[]
+  warnings: { id: number; username: string; warnings: string[] }[]
+  functionPermissions: FunctionPermissions
+}
+
+export interface ChangeStats {
+  last7days: UserStatusLog[]
+  statusCounts: Record<string, number>
   total: number
 }

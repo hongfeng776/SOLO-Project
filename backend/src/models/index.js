@@ -11,6 +11,7 @@ const OperationLog = require('./OperationLog')
 const Recycle = require('./Recycle')
 const UserEditLog = require('./UserEditLog')
 const AccountComplianceLog = require('./AccountComplianceLog')
+const UserStatusLog = require('./UserStatusLog')
 
 User.hasMany(Resource, { foreignKey: 'authorId', as: 'resources' })
 Resource.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
@@ -60,6 +61,9 @@ UserEditLog.belongsTo(User, { foreignKey: 'userId', as: 'user' })
 User.hasMany(AccountComplianceLog, { foreignKey: 'userId', as: 'complianceLogs' })
 AccountComplianceLog.belongsTo(User, { foreignKey: 'userId', as: 'user' })
 
+User.hasMany(UserStatusLog, { foreignKey: 'userId', as: 'statusLogs' })
+UserStatusLog.belongsTo(User, { foreignKey: 'userId', as: 'user' })
+
 module.exports = {
   User,
   Category,
@@ -73,5 +77,6 @@ module.exports = {
   OperationLog,
   Recycle,
   UserEditLog,
-  AccountComplianceLog
+  AccountComplianceLog,
+  UserStatusLog
 }
