@@ -22,3 +22,4 @@ export { LoanApprovalFlow } from './LoanApprovalFlow';
 export { LoanApprovalLog } from './LoanApprovalLog';
 export { LoanRepayment } from './LoanRepayment';
 export { LoanWithhold } from './LoanWithhold';
+export { Settlement, SettlementBatch } from './Settlement';

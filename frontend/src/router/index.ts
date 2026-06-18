@@ -425,6 +425,45 @@ const asyncRoutes: RouteRecordRaw[] = [
           permissions: ['loan:repayment:trace'],
           roles: ['admin', 'manager', 'auditor']
         }
+      },
+      {
+        path: 'settlement/index',
+        name: 'BusinessSettlementIndex',
+        component: () => import('@views/business/settlement/index.vue'),
+        meta: {
+          title: '转账结算',
+          icon: 'Money',
+          componentName: 'BusinessSettlementIndex',
+          keepAlive: true,
+          permissions: ['business:settlement:query'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'settlement/batch',
+        name: 'BusinessSettlementBatch',
+        component: () => import('@views/business/settlement/batch.vue'),
+        meta: {
+          title: '批量转账',
+          icon: 'Files',
+          componentName: 'BusinessSettlementBatch',
+          keepAlive: true,
+          permissions: ['business:settlement:batch'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'settlement/trace',
+        name: 'BusinessSettlementTrace',
+        component: () => import('@views/business/settlement/trace.vue'),
+        meta: {
+          title: '结算溯源',
+          icon: 'Search',
+          componentName: 'BusinessSettlementTrace',
+          keepAlive: false,
+          permissions: ['business:settlement:trace'],
+          roles: ['admin', 'manager', 'auditor']
+        }
       }
     ]
   },

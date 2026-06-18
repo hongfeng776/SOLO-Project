@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -15,6 +15,7 @@ const depositController = new DepositController();
 const loanController = new LoanController();
 const loanApprovalController = new LoanApprovalController();
 const loanRepaymentController = new LoanRepaymentController();
+const settlementController = new SettlementController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -188,5 +189,33 @@ router.post('/loan/repayment/withhold/batch', requirePermission('loan:repayment:
 router.post('/loan/repayment/trace', requirePermission('loan:repayment:trace'), (req, res, next) => loanRepaymentController.traceRepayment(req, res));
 // 生成代扣记录（定时任务用）
 router.post('/loan/repayment/generate-withhold', requirePermission('loan:repayment:manage'), (req, res, next) => loanRepaymentController.generateWithholdRecords(req, res));
+
+// ========== 支付结算模块 ==========
+// 配置枚举
+router.get('/settlement/config', requireAuth, (req, res, next) => settlementController.config(req, res, next));
+// 前置校验
+router.post('/settlement/precheck', requirePermission('business:settlement:create'), (req, res, next) => settlementController.preCheck(req, res, next));
+// 列表查询
+router.get('/settlement/list', requirePermission('business:settlement:query'), (req, res, next) => settlementController.list(req, res, next));
+// 详情查询
+router.get('/settlement/:id', requirePermission('business:settlement:query'), (req, res, next) => settlementController.detail(req, res, next));
+// 创建转账
+router.post('/settlement', requirePermission('business:settlement:create'), (req, res, next) => settlementController.create(req, res, next));
+// 撤销转账
+router.post('/settlement/:id/cancel', requirePermission('business:settlement:update'), (req, res, next) => settlementController.cancel(req, res, next));
+// 复核转账
+router.post('/settlement/:id/review', requirePermission('business:settlement:review'), (req, res, next) => settlementController.review(req, res, next));
+// 创建批量转账
+router.post('/settlement/batch', requirePermission('business:settlement:batch'), (req, res, next) => settlementController.batch(req, res, next));
+// 批量列表
+router.get('/settlement/batch/list', requirePermission('business:settlement:query'), (req, res, next) => settlementController.batchList(req, res, next));
+// 批量详情
+router.get('/settlement/batch/:id', requirePermission('business:settlement:query'), (req, res, next) => settlementController.batchDetail(req, res, next));
+// 批量复核
+router.post('/settlement/batch/:id/review', requirePermission('business:settlement:review'), (req, res, next) => settlementController.batchReview(req, res, next));
+// 批量进度
+router.get('/settlement/batch/:id/progress', requirePermission('business:settlement:query'), (req, res, next) => settlementController.batchProgress(req, res, next));
+// 溯源查询
+router.post('/settlement/trace', requirePermission('business:settlement:trace'), (req, res, next) => settlementController.trace(req, res, next));
 
 export default router;

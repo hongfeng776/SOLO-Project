@@ -17,3 +17,6 @@ export { OpeningReviewService } from './OpeningReviewService';
 export { StatusFlowService } from './StatusFlowService';
 export { DepositService } from './DepositService';
 export { LoanService } from './LoanService';
+export { LoanApprovalService } from './LoanApprovalService';
+export { LoanRepaymentService } from './LoanRepaymentService';
+export { SettlementService } from './SettlementService';
