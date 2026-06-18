@@ -16,3 +16,4 @@ export { OpeningReviewController } from './OpeningReviewController';
 export { StatusFlowController } from './StatusFlowController';
 export { DepositController } from './DepositController';
 export { LoanController } from './LoanController';
+export { LoanApprovalController } from './LoanApprovalController';

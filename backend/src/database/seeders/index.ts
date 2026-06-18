@@ -1,4 +1,4 @@
-import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog, StatusChangeLog } from '../../models';
+import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog, StatusChangeLog, LoanApprovalFlow, LoanApprovalLog } from '../../models';
 import { hashPasswordSync } from '../../utils/password';
 import { sequelize, syncDatabase } from '../../config/database';
 import { v4 as uuidv4 } from 'uuid';
@@ -270,7 +270,23 @@ export async function seedPermissions(): Promise<void> {
     { id: 'perm068', parent_id: 'perm067', name: '批量录入', code: 'business:loan:batch', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:loan:batch' },
     { id: 'perm069', parent_id: 'perm067', name: '批量复核', code: 'business:loan:review', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:loan:review' },
     { id: 'perm070', parent_id: 'perm060', name: '贷款溯源', code: 'business:loan:trace', type: 2, path: 'trace', component: 'loan/trace', icon: 'Search', sort: 3, visible: 1, status: 1, perms: '' },
-    { id: 'perm071', parent_id: 'perm070', name: '溯源查询', code: 'business:loan:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:loan:trace' }
+    { id: 'perm071', parent_id: 'perm070', name: '溯源查询', code: 'business:loan:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:loan:trace' },
+
+    // ========== 贷款审批权限 ==========
+    { id: 'perm072', parent_id: 'perm060', name: '贷款审批', code: 'loan:approval', type: 2, path: 'approval', component: 'loan-approval/index', icon: 'Stamp', sort: 4, visible: 1, status: 1, perms: '' },
+    { id: 'perm073', parent_id: 'perm072', name: '审批查询', code: 'loan:approval:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'loan:approval:query' },
+    { id: 'perm074', parent_id: 'perm072', name: '审批前置校验', code: 'loan:approval:precheck', type: 3, sort: 2, visible: 1, status: 1, perms: 'loan:approval:precheck' },
+    { id: 'perm075', parent_id: 'perm072', name: '提交审批', code: 'loan:approval:submit', type: 3, sort: 3, visible: 1, status: 1, perms: 'loan:approval:submit' },
+    { id: 'perm076', parent_id: 'perm072', name: '一级审批', code: 'loan:approval:level1', type: 3, sort: 4, visible: 1, status: 1, perms: 'loan:approval:level1' },
+    { id: 'perm077', parent_id: 'perm072', name: '二级审批', code: 'loan:approval:level2', type: 3, sort: 5, visible: 1, status: 1, perms: 'loan:approval:level2' },
+    { id: 'perm078', parent_id: 'perm072', name: '三级审批', code: 'loan:approval:level3', type: 3, sort: 6, visible: 1, status: 1, perms: 'loan:approval:level3' },
+    { id: 'perm079', parent_id: 'perm072', name: '四级审批', code: 'loan:approval:level4', type: 3, sort: 7, visible: 1, status: 1, perms: 'loan:approval:level4' },
+    { id: 'perm080', parent_id: 'perm072', name: '五级审批', code: 'loan:approval:level5', type: 3, sort: 8, visible: 1, status: 1, perms: 'loan:approval:level5' },
+    { id: 'perm081', parent_id: 'perm072', name: '生成合同', code: 'loan:approval:contract', type: 3, sort: 9, visible: 1, status: 1, perms: 'loan:approval:contract' },
+    { id: 'perm082', parent_id: 'perm060', name: '批量审批', code: 'loan:approval:batch', type: 2, path: 'approval/batch', component: 'loan-approval/batch', icon: 'Files', sort: 5, visible: 1, status: 1, perms: '' },
+    { id: 'perm083', parent_id: 'perm082', name: '批量审批操作', code: 'loan:approval:batch', type: 3, sort: 1, visible: 1, status: 1, perms: 'loan:approval:batch' },
+    { id: 'perm084', parent_id: 'perm060', name: '审批溯源', code: 'loan:approval:trace', type: 2, path: 'approval/trace', component: 'loan-approval/trace', icon: 'Search', sort: 6, visible: 1, status: 1, perms: '' },
+    { id: 'perm085', parent_id: 'perm084', name: '审批溯源查询', code: 'loan:approval:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'loan:approval:trace' }
   ];
 
   await bulkCreateInBatches(Permission, permissions as any);
@@ -323,7 +339,10 @@ export async function seedRolePermissions(): Promise<void> {
       'business:deposit:batch', 'business:deposit:review', 'business:deposit:trace',
       'business:loan:query', 'business:loan:create', 'business:loan:update',
       'business:loan:preapprove', 'business:loan:finalapprove',
-      'business:loan:batch', 'business:loan:review', 'business:loan:trace'
+      'business:loan:batch', 'business:loan:review', 'business:loan:trace',
+      'loan:approval:query', 'loan:approval:precheck', 'loan:approval:submit',
+      'loan:approval:level1', 'loan:approval:level2', 'loan:approval:level3',
+      'loan:approval:batch', 'loan:approval:contract', 'loan:approval:trace'
     ];
     const perms = allPermissions.filter(p => managerCodes.includes(p.code) || p.type !== 3);
     const managerRPs = perms.map(p => ({
@@ -347,9 +366,11 @@ export async function seedRolePermissions(): Promise<void> {
       'business:deposit:query', 'business:deposit:create', 'business:deposit:update',
       'business:deposit:batch',
       'business:loan:query', 'business:loan:create', 'business:loan:update',
-      'business:loan:batch'
+      'business:loan:batch',
+      'loan:approval:query', 'loan:approval:precheck', 'loan:approval:submit',
+      'loan:approval:level1'
     ];
-    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:batch' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:batch' || p.code === 'business:loan:trace')));
+    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:batch' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:batch' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:batch' || p.code === 'loan:approval:trace')));
     const operatorRPs = perms.map(p => ({
       id: `rp_${operatorRole.id}_${p.id}`,
       role_id: operatorRole.id,
@@ -369,9 +390,10 @@ export async function seedRolePermissions(): Promise<void> {
       'opening:review:query', 'opening:review:trace',
       'status:flow:query', 'status:flow:trace',
       'business:deposit:query', 'business:deposit:trace',
-      'business:loan:query', 'business:loan:trace'
+      'business:loan:query', 'business:loan:trace',
+      'loan:approval:query', 'loan:approval:level4', 'loan:approval:trace'
     ];
-    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:trace')));
+    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:trace')));
     const auditorRPs = perms.map(p => ({
       id: `rp_${auditorRole.id}_${p.id}`,
       role_id: auditorRole.id,

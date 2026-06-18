@@ -121,3 +121,31 @@ export {
   type LoanTraceMultiLendItem,
   type LoanTraceResult
 } from './loan';
+
+export {
+  ApprovalLevelText,
+  ApprovalResultText,
+  ApprovalStatusText,
+  RejectReasonOptions,
+  APPROVAL_LEVEL_CONFIG,
+  SINGLE_LEVEL_APPROVAL_THRESHOLD,
+  MULTI_LEVEL_APPROVAL_REQUIRED,
+  HIGH_RISK_LEVEL_THRESHOLD,
+  type ApprovalPreCheckResult,
+  type MaterialCheckItem,
+  type CreditReport,
+  type DebtData,
+  type PreApprovalConclusion,
+  type ApprovalDetailVO,
+  type ApprovalFlowVO,
+  type ApprovalLogVO,
+  type DoApprovalRequest,
+  type DoApprovalResult,
+  type BatchApprovalQueryParams,
+  type BatchApprovalItem,
+  type BatchApprovalRequest,
+  type BatchApprovalResult,
+  type ApprovalTraceRequest,
+  type ApprovalTraceResult,
+  type GenerateContractResult
+} from './loanApproval';

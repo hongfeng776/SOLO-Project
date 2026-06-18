@@ -347,6 +347,45 @@ const asyncRoutes: RouteRecordRaw[] = [
           permissions: ['business:loan:trace'],
           roles: ['admin', 'manager', 'auditor']
         }
+      },
+      {
+        path: 'loan/approval',
+        name: 'BusinessLoanApproval',
+        component: () => import('@views/business/loan-approval/index.vue'),
+        meta: {
+          title: '贷款审批工作台',
+          icon: 'Stamp',
+          componentName: 'BusinessLoanApproval',
+          keepAlive: true,
+          permissions: ['loan:approval:query'],
+          roles: ['admin', 'manager', 'operator', 'auditor']
+        }
+      },
+      {
+        path: 'loan/approval/batch',
+        name: 'BusinessLoanApprovalBatch',
+        component: () => import('@views/business/loan-approval/batch.vue'),
+        meta: {
+          title: '批量审批',
+          icon: 'Files',
+          componentName: 'BusinessLoanApprovalBatch',
+          keepAlive: true,
+          permissions: ['loan:approval:batch'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'loan/approval/trace',
+        name: 'BusinessLoanApprovalTrace',
+        component: () => import('@views/business/loan-approval/trace.vue'),
+        meta: {
+          title: '审批溯源',
+          icon: 'Search',
+          componentName: 'BusinessLoanApprovalTrace',
+          keepAlive: false,
+          permissions: ['loan:approval:trace'],
+          roles: ['admin', 'manager', 'auditor']
+        }
       }
     ]
   },

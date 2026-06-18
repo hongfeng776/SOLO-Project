@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -13,6 +13,7 @@ const openingReviewController = new OpeningReviewController();
 const statusFlowController = new StatusFlowController();
 const depositController = new DepositController();
 const loanController = new LoanController();
+const loanApprovalController = new LoanApprovalController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -154,5 +155,21 @@ router.post('/loan/batch', requirePermission('business:loan:batch'), (req, res, 
 router.post('/loan/batch/review', requirePermission('business:loan:review'), (req, res, next) => loanController.batchReview(req, res, next));
 // 溯源查询
 router.post('/loan/trace', requirePermission('business:loan:trace'), (req, res, next) => loanController.trace(req, res, next));
+
+// ========== 贷款审批流转管理 ==========
+// 功能点1：审批前置校验
+router.post('/loan/approval/precheck', requirePermission('loan:approval:precheck'), (req, res, next) => loanApprovalController.preCheck(req, res, next));
+// 功能点1：审批详情（联动展示征信、负债、资料、预审结论）
+router.get('/loan/approval/:id', requirePermission('loan:approval:query'), (req, res, next) => loanApprovalController.detail(req, res, next));
+// 功能点2：执行审批（单级/多级审批）
+router.post('/loan/approval/approve', requirePermission('loan:approval:submit'), (req, res, next) => loanApprovalController.approve(req, res, next));
+// 功能点2：生成贷款合同
+router.post('/loan/approval/contract', requirePermission('loan:approval:contract'), (req, res, next) => loanApprovalController.generateContract(req, res, next));
+// 功能点3：待审批列表
+router.get('/loan/approval/pending/list', requirePermission('loan:approval:query'), (req, res, next) => loanApprovalController.pendingList(req, res, next));
+// 功能点3：批量审批
+router.post('/loan/approval/batch', requirePermission('loan:approval:batch'), (req, res, next) => loanApprovalController.batchApprove(req, res, next));
+// 功能点4：审批溯源查询
+router.post('/loan/approval/trace', requirePermission('loan:approval:trace'), (req, res, next) => loanApprovalController.trace(req, res, next));
 
 export default router;

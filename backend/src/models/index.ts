@@ -18,3 +18,5 @@ export { OpeningReviewLog } from './OpeningReviewLog';
 export { StatusChangeLog } from './StatusChangeLog';
 export { Deposit } from './Deposit';
 export { Loan } from './Loan';
+export { LoanApprovalFlow } from './LoanApprovalFlow';
+export { LoanApprovalLog } from './LoanApprovalLog';
