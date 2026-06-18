@@ -62,9 +62,33 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'copyrights',
-        name: 'Copyrights',
-        component: () => import('@/views/copyright/index.vue'),
-        meta: { title: '版权管理', icon: 'Document', roles: ['copyright:view'] },
+        meta: { title: '版权合规管理', icon: 'Document' },
+        children: [
+          {
+            path: '',
+            name: 'Copyrights',
+            component: () => import('@/views/copyright/index.vue'),
+            meta: { title: '版权资源管理', icon: 'Document', roles: ['copyright:view'] },
+          },
+          {
+            path: 'entry',
+            name: 'CopyrightEntry',
+            component: () => import('@/views/copyright/entry.vue'),
+            meta: { title: '版权资源录入', icon: 'Edit', roles: ['copyright:create'] },
+          },
+          {
+            path: 'batch',
+            name: 'CopyrightBatch',
+            component: () => import('@/views/copyright/batch.vue'),
+            meta: { title: '批量管理', icon: 'FolderOpened', roles: ['copyright:batch'] },
+          },
+          {
+            path: 'trace',
+            name: 'CopyrightTrace',
+            component: () => import('@/views/copyright/trace.vue'),
+            meta: { title: '版权溯源查询', icon: 'Search', roles: ['copyright:view'] },
+          },
+        ],
       },
       {
         path: 'advertisements',

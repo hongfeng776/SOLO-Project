@@ -1512,4 +1512,245 @@ export interface BatchRuleActionResult {
   newRuleCodes?: string[]
 }
 
+export interface CopyrightQualificationFile {
+  id?: string
+  type: string
+  typeLabel?: string
+  name: string
+  url: string
+  size?: number
+  uploadProgress?: number
+  validityStatus?: string
+  validityMessage?: string
+  isVerified?: boolean
+  uploadTime?: string
+  ocrResult?: Record<string, any>
+}
+
+export interface CopyrightFormData {
+  id?: number
+  code: string
+  name: string
+  type: number
+  contentType: number
+  supplierName: string
+  supplierContact?: string
+  supplierPhone?: string
+  contractNo?: string
+  startDate: string
+  endDate: string
+  territories?: string
+  licenseScope?: string[]
+  licenseFee: number
+  currency?: string
+  paymentStatus: number
+  ownershipStatus?: number
+  complianceStatus?: number
+  bindStatus?: number
+  description?: string
+  remark?: string
+  status?: number
+  qualificationFiles?: CopyrightQualificationFile[]
+  contentIds?: number[]
+  copyrightCertificate?: string
+  authorizationAgreement?: string
+  ownershipProof?: string
+}
+
+export interface CopyrightDetail extends CopyrightItem {
+  contentType?: number
+  licenseScope?: string[]
+  ownershipStatus?: number
+  complianceStatus?: number
+  bindStatus?: number
+  qualificationFiles?: CopyrightQualificationFile[]
+  relatedContents?: Array<{
+    id: number
+    title: string
+    category: number
+    status: number
+    auditStatus?: number
+  }>
+  auditTrail?: Array<{
+    time: string
+    operator: string
+    action: string
+    detail: string
+  }>
+}
+
+export interface CopyrightConflictCheckResult {
+  hasConflict: boolean
+  conflicts: Array<{
+    type: 'duplicate_code' | 'content_conflict' | 'scope_overlap' | 'validity_mismatch'
+    level: 'high' | 'medium' | 'low'
+    message: string
+    relatedCopyrightId?: number
+    relatedCopyrightCode?: string
+    relatedContentId?: number
+    relatedContentTitle?: string
+  }>
+  canSubmit: boolean
+  duplicateCode?: boolean
+  duplicateCodeInfo?: {
+    existingCopyrightIds?: number[]
+    existingCopyrightCodes?: string[]
+  }
+  contentConflicts?: Array<{
+    contentId: number
+    existingCopyrightId: number
+    existingCopyrightCode: string
+  }>
+  details?: {
+    inconsistency?: Array<'scope' | 'period' | 'ownership'>
+  }
+}
+
+export interface CopyrightTraceItem {
+  id: number
+  code: string
+  name: string
+  type: number
+  contentType: number
+  supplierName: string
+  startDate: string
+  endDate: string
+  ownershipStatus: number
+  complianceStatus: number
+  bindStatus: number
+  status: number
+  contentCount: number
+  relatedContents?: Array<{ id: number; title: string }>
+  qualificationFiles?: CopyrightQualificationFile[]
+  traceEvents: Array<{
+    id: number
+    time: string
+    operatorId?: number
+    operatorName?: string
+    eventType: string
+    eventLabel: string
+    detail: string
+    ipAddress?: string
+  }>
+}
+
+export interface CopyrightTraceQuery {
+  code?: string
+  contentId?: number
+  supplierName?: string
+  contentType?: number
+  startDate?: string
+  endDate?: string
+}
+
+export interface BatchCopyrightImportRow {
+  rowIndex: number
+  data: Partial<CopyrightFormData>
+  status: 'pending' | 'success' | 'skipped' | 'error'
+  errorMessages?: string[]
+  warnings?: string[]
+  copyrightId?: number
+}
+
+export interface BatchCopyrightImportResult {
+  batchId: string
+  total: number
+  totalCount: number
+  successCount: number
+  skippedCount: number
+  skipCount: number
+  errorCount: number
+  rows: BatchCopyrightImportRow[]
+  generatedAt: string
+  importedIds?: number[]
+  errors?: BatchImportErrorItem[]
+  exceptionReport?: {
+    formatErrors: BatchCopyrightImportRow[]
+    missingFields: BatchCopyrightImportRow[]
+    duplicateCodes: BatchCopyrightImportRow[]
+  }
+}
+
+export interface BatchImportErrorItem {
+  rowNumber: number
+  code?: string
+  name?: string
+  errorType: string
+  errorMessage: string
+}
+
+export interface BatchCopyrightRenewParams {
+  ids: number[]
+  extendMonths?: number
+  extendEndDate?: string
+  renewalReason?: string
+  remark?: string
+}
+
+export interface BatchCopyrightInvalidParams {
+  ids: number[]
+  invalidReason: string
+  remark?: string
+}
+
+export interface BatchCopyrightProgress {
+  batchId: string
+  action: string
+  actionLabel: string
+  total: number
+  totalCount: number
+  processed: number
+  successCount: number
+  failedCount: number
+  errorCount: number
+  skippedCount: number
+  progress: number
+  percentage: number
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'idle' | 'processing' | 'success' | 'partial' | 'error' | 'exception'
+  startedAt?: string
+  completedAt?: string
+  errorMessage?: string
+  currentItem?: string
+  message?: string
+}
+
+export interface BatchOperationLogItem {
+  id: string
+  batchId: string
+  copyrightId?: number
+  copyrightCode?: string
+  action: string
+  status: 'success' | 'failed' | 'skipped'
+  message?: string
+  operatorId?: number
+  operatorName?: string
+  createdAt: string
+}
+
+export interface CopyrightVerifyResult {
+  isValid: boolean
+  issues: Array<{
+    field: string
+    level: 'error' | 'warning' | 'info'
+    message: string
+  }>
+  fileChecks: Array<{
+    fileType: string
+    fileName: string
+    isValid: boolean
+    ocrResult?: Record<string, any>
+    issues?: string[]
+  }>
+}
+
+export interface CopyrightAuditSyncData {
+  copyrightId: number
+  copyrightCode: string
+  action: 'create' | 'update' | 'expire' | 'renew' | 'invalid'
+  syncTime: string
+  syncStatus: 'success' | 'pending' | 'failed'
+  syncTargets: Array<'content_audit' | 'risk_control'>
+  data?: Partial<CopyrightItem>
+}
+
 

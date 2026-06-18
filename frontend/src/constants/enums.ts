@@ -564,5 +564,57 @@ export const RULE_MODIFY_TYPE = {
   BATCH_SYNC: { value: 'batch_sync', label: '批量同步', color: '#722ed1' },
 } as const
 
+export const COPYRIGHT_QUALIFICATION_TYPE = {
+  CERTIFICATE: { value: 'certificate', label: '版权证书', required: true, color: '#409EFF' },
+  AGREEMENT: { value: 'agreement', label: '授权协议', required: true, color: '#67C23A' },
+  OWNERSHIP: { value: 'ownership', label: '权属证明', required: true, color: '#E6A23C' },
+} as const
+
+export const COPYRIGHT_CONTENT_TYPE = {
+  MOVIE: { value: 1, label: '电影', validityUnit: 'year', defaultValidity: 5, scopeOptions: ['公映权', '信息网络传播权', '广播权'] },
+  TV_SERIES: { value: 2, label: '电视剧', validityUnit: 'year', defaultValidity: 5, scopeOptions: ['信息网络传播权', '广播权', '二轮播出权'] },
+  VARIETY: { value: 3, label: '综艺', validityUnit: 'year', defaultValidity: 3, scopeOptions: ['信息网络传播权', '独家网络首播权', '非独家使用权'] },
+  ANIME: { value: 4, label: '动漫', validityUnit: 'year', defaultValidity: 5, scopeOptions: ['信息网络传播权', '改编权', '翻译权'] },
+  DOCUMENTARY: { value: 5, label: '纪录片', validityUnit: 'year', defaultValidity: 10, scopeOptions: ['信息网络传播权', '教育用途授权', '公益展播权'] },
+  SHORT_VIDEO: { value: 6, label: '短视频', validityUnit: 'month', defaultValidity: 12, scopeOptions: ['信息网络传播权', '二创授权', '商业化授权'] },
+  ARTICLE: { value: 7, label: '图文', validityUnit: 'year', defaultValidity: 3, scopeOptions: ['信息网络传播权', '汇编权', '转载授权'] },
+  MUSIC: { value: 8, label: '音乐', validityUnit: 'year', defaultValidity: 5, scopeOptions: ['信息网络传播权', '表演权', '录音制作者权'] },
+} as const
+
+export const COPYRIGHT_BIND_STATUS = {
+  UNBOUND: { value: 0, label: '未绑定内容', color: '#909399', type: 'info' },
+  BOUND_DRAFT: { value: 1, label: '已绑定(待上架)', color: '#409EFF', type: 'primary' },
+  BOUND_PUBLISHED: { value: 2, label: '已绑定(已上架)', color: '#67C23A', type: 'success' },
+  BOUND_OFFLINE: { value: 3, label: '已绑定(已下架)', color: '#E6A23C', type: 'warning' },
+} as const
+
+export const COPYRIGHT_OWNERSHIP_STATUS = {
+  CLEAR: { value: 1, label: '权属清晰', color: '#67C23A', type: 'success' },
+  DISPUTED: { value: 2, label: '权属争议中', color: '#E6A23C', type: 'warning' },
+  UNVERIFIED: { value: 3, label: '权属待核实', color: '#F56C6C', type: 'danger' },
+  TRANSFERRED: { value: 4, label: '已转让', color: '#909399', type: 'info' },
+} as const
+
+export const COPYRIGHT_COMPLIANCE_STATUS = {
+  COMPLIANT: { value: 1, label: '合规', color: '#67C23A', type: 'success' },
+  WARNING: { value: 2, label: '合规预警', color: '#E6A23C', type: 'warning' },
+  EXPIRED: { value: 3, label: '已过期', color: '#F56C6C', type: 'danger' },
+  INCOMPLETE: { value: 4, label: '资料不完整', color: '#909399', type: 'info' },
+} as const
+
+export const BATCH_COPYRIGHT_ACTION = {
+  IMPORT: { value: 'import', label: '批量导入资质台账', icon: 'Upload', type: 'primary' },
+  RENEW: { value: 'renew', label: '批量续期即将过期', icon: 'RefreshRight', type: 'success' },
+  INVALID: { value: 'invalid', label: '批量标记失效版权', icon: 'CircleClose', type: 'danger' },
+  EXPORT: { value: 'export', label: '批量导出版权台账', icon: 'Download', type: 'info' },
+} as const
+
+export const COPYRIGHT_FILE_VALIDITY = {
+  VALID: { value: 'valid', label: '有效', color: '#67C23A' },
+  EXPIRED: { value: 'expired', label: '已过期', color: '#F56C6C' },
+  UNCLEAR: { value: 'unclear', label: '文件不清晰', color: '#E6A23C' },
+  PENDING: { value: 'pending', label: '待核验', color: '#909399' },
+} as const
+
 
 
