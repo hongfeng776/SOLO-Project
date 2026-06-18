@@ -111,6 +111,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '风险告警', icon: 'Warning', keepAlive: true }
       },
       {
+        path: 'risk-rule',
+        name: 'RiskRule',
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/risk-rule/index.vue'),
+        meta: { title: '风控规则', icon: 'Safety', keepAlive: true, permission: 'riskRule:view' }
+      },
+      {
         path: 'compliance',
         name: 'Compliance',
         component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/compliance/index.vue'),

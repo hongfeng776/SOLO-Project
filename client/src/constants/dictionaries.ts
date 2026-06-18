@@ -435,3 +435,87 @@ export const TRADING_PERIOD_LABELS: Record<string, { label: string; class: strin
   '15:01': { label: '盘后', class: 'after-close' },
   '23:59': { label: '盘后', class: 'after-close' },
 }
+
+import { RiskRuleType, RiskRuleStatus, EffectMode, CustomerLevel, RiskRuleChangeType } from '@/enums'
+
+export const RISK_RULE_TYPE_LABELS: Record<RiskRuleType, string> = {
+  [RiskRuleType.TRADE_LIMIT]: '交易限额',
+  [RiskRuleType.POSITION_LIMIT]: '持仓限额',
+  [RiskRuleType.VOLATILITY_RISK]: '波动风控',
+  [RiskRuleType.FREQUENCY_RISK]: '频次风控',
+}
+
+export const RISK_RULE_TYPE_COLORS: Record<RiskRuleType, string> = {
+  [RiskRuleType.TRADE_LIMIT]: '#409EFF',
+  [RiskRuleType.POSITION_LIMIT]: '#67C23A',
+  [RiskRuleType.VOLATILITY_RISK]: '#E6A23C',
+  [RiskRuleType.FREQUENCY_RISK]: '#F56C6C',
+}
+
+export const RISK_RULE_TYPE_ICONS: Record<RiskRuleType, string> = {
+  [RiskRuleType.TRADE_LIMIT]: 'Money',
+  [RiskRuleType.POSITION_LIMIT]: 'Goods',
+  [RiskRuleType.VOLATILITY_RISK]: 'TrendCharts',
+  [RiskRuleType.FREQUENCY_RISK]: 'Timer',
+}
+
+export const RISK_RULE_STATUS_LABELS: Record<RiskRuleStatus, string> = {
+  [RiskRuleStatus.ENABLED]: '已启用',
+  [RiskRuleStatus.DISABLED]: '已禁用',
+  [RiskRuleStatus.PENDING]: '待生效',
+  [RiskRuleStatus.EXPIRED]: '已过期',
+}
+
+export const RISK_RULE_STATUS_COLORS: Record<RiskRuleStatus, string> = {
+  [RiskRuleStatus.ENABLED]: 'success',
+  [RiskRuleStatus.DISABLED]: 'info',
+  [RiskRuleStatus.PENDING]: 'warning',
+  [RiskRuleStatus.EXPIRED]: 'danger',
+}
+
+export const EFFECT_MODE_LABELS: Record<EffectMode, string> = {
+  [EffectMode.IMMEDIATE]: '即时生效',
+  [EffectMode.SCHEDULED]: '定时生效',
+}
+
+export const CUSTOMER_LEVEL_LABELS: Record<CustomerLevel, string> = {
+  [CustomerLevel.NORMAL]: '普通客户',
+  [CustomerLevel.SILVER]: '白银客户',
+  [CustomerLevel.GOLD]: '黄金客户',
+  [CustomerLevel.PLATINUM]: '铂金客户',
+  [CustomerLevel.DIAMOND]: '钻石客户',
+}
+
+export const CUSTOMER_LEVEL_COLORS: Record<CustomerLevel, string> = {
+  [CustomerLevel.NORMAL]: '#909399',
+  [CustomerLevel.SILVER]: '#C0C4CC',
+  [CustomerLevel.GOLD]: '#E6A23C',
+  [CustomerLevel.PLATINUM]: '#409EFF',
+  [CustomerLevel.DIAMOND]: '#9B59B6',
+}
+
+export const RISK_RULE_CHANGE_TYPE_LABELS: Record<RiskRuleChangeType, string> = {
+  [RiskRuleChangeType.CREATE]: '创建规则',
+  [RiskRuleChangeType.UPDATE]: '修改规则',
+  [RiskRuleChangeType.ENABLE]: '启用规则',
+  [RiskRuleChangeType.DISABLE]: '禁用规则',
+  [RiskRuleChangeType.RESET]: '重置规则',
+  [RiskRuleChangeType.EXPIRE]: '规则过期',
+}
+
+export const RISK_RULE_CHANGE_TYPE_COLORS: Record<RiskRuleChangeType, string> = {
+  [RiskRuleChangeType.CREATE]: '#409EFF',
+  [RiskRuleChangeType.UPDATE]: '#67C23A',
+  [RiskRuleChangeType.ENABLE]: '#0F9B58',
+  [RiskRuleChangeType.DISABLE]: '#909399',
+  [RiskRuleChangeType.RESET]: '#E6A23C',
+  [RiskRuleChangeType.EXPIRE]: '#D93025',
+}
+
+export const RISK_RULE_STEP_TITLES: Record<number, string> = {
+  1: '选择规则类型',
+  2: '配置适用客户等级',
+  3: '设置规则参数',
+  4: '配置生效时段',
+  5: '确认提交',
+}

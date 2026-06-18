@@ -63,3 +63,45 @@ export enum StockStatus { TRADING = 'trading', HOLIDAY = 'holiday', SUSPENDED = 
 export const HOT_RISE_THRESHOLD = 7
 
 export const RISK_FALL_THRESHOLD = -7
+
+export enum RiskRuleType {
+  TRADE_LIMIT = 'trade_limit',
+  POSITION_LIMIT = 'position_limit',
+  VOLATILITY_RISK = 'volatility_risk',
+  FREQUENCY_RISK = 'frequency_risk',
+}
+
+export enum RiskRuleStatus {
+  ENABLED = 'enabled',
+  DISABLED = 'disabled',
+  PENDING = 'pending',
+  EXPIRED = 'expired',
+}
+
+export enum EffectMode {
+  IMMEDIATE = 'immediate',
+  SCHEDULED = 'scheduled',
+}
+
+export enum CustomerLevel {
+  NORMAL = 'normal',
+  SILVER = 'silver',
+  GOLD = 'gold',
+  PLATINUM = 'platinum',
+  DIAMOND = 'diamond',
+}
+
+export enum RiskRuleChangeType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  ENABLE = 'enable',
+  DISABLE = 'disable',
+  RESET = 'reset',
+  EXPIRE = 'expire',
+}
+
+export enum BatchOperationType {
+  ENABLE = 'enable',
+  DISABLE = 'disable',
+  RESET = 'reset',
+}

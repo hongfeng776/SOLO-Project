@@ -872,3 +872,167 @@ export interface IReplaySessionDetail extends IReplaySession {
   conclusions: IReplayConclusion[]
   volatilityStats: IVolatilityPattern
 }
+
+import { RiskRuleType, RiskRuleStatus, EffectMode, CustomerLevel, RiskRuleChangeType, BatchOperationType } from '@/enums'
+
+export interface IRiskRuleLevelParams {
+  customerLevel: CustomerLevel
+  customerLevelLabel?: string
+  maxTradeAmount?: number
+  minTradeAmount?: number
+  dailyTradeLimit?: number
+  maxPositionAmount?: number
+  maxPositionRatio?: number
+  singleStockPositionLimit?: number
+  maxDailyVolatility?: number
+  maxSingleVolatility?: number
+  circuitBreakerThreshold?: number
+  maxDailyTrades?: number
+  maxTradesPerMinute?: number
+  maxSameStockTrades?: number
+  coolDownPeriod?: number
+}
+
+export interface IRiskRule {
+  id: number
+  ruleCode: string
+  ruleName: string
+  ruleType: RiskRuleType
+  ruleTypeLabel?: string
+  description?: string
+  status: RiskRuleStatus
+  statusLabel?: string
+  effectMode: EffectMode
+  effectModeLabel?: string
+  customerLevels: CustomerLevel[]
+  customerLevelLabels?: string[]
+  levelParams: IRiskRuleLevelParams[]
+  effectiveStart: string
+  effectiveEnd?: string
+  scheduledTime?: string
+  priority: number
+  version: number
+  isGlobal?: boolean
+  scopeSectors?: string[]
+  createdBy: number
+  createdByName?: string
+  createdAt: string
+  updatedAt: string
+  updatedBy?: number
+  updatedByName?: string
+  remark?: string
+}
+
+export interface IRiskRuleValidationError {
+  field: string
+  message: string
+  level: 'error' | 'warning'
+  suggestion?: string
+}
+
+export interface IRiskRuleValidationResult {
+  valid: boolean
+  errors: IRiskRuleValidationError[]
+  warnings: IRiskRuleValidationError[]
+}
+
+export interface IRiskRuleConflictInfo {
+  conflictType: 'overlap' | 'logic' | 'range' | 'redundant'
+  message: string
+  level: 'high' | 'medium' | 'low'
+  relatedRuleId?: number
+  relatedRuleName?: string
+}
+
+export interface IRiskRuleCompatibilityCheck {
+  compatible: boolean
+  conflicts: IRiskRuleConflictInfo[]
+  suggestions: string[]
+}
+
+export interface IRiskRuleHistory {
+  id: number
+  ruleId: number
+  ruleName: string
+  changeType: RiskRuleChangeType
+  changeTypeLabel?: string
+  beforeSnapshot: Partial<IRiskRule>
+  afterSnapshot: Partial<IRiskRule>
+  changedFields: string[]
+  compatibilityCheck?: IRiskRuleCompatibilityCheck
+  operatorId: number
+  operatorName: string
+  effectScope: string
+  operationLogId?: number
+  remark?: string
+  createdAt: string
+}
+
+export interface IRiskRuleHistoryResult {
+  list: IRiskRuleHistory[]
+  total: number
+  stats: {
+    changeTypeDist: Array<{ type: RiskRuleChangeType; count: number }>
+    operatorDist: Array<{ operatorId: number; operatorName: string; count: number }>
+    conflictCount: number
+  }
+}
+
+export interface IRiskRuleListParams {
+  page: number
+  pageSize: number
+  ruleType?: RiskRuleType
+  status?: RiskRuleStatus
+  customerLevel?: CustomerLevel
+  keyword?: string
+  effectMode?: EffectMode
+}
+
+export interface IRiskRuleCreateData {
+  ruleName: string
+  ruleType: RiskRuleType
+  description?: string
+  effectMode: EffectMode
+  customerLevels: CustomerLevel[]
+  levelParams: IRiskRuleLevelParams[]
+  effectiveStart: string
+  effectiveEnd?: string
+  scheduledTime?: string
+  priority?: number
+  isGlobal?: boolean
+  scopeSectors?: string[]
+  remark?: string
+}
+
+export interface IRiskRuleUpdateData extends Partial<IRiskRuleCreateData> {
+  version?: number
+}
+
+export interface IBatchOperationResult {
+  total: number
+  success: number
+  failed: number
+  failedItems: Array<{ id: number; ruleName: string; reason: string }>
+}
+
+export interface IBatchOperationProgress {
+  operationType: BatchOperationType
+  operationTypeLabel?: string
+  total: number
+  current: number
+  percent: number
+  status: 'pending' | 'processing' | 'success' | 'failed'
+  successCount: number
+  failedCount: number
+  failedItems: Array<{ id: number; ruleName: string; reason: string }>
+  startTime: string
+  endTime?: string
+}
+
+export interface IRiskRuleScenarioMatch {
+  scenarioName: string
+  scenarioDescription: string
+  matchScore: number
+  volatilityRange: [number, number]
+  suggestedRules: Array<{ ruleId: number; ruleName: string; ruleType: RiskRuleType }>
+}
