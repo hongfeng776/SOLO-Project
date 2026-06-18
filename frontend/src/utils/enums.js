@@ -367,6 +367,73 @@ export const MerchantTypeEnum = {
   FRANCHISE: { value: 4, label: '品牌加盟' }
 }
 
+export const MerchantAuditStatusEnum = {
+  PENDING: { value: 0, label: '待审核', type: 'warning', color: '#faad14' },
+  APPROVED: { value: 1, label: '已通过', type: 'success', color: '#52c41a' },
+  REJECTED: { value: 2, label: '已驳回', type: 'danger', color: '#ff4d4f' },
+  AUDITING: { value: 3, label: '审核中', type: 'primary', color: '#1890ff' },
+  TEMPORARY: { value: 4, label: '已暂存', type: 'info', color: '#722ed1' },
+  EXPIRED: { value: 5, label: '已过期', type: 'info', color: '#909399' },
+  FINAL_AUDITING: { value: 6, label: '终审中', type: 'primary', color: '#13c2c2' },
+  REVISED_PENDING: { value: 7, label: '已修正待审', type: 'warning', color: '#eb2f96' }
+}
+
+export const MerchantBusinessTypeEnum = {
+  FLIGHT: { value: 'flight', label: '机票商家', icon: 'Promotion', color: '#1890ff', gradient: 'linear-gradient(135deg, #1890ff, #69c0ff)' },
+  HOTEL: { value: 'hotel', label: '酒店商家', icon: 'OfficeBuilding', color: '#52c41a', gradient: 'linear-gradient(135deg, #52c41a, #95de64)' },
+  TOURISM: { value: 'tourism', label: '文旅商家', icon: 'Tickets', color: '#faad14', gradient: 'linear-gradient(135deg, #faad14, #ffd666)' },
+  CAR: { value: 'car', label: '租车商家', icon: 'Van', color: '#722ed1', gradient: 'linear-gradient(135deg, #722ed1, #b37feb)' }
+}
+
+export const MerchantCategoryEnum = {
+  NORMAL: { value: 1, label: '普通商家', type: 'info' },
+  HIGH_RISK: { value: 2, label: '高危行业', type: 'danger' }
+}
+
+export const SettleStatusEnum = {
+  NOT_STARTED: { value: 0, label: '未开始', type: 'info' },
+  INFO_SUBMITTED: { value: 1, label: '信息已提交', type: 'primary' },
+  QUALIFICATION_SUBMITTED: { value: 2, label: '资质已提交', type: 'primary' },
+  AUDITING: { value: 3, label: '审核中', type: 'warning' },
+  COMPLETED: { value: 4, label: '入驻完成', type: 'success' },
+  LOCKED: { value: 5, label: '已锁定', type: 'danger' }
+}
+
+export const AuditLevelEnum = {
+  INITIAL: { value: 1, label: '初审', type: 'primary' },
+  FINAL: { value: 2, label: '终审', type: 'danger' }
+}
+
+export const QualificationCategoryEnum = {
+  BUSINESS_LICENSE: { value: 'business_license', label: '营业执照', required: true },
+  OPERATION_PERMIT: { value: 'operation_permit', label: '经营资质证书', required: true },
+  AUTHORIZATION: { value: 'authorization', label: '品牌授权证明', required: true },
+  LEGAL_PERSON: { value: 'legal_person', label: '法人身份证明', required: true },
+  FLIGHT_PERMIT: { value: 'flight_permit', label: '航空运营资质', required: false },
+  HOTEL_PERMIT: { value: 'hotel_permit', label: '酒店特种许可', required: false },
+  TICKET_PERMIT: { value: 'ticket_permit', label: '文旅经营许可', required: false },
+  CAR_PERMIT: { value: 'car_permit', label: '车辆运营资质', required: false }
+}
+
+export const QualificationAuditResultEnum = {
+  PENDING: { value: 0, label: '待审核', type: 'warning' },
+  PASSED: { value: 1, label: '通过', type: 'success' },
+  FAILED: { value: 2, label: '不合格', type: 'danger' }
+}
+
+export const AuditActionEnum = {
+  SUBMIT: { value: 'submit', label: '提交入驻申请', color: '#1890ff' },
+  AUDIT_PASS: { value: 'audit_pass', label: '审核通过', color: '#52c41a' },
+  AUDIT_REJECT: { value: 'audit_reject', label: '审核驳回', color: '#ff4d4f' },
+  AUDIT_TEMPORARY: { value: 'audit_temporary', label: '审核暂存', color: '#722ed1' },
+  REVISE: { value: 'revise', label: '信息修正', color: '#faad14' },
+  FINAL_PASS: { value: 'final_pass', label: '终审通过', color: '#13c2c2' },
+  FINAL_REJECT: { value: 'final_reject', label: '终审驳回', color: '#ff4d4f' },
+  EXPIRE: { value: 'expire', label: '审核过期', color: '#909399' },
+  AUTO_RESET: { value: 'auto_reset', label: '自动重置', color: '#909399' },
+  DETECT_VIOLATION: { value: 'detect_violation', label: '违规检测拦截', color: '#f5222d' }
+}
+
 export const ExportStatusEnum = {
   IDLE: { value: 'idle', label: '待导出' },
   PROCESSING: { value: 'processing', label: '导出中' },
@@ -574,6 +641,14 @@ export default {
   RiskTagOptions,
   RestrictTypeEnum,
   MerchantTypeEnum,
+  MerchantAuditStatusEnum,
+  MerchantBusinessTypeEnum,
+  MerchantCategoryEnum,
+  SettleStatusEnum,
+  AuditLevelEnum,
+  QualificationCategoryEnum,
+  QualificationAuditResultEnum,
+  AuditActionEnum,
   ExportStatusEnum,
   BenefitTypeEnum,
   BenefitStatusEnum,

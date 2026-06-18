@@ -140,9 +140,24 @@ registerCrudRoutes('approvals', approvalController);
 router.post('/approvals/:id/approve', auth(), approvalController.approve.bind(approvalController));
 router.post('/approvals/:id/reject', auth(), approvalController.reject.bind(approvalController));
 
+registerCrudRoutes('merchants', merchantController);
 router.post('/merchants/:id/audit', auth(), merchantController.auditMerchant.bind(merchantController))
 router.get('/merchants/:id/orders', auth(), pagination, merchantController.getMerchantOrders.bind(merchantController))
 router.put('/merchants/:id/violation', auth(), merchantController.updateViolation.bind(merchantController))
+router.get('/merchants/audit/stats', auth(), merchantController.getAuditStats.bind(merchantController))
+router.get('/merchants/audit/pending', auth(), pagination, merchantController.getPendingAuditList.bind(merchantController))
+router.get('/merchants/:id/audit/detail', auth(), merchantController.getAuditDetail.bind(merchantController))
+router.get('/merchants/:id/audit/precheck', auth(), merchantController.preAuditCheck.bind(merchantController))
+router.post('/merchants/:id/audit/pass', auth(['admin', 'merchant_auditor', 'senior_auditor']), merchantController.submitAuditPass.bind(merchantController))
+router.post('/merchants/:id/audit/reject', auth(['admin', 'merchant_auditor', 'senior_auditor']), merchantController.submitAuditReject.bind(merchantController))
+router.post('/merchants/:id/audit/temporary', auth(['admin', 'merchant_auditor', 'senior_auditor']), merchantController.submitAuditTemporary.bind(merchantController))
+router.post('/merchants/batch/audit-pass', auth(['admin', 'merchant_auditor', 'senior_auditor']), merchantController.batchAuditPass.bind(merchantController))
+router.post('/merchants/batch/audit-reject', auth(['admin', 'merchant_auditor', 'senior_auditor']), merchantController.batchAuditReject.bind(merchantController))
+router.post('/merchants/batch/audit-temporary', auth(['admin', 'merchant_auditor', 'senior_auditor']), merchantController.batchAuditTemporary.bind(merchantController))
+router.post('/merchants/audit/check-expired', auth(['admin']), merchantController.checkExpiredAudits.bind(merchantController))
+router.get('/merchants/:id/audit/trace', auth(), pagination, merchantController.getAuditTrace.bind(merchantController))
+router.get('/merchants/:id/qualifications', auth(), merchantController.getQualifications.bind(merchantController))
+router.put('/merchants/:id/qualifications', auth(), merchantController.saveQualifications.bind(merchantController))
 
 router.post('/payments/initiate', auth(), paymentValidator.checkPaymentPreconditions, paymentValidator.validatePaymentParams, paymentController.initiatePayment.bind(paymentController))
 router.put('/payments/:flowId/confirm', auth(), paymentController.confirmPayment.bind(paymentController))

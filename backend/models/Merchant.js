@@ -1,5 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
+const MerchantQualification = require('./MerchantQualification');
+const MerchantAuditLog = require('./MerchantAuditLog');
 
 const Merchant = sequelize.define('Merchant', {
   id: {
@@ -28,7 +30,7 @@ const Merchant = sequelize.define('Merchant', {
   auditStatus: {
     type: DataTypes.TINYINT,
     defaultValue: 0,
-    comment: '审核状态: 0-待审核, 1-已通过, 2-已拒绝'
+    comment: '审核状态: 0-待审核, 1-已通过, 2-已驳回, 3-审核中, 4-暂存, 5-已过期, 6-终审中, 7-已修正待审核'
   },
   businessLicense: {
     type: DataTypes.STRING(255),
@@ -50,7 +52,12 @@ const Merchant = sequelize.define('Merchant', {
   },
   businessType: {
     type: DataTypes.STRING(20),
-    comment: '业务类型: flight/hotel/car/ticket'
+    comment: '业务品类: flight-机票, hotel-酒店, tourism-文旅, car-租车'
+  },
+  merchantCategory: {
+    type: DataTypes.TINYINT,
+    defaultValue: 1,
+    comment: '商家类型: 1-普通, 2-高危行业(需要人工专项核验)'
   },
   status: {
     type: DataTypes.TINYINT,
@@ -68,12 +75,97 @@ const Merchant = sequelize.define('Merchant', {
   settledAt: {
     type: DataTypes.DATE,
     comment: '入驻时间'
+  },
+  auditSubmitTime: {
+    type: DataTypes.DATE,
+    comment: '审核提交时间'
+  },
+  auditExpireTime: {
+    type: DataTypes.DATE,
+    comment: '审核过期时间'
+  },
+  auditLevel: {
+    type: DataTypes.TINYINT,
+    defaultValue: 1,
+    comment: '审核层级: 1-初审, 2-终审'
+  },
+  rejectReason: {
+    type: DataTypes.TEXT,
+    comment: '驳回原因'
+  },
+  businessPermission: {
+    type: DataTypes.JSON,
+    comment: '经营权限配置',
+    defaultValue: {}
+  },
+  listingPermission: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '资源上架权限: 0-无权限, 1-拥有权限'
+  },
+  settleStatus: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '入驻流程状态: 0-未开始, 1-信息提交, 2-资质提交, 3-审核中, 4-已完成, 5-已锁定'
+  },
+  unifiedCreditCode: {
+    type: DataTypes.STRING(50),
+    comment: '统一社会信用代码'
+  },
+  legalPersonName: {
+    type: DataTypes.STRING(50),
+    comment: '法人姓名'
+  },
+  legalPersonIdCard: {
+    type: DataTypes.STRING(50),
+    comment: '法人身份证号'
+  },
+  registeredCapital: {
+    type: DataTypes.DECIMAL(15, 2),
+    comment: '注册资本'
+  },
+  establishDate: {
+    type: DataTypes.DATE,
+    comment: '成立日期'
+  },
+  businessTermStart: {
+    type: DataTypes.DATE,
+    comment: '营业期限开始'
+  },
+  businessTermEnd: {
+    type: DataTypes.DATE,
+    comment: '营业期限结束'
+  },
+  reviseCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: '资料修正次数'
   }
 }, {
   tableName: 'merchants',
   comment: '商家表',
   timestamps: true,
   paranoid: true
+});
+
+Merchant.hasMany(MerchantQualification, {
+  foreignKey: 'merchantId',
+  as: 'qualifications'
+});
+
+MerchantQualification.belongsTo(Merchant, {
+  foreignKey: 'merchantId',
+  as: 'merchant'
+});
+
+Merchant.hasMany(MerchantAuditLog, {
+  foreignKey: 'merchantId',
+  as: 'auditLogs'
+});
+
+MerchantAuditLog.belongsTo(Merchant, {
+  foreignKey: 'merchantId',
+  as: 'merchant'
 });
 
 module.exports = Merchant;

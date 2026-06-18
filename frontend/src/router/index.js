@@ -139,12 +139,20 @@ export const routes = [
   {
     path: '/merchant',
     component: Layout,
+    redirect: '/merchant/index',
+    meta: { title: '商家管理', icon: 'Shop' },
     children: [
       {
         path: 'index',
         name: 'MerchantManage',
         component: () => import('@/views/Merchant.vue'),
-        meta: { title: '商家管理', icon: 'Shop', roles: ['admin'] }
+        meta: { title: '商家列表', icon: 'Shop', roles: ['admin'] }
+      },
+      {
+        path: 'qualification-audit',
+        name: 'MerchantQualificationAudit',
+        component: () => import('@/views/merchant/QualificationAudit.vue'),
+        meta: { title: '入驻资质审核', icon: 'Stamp', roles: ['admin', 'merchant_auditor', 'senior_auditor'] }
       }
     ]
   },
