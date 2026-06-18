@@ -38,6 +38,10 @@ import { GoodsSnapshotDao } from './GoodsSnapshotDao';
 import { MerchantOrderRecordDao } from './MerchantOrderRecordDao';
 import { PaymentReconcileDao } from './PaymentReconcileDao';
 import { FundSettlementDao } from './FundSettlementDao';
+import { LogisticsProviderDao } from './LogisticsProviderDao';
+import { ShipmentRecordDao } from './ShipmentRecordDao';
+import { LogisticsTrackDao } from './LogisticsTrackDao';
+import { AbnormalLogisticsLogDao } from './AbnormalLogisticsLogDao';
 
 export {
   BaseDao,
@@ -82,6 +86,10 @@ export {
   MerchantOrderRecordDao,
   PaymentReconcileDao,
   FundSettlementDao,
+  LogisticsProviderDao,
+  ShipmentRecordDao,
+  LogisticsTrackDao,
+  AbnormalLogisticsLogDao,
 };
 
 export const daos = {
@@ -124,6 +132,10 @@ export const daos = {
   merchantOrderRecordDao: new MerchantOrderRecordDao(),
   paymentReconcileDao: new PaymentReconcileDao(),
   fundSettlementDao: new FundSettlementDao(),
+  logisticsProviderDao: new LogisticsProviderDao(),
+  shipmentRecordDao: new ShipmentRecordDao(),
+  logisticsTrackDao: new LogisticsTrackDao(),
+  abnormalLogisticsLogDao: new AbnormalLogisticsLogDao(),
 };
 
 export default daos;

@@ -178,6 +178,57 @@ export class Order extends Model<Order> {
   })
   shipping_status?: number;
 
+  @Column({
+    type: DataType.BIGINT.UNSIGNED,
+    comment: '物流服务商ID',
+  })
+  logistics_provider_id?: number;
+
+  @Column({
+    type: DataType.DATE,
+    comment: '发货时间',
+  })
+  shipped_at?: Date;
+
+  @Column({
+    type: DataType.STRING(50),
+    comment: '收件人姓名',
+  })
+  signer_name?: string;
+
+  @Column({
+    type: DataType.DATE,
+    comment: '签收时间',
+  })
+  signed_at?: Date;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '物流状态：0-待发货 1-已揽收 2-运输中 3-派送中 4-已签收 5-签收异常 6-已退回',
+  })
+  logistics_status?: number;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '物流异常标记：0-正常 1-地址异常 2-物流停滞 3-拒收 4-破损',
+  })
+  logistics_abnormal_flag?: number;
+
+  @Column({
+    type: DataType.STRING(500),
+    comment: '物流异常原因',
+  })
+  logistics_abnormal_reason?: string;
+
+  @Column({
+    type: DataType.DECIMAL(10, 2),
+    defaultValue: 0,
+    comment: '实际运费',
+  })
+  actual_freight?: number;
+
   @CreatedAt
   @Column({
     type: DataType.DATE,

@@ -31,6 +31,10 @@ import GoodsAuditTraceService, { goodsAuditTraceService } from './GoodsAuditTrac
 import OrderValidateService, { orderValidateService } from './OrderValidateService';
 import OrderBatchService, { orderBatchService } from './OrderBatchService';
 import OrderTraceService, { orderTraceService } from './OrderTraceService';
+import ShippingValidateService, { shippingValidateService } from './ShippingValidateService';
+import ShippingSyncService, { shippingSyncService } from './ShippingSyncService';
+import LogisticsBatchService, { logisticsBatchService } from './LogisticsBatchService';
+import LogisticsTraceService, { logisticsTraceService } from './LogisticsTraceService';
 
 export {
   AfterSaleAuditService,
@@ -66,6 +70,10 @@ export {
   OrderValidateService,
   OrderBatchService,
   OrderTraceService,
+  ShippingValidateService,
+  ShippingSyncService,
+  LogisticsBatchService,
+  LogisticsTraceService,
 };
 
 export const services = {
@@ -102,6 +110,10 @@ export const services = {
   orderValidateService,
   orderBatchService,
   orderTraceService,
+  shippingValidateService,
+  shippingSyncService,
+  logisticsBatchService,
+  logisticsTraceService,
 };
 
 export default services;

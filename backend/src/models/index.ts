@@ -32,6 +32,10 @@ import { PaymentFlow } from './PaymentFlow';
 import { MerchantOrderRecord } from './MerchantOrderRecord';
 import { OrderException } from './OrderException';
 import { GoodsSnapshot } from './GoodsSnapshot';
+import { LogisticsProvider } from './LogisticsProvider';
+import { ShipmentRecord } from './ShipmentRecord';
+import { LogisticsTrack } from './LogisticsTrack';
+import { AbnormalLogisticsLog } from './AbnormalLogisticsLog';
 
 export {
   Admin,
@@ -68,6 +72,10 @@ export {
   PaymentFlow,
   MerchantOrderRecord,
   OrderException,
+  LogisticsProvider,
+  ShipmentRecord,
+  LogisticsTrack,
+  AbnormalLogisticsLog,
 };
 
 export const models = {
@@ -105,6 +113,10 @@ export const models = {
   PaymentFlow,
   MerchantOrderRecord,
   OrderException,
+  LogisticsProvider,
+  ShipmentRecord,
+  LogisticsTrack,
+  AbnormalLogisticsLog,
 };
 
 export default models;

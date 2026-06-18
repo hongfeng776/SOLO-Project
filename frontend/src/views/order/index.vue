@@ -67,6 +67,43 @@
             <el-option label="否" :value="0" />
           </el-select>
         </el-form-item>
+        <el-form-item label="物流状态">
+          <el-select v-model="searchForm.logisticsStatus" placeholder="全部" clearable style="width: 140px">
+            <el-option label="待发货" :value="0" />
+            <el-option label="已揽收" :value="1" />
+            <el-option label="运输中" :value="2" />
+            <el-option label="派送中" :value="3" />
+            <el-option label="已签收" :value="4" />
+            <el-option label="签收异常" :value="5" />
+            <el-option label="已退回" :value="6" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="物流渠道">
+          <el-select v-model="searchForm.logisticsProviderId" placeholder="全部" clearable style="width: 160px">
+            <el-option
+              v-for="provider in logisticsProviderList"
+              :key="provider.id"
+              :label="provider.providerName"
+              :value="provider.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="异常物流">
+          <el-select v-model="searchForm.isLogisticsAbnormal" placeholder="全部" clearable style="width: 140px">
+            <el-option label="否" :value="0" />
+            <el-option label="是" :value="1" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="发货时间">
+          <el-date-picker
+            v-model="searchForm.shippedDateRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            value-format="YYYY-MM-DD"
+          />
+        </el-form-item>
         <el-form-item label="异常状态">
           <el-select v-model="searchForm.isException" placeholder="全部" clearable style="width: 140px">
             <el-option label="正常订单" :value="0" />
@@ -95,10 +132,19 @@
       <el-button type="success" size="small" @click="handleBatchResetExpire">
         <el-icon><RefreshRight /></el-icon> 批量重置时效
       </el-button>
-      <el-button v-if="hasFinancePermission" type="warning" size="small" @click="handleBatchMarkReconcile">
+      <el-button v-if="hasFinancePermission" type="warning" size="small" @click="handleBatchMarkReconcile" class="btn-click-feedback">
         <el-icon><DocumentChecked /></el-icon> 批量标记对账
       </el-button>
-      <el-button type="danger" size="small" @click="handleBatchMarkException">
+      <el-button type="primary" size="small" @click="handleBatchShip" class="btn-click-feedback">
+        <el-icon><Goods /></el-icon> 批量录入物流
+      </el-button>
+      <el-button type="warning" size="small" @click="handleBatchUpdateAbnormal" class="btn-click-feedback">
+        <el-icon><Warning /></el-icon> 批量更新物流异常
+      </el-button>
+      <el-button type="success" size="small" @click="handleBatchResendNotification" class="btn-click-feedback">
+        <el-icon><Bell /></el-icon> 批量补发物流通知
+      </el-button>
+      <el-button type="danger" size="small" @click="handleBatchMarkException" class="btn-click-feedback">
         <el-icon><Warning /></el-icon> 批量标记异常
       </el-button>
       <el-button type="info" size="small" @click="handleBatchArchive">
@@ -181,6 +227,49 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="物流状态" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag
+              v-if="row.logisticsStatus !== undefined && row.logisticsStatus !== null"
+              :type="row.logisticsStatus === 4 ? 'success' : row.logisticsStatus === 5 || row.logisticsStatus === 6 ? 'danger' : row.logisticsStatus === 0 ? 'info' : 'warning'"
+              size="small"
+            >
+              {{ LogisticsStatusMap[row.logisticsStatus] || '待发货' }}
+            </el-tag>
+            <span v-else style="color: #909399">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="物流单号" width="150" align="center">
+          <template #default="{ row }">
+            <el-tooltip v-if="row.logisticsNo" content="点击复制" placement="top">
+              <span
+                class="logistics-no-text"
+                @click.stop="handleCopyLogisticsNo(row.logisticsNo)"
+              >
+                {{ row.logisticsNo }}
+              </span>
+            </el-tooltip>
+            <span v-else style="color: #909399">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="物流公司" width="120" align="center">
+          <template #default="{ row }">
+            <span>{{ row.logisticsCompany || row.logisticsProviderName || '-' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="发货时间" width="160" align="center">
+          <template #default="{ row }">
+            <span>{{ row.shippedAt ? formatOrderDateTime(row.shippedAt) : '-' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="物流异常" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag v-if="row.isLogisticsAbnormal === 1" type="danger" size="small">
+              异常
+            </el-tag>
+            <span v-else style="color: #67c23a">正常</span>
+          </template>
+        </el-table-column>
         <el-table-column label="收货信息" min-width="200">
           <template #default="{ row }">
             <div class="receiver-info">
@@ -207,17 +296,19 @@
             {{ formatOrderDateTime(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="260" align="center" fixed="right">
+        <el-table-column label="操作" width="340" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click.stop="handleView(row as Order)">详情</el-button>
-            <el-button link type="primary" @click.stop="handleEdit(row as Order)" :disabled="(row as Order).status >= 2">编辑</el-button>
-            <el-button link type="primary" @click.stop="handleTrace(row as Order)">溯源</el-button>
-            <el-button link type="primary" @click.stop="handlePaymentTrace(row as Order)">支付溯源</el-button>
+            <el-button link type="primary" @click.stop="handleView(row as Order)" class="btn-click-feedback">详情</el-button>
+            <el-button link type="primary" @click.stop="handleEdit(row as Order)" :disabled="(row as Order).status >= 2" class="btn-click-feedback">编辑</el-button>
+            <el-button link type="primary" @click.stop="handleTrace(row as Order)" class="btn-click-feedback">溯源</el-button>
+            <el-button link type="primary" @click.stop="handlePaymentTrace(row as Order)" class="btn-click-feedback">支付溯源</el-button>
+            <el-button link type="primary" @click.stop="handleLogisticsTrace(row as Order)" :disabled="!row.logisticsNo" class="btn-click-feedback">物流详情</el-button>
             <el-dropdown trigger="click" @command="(cmd) => handleAction(cmd, row as Order)">
-              <el-button link type="primary">更多<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
+              <el-button link type="primary" class="btn-click-feedback">更多<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item command="ship" v-if="row.status === 1">发货</el-dropdown-item>
+                  <el-dropdown-item command="updateLogistics" v-if="row.logisticsNo">更新物流</el-dropdown-item>
                   <el-dropdown-item command="complete" v-if="row.status === 2">完成</el-dropdown-item>
                   <el-dropdown-item command="cancel" v-if="row.status <= 1">取消</el-dropdown-item>
                   <el-dropdown-item command="updatePayStatus" v-if="row.status === 0">更新支付状态</el-dropdown-item>
@@ -633,21 +724,330 @@
     <el-dialog
       v-model="shipVisible"
       title="订单发货"
-      width="500px"
+      width="600px"
       class="dialog-center-zoom"
       destroy-on-close
     >
-      <el-form :model="shipForm" label-width="100px" @submit.prevent>
-        <el-form-item label="物流公司" required>
+      <el-form :model="shipForm" label-width="110px" @submit.prevent>
+        <el-form-item label="订单编号">
+          <el-input :value="currentOrder?.orderNo" disabled />
+        </el-form-item>
+        <el-form-item label="物流服务商" required>
+          <el-select
+            v-model="shipForm.logisticsProviderId"
+            placeholder="请选择物流服务商"
+            style="width: 100%"
+            @change="handleProviderChange"
+          >
+            <el-option
+              v-for="provider in logisticsProviderList"
+              :key="provider.id"
+              :label="provider.providerName"
+              :value="provider.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="物流公司">
           <el-input v-model="shipForm.logisticsCompany" placeholder="请输入物流公司名称" />
         </el-form-item>
         <el-form-item label="物流单号" required>
-          <el-input v-model="shipForm.logisticsNo" placeholder="请输入物流单号" />
+          <el-input
+            v-model="shipForm.logisticsNo"
+            placeholder="请输入物流单号"
+            :class="{ 'logistics-no-error btn-shake': logisticsNoError }"
+            @blur="handleLogisticsNoBlur"
+          />
+          <div v-if="logisticsNoError" style="color: #f56c6c; font-size: 12px; margin-top: 4px;">
+            {{ logisticsNoError }}
+          </div>
+        </el-form-item>
+        <el-form-item label="运费金额">
+          <el-input-number v-model="shipForm.freightAmount" :min="0" :precision="2" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="包裹数量">
+          <el-input-number v-model="shipForm.packageCount" :min="1" :precision="0" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="包裹重量">
+          <el-input-number v-model="shipForm.packageWeight" :min="0" :precision="2" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="保价金额">
+          <el-input-number v-model="shipForm.insuranceAmount" :min="0" :precision="2" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="shipForm.remark" type="textarea" :rows="2" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="shipVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleShip">确认发货</el-button>
+        <el-button @click="shipVisible = false" class="btn-click-feedback">取消</el-button>
+        <el-button type="primary" :disabled="shipBtnDisabled" @click="handleShip" class="btn-click-feedback">
+          {{ shipBtnDisabled ? '发货中...' : '确认发货' }}
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="logisticsTraceVisible"
+      title="物流溯源"
+      width="900px"
+      class="dialog-center-zoom"
+      destroy-on-close
+    >
+      <el-tabs v-model="logisticsTraceTab">
+        <el-tab-pane label="发货记录" name="shipment">
+          <div class="trace-tab-content">
+            <el-descriptions :column="2" border size="small" v-if="logisticsTraceData?.shipmentRecord">
+              <el-descriptions-item label="订单编号">
+                {{ logisticsTraceData.shipmentRecord.orderNo }}
+              </el-descriptions-item>
+              <el-descriptions-item label="发货单号">
+                {{ logisticsTraceData.shipmentRecord.shipmentNo }}
+              </el-descriptions-item>
+              <el-descriptions-item label="物流服务商">
+                {{ logisticsTraceData.shipmentRecord.logisticsProviderName }}
+              </el-descriptions-item>
+              <el-descriptions-item label="物流单号">
+                {{ logisticsTraceData.shipmentRecord.logisticsNo }}
+              </el-descriptions-item>
+              <el-descriptions-item label="收货人">
+                {{ logisticsTraceData.shipmentRecord.receiverName }}
+              </el-descriptions-item>
+              <el-descriptions-item label="联系电话">
+                {{ logisticsTraceData.shipmentRecord.receiverPhone }}
+              </el-descriptions-item>
+              <el-descriptions-item label="收货地址" :span="2">
+                {{ logisticsTraceData.shipmentRecord.receiverProvince }}
+                {{ logisticsTraceData.shipmentRecord.receiverCity }}
+                {{ logisticsTraceData.shipmentRecord.receiverDistrict }}
+                {{ logisticsTraceData.shipmentRecord.receiverAddress }}
+              </el-descriptions-item>
+              <el-descriptions-item label="包裹数量">
+                {{ logisticsTraceData.shipmentRecord.packageCount || 1 }}
+              </el-descriptions-item>
+              <el-descriptions-item label="包裹重量">
+                {{ logisticsTraceData.shipmentRecord.packageWeight ? logisticsTraceData.shipmentRecord.packageWeight + ' kg' : '-' }}
+              </el-descriptions-item>
+              <el-descriptions-item label="运费">
+                {{ logisticsTraceData.shipmentRecord.freightAmount ? formatAmount(logisticsTraceData.shipmentRecord.freightAmount) : '-' }}
+              </el-descriptions-item>
+              <el-descriptions-item label="保价">
+                {{ logisticsTraceData.shipmentRecord.insuranceAmount ? formatAmount(logisticsTraceData.shipmentRecord.insuranceAmount) : '-' }}
+              </el-descriptions-item>
+              <el-descriptions-item label="发货时间">
+                {{ logisticsTraceData.shipmentRecord.shippedAt ? formatOrderDateTime(logisticsTraceData.shipmentRecord.shippedAt) : '-' }}
+              </el-descriptions-item>
+              <el-descriptions-item label="签收时间">
+                {{ logisticsTraceData.shipmentRecord.signedAt ? formatOrderDateTime(logisticsTraceData.shipmentRecord.signedAt) : '-' }}
+              </el-descriptions-item>
+              <el-descriptions-item label="操作人">
+                {{ logisticsTraceData.shipmentRecord.operatorName || '系统' }}
+              </el-descriptions-item>
+              <el-descriptions-item label="备注" :span="2" v-if="logisticsTraceData.shipmentRecord.remark">
+                {{ logisticsTraceData.shipmentRecord.remark }}
+              </el-descriptions-item>
+            </el-descriptions>
+            <el-empty v-else description="暂无发货记录" />
+          </div>
+        </el-tab-pane>
+
+        <el-tab-pane label="物流轨迹" name="tracks">
+          <div class="trace-tab-content">
+            <div v-if="logisticsTraceData?.logisticsTracks && logisticsTraceData.logisticsTracks.length > 0" class="logistics-timeline">
+              <div
+                v-for="(track, index) in logisticsTraceData.logisticsTracks"
+                :key="track.id"
+                class="track-item"
+                :class="track.isAbnormal === 1 ? 'track-item-abnormal' : 'track-item-normal'"
+              >
+                <div class="timeline-dot"></div>
+                <div v-if="index < logisticsTraceData.logisticsTracks.length - 1" class="timeline-line"></div>
+                <div class="track-content">
+                  <div class="track-header">
+                    <span class="track-status">{{ TrackStatusMap[track.trackStatus] || '未知' }}</span>
+                    <span class="track-time">{{ formatOrderDateTime(track.trackTime) }}</span>
+                  </div>
+                  <div class="track-description">{{ track.description }}</div>
+                  <div v-if="track.location" class="track-location">
+                    <el-icon><Location /></el-icon>
+                    {{ track.province || '' }}{{ track.city || '' }}{{ track.district || '' }} {{ track.location }}
+                  </div>
+                  <div v-if="track.isAbnormal === 1" class="track-abnormal">
+                    <el-icon color="#f56c6c"><WarningFilled /></el-icon>
+                    {{ track.abnormalDesc || '物流异常' }}
+                  </div>
+                  <div v-if="track.operator" class="track-operator">
+                    操作人：{{ track.operator }}{{ track.operatorPhone ? '（' + track.operatorPhone + '）' : '' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <el-empty v-else description="暂无物流轨迹" />
+          </div>
+        </el-tab-pane>
+
+        <el-tab-pane label="异常处理日志" name="abnormalLogs">
+          <div class="trace-tab-content">
+            <div v-if="logisticsTraceData?.abnormalLogs && logisticsTraceData.abnormalLogs.length > 0">
+              <el-table :data="logisticsTraceData.abnormalLogs" stripe size="small">
+                <el-table-column prop="logNo" label="日志编号" width="160" />
+                <el-table-column label="异常类型" width="100" align="center">
+                  <template #default="{ row }">
+                    <el-tag :type="row.abnormalLevel === 3 ? 'danger' : row.abnormalLevel === 2 ? 'warning' : 'info'" size="small">
+                      {{ AbnormalLogisticsTypeMap[row.abnormalType] || '未知' }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="异常等级" width="100" align="center">
+                  <template #default="{ row }">
+                    <el-tag :type="row.abnormalLevel === 3 ? 'danger' : row.abnormalLevel === 2 ? 'warning' : 'info'" size="small">
+                      {{ AbnormalLevelMap[row.abnormalLevel] || '未知' }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="abnormalDesc" label="异常描述" show-overflow-tooltip />
+                <el-table-column label="处理状态" width="100" align="center">
+                  <template #default="{ row }">
+                    <el-tag :type="row.status === 2 ? 'success' : row.status === 3 ? 'info' : row.status === 1 ? 'warning' : 'danger'" size="small">
+                      {{ AbnormalHandleStatusMap[row.status] || '未知' }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="处理结果" show-overflow-tooltip>
+                  <template #default="{ row }">
+                    {{ row.handleResult || '-' }}
+                  </template>
+                </el-table-column>
+                <el-table-column prop="operatorName" label="处理人" width="100" align="center" />
+                <el-table-column label="上报时间" width="160" align="center">
+                  <template #default="{ row }">
+                    {{ row.reportedAt ? formatOrderDateTime(row.reportedAt) : '-' }}
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+            <el-empty v-else description="暂无异常处理记录" />
+          </div>
+        </el-tab-pane>
+
+        <el-tab-pane label="数据校验报告" name="validationReport">
+          <div class="trace-tab-content">
+            <div v-if="logisticsValidationReport">
+              <div
+                class="validation-report-card"
+                :class="logisticsValidationReport.overallScore >= 80 ? 'passed' : 'failed'"
+              >
+                <div style="font-weight: 600; margin-bottom: 12px">
+                  总体校验结果：
+                  <el-tag :type="logisticsValidationReport.overallScore >= 80 ? 'success' : 'danger'" effect="dark">
+                    {{ logisticsValidationReport.overallScore >= 80 ? '通过' : '不通过' }}
+                  </el-tag>
+                  <span style="margin-left: 8px; font-size: 12px; color: #909399">
+                    综合得分：{{ logisticsValidationReport.overallScore }}分
+                  </span>
+                </div>
+                <div class="validate-result-item" :class="{ success: logisticsValidationReport.orderMatch }">
+                  <div style="font-weight: 500">订单信息匹配校验</div>
+                  <div style="font-size: 12px; color: #606266">{{ logisticsValidationReport.orderMatch ? '订单号与发货记录匹配' : '订单信息不匹配' }}</div>
+                </div>
+                <div class="validate-result-item" :class="{ success: logisticsValidationReport.logisticsNoValid }">
+                  <div style="font-weight: 500">物流单号格式校验</div>
+                  <div style="font-size: 12px; color: #606266">{{ logisticsValidationReport.logisticsNoValid ? '物流单号格式正确' : '物流单号格式异常' }}</div>
+                </div>
+                <div class="validate-result-item" :class="{ success: logisticsValidationReport.providerValid }">
+                  <div style="font-weight: 500">物流服务商校验</div>
+                  <div style="font-size: 12px; color: #606266">{{ logisticsValidationReport.providerValid ? '物流服务商有效' : '物流服务商信息异常' }}</div>
+                </div>
+                <div class="validate-result-item" :class="{ success: logisticsValidationReport.trackContinuity }">
+                  <div style="font-weight: 500">轨迹连续性校验</div>
+                  <div style="font-size: 12px; color: #606266">{{ logisticsValidationReport.trackContinuity ? '物流轨迹连续完整' : '物流轨迹存在断点' }}</div>
+                </div>
+                <div class="validate-result-item" :class="{ success: logisticsValidationReport.noDuplicate }">
+                  <div style="font-weight: 500">重复单号校验</div>
+                  <div style="font-size: 12px; color: #606266">{{ logisticsValidationReport.noDuplicate ? '无重复物流单号' : '存在重复物流单号' }}</div>
+                </div>
+                <div class="validate-result-item" :class="{ success: logisticsValidationReport.addressMatch }">
+                  <div style="font-weight: 500">收货地址匹配校验</div>
+                  <div style="font-size: 12px; color: #606266">{{ logisticsValidationReport.addressMatch ? '收货地址一致' : '收货地址不一致' }}</div>
+                </div>
+                <div v-if="logisticsValidationReport.issues.length > 0" style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ebeef5">
+                  <div style="font-weight: 500; color: #f56c6c; margin-bottom: 4px">存在问题：</div>
+                  <div v-for="(issue, idx) in logisticsValidationReport.issues" :key="idx" style="font-size: 12px; color: #f56c6c; margin-left: 12px">
+                    • {{ issue }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <el-empty v-else description="暂无校验报告" />
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+      <template #footer>
+        <el-button @click="logisticsTraceVisible = false" class="btn-click-feedback">关闭</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="batchShipVisible"
+      title="批量发货"
+      width="700px"
+      class="dialog-center-zoom"
+      destroy-on-close
+    >
+      <el-form label-width="110px" @submit.prevent>
+        <el-form-item label="物流服务商" required>
+          <el-select
+            v-model="batchShipForm.logisticsProviderId"
+            placeholder="请选择物流服务商"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="provider in logisticsProviderList"
+              :key="provider.id"
+              :label="provider.providerName"
+              :value="provider.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="数据导入" required>
+          <el-upload
+            class="batch-upload"
+            drag
+            :auto-upload="false"
+            :on-change="handleBatchFileChange"
+            accept=".xlsx,.xls,.csv"
+          >
+            <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
+            <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+            <template #tip>
+              <div class="el-upload__tip">
+                支持Excel格式，模板列：订单编号、物流单号、物流公司（可选）
+              </div>
+            </template>
+          </el-upload>
+        </el-form-item>
+        <el-form-item label="粘贴数据">
+          <el-input
+            v-model="batchShipForm.pasteData"
+            type="textarea"
+            :rows="5"
+            placeholder="粘贴数据格式：订单编号&#9;物流单号（每行一条，Tab分隔）"
+          />
+        </el-form-item>
+        <el-form-item v-if="batchShipProgress > 0" label="导入进度">
+          <el-progress :percentage="batchShipProgress" :status="batchShipProgress === 100 ? 'success' : undefined" class="batch-import-progress" />
+        </el-form-item>
+        <el-form-item v-if="batchShipErrors.length > 0" label="错误明细">
+          <div style="width: 100%; max-height: 150px; overflow-y: auto; padding: 8px; background: #fef0f0; border-radius: 4px;">
+            <div v-for="(err, idx) in batchShipErrors" :key="idx" style="font-size: 12px; color: #f56c6c; padding: 2px 0;">
+              第{{ err.row }}行 - {{ err.reason }}
+            </div>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="batchShipVisible = false" class="btn-click-feedback">取消</el-button>
+        <el-button type="primary" :disabled="batchShipBtnDisabled" @click="handleBatchShipConfirm" class="btn-click-feedback">
+          {{ batchShipBtnDisabled ? '发货中...' : '确认批量发货' }}
+        </el-button>
       </template>
     </el-dialog>
 
@@ -931,11 +1331,14 @@ import {
   Check,
   RefreshRight,
   DocumentChecked,
+  Goods,
+  Van,
+  Location,
+  UploadFilled,
 } from '@element-plus/icons-vue'
 import {
   getOrderList,
   updateOrder,
-  shipOrder,
   completeOrder,
   cancelOrder,
   getOrderDetailWithItems,
@@ -967,6 +1370,28 @@ import {
   PayScenarioMap,
   SettleStatusMap,
 } from '@/api/payment'
+import {
+  verifyShipping,
+  validateLogisticsNoFormat,
+  shipOrder,
+  updateLogisticsStatus,
+  getLogisticsProviderList,
+  batchShipOrder,
+  batchUpdateAbnormalStatus,
+  batchResendLogisticsNotification,
+  getLogisticsTraceByOrderId,
+  validateLogisticsData,
+  type LogisticsProvider,
+  type LogisticsTraceData,
+  type LogisticsValidationReport,
+  type ShipOrderData,
+  LogisticsStatusMap,
+  ShippingAbnormalMap,
+  TrackStatusMap,
+  AbnormalLogisticsTypeMap,
+  AbnormalLevelMap,
+  AbnormalHandleStatusMap,
+} from '@/api/shipping'
 import { OrderStatusMap, PayTypeMap, OrderStatus } from '@/types/business'
 import { formatAmount } from '@/utils/amount'
 import { formatOrderDateTime } from '@/utils/date'
@@ -996,6 +1421,10 @@ const searchForm = reactive({
   reconcileStatus: undefined as number | undefined,
   riskFlag: undefined as number | undefined,
   isOverdue: undefined as number | undefined,
+  logisticsStatus: undefined as number | undefined,
+  logisticsProviderId: undefined as number | undefined,
+  isLogisticsAbnormal: undefined as number | undefined,
+  shippedDateRange: [] as string[],
   isException: undefined as number | undefined,
 })
 
@@ -1005,17 +1434,28 @@ const traceVisible = ref(false)
 const shipVisible = ref(false)
 const payStatusVisible = ref(false)
 const paymentTraceVisible = ref(false)
+const logisticsTraceVisible = ref(false)
+const batchShipVisible = ref(false)
 const activeTab = ref('basic')
 const paymentTraceTab = ref('flow')
+const logisticsTraceTab = ref('shipment')
 
+const logisticsProviderList = ref<LogisticsProvider[]>([])
 const currentOrder = ref<Order | null>(null)
 const currentOrderItems = ref<any[]>([])
 const traceData = ref<OrderTraceData | null>(null)
 const validationReport = ref<OrderValidationReport | null>(null)
 const paymentTraceData = ref<PaymentTraceData | null>(null)
 const paymentValidationReport = ref<PaymentValidationReport | null>(null)
+const logisticsTraceData = ref<LogisticsTraceData | null>(null)
+const logisticsValidationReport = ref<LogisticsValidationReport | null>(null)
 const saveBtnDisabled = ref(false)
 const payBtnDisabled = ref(false)
+const shipBtnDisabled = ref(false)
+const logisticsNoError = ref('')
+const batchShipProgress = ref(0)
+const batchShipErrors = ref<Array<{ row: number; reason: string }>>([])
+const batchShipBtnDisabled = ref(false)
 
 const hasFinancePermission = computed(() => {
   const role = userStore.userInfo?.role
@@ -1049,8 +1489,20 @@ const editRules: FormRules = {
 }
 
 const shipForm = reactive({
+  logisticsProviderId: undefined as number | undefined,
+  logisticsProviderName: '',
   logisticsCompany: '',
   logisticsNo: '',
+  freightAmount: undefined as number | undefined,
+  packageCount: 1,
+  packageWeight: undefined as number | undefined,
+  insuranceAmount: undefined as number | undefined,
+  remark: '',
+})
+
+const batchShipForm = reactive({
+  logisticsProviderId: undefined as number | undefined,
+  pasteData: '',
 })
 
 const payStatusForm = reactive<{
@@ -1096,6 +1548,11 @@ const fetchOrderList = async () => {
       reconcileStatus: searchForm.reconcileStatus,
       riskFlag: searchForm.riskFlag,
       isOverdue: searchForm.isOverdue,
+      logisticsStatus: searchForm.logisticsStatus,
+      logisticsProviderId: searchForm.logisticsProviderId,
+      isLogisticsAbnormal: searchForm.isLogisticsAbnormal,
+      startShippedAt: searchForm.shippedDateRange?.[0],
+      endShippedAt: searchForm.shippedDateRange?.[1],
       isException: searchForm.isException,
     }
 
@@ -1126,6 +1583,10 @@ const handleReset = () => {
   searchForm.reconcileStatus = undefined
   searchForm.riskFlag = undefined
   searchForm.isOverdue = undefined
+  searchForm.logisticsStatus = undefined
+  searchForm.logisticsProviderId = undefined
+  searchForm.isLogisticsAbnormal = undefined
+  searchForm.shippedDateRange = []
   searchForm.isException = undefined
   pagination.pageNum = 1
   fetchOrderList()
@@ -1226,9 +1687,20 @@ const handleAction = (cmd: string, row: Order) => {
   switch (cmd) {
     case 'ship':
       currentOrder.value = row
+      shipForm.logisticsProviderId = undefined
+      shipForm.logisticsProviderName = ''
       shipForm.logisticsCompany = ''
       shipForm.logisticsNo = ''
+      shipForm.freightAmount = undefined
+      shipForm.packageCount = 1
+      shipForm.packageWeight = undefined
+      shipForm.insuranceAmount = undefined
+      shipForm.remark = ''
+      logisticsNoError.value = ''
       shipVisible.value = true
+      break
+    case 'updateLogistics':
+      handleLogisticsStatusUpdate(row)
       break
     case 'complete':
       handleComplete(row)
@@ -1242,16 +1714,106 @@ const handleAction = (cmd: string, row: Order) => {
   }
 }
 
+const loadLogisticsProviders = async () => {
+  try {
+    const res = await getLogisticsProviderList()
+    logisticsProviderList.value = res.data
+  } catch (error) {
+    ElMessage.error('获取物流服务商列表失败')
+  }
+}
+
+const handleProviderChange = (providerId: number) => {
+  const provider = logisticsProviderList.value.find(p => p.id === providerId)
+  if (provider) {
+    shipForm.logisticsProviderName = provider.providerName
+    if (!shipForm.logisticsCompany) {
+      shipForm.logisticsCompany = provider.providerName
+    }
+  }
+}
+
+const handleLogisticsNoBlur = async () => {
+  if (!shipForm.logisticsNo) {
+    logisticsNoError.value = ''
+    return
+  }
+  try {
+    const res = await validateLogisticsNoFormat({
+      logisticsNo: shipForm.logisticsNo,
+      providerId: shipForm.logisticsProviderId,
+    })
+    if (!res.data.valid) {
+      logisticsNoError.value = res.data.errorMessage || '物流单号格式不正确'
+    } else {
+      logisticsNoError.value = ''
+    }
+  } catch (error) {
+    logisticsNoError.value = ''
+  }
+}
+
+const handleCopyLogisticsNo = async (logisticsNo: string) => {
+  try {
+    await navigator.clipboard.writeText(logisticsNo)
+    ElMessage.success('物流单号已复制')
+  } catch (error) {
+    ElMessage.warning('复制失败，请手动复制')
+  }
+}
+
 const handleShip = async () => {
-  if (!shipForm.logisticsCompany || !shipForm.logisticsNo) {
-    ElMessage.warning('请填写物流公司和物流单号')
+  if (!shipForm.logisticsProviderId) {
+    ElMessage.warning('请选择物流服务商')
+    return
+  }
+  if (!shipForm.logisticsNo) {
+    ElMessage.warning('请填写物流单号')
+    return
+  }
+  if (logisticsNoError.value) {
+    ElMessage.warning('物流单号格式不正确，请检查')
     return
   }
 
+  shipBtnDisabled.value = true
   try {
-    const res = await shipOrder(currentOrder.value!.id, shipForm)
+    const verifyData = {
+      orderId: currentOrder.value!.id,
+      logisticsProviderId: shipForm.logisticsProviderId,
+      logisticsNo: shipForm.logisticsNo,
+      logisticsCompany: shipForm.logisticsCompany,
+      receiverName: currentOrder.value?.receiverName,
+      receiverPhone: currentOrder.value?.receiverPhone,
+      receiverProvince: currentOrder.value?.receiverProvince,
+      receiverCity: currentOrder.value?.receiverCity,
+      receiverDistrict: currentOrder.value?.receiverDistrict,
+      receiverAddress: currentOrder.value?.receiverAddress,
+    }
+    const verifyRes = await verifyShipping(verifyData)
+    const errors = verifyRes.data.filter((r: any) => !r.valid)
+    if (errors.length > 0) {
+      ElMessage.warning(`发货核验不通过：${errors.map((e: any) => e.errorMessage).join('；')}`)
+      return
+    }
+
+    const shipData: ShipOrderData = {
+      orderId: currentOrder.value!.id,
+      logisticsProviderId: shipForm.logisticsProviderId,
+      logisticsProviderName: shipForm.logisticsProviderName,
+      logisticsNo: shipForm.logisticsNo,
+      logisticsCompany: shipForm.logisticsCompany || shipForm.logisticsProviderName,
+      freightAmount: shipForm.freightAmount,
+      packageCount: shipForm.packageCount,
+      packageWeight: shipForm.packageWeight,
+      insuranceAmount: shipForm.insuranceAmount,
+      remark: shipForm.remark,
+      operatorId: userStore.userInfo?.id,
+      operatorName: userStore.userInfo?.username,
+    }
+    const res = await shipOrder(shipData)
     if (!res.data.success) {
-      ElMessage.error(res.data.error || '发货失败')
+      ElMessage.error(res.data.errorMessage || '发货失败')
       return
     }
     ElMessage.success('发货成功')
@@ -1259,6 +1821,231 @@ const handleShip = async () => {
     fetchOrderList()
   } catch (error) {
     ElMessage.error('发货失败')
+  } finally {
+    setTimeout(() => {
+      shipBtnDisabled.value = false
+    }, 300)
+  }
+}
+
+const handleLogisticsTrace = async (row: Order) => {
+  try {
+    const [traceRes, validateRes] = await Promise.all([
+      getLogisticsTraceByOrderId(row.id),
+      validateLogisticsData(row.id),
+    ])
+    logisticsTraceData.value = traceRes.data
+    logisticsValidationReport.value = validateRes.data
+    logisticsTraceTab.value = 'shipment'
+    logisticsTraceVisible.value = true
+  } catch (error) {
+    ElMessage.error('获取物流溯源信息失败')
+  }
+}
+
+const handleLogisticsStatusUpdate = async (row: Order) => {
+  try {
+    const { value: status } = await ElMessageBox.prompt(
+      `请输入物流状态（0-待发货 1-已揽收 2-运输中 3-派送中 4-已签收 5-签收异常 6-已退回）`,
+      '更新物流状态',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputValidator: (value) => {
+          const num = parseInt(value)
+          if (isNaN(num) || num < 0 || num > 6) {
+            return '请输入0-6之间的数字'
+          }
+          return true
+        },
+        type: 'warning',
+      }
+    )
+    let description: string | undefined
+    try {
+      const descRes = await ElMessageBox.prompt(
+        '请输入轨迹描述（可选）',
+        '轨迹描述',
+        {
+          confirmButtonText: '确认',
+          cancelButtonText: '跳过',
+          inputPattern: /.*/,
+          type: 'info',
+        }
+      )
+      description = (descRes as any).value
+    } catch (e) {
+      description = undefined
+    }
+
+    const res = await updateLogisticsStatus({
+      orderId: row.id,
+      logisticsStatus: parseInt(status),
+      description: description as string | undefined,
+      operatorId: userStore.userInfo?.id,
+      operatorName: userStore.userInfo?.username,
+    })
+    if (!res.data.success) {
+      ElMessage.error(res.data.errorMessage || '更新失败')
+      return
+    }
+    ElMessage.success('物流状态更新成功')
+    fetchOrderList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('更新失败')
+    }
+  }
+}
+
+const handleBatchShip = () => {
+  if (selectedIds.value.length === 0) {
+    ElMessage.warning('请先选择订单')
+    return
+  }
+  batchShipForm.logisticsProviderId = undefined
+  batchShipForm.pasteData = ''
+  batchShipProgress.value = 0
+  batchShipErrors.value = []
+  batchShipVisible.value = true
+}
+
+const handleBatchFileChange = (file: any) => {
+  batchShipProgress.value = 30
+  setTimeout(() => {
+    batchShipProgress.value = 60
+  }, 500)
+  setTimeout(() => {
+    batchShipProgress.value = 100
+    ElMessage.info('文件解析完成，请点击确认批量发货')
+  }, 1000)
+}
+
+const handleBatchShipConfirm = async () => {
+  if (!batchShipForm.logisticsProviderId) {
+    ElMessage.warning('请选择物流服务商')
+    return
+  }
+  const provider = logisticsProviderList.value.find(p => p.id === batchShipForm.logisticsProviderId)
+  if (!provider) {
+    ElMessage.warning('物流服务商不存在')
+    return
+  }
+
+  batchShipBtnDisabled.value = true
+  try {
+    let items: any[] = []
+    if (batchShipForm.pasteData) {
+      const lines = batchShipForm.pasteData.trim().split('\n')
+      lines.forEach((line, index) => {
+        const parts = line.split('\t').map((s: string) => s.trim())
+        if (parts.length >= 2 && parts[0] && parts[1]) {
+          const order = orderList.value.find(o => o.orderNo === parts[0])
+          if (order) {
+            items.push({
+              orderId: order.id,
+              logisticsProviderId: batchShipForm.logisticsProviderId,
+              logisticsNo: parts[1],
+              logisticsCompany: parts[2] || provider.providerName,
+            })
+          } else {
+            batchShipErrors.value.push({ row: index + 1, reason: `订单编号${parts[0]}不存在` })
+          }
+        }
+      })
+    }
+
+    if (items.length === 0 && selectedIds.value.length > 0) {
+      items = selectedIds.value.map(id => ({
+        orderId: id,
+        logisticsProviderId: batchShipForm.logisticsProviderId,
+        logisticsNo: '',
+        logisticsCompany: provider.providerName,
+      }))
+    }
+
+    if (items.length === 0) {
+      ElMessage.warning('没有有效的发货数据')
+      return
+    }
+
+    const res = await batchShipOrder(items)
+    const resData = res.data as any
+    if (resData.errors && resData.errors.length > 0) {
+      batchShipErrors.value = resData.errors
+    }
+    ElMessage.success(`批量发货完成，成功 ${res.data.successCount} 条，失败 ${res.data.failCount} 条`)
+    if (res.data.successCount > 0) {
+      batchShipVisible.value = false
+      selectedIds.value = []
+      fetchOrderList()
+    }
+  } catch (error) {
+    ElMessage.error('批量发货失败')
+  } finally {
+    setTimeout(() => {
+      batchShipBtnDisabled.value = false
+    }, 300)
+  }
+}
+
+const handleBatchUpdateAbnormal = async () => {
+  if (selectedIds.value.length === 0) return
+  try {
+    const { value: flag } = await ElMessageBox.prompt(
+      `请输入异常状态（0-正常 1-异常）`,
+      '批量更新物流异常',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputValidator: (value) => {
+          const num = parseInt(value)
+          if (isNaN(num) || (num !== 0 && num !== 1)) {
+            return '请输入0或1'
+          }
+          return true
+        },
+        type: 'warning',
+      }
+    )
+    const params: any = {
+      ids: selectedIds.value,
+      pageNum: 1,
+      pageSize: 9999,
+      abnormalFlag: parseInt(flag),
+    }
+    const res = await batchUpdateAbnormalStatus(params)
+    ElMessage.success(`批量更新完成，成功 ${res.data.successCount} 条，失败 ${res.data.failCount} 条`)
+    selectedIds.value = []
+    fetchOrderList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('批量更新失败')
+    }
+  }
+}
+
+const handleBatchResendNotification = async () => {
+  if (selectedIds.value.length === 0) return
+  try {
+    await ElMessageBox.confirm(
+      `确定要向选中的 ${selectedIds.value.length} 条订单补发物流通知吗？`,
+      '批量补发通知',
+      { type: 'warning' }
+    )
+    const params: any = {
+      ids: selectedIds.value,
+      pageNum: 1,
+      pageSize: 9999,
+    }
+    const res = await batchResendLogisticsNotification(params)
+    ElMessage.success(`批量补发完成，成功 ${res.data.successCount} 条，失败 ${res.data.failCount} 条`)
+    selectedIds.value = []
+    fetchOrderList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('批量补发失败')
+    }
   }
 }
 
@@ -1518,6 +2305,7 @@ const handleBatchMarkReconcile = async () => {
 
 onMounted(() => {
   fetchOrderList()
+  loadLogisticsProviders()
 })
 </script>
 
@@ -1669,6 +2457,184 @@ onMounted(() => {
 
   &:not(.success) {
     border-left-color: #f56c6c;
+  }
+}
+
+.logistics-no-text {
+  cursor: pointer;
+  color: #409eff;
+  text-decoration: underline;
+
+  &:hover {
+    color: #66b1ff;
+  }
+}
+
+.logistics-no-error {
+  :deep(.el-input__wrapper) {
+    border: 1px solid #f56c6c !important;
+    box-shadow: 0 0 0 1px #f56c6c inset !important;
+  }
+}
+
+.btn-click-feedback {
+  transition: all 0.1s ease;
+
+  &:active {
+    transform: translateY(2px);
+    filter: brightness(0.95);
+  }
+}
+
+.btn-shake {
+  animation: btnShake 0.4s ease-in-out;
+}
+
+@keyframes btnShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+  20%, 40%, 60%, 80% { transform: translateX(3px); }
+}
+
+.logistics-timeline {
+  position: relative;
+  padding-left: 8px;
+}
+
+.track-item {
+  position: relative;
+  padding-left: 28px;
+  padding-bottom: 20px;
+
+  &:last-child {
+    padding-bottom: 0;
+
+    .timeline-line {
+      display: none;
+    }
+  }
+}
+
+.timeline-dot {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #dcdfe6;
+  border: 2px solid #fff;
+  z-index: 1;
+}
+
+.timeline-line {
+  position: absolute;
+  left: 5px;
+  top: 16px;
+  bottom: 0;
+  width: 2px;
+  background: #ebeef5;
+}
+
+.track-content {
+  padding: 4px 0;
+}
+
+.track-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.track-status {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.track-time {
+  font-size: 12px;
+  color: #909399;
+}
+
+.track-description {
+  font-size: 13px;
+  color: #606266;
+  line-height: 1.6;
+}
+
+.track-location {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.track-abnormal {
+  font-size: 12px;
+  color: #f56c6c;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.track-operator {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+.track-item-normal {
+  .timeline-dot {
+    background: #67c23a;
+    box-shadow: 0 0 0 2px #e1f3d8;
+  }
+
+  .track-status {
+    color: #67c23a;
+  }
+}
+
+.track-item-abnormal {
+  .timeline-dot {
+    background: #f56c6c;
+    box-shadow: 0 0 0 2px #fde2e2;
+  }
+
+  .track-status {
+    color: #f56c6c;
+  }
+
+  .timeline-line {
+    background: #fde2e2;
+  }
+}
+
+.batch-import-progress {
+  width: 100%;
+
+  :deep(.el-progress-bar__outer) {
+    border-radius: 10px;
+    height: 14px;
+    background-color: #f0f2f5;
+  }
+
+  :deep(.el-progress-bar__inner) {
+    border-radius: 10px;
+    background: linear-gradient(90deg, #409eff, #67c23a);
+  }
+}
+
+.batch-upload {
+  width: 100%;
+
+  :deep(.el-upload-dragger) {
+    width: 100%;
+    padding: 20px;
   }
 }
 </style>
