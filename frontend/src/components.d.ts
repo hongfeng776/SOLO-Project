@@ -17,6 +17,7 @@ declare module 'vue' {
     QyContentPreview: typeof import('./components/QyContentPreview/index.vue')['default']
     QyDataTable: typeof import('./components/QyDataTable/index.vue')['default']
     QyEmpty: typeof import('./components/QyEmpty/index.vue')['default']
+    QySkeleton: typeof import('./components/QySkeleton/index.vue')['default']
     QyTableToolbar: typeof import('./components/QyTableToolbar/index.vue')['default']
     QyUpload: typeof import('./components/QyUpload/index.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

@@ -1,11 +1,11 @@
-const { verifyToken, getStoredToken } = require('../utils/auth');
+﻿const { verifyToken, getStoredToken } = require('../utils/auth');
 const { UnauthorizedError, ForbiddenError } = require('../utils/errors');
 
 const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization || req.headers.Authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ') {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return next(new UnauthorizedError('缺少Authorization头格式错误'));
     }
 
@@ -61,7 +61,7 @@ const requirePermission = (...permissions) => {
       return next(new UnauthorizedError());
     }
     const userPermissions = req.user.permissions || [];
-    const hasPermission = permissions.every((p => 
+    const hasPermission = permissions.every(p =>
       userPermissions.includes(p) || userPermissions.includes('*')
     );
     if (!hasPermission) {
@@ -74,7 +74,7 @@ const requirePermission = (...permissions) => {
 const optionalAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization || req.headers.Authorization;
-    if (authHeader && authHeader.startsWith('Bearer ') {
+    if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
       const decoded = verifyToken(token);
       if (decoded && decoded.type === 'access') {

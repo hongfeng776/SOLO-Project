@@ -1,12 +1,12 @@
-const AuthService = require('../services/AuthService');
+﻿const AuthService = require('../services/AuthService');
 const { success, created } = require('../utils/response');
 const { validate, Joi } = require('../middleware/validator');
 
 class AuthController {
   login = [
     validate(Joi.object({
-      username: Joi.string().required().min(3).max(50).message('用户名必填'),
-      password: Joi.string().required().min(6).max(50).message('密码必填'),
+      username: Joi.string().required().min(3).max(50),
+      password: Joi.string().required().min(6).max(50),
     })),
     async (req, res, next) => {
       try {
@@ -32,7 +32,7 @@ class AuthController {
 
   refreshToken = [
     validate(Joi.object({
-      refreshToken: Joi.string().required().message('刷新令牌必填'),
+      refreshToken: Joi.string().required(),
     })),
     async (req, res, next) => {
       try {
@@ -46,8 +46,8 @@ class AuthController {
 
   changePassword = [
     validate(Joi.object({
-      oldPassword: Joi.string().required().message('原密码必填'),
-      newPassword: Joi.string().required().min(6).max(50).message('新密码长度6-50位'),
+      oldPassword: Joi.string().required(),
+      newPassword: Joi.string().required().min(6).max(50),
     })),
     async (req, res, next) => {
       try {
