@@ -295,6 +295,38 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/activity-operation',
+    component: Layout,
+    redirect: '/activity-operation/list',
+    meta: { title: '活跃度运营', icon: 'Histogram', roles: ['admin', 'operation_admin', 'operator'] },
+    children: [
+      {
+        path: 'list',
+        name: 'ActivityOperationList',
+        component: () => import(/* webpackChunkName: "activity-operation" */ '@views/activity-operation/list/index.vue'),
+        meta: { title: '活跃度查询', icon: 'DataAnalysis', roles: ['admin', 'operation_admin', 'operator'] }
+      },
+      {
+        path: 'strategy',
+        name: 'ActivityOperationStrategy',
+        component: () => import(/* webpackChunkName: "activity-operation" */ '@views/activity-operation/strategy/index.vue'),
+        meta: { title: '策略管理', icon: 'Setting', roles: ['admin', 'operation_admin'] }
+      },
+      {
+        path: 'batch',
+        name: 'ActivityOperationBatch',
+        component: () => import(/* webpackChunkName: "activity-operation" */ '@views/activity-operation/batch/index.vue'),
+        meta: { title: '批量运营', icon: 'Operation', roles: ['admin', 'operation_admin'] }
+      },
+      {
+        path: 'trace',
+        name: 'ActivityOperationTrace',
+        component: () => import(/* webpackChunkName: "activity-operation" */ '@views/activity-operation/trace/index.vue'),
+        meta: { title: '溯源预警', icon: 'Aim', roles: ['admin', 'operation_admin', 'operator'] }
+      }
+    ]
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/404',
     meta: { hidden: true }

@@ -1051,3 +1051,211 @@ export interface RiskControlPermission {
   canIntercept: boolean
   canRevoke: boolean
 }
+
+export interface ActivityScoreDetail {
+  dailyLogin: number
+  weeklyLogin: number
+  monthlyLogin: number
+  publish: number
+  comment: number
+  like: number
+  interact: number
+  share: number
+}
+
+export interface ActivityListUser extends UserAccount {
+  activityLevel: number
+  activityScore: number
+  activityScoreDetail: ActivityScoreDetail
+  lastActivityUpdateTime?: string
+  isFocusMaintenance: number
+  activityStrategies: string[]
+  dailyLoginCount: number
+  weeklyLoginCount: number
+  monthlyLoginCount: number
+  weeklyPublishCount: number
+  weeklyCommentCount: number
+  weeklyLikeCount: number
+  weeklyInteractionCount: number
+}
+
+export interface FilterValidationResult {
+  valid: boolean
+  conflicts: string[]
+}
+
+export interface ActivityUserDetail {
+  user: ActivityListUser
+  levelInfo: {
+    levelName: string
+    levelColor: string
+    nextLevel?: string
+    nextLevelScore?: number
+    scoreToNextLevel?: number
+  }
+  currentStrategies: Array<{
+    key: string
+    name: string
+    enabled: boolean
+    description: string
+  }>
+  availableStrategies: Array<{
+    key: string
+    name: string
+    description: string
+  }>
+  recentScoreLogs: ActivityScoreLogItem[]
+  refreshResult?: ActivityRefreshResult
+}
+
+export interface ActivityScoreLogItem {
+  id: number
+  userId: number
+  userName: string
+  oldLevel: number
+  newLevel: number
+  oldScore: number
+  newScore: number
+  scoreDetail?: string
+  changeType: string
+  logType: string
+  abnormalType?: string
+  isAbnormal: number
+  fluctuationAmount?: number
+  operatorId?: number
+  operatorName?: string
+  remark?: string
+  createTime: string
+}
+
+export interface ActivityStrategy {
+  id: number
+  strategyName: string
+  strategyType: string
+  targetActivityLevel: string
+  targetCondition?: string
+  content?: string
+  benefits?: string
+  triggerMode: string
+  triggerTime?: string
+  status: number
+  priority: number
+  autoApply: number
+  applyCount: number
+  successCount: number
+  failCount: number
+  operatorId?: number
+  operatorName?: string
+  remark?: string
+  createTime: string
+  updateTime: string
+}
+
+export interface ActivityOperationRecordItem {
+  id: number
+  operationName: string
+  operationType: string
+  batchType?: string
+  strategyId?: number
+  targetActivityLevel?: string
+  userScope?: string
+  userCount: number
+  successCount: number
+  failCount: number
+  executeType: string
+  executeTime?: string
+  executeEndTime?: string
+  status: number
+  operatorId?: number
+  operatorName?: string
+  operationResult?: string
+  detail?: string
+  createTime: string
+  updateTime: string
+}
+
+export interface BatchActivityOperationResult {
+  total: number
+  success: number
+  fail: number
+  recordId?: number
+  results: Array<{
+    userId: number
+    userName: string
+    success: boolean
+    error?: string
+  }>
+}
+
+export interface ActivityAbnormalDetectResult {
+  hasAbnormal: boolean
+  abnormalTypes: string[]
+  abnormalDetails: Array<{
+    type: string
+    name: string
+    severity: 'high' | 'medium' | 'low'
+    description: string
+    evidence: Record<string, any>
+  }>
+  overallScore: number
+  suggestions: string[]
+}
+
+export interface ActivityAbnormalWarningItem {
+  id: number
+  userId: number
+  userName: string
+  abnormalType: string
+  abnormalName: string
+  severity: number
+  description: string
+  evidence: string
+  score: number
+  handled: number
+  createTime: string
+}
+
+export interface ActivityDataValidation {
+  valid: boolean
+  checks: Array<{
+    name: string
+    passed: boolean
+    message?: string
+  }>
+  continuity: {
+    passed: boolean
+    missingDays?: string[]
+  }
+  consistency: {
+    passed: boolean
+    totalScore?: number
+    detailSum?: number
+  }
+  rationality: {
+    passed: boolean
+    actualBehaviorScore?: number
+    recordedScore?: number
+  }
+}
+
+export interface ActivityRefreshResult {
+  success: boolean
+  message: string
+  oldScore: number
+  newScore: number
+  oldLevel: number
+  newLevel: number
+  strategiesAdded: string[]
+  strategiesRemoved: string[]
+  markedAbnormal: boolean
+  abnormalType?: string
+}
+
+export interface ActivityPermission {
+  canView: boolean
+  canCalculate: boolean
+  canRefresh: boolean
+  canBatch: boolean
+  canAbnormal: boolean
+  canStrategy: boolean
+}

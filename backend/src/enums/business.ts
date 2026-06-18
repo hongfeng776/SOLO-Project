@@ -361,3 +361,165 @@ export const BEHAVIOR_FREQUENCY_LIMITS: Record<string, { window: number; max: nu
   [BehaviorType.LIKE]: { window: 60, max: 50 },
   [BehaviorType.FOLLOW]: { window: 60, max: 20 }
 }
+
+export enum ActivityLevel {
+  SLEEPER = -1,
+  LOW = 0,
+  NORMAL = 1,
+  HIGH = 2
+}
+
+export const ACTIVITY_LEVEL_NAMES: Record<number, string> = {
+  [ActivityLevel.SLEEPER]: '沉睡',
+  [ActivityLevel.LOW]: '低活跃',
+  [ActivityLevel.NORMAL]: '正常',
+  [ActivityLevel.HIGH]: '高活跃'
+}
+
+export const ACTIVITY_LEVEL_COLORS: Record<number, string> = {
+  [ActivityLevel.SLEEPER]: '#909399',
+  [ActivityLevel.LOW]: '#e6a23c',
+  [ActivityLevel.NORMAL]: '#409eff',
+  [ActivityLevel.HIGH]: '#67c23a'
+}
+
+export enum ActivityScoreFactor {
+  DAILY_LOGIN = 'daily_login',
+  WEEKLY_LOGIN = 'weekly_login',
+  MONTHLY_LOGIN = 'monthly_login',
+  PUBLISH = 'publish',
+  COMMENT = 'comment',
+  LIKE = 'like',
+  INTERACT = 'interact',
+  SHARE = 'share'
+}
+
+export const ACTIVITY_SCORE_FACTOR_NAMES: Record<string, string> = {
+  [ActivityScoreFactor.DAILY_LOGIN]: '日登录',
+  [ActivityScoreFactor.WEEKLY_LOGIN]: '周登录',
+  [ActivityScoreFactor.MONTHLY_LOGIN]: '月登录',
+  [ActivityScoreFactor.PUBLISH]: '发布内容',
+  [ActivityScoreFactor.COMMENT]: '评论',
+  [ActivityScoreFactor.LIKE]: '点赞',
+  [ActivityScoreFactor.INTERACT]: '互动',
+  [ActivityScoreFactor.SHARE]: '分享'
+}
+
+export const ACTIVITY_SCORE_FACTOR_WEIGHTS: Record<string, number> = {
+  [ActivityScoreFactor.DAILY_LOGIN]: 15,
+  [ActivityScoreFactor.WEEKLY_LOGIN]: 10,
+  [ActivityScoreFactor.MONTHLY_LOGIN]: 5,
+  [ActivityScoreFactor.PUBLISH]: 25,
+  [ActivityScoreFactor.COMMENT]: 15,
+  [ActivityScoreFactor.LIKE]: 10,
+  [ActivityScoreFactor.INTERACT]: 15,
+  [ActivityScoreFactor.SHARE]: 5
+}
+
+export const ACTIVITY_LEVEL_THRESHOLDS: Record<number, { min: number; max: number }> = {
+  [ActivityLevel.SLEEPER]: { min: -1, max: 19 },
+  [ActivityLevel.LOW]: { min: 20, max: 49 },
+  [ActivityLevel.NORMAL]: { min: 50, max: 79 },
+  [ActivityLevel.HIGH]: { min: 80, max: 100 }
+}
+
+export enum OperationStrategyType {
+  FLOW_BOOST = 'flow_boost',
+  ACTIVITY_PRIORITY = 'activity_priority',
+  WAKEUP_MESSAGE = 'wakeup_message',
+  BENEFIT_GRANT = 'benefit_grant',
+  FOCUS_MAINTENANCE = 'focus_maintenance',
+  CUSTOM = 'custom'
+}
+
+export const OPERATION_STRATEGY_NAMES: Record<string, string> = {
+  [OperationStrategyType.FLOW_BOOST]: '流量扶持',
+  [OperationStrategyType.ACTIVITY_PRIORITY]: '活动优先参与',
+  [OperationStrategyType.WAKEUP_MESSAGE]: '唤醒消息推送',
+  [OperationStrategyType.BENEFIT_GRANT]: '权益发放',
+  [OperationStrategyType.FOCUS_MAINTENANCE]: '重点运维标记',
+  [OperationStrategyType.CUSTOM]: '自定义操作'
+}
+
+export const ACTIVITY_LEVEL_STRATEGY_MAP: Record<number, string[]> = {
+  [ActivityLevel.SLEEPER]: [OperationStrategyType.WAKEUP_MESSAGE, OperationStrategyType.BENEFIT_GRANT],
+  [ActivityLevel.LOW]: [OperationStrategyType.FOCUS_MAINTENANCE, OperationStrategyType.FLOW_BOOST],
+  [ActivityLevel.NORMAL]: [OperationStrategyType.FLOW_BOOST],
+  [ActivityLevel.HIGH]: [OperationStrategyType.FLOW_BOOST, OperationStrategyType.ACTIVITY_PRIORITY, OperationStrategyType.BENEFIT_GRANT]
+}
+
+export enum OperationExecuteType {
+  IMMEDIATE = 'immediate',
+  SCHEDULED = 'scheduled'
+}
+
+export const OPERATION_EXECUTE_NAMES: Record<string, string> = {
+  [OperationExecuteType.IMMEDIATE]: '即时生效',
+  [OperationExecuteType.SCHEDULED]: '定时生效'
+}
+
+export enum OperationStatus {
+  PENDING = 0,
+  RUNNING = 1,
+  COMPLETED = 2,
+  FAILED = 3,
+  CANCELLED = 4,
+  SCHEDULED = 5
+}
+
+export const OPERATION_STATUS_NAMES: Record<number, string> = {
+  [OperationStatus.PENDING]: '待处理',
+  [OperationStatus.RUNNING]: '执行中',
+  [OperationStatus.COMPLETED]: '已完成',
+  [OperationStatus.FAILED]: '失败',
+  [OperationStatus.CANCELLED]: '已取消',
+  [OperationStatus.SCHEDULED]: '已定时'
+}
+
+export enum ActivityAbnormalType {
+  FAKE_SCORE = 'fake_score',
+  ABNORMAL_FLUCTUATION = 'abnormal_fluctuation',
+  FAKE_INTERACT = 'fake_interact',
+  SUSPICIOUS_PATTERN = 'suspicious_pattern',
+  DATA_DISCONTINUITY = 'data_discontinuity'
+}
+
+export const ACTIVITY_ABNORMAL_NAMES: Record<string, string> = {
+  [ActivityAbnormalType.FAKE_SCORE]: '虚假活跃度',
+  [ActivityAbnormalType.ABNORMAL_FLUCTUATION]: '异常分值波动',
+  [ActivityAbnormalType.FAKE_INTERACT]: '虚假互动',
+  [ActivityAbnormalType.SUSPICIOUS_PATTERN]: '可疑行为模式',
+  [ActivityAbnormalType.DATA_DISCONTINUITY]: '数据不连续'
+}
+
+export enum ActivityLogType {
+  LEVEL_CHANGE = 'level_change',
+  STRATEGY_APPLY = 'strategy_apply',
+  BATCH_OPERATION = 'batch_operation',
+  MANUAL_REFRESH = 'manual_refresh',
+  AUTO_UPDATE = 'auto_update',
+  BENEFIT_GRANT = 'benefit_grant'
+}
+
+export const ACTIVITY_LOG_TYPE_NAMES: Record<string, string> = {
+  [ActivityLogType.LEVEL_CHANGE]: '等级变更',
+  [ActivityLogType.STRATEGY_APPLY]: '策略适配',
+  [ActivityLogType.BATCH_OPERATION]: '批量操作',
+  [ActivityLogType.MANUAL_REFRESH]: '手动刷新',
+  [ActivityLogType.AUTO_UPDATE]: '自动更新',
+  [ActivityLogType.BENEFIT_GRANT]: '权益发放'
+}
+
+export enum ActivityBatchType {
+  WAKE_UP_SLEEPING = 'wake_up_sleeping',
+  GRANT_BENEFIT_HIGH = 'grant_benefit_high',
+  MARK_FOCUS_LOW = 'mark_focus_low',
+  SEND_PUSH_NOTIFY = 'send_push_notify'
+}
+
+export const ACTIVITY_BATCH_TYPE_NAMES: Record<string, string> = {
+  [ActivityBatchType.WAKE_UP_SLEEPING]: '批量唤醒沉睡用户',
+  [ActivityBatchType.GRANT_BENEFIT_HIGH]: '批量发放高活跃权益',
+  [ActivityBatchType.MARK_FOCUS_LOW]: '批量标记低活跃重点运维',
+  [ActivityBatchType.SEND_PUSH_NOTIFY]: '批量推送通知消息'
+}

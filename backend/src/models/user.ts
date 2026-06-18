@@ -41,6 +41,19 @@ class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare lastViolationTime: CreationOptional<Date | null>
   declare violationCount: CreationOptional<number>
   declare riskControlRemark: CreationOptional<string>
+  declare activityLevel: CreationOptional<number>
+  declare activityScore: CreationOptional<number>
+  declare activityScoreDetail: CreationOptional<string>
+  declare lastActivityUpdateTime: CreationOptional<Date | null>
+  declare isFocusMaintenance: CreationOptional<number>
+  declare activityStrategies: CreationOptional<string>
+  declare dailyLoginCount: CreationOptional<number>
+  declare weeklyLoginCount: CreationOptional<number>
+  declare monthlyLoginCount: CreationOptional<number>
+  declare weeklyPublishCount: CreationOptional<number>
+  declare weeklyCommentCount: CreationOptional<number>
+  declare weeklyLikeCount: CreationOptional<number>
+  declare weeklyInteractionCount: CreationOptional<number>
   declare createTime: CreationOptional<Date>
   declare updateTime: CreationOptional<Date>
   declare deleteTime: CreationOptional<Date | null>
@@ -258,6 +271,81 @@ User.init(
       allowNull: true,
       defaultValue: '',
       comment: '风控备注'
+    },
+    activityLevel: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '活跃度等级 -1沉睡 0低活跃 1正常 2高活跃'
+    },
+    activityScore: {
+      type: DataTypes.TINYINT.UNSIGNED,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '活跃度分值 0-100'
+    },
+    activityScoreDetail: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: '活跃度分值明细JSON'
+    },
+    lastActivityUpdateTime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '活跃度最后更新时间'
+    },
+    isFocusMaintenance: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '是否重点运维 0否 1是'
+    },
+    activityStrategies: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: '已生效的运营策略JSON'
+    },
+    dailyLoginCount: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '日登录次数'
+    },
+    weeklyLoginCount: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '周登录次数'
+    },
+    monthlyLoginCount: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '月登录次数'
+    },
+    weeklyPublishCount: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '周发布次数'
+    },
+    weeklyCommentCount: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '周评论次数'
+    },
+    weeklyLikeCount: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '周点赞次数'
+    },
+    weeklyInteractionCount: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '周综合互动次数'
     },
     createTime: DataTypes.DATE,
     updateTime: DataTypes.DATE,
