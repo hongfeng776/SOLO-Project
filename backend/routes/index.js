@@ -10,6 +10,7 @@ const paymentValidator = require('../middleware/paymentValidator')
 const authController = require('../controllers/AuthController')
 const userController = require('../controllers/UserController')
 const roleController = require('../controllers/RoleController')
+const permissionController = require('../controllers/PermissionController')
 const flightController = require('../controllers/FlightController')
 const hotelController = require('../controllers/HotelController')
 const carController = require('../controllers/CarController')
@@ -56,6 +57,18 @@ router.post('/users/batch/status', auth(['admin', 'risk_operator']), userControl
 router.post('/users/batch/info', auth(['admin']), userController.batchUpdateInfo.bind(userController));
 router.post('/users/batch/freeze', auth(['admin', 'risk_operator']), userController.batchFreeze.bind(userController));
 router.post('/users/batch/unfreeze', auth(['admin', 'risk_operator']), userController.batchUnfreeze.bind(userController));
+
+router.get('/permissions/tree', auth(), permissionController.getPermissionTree.bind(permissionController));
+router.get('/permissions/templates', auth(), permissionController.getTemplates.bind(permissionController));
+router.get('/permissions/user/:userId', auth(), permissionController.getUserPermissions.bind(permissionController));
+router.post('/permissions/user/:userId', auth(), permissionController.savePermission.bind(permissionController));
+router.post('/permissions/validate', auth(), permissionController.validatePermissions.bind(permissionController));
+router.post('/permissions/batch/template', auth(['admin']), permissionController.batchApplyTemplate.bind(permissionController));
+router.post('/permissions/batch/toggle', auth(['admin']), permissionController.batchToggle.bind(permissionController));
+router.post('/permissions/batch/reset', auth(['admin']), permissionController.batchReset.bind(permissionController));
+router.get('/permissions/logs', auth(), pagination, permissionController.getLogs.bind(permissionController));
+router.get('/permissions/abnormal/:userId', auth(), permissionController.detectAbnormal.bind(permissionController));
+router.post('/permissions/check-expired', auth(['admin']), permissionController.checkExpired.bind(permissionController));
 registerCrudRoutes('roles', roleController);
 registerCrudRoutes('flights', flightController);
 registerCrudRoutes('hotels', hotelController);

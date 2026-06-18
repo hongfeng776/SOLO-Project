@@ -3,6 +3,9 @@
     <div class="page-header">
       <h2>用户基础信息管控</h2>
       <div>
+        <el-button type="success" :icon="Key" :disabled="selectedIds.length === 0" @click="batchPermDialogVisible = true">
+          批量权限配置
+        </el-button>
         <el-button type="primary" :icon="Plus" @click="handleAdd">新增用户</el-button>
       </div>
     </div>
@@ -132,10 +135,11 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="注册时间" width="170" />
-        <el-table-column label="操作" width="260" fixed="right" class-name="action-buttons">
+        <el-table-column label="操作" width="320" fixed="right" class-name="action-buttons">
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="handleView(row)">详情</el-button>
             <el-button type="success" link size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button type="primary" link size="small" @click="handlePermission(row)">权限配置</el-button>
             <el-button
               v-if="row.status !== 2"
               type="warning"
@@ -183,13 +187,34 @@
       v-model="detailDialogVisible"
       :user-id="currentUserId"
     />
+
+    <PermissionConfigDialog
+      v-model="permissionDialogVisible"
+      :user-id="currentPermissionUserId"
+      :user-data="currentPermissionUser"
+      @success="handlePermissionSuccess"
+    />
+
+    <el-dialog
+      v-model="batchPermDialogVisible"
+      title="批量权限配置"
+      width="720px"
+      :close-on-click-modal="false"
+    >
+      <PermissionBatchPanel
+        :selected-ids="selectedIds"
+        :selected-rows="selectedRows"
+        @success="handleBatchPermSuccess"
+        @cancel="batchPermDialogVisible = false"
+      />
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search, Refresh, Warning } from '@element-plus/icons-vue'
+import { Plus, Search, Refresh, Warning, Key } from '@element-plus/icons-vue'
 import {
   UserLevelEnum,
   UserStatusEnum,
@@ -207,14 +232,21 @@ import {
 import UserEditDialog from '@/components/User/UserEditDialog.vue'
 import UserDetailDialog from '@/components/User/UserDetailDialog.vue'
 import UserBatchToolbar from '@/components/User/UserBatchToolbar.vue'
+import PermissionConfigDialog from '@/components/Permission/PermissionConfigDialog.vue'
+import PermissionBatchPanel from '@/components/Permission/PermissionBatchPanel.vue'
 
 const loading = ref(false)
 const editDialogVisible = ref(false)
 const detailDialogVisible = ref(false)
+const permissionDialogVisible = ref(false)
+const batchPermDialogVisible = ref(false)
 const currentUser = ref(null)
 const currentUserId = ref(null)
+const currentPermissionUserId = ref(null)
+const currentPermissionUser = ref(null)
 const selectedIds = ref([])
 const selectedRows = ref([])
+const listFadeKey = ref(0)
 
 const searchForm = reactive({
   keyword: '',
@@ -339,6 +371,24 @@ const handleEdit = (row) => {
 const handleView = (row) => {
   currentUserId.value = row.id
   detailDialogVisible.value = true
+}
+
+const handlePermission = (row) => {
+  currentPermissionUserId.value = row.id
+  currentPermissionUser.value = row
+  permissionDialogVisible.value = true
+}
+
+const handlePermissionSuccess = () => {
+  listFadeKey.value++
+  fetchData()
+}
+
+const handleBatchPermSuccess = () => {
+  batchPermDialogVisible.value = false
+  listFadeKey.value++
+  fetchData()
+  handleClearSelection()
 }
 
 const handleFreeze = async (row) => {

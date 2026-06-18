@@ -267,6 +267,43 @@ export const UserTagOptions = [
   { value: 'complaint', label: '投诉用户', color: '#eb2f96' }
 ]
 
+export const PermissionTypeEnum = {
+  BASE: { value: 'base', label: '基础权限', color: '#1890ff', icon: 'User' },
+  TRAVEL: { value: 'travel', label: '出行特权', color: '#52c41a', icon: 'Van' },
+  MARKETING: { value: 'marketing', label: '营销权益', color: '#faad14', icon: 'Present' },
+  BUSINESS: { value: 'business', label: '商旅专属', color: '#722ed1', icon: 'Suitcase' }
+}
+
+export const PermissionActionEnum = {
+  GRANT: { value: 'grant', label: '授予权限', color: '#52c41a' },
+  REVOKE: { value: 'revoke', label: '收回权限', color: '#ff4d4f' },
+  UPDATE: { value: 'update', label: '修改配置', color: '#1890ff' },
+  BATCH_GRANT: { value: 'batch_grant', label: '批量授予', color: '#52c41a' },
+  BATCH_REVOKE: { value: 'batch_revoke', label: '批量收回', color: '#ff4d4f' },
+  RESET: { value: 'reset', label: '重置权限', color: '#722ed1' },
+  EXPIRE: { value: 'expire', label: '自动过期', color: '#909399' }
+}
+
+export const PermissionStatusEnum = {
+  ACTIVE: { value: 1, label: '生效中', color: '#52c41a', type: 'success' },
+  EXPIRED: { value: 0, label: '已过期', color: '#909399', type: 'info' },
+  CANCELED: { value: 2, label: '已取消', color: '#ff4d4f', type: 'danger' }
+}
+
+export const PermissionTemplateOptions = [
+  { value: 'normal_default', label: '普通用户默认', userLevel: 1, description: '基础浏览与下单权限' },
+  { value: 'business_standard', label: '商旅用户标准', userLevel: 2, description: '商旅出行专属权益' },
+  { value: 'vip_premium', label: 'VIP尊享', userLevel: 3, description: '全部特权开放' },
+  { value: 'restricted', label: '受限用户', userLevel: 1, description: '仅保留基础查看权限' }
+]
+
+export const PermissionSourceEnum = {
+  MANUAL: { value: 'manual', label: '手动配置', color: '#1890ff' },
+  LEVEL: { value: 'level', label: '等级自带', color: '#52c41a' },
+  ACTIVITY: { value: 'activity', label: '活动赠送', color: '#faad14' },
+  BATCH: { value: 'batch', label: '批量配置', color: '#722ed1' }
+}
+
 export const MerchantTypeEnum = {
   INDIVIDUAL: { value: 1, label: '个人商家' },
   ENTERPRISE: { value: 2, label: '企业商家' },
@@ -318,6 +355,11 @@ export default {
   UserAbnormalTypeEnum,
   RegisterChannelEnum,
   UserTagOptions,
+  PermissionTypeEnum,
+  PermissionActionEnum,
+  PermissionStatusEnum,
+  PermissionTemplateOptions,
+  PermissionSourceEnum,
   MerchantTypeEnum,
   ExportStatusEnum,
   getEnumLabel,
