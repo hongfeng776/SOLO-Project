@@ -1,10 +1,7 @@
 import { Op } from 'sequelize';
 import { daos } from '../dao';
 import { ShipmentRecord } from '../models/ShipmentRecord';
-import { LogisticsProvider } from '../models/LogisticsProvider';
 import { LogisticsTrack } from '../models/LogisticsTrack';
-import { AbnormalLogisticsLog } from '../models/AbnormalLogisticsLog';
-import { OrderLog } from '../models/OrderLog';
 
 export interface LogisticsTraceData {
   shipmentRecord: any | null;

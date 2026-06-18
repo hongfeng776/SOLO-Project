@@ -25,22 +25,22 @@
 
     <el-dialog v-model="detailVisible" title="售后详情" width="600px">
       <el-descriptions :column="2" border v-if="currentRow">
-        <el-descriptions-item label="售后单号">{{ currentRow.id }}</el-descriptions-item>
+        <el-descriptions-item label="售后单号">{{ currentRow.afterSaleNo }}</el-descriptions-item>
         <el-descriptions-item label="关联订单">{{ currentRow.orderNo }}</el-descriptions-item>
-        <el-descriptions-item label="申请用户">{{ currentRow.username }}</el-descriptions-item>
+        <el-descriptions-item label="申请用户ID">{{ currentRow.userId }}</el-descriptions-item>
         <el-descriptions-item label="售后类型">
-          {{ currentRow.type === 1 ? '仅退款' : '退货退款' }}
+          {{ currentRow.type === 1 ? '退款' : currentRow.type === 2 ? '退货退款' : currentRow.type === 3 ? '换货' : '维修' }}
         </el-descriptions-item>
         <el-descriptions-item label="申请金额">
-          <span class="amount-text">{{ formatAmount(currentRow.applyAmount) }}</span>
+          <span class="amount-text">{{ formatAmount(currentRow.amount ?? 0) }}</span>
         </el-descriptions-item>
         <el-descriptions-item label="退款金额">
-          <span class="amount-text">{{ formatAmount(currentRow.refundAmount) }}</span>
+          <span class="amount-text">{{ formatAmount(currentRow.amount ?? 0) }}</span>
         </el-descriptions-item>
-        <el-descriptions-item label="申请原因" :span="2">{{ currentRow.reason }}</el-descriptions-item>
-        <el-descriptions-item label="问题描述" :span="2">{{ currentRow.description }}</el-descriptions-item>
+        <el-descriptions-item label="申请原因" :span="2">{{ currentRow.reason || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="处理备注" :span="2">{{ currentRow.handleRemark || '-' }}</el-descriptions-item>
         <el-descriptions-item label="申请时间">{{ formatDateTime(currentRow.createdAt) }}</el-descriptions-item>
-        <el-descriptions-item label="处理时间">{{ formatDateTime(currentRow.processTime!) }}</el-descriptions-item>
+        <el-descriptions-item label="处理时间">{{ formatDateTime(currentRow.completedAt ?? currentRow.updatedAt) }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
   </div>
@@ -52,9 +52,8 @@ import ProTable from '@/components/ProTable/index.vue'
 import { AfterSaleStatusMap } from '@/types/business'
 import {
   getAfterSaleList,
-  approveAfterSale,
-  rejectAfterSale,
-  type AfterSale
+  processAfterSale,
+  type AfterSaleRecord as AfterSale
 } from '@/api/aftersale'
 import { formatAmount } from '@/utils/amount'
 import { formatDateTime } from '@/utils/date'
@@ -102,10 +101,10 @@ const handleView = (row: Record<string, unknown>) => {
 }
 
 const handleApprove = async (row: Record<string, unknown>) => {
-  await approveAfterSale(row.id as number, { refundAmount: row.applyAmount as number })
+  await processAfterSale({ afterSaleId: row.id as number, action: 'audit_pass', status: 1, handleRemark: '审核通过' })
 }
 
 const handleReject = async (row: Record<string, unknown>) => {
-  await rejectAfterSale(row.id as number, { remark: '不符合售后条件' })
+  await processAfterSale({ afterSaleId: row.id as number, action: 'audit_reject', status: 4, handleRemark: '不符合售后条件' })
 }
 </script>

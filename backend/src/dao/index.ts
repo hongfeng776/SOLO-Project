@@ -42,6 +42,8 @@ import { LogisticsProviderDao } from './LogisticsProviderDao';
 import { ShipmentRecordDao } from './ShipmentRecordDao';
 import { LogisticsTrackDao } from './LogisticsTrackDao';
 import { AbnormalLogisticsLogDao } from './AbnormalLogisticsLogDao';
+import { AfterSaleLedgerDao } from './AfterSaleLedgerDao';
+import { AfterSaleOperationLogDao } from './AfterSaleOperationLogDao';
 
 export {
   BaseDao,
@@ -90,6 +92,8 @@ export {
   ShipmentRecordDao,
   LogisticsTrackDao,
   AbnormalLogisticsLogDao,
+  AfterSaleLedgerDao,
+  AfterSaleOperationLogDao,
 };
 
 export const daos = {
@@ -136,6 +140,8 @@ export const daos = {
   shipmentRecordDao: new ShipmentRecordDao(),
   logisticsTrackDao: new LogisticsTrackDao(),
   abnormalLogisticsLogDao: new AbnormalLogisticsLogDao(),
+  afterSaleLedgerDao: new AfterSaleLedgerDao(),
+  afterSaleOperationLogDao: new AfterSaleOperationLogDao(),
 };
 
 export default daos;

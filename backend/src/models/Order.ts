@@ -229,6 +229,77 @@ export class Order extends Model<Order> {
   })
   actual_freight?: number;
 
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '售后状态：0-无售后 1-售后中 2-售后完成 3-售后拒绝',
+  })
+  after_sale_status?: number;
+
+  @Column({
+    type: DataType.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '售后申请次数',
+  })
+  after_sale_count?: number;
+
+  @Column({
+    type: DataType.DATE,
+    comment: '售后时效截止时间',
+  })
+  after_sale_deadline?: Date;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '终止类型：0-未终止 1-主动取消 2-超时取消 3-违规取消 4-售后终止',
+  })
+  terminate_type?: number;
+
+  @Column({
+    type: DataType.DATE,
+    comment: '终止时间',
+  })
+  terminated_at?: Date;
+
+  @Column({
+    type: DataType.STRING(500),
+    comment: '终止原因',
+  })
+  terminate_reason?: string;
+
+  @Column({
+    type: DataType.BIGINT.UNSIGNED,
+    comment: '终止操作人ID',
+  })
+  terminate_operator_id?: number;
+
+  @Column({
+    type: DataType.STRING(50),
+    comment: '终止操作人姓名',
+  })
+  terminate_operator_name?: string;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '退款状态：0-无退款 1-退款中 2-已退款 3-退款拒绝',
+  })
+  refund_status?: number;
+
+  @Column({
+    type: DataType.DECIMAL(10, 2),
+    defaultValue: 0,
+    comment: '退款金额',
+  })
+  refund_amount?: number;
+
+  @Column({
+    type: DataType.DATE,
+    comment: '退款时间',
+  })
+  refund_time?: Date;
+
   @CreatedAt
   @Column({
     type: DataType.DATE,

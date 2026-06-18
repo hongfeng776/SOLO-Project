@@ -1,12 +1,43 @@
 import { Table, Column, Model, DataType, PrimaryKey, AutoIncrement, CreatedAt, UpdatedAt } from 'sequelize-typescript';
 
 @Table({
-  tableName: 'after_sales',
+  tableName: 'after_sale_ledgers',
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
+  indexes: [
+    {
+      name: 'uk_ledger_no',
+      fields: ['ledger_no'],
+      unique: true,
+    },
+    {
+      name: 'idx_after_sale_id',
+      fields: ['after_sale_id'],
+    },
+    {
+      name: 'idx_after_sale_no',
+      fields: ['after_sale_no'],
+    },
+    {
+      name: 'idx_order_id',
+      fields: ['order_id'],
+    },
+    {
+      name: 'idx_user_id',
+      fields: ['user_id'],
+    },
+    {
+      name: 'idx_merchant_id',
+      fields: ['merchant_id'],
+    },
+    {
+      name: 'idx_created_at',
+      fields: ['created_at'],
+    },
+  ],
 })
-export class AfterSale extends Model<AfterSale> {
+export class AfterSaleLedger extends Model<AfterSaleLedger> {
   @PrimaryKey
   @AutoIncrement
   @Column({
@@ -18,6 +49,20 @@ export class AfterSale extends Model<AfterSale> {
     type: DataType.STRING(32),
     allowNull: false,
     unique: true,
+    comment: '台账编号',
+  })
+  ledger_no!: string;
+
+  @Column({
+    type: DataType.BIGINT.UNSIGNED,
+    allowNull: false,
+    comment: '售后记录ID',
+  })
+  after_sale_id!: number;
+
+  @Column({
+    type: DataType.STRING(32),
+    allowNull: false,
     comment: '售后单号',
   })
   after_sale_no!: string;
@@ -58,42 +103,10 @@ export class AfterSale extends Model<AfterSale> {
 
   @Column({
     type: DataType.TINYINT.UNSIGNED,
-    comment: '售后类型：1-退款 2-退货退款 3-换货 4-维修',
+    allowNull: false,
+    comment: '售后类型',
   })
-  type?: number;
-
-  @Column({
-    type: DataType.TINYINT.UNSIGNED,
-    defaultValue: 0,
-    comment: '状态：0-待审核 1-审核通过 2-处理中 3-已完成 4-已拒绝 5-已取消 6-已关闭',
-  })
-  status?: number;
-
-  @Column({
-    type: DataType.TEXT,
-    comment: '申请原因',
-  })
-  reason?: string;
-
-  @Column({
-    type: DataType.DECIMAL(10, 2),
-    comment: '退款金额',
-  })
-  amount?: number;
-
-  @Column({
-    type: DataType.DECIMAL(10, 2),
-    defaultValue: 0,
-    comment: '订单实付金额',
-  })
-  order_pay_amount?: number;
-
-  @Column({
-    type: DataType.INTEGER.UNSIGNED,
-    defaultValue: 1,
-    comment: '申请次数（同一订单第N次）',
-  })
-  apply_count?: number;
+  after_sale_type!: number;
 
   @Column({
     type: DataType.TINYINT.UNSIGNED,
@@ -103,27 +116,22 @@ export class AfterSale extends Model<AfterSale> {
   cancel_scene?: number;
 
   @Column({
-    type: DataType.JSON,
-    comment: '售后商品明细',
+    type: DataType.DECIMAL(10, 2),
+    defaultValue: 0,
+    comment: '退款金额',
   })
-  items?: any;
+  refund_amount?: number;
 
   @Column({
-    type: DataType.STRING(500),
-    comment: '凭证图片（逗号分隔）',
+    type: DataType.TEXT,
+    comment: '库存回退明细(JSON)',
   })
-  evidence_images?: string;
-
-  @Column({
-    type: DataType.DATE,
-    comment: '售后时效截止时间',
-  })
-  deadline?: Date;
+  stock_rollback_items?: string;
 
   @Column({
     type: DataType.TINYINT.UNSIGNED,
     defaultValue: 0,
-    comment: '库存回退状态：0-未回退 1-已回退 2-回退失败',
+    comment: '库存回退状态',
   })
   stock_rollback_status?: number;
 
@@ -137,27 +145,22 @@ export class AfterSale extends Model<AfterSale> {
   @Column({
     type: DataType.DECIMAL(10, 2),
     defaultValue: 0,
-    comment: '用户积分回退数量',
+    comment: '用户积分回退',
   })
   points_rollback?: number;
 
   @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '订单终态',
+  })
+  order_final_status?: number;
+
+  @Column({
     type: DataType.STRING(500),
-    comment: '处理备注',
+    comment: '处理结果',
   })
-  handle_remark?: string;
-
-  @Column({
-    type: DataType.DATE,
-    comment: '审核时间',
-  })
-  audited_at?: Date;
-
-  @Column({
-    type: DataType.DATE,
-    comment: '完成时间',
-  })
-  completed_at?: Date;
+  process_result?: string;
 
   @Column({
     type: DataType.BIGINT.UNSIGNED,

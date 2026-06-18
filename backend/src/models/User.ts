@@ -63,6 +63,34 @@ export class User extends Model<User> {
   })
   total_pay_points?: number;
 
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 3,
+    comment: '信用等级：1-差 2-一般 3-良好 4-优秀 5-卓越',
+  })
+  credit_level?: number;
+
+  @Column({
+    type: DataType.INTEGER,
+    defaultValue: 100,
+    comment: '信用分',
+  })
+  credit_score?: number;
+
+  @Column({
+    type: DataType.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '售后申请次数',
+  })
+  after_sale_count?: number;
+
+  @Column({
+    type: DataType.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '违规售后次数',
+  })
+  violation_count?: number;
+
   @CreatedAt
   @Column({
     type: DataType.DATE,

@@ -36,6 +36,8 @@ import { LogisticsProvider } from './LogisticsProvider';
 import { ShipmentRecord } from './ShipmentRecord';
 import { LogisticsTrack } from './LogisticsTrack';
 import { AbnormalLogisticsLog } from './AbnormalLogisticsLog';
+import { AfterSaleLedger } from './AfterSaleLedger';
+import { AfterSaleOperationLog } from './AfterSaleOperationLog';
 
 export {
   Admin,
@@ -76,6 +78,8 @@ export {
   ShipmentRecord,
   LogisticsTrack,
   AbnormalLogisticsLog,
+  AfterSaleLedger,
+  AfterSaleOperationLog,
 };
 
 export const models = {
@@ -117,6 +121,8 @@ export const models = {
   ShipmentRecord,
   LogisticsTrack,
   AbnormalLogisticsLog,
+  AfterSaleLedger,
+  AfterSaleOperationLog,
 };
 
 export default models;

@@ -74,6 +74,27 @@ export class Merchant extends Model<Merchant> {
   })
   total_sales_count?: number;
 
+  @Column({
+    type: DataType.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '售后处理次数',
+  })
+  after_sale_handle_count?: number;
+
+  @Column({
+    type: DataType.DECIMAL(12, 2),
+    defaultValue: 0,
+    comment: '累计退款金额',
+  })
+  total_refund_amount?: number;
+
+  @Column({
+    type: DataType.DECIMAL(12, 2),
+    defaultValue: 0,
+    comment: '已扣减结算金额（退款回退）',
+  })
+  deducted_settle_amount?: number;
+
   @CreatedAt
   @Column({
     type: DataType.DATE,

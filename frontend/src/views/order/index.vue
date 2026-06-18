@@ -94,6 +94,31 @@
             <el-option label="是" :value="1" />
           </el-select>
         </el-form-item>
+        <el-form-item label="售后状态">
+          <el-select v-model="searchForm.afterSaleStatus" placeholder="全部" clearable style="width: 140px">
+            <el-option label="无售后" :value="0" />
+            <el-option label="售后中" :value="1" />
+            <el-option label="售后完成" :value="2" />
+            <el-option label="售后拒绝" :value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="退款状态">
+          <el-select v-model="searchForm.refundStatus" placeholder="全部" clearable style="width: 140px">
+            <el-option label="无退款" :value="0" />
+            <el-option label="退款中" :value="1" />
+            <el-option label="已退款" :value="2" />
+            <el-option label="退款拒绝" :value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="终止类型">
+          <el-select v-model="searchForm.terminateType" placeholder="全部" clearable style="width: 140px">
+            <el-option label="未终止" :value="0" />
+            <el-option label="主动取消" :value="1" />
+            <el-option label="超时取消" :value="2" />
+            <el-option label="违规取消" :value="3" />
+            <el-option label="售后终止" :value="4" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="发货时间">
           <el-date-picker
             v-model="searchForm.shippedDateRange"
@@ -143,6 +168,15 @@
       </el-button>
       <el-button type="success" size="small" @click="handleBatchResendNotification" class="btn-click-feedback">
         <el-icon><Bell /></el-icon> 批量补发物流通知
+      </el-button>
+      <el-button type="primary" size="small" @click="handleBatchAuditAfterSale" class="btn-click-feedback">
+        <el-icon><Select /></el-icon> 批量审核售后
+      </el-button>
+      <el-button type="warning" size="small" @click="handleBatchCloseInvalid" class="btn-click-feedback">
+        <el-icon><CircleClose /></el-icon> 批量关闭无效工单
+      </el-button>
+      <el-button type="info" size="small" @click="handleBatchArchiveTerminated" class="btn-click-feedback">
+        <el-icon><FolderOpened /></el-icon> 批量归档终止订单
       </el-button>
       <el-button type="danger" size="small" @click="handleBatchMarkException" class="btn-click-feedback">
         <el-icon><Warning /></el-icon> 批量标记异常
@@ -270,6 +304,42 @@
             <span v-else style="color: #67c23a">正常</span>
           </template>
         </el-table-column>
+        <el-table-column label="售后状态" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag
+              v-if="row.afterSaleStatus !== undefined && row.afterSaleStatus !== null"
+              :type="row.afterSaleStatus === 2 ? 'success' : row.afterSaleStatus === 3 ? 'danger' : row.afterSaleStatus === 1 ? 'warning' : 'info'"
+              size="small"
+            >
+              {{ AfterSaleStatusMap[row.afterSaleStatus] || '无售后' }}
+            </el-tag>
+            <span v-else style="color: #909399">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="退款状态" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag
+              v-if="row.refundStatus !== undefined && row.refundStatus !== null && row.refundStatus > 0"
+              :type="row.refundStatus === 2 ? 'success' : row.refundStatus === 3 ? 'danger' : 'warning'"
+              size="small"
+            >
+              {{ RefundStatusMap[row.refundStatus] || '未知' }}
+            </el-tag>
+            <span v-else style="color: #909399">无退款</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="终止类型" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag
+              v-if="row.terminateType !== undefined && row.terminateType !== null && row.terminateType > 0"
+              :type="row.terminateType === 4 ? 'danger' : row.terminateType === 3 ? 'danger' : 'warning'"
+              size="small"
+            >
+              {{ TerminateTypeMap[row.terminateType] || '未知' }}
+            </el-tag>
+            <span v-else style="color: #909399">未终止</span>
+          </template>
+        </el-table-column>
         <el-table-column label="收货信息" min-width="200">
           <template #default="{ row }">
             <div class="receiver-info">
@@ -309,6 +379,8 @@
                 <el-dropdown-menu>
                   <el-dropdown-item command="ship" v-if="row.status === 1">发货</el-dropdown-item>
                   <el-dropdown-item command="updateLogistics" v-if="row.logisticsNo">更新物流</el-dropdown-item>
+                  <el-dropdown-item command="applyAfterSale" v-if="row.status >= 1 && row.afterSaleStatus === 0">申请售后</el-dropdown-item>
+                  <el-dropdown-item command="cancelOrder" v-if="row.status <= 1">取消订单</el-dropdown-item>
                   <el-dropdown-item command="complete" v-if="row.status === 2">完成</el-dropdown-item>
                   <el-dropdown-item command="cancel" v-if="row.status <= 1">取消</el-dropdown-item>
                   <el-dropdown-item command="updatePayStatus" v-if="row.status === 0">更新支付状态</el-dropdown-item>
@@ -1313,6 +1385,274 @@
         <el-button @click="paymentTraceVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="afterSaleApplyVisible"
+      title="申请售后"
+      width="600px"
+      class="dialog-center-zoom"
+      destroy-on-close
+    >
+      <el-form :model="afterSaleApplyForm" label-width="100px" @submit.prevent>
+        <el-form-item label="订单编号">
+          <el-input v-model="afterSaleApplyForm.orderId" disabled />
+        </el-form-item>
+        <el-form-item label="售后类型" required>
+          <el-select v-model="afterSaleApplyForm.type" placeholder="请选择售后类型" style="width: 100%">
+            <el-option label="退款" :value="1" />
+            <el-option label="退货退款" :value="2" />
+            <el-option label="换货" :value="3" />
+            <el-option label="维修" :value="4" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="退款金额">
+          <el-input-number v-model="afterSaleApplyForm.amount" :min="0" :precision="2" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="申请原因">
+          <el-input v-model="afterSaleApplyForm.reason" type="textarea" :rows="4" placeholder="请输入申请原因" maxlength="500" show-word-limit />
+        </el-form-item>
+        <el-form-item v-if="afterSaleValidateResults.length > 0" label="校验结果">
+          <div class="after-sale-restriction">
+            <div v-for="(result, idx) in afterSaleValidateResults" :key="idx" style="margin-bottom: 8px">
+              <div v-if="!result.valid" style="color: #f56c6c; font-weight: 500">
+                <el-icon><WarningFilled /></el-icon> {{ result.errorMessage }}
+              </div>
+              <div v-if="result.restrictionRules && result.restrictionRules.length > 0" style="margin-top: 4px">
+                <div v-for="(rule, rIdx) in result.restrictionRules" :key="rIdx" style="font-size: 12px; color: #f56c6c; padding-left: 12px">
+                  • {{ rule }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="afterSaleApplyVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :disabled="afterSaleApplyDisabled"
+          @click="handleAfterSaleApplyConfirm"
+          :class="{ 'validate-disabled-btn': afterSaleApplyDisabled }"
+        >
+          确认申请
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="afterSaleTraceVisible"
+      title="售后溯源"
+      width="1000px"
+      class="dialog-center-zoom"
+      destroy-on-close
+    >
+      <div class="after-sale-trace-swiper">
+        <el-button
+          :disabled="afterSaleTraceIndex <= 0"
+          @click="handleAfterSaleTracePrev"
+          circle
+          size="small"
+          class="slide-left"
+        >
+          <el-icon><ArrowLeft /></el-icon>
+        </el-button>
+        <div style="flex: 1; overflow: hidden">
+          <el-tabs v-model="afterSaleTraceTab">
+            <el-tab-pane label="售后信息" name="afterSale">
+              <div class="trace-tab-content">
+                <el-descriptions :column="2" border size="small" v-if="afterSaleTraceData?.afterSale">
+                  <el-descriptions-item label="售后单号">{{ afterSaleTraceData.afterSale.afterSaleNo }}</el-descriptions-item>
+                  <el-descriptions-item label="订单编号">{{ afterSaleTraceData.afterSale.orderNo }}</el-descriptions-item>
+                  <el-descriptions-item label="售后类型">{{ AfterSaleTypeMap[afterSaleTraceData.afterSale.type] || '未知' }}</el-descriptions-item>
+                  <el-descriptions-item label="售后状态">
+                    <el-tag :type="afterSaleTraceData.afterSale.status === 3 ? 'success' : afterSaleTraceData.afterSale.status === 4 ? 'danger' : 'warning'" size="small">
+                      {{ AfterSaleStatusMap[afterSaleTraceData.afterSale.status] || '未知' }}
+                    </el-tag>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="退款金额">
+                    <span class="amount-text">{{ formatAmount(afterSaleTraceData.afterSale.amount ?? 0) }}</span>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="申请原因">{{ afterSaleTraceData.afterSale.reason || '-' }}</el-descriptions-item>
+                  <el-descriptions-item label="创建时间">{{ formatOrderDateTime(afterSaleTraceData.afterSale.createdAt) }}</el-descriptions-item>
+                  <el-descriptions-item label="更新时间">{{ formatOrderDateTime(afterSaleTraceData.afterSale.updatedAt) }}</el-descriptions-item>
+                  <el-descriptions-item label="处理备注" :span="2" v-if="afterSaleTraceData.afterSale.handleRemark">
+                    {{ afterSaleTraceData.afterSale.handleRemark }}
+                  </el-descriptions-item>
+                </el-descriptions>
+                <el-empty v-else description="暂无售后信息" />
+              </div>
+            </el-tab-pane>
+
+            <el-tab-pane label="操作日志" name="operationLogs">
+              <div class="trace-tab-content">
+                <div v-if="afterSaleTraceData?.operationLogs && afterSaleTraceData.operationLogs.length > 0">
+                  <div v-for="log in afterSaleTraceData.operationLogs" :key="log.id" class="order-log-item">
+                    <div class="log-action">{{ log.actionDesc || log.action }}</div>
+                    <div style="font-size: 13px; color: #606266; margin-bottom: 4px">
+                      {{ log.remark || '-' }}
+                    </div>
+                    <div v-if="log.fundChange" style="font-size: 12px; color: #e6a23c; margin-bottom: 4px">
+                      资金变动：{{ log.fundChange }}
+                    </div>
+                    <div v-if="log.stockChange" style="font-size: 12px; color: #409eff; margin-bottom: 4px">
+                      库存变动：{{ log.stockChange }}
+                    </div>
+                    <div class="log-meta">
+                      操作人：{{ log.operatorName || '系统' }} | {{ formatOrderDateTime(log.createdAt) }}
+                    </div>
+                  </div>
+                </div>
+                <el-empty v-else description="暂无操作日志" />
+              </div>
+            </el-tab-pane>
+
+            <el-tab-pane label="售后台账" name="ledger">
+              <div class="trace-tab-content">
+                <el-descriptions :column="2" border size="small" v-if="afterSaleTraceData?.ledger">
+                  <el-descriptions-item label="台账编号">{{ afterSaleTraceData.ledger.ledgerNo }}</el-descriptions-item>
+                  <el-descriptions-item label="售后单号">{{ afterSaleTraceData.ledger.afterSaleNo }}</el-descriptions-item>
+                  <el-descriptions-item label="订单编号">{{ afterSaleTraceData.ledger.orderNo }}</el-descriptions-item>
+                  <el-descriptions-item label="售后类型">{{ AfterSaleTypeMap[afterSaleTraceData.ledger.afterSaleType] || '未知' }}</el-descriptions-item>
+                  <el-descriptions-item label="退款金额">
+                    <span class="amount-text">{{ formatAmount(afterSaleTraceData.ledger.refundAmount) }}</span>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="库存回退状态">
+                    <el-tag :type="afterSaleTraceData.ledger.stockRollbackStatus === 1 ? 'success' : afterSaleTraceData.ledger.stockRollbackStatus === 2 ? 'danger' : 'info'" size="small">
+                      {{ afterSaleTraceData.ledger.stockRollbackStatus === 1 ? '已回退' : afterSaleTraceData.ledger.stockRollbackStatus === 2 ? '回退失败' : '未回退' }}
+                    </el-tag>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="结算扣款">
+                    <span class="amount-text">{{ formatAmount(afterSaleTraceData.ledger.settleDeductAmount) }}</span>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="积分回退">{{ afterSaleTraceData.ledger.pointsRollback }}</el-descriptions-item>
+                  <el-descriptions-item label="创建时间">{{ formatOrderDateTime(afterSaleTraceData.ledger.createdAt) }}</el-descriptions-item>
+                  <el-descriptions-item label="备注" v-if="afterSaleTraceData.ledger.remark">
+                    {{ afterSaleTraceData.ledger.remark }}
+                  </el-descriptions-item>
+                </el-descriptions>
+                <el-empty v-else description="暂无台账信息" />
+              </div>
+            </el-tab-pane>
+
+            <el-tab-pane label="数据校验报告" name="validationReport">
+              <div class="trace-tab-content">
+                <div v-if="afterSaleValidationReport">
+                  <div
+                    class="validation-report-card"
+                    :class="afterSaleValidationReport.overallScore >= 80 ? 'passed' : 'failed'"
+                  >
+                    <div style="font-weight: 600; margin-bottom: 12px">
+                      总体校验结果：
+                      <el-tag :type="afterSaleValidationReport.overallScore >= 80 ? 'success' : 'danger'" effect="dark">
+                        {{ afterSaleValidationReport.overallScore >= 80 ? '通过' : '不通过' }}
+                      </el-tag>
+                      <span style="margin-left: 8px; font-size: 12px; color: #909399">
+                        综合得分：{{ afterSaleValidationReport.overallScore }}分
+                      </span>
+                    </div>
+                    <div class="validate-result-item" :class="{ success: afterSaleValidationReport.processCompliance }">
+                      <div style="font-weight: 500">流程合规性校验</div>
+                      <div style="font-size: 12px; color: #606266">{{ afterSaleValidationReport.processCompliance ? '流程合规' : '流程不合规' }}</div>
+                    </div>
+                    <div class="validate-result-item" :class="{ success: afterSaleValidationReport.dataConsistency }">
+                      <div style="font-weight: 500">数据一致性校验</div>
+                      <div style="font-size: 12px; color: #606266">{{ afterSaleValidationReport.dataConsistency ? '数据一致' : '数据不一致' }}</div>
+                    </div>
+                    <div class="validate-result-item" :class="{ success: afterSaleValidationReport.noDuplicate }">
+                      <div style="font-weight: 500">重复售后校验</div>
+                      <div style="font-size: 12px; color: #606266">{{ afterSaleValidationReport.noDuplicate ? '无重复售后' : '存在重复售后' }}</div>
+                    </div>
+                    <div class="validate-result-item" :class="{ success: afterSaleValidationReport.fundMatch }">
+                      <div style="font-weight: 500">资金匹配校验</div>
+                      <div style="font-size: 12px; color: #606266">{{ afterSaleValidationReport.fundMatch ? '资金匹配' : '资金不匹配' }}</div>
+                    </div>
+                    <div class="validate-result-item" :class="{ success: afterSaleValidationReport.stockMatch }">
+                      <div style="font-weight: 500">库存匹配校验</div>
+                      <div style="font-size: 12px; color: #606266">{{ afterSaleValidationReport.stockMatch ? '库存匹配' : '库存不匹配' }}</div>
+                    </div>
+                    <div class="validate-result-item" :class="{ success: afterSaleValidationReport.statusConsistency }">
+                      <div style="font-weight: 500">状态一致性校验</div>
+                      <div style="font-size: 12px; color: #606266">{{ afterSaleValidationReport.statusConsistency ? '状态一致' : '状态不一致' }}</div>
+                    </div>
+                    <div v-if="afterSaleValidationReport.issues.length > 0" style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ebeef5">
+                      <div style="font-weight: 500; color: #f56c6c; margin-bottom: 4px">存在问题：</div>
+                      <div v-for="(issue, idx) in afterSaleValidationReport.issues" :key="idx" style="font-size: 12px; color: #f56c6c; margin-left: 12px">
+                        • {{ issue }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <el-empty v-else description="暂无校验报告" />
+              </div>
+            </el-tab-pane>
+          </el-tabs>
+        </div>
+        <el-button
+          :disabled="afterSaleTraceIndex >= afterSaleTraceList.length - 1"
+          @click="handleAfterSaleTraceNext"
+          circle
+          size="small"
+          class="slide-right"
+        >
+          <el-icon><ArrowRight /></el-icon>
+        </el-button>
+      </div>
+      <div style="text-align: center; font-size: 12px; color: #909399; margin-top: 8px">
+        {{ afterSaleTraceList.length > 0 ? `${afterSaleTraceIndex + 1} / ${afterSaleTraceList.length}` : '' }}
+      </div>
+      <template #footer>
+        <el-button @click="afterSaleTraceVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="cancelOrderVisible"
+      title="取消订单"
+      width="600px"
+      class="dialog-center-zoom"
+      destroy-on-close
+    >
+      <el-form :model="cancelOrderForm" label-width="100px" @submit.prevent>
+        <el-form-item label="订单编号">
+          <el-input v-model="cancelOrderForm.orderId" disabled />
+        </el-form-item>
+        <el-form-item label="取消场景" required>
+          <el-select v-model="cancelOrderForm.cancelScene" placeholder="请选择取消场景" style="width: 100%">
+            <el-option label="主动取消" :value="1" />
+            <el-option label="超时取消" :value="2" />
+            <el-option label="违规取消" :value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="取消原因">
+          <el-input v-model="cancelOrderForm.reason" type="textarea" :rows="4" placeholder="请输入取消原因" maxlength="500" show-word-limit />
+        </el-form-item>
+        <el-form-item v-if="cancelOrderValidateResults.length > 0" label="校验结果">
+          <div class="after-sale-restriction">
+            <div v-for="(result, idx) in cancelOrderValidateResults" :key="idx" style="margin-bottom: 8px">
+              <div v-if="!result.valid" style="color: #f56c6c; font-weight: 500">
+                <el-icon><WarningFilled /></el-icon> {{ result.errorMessage }}
+              </div>
+              <div v-if="result.restrictionRules && result.restrictionRules.length > 0" style="margin-top: 4px">
+                <div v-for="(rule, rIdx) in result.restrictionRules" :key="rIdx" style="font-size: 12px; color: #f56c6c; padding-left: 12px">
+                  • {{ rule }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="cancelOrderVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :disabled="cancelOrderDisabled"
+          @click="handleCancelOrderConfirm"
+          :class="{ 'validate-disabled-btn': cancelOrderDisabled }"
+        >
+          确认取消
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -1335,6 +1675,10 @@ import {
   Van,
   Location,
   UploadFilled,
+  Select,
+  CircleClose,
+  ArrowLeft,
+  ArrowRight,
 } from '@element-plus/icons-vue'
 import {
   getOrderList,
@@ -1397,6 +1741,27 @@ import { formatAmount } from '@/utils/amount'
 import { formatOrderDateTime } from '@/utils/date'
 import type { PageResult } from '@/types/api'
 import { useUserStore } from '@/stores/user'
+import {
+  applyAfterSale,
+  verifyAfterSaleApply,
+  verifyOrderTerminate,
+  cancelOrderApi,
+  processAfterSale,
+  getAfterSaleTraceByOrderId,
+  validateAfterSaleData,
+  batchAuditAfterSale,
+  batchCloseInvalidAfterSale,
+  batchArchiveTerminated,
+  type AfterSaleApplyData,
+  type AfterSaleTraceData,
+  type AfterSaleValidationReport,
+  type AfterSaleValidateResult,
+  AfterSaleTypeMap,
+  AfterSaleStatusMap,
+  CancelSceneMap,
+  TerminateTypeMap,
+  RefundStatusMap,
+} from '@/api/aftersale'
 
 const loading = ref(false)
 const orderList = ref<Order[]>([])
@@ -1425,6 +1790,9 @@ const searchForm = reactive({
   logisticsProviderId: undefined as number | undefined,
   isLogisticsAbnormal: undefined as number | undefined,
   shippedDateRange: [] as string[],
+  afterSaleStatus: undefined as number | undefined,
+  refundStatus: undefined as number | undefined,
+  terminateType: undefined as number | undefined,
   isException: undefined as number | undefined,
 })
 
@@ -1436,9 +1804,13 @@ const payStatusVisible = ref(false)
 const paymentTraceVisible = ref(false)
 const logisticsTraceVisible = ref(false)
 const batchShipVisible = ref(false)
+const afterSaleApplyVisible = ref(false)
+const afterSaleTraceVisible = ref(false)
+const cancelOrderVisible = ref(false)
 const activeTab = ref('basic')
 const paymentTraceTab = ref('flow')
 const logisticsTraceTab = ref('shipment')
+const afterSaleTraceTab = ref('afterSale')
 
 const logisticsProviderList = ref<LogisticsProvider[]>([])
 const currentOrder = ref<Order | null>(null)
@@ -1449,6 +1821,14 @@ const paymentTraceData = ref<PaymentTraceData | null>(null)
 const paymentValidationReport = ref<PaymentValidationReport | null>(null)
 const logisticsTraceData = ref<LogisticsTraceData | null>(null)
 const logisticsValidationReport = ref<LogisticsValidationReport | null>(null)
+const afterSaleTraceData = ref<AfterSaleTraceData | null>(null)
+const afterSaleValidationReport = ref<AfterSaleValidationReport | null>(null)
+const afterSaleTraceList = ref<AfterSaleTraceData[]>([])
+const afterSaleTraceIndex = ref(0)
+const afterSaleValidateResults = ref<AfterSaleValidateResult[]>([])
+const cancelOrderValidateResults = ref<AfterSaleValidateResult[]>([])
+const afterSaleApplyDisabled = ref(false)
+const cancelOrderDisabled = ref(false)
 const saveBtnDisabled = ref(false)
 const payBtnDisabled = ref(false)
 const shipBtnDisabled = ref(false)
@@ -1505,6 +1885,19 @@ const batchShipForm = reactive({
   pasteData: '',
 })
 
+const afterSaleApplyForm = reactive({
+  orderId: '',
+  type: undefined as number | undefined,
+  amount: undefined as number | undefined,
+  reason: '',
+})
+
+const cancelOrderForm = reactive({
+  orderId: '',
+  cancelScene: undefined as number | undefined,
+  reason: '',
+})
+
 const payStatusForm = reactive<{
   orderId: number
   flowId: number
@@ -1553,6 +1946,9 @@ const fetchOrderList = async () => {
       isLogisticsAbnormal: searchForm.isLogisticsAbnormal,
       startShippedAt: searchForm.shippedDateRange?.[0],
       endShippedAt: searchForm.shippedDateRange?.[1],
+      afterSaleStatus: searchForm.afterSaleStatus,
+      refundStatus: searchForm.refundStatus,
+      terminateType: searchForm.terminateType,
       isException: searchForm.isException,
     }
 
@@ -1587,6 +1983,9 @@ const handleReset = () => {
   searchForm.logisticsProviderId = undefined
   searchForm.isLogisticsAbnormal = undefined
   searchForm.shippedDateRange = []
+  searchForm.afterSaleStatus = undefined
+  searchForm.refundStatus = undefined
+  searchForm.terminateType = undefined
   searchForm.isException = undefined
   pagination.pageNum = 1
   fetchOrderList()
@@ -1701,6 +2100,12 @@ const handleAction = (cmd: string, row: Order) => {
       break
     case 'updateLogistics':
       handleLogisticsStatusUpdate(row)
+      break
+    case 'applyAfterSale':
+      handleApplyAfterSale(row)
+      break
+    case 'cancelOrder':
+      handleCancelOrder(row)
       break
     case 'complete':
       handleComplete(row)
@@ -2219,6 +2624,249 @@ const handlePaymentTrace = async (row: Order) => {
   }
 }
 
+const handleApplyAfterSale = async (row: Order) => {
+  currentOrder.value = row
+  afterSaleApplyForm.orderId = row.orderNo
+  afterSaleApplyForm.type = undefined
+  afterSaleApplyForm.amount = row.payAmount
+  afterSaleApplyForm.reason = ''
+  afterSaleValidateResults.value = []
+  afterSaleApplyDisabled.value = false
+
+  try {
+    const verifyData: AfterSaleApplyData = {
+      orderId: row.id,
+      userId: (row as any).userId,
+      type: 1,
+      amount: row.payAmount,
+    }
+    const verifyRes = await verifyAfterSaleApply(verifyData)
+    const results = verifyRes.data
+    afterSaleValidateResults.value = results
+    const hasInvalid = results.some((r: AfterSaleValidateResult) => !r.valid)
+    afterSaleApplyDisabled.value = hasInvalid
+  } catch (error) {
+    afterSaleValidateResults.value = []
+    afterSaleApplyDisabled.value = false
+  }
+
+  afterSaleApplyVisible.value = true
+}
+
+const handleAfterSaleApplyConfirm = async () => {
+  if (!afterSaleApplyForm.type) {
+    ElMessage.warning('请选择售后类型')
+    return
+  }
+  try {
+    const data: AfterSaleApplyData = {
+      orderId: currentOrder.value!.id,
+      userId: (currentOrder.value as any).userId,
+      type: afterSaleApplyForm.type,
+      amount: afterSaleApplyForm.amount,
+      reason: afterSaleApplyForm.reason,
+    }
+    const res = await applyAfterSale(data)
+    if (!res.data) {
+      ElMessage.error('申请售后失败')
+      return
+    }
+    ElMessage.success('售后申请已提交')
+    afterSaleApplyVisible.value = false
+    fetchOrderList()
+  } catch (error) {
+    ElMessage.error('申请售后失败')
+  }
+}
+
+const handleCancelOrder = async (row: Order) => {
+  currentOrder.value = row
+  cancelOrderForm.orderId = row.orderNo
+  cancelOrderForm.cancelScene = undefined
+  cancelOrderForm.reason = ''
+  cancelOrderValidateResults.value = []
+  cancelOrderDisabled.value = false
+
+  try {
+    const verifyData = {
+      orderId: row.id,
+      cancelScene: 1,
+    }
+    const verifyRes = await verifyOrderTerminate(verifyData)
+    const results = verifyRes.data
+    cancelOrderValidateResults.value = results
+    const hasInvalid = results.some((r: AfterSaleValidateResult) => !r.valid)
+    cancelOrderDisabled.value = hasInvalid
+  } catch (error) {
+    cancelOrderValidateResults.value = []
+    cancelOrderDisabled.value = false
+  }
+
+  cancelOrderVisible.value = true
+}
+
+const handleCancelOrderConfirm = async () => {
+  if (!cancelOrderForm.cancelScene) {
+    ElMessage.warning('请选择取消场景')
+    return
+  }
+  try {
+    const res = await cancelOrderApi({
+      orderId: currentOrder.value!.id,
+      cancelScene: cancelOrderForm.cancelScene,
+      reason: cancelOrderForm.reason,
+    })
+    if (!res.data?.success) {
+      ElMessage.error(res.data?.error || '取消订单失败')
+      return
+    }
+    ElMessage.success('订单已取消')
+    cancelOrderVisible.value = false
+    fetchOrderList()
+  } catch (error) {
+    ElMessage.error('取消订单失败')
+  }
+}
+
+const handleAfterSaleTrace = async (row: Order) => {
+  try {
+    const traceRes = await getAfterSaleTraceByOrderId(row.id)
+    const traceDataItem = traceRes.data
+    afterSaleTraceList.value = traceDataItem ? [traceDataItem] : []
+    afterSaleTraceIndex.value = 0
+    afterSaleTraceData.value = traceDataItem
+
+    if (traceDataItem?.afterSale) {
+      try {
+        const validateRes = await validateAfterSaleData(traceDataItem.afterSale.id)
+        afterSaleValidationReport.value = validateRes.data
+      } catch {
+        afterSaleValidationReport.value = null
+      }
+    } else {
+      afterSaleValidationReport.value = null
+    }
+
+    afterSaleTraceTab.value = 'afterSale'
+    afterSaleTraceVisible.value = true
+  } catch (error) {
+    ElMessage.error('获取售后溯源信息失败')
+  }
+}
+
+const handleAfterSaleTracePrev = () => {
+  if (afterSaleTraceIndex.value > 0) {
+    afterSaleTraceIndex.value--
+    afterSaleTraceData.value = afterSaleTraceList.value[afterSaleTraceIndex.value]
+  }
+}
+
+const handleAfterSaleTraceNext = () => {
+  if (afterSaleTraceIndex.value < afterSaleTraceList.value.length - 1) {
+    afterSaleTraceIndex.value++
+    afterSaleTraceData.value = afterSaleTraceList.value[afterSaleTraceIndex.value]
+  }
+}
+
+const handleBatchAuditAfterSale = async () => {
+  if (selectedIds.value.length === 0) {
+    ElMessage.warning('请先选择订单')
+    return
+  }
+  try {
+    const { value: status } = await ElMessageBox.prompt(
+      '请输入审核状态（1-审核通过 4-审核拒绝）',
+      '批量审核售后',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputValidator: (value) => {
+          const num = parseInt(value)
+          if (isNaN(num) || (num !== 1 && num !== 4)) {
+            return '请输入1或4'
+          }
+          return true
+        },
+        type: 'warning',
+      }
+    )
+    await ElMessageBox.confirm(
+      `确定要对选中的 ${selectedIds.value.length} 条订单进行售后审核吗？`,
+      '批量审核',
+      { type: 'warning' }
+    )
+    const res = await batchAuditAfterSale({
+      ids: selectedIds.value,
+      pageNum: 1,
+      pageSize: 9999,
+      status: parseInt(status),
+    })
+    ElMessage.success(`批量审核完成，成功 ${res.data.successCount} 条，失败 ${res.data.failCount} 条`)
+    selectedIds.value = []
+    fetchOrderList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('批量审核失败')
+    }
+  }
+}
+
+const handleBatchCloseInvalid = async () => {
+  if (selectedIds.value.length === 0) {
+    ElMessage.warning('请先选择订单')
+    return
+  }
+  try {
+    const { value: reason } = await ElMessageBox.prompt(
+      '请输入关闭原因',
+      '批量关闭无效工单',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputPlaceholder: '请输入关闭原因',
+        type: 'warning',
+      }
+    )
+    const res = await batchCloseInvalidAfterSale({
+      ids: selectedIds.value,
+      reason,
+    })
+    ElMessage.success(`批量关闭完成，成功 ${res.data.successCount} 条，失败 ${res.data.failCount} 条`)
+    selectedIds.value = []
+    fetchOrderList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('批量关闭失败')
+    }
+  }
+}
+
+const handleBatchArchiveTerminated = async () => {
+  if (selectedIds.value.length === 0) {
+    ElMessage.warning('请先选择订单')
+    return
+  }
+  try {
+    await ElMessageBox.confirm(
+      `确定要归档选中的 ${selectedIds.value.length} 条终止订单吗？`,
+      '批量归档终止订单',
+      { type: 'warning' }
+    )
+    const res = await batchArchiveTerminated({
+      ids: selectedIds.value,
+      pageNum: 1,
+      pageSize: 9999,
+    })
+    ElMessage.success(`批量归档完成，成功 ${res.data.successCount} 条，失败 ${res.data.failCount} 条`)
+    selectedIds.value = []
+    fetchOrderList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('批量归档失败')
+    }
+  }
+}
+
 const handleBatchVerifyPayment = async () => {
   if (selectedIds.value.length === 0) return
   try {
@@ -2636,5 +3284,41 @@ onMounted(() => {
     width: 100%;
     padding: 20px;
   }
+}
+
+.after-sale-restriction {
+  padding: 12px;
+  background: #fef0f0;
+  border: 1px solid #fde2e2;
+  border-radius: 6px;
+}
+
+.after-sale-trace-swiper {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.validate-disabled-btn {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.slide-left {
+  animation: slideLeft 0.3s ease;
+}
+
+.slide-right {
+  animation: slideRight 0.3s ease;
+}
+
+@keyframes slideLeft {
+  0% { transform: translateX(20px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideRight {
+  0% { transform: translateX(-20px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
 }
 </style>
