@@ -239,3 +239,47 @@ export async function getMatchingTrace(req: Request, res: Response, next: NextFu
     next(err);
   }
 }
+
+export async function validateStatusOperation(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id);
+    const targetStatus = req.query.targetStatus as string;
+    const result = await tradeService.validateStatusOperation(id, targetStatus);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function manualChangeStatus(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id);
+    const { targetStatus, reason } = req.body;
+    const operatorId = (req as any).user?.id;
+    const result = await tradeService.manualChangeStatus(id, targetStatus, operatorId, reason);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function batchChangeStatus(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { ids, targetStatus, reason, filters } = req.body;
+    const operatorId = (req as any).user?.id;
+    const result = await tradeService.batchChangeStatus(ids.map(Number), targetStatus, operatorId, reason, filters);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getStatusTrace(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id);
+    const result = await tradeService.getStatusTrace(id);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}

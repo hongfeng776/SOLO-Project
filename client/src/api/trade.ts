@@ -280,3 +280,99 @@ export function batchControlOrders(data: {
 export function getMatchingTrace(id: number): Promise<IApiResponse<IMatchingTrace>> {
   return get<IMatchingTrace>(`/api/trades/${id}/matching-trace`)
 }
+
+export interface IStatusValidation {
+  valid: boolean
+  errors: string[]
+  warnings: string[]
+  allowedActions: string[]
+  currentStatus: string
+  targetStatus: string
+}
+
+export interface IStatusChangeResult {
+  success: boolean
+  tradeId: number
+  previousStatus: string
+  newStatus: string
+  changeType: 'manual' | 'system'
+  dataConsistent: boolean
+  fundDiff: number
+  holdingDiff: number
+  message: string
+}
+
+export interface IStatusTraceRecord {
+  id: number
+  tradeId: number
+  tradeNo: string
+  fromStatus: string
+  toStatus: string
+  changeType: 'manual' | 'system'
+  operatorId: number | null
+  operatorName: string
+  reason: string
+  fundBefore: number
+  fundAfter: number
+  fundDiff: number
+  holdingBefore: number
+  holdingAfter: number
+  holdingDiff: number
+  dataConsistent: boolean
+  createdAt: string
+}
+
+export interface IStatusTraceInfo {
+  orderId: number
+  tradeNo: string
+  currentStatus: string
+  records: IStatusTraceRecord[]
+  sequenceValid: boolean
+  sequenceErrors: string[]
+  dataSummary: {
+    totalFundChange: number
+    totalHoldingChange: number
+    allConsistent: boolean
+  }
+}
+
+export interface IBatchStatusChangeResult {
+  total: number
+  successCount: number
+  failedCount: number
+  results: IStatusChangeResult[]
+}
+
+export function validateStatusOperation(id: number, targetStatus: string): Promise<IApiResponse<IStatusValidation>> {
+  return get<IStatusValidation>(`/api/trades/${id}/status-validate`, { targetStatus })
+}
+
+export function manualChangeStatus(data: {
+  id: number
+  targetStatus: string
+  reason: string
+}): Promise<IApiResponse<IStatusChangeResult>> {
+  return put<IStatusChangeResult>(`/api/trades/${data.id}/status`, {
+    targetStatus: data.targetStatus,
+    reason: data.reason,
+  })
+}
+
+export function batchChangeStatus(data: {
+  ids: number[]
+  targetStatus: string
+  reason: string
+  filters?: {
+    riskLevel?: string
+    minAmount?: number
+    maxAmount?: number
+    startDate?: string
+    endDate?: string
+  }
+}): Promise<IApiResponse<IBatchStatusChangeResult>> {
+  return put<IBatchStatusChangeResult>('/api/trades/batch-status', data)
+}
+
+export function getStatusTrace(id: number): Promise<IApiResponse<IStatusTraceInfo>> {
+  return get<IStatusTraceInfo>(`/api/trades/${id}/status-trace`)
+}

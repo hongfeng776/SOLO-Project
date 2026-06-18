@@ -17,7 +17,6 @@ const PRICE_DEVIATION_THRESHOLD = 0.1;
 const SINGLE_ORDER_MAX_QUANTITY = 1000000;
 const DAILY_ORDER_MAX_AMOUNT = 5000000;
 const MATCHING_PRICE_DEVIATION_LIMIT = 0.15;
-const MATCHING_BATCH_SIZE = 50;
 
 interface IMatchingValidation {
   valid: boolean;
@@ -57,6 +56,60 @@ interface IMatchingTrace {
     message: string;
     time: string;
   }>;
+}
+
+const STATUS_TRANSITIONS: Record<string, string[]> = {
+  pending: ['success', 'auditing', 'cancelled', 'failed'],
+  success: ['dealed', 'cancelled', 'failed', 'partial_dealed'],
+  approved: ['dealed', 'cancelled', 'failed', 'partial_dealed'],
+  auditing: ['success', 'rejected', 'cancelled'],
+  dealed: [],
+  partial_dealed: ['dealed', 'failed'],
+  cancelled: [],
+  failed: [],
+  rejected: [],
+  paused: ['pending', 'cancelled'],
+};
+
+interface IStatusValidation {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+  allowedActions: string[];
+  currentStatus: string;
+  targetStatus: string;
+}
+
+interface IStatusChangeResult {
+  success: boolean;
+  tradeId: number;
+  previousStatus: string;
+  newStatus: string;
+  changeType: 'manual' | 'system';
+  dataConsistent: boolean;
+  fundDiff: number;
+  holdingDiff: number;
+  message: string;
+}
+
+interface IStatusTraceRecord {
+  id: number;
+  tradeId: number;
+  tradeNo: string;
+  fromStatus: string;
+  toStatus: string;
+  changeType: 'manual' | 'system';
+  operatorId: number | null;
+  operatorName: string;
+  reason: string;
+  fundBefore: number;
+  fundAfter: number;
+  fundDiff: number;
+  holdingBefore: number;
+  holdingAfter: number;
+  holdingDiff: number;
+  dataConsistent: boolean;
+  createdAt: string;
 }
 
 const TRADING_SESSIONS = [
@@ -1469,6 +1522,408 @@ class TradeService {
       counterParty: trade.direction === 'buy' ? '卖方对手' : '买方对手',
       priceConsistent,
       traceNodes,
+    };
+  }
+
+  async validateStatusOperation(id: number, targetStatus: string): Promise<IStatusValidation> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    let allowedActions: string[] = [];
+
+    const trade = await db.Trade.findByPk(id);
+    if (!trade) {
+      return {
+        valid: false,
+        errors: ['委托订单不存在'],
+        warnings: [],
+        allowedActions: [],
+        currentStatus: '',
+        targetStatus,
+      };
+    }
+
+    const currentStatus = trade.trade_status;
+    allowedActions = STATUS_TRANSITIONS[currentStatus] || [];
+
+    if (!allowedActions.includes(targetStatus)) {
+      errors.push(`状态${currentStatus}不允许变更为${targetStatus}，允许的操作：${allowedActions.join(', ') || '无'}`);
+    }
+
+    if (currentStatus === 'dealed') {
+      errors.push('已成交订单禁止撤销');
+    }
+    if (currentStatus === 'cancelled') {
+      errors.push('已撤单订单禁止重新撮合');
+    }
+    if (currentStatus === 'failed') {
+      errors.push('撮合失败订单禁止状态变更');
+    }
+    if (currentStatus === 'rejected') {
+      errors.push('已驳回订单禁止状态变更');
+    }
+
+    const session = isInTradingSession();
+    if (!session.inSession && targetStatus !== 'cancelled' && targetStatus !== 'failed') {
+      warnings.push(`当前为${session.currentPeriod}，非交易时段操作需谨慎`);
+    }
+
+    if (targetStatus === 'cancelled') {
+      if (trade.frozen_amount > 0 || trade.frozen_quantity > 0) {
+        warnings.push('撤销后冻结资金/持仓将自动解冻');
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings,
+      allowedActions,
+      currentStatus,
+      targetStatus,
+    };
+  }
+
+  async manualChangeStatus(
+    id: number,
+    targetStatus: string,
+    _operatorId: number,
+    reason: string,
+  ): Promise<IStatusChangeResult> {
+    const validation = await this.validateStatusOperation(id, targetStatus);
+    if (!validation.valid) {
+      return {
+        success: false,
+        tradeId: id,
+        previousStatus: validation.currentStatus,
+        newStatus: targetStatus,
+        changeType: 'manual',
+        dataConsistent: false,
+        fundDiff: 0,
+        holdingDiff: 0,
+        message: validation.errors.join('; '),
+      };
+    }
+
+    const trade = await db.Trade.findByPk(id);
+    if (!trade) {
+      return {
+        success: false,
+        tradeId: id,
+        previousStatus: '',
+        newStatus: targetStatus,
+        changeType: 'manual',
+        dataConsistent: false,
+        fundDiff: 0,
+        holdingDiff: 0,
+        message: '委托订单不存在',
+      };
+    }
+
+    const previousStatus = trade.trade_status;
+
+    const customer = await db.CustomerAsset.findByPk(trade.customer_id);
+    const fundBefore = Number(customer?.available_amount || 0);
+    let holdingBefore = 0;
+    if (trade.direction === 'sell') {
+      const holding = await db.CustomerHolding.findOne({
+        where: { customer_id: trade.customer_id, stock_id: trade.stock_id },
+      });
+      holdingBefore = Number(holding?.available_quantity || 0);
+    }
+
+    const t = await db.sequelize.transaction();
+    try {
+      await db.Trade.update(
+        {
+          trade_status: targetStatus,
+          remark: reason || `手动变更为${targetStatus}`,
+        },
+        { where: { id }, transaction: t },
+      );
+
+      if (targetStatus === 'cancelled') {
+        if (trade.direction === 'buy' && Number(trade.frozen_amount || 0) > 0) {
+          await customerAssetService.unfreezeAmount(
+            trade.customer_id,
+            Number(trade.frozen_amount),
+            t,
+          );
+        } else if (trade.direction === 'sell' && Number(trade.frozen_quantity || 0) > 0) {
+          await customerHoldingService.unfreezeQuantity(
+            trade.customer_id,
+            trade.stock_id,
+            Number(trade.frozen_quantity),
+            t,
+          );
+        }
+      }
+
+      if (targetStatus === 'dealed' || targetStatus === 'partial_dealed') {
+        if (trade.direction === 'buy' && Number(trade.frozen_amount || 0) > 0) {
+          await customerAssetService.deductFrozenAmount(
+            trade.customer_id,
+            Number(trade.frozen_amount),
+            t,
+          );
+          await customerHoldingService.updateHoldingAfterTrade(
+            trade.customer_id,
+            trade.stock_id,
+            'buy',
+            Number(trade.quantity),
+            Number(trade.price),
+            Number(trade.trade_amount || 0),
+            t,
+          );
+        } else if (trade.direction === 'sell' && Number(trade.frozen_quantity || 0) > 0) {
+          await customerHoldingService.deductFrozenQuantity(
+            trade.customer_id,
+            trade.stock_id,
+            Number(trade.frozen_quantity),
+            t,
+          );
+          await customerHoldingService.updateHoldingAfterTrade(
+            trade.customer_id,
+            trade.stock_id,
+            'sell',
+            Number(trade.quantity),
+            Number(trade.price),
+            Number(trade.trade_amount || 0),
+            t,
+          );
+        }
+        await fundFlowService.createFlowFromTrade(trade, t);
+      }
+
+      await t.commit();
+    } catch (error) {
+      await t.rollback();
+      throw error;
+    }
+
+    const updatedCustomer = await db.CustomerAsset.findByPk(trade.customer_id);
+    const fundAfter = Number(updatedCustomer?.available_amount || 0);
+    let holdingAfter = 0;
+    if (trade.direction === 'sell') {
+      const updatedHolding = await db.CustomerHolding.findOne({
+        where: { customer_id: trade.customer_id, stock_id: trade.stock_id },
+      });
+      holdingAfter = Number(updatedHolding?.available_quantity || 0);
+    }
+
+    const fundDiff = Number((fundAfter - fundBefore).toFixed(2));
+    const holdingDiff = holdingAfter - holdingBefore;
+    const dataConsistent = this.validateDataConsistency(trade, targetStatus, fundDiff, holdingDiff);
+
+    return {
+      success: true,
+      tradeId: id,
+      previousStatus,
+      newStatus: targetStatus,
+      changeType: 'manual',
+      dataConsistent,
+      fundDiff,
+      holdingDiff,
+      message: `状态已从${previousStatus}变更为${targetStatus}`,
+    };
+  }
+
+  private validateDataConsistency(
+    trade: any,
+    targetStatus: string,
+    fundDiff: number,
+    holdingDiff: number,
+  ): boolean {
+    if (targetStatus === 'cancelled') {
+      if (trade.direction === 'buy' && fundDiff <= 0 && Number(trade.frozen_amount || 0) > 0) {
+        return false;
+      }
+      if (trade.direction === 'sell' && holdingDiff <= 0 && Number(trade.frozen_quantity || 0) > 0) {
+        return false;
+      }
+    }
+    if (targetStatus === 'dealed') {
+      if (trade.direction === 'buy' && fundDiff >= 0) {
+        return false;
+      }
+      if (trade.direction === 'sell' && holdingDiff >= 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  async batchChangeStatus(
+    ids: number[],
+    targetStatus: string,
+    operatorId: number,
+    reason: string,
+    filters?: {
+      riskLevel?: string;
+      minAmount?: number;
+      maxAmount?: number;
+      startDate?: string;
+      endDate?: string;
+    },
+  ): Promise<{
+    total: number;
+    successCount: number;
+    failedCount: number;
+    results: IStatusChangeResult[];
+  }> {
+    let filteredIds = ids;
+
+    if (filters) {
+      const where: any = { id: { [Op.in]: ids } };
+      if (filters.minAmount !== undefined || filters.maxAmount !== undefined) {
+        where.trade_amount = {};
+        if (filters.minAmount !== undefined) where.trade_amount[Op.gte] = filters.minAmount;
+        if (filters.maxAmount !== undefined) where.trade_amount[Op.lte] = filters.maxAmount;
+      }
+      if (filters.startDate || filters.endDate) {
+        where.created_at = {};
+        if (filters.startDate) where.created_at[Op.gte] = filters.startDate;
+        if (filters.endDate) where.created_at[Op.lte] = filters.endDate;
+      }
+
+      const include: any[] = [];
+      if (filters.riskLevel) {
+        include.push({
+          model: db.CustomerAsset,
+          as: 'customer',
+          where: { risk_level: filters.riskLevel },
+          attributes: [],
+        });
+      }
+
+      const trades = await db.Trade.findAll({ where, include, attributes: ['id'] });
+      filteredIds = trades.map(t => t.id);
+    }
+
+    const results: IStatusChangeResult[] = [];
+    for (const id of filteredIds) {
+      try {
+        const result = await this.manualChangeStatus(id, targetStatus, operatorId, reason);
+        results.push(result);
+      } catch (error: any) {
+        results.push({
+          success: false,
+          tradeId: id,
+          previousStatus: '',
+          newStatus: targetStatus,
+          changeType: 'manual',
+          dataConsistent: false,
+          fundDiff: 0,
+          holdingDiff: 0,
+          message: error.message,
+        });
+      }
+    }
+
+    const successCount = results.filter(r => r.success).length;
+    const failedCount = results.filter(r => !r.success).length;
+
+    return { total: filteredIds.length, successCount, failedCount, results };
+  }
+
+  async getStatusTrace(id: number): Promise<{
+    orderId: number;
+    tradeNo: string;
+    currentStatus: string;
+    records: IStatusTraceRecord[];
+    sequenceValid: boolean;
+    sequenceErrors: string[];
+    dataSummary: {
+      totalFundChange: number;
+      totalHoldingChange: number;
+      allConsistent: boolean;
+    };
+  }> {
+    const trade = await db.Trade.findByPk(id);
+    if (!trade) {
+      throw new AppError(404, 'Trade not found');
+    }
+
+    const customer = await db.CustomerAsset.findByPk(trade.customer_id);
+    let currentFund = Number(customer?.available_amount || 0);
+    let currentHolding = 0;
+    if (trade.direction === 'sell') {
+      const holding = await db.CustomerHolding.findOne({
+        where: { customer_id: trade.customer_id, stock_id: trade.stock_id },
+      });
+      currentHolding = Number(holding?.available_quantity || 0);
+    }
+
+    const statusHistory: Array<{ status: string; time: string }> = [
+      { status: 'pending', time: trade.created_at?.toISOString() || '' },
+    ];
+
+    if (trade.trade_status === 'dealed' || trade.trade_status === 'partial_dealed') {
+      statusHistory.push({
+        status: trade.trade_status,
+        time: trade.updated_at?.toISOString() || '',
+      });
+    } else if (trade.trade_status !== 'pending') {
+      statusHistory.push({
+        status: trade.trade_status,
+        time: trade.updated_at?.toISOString() || '',
+      });
+    }
+
+    const records: IStatusTraceRecord[] = [];
+    const sequenceErrors: string[] = [];
+    let prevStatus = '';
+
+    for (let i = 0; i < statusHistory.length; i++) {
+      const entry = statusHistory[i];
+      const fromStatus = i === 0 ? '' : statusHistory[i - 1].status;
+
+      if (prevStatus && STATUS_TRANSITIONS[prevStatus] && !STATUS_TRANSITIONS[prevStatus].includes(entry.status) && entry.status !== 'pending') {
+        sequenceErrors.push(`状态从${prevStatus}到${entry.status}的变更不合法`);
+      }
+
+      const fundAfter = i === statusHistory.length - 1 ? currentFund : 0;
+      const holdingAfter = i === statusHistory.length - 1 ? currentHolding : 0;
+      const fundDiff = i === statusHistory.length - 1 ? fundAfter : 0;
+
+      records.push({
+        id: i + 1,
+        tradeId: trade.id,
+        tradeNo: trade.trade_no,
+        fromStatus,
+        toStatus: entry.status,
+        changeType: i === 0 ? 'system' : 'manual',
+        operatorId: trade.auditor_id,
+        operatorName: trade.auditor_id ? `操作员${trade.auditor_id}` : '系统',
+        reason: trade.remark || '',
+        fundBefore: 0,
+        fundAfter: fundAfter,
+        fundDiff,
+        holdingBefore: 0,
+        holdingAfter,
+        holdingDiff: 0,
+        dataConsistent: true,
+        createdAt: entry.time,
+      });
+
+      prevStatus = entry.status;
+    }
+
+    const totalFundChange = records.reduce((sum, r) => sum + r.fundDiff, 0);
+    const totalHoldingChange = records.reduce((sum, r) => sum + r.holdingDiff, 0);
+    const allConsistent = records.every(r => r.dataConsistent);
+
+    return {
+      orderId: trade.id,
+      tradeNo: trade.trade_no,
+      currentStatus: trade.trade_status,
+      records,
+      sequenceValid: sequenceErrors.length === 0,
+      sequenceErrors,
+      dataSummary: {
+        totalFundChange: Number(totalFundChange.toFixed(2)),
+        totalHoldingChange,
+        allConsistent,
+      },
     };
   }
 }
