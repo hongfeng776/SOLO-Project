@@ -20,3 +20,5 @@ export { Deposit } from './Deposit';
 export { Loan } from './Loan';
 export { LoanApprovalFlow } from './LoanApprovalFlow';
 export { LoanApprovalLog } from './LoanApprovalLog';
+export { LoanRepayment } from './LoanRepayment';
+export { LoanWithhold } from './LoanWithhold';

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -14,6 +14,7 @@ const statusFlowController = new StatusFlowController();
 const depositController = new DepositController();
 const loanController = new LoanController();
 const loanApprovalController = new LoanApprovalController();
+const loanRepaymentController = new LoanRepaymentController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -171,5 +172,21 @@ router.get('/loan/approval/pending/list', requirePermission('loan:approval:query
 router.post('/loan/approval/batch', requirePermission('loan:approval:batch'), (req, res, next) => loanApprovalController.batchApprove(req, res, next));
 // 功能点4：审批溯源查询
 router.post('/loan/approval/trace', requirePermission('loan:approval:trace'), (req, res, next) => loanApprovalController.trace(req, res, next));
+
+// ========== 贷后还款风控管理 ==========
+// 功能点1：还款前置校验
+router.post('/loan/repayment/precheck', requirePermission('loan:repayment:precheck'), (req, res, next) => loanRepaymentController.preCheck(req, res));
+// 功能点1和2：还款详情（含账单、余额、逾期信息）
+router.get('/loan/repayment/:id', requirePermission('loan:repayment:query'), (req, res, next) => loanRepaymentController.getDetail(req, res));
+// 功能点2：执行还款（按期/提前/逾期/分期）
+router.post('/loan/repayment', requirePermission('loan:repayment:submit'), (req, res, next) => loanRepaymentController.doRepayment(req, res));
+// 功能点3：代扣列表
+router.get('/loan/repayment/withhold/list', requirePermission('loan:repayment:withhold'), (req, res, next) => loanRepaymentController.getWithholdList(req, res));
+// 功能点3：批量代扣
+router.post('/loan/repayment/withhold/batch', requirePermission('loan:repayment:batch'), (req, res, next) => loanRepaymentController.batchWithhold(req, res));
+// 功能点4：还款溯源
+router.post('/loan/repayment/trace', requirePermission('loan:repayment:trace'), (req, res, next) => loanRepaymentController.traceRepayment(req, res));
+// 生成代扣记录（定时任务用）
+router.post('/loan/repayment/generate-withhold', requirePermission('loan:repayment:manage'), (req, res, next) => loanRepaymentController.generateWithholdRecords(req, res));
 
 export default router;
