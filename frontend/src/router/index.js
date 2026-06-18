@@ -51,6 +51,20 @@ export const routes = [
     ]
   },
   {
+    path: '/risk',
+    component: Layout,
+    redirect: '/risk/behavior-monitor',
+    meta: { title: '风控中心', icon: 'Warning' },
+    children: [
+      {
+        path: 'behavior-monitor',
+        name: 'BehaviorMonitor',
+        component: () => import('@/views/behavior/UserBehaviorMonitor.vue'),
+        meta: { title: '行为数据监测', icon: 'DataLine', roles: ['admin', 'risk_operator'] }
+      }
+    ]
+  },
+  {
     path: '/product',
     component: Layout,
     redirect: '/product/flight',

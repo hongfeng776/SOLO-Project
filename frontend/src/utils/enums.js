@@ -304,6 +304,62 @@ export const PermissionSourceEnum = {
   BATCH: { value: 'batch', label: '批量配置', color: '#722ed1' }
 }
 
+export const BehaviorTypeEnum = {
+  BROWSE: { value: 'browse', label: '浏览行为', color: '#1890ff', icon: 'View' },
+  ORDER: { value: 'order', label: '下单行为', color: '#52c41a', icon: 'ShoppingCart' },
+  AFTERSALE: { value: 'aftersale', label: '售后行为', color: '#faad14', icon: 'Service' },
+  MARKETING: { value: 'marketing', label: '营销参与', color: '#722ed1', icon: 'Present' }
+}
+
+export const BehaviorKeyEnum = {
+  product_view: { label: '商品浏览', type: 'browse' },
+  category_view: { label: '分类浏览', type: 'browse' },
+  search: { label: '搜索行为', type: 'browse' },
+  home_view: { label: '首页访问', type: 'browse' },
+  order_create: { label: '创建订单', type: 'order' },
+  order_pay: { label: '订单支付', type: 'order' },
+  order_cancel: { label: '取消订单', type: 'order' },
+  coupon_use: { label: '使用优惠券', type: 'order' },
+  refund_apply: { label: '申请退款', type: 'aftersale' },
+  refund_audit: { label: '退款审核', type: 'aftersale' },
+  exchange_apply: { label: '申请换货', type: 'aftersale' },
+  complaint: { label: '投诉申诉', type: 'aftersale' },
+  coupon_receive: { label: '领取优惠券', type: 'marketing' },
+  activity_join: { label: '参与活动', type: 'marketing' },
+  points_exchange: { label: '积分兑换', type: 'marketing' },
+  share_invite: { label: '分享邀请', type: 'marketing' }
+}
+
+export const RiskLevelEnum = {
+  NORMAL: { value: 0, label: '正常', color: '#52c41a', type: 'success' },
+  LIGHT: { value: 1, label: '轻度预警', color: '#faad14', type: 'warning' },
+  MEDIUM: { value: 2, label: '中度关注', color: '#fa8c16', type: 'warning' },
+  HEAVY: { value: 3, label: '重度高危', color: '#ff4d4f', type: 'danger' }
+}
+
+export const AbnormalTypeEnum = {
+  fake: { value: 'fake', label: '虚假行为', color: '#ff4d4f' },
+  duplicate: { value: 'duplicate', label: '重复操作', color: '#faad14' },
+  fraud: { value: 'fraud', label: '刷单行为', color: '#eb2f96' },
+  abuse: { value: 'abuse', label: '恶意售后', color: '#fa541c' },
+  wool: { value: 'wool', label: '薅羊毛', color: '#722ed1' }
+}
+
+export const RiskTagOptions = [
+  { value: '刷单嫌疑', color: '#eb2f96' },
+  { value: '恶意售后', color: '#ff4d4f' },
+  { value: '薅权益', color: '#722ed1' },
+  { value: 'IP异常', color: '#faad14' },
+  { value: '人工标记', color: '#1890ff' },
+  { value: '高频操作', color: '#fa8c16' }
+]
+
+export const RestrictTypeEnum = {
+  order: { value: 'order', label: '限制下单', desc: '禁止用户创建新订单' },
+  aftersale: { value: 'aftersale', label: '限制售后', desc: '禁止用户发起售后申请' },
+  all: { value: 'all', label: '全功能限制', desc: '禁止用户所有业务操作' }
+}
+
 export const MerchantTypeEnum = {
   INDIVIDUAL: { value: 1, label: '个人商家' },
   ENTERPRISE: { value: 2, label: '企业商家' },
@@ -360,6 +416,12 @@ export default {
   PermissionStatusEnum,
   PermissionTemplateOptions,
   PermissionSourceEnum,
+  BehaviorTypeEnum,
+  BehaviorKeyEnum,
+  RiskLevelEnum,
+  AbnormalTypeEnum,
+  RiskTagOptions,
+  RestrictTypeEnum,
   MerchantTypeEnum,
   ExportStatusEnum,
   getEnumLabel,

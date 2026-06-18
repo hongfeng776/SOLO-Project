@@ -11,6 +11,7 @@ const authController = require('../controllers/AuthController')
 const userController = require('../controllers/UserController')
 const roleController = require('../controllers/RoleController')
 const permissionController = require('../controllers/PermissionController')
+const userBehaviorController = require('../controllers/UserBehaviorController')
 const flightController = require('../controllers/FlightController')
 const hotelController = require('../controllers/HotelController')
 const carController = require('../controllers/CarController')
@@ -69,6 +70,15 @@ router.post('/permissions/batch/reset', auth(['admin']), permissionController.ba
 router.get('/permissions/logs', auth(), pagination, permissionController.getLogs.bind(permissionController));
 router.get('/permissions/abnormal/:userId', auth(), permissionController.detectAbnormal.bind(permissionController));
 router.post('/permissions/check-expired', auth(['admin']), permissionController.checkExpired.bind(permissionController));
+
+router.get('/behaviors', auth(), pagination, userBehaviorController.list.bind(userBehaviorController));
+router.get('/behaviors/stats/summary', auth(), userBehaviorController.stats.bind(userBehaviorController));
+router.get('/behaviors/trace/:userId', auth(), userBehaviorController.trace.bind(userBehaviorController));
+router.post('/behaviors/detect-risk/:userId', auth(['admin', 'risk_operator']), userBehaviorController.detectRisk.bind(userBehaviorController));
+router.get('/behaviors/risks/list', auth(), pagination, userBehaviorController.riskList.bind(userBehaviorController));
+router.post('/behaviors/batch/mark', auth(['admin', 'risk_operator']), userBehaviorController.batchMark.bind(userBehaviorController));
+router.post('/behaviors/batch/warning', auth(['admin', 'risk_operator']), userBehaviorController.batchWarning.bind(userBehaviorController));
+router.post('/behaviors/batch/restrict', auth(['admin']), userBehaviorController.batchRestrict.bind(userBehaviorController));
 registerCrudRoutes('roles', roleController);
 registerCrudRoutes('flights', flightController);
 registerCrudRoutes('hotels', hotelController);
