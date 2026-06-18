@@ -44,6 +44,12 @@ import { LogisticsTrack } from './LogisticsTrack';
 import { AbnormalLogisticsLog } from './AbnormalLogisticsLog';
 import { AfterSaleLedger } from './AfterSaleLedger';
 import { AfterSaleOperationLog } from './AfterSaleOperationLog';
+import { PermissionConfig } from './PermissionConfig';
+import { UserPermission } from './UserPermission';
+import { UserPermissionLog } from './UserPermissionLog';
+import { UserFreezeRecord } from './UserFreezeRecord';
+import { MerchantQualificationLedger } from './MerchantQualificationLedger';
+import { QualificationChangeLog } from './QualificationChangeLog';
 
 export {
   Admin,
@@ -92,6 +98,12 @@ export {
   AbnormalLogisticsLog,
   AfterSaleLedger,
   AfterSaleOperationLog,
+  PermissionConfig,
+  UserPermission,
+  UserPermissionLog,
+  UserFreezeRecord,
+  MerchantQualificationLedger,
+  QualificationChangeLog,
 };
 
 export const models = {
@@ -141,6 +153,12 @@ export const models = {
   AbnormalLogisticsLog,
   AfterSaleLedger,
   AfterSaleOperationLog,
+  PermissionConfig,
+  UserPermission,
+  UserPermissionLog,
+  UserFreezeRecord,
+  MerchantQualificationLedger,
+  QualificationChangeLog,
 };
 
 export default models;

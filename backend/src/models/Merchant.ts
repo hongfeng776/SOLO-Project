@@ -1,5 +1,25 @@
 import { Table, Column, Model, DataType, PrimaryKey, AutoIncrement, CreatedAt, UpdatedAt } from 'sequelize-typescript';
 
+export enum MerchantSettleStatus {
+  PENDING_SUBMIT = 0,
+  PENDING_AUDIT = 1,
+  AUDIT_APPROVED = 2,
+  AUDIT_REJECTED = 3,
+  QUALIFICATION_EXPIRED = 4,
+  QUALIFICATION_ABNORMAL = 5,
+  DISABLED = 6,
+}
+
+export const MERCHANT_SETTLE_STATUS_MAP: Record<number, string> = {
+  [MerchantSettleStatus.PENDING_SUBMIT]: '待提交',
+  [MerchantSettleStatus.PENDING_AUDIT]: '待审核',
+  [MerchantSettleStatus.AUDIT_APPROVED]: '审核通过',
+  [MerchantSettleStatus.AUDIT_REJECTED]: '审核驳回',
+  [MerchantSettleStatus.QUALIFICATION_EXPIRED]: '资质过期',
+  [MerchantSettleStatus.QUALIFICATION_ABNORMAL]: '资质异常',
+  [MerchantSettleStatus.DISABLED]: '已禁用',
+};
+
 @Table({
   tableName: 'merchants',
   timestamps: true,
@@ -38,6 +58,123 @@ export class Merchant extends Model<Merchant> {
     comment: '地址',
   })
   address?: string;
+
+  @Column({
+    type: DataType.STRING(50),
+    comment: '法人姓名',
+  })
+  legal_person?: string;
+
+  @Column({
+    type: DataType.STRING(50),
+    comment: '法人身份证号',
+  })
+  legal_id_card?: string;
+
+  @Column({
+    type: DataType.STRING(50),
+    comment: '营业执照号',
+  })
+  business_license_no?: string;
+
+  @Column({
+    type: DataType.STRING(50),
+    comment: '统一社会信用代码',
+  })
+  credit_code?: string;
+
+  @Column({
+    type: DataType.DATEONLY,
+    comment: '营业执照有效期起始',
+  })
+  license_valid_from?: Date;
+
+  @Column({
+    type: DataType.DATEONLY,
+    comment: '营业执照有效期终止',
+  })
+  license_valid_to?: Date;
+
+  @Column({
+    type: DataType.STRING(500),
+    comment: '营业执照图片URL',
+  })
+  license_image_url?: string;
+
+  @Column({
+    type: DataType.STRING(500),
+    comment: '法人身份证正面URL',
+  })
+  legal_id_front_url?: string;
+
+  @Column({
+    type: DataType.STRING(500),
+    comment: '法人身份证反面URL',
+  })
+  legal_id_back_url?: string;
+
+  @Column({
+    type: DataType.DECIMAL(18, 2),
+    comment: '注册资本(万元)',
+  })
+  registered_capital?: number;
+
+  @Column({
+    type: DataType.DATEONLY,
+    comment: '成立日期',
+  })
+  establish_date?: Date;
+
+  @Column({
+    type: DataType.TEXT,
+    comment: '经营范围',
+  })
+  business_scope?: string;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '入驻状态：0-待提交 1-待审核 2-审核通过 3-审核驳回 4-资质过期 5-资质异常 6-已禁用',
+  })
+  settle_status?: number;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '店铺开通权限：0-未开通 1-已开通',
+  })
+  shop_open_status?: number;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '商品上架权限：0-无权限 1-有权限',
+  })
+  goods_publish_permission?: number;
+
+  @Column({
+    type: DataType.STRING(100),
+    comment: '行业类型',
+  })
+  industry_type?: string;
+
+  @Column({
+    type: DataType.STRING(2000),
+    comment: '资质备注',
+  })
+  qualification_remark?: string;
+
+  @Column({
+    type: DataType.STRING(1000),
+    comment: '审核原因/驳回原因',
+  })
+  audit_reason?: string;
+
+  @Column({
+    type: DataType.DATE,
+    comment: '最后审核时间',
+  })
+  last_audit_time?: Date;
 
   @Column({
     type: DataType.TINYINT.UNSIGNED,

@@ -43,6 +43,10 @@ import AfterSaleValidateService, { afterSaleValidateService } from './AfterSaleV
 import AfterSaleSyncService, { afterSaleSyncService } from './AfterSaleSyncService';
 import AfterSaleBatchService, { afterSaleBatchService } from './AfterSaleBatchService';
 import AfterSaleTraceService, { afterSaleTraceService } from './AfterSaleTraceService';
+import MerchantQualificationService, { merchantQualificationService } from './MerchantQualificationService';
+import MerchantQualificationAuditService, { merchantQualificationAuditService } from './MerchantQualificationAuditService';
+import MerchantQualificationBatchService, { merchantQualificationBatchService } from './MerchantQualificationBatchService';
+import MerchantQualificationTraceService, { merchantQualificationTraceService } from './MerchantQualificationTraceService';
 
 export {
   AfterSaleAuditService,
@@ -90,6 +94,10 @@ export {
   AfterSaleSyncService,
   AfterSaleBatchService,
   AfterSaleTraceService,
+  MerchantQualificationService,
+  MerchantQualificationAuditService,
+  MerchantQualificationBatchService,
+  MerchantQualificationTraceService,
 };
 
 export const services: Record<string, any> = {
@@ -138,6 +146,10 @@ export const services: Record<string, any> = {
   afterSaleSyncService,
   afterSaleBatchService,
   afterSaleTraceService,
+  merchantQualificationService,
+  merchantQualificationAuditService,
+  merchantQualificationBatchService,
+  merchantQualificationTraceService,
 };
 
 export default services;

@@ -75,8 +75,28 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'merchant',
         name: 'Merchant',
-        component: () => import('@/views/merchant/index.vue'),
-        meta: { title: '商家管理', icon: 'Shop', requiresAuth: true }
+        redirect: '/merchant/list',
+        meta: { title: '商家管理', icon: 'Shop', requiresAuth: true },
+        children: [
+          {
+            path: 'list',
+            name: 'MerchantList',
+            component: () => import('@/views/merchant/index.vue'),
+            meta: { title: '商家列表', icon: 'Shop', requiresAuth: true }
+          },
+          {
+            path: 'qualification',
+            name: 'MerchantQualification',
+            component: () => import('@/views/merchant/qualificationSubmit.vue'),
+            meta: { title: '资质提交', icon: 'Document', requiresAuth: true }
+          },
+          {
+            path: 'audit',
+            name: 'MerchantAuditManage',
+            component: () => import('@/views/merchant/qualificationAudit.vue'),
+            meta: { title: '资质审核', icon: 'Checked', requiresAuth: true }
+          }
+        ]
       },
       {
         path: 'content',

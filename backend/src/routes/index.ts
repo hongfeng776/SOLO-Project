@@ -48,6 +48,10 @@ import logisticsTraceRouter from './logisticsTrace';
 import afterSaleValidateRouter from './afterSaleValidate';
 import afterSaleBatchRouter from './afterSaleBatch';
 import afterSaleTraceRouter from './afterSaleTrace';
+import merchantQualificationRouter from './merchantQualification';
+import merchantQualificationAuditRouter from './merchantQualificationAudit';
+import merchantQualificationBatchRouter from './merchantQualificationBatch';
+import merchantQualificationTraceRouter from './merchantQualificationTrace';
 
 const router = Router();
 
@@ -100,5 +104,9 @@ router.use('/logisticsTrace', logisticsTraceRouter);
 router.use('/afterSaleValidate', afterSaleValidateRouter);
 router.use('/afterSaleBatch', afterSaleBatchRouter);
 router.use('/afterSaleTrace', afterSaleTraceRouter);
+router.use('/merchantQualification', merchantQualificationRouter);
+router.use('/merchantQualificationAudit', merchantQualificationAuditRouter);
+router.use('/merchantQualificationBatch', merchantQualificationBatchRouter);
+router.use('/merchantQualificationTrace', merchantQualificationTraceRouter);
 
 export default router;
