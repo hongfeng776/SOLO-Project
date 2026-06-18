@@ -512,3 +512,254 @@ export interface QualificationCheckResult {
   checks: QualificationCheck[]
   violationPoints: ViolationPoint[]
 }
+
+export interface SettlementRuleViolation {
+  field: string
+  message: string
+  severity: 'high' | 'medium' | 'low'
+}
+
+export interface SettlementRulePreCheck {
+  passed: boolean
+  violations: SettlementRuleViolation[]
+  warnings: SettlementRuleViolation[]
+  commissionRate: number
+  estimatedIncome: number
+}
+
+export interface ExclusiveRuleCheck {
+  isExclusive: boolean
+  conflicts: string[]
+  conflictRules: number[]
+}
+
+export interface EstimatedIncome {
+  totalOrders: number
+  totalOrderAmount: number
+  baseIncome: number
+  estimatedTotal: number
+}
+
+export interface CalculationStep {
+  type: 'base' | 'subsidy'
+  name: string
+  formula: string
+  amount: number
+}
+
+export interface OrderIncomeResult {
+  baseIncome: number
+  hourSubsidy: number
+  ratingSubsidy: number
+  holidaySubsidy: number
+  premiumIncome: number
+  excellentSubsidy: number
+  newDriverSubsidy: number
+  penaltyAmount: number
+  totalIncome: number
+  platformCommission: number
+  commissionRate: number
+  appliedRules: number[]
+  calculationDetail: CalculationStep[]
+}
+
+export interface CalculateIncomeResult {
+  orderInfo: any
+  matchedRules: any[]
+  income: OrderIncomeResult
+  calculationProcess: CalculationStep[]
+}
+
+export interface SettlementItem {
+  id: number
+  settlementRecordId: number
+  orderId: number
+  orderNo: string
+  driverId: number
+  orderType: number
+  orderSource: string
+  orderStartTime: string
+  isPeakHour: number
+  isHoliday: number
+  isWeekend: number
+  isPremium: number
+  serviceRating: number
+  orderAmount: number
+  premiumAmount: number
+  commissionRate: number
+  baseIncome: number
+  hourSubsidy: number
+  ratingSubsidy: number
+  holidaySubsidy: number
+  premiumIncome: number
+  penaltyAmount: number
+  totalIncome: number
+  platformCommission: number
+  appliedRules: number[]
+  calculationDetail: CalculationStep[]
+  isAbnormal: number
+  abnormalType?: string
+  abnormalReason?: string
+  matchCheckResult: any
+  orderInfo?: any
+  appliedRuleNames?: string[]
+  createTime: string
+}
+
+export interface SettlementAuditLog {
+  id: number
+  settlementRecordId: number
+  settlementItemId?: number
+  operationType: number
+  operationTypeName: string
+  oldSettleStatus?: number
+  newSettleStatus?: number
+  oldAuditStatus?: number
+  newAuditStatus?: number
+  incomeChange?: any
+  ruleChangeDetail?: any
+  abnormalInterceptDetail?: any
+  checkResult?: any
+  rejectReason?: string
+  operatorId?: number
+  operatorName?: string
+  operatorRole?: string
+  remark?: string
+  createTime: string
+}
+
+export interface SettlementRecord {
+  id: number
+  settlementNo: string
+  driverId: number
+  settlementType: number
+  settleStatus: number
+  periodStart: string
+  periodEnd: string
+  totalOrders: number
+  totalOrderAmount: number
+  baseIncome: number
+  totalSubsidy: number
+  hourSubsidy: number
+  ratingSubsidy: number
+  holidaySubsidy: number
+  premiumSubsidy: number
+  excellentSubsidy: number
+  newDriverSubsidy: number
+  penaltyAmount: number
+  totalIncome: number
+  platformCommission: number
+  actualSettleAmount: number
+  isAbnormal: number
+  abnormalType?: string
+  abnormalReason?: string
+  rejectReason?: string
+  isPosted: number
+  postedTime?: string
+  settleTime?: string
+  voucherNo?: string
+  auditStatus: number
+  auditorId?: number
+  auditorName?: string
+  auditTime?: string
+  createTime: string
+  updateTime: string
+  driver?: {
+    name: string
+    phone: string
+    city: string
+    vehicleType: string
+    driverLevel: number
+  }
+  items?: SettlementItem[]
+  auditLogs?: SettlementAuditLog[]
+}
+
+export interface SettlementTrace {
+  record: SettlementRecord
+  items: SettlementItem[]
+  auditLogs: SettlementAuditLog[]
+}
+
+export interface SettlementBatchResult {
+  total: number
+  successCount: number
+  failCount: number
+  results: Array<{
+    id: number
+    success: boolean
+    message?: string
+  }>
+}
+
+export interface SettlementStatistics {
+  total: number
+  pending: number
+  processing: number
+  settled: number
+  posted: number
+  abnormal: number
+  rejected: number
+  totalIncome: number
+  totalSubsidy: number
+  totalCommission: number
+  levelDistribution: Record<number, number>
+  cityDistribution: Record<string, number>
+  todayCreated: number
+  todaySettled: number
+}
+
+export interface SettlementQueryParams {
+  page?: number
+  pageSize?: number
+  driverName?: string
+  settleStatus?: number
+  settlementType?: number
+  isAbnormal?: number
+  isPosted?: number
+  periodStart?: string
+  periodEnd?: string
+  driverLevel?: number
+}
+
+export interface SettlementRule {
+  id: number
+  ruleName: string
+  ruleType: number
+  applyScope: number
+  applyDriverLevels?: number[]
+  applyCities?: string[]
+  applyVehicleTypes?: string[]
+  applyOrderTypes?: number[]
+  commissionRate: number
+  minCommissionRate: number
+  maxCommissionRate: number
+  subsidyAmount: number
+  subsidyPercent: number
+  timeStart?: string
+  timeEnd?: string
+  isHoliday: number
+  isWeekend: number
+  minServiceRating: number
+  isExclusive: number
+  exclusiveRuleIds?: number[]
+  priority: number
+  status: number
+  effectiveStart?: string
+  effectiveEnd?: string
+  isDefault: number
+  description?: string
+  creatorId?: number
+  creatorName?: string
+  createTime: string
+  updateTime: string
+}
+
+export interface MatchCheckResult {
+  orderMatch: boolean
+  ruleMatch: boolean
+  amountMatch: boolean
+  subsidyMatch: boolean
+  details: string[]
+}
+

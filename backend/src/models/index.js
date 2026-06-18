@@ -25,6 +25,10 @@ const DriverAuditLog = require('./DriverAuditLog')
 const DriverStatusLog = require('./DriverStatusLog')
 const DriverServiceData = require('./DriverServiceData')
 const DriverServiceLog = require('./DriverServiceLog')
+const SettlementRule = require('./SettlementRule')
+const SettlementRecord = require('./SettlementRecord')
+const SettlementItem = require('./SettlementItem')
+const SettlementAuditLog = require('./SettlementAuditLog')
 
 Driver.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
 Vehicle.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
@@ -69,6 +73,15 @@ DriverServiceData.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
 Driver.hasMany(DriverServiceLog, { foreignKey: 'driverId', as: 'serviceLogs' })
 DriverServiceLog.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
 
+SettlementRecord.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
+Driver.hasMany(SettlementRecord, { foreignKey: 'driverId', as: 'settlementRecords' })
+SettlementRecord.hasMany(SettlementItem, { foreignKey: 'settlementRecordId', as: 'items' })
+SettlementRecord.hasMany(SettlementAuditLog, { foreignKey: 'settlementRecordId', as: 'auditLogs' })
+SettlementItem.belongsTo(SettlementRecord, { foreignKey: 'settlementRecordId', as: 'settlementRecord' })
+SettlementItem.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
+SettlementItem.belongsTo(Order, { foreignKey: 'orderId', as: 'order' })
+SettlementAuditLog.belongsTo(SettlementRecord, { foreignKey: 'settlementRecordId', as: 'settlementRecord' })
+
 module.exports = {
   User,
   Role,
@@ -96,5 +109,9 @@ module.exports = {
   DriverAuditLog,
   DriverStatusLog,
   DriverServiceData,
-  DriverServiceLog
+  DriverServiceLog,
+  SettlementRule,
+  SettlementRecord,
+  SettlementItem,
+  SettlementAuditLog
 }

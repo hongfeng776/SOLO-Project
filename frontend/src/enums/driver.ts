@@ -301,3 +301,154 @@ export const ExportFieldCategories = [
   { key: 'finance', label: '财务数据', fields: ['totalIncome', 'avgOrderAmount'] },
   { key: 'sensitive', label: '敏感信息', fields: ['idCard', 'driverLicenseNo'], permissionRequired: true }
 ]
+
+export enum SettlementRuleType {
+  BASE_COMMISSION = 1,
+  HOUR_SURCHARGE = 2,
+  RATING_SUBSIDY = 3,
+  HOLIDAY_SUBSIDY = 4,
+  PREMIUM_COMMISSION = 5,
+  NEW_DRIVER = 6,
+  EXCELLENT_EXCLUSIVE = 7
+}
+
+export const SettlementRuleTypeMap: Record<number, string> = {
+  [SettlementRuleType.BASE_COMMISSION]: '基础分成比例',
+  [SettlementRuleType.HOUR_SURCHARGE]: '时段加价',
+  [SettlementRuleType.RATING_SUBSIDY]: '星级补贴',
+  [SettlementRuleType.HOLIDAY_SUBSIDY]: '节假日补贴',
+  [SettlementRuleType.PREMIUM_COMMISSION]: '溢价分成',
+  [SettlementRuleType.NEW_DRIVER]: '新人补贴',
+  [SettlementRuleType.EXCELLENT_EXCLUSIVE]: '优质司机专属'
+}
+
+export const SettlementRuleTypeColorMap: Record<number, string> = {
+  [SettlementRuleType.BASE_COMMISSION]: '#409eff',
+  [SettlementRuleType.HOUR_SURCHARGE]: '#e6a23c',
+  [SettlementRuleType.RATING_SUBSIDY]: '#67c23a',
+  [SettlementRuleType.HOLIDAY_SUBSIDY]: '#f56c6c',
+  [SettlementRuleType.PREMIUM_COMMISSION]: '#909399',
+  [SettlementRuleType.NEW_DRIVER]: '#9b59b6',
+  [SettlementRuleType.EXCELLENT_EXCLUSIVE]: '#1abc9c'
+}
+
+export enum ApplyScope {
+  ALL = 1,
+  BY_LEVEL = 2,
+  BY_CITY = 3,
+  BY_VEHICLE = 4
+}
+
+export const ApplyScopeMap: Record<number, string> = {
+  [ApplyScope.ALL]: '全部司机',
+  [ApplyScope.BY_LEVEL]: '按等级',
+  [ApplyScope.BY_CITY]: '按城市',
+  [ApplyScope.BY_VEHICLE]: '按车型'
+}
+
+export enum SettlementStatus {
+  PENDING = 1,
+  PROCESSING = 2,
+  SETTLED = 3,
+  POSTED = 4,
+  ABNORMAL = 5,
+  REJECTED = 6
+}
+
+export const SettlementStatusMap: Record<number, string> = {
+  [SettlementStatus.PENDING]: '待结算',
+  [SettlementStatus.PROCESSING]: '结算中',
+  [SettlementStatus.SETTLED]: '已结算',
+  [SettlementStatus.POSTED]: '已入账',
+  [SettlementStatus.ABNORMAL]: '结算异常',
+  [SettlementStatus.REJECTED]: '已驳回'
+}
+
+export const SettlementStatusColorMap: Record<number, string> = {
+  [SettlementStatus.PENDING]: '#e6a23c',
+  [SettlementStatus.PROCESSING]: '#409eff',
+  [SettlementStatus.SETTLED]: '#67c23a',
+  [SettlementStatus.POSTED]: '#1abc9c',
+  [SettlementStatus.ABNORMAL]: '#f56c6c',
+  [SettlementStatus.REJECTED]: '#909399'
+}
+
+export const SettlementStatusTypeMap: Record<number, 'warning' | 'primary' | 'success' | 'danger' | 'info'> = {
+  [SettlementStatus.PENDING]: 'warning',
+  [SettlementStatus.PROCESSING]: 'primary',
+  [SettlementStatus.SETTLED]: 'success',
+  [SettlementStatus.POSTED]: 'success',
+  [SettlementStatus.ABNORMAL]: 'danger',
+  [SettlementStatus.REJECTED]: 'info'
+}
+
+export enum SettlementType {
+  DAILY = 1,
+  WEEKLY = 2,
+  MONTHLY = 3,
+  MANUAL = 4
+}
+
+export const SettlementTypeMap: Record<number, string> = {
+  [SettlementType.DAILY]: '日结',
+  [SettlementType.WEEKLY]: '周结',
+  [SettlementType.MONTHLY]: '月结',
+  [SettlementType.MANUAL]: '手动结算'
+}
+
+export enum SettlementOperationType {
+  CREATE = 1,
+  RULE_CHANGE = 2,
+  INITIATE = 3,
+  AUDIT_PASS = 4,
+  AUDIT_REJECT = 5,
+  POST = 6,
+  ABNORMAL_INTERCEPT = 7,
+  UPDATE_RULE = 8,
+  DATA_CORRECTION = 9
+}
+
+export const SettlementOperationTypeMap: Record<number, string> = {
+  [SettlementOperationType.CREATE]: '创建结算',
+  [SettlementOperationType.RULE_CHANGE]: '修改规则',
+  [SettlementOperationType.INITIATE]: '发起结算',
+  [SettlementOperationType.AUDIT_PASS]: '审核通过',
+  [SettlementOperationType.AUDIT_REJECT]: '审核驳回',
+  [SettlementOperationType.POST]: '入账',
+  [SettlementOperationType.ABNORMAL_INTERCEPT]: '异常拦截',
+  [SettlementOperationType.UPDATE_RULE]: '规则变更',
+  [SettlementOperationType.DATA_CORRECTION]: '数据修正'
+}
+
+export const SettlementOperationTypeColorMap: Record<number, string> = {
+  [SettlementOperationType.CREATE]: '#409eff',
+  [SettlementOperationType.RULE_CHANGE]: '#909399',
+  [SettlementOperationType.INITIATE]: '#e6a23c',
+  [SettlementOperationType.AUDIT_PASS]: '#67c23a',
+  [SettlementOperationType.AUDIT_REJECT]: '#f56c6c',
+  [SettlementOperationType.POST]: '#1abc9c',
+  [SettlementOperationType.ABNORMAL_INTERCEPT]: '#e74c3c',
+  [SettlementOperationType.UPDATE_RULE]: '#9b59b6',
+  [SettlementOperationType.DATA_CORRECTION]: '#34495e'
+}
+
+export const AbnormalTypeMap: Record<string, string> = {
+  repeat_settlement: '重复结算',
+  over_settlement: '超额结算',
+  illegal_subsidy: '违规补贴',
+  mismatch: '数据不匹配'
+}
+
+export const OrderSourceMap: Record<string, string> = {
+  platform: '平台订单',
+  enterprise: '企业订单',
+  h5: '小程序订单',
+  vip: '会员订单'
+}
+
+export const ComplianceConfig = {
+  minCommissionRate: 70,
+  maxCommissionRate: 90,
+  maxSingleIncomeMultiplier: 3,
+  maxDailySubsidyMultiplier: 2
+}
