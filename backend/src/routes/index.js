@@ -21,5 +21,6 @@ router.use(`${config.apiPrefix}/operation-logs`, require('./operationLog'));
 router.use(`${config.apiPrefix}/dashboard`, require('./dashboard'));
 router.use(`${config.apiPrefix}/topics`, require('./topic'));
 router.use(`${config.apiPrefix}/audit`, require('./audit'));
+router.use(`${config.apiPrefix}/article-audit`, require('./article-audit'));
 
 module.exports = router;

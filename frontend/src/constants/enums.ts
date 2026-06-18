@@ -386,3 +386,57 @@ export const BATCH_AUDIT_ACTION = {
   URGENT: { value: 'urgent', label: '批量加急', icon: 'Lightning', type: 'primary' },
   ARCHIVE: { value: 'archive', label: '批量归档', icon: 'Folder', type: 'info' },
 } as const
+
+export const ARTICLE_AUDIT_STATUS = {
+  PENDING: { value: 0, label: '待审核', color: '#E6A23C', type: 'warning' },
+  REVIEWING: { value: 1, label: '审核中', color: '#409EFF', type: 'primary' },
+  APPROVED: { value: 2, label: '已通过', color: '#67C23A', type: 'success' },
+  REJECTED: { value: 3, label: '已驳回', color: '#F56C6C', type: 'danger' },
+  SUSPECTED: { value: 6, label: '疑似违规', color: '#722ed1', type: 'warning' },
+} as const
+
+export const AI_PRE_SCREEN_RESULT = {
+  PASSED: { value: 'passed', label: 'AI初筛通过', color: '#67C23A', type: 'success' },
+  WARNING: { value: 'warning', label: 'AI警告', color: '#E6A23C', type: 'warning' },
+  FAILED: { value: 'failed', label: 'AI初筛异常', color: '#F56C6C', type: 'danger' },
+  PENDING: { value: 'pending', label: '未检测', color: '#909399', type: 'info' },
+} as const
+
+export const AI_RISK_TYPE = {
+  SENSITIVE_WORD: { value: 'sensitive_word', label: '敏感词', severity: 'high', defaultPoints: 20 },
+  INAPPROPRIATE_IMAGE: { value: 'inappropriate_image', label: '违规配图', severity: 'high', defaultPoints: 25 },
+  FAKE_INFO: { value: 'fake_info', label: '虚假信息', severity: 'high', defaultPoints: 25 },
+  EXAGGERATED: { value: 'exaggerated', label: '夸大宣传', severity: 'medium', defaultPoints: 12 },
+  AD_PROMOTION: { value: 'ad_promotion', label: '违规广告', severity: 'medium', defaultPoints: 15 },
+  COPYRIGHT: { value: 'copyright', label: '版权嫌疑', severity: 'medium', defaultPoints: 15 },
+  POOR_QUALITY: { value: 'poor_quality', label: '低质内容', severity: 'low', defaultPoints: 8 },
+  TYPO: { value: 'typo', label: '错别字', severity: 'low', defaultPoints: 5 },
+  PLAGIARISM: { value: 'plagiarism', label: '疑似抄袭', severity: 'high', defaultPoints: 20 },
+} as const
+
+export const ARTICLE_RISK_TAG = {
+  SENSITIVE: { value: 'sensitive', label: '敏感', color: '#F56C6C' },
+  VIOLATION: { value: 'violation', label: '违规', color: '#C0392B' },
+  FAKE: { value: 'fake', label: '虚假', color: '#E6A23C' },
+  LOW_QUALITY: { value: 'low_quality', label: '低质', color: '#909399' },
+  AD: { value: 'ad', label: '广告', color: '#409EFF' },
+  COPYRIGHT: { value: 'copyright', label: '版权', color: '#722ed1' },
+  PLAGIARISM: { value: 'plagiarism', label: '抄袭', color: '#F56C6C' },
+  IMAGE: { value: 'image', label: '配图', color: '#13c2c2' },
+} as const
+
+export const ARTICLE_AUDIT_EXCEPTION = {
+  DUPLICATE_AUDIT: { value: 'duplicate_audit', label: '重复审核', color: '#E6A23C' },
+  CONTENT_MODIFIED: { value: 'content_modified', label: '内容被篡改', color: '#F56C6C' },
+  RESULT_MISMATCH: { value: 'result_mismatch', label: '结果与风险不匹配', color: '#722ed1' },
+  OVERDUE: { value: 'overdue', label: '审核超时', color: '#409EFF' },
+  MISSED_RISK: { value: 'missed_risk', label: '风险漏判', color: '#C0392B' },
+} as const
+
+export const BATCH_ARTICLE_ACTION = {
+  APPROVE_LOW_RISK: { value: 'approve_low_risk', label: '批量通过低风险', icon: 'CircleCheck', type: 'success' },
+  MARK_OVERDUE: { value: 'mark_overdue', label: '批量标记超时', icon: 'AlarmClock', type: 'warning' },
+  REVIEW_SUSPECTED: { value: 'review_suspected', label: '批量复核疑似违规', icon: 'RefreshRight', type: 'primary' },
+  EXPORT_LEDGER: { value: 'export_ledger', label: '导出审核台账', icon: 'Download', type: 'info' },
+} as const
+

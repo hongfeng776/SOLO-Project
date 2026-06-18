@@ -888,3 +888,230 @@ export interface RejectReasonTemplate {
   label: string
   examples: string[]
 }
+
+export interface AiRiskItem {
+  type: string
+  label: string
+  severity: 'low' | 'medium' | 'high'
+  score: number
+  description: string
+  positions?: Array<{ paragraph?: number; offset?: number; length?: number; imageIndex?: number; text?: string }>
+  suggestions: string[]
+  handled: boolean
+}
+
+export interface AiPreScreenResult {
+  screenId: string
+  articleId: number
+  screenTime: string
+  overallResult: 'passed' | 'warning' | 'failed' | 'pending'
+  overallScore: number
+  riskItems: AiRiskItem[]
+  handledRiskCount: number
+  totalRiskCount: number
+  contentHash: string
+  imageHashes?: string[]
+  suspiciousTags: string[]
+  requiresManualAudit: boolean
+}
+
+export interface ArticleAuditDetail {
+  articleId: number
+  articleCode: string
+  title: string
+  summary: string
+  coverImages: string[]
+  bodyImages: string[]
+  domainCategory: string
+  articleType: number
+  articleQuality: number
+  wordCount: number
+  layoutTemplate: string
+  author: { id: number; name: string; level: number; violationCount: number }
+  publishAccount: string
+  aiPreScreen: AiPreScreenResult
+  auditStatus: number
+  assignedAuditor?: { id: number; name: string }
+  versionNo: number
+  riskLevel: number
+  riskTags: string[]
+  deadline?: string
+  submittedAt: string
+  publishPermission: number
+  distributionQualification: boolean
+  previousAuditLogs: Array<{
+    auditNo: string
+    auditorName: string
+    auditStatus: number
+    reviewLevel: number
+    rejectReason?: string
+    auditTime: string
+    modifiedAfterAudit?: boolean
+  }>
+}
+
+export interface ArticleAuditSubmitData {
+  articleId: number
+  articleCode: string
+  auditStatus: number
+  reviewLevel?: number
+  rejectReasonCategory?: string
+  rejectReasonDetail?: string
+  auditRemark?: string
+  handledRiskItems?: string[]
+  contentConsistentHash?: string
+  suspectedReviewRequested?: boolean
+}
+
+export interface ArticleAuditPoolItem {
+  articleId: number
+  articleCode: string
+  title: string
+  summary: string
+  coverImage?: string
+  domainCategory: string
+  domainCategoryLabel: string
+  articleType: number
+  articleTypeLabel: string
+  articleQuality: number
+  wordCount: number
+  authorName: string
+  publishAccount: string
+  auditStatus: number
+  auditStatusLabel: string
+  aiScreenResult: string
+  aiScreenResultLabel: string
+  riskLevel: number
+  riskLevelLabel: string
+  riskTags: string[]
+  assignedAuditorName?: string
+  versionNo: number
+  deadline?: string
+  isOverdue: boolean
+  submittedAt: string
+  publishPermission: number
+  distributionQualification: boolean
+  aiRiskCount: number
+  aiUnresolvedRiskCount: number
+}
+
+export interface BatchArticleAuditParams {
+  action: 'approve_low_risk' | 'mark_overdue' | 'review_suspected' | 'reject' | 'export_ledger'
+  articleIds: number[]
+  domainCategory?: string
+  riskLevel?: number
+  rejectReasonCategory?: string
+  rejectReasonDetail?: string
+  remark?: string
+}
+
+export interface ArticleAuditTraceRecord {
+  traceId: string
+  articleCode: string
+  auditBatch: string
+  riskTags: string[]
+  articleTitle: string
+  auditStatus: number
+  auditStatusLabel: string
+  creatorName: string
+  timeline: Array<{
+    action: string
+    operator: string
+    operatorRole: string
+    time: string
+    status: string
+    detail: string
+    riskChecks: string[]
+  }>
+  contentVersionDiff: Array<{
+    versionNo: number
+    titleHashMatch: boolean
+    contentHashMatch: boolean
+    bodyImageCountDiff: number
+    wordCountDiff: number
+    modifiedBy: string
+    modifiedAt: string
+  }>
+  riskMatchAnalysis: {
+    expectedResult: string
+    actualResult: string
+    matchRate: number
+    mismatchedRisks: string[]
+  }
+  exceptions: Array<{
+    type: string
+    typeLabel: string
+    description: string
+    suggestedAction: string
+    severity: string
+  }>
+}
+
+export interface AuditLedgerItem {
+  ledgerNo: string
+  articleCode: string
+  articleTitle: string
+  domainCategory: string
+  auditAction: string
+  auditorName: string
+  auditTime: string
+  auditRemark: string
+  aiRiskCountBefore: number
+  aiRiskCountAfter: number
+  publishPermission: string
+  distributionQualification: string
+}
+
+export interface ArticleAuditLedgerExportResult {
+  exportId: string
+  fileName: string
+  generatedAt: string
+  totalCount: number
+  url?: string
+  ledgerItems: AuditLedgerItem[]
+}
+
+export interface ArticleAuditDuplicateCheckResult {
+  isDuplicate: boolean
+  duplicateWithinMinutes: number
+  lastAuditRecord?: {
+    auditNo: string
+    auditorName: string
+    auditStatus: number
+    auditTime: string
+  }
+  contentModifiedAfter: boolean
+  currentHash: string
+  previousHash: string
+}
+
+export interface ArticleAuditConsistencyCheck {
+  contentUnchanged: boolean
+  titleUnchanged: boolean
+  bodyUnchanged: boolean
+  imagesUnchanged: boolean
+  wordCountDelta: number
+  auditResultRiskMatch: boolean
+  unresolvedRisks: string[]
+  canSubmit: boolean
+  blockReasons: string[]
+}
+
+export interface ArticleAuditQCResult {
+  qcId: string
+  period: string
+  totalAudited: number
+  exceptionCount: number
+  misjudgmentRate: string
+  avgConsistency: number
+  auditors: Array<{
+    auditorId: number
+    auditorName: string
+    auditCount: number
+    misjudgmentCount: number
+    missedRiskCount: number
+    accuracy: number
+  }>
+  riskTagDistribution: Array<{ tag: string; count: number }>
+}
+

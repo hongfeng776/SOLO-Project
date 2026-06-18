@@ -43,6 +43,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '图文管理', icon: 'DocumentCopy', roles: ['content:view'] },
       },
       {
+        path: 'article-audit',
+        name: 'ArticleAudit',
+        component: () => import('@/views/article/audit.vue'),
+        meta: { title: '图文审核', icon: 'Document', roles: ['content:audit', 'article:audit'] },
+      },
+      {
         path: 'topics',
         name: 'Topics',
         component: () => import('@/views/topic/index.vue'),
