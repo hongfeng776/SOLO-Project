@@ -31,9 +31,13 @@ const SettlementItem = require('./SettlementItem')
 const SettlementAuditLog = require('./SettlementAuditLog')
 const PassengerAuditLog = require('./PassengerAuditLog')
 const PassengerOperationLog = require('./PassengerOperationLog')
+const VehicleAuditLog = require('./VehicleAuditLog')
 
 Driver.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
 Vehicle.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
+
+Vehicle.hasMany(VehicleAuditLog, { foreignKey: 'vehicleId', as: 'auditLogs' })
+VehicleAuditLog.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
 
 Order.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
 Order.belongsTo(Passenger, { foreignKey: 'passengerId', as: 'passenger' })
@@ -97,6 +101,7 @@ module.exports = {
   Driver,
   Passenger,
   Vehicle,
+  VehicleAuditLog,
   CapacityType,
   FinanceStatement,
   FinanceSettlement,

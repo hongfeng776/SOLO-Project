@@ -88,3 +88,58 @@ ol {
 .mb-20 {
   margin-bottom: 20px;
 }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.shake {
+  animation: shake 0.4s ease-in-out;
+  border-color: #f56c6c !important;
+  
+  &:focus {
+    box-shadow: 0 0 0 2px rgba(245, 108, 108, 0.2) !important;
+  }
+}
+
+.input-error {
+  .el-input__wrapper {
+    box-shadow: 0 0 0 1px #f56c6c inset;
+    
+    &.is-focus {
+      box-shadow: 0 0 0 1px #f56c6c inset, 0 0 0 3px rgba(245, 108, 108, 0.2) !important;
+    }
+  }
+}
+
+.level-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  
+  &.level-S {
+    background: linear-gradient(135deg, #ffd700, #ffb300);
+    color: #fff;
+  }
+  
+  &.level-A {
+    background: linear-gradient(135deg, #409eff, #2b85e4);
+    color: #fff;
+  }
+  
+  &.level-B {
+    background: linear-gradient(135deg, #67c23a, #529b2e);
+    color: #fff;
+  }
+  
+  &.level-C {
+    background: linear-gradient(135deg, #909399, #73767a);
+    color: #fff;
+  }
+}
