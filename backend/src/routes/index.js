@@ -14,6 +14,7 @@ const appealRoutes = require('./appeals')
 const notificationRoutes = require('./notifications')
 const logRoutes = require('./logs')
 const recycleRoutes = require('./recycles')
+const rolePermissionRoutes = require('./rolePermissions')
 
 router.use('/auth', authRoutes)
 router.use('/resources', resourceRoutes)
@@ -28,5 +29,6 @@ router.use('/appeals', appealRoutes)
 router.use('/notifications', notificationRoutes)
 router.use('/logs', logRoutes)
 router.use('/recycles', recycleRoutes)
+router.use('/role-permissions', rolePermissionRoutes)
 
 module.exports = router

@@ -1036,3 +1036,113 @@ export interface LoginQueryParams extends PageParams {
   orderBy?: string
   orderDir?: string
 }
+
+// ================ 角色权限管理 ================
+
+export interface RoleItem {
+  id: number
+  name: string
+  code: string
+  description: string
+  type: string
+  isSystem: boolean
+  status: 'active' | 'inactive'
+  level: number
+  sort: number
+  permCount?: number
+  boundUserCount?: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PermissionMenu {
+  id: number
+  name: string
+  code: string
+  parentId: number | null
+  level: 'module' | 'page' | 'action'
+  module: string
+  isCore: boolean
+  mutexGroup: string | null
+  requiredLevel: number
+  description: string
+  sort: number
+  status: 'active' | 'inactive'
+  children?: PermissionMenu[]
+  rolePermissionId?: number
+}
+
+export interface RoleDetail extends RoleItem {
+  permissions: PermissionMenu[]
+  boundUsers: { id: number; uid: string; username: string; nickname: string; status: string }[]
+}
+
+export interface PermissionConflict {
+  mutexGroup: string
+  description: string
+  permissions: { id: number; name: string; code: string }[]
+}
+
+export interface PermissionAdaptIssue {
+  permissionId: number
+  permissionName: string
+  permissionCode: string
+  reason: string
+}
+
+export interface ValidateConfigResult {
+  valid: boolean
+  errors: string[]
+  conflicts: PermissionConflict[]
+  adaptIssues: PermissionAdaptIssue[]
+}
+
+export interface RolePermissionLog {
+  id: number
+  roleId: number
+  roleName: string
+  changeType: 'create' | 'edit' | 'delete' | 'batch_copy' | 'batch_modify' | 'sync'
+  addedPermissions: number[]
+  removedPermissions: number[]
+  permissionSnapshot: { permissionId: number; isCore: boolean; name: string; code: string }[]
+  conflictResolution: Record<string, any> | null
+  affectedUserIds: number[]
+  batchId: string | null
+  operatorId: number | null
+  operatorName: string | null
+  operatorRole: string | null
+  reason: string | null
+  ip: string | null
+  createdAt: string
+}
+
+export interface ComplianceIssue {
+  type: 'conflict' | 'missing' | 'redundant'
+  severity: 'high' | 'medium' | 'low'
+  description: string
+  fields: string[]
+}
+
+export interface ComplianceResult {
+  score: number
+  consistent: boolean
+  issues: ComplianceIssue[]
+}
+
+export interface TraceRoleResult {
+  role: RoleItem
+  permissions: PermissionMenu[]
+  boundUsers: { id: number; uid: string; username: string; nickname: string; status: string; createdAt: string }[]
+  logs: RolePermissionLog[]
+  compliance: ComplianceResult
+}
+
+export interface BatchCopyResult {
+  success: { id: number; name: string }[]
+  failed: { id: number; reason: string }[]
+}
+
+export interface BatchModifyResult {
+  success: { id: number; name: string }[]
+  failed: { id: number; reason: string }[]
+}

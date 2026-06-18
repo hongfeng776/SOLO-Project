@@ -622,3 +622,84 @@ export enum BatchLoginAction {
   CLEAR_RISK = 'clear',
   DELETE = 'delete'
 }
+
+// ================ 角色权限管理 ================
+
+export enum PermMenuLevel {
+  MODULE = 'module',
+  PAGE = 'page',
+  ACTION = 'action'
+}
+
+export const PermMenuLevelLabel: Record<string, string> = {
+  [PermMenuLevel.MODULE]: '模块级',
+  [PermMenuLevel.PAGE]: '页面级',
+  [PermMenuLevel.ACTION]: '操作级'
+}
+
+export const PermMenuLevelTagType: Record<string, string> = {
+  [PermMenuLevel.MODULE]: 'danger',
+  [PermMenuLevel.PAGE]: 'warning',
+  [PermMenuLevel.ACTION]: 'info'
+}
+
+export const RoleTypeLabel: Record<string, string> = {
+  super_admin: '超级管理员',
+  admin: '管理员',
+  auditor: '审核员',
+  operator: '运营员',
+  member: '普通用户'
+}
+
+export const RoleTypeTagType: Record<string, string> = {
+  super_admin: 'danger',
+  admin: 'warning',
+  auditor: 'primary',
+  operator: 'success',
+  member: 'info'
+}
+
+export const RoleStatusOption = [
+  { value: '', label: '全部状态' },
+  { value: 'active', label: '启用' },
+  { value: 'inactive', label: '停用' }
+]
+
+export const RoleTypeOption = [
+  { value: '', label: '全部类型' },
+  { value: 'super_admin', label: '超级管理员' },
+  { value: 'admin', label: '管理员' },
+  { value: 'auditor', label: '审核员' },
+  { value: 'operator', label: '运营员' },
+  { value: 'member', label: '普通用户' }
+]
+
+export const PermChangeTypeLabel: Record<string, string> = {
+  create: '创建角色',
+  edit: '编辑权限',
+  delete: '删除角色',
+  batch_copy: '批量复制模板',
+  batch_modify: '批量修改权限',
+  sync: '权限同步'
+}
+
+export const PermChangeTypeTagType: Record<string, string> = {
+  create: 'success',
+  edit: 'primary',
+  delete: 'danger',
+  batch_copy: 'warning',
+  batch_modify: 'warning',
+  sync: 'info'
+}
+
+export const ComplianceIssueTypeLabel: Record<string, string> = {
+  conflict: '权限冲突',
+  missing: '权限缺失',
+  redundant: '权限冗余'
+}
+
+export const ComplianceIssueSeverityTagType: Record<string, string> = {
+  high: 'danger',
+  medium: 'warning',
+  low: 'info'
+}

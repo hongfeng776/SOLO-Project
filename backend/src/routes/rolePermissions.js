@@ -1,0 +1,22 @@
+const express = require('express')
+const router = express.Router()
+const rolePermissionController = require('../controllers/rolePermissionController')
+const { authMiddleware, roleMiddleware } = require('../middlewares/auth')
+
+router.get('/roles', authMiddleware(), roleMiddleware(['super_admin', 'admin']), rolePermissionController.getRoleList)
+router.get('/roles/:id', authMiddleware(), roleMiddleware(['super_admin', 'admin']), rolePermissionController.getRoleDetail)
+router.post('/roles', authMiddleware(), roleMiddleware(['super_admin']), rolePermissionController.createRole)
+router.put('/roles/:id', authMiddleware(), roleMiddleware(['super_admin']), rolePermissionController.updateRolePermissions)
+router.delete('/roles/:id', authMiddleware(), roleMiddleware(['super_admin']), rolePermissionController.deleteRole)
+router.get('/menus/tree', authMiddleware(), roleMiddleware(['super_admin', 'admin']), rolePermissionController.getPermissionMenuTree)
+router.get('/menus/modules', authMiddleware(), roleMiddleware(['super_admin', 'admin']), rolePermissionController.getPermissionModules)
+router.get('/validate/name', authMiddleware(), roleMiddleware(['super_admin', 'admin']), rolePermissionController.validateRoleName)
+router.get('/validate/code', authMiddleware(), roleMiddleware(['super_admin', 'admin']), rolePermissionController.validateRoleCode)
+router.post('/validate/config/:roleId', authMiddleware(), roleMiddleware(['super_admin', 'admin']), rolePermissionController.validatePermissionConfig)
+router.post('/batch/copy', authMiddleware(), roleMiddleware(['super_admin']), rolePermissionController.batchCopyTemplate)
+router.post('/batch/modify', authMiddleware(), roleMiddleware(['super_admin']), rolePermissionController.batchModifyPermissions)
+router.get('/trace/:id', authMiddleware(), roleMiddleware(['super_admin', 'admin']), rolePermissionController.traceRole)
+router.get('/logs', authMiddleware(), roleMiddleware(['super_admin', 'admin']), rolePermissionController.getPermissionLogs)
+router.post('/init', authMiddleware(), roleMiddleware(['super_admin']), rolePermissionController.initDefaultData)
+
+module.exports = router

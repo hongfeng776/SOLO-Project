@@ -18,6 +18,10 @@ const MemberTagLog = require('./MemberTagLog')
 const LoginLog = require('./LoginLog')
 const LoginDevice = require('./LoginDevice')
 const LoginRiskReport = require('./LoginRiskReport')
+const Role = require('./Role')
+const PermissionMenu = require('./PermissionMenu')
+const RolePermission = require('./RolePermission')
+const RolePermissionLog = require('./RolePermissionLog')
 
 User.hasMany(Resource, { foreignKey: 'authorId', as: 'resources' })
 Resource.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
@@ -87,6 +91,15 @@ LoginRiskReport.belongsTo(User, { foreignKey: 'userId', as: 'user' })
 
 LoginRiskReport.belongsTo(LoginLog, { foreignKey: 'loginLogId', as: 'loginLog' })
 
+Role.hasMany(RolePermission, { foreignKey: 'roleId', as: 'rolePermissions' })
+RolePermission.belongsTo(Role, { foreignKey: 'roleId', as: 'role' })
+PermissionMenu.hasMany(RolePermission, { foreignKey: 'permissionId', as: 'rolePermissions' })
+RolePermission.belongsTo(PermissionMenu, { foreignKey: 'permissionId', as: 'permission' })
+PermissionMenu.hasMany(PermissionMenu, { foreignKey: 'parentId', as: 'children' })
+PermissionMenu.belongsTo(PermissionMenu, { foreignKey: 'parentId', as: 'parent' })
+Role.hasMany(RolePermissionLog, { foreignKey: 'roleId', as: 'permissionLogs' })
+RolePermissionLog.belongsTo(Role, { foreignKey: 'roleId', as: 'role' })
+
 module.exports = {
   User,
   Category,
@@ -107,5 +120,9 @@ module.exports = {
   MemberTagLog,
   LoginLog,
   LoginDevice,
-  LoginRiskReport
+  LoginRiskReport,
+  Role,
+  PermissionMenu,
+  RolePermission,
+  RolePermissionLog
 }

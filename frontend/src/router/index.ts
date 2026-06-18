@@ -122,6 +122,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '系统设置', icon: 'Setting', roles: ['super_admin', 'admin'] }
       },
       {
+        path: 'role-permission',
+        name: 'RolePermission',
+        component: () => import('@/views/role-permission/index.vue'),
+        meta: { title: '角色权限', icon: 'Lock', roles: ['super_admin', 'admin'] }
+      },
+      {
         path: 'log',
         name: 'OperationLog',
         component: () => import('@/views/log/index.vue'),
