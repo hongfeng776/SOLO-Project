@@ -16,6 +16,48 @@ const BATCH_AUDIT_THRESHOLD = 50000;
 const PRICE_DEVIATION_THRESHOLD = 0.1;
 const SINGLE_ORDER_MAX_QUANTITY = 1000000;
 const DAILY_ORDER_MAX_AMOUNT = 5000000;
+const MATCHING_PRICE_DEVIATION_LIMIT = 0.15;
+const MATCHING_BATCH_SIZE = 50;
+
+interface IMatchingValidation {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+  orderValid: boolean;
+  marketLiquidity: 'high' | 'medium' | 'low' | 'none';
+  ruleActive: boolean;
+  stockTradable: boolean;
+}
+
+interface IMatchingResult {
+  success: boolean;
+  matchStatus: 'full' | 'partial' | 'failed';
+  matchPrice: number;
+  matchQuantity: number;
+  matchAmount: number;
+  remainQuantity: number;
+  trade: any;
+}
+
+interface IMatchingTrace {
+  orderId: number;
+  tradeNo: string;
+  matchRule: string;
+  matchPrice: number;
+  matchQuantity: number;
+  matchAmount: number;
+  marketPrice: number;
+  priceDeviation: number;
+  matchedAt: string;
+  counterParty: string;
+  priceConsistent: boolean;
+  traceNodes: Array<{
+    name: string;
+    passed: boolean;
+    message: string;
+    time: string;
+  }>;
+}
 
 const TRADING_SESSIONS = [
   { start: '09:30', end: '11:30' },
@@ -895,6 +937,538 @@ class TradeService {
       successCount,
       failedCount,
       results,
+    };
+  }
+
+  async validateMatchingOrder(id: number): Promise<IMatchingValidation> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    let orderValid = true;
+    let marketLiquidity: 'high' | 'medium' | 'low' | 'none' = 'none';
+    let ruleActive = true;
+    let stockTradable = true;
+
+    const trade = await db.Trade.findByPk(id);
+    if (!trade) {
+      errors.push('委托订单不存在');
+      return { valid: false, errors, warnings, orderValid: false, marketLiquidity: 'none', ruleActive: false, stockTradable: false };
+    }
+
+    if (trade.trade_status !== 'pending' && trade.trade_status !== 'success' && trade.trade_status !== 'approved') {
+      errors.push(`委托状态为${trade.trade_status}，无法撮合`);
+      orderValid = false;
+    }
+
+    const stock = await db.StockQuote.findByPk(trade.stock_id);
+    if (!stock) {
+      errors.push('股票不存在');
+      stockTradable = false;
+    } else {
+      if (stock.status === 'suspended') {
+        errors.push(`股票${stock.stock_name}已停牌，自动暂停撮合`);
+        stockTradable = false;
+      } else if (stock.status === 'delisted') {
+        errors.push(`股票${stock.stock_name}已退市，自动暂停撮合`);
+        stockTradable = false;
+      } else if (stock.status !== 'trading') {
+        warnings.push(`股票状态为${stock.status}，请关注`);
+      }
+
+      const volume = Number(stock.volume || 0);
+      if (volume > 10000000) {
+        marketLiquidity = 'high';
+      } else if (volume > 1000000) {
+        marketLiquidity = 'medium';
+      } else if (volume > 100000) {
+        marketLiquidity = 'low';
+      } else {
+        marketLiquidity = 'none';
+        warnings.push('市场流动性不足，撮合可能延迟');
+      }
+    }
+
+    const session = isInTradingSession();
+    if (!session.inSession) {
+      warnings.push(`当前为${session.currentPeriod}，撮合规则未生效`);
+      ruleActive = false;
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings,
+      orderValid,
+      marketLiquidity,
+      ruleActive,
+      stockTradable,
+    };
+  }
+
+  async executeMatching(id: number): Promise<IMatchingResult> {
+    const validation = await this.validateMatchingOrder(id);
+    if (!validation.valid) {
+      return {
+        success: false,
+        matchStatus: 'failed',
+        matchPrice: 0,
+        matchQuantity: 0,
+        matchAmount: 0,
+        remainQuantity: 0,
+        trade: null,
+      };
+    }
+
+    const trade = await db.Trade.findByPk(id);
+    if (!trade) {
+      return {
+        success: false,
+        matchStatus: 'failed',
+        matchPrice: 0,
+        matchQuantity: 0,
+        matchAmount: 0,
+        remainQuantity: 0,
+        trade: null,
+      };
+    }
+
+    const stock = await db.StockQuote.findByPk(trade.stock_id);
+    const marketPrice = Number(stock?.current_price || 0);
+    const orderPrice = Number(trade.price);
+    const orderQuantity = Number(trade.quantity);
+
+    const priceDeviation = marketPrice > 0 ? Math.abs(orderPrice - marketPrice) / marketPrice : 0;
+    if (priceDeviation > MATCHING_PRICE_DEVIATION_LIMIT) {
+      return {
+        success: false,
+        matchStatus: 'failed',
+        matchPrice: 0,
+        matchQuantity: 0,
+        matchAmount: 0,
+        remainQuantity: orderQuantity,
+        trade,
+      };
+    }
+
+    const matchPrice = orderPrice;
+    const liquidity = Number(stock?.volume || 0);
+    let matchQuantity = orderQuantity;
+    let matchStatus: 'full' | 'partial' | 'failed' = 'full';
+
+    if (liquidity < orderQuantity * 0.3) {
+      matchQuantity = Math.floor(liquidity / 100) * 100;
+      if (matchQuantity <= 0) {
+        matchStatus = 'failed';
+        matchQuantity = 0;
+      } else {
+        matchStatus = 'partial';
+      }
+    }
+
+    if (matchStatus === 'failed') {
+      return {
+        success: false,
+        matchStatus: 'failed',
+        matchPrice: 0,
+        matchQuantity: 0,
+        matchAmount: 0,
+        remainQuantity: orderQuantity,
+        trade,
+      };
+    }
+
+    const matchAmount = Number((matchPrice * matchQuantity).toFixed(2));
+    const remainQuantity = orderQuantity - matchQuantity;
+
+    const t = await db.sequelize.transaction();
+    try {
+      const updateData: any = {
+        trade_status: matchStatus === 'full' ? 'dealed' : 'partial_dealed',
+        trade_amount: matchAmount,
+      };
+      if (matchStatus === 'full') {
+        updateData.quantity = matchQuantity;
+      }
+
+      await db.Trade.update(updateData, { where: { id }, transaction: t });
+
+      if (matchStatus === 'full') {
+        if (trade.direction === 'buy') {
+          await customerAssetService.deductFrozenAmount(
+            trade.customer_id,
+            Number(trade.frozen_amount || 0),
+            t,
+          );
+          await customerHoldingService.updateHoldingAfterTrade(
+            trade.customer_id,
+            trade.stock_id,
+            'buy',
+            matchQuantity,
+            matchPrice,
+            matchAmount,
+            t,
+          );
+        } else {
+          await customerHoldingService.deductFrozenQuantity(
+            trade.customer_id,
+            trade.stock_id,
+            Number(trade.frozen_quantity || 0),
+            t,
+          );
+          await customerHoldingService.updateHoldingAfterTrade(
+            trade.customer_id,
+            trade.stock_id,
+            'sell',
+            matchQuantity,
+            matchPrice,
+            matchAmount,
+            t,
+          );
+        }
+
+        await customerAssetService.updateAfterTrade(trade, t);
+        await fundFlowService.createFlowFromTrade(trade, t);
+      } else {
+        if (trade.direction === 'buy') {
+          const totalCost = matchAmount + Number(trade.total_fee || 0) * (matchQuantity / orderQuantity);
+          await customerAssetService.deductFrozenAmount(
+            trade.customer_id,
+            Number(totalCost.toFixed(2)),
+            t,
+          );
+          await customerHoldingService.updateHoldingAfterTrade(
+            trade.customer_id,
+            trade.stock_id,
+            'buy',
+            matchQuantity,
+            matchPrice,
+            matchAmount,
+            t,
+          );
+        } else {
+          await customerHoldingService.deductFrozenQuantity(
+            trade.customer_id,
+            trade.stock_id,
+            matchQuantity,
+            t,
+          );
+          await customerHoldingService.updateHoldingAfterTrade(
+            trade.customer_id,
+            trade.stock_id,
+            'sell',
+            matchQuantity,
+            matchPrice,
+            matchAmount,
+            t,
+          );
+        }
+
+        await fundFlowService.createFlowFromTrade(trade, t);
+      }
+
+      await t.commit();
+      const updatedTrade = await db.Trade.findByPk(id);
+
+      return {
+        success: true,
+        matchStatus,
+        matchPrice,
+        matchQuantity,
+        matchAmount,
+        remainQuantity,
+        trade: updatedTrade,
+      };
+    } catch (error) {
+      await t.rollback();
+      throw error;
+    }
+  }
+
+  async getMatchingOrders(params: {
+    page: number;
+    pageSize: number;
+    matchStatus?: string;
+    stockCode?: string;
+    direction?: string;
+  }) {
+    const { page, pageSize, matchStatus, stockCode, direction } = params;
+    const where: any = {
+      trade_status: { [Op.in]: ['pending', 'success', 'approved', 'partial_dealed', 'dealed'] },
+    };
+
+    if (matchStatus === 'pending') {
+      where.trade_status = { [Op.in]: ['pending', 'success', 'approved'] };
+    } else if (matchStatus === 'partial') {
+      where.trade_status = 'partial_dealed';
+    } else if (matchStatus === 'full') {
+      where.trade_status = 'dealed';
+    }
+
+    if (stockCode) {
+      where.stock_code = { [Op.like]: `%${stockCode}%` };
+    }
+    if (direction) {
+      where.direction = direction;
+    }
+
+    const { rows, count } = await db.Trade.findAndCountAll({
+      where,
+      offset: (page - 1) * pageSize,
+      limit: pageSize,
+      order: [
+        ['price', 'DESC'],
+        ['created_at', 'ASC'],
+      ],
+    });
+
+    return { list: rows, total: count, page, pageSize };
+  }
+
+  async getMatchingProgress() {
+    const total = await db.Trade.count({
+      where: { trade_status: { [Op.in]: ['pending', 'success', 'approved'] } },
+    });
+    const partialDealed = await db.Trade.count({
+      where: { trade_status: 'partial_dealed' },
+    });
+    const fullDealed = await db.Trade.count({
+      where: { trade_status: 'dealed' },
+    });
+    const failed = await db.Trade.count({
+      where: { trade_status: 'failed' },
+    });
+    const paused = await db.Trade.count({
+      where: { trade_status: 'cancelled' },
+    });
+
+    const dealedAmount = await db.Trade.sum('trade_amount', {
+      where: { trade_status: { [Op.in]: ['dealed', 'partial_dealed'] } },
+    });
+
+    return {
+      total,
+      partialDealed,
+      fullDealed,
+      failed,
+      paused,
+      dealedAmount: Number(dealedAmount || 0).toFixed(2),
+      progressRate: total + partialDealed + fullDealed > 0
+        ? ((fullDealed / (total + partialDealed + fullDealed)) * 100).toFixed(1)
+        : '0.0',
+    };
+  }
+
+  async batchControlOrders(ids: number[], action: 'pause' | 'resume' | 'clear', operatorId: number) {
+    const results: Array<{ id: number; success: boolean; error?: string }> = [];
+
+    for (const id of ids) {
+      try {
+        const trade = await db.Trade.findByPk(id);
+        if (!trade) {
+          results.push({ id, success: false, error: '订单不存在' });
+          continue;
+        }
+
+        if (action === 'pause') {
+          if (trade.trade_status !== 'pending' && trade.trade_status !== 'success' && trade.trade_status !== 'approved') {
+            results.push({ id, success: false, error: '当前状态不可暂停' });
+            continue;
+          }
+          await db.Trade.update(
+            { trade_status: 'paused', remark: `管理员${operatorId}暂停撮合` },
+            { where: { id } },
+          );
+        } else if (action === 'resume') {
+          if (trade.trade_status !== 'paused') {
+            results.push({ id, success: false, error: '当前状态不可恢复' });
+            continue;
+          }
+          await db.Trade.update(
+            { trade_status: 'pending', remark: `管理员${operatorId}恢复撮合` },
+            { where: { id } },
+          );
+        } else if (action === 'clear') {
+          if (trade.trade_status !== 'pending' && trade.trade_status !== 'paused' && trade.trade_status !== 'success' && trade.trade_status !== 'approved') {
+            results.push({ id, success: false, error: '当前状态不可清空' });
+            continue;
+          }
+          const t = await db.sequelize.transaction();
+          try {
+            await db.Trade.update(
+              { trade_status: 'cancelled' },
+              { where: { id }, transaction: t },
+            );
+            if (trade.direction === 'buy') {
+              await customerAssetService.unfreezeAmount(
+                trade.customer_id,
+                Number(trade.frozen_amount || 0),
+                t,
+              );
+            } else {
+              await customerHoldingService.unfreezeQuantity(
+                trade.customer_id,
+                trade.stock_id,
+                Number(trade.frozen_quantity || 0),
+                t,
+              );
+            }
+            await t.commit();
+          } catch (err) {
+            await t.rollback();
+            throw err;
+          }
+        }
+
+        results.push({ id, success: true });
+      } catch (error: any) {
+        results.push({ id, success: false, error: error.message });
+      }
+    }
+
+    const successCount = results.filter(r => r.success).length;
+    const failedCount = results.filter(r => !r.success).length;
+
+    return {
+      total: ids.length,
+      successCount,
+      failedCount,
+      results,
+    };
+  }
+
+  async batchExecuteMatching(ids: number[]) {
+    const results: Array<{
+      id: number;
+      success: boolean;
+      matchStatus?: string;
+      matchQuantity?: number;
+      matchAmount?: number;
+      error?: string;
+    }> = [];
+
+    const sortedTrades = await db.Trade.findAll({
+      where: {
+        id: { [Op.in]: ids },
+        trade_status: { [Op.in]: ['pending', 'success', 'approved'] },
+      },
+      order: [
+        ['price', 'DESC'],
+        ['created_at', 'ASC'],
+      ],
+    });
+
+    for (const trade of sortedTrades) {
+      try {
+        const result = await this.executeMatching(trade.id);
+        results.push({
+          id: trade.id,
+          success: result.success,
+          matchStatus: result.matchStatus,
+          matchQuantity: result.matchQuantity,
+          matchAmount: result.matchAmount,
+        });
+      } catch (error: any) {
+        results.push({
+          id: trade.id,
+          success: false,
+          error: error.message,
+        });
+      }
+    }
+
+    const successCount = results.filter(r => r.success).length;
+    const partialCount = results.filter(r => r.matchStatus === 'partial').length;
+    const failedCount = results.filter(r => !r.success).length;
+
+    return {
+      total: ids.length,
+      successCount,
+      partialCount,
+      failedCount,
+      results,
+    };
+  }
+
+  async getMatchingTrace(id: number): Promise<IMatchingTrace> {
+    const trade = await db.Trade.findByPk(id);
+    if (!trade) {
+      throw new AppError(404, 'Trade not found');
+    }
+
+    const stock = await db.StockQuote.findByPk(trade.stock_id);
+    const marketPrice = Number(stock?.current_price || 0);
+    const orderPrice = Number(trade.price);
+    const priceDeviation = marketPrice > 0 ? Math.abs(orderPrice - marketPrice) / marketPrice : 0;
+
+    const traceNodes: Array<{ name: string; passed: boolean; message: string; time: string }> = [];
+
+    traceNodes.push({
+      name: '委托提交',
+      passed: true,
+      message: `委托价格${orderPrice}，数量${Number(trade.quantity)}`,
+      time: trade.created_at?.toISOString() || new Date().toISOString(),
+    });
+
+    const stockTradable = stock?.status === 'trading';
+    traceNodes.push({
+      name: '股票状态校验',
+      passed: stockTradable,
+      message: stockTradable ? '股票正常交易中' : `股票状态：${stock?.status || '未知'}`,
+      time: trade.created_at?.toISOString() || new Date().toISOString(),
+    });
+
+    traceNodes.push({
+      name: '撮合规则校验',
+      passed: true,
+      message: '价格优先、时间优先',
+      time: trade.created_at?.toISOString() || new Date().toISOString(),
+    });
+
+    const priceConsistent = priceDeviation <= MATCHING_PRICE_DEVIATION_LIMIT;
+    traceNodes.push({
+      name: '价格一致性校验',
+      passed: priceConsistent,
+      message: `委托价${orderPrice}，市场价${marketPrice}，偏差${(priceDeviation * 100).toFixed(2)}%`,
+      time: new Date().toISOString(),
+    });
+
+    if (trade.trade_status === 'dealed' || trade.trade_status === 'partial_dealed') {
+      traceNodes.push({
+        name: '撮合成交',
+        passed: true,
+        message: trade.trade_status === 'dealed' ? '全部成交' : '部分成交',
+        time: trade.updated_at?.toISOString() || new Date().toISOString(),
+      });
+
+      if (trade.trade_status === 'dealed') {
+        traceNodes.push({
+          name: '持仓资金更新',
+          passed: true,
+          message: '持仓与资金已同步更新',
+          time: trade.updated_at?.toISOString() || new Date().toISOString(),
+        });
+      }
+    } else if (trade.trade_status === 'failed') {
+      traceNodes.push({
+        name: '撮合失败',
+        passed: false,
+        message: '撮合失败，订单已驳回',
+        time: trade.updated_at?.toISOString() || new Date().toISOString(),
+      });
+    }
+
+    return {
+      orderId: trade.id,
+      tradeNo: trade.trade_no,
+      matchRule: '价格优先、时间优先',
+      matchPrice: orderPrice,
+      matchQuantity: Number(trade.quantity),
+      matchAmount: Number(trade.trade_amount),
+      marketPrice,
+      priceDeviation,
+      matchedAt: trade.updated_at?.toISOString() || '',
+      counterParty: trade.direction === 'buy' ? '卖方对手' : '买方对手',
+      priceConsistent,
+      traceNodes,
     };
   }
 }

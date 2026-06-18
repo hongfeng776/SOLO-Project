@@ -178,3 +178,105 @@ export function processBatchOrders(data: {
 }): Promise<IApiResponse<IBatchProcessResult>> {
   return post<IBatchProcessResult>('/api/trades/batch-process', data)
 }
+
+export interface IMatchingValidation {
+  valid: boolean
+  errors: string[]
+  warnings: string[]
+  orderValid: boolean
+  marketLiquidity: 'high' | 'medium' | 'low' | 'none'
+  ruleActive: boolean
+  stockTradable: boolean
+}
+
+export interface IMatchingResult {
+  success: boolean
+  matchStatus: 'full' | 'partial' | 'failed'
+  matchPrice: number
+  matchQuantity: number
+  matchAmount: number
+  remainQuantity: number
+  trade: ITrade
+}
+
+export interface IMatchingProgress {
+  total: number
+  partialDealed: number
+  fullDealed: number
+  failed: number
+  paused: number
+  dealedAmount: string
+  progressRate: string
+}
+
+export interface IMatchingTraceNode {
+  name: string
+  passed: boolean
+  message: string
+  time: string
+}
+
+export interface IMatchingTrace {
+  orderId: number
+  tradeNo: string
+  matchRule: string
+  matchPrice: number
+  matchQuantity: number
+  matchAmount: number
+  marketPrice: number
+  priceDeviation: number
+  matchedAt: string
+  counterParty: string
+  priceConsistent: boolean
+  traceNodes: IMatchingTraceNode[]
+}
+
+export interface IBatchMatchingResult {
+  total: number
+  successCount: number
+  partialCount: number
+  failedCount: number
+  results: Array<{
+    id: number
+    success: boolean
+    matchStatus?: string
+    matchQuantity?: number
+    matchAmount?: number
+    error?: string
+  }>
+}
+
+export function validateMatchingOrder(id: number): Promise<IApiResponse<IMatchingValidation>> {
+  return get<IMatchingValidation>(`/api/trades/${id}/matching-validate`)
+}
+
+export function executeMatching(id: number): Promise<IApiResponse<IMatchingResult>> {
+  return post<IMatchingResult>(`/api/trades/matching/${id}/execute`)
+}
+
+export function batchExecuteMatching(ids: number[]): Promise<IApiResponse<IBatchMatchingResult>> {
+  return post<IBatchMatchingResult>('/api/trades/matching/batch-execute', { ids })
+}
+
+export function getMatchingOrders(params: IPageParams & {
+  matchStatus?: string
+  stockCode?: string
+  direction?: string
+}): Promise<IApiResponse<IPaginatedData<ITrade>>> {
+  return get<IPaginatedData<ITrade>>('/api/trades/matching', params)
+}
+
+export function getMatchingProgress(): Promise<IApiResponse<IMatchingProgress>> {
+  return get<IMatchingProgress>('/api/trades/matching-progress')
+}
+
+export function batchControlOrders(data: {
+  ids: number[]
+  action: 'pause' | 'resume' | 'clear'
+}): Promise<IApiResponse<IBatchProcessResult>> {
+  return post<IBatchProcessResult>('/api/trades/matching/batch-control', data)
+}
+
+export function getMatchingTrace(id: number): Promise<IApiResponse<IMatchingTrace>> {
+  return get<IMatchingTrace>(`/api/trades/${id}/matching-trace`)
+}

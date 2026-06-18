@@ -161,3 +161,81 @@ export async function processBatchOrders(req: Request, res: Response, next: Next
     next(err);
   }
 }
+
+export async function validateMatchingOrder(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id);
+    const result = await tradeService.validateMatchingOrder(id);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function executeMatching(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id);
+    const result = await tradeService.executeMatching(id);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function batchExecuteMatching(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { ids } = req.body;
+    const result = await tradeService.batchExecuteMatching(ids.map(Number));
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getMatchingOrders(req: Request, res: Response, next: NextFunction) {
+  try {
+    const page = Number(req.query.page) || 1;
+    const pageSize = Number(req.query.pageSize) || 10;
+    const matchStatus = req.query.matchStatus as string | undefined;
+    const stockCode = req.query.stockCode as string | undefined;
+    const direction = req.query.direction as string | undefined;
+
+    const result = await tradeService.getMatchingOrders({ page, pageSize, matchStatus, stockCode, direction });
+    res.json(paginated(result.list, result.total, result.page, result.pageSize));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getMatchingProgress(_req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await tradeService.getMatchingProgress();
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function batchControlOrders(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { ids, action } = req.body;
+    const result = await tradeService.batchControlOrders(
+      ids.map(Number),
+      action,
+      (req as any).user?.id,
+    );
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getMatchingTrace(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id);
+    const result = await tradeService.getMatchingTrace(id);
+    res.json(success(result));
+  } catch (err) {
+    next(err);
+  }
+}
