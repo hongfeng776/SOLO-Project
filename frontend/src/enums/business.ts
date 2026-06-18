@@ -533,3 +533,124 @@ export const ACTIVITY_BATCH_TYPE_NAMES: Record<string, string> = {
   [ActivityBatchType.MARK_FOCUS_LOW]: '批量标记低活跃重点运维',
   [ActivityBatchType.SEND_PUSH_NOTIFY]: '批量推送通知消息'
 }
+
+export enum QualificationApplyStatus {
+  PENDING = 0,
+  UNDER_REVIEW = 1,
+  APPROVED = 2,
+  REJECTED = 3,
+  EXPIRED = 4
+}
+
+export const QUALIFICATION_APPLY_STATUS_NAMES: Record<number, string> = {
+  [QualificationApplyStatus.PENDING]: '待提交',
+  [QualificationApplyStatus.UNDER_REVIEW]: '审核中',
+  [QualificationApplyStatus.APPROVED]: '已通过',
+  [QualificationApplyStatus.REJECTED]: '已驳回',
+  [QualificationApplyStatus.EXPIRED]: '已过期'
+}
+
+export const QUALIFICATION_APPLY_STATUS_COLORS: Record<number, string> = {
+  [QualificationApplyStatus.PENDING]: '#909399',
+  [QualificationApplyStatus.UNDER_REVIEW]: '#e6a23c',
+  [QualificationApplyStatus.APPROVED]: '#67c23a',
+  [QualificationApplyStatus.REJECTED]: '#f56c6c',
+  [QualificationApplyStatus.EXPIRED]: '#909399'
+}
+
+export const QUALIFICATION_APPLY_TAG_TYPES: Record<number, string> = {
+  [QualificationApplyStatus.PENDING]: 'info',
+  [QualificationApplyStatus.UNDER_REVIEW]: 'warning',
+  [QualificationApplyStatus.APPROVED]: 'success',
+  [QualificationApplyStatus.REJECTED]: 'danger',
+  [QualificationApplyStatus.EXPIRED]: 'info'
+}
+
+export enum QualificationType {
+  ID_CARD = 'id_card',
+  BUSINESS_LICENSE = 'business_license',
+  INDUSTRY_CERT = 'industry_cert',
+  OTHER = 'other'
+}
+
+export const QUALIFICATION_TYPE_NAMES: Record<string, string> = {
+  [QualificationType.ID_CARD]: '身份证件',
+  [QualificationType.BUSINESS_LICENSE]: '营业执照',
+  [QualificationType.INDUSTRY_CERT]: '行业资质证',
+  [QualificationType.OTHER]: '其他材料'
+}
+
+export enum QualificationLogType {
+  SUBMIT = 'submit',
+  PRE_CHECK = 'pre_check',
+  AUDIT_PASS = 'audit_pass',
+  AUDIT_REJECT = 'audit_reject',
+  BATCH_PASS = 'batch_pass',
+  BATCH_REJECT = 'batch_reject',
+  EXPIRE = 'expire',
+  RENEW = 'renew',
+  FAKE_DETECT = 'fake_detect',
+  STATUS_CHANGE = 'status_change',
+  BENEFIT_CHANGE = 'benefit_change'
+}
+
+export const QUALIFICATION_LOG_TYPE_NAMES: Record<string, string> = {
+  [QualificationLogType.SUBMIT]: '提交申请',
+  [QualificationLogType.PRE_CHECK]: '前置校验',
+  [QualificationLogType.AUDIT_PASS]: '审核通过',
+  [QualificationLogType.AUDIT_REJECT]: '审核驳回',
+  [QualificationLogType.BATCH_PASS]: '批量通过',
+  [QualificationLogType.BATCH_REJECT]: '批量驳回',
+  [QualificationLogType.EXPIRE]: '资质过期',
+  [QualificationLogType.RENEW]: '资质续期',
+  [QualificationLogType.FAKE_DETECT]: '虚假资质检测',
+  [QualificationLogType.STATUS_CHANGE]: '身份状态变更',
+  [QualificationLogType.BENEFIT_CHANGE]: '权益变更'
+}
+
+export enum CreatorIdentityStatus {
+  NORMAL = 0,
+  VERIFIED = 1,
+  RESTRICTED = 2,
+  BANNED = 3
+}
+
+export const CREATOR_IDENTITY_STATUS_NAMES: Record<number, string> = {
+  [CreatorIdentityStatus.NORMAL]: '普通用户',
+  [CreatorIdentityStatus.VERIFIED]: '认证达人',
+  [CreatorIdentityStatus.RESTRICTED]: '受限达人',
+  [CreatorIdentityStatus.BANNED]: '封禁达人'
+}
+
+export const CREATOR_IDENTITY_STATUS_COLORS: Record<number, string> = {
+  [CreatorIdentityStatus.NORMAL]: '#909399',
+  [CreatorIdentityStatus.VERIFIED]: '#67c23a',
+  [CreatorIdentityStatus.RESTRICTED]: '#e6a23c',
+  [CreatorIdentityStatus.BANNED]: '#f56c6c'
+}
+
+export enum CreatorBenefit {
+  LIVE_STREAMING = 'live_streaming',
+  PRODUCT_LINK = 'product_link',
+  SHOPPING_CART = 'shopping_cart',
+  BRAND_COOPERATION = 'brand_cooperation',
+  COMMISSION = 'commission',
+  DATA_ANALYTICS = 'data_analytics',
+  ACTIVITY_PRIORITY = 'activity_priority',
+  CUSTOMER_SERVICE = 'customer_service',
+  VERIFIED_BADGE = 'verified_badge',
+  FLOW_BOOST = 'flow_boost'
+}
+
+export const CREATOR_BENEFIT_NAMES: Record<string, string> = {
+  [CreatorBenefit.LIVE_STREAMING]: '直播带货',
+  [CreatorBenefit.PRODUCT_LINK]: '商品链接',
+  [CreatorBenefit.SHOPPING_CART]: '购物车功能',
+  [CreatorBenefit.BRAND_COOPERATION]: '品牌合作',
+  [CreatorBenefit.COMMISSION]: '佣金结算',
+  [CreatorBenefit.DATA_ANALYTICS]: '数据分析',
+  [CreatorBenefit.ACTIVITY_PRIORITY]: '活动优先',
+  [CreatorBenefit.CUSTOMER_SERVICE]: '专属客服',
+  [CreatorBenefit.VERIFIED_BADGE]: '认证标识',
+  [CreatorBenefit.FLOW_BOOST]: '流量扶持'
+}

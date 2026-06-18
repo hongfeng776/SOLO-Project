@@ -11,7 +11,8 @@ export enum CacheKey {
   NOTE_DETAIL = 'note:detail:',
   STATS_OVERVIEW = 'stats:overview',
   STATS_TREND = 'stats:trend:',
-  CREATOR_LIST = 'creator:list'
+  CREATOR_LIST = 'creator:list',
+  CREATOR_QUALIFICATION_LIST = 'creator:qualification:list'
 }
 
 export enum CacheTTL {

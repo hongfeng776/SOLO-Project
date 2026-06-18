@@ -31,6 +31,9 @@ import PunishmentRecord from './punishment-record'
 import ActivityScoreLog from './activity-score-log'
 import ActivityOperationStrategy from './activity-operation-strategy'
 import ActivityOperationRecord from './activity-operation-record'
+import CreatorQualificationApply from './creator-qualification-apply'
+import CreatorQualificationLog from './creator-qualification-log'
+import CreatorBenefitConfig from './creator-benefit-config'
 
 const UserRole = User.sequelize!.define('sys_user_role', {}, { tableName: 'sys_user_role', timestamps: false })
 const NoteTag = Note.sequelize!.define('biz_note_tag', {}, { tableName: 'biz_note_tag', timestamps: false })
@@ -68,4 +71,16 @@ ActivityScoreLog.belongsTo(User, { as: 'user', foreignKey: 'userId' })
 User.hasMany(ActivityOperationRecord, { as: 'activityOperationRecords', foreignKey: 'userId' })
 ActivityOperationRecord.belongsTo(User, { as: 'user', foreignKey: 'userId' })
 
-export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, UserRole, NoteTag }
+Creator.hasMany(CreatorQualificationApply, { as: 'qualificationApplies', foreignKey: 'creatorId' })
+CreatorQualificationApply.belongsTo(Creator, { as: 'creator', foreignKey: 'creatorId' })
+
+Creator.hasMany(CreatorQualificationLog, { as: 'qualificationLogs', foreignKey: 'creatorId' })
+CreatorQualificationLog.belongsTo(Creator, { as: 'creator', foreignKey: 'creatorId' })
+
+CreatorQualificationApply.hasMany(CreatorQualificationLog, { as: 'logs', foreignKey: 'applyId' })
+CreatorQualificationLog.belongsTo(CreatorQualificationApply, { as: 'apply', foreignKey: 'applyId' })
+
+Creator.hasOne(CreatorBenefitConfig, { as: 'benefitConfig', foreignKey: 'creatorId' })
+CreatorBenefitConfig.belongsTo(Creator, { as: 'creator', foreignKey: 'creatorId' })
+
+export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, UserRole, NoteTag }

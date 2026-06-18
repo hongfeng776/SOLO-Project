@@ -39,6 +39,7 @@ import tagManagementRoutes from '@routes/tag-management'
 import userLevelRoutes from '@routes/user-level'
 import riskControlRoutes from '@routes/risk-control'
 import activityOperationRoutes from '@routes/activity-operation'
+import creatorQualificationRoutes from '@routes/creator-qualification'
 
 const app = express()
 
@@ -89,6 +90,7 @@ app.use('/api/tags', tagManagementRoutes)
 app.use('/api/user-level', userLevelRoutes)
 app.use('/api/risk-control', riskControlRoutes)
 app.use('/api/activity-operation', activityOperationRoutes)
+app.use('/api/creator-qualification', creatorQualificationRoutes)
 
 app.use(celebrateErrors())
 app.use(errorHandler)

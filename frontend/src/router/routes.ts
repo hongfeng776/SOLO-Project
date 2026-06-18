@@ -82,7 +82,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     path: '/creator',
     component: Layout,
     redirect: '/creator/list',
-    meta: { title: '达人运维', icon: 'User', roles: ['admin', 'operation'] },
+    meta: { title: '达人商家管理', icon: 'User', roles: ['admin', 'operation'] },
     children: [
       {
         path: 'list',
@@ -95,6 +95,12 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: 'Qualification',
         component: () => import(/* webpackChunkName: "creator" */ '@views/creator/qualification/index.vue'),
         meta: { title: '商家资质', icon: 'Medal', roles: ['admin'] }
+      },
+      {
+        path: 'qualification-audit',
+        name: 'QualificationAudit',
+        component: () => import(/* webpackChunkName: "creator" */ '@views/creator/qualification-audit/index.vue'),
+        meta: { title: '达人资质审核', icon: 'CircleCheck', roles: ['admin', 'operation_manager', 'reviewer'] }
       }
     ]
   },
