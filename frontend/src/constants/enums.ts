@@ -616,5 +616,155 @@ export const COPYRIGHT_FILE_VALIDITY = {
   PENDING: { value: 'pending', label: '待核验', color: '#909399' },
 } as const
 
+export const VALIDITY_STATUS = {
+  NORMAL: { value: 1, label: '正常', color: '#67C23A', type: 'success', bgClass: 'validity-normal' },
+  WARNING: { value: 2, label: '即将过期', color: '#E6A23C', type: 'warning', bgClass: 'validity-warning' },
+  EXPIRED: { value: 3, label: '已过期', color: '#F56C6C', type: 'danger', bgClass: 'validity-expired' },
+} as const
+
+export const EXPIRE_HANDLER_RULE = {
+  NOTIFY_ONLY: { value: 1, label: '仅发送预警通知', desc: '到期前发送运营预警，不执行自动下架' },
+  AUTO_OFFLINE: { value: 2, label: '自动下架关联内容', desc: '到期后自动下架全部关联内容，停止流量分发' },
+  AUTO_OFFLINE_ARCHIVE: { value: 3, label: '下架并归档台账', desc: '下架内容后，将版权记录移入历史台账' },
+  REVIEW_BEFORE_OFFLINE: { value: 4, label: '人工复核后下架', desc: '到期后发送待办任务，人工确认后执行下架' },
+} as const
+
+export const RELATED_CONTENT_SCOPE = {
+  PUBLISHED_ONLY: { value: 1, label: '仅已上架内容', countKey: 'publishedCount' },
+  ALL_BOUND: { value: 2, label: '全部已绑定内容', countKey: 'totalBoundCount' },
+  SPECIFIC_CATEGORY: { value: 3, label: '指定品类内容', countKey: 'categoryCount' },
+} as const
+
+export const WARNING_THRESHOLD_UNIT = {
+  DAY: { value: 'day', label: '天', factor: 1 },
+  WEEK: { value: 'week', label: '周', factor: 7 },
+  MONTH: { value: 'month', label: '个月', factor: 30 },
+} as const
+
+export const VALIDITY_CHANGE_SOURCE = {
+  MANUAL: { value: 'manual', label: '手动变更', color: '#409EFF' },
+  BATCH: { value: 'batch', label: '批量操作', color: '#722ed1' },
+  SYSTEM_TRIGGER: { value: 'system', label: '系统自动触发', color: '#E6A23C' },
+  RENEWAL: { value: 'renewal', label: '续期变更', color: '#67C23A' },
+  TEST_ENV: { value: 'test', label: '测试环境演练', color: '#13c2c2' },
+} as const
+
+export const BATCH_VALIDITY_ACTION = {
+  RENEW_WARNING: { value: 'renew_warning', label: '批量续期预警版权', type: 'success', confirm: true, riskLevel: 'low' },
+  OFFLINE_EXPIRED: { value: 'offline_expired', label: '批量下架过期内容', type: 'warning', confirm: true, riskLevel: 'medium' },
+  ARCHIVE_EXPIRED: { value: 'archive_expired', label: '批量归档过期台账', type: 'info', confirm: true, riskLevel: 'low' },
+  TRIGGER_SCAN: { value: 'trigger_scan', label: '批量触发全量筛查', type: 'primary', confirm: false, riskLevel: 'low' },
+} as const
+
+export const ENVIRONMENT_MODE = {
+  TEST: { value: 'test', label: '测试环境', tip: '仅模拟执行，不落库不影响线上数据', color: '#13c2c2', badgeType: 'info' },
+  PRODUCTION: { value: 'prod', label: '正式环境', tip: '真实执行，下架/归档等操作不可逆', color: '#F56C6C', badgeType: 'danger' },
+} as const
+
+export const WARNING_PUSH_CHANNEL = {
+  MESSAGE_CENTER: { value: 'message_center', label: '系统消息', icon: 'Bell' },
+  EMAIL: { value: 'email', label: '邮件', icon: 'Message' },
+  SMS: { value: 'sms', label: '短信', icon: 'Iphone' },
+  DING_TALK: { value: 'dingtalk', label: '钉钉群', icon: 'ChatDotRound' },
+  FEISHU: { value: 'feishu', label: '飞书群', icon: 'Promotion' },
+} as const
+
+export const VALIDITY_TRACE_EVENT = {
+  CONFIG_CREATE: { value: 'config_create', label: '有效期配置创建', color: '#409EFF' },
+  CONFIG_UPDATE: { value: 'config_update', label: '有效期配置更新', color: '#409EFF' },
+  THRESHOLD_TRIGGER: { value: 'threshold_trigger', label: '阈值触发预警', color: '#E6A23C' },
+  WARNING_PUSHED: { value: 'warning_pushed', label: '预警推送完成', color: '#E6A23C' },
+  STATUS_CHANGE: { value: 'status_change', label: '状态变更执行', color: '#F56C6C' },
+  CONTENT_OFFLINE: { value: 'content_offline', label: '内容下架', color: '#F56C6C' },
+  ARCHIVE_COMPLETE: { value: 'archive_complete', label: '台账归档', color: '#909399' },
+  RENEWAL_COMPLETE: { value: 'renewal_complete', label: '续期完成', color: '#67C23A' },
+  SYNC_TO_AUDIT: { value: 'sync_audit', label: '同步至内容审核', color: '#722ed1' },
+  SYNC_TO_RISK: { value: 'sync_risk', label: '同步至风控模块', color: '#722ed1' },
+  EXCEPTION_DETECTED: { value: 'exception', label: '异常检测', color: '#C0392B' },
+} as const
+
+export const TRACE_EXCEPTION_TYPE = {
+  INVALID_RENEWAL: { value: 'invalid_renewal', label: '无效续期拦截', severity: 'high', desc: '续期参数无效或版权未处于可续期状态' },
+  DUPLICATE_WARNING: { value: 'duplicate_warning', label: '重复预警配置', severity: 'medium', desc: '同一批次同一版权触发多次预警' },
+  MISSED_OFFLINE: { value: 'missed_offline', label: '过期内容漏下架', severity: 'high', desc: '内容应下架但状态仍为上架' },
+  MISSED_WARNING: { value: 'missed_warning', label: '预警漏推送', severity: 'medium', desc: '到达阈值未发送预警消息' },
+  SYNC_DELAY: { value: 'sync_delay', label: '状态同步不及时', severity: 'low', desc: '审核/风控模块状态滞后超过阈值' },
+  RULE_INCOMPLETE: { value: 'rule_incomplete', label: '处理规则执行不完整', severity: 'high', desc: '部分关联内容未按规则处理' },
+} as const
+
+export const VALIDITY_BATCH_STATUS = {
+  PENDING: { value: 'pending', label: '待执行', color: '#909399', type: 'info' },
+  RUNNING: { value: 'running', label: '执行中', color: '#409EFF', type: 'primary' },
+  COMPLETED: { value: 'completed', label: '执行完成', color: '#67C23A', type: 'success' },
+  PARTIAL: { value: 'partial', label: '部分成功', color: '#E6A23C', type: 'warning' },
+  FAILED: { value: 'failed', label: '执行失败', color: '#F56C6C', type: 'danger' },
+  CANCELLED: { value: 'cancelled', label: '已取消', color: '#C0C4CC', type: 'info' },
+} as const
+
+export const END_USER_ACCOUNT_STATUS = {
+  NORMAL: { value: 1, label: '正常', color: '#67C23A', type: 'success' },
+  FLOW_LIMITED: { value: 2, label: '限流', color: '#E6A23C', type: 'warning' },
+  MUTED: { value: 3, label: '禁言', color: '#F56C6C', type: 'danger' },
+  TEMP_BANNED: { value: 4, label: '临时封禁', color: '#F56C6C', type: 'danger' },
+  PERMANENT_BANNED: { value: 5, label: '永久封禁', color: '#C0392B', type: 'danger' },
+} as const
+
+export const END_USER_TYPE = {
+  NORMAL: { value: 1, label: '普通用户', color: '#909399', type: 'info' },
+  CREATOR: { value: 2, label: '创作者', color: '#409EFF', type: 'primary' },
+  MEMBER: { value: 3, label: '会员用户', color: '#E6A23C', type: 'warning' },
+} as const
+
+export const END_USER_ACTIVITY_LEVEL = {
+  DORMANT: { value: 0, label: '沉睡用户', color: '#C0C4CC', type: 'info' },
+  LOW: { value: 1, label: '低活跃', color: '#909399', type: 'info' },
+  MEDIUM: { value: 2, label: '中活跃', color: '#409EFF', type: 'primary' },
+  HIGH: { value: 3, label: '高活跃', color: '#67C23A', type: 'success' },
+  ACTIVE: { value: 4, label: '核心活跃', color: '#722ed1', type: 'primary' },
+} as const
+
+export const END_USER_FLOW_LIMIT_LEVEL = {
+  NONE: { value: 0, label: '无限流', color: '#67C23A', type: 'success' },
+  LIGHT: { value: 1, label: '轻度限流', color: '#E6A23C', type: 'warning' },
+  MEDIUM: { value: 2, label: '中度限流', color: '#F56C6C', type: 'danger' },
+  SEVERE: { value: 3, label: '重度限流', color: '#C0392B', type: 'danger' },
+} as const
+
+export const END_USER_GENDER = {
+  UNKNOWN: { value: 0, label: '保密' },
+  MALE: { value: 1, label: '男', color: '#409EFF' },
+  FEMALE: { value: 2, label: '女', color: '#EB2F96' },
+} as const
+
+export const OPERATION_TYPE_USER = {
+  MANUAL: { value: 'MANUAL', label: '手动操作', color: '#409EFF' },
+  BATCH: { value: 'BATCH', label: '批量操作', color: '#722ed1' },
+  SYSTEM: { value: 'SYSTEM', label: '系统触发', color: '#E6A23C' },
+} as const
+
+export const BATCH_END_USER_ACTION = {
+  UNBAN_LOW_VIOLATION: { value: 'UNBAN_LOW_VIOLATION', label: '批量解封低违规', icon: 'Unlock', type: 'success', desc: '仅解封违规次数≤1的封禁账号' },
+  FLOW_LIMIT_LOW_QUALITY: { value: 'FLOW_LIMIT_LOW_QUALITY', label: '批量限流低质创作者', icon: 'TrendCharts', type: 'warning', desc: '对初级及以下创作者执行限流' },
+  ACTIVATE_DORMANT: { value: 'ACTIVATE_DORMANT', label: '批量激活沉睡用户', icon: 'RefreshRight', type: 'primary', desc: '将沉睡用户提升为低活跃等级' },
+  BATCH_UNBAN: { value: 'BATCH_UNBAN', label: '批量解封账号', icon: 'Unlock', type: 'success', desc: '解除所有选中封禁账号的限制' },
+  BATCH_FLOW_LIMIT: { value: 'BATCH_FLOW_LIMIT', label: '批量限流', icon: 'TrendCharts', type: 'warning', desc: '对所有正常状态账号执行限流' },
+  BATCH_TEMP_BAN: { value: 'BATCH_TEMP_BAN', label: '批量临时封禁', icon: 'Warning', type: 'danger', desc: '对正常/限流状态账号临时封禁' },
+} as const
+
+export const STATUS_CHANGE_PERMISSION = {
+  NORMAL: { canWatch: true, canComment: true, canPublish: true, canDistribute: true },
+  FLOW_LIMITED: { canWatch: true, canComment: true, canPublish: true, canDistribute: false },
+  MUTED: { canWatch: true, canComment: false, canPublish: true, canDistribute: true },
+  TEMP_BANNED: { canWatch: false, canComment: false, canPublish: false, canDistribute: false },
+  PERMANENT_BANNED: { canWatch: false, canComment: false, canPublish: false, canDistribute: false },
+} as const
+
+export const PERMISSION_LABEL: Record<string, string> = {
+  canWatch: '观看权限',
+  canComment: '评论权限',
+  canPublish: '投稿权限',
+  canDistribute: '内容分发',
+}
+
 
 

@@ -88,6 +88,24 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/views/copyright/trace.vue'),
             meta: { title: '版权溯源查询', icon: 'Search', roles: ['copyright:view'] },
           },
+          {
+            path: 'validity',
+            name: 'CopyrightValidity',
+            component: () => import('@/views/copyright/validity.vue'),
+            meta: { title: '有效期管控', icon: 'Clock', roles: ['copyright:manage'] },
+          },
+          {
+            path: 'validity-batch',
+            name: 'CopyrightValidityBatch',
+            component: () => import('@/views/copyright/validity-batch.vue'),
+            meta: { title: '批量管控有效期', icon: 'DataLine', roles: ['copyright:manage', 'copyright:batch'] },
+          },
+          {
+            path: 'validity-trace',
+            name: 'CopyrightValidityTrace',
+            component: () => import('@/views/copyright/validity-trace.vue'),
+            meta: { title: '管控溯源核查', icon: 'Aim', roles: ['copyright:view', 'copyright:audit'] },
+          },
         ],
       },
       {
@@ -119,6 +137,18 @@ const routes: RouteRecordRaw[] = [
         name: 'Messages',
         component: () => import('@/views/message/index.vue'),
         meta: { title: '消息中心', icon: 'Bell', roles: ['*'] },
+      },
+      {
+        path: 'user-operation',
+        meta: { title: '用户运营管理', icon: 'User' },
+        children: [
+          {
+            path: '',
+            name: 'UserAccountManagement',
+            component: () => import('@/views/user-operation/account/index.vue'),
+            meta: { title: '用户账号管理', icon: 'UserFilled', roles: ['endUser:view'] },
+          },
+        ],
       },
       {
         path: 'system',

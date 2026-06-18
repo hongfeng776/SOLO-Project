@@ -674,6 +674,51 @@ class CopyrightService {
 
     return syncData;
   }
+
+  async syncValidityToCopyright(id, validityStatus, operatorId) {
+    const copyright = await Copyright.findByPk(id);
+    if (!copyright) {
+      throw new NotFoundError('版权信息不存在');
+    }
+
+    const VALIDITY_STATUS = {
+      NORMAL: 1,
+      WARNING: 2,
+      EXPIRED: 3,
+    };
+
+    const updateData = {
+      updated_by: operatorId || null,
+    };
+
+    if (validityStatus === VALIDITY_STATUS.EXPIRED) {
+      updateData.compliance_status = 3;
+      updateData.status = 0;
+    } else if (validityStatus === VALIDITY_STATUS.WARNING) {
+      updateData.compliance_status = 2;
+      updateData.status = 2;
+    } else if (validityStatus === VALIDITY_STATUS.NORMAL) {
+      const currentCompliance = this._calculateComplianceStatus(copyright);
+      updateData.compliance_status = currentCompliance === 4 ? 4 : 1;
+      updateData.status = 1;
+    }
+
+    await Copyright.update(updateData, { where: { id } });
+
+    const updated = await Copyright.findByPk(id);
+
+    return {
+      copyrightId: id,
+      copyrightCode: copyright.copyright_code,
+      validityStatus,
+      validityStatusLabel: validityStatus === 1 ? '正常' : validityStatus === 2 ? '预警' : '已过期',
+      updatedFields: Object.keys(updateData).filter((k) => k !== 'updated_by'),
+      syncedComplianceStatus: updateData.compliance_status,
+      syncedStatus: updateData.status,
+      syncedAt: new Date().toISOString(),
+      data: updated ? this._mapCopyright(updated) : null,
+    };
+  }
 }
 
 module.exports = new CopyrightService();

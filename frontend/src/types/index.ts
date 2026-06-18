@@ -1753,4 +1753,354 @@ export interface CopyrightAuditSyncData {
   data?: Partial<CopyrightItem>
 }
 
+export interface ValidityWarningConfig {
+  id: number
+  name: string
+  enabled: boolean
+  priority: number
+  warningThreshold: number
+  warningThresholdUnit: 'day' | 'week' | 'month'
+  warningThresholdDays: number
+  expireHandlerRule: 1 | 2 | 3 | 4
+  relatedContentScope: 1 | 2 | 3
+  specificContentCategories?: number[]
+  pushChannels: Array<keyof typeof import('@/constants/enums').WARNING_PUSH_CHANNEL>
+  receiverRoles: string[]
+  receiverUserIds?: number[]
+  applicableCopyrightTypes?: number[]
+  applicableContentTypes?: number[]
+  remark?: string
+  scanCount?: number
+  lastScanAt?: string
+  version?: number
+  status: number
+  createdBy?: number
+  updatedBy?: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ValidityWarningConfigForm {
+  id?: number
+  name: string
+  enabled: boolean
+  priority: number
+  warningThreshold: number
+  warningThresholdUnit: 'day' | 'week' | 'month'
+  expireHandlerRule: 1 | 2 | 3 | 4
+  relatedContentScope: 1 | 2 | 3
+  specificContentCategories?: number[]
+  pushChannels: string[]
+  receiverRoles: string[]
+  receiverUserIds?: number[]
+  applicableCopyrightTypes?: number[]
+  applicableContentTypes?: number[]
+  remark?: string
+  status?: number
+}
+
+export interface ValidityScanResult {
+  totalScanned: number
+  normalCount: number
+  warningCount: number
+  expiredCount: number
+  newlyTriggered: number
+  affectedContentCount: number
+  scanDurationMs: number
+  configApplied?: number[]
+  warnings?: ValidityWarningRecord[]
+  exceptions?: ValidityTraceException[]
+  scannedAt: string
+}
+
+export interface ValidityWarningRecord {
+  id: number
+  batchNo: string
+  configId: number
+  configName: string
+  copyrightId: number
+  copyrightCode: string
+  copyrightName: string
+  oldValidityStatus: 1 | 2 | 3
+  newValidityStatus: 1 | 2 | 3
+  remainingDays: number
+  endDate: string
+  triggerThreshold: number
+  pushChannels: string[]
+  pushedReceivers: number
+  pushStatus: 'pending' | 'success' | 'partial' | 'failed'
+  pushFailedReason?: string
+  handled: boolean
+  handledAt?: string
+  handledBy?: number
+  handledRemark?: string
+  environmentMode: 'test' | 'prod'
+  createdAt: string
+}
+
+export interface ValidityStatusChangeRecord {
+  id: number
+  changeNo: string
+  copyrightId: number
+  copyrightCode: string
+  copyrightName: string
+  oldStatus: 1 | 2 | 3
+  newStatus: 1 | 2 | 3
+  source: 'manual' | 'batch' | 'system' | 'renewal' | 'test'
+  operatorId?: number
+  operatorName?: string
+  batchId?: string
+  batchNo?: string
+  configId?: number
+  reason: string
+  affectedContentIds?: number[]
+  affectedContentCount: number
+  offlineCount?: number
+  archiveCount?: number
+  syncedToAudit: boolean
+  syncedToRisk: boolean
+  syncDelayMs?: number
+  environmentMode: 'test' | 'prod'
+  createdAt: string
+}
+
+export interface ValidityBatchTask {
+  id: number
+  batchId: string
+  batchNo: string
+  action: 'renew_warning' | 'offline_expired' | 'archive_expired' | 'trigger_scan'
+  actionLabel: string
+  environmentMode: 'test' | 'prod'
+  totalCount: number
+  processedCount: number
+  successCount: number
+  failedCount: number
+  skippedCount: number
+  progress: number
+  status: 'pending' | 'running' | 'completed' | 'partial' | 'failed' | 'cancelled'
+  operatorId?: number
+  operatorName?: string
+  filterCriteria?: Record<string, any>
+  filtersSummary?: string
+  durationMs?: number
+  errorSample?: Array<{ copyrightId: number; code: string; reason: string }>
+  estimatedRemainingMs?: number
+  createdAt: string
+  startedAt?: string
+  completedAt?: string
+}
+
+export interface ValidityBatchParams {
+  action: 'renew_warning' | 'offline_expired' | 'archive_expired' | 'trigger_scan'
+  ids?: number[]
+  environmentMode: 'test' | 'prod'
+  copyrightType?: number
+  contentType?: number
+  minRemainingDays?: number
+  maxRemainingDays?: number
+  minRelatedContentCount?: number
+  maxRelatedContentCount?: number
+  dryRunRemark?: string
+  renewMonths?: number
+  operatorRemark?: string
+}
+
+export interface ValidityTraceEventItem {
+  id: number
+  traceNo: string
+  copyrightId?: number
+  copyrightCode?: string
+  configId?: number
+  batchId?: string
+  batchNo?: string
+  eventType: string
+  eventLabel: string
+  eventSeverity: 'info' | 'warning' | 'danger' | 'success'
+  detail?: string
+  metadata?: Record<string, any>
+  operatorId?: number
+  operatorName?: string
+  environmentMode: 'test' | 'prod'
+  createdAt: string
+}
+
+export interface ValidityTraceException {
+  id: number
+  traceNo: string
+  exceptionType: string
+  exceptionLabel: string
+  severity: 'low' | 'medium' | 'high'
+  copyrightId?: number
+  copyrightCode?: string
+  contentId?: number
+  batchId?: string
+  configId?: number
+  description: string
+  expected?: string
+  actual?: string
+  impactScope?: string
+  affectedCount?: number
+  detectedAt: string
+  autoResolved: boolean
+  resolvedAt?: string
+  resolvedBy?: number
+  resolutionRemark?: string
+  checksum?: string
+}
+
+export interface ValidityDashboardStats {
+  totalCopyrights: number
+  normalCount: number
+  warningCount: number
+  expiredCount: number
+  warningRate: string
+  expireRate: string
+  expiringIn7Days: number
+  expiringIn30Days: number
+  expiredNotOffline: number
+  activeConfigs: number
+  pendingWarningCount: number
+  pendingManualReviewCount: number
+  last24hChanges: number
+  last24hExceptions: number
+  distributionByType?: Array<{ type: number; label: string; total: number; normal: number; warning: number; expired: number }>
+  avgSyncDelayMs?: number
+  complianceScore?: number
+}
+
+export interface ValidityCopyrightItem extends CopyrightItem {
+  validityStatus: 1 | 2 | 3
+  remainingDays: number
+  relatedContentCount: number
+  publishedContentCount: number
+  shouldTriggerWarning: boolean
+  matchedConfigIds?: number[]
+  lastWarningAt?: string
+  lastStatusChangeAt?: string
+  latestChangeRecord?: ValidityStatusChangeRecord
+}
+
+export interface EndUserItem {
+  id: number
+  uid: string
+  username: string
+  nickname: string
+  realName?: string
+  idCardNo?: string
+  avatar?: string
+  email?: string
+  phone?: string
+  gender: number
+  birthday?: string
+  region?: string
+  signature?: string
+  userType: number
+  creatorLevel: number
+  memberLevel: number
+  accountStatus: number
+  isVerified: number
+  banReason?: string
+  banStartTime?: string
+  banEndTime?: string
+  flowLimitLevel: number
+  muteEndTime?: string
+  violationCount: number
+  activityScore: number
+  activityLevel: number
+  registerSource?: string
+  registerIp?: string
+  lastLoginAt?: string
+  lastLoginIp?: string
+  loginCount: number
+  watchCount: number
+  publishCount: number
+  commentCount: number
+  followerCount: number
+  followingCount: number
+  userTags: string[]
+  riskTags: string[]
+  operationBatch?: string
+  remark?: string
+  createdAt: string
+  updatedAt: string
+  statusLogs?: AccountStatusLogItem[]
+}
+
+export interface AccountStatusLogItem {
+  id: number
+  userId: number
+  uid: string
+  fromStatus: number
+  toStatus: number
+  changeReason?: string
+  changeRemark?: string
+  durationDays?: number
+  flowLimitLevel: number
+  operationType: string
+  operationBatch?: string
+  operatorId?: number
+  operatorName?: string
+  affectedPermissions?: Record<string, boolean>
+  extraData?: Record<string, any>
+  ipAddress?: string
+  isReverted: number
+  revertedAt?: string
+  revertLogId?: number
+  createdAt: string
+}
+
+export interface EndUserStats {
+  total: number
+  unverifiedCount: number
+  dormantCount: number
+  byStatus: Array<{ status: number; count: number }>
+  byType: Array<{ type: number; count: number }>
+}
+
+export interface StatusChangeValidation {
+  canChange: boolean
+  reasons: string[]
+  warnings: string[]
+  info: string[]
+  suggestedAction: 'PROCEED' | 'BLOCK' | 'WARN' | null
+}
+
+export interface DuplicateCheckResult {
+  isDuplicate: boolean
+  type: 'USERNAME' | 'PHONE' | 'UID' | null
+  existingUser?: {
+    id: number
+    uid: string
+    username: string
+    phone?: string
+    accountStatus: number
+  }
+}
+
+export interface BatchEndUserResult {
+  batchNo: string
+  successCount: number
+  failedCount: number
+  skippedCount: number
+  successIds: number[]
+  failedItems: Array<{ id: number; reason: string }>
+  skippedItems: Array<{ id: number; uid: string; reason: string }>
+}
+
+export interface EndUserQueryParams extends PaginationParams {
+  userType?: number | null
+  accountStatus?: number | null
+  creatorLevel?: number | null
+  memberLevel?: number | null
+  activityLevel?: number | null
+  isVerified?: number | null
+  minViolationCount?: number | null
+  maxViolationCount?: number | null
+  registerStartDate?: string | null
+  registerEndDate?: string | null
+  operationBatch?: string | null
+  userTag?: string | null
+}
+
+
 

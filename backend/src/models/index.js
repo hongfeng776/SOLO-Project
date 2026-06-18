@@ -3,6 +3,7 @@ const { Content } = require('./Content');
 const { ArticleVersion } = require('./ArticleVersion');
 const { ContentStatusLog } = require('./ContentStatusLog');
 const { Copyright } = require('./Copyright');
+const { CopyrightValidity, CopyrightValidityLog, CopyrightValidityTask } = require('./CopyrightValidity');
 const { Advertisement } = require('./Advertisement');
 const { Activity } = require('./Activity');
 const { Comment } = require('./Comment');
@@ -13,6 +14,7 @@ const { Topic } = require('./Topic');
 const { TopicContent } = require('./TopicContent');
 const { AuditRule } = require('./AuditRule');
 const { AuditRuleModifyLog } = require('./AuditRuleModifyLog');
+const { EndUser, AccountStatusLog } = require('./EndUser');
 
 Content.belongsTo(Copyright, { foreignKey: 'copyright_id', as: 'copyright' });
 Copyright.hasMany(Content, { foreignKey: 'copyright_id', as: 'contents' });
@@ -25,6 +27,11 @@ Activity.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 AuditRule.hasMany(AuditRuleModifyLog, { foreignKey: 'rule_id', as: 'modifyLogs' });
 AuditRuleModifyLog.belongsTo(AuditRule, { foreignKey: 'rule_id', as: 'auditRule' });
 
+CopyrightValidity.hasMany(CopyrightValidityLog, { foreignKey: 'config_id', as: 'logs' });
+CopyrightValidityLog.belongsTo(CopyrightValidity, { foreignKey: 'config_id', as: 'config' });
+CopyrightValidity.hasMany(CopyrightValidityTask, { foreignKey: 'config_id', as: 'tasks' });
+CopyrightValidityTask.belongsTo(CopyrightValidity, { foreignKey: 'config_id', as: 'config' });
+
 module.exports = {
   User,
   Role,
@@ -32,6 +39,9 @@ module.exports = {
   ArticleVersion,
   ContentStatusLog,
   Copyright,
+  CopyrightValidity,
+  CopyrightValidityLog,
+  CopyrightValidityTask,
   Advertisement,
   Activity,
   Comment,
@@ -42,4 +52,6 @@ module.exports = {
   TopicContent,
   AuditRule,
   AuditRuleModifyLog,
+  EndUser,
+  AccountStatusLog,
 };

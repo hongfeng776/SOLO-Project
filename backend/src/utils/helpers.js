@@ -52,6 +52,17 @@ const chunkArray = (array, size) => {
   return chunks;
 };
 
+const generateBatchNo = (prefix = 'BATCH') => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const h = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `${prefix}${y}${m}${d}${h}${min}${rand}`;
+};
+
 module.exports = {
   formatDate,
   parsePagination,
@@ -60,4 +71,5 @@ module.exports = {
   generateRandomString,
   maskPhone,
   chunkArray,
+  generateBatchNo,
 };
