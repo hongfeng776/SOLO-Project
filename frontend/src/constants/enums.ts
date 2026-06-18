@@ -440,3 +440,60 @@ export const BATCH_ARTICLE_ACTION = {
   EXPORT_LEDGER: { value: 'export_ledger', label: '导出审核台账', icon: 'Download', type: 'info' },
 } as const
 
+export const COMMENT_AUDIT_STATUS = {
+  PENDING_AUDIT: { value: 0, label: '待审核', color: '#E6A23C', type: 'warning' },
+  NORMAL: { value: 1, label: '正常展示', color: '#67C23A', type: 'success' },
+  HIDDEN: { value: 2, label: '已屏蔽', color: '#909399', type: 'info' },
+  DELETED: { value: 3, label: '违规删除', color: '#F56C6C', type: 'danger' },
+  LOCKED: { value: 4, label: '高危锁定', color: '#C0392B', type: 'danger' },
+} as const
+
+export const COMMENT_VIOLATION_TYPE = {
+  SPAM_AD: { value: 'spam_ad', label: '垃圾广告', level: 2, defaultMuteDays: 1 },
+  ABUSE_INSULT: { value: 'abuse_insult', label: '辱骂攻击', level: 2, defaultMuteDays: 3 },
+  PORN_VULGAR: { value: 'porn_vulgar', label: '色情低俗', level: 3, defaultMuteDays: 7 },
+  POLITICS_SENSITIVE: { value: 'politics_sensitive', label: '政治敏感', level: 3, defaultMuteDays: 30 },
+  VIOLENCE_THREAT: { value: 'violence_threat', label: '暴力恐吓', level: 3, defaultMuteDays: 15 },
+  FAKE_INFO: { value: 'fake_info', label: '虚假不实', level: 2, defaultMuteDays: 3 },
+  PIRACY: { value: 'piracy', label: '侵权盗版', level: 2, defaultMuteDays: 3 },
+  DISCRIMINATION: { value: 'discrimination', label: '歧视仇恨', level: 3, defaultMuteDays: 15 },
+  MINOR_HARMFUL: { value: 'minor_harmful', label: '未成年人不良', level: 3, defaultMuteDays: 30 },
+  MALICIOUS_BRUSH: { value: 'malicious_brush', label: '恶意刷评', level: 2, defaultMuteDays: 7 },
+  PERSONAL_PRIVACY: { value: 'personal_privacy', label: '泄露隐私', level: 3, defaultMuteDays: 15 },
+  OTHER: { value: 'other', label: '其他违规', level: 1, defaultMuteDays: 0 },
+} as const
+
+export const COMMENT_AUDIT_ACTION = {
+  APPROVE: { value: 'approve', label: '放行', icon: 'CircleCheck', type: 'success', nextStatus: 1 },
+  HIDE: { value: 'hide', label: '屏蔽', icon: 'Hide', type: 'warning', nextStatus: 2 },
+  DELETE: { value: 'delete', label: '删除', icon: 'Delete', type: 'danger', nextStatus: 3 },
+  MUTE: { value: 'mute', label: '禁言用户', icon: 'Mute', type: 'danger', nextStatus: 3 },
+} as const
+
+export const USER_MUTE_LEVEL = {
+  MUTE_1D: { value: 1, label: '禁言1天', days: 1 },
+  MUTE_7D: { value: 2, label: '禁言7天', days: 7 },
+  MUTE_30D: { value: 3, label: '禁言30天', days: 30 },
+  MUTE_FOREVER: { value: 9, label: '永久禁言', days: -1 },
+} as const
+
+export const COMMENT_AUDIT_SOURCE = {
+  NEW_PUBLISHED: { value: 'new_published', label: '新发布未审', color: '#409EFF' },
+  USER_REPORTED: { value: 'user_reported', label: '用户举报', color: '#E6A23C' },
+  HISTORY_VIOLATION: { value: 'history_violation', label: '历史违规复查', color: '#722ed1' },
+  HIGH_RISK_AUTO: { value: 'high_risk_auto', label: 'AI高危自动锁定', color: '#C0392B' },
+} as const
+
+export const BATCH_COMMENT_ACTION = {
+  CLEAN_HISTORY: { value: 'clean_history', label: '批量清理历史违规', icon: 'Delete', type: 'danger' },
+  APPROVE_COMPLIANT: { value: 'approve_compliant', label: '批量放行合规待审', icon: 'CircleCheck', type: 'success' },
+  MARK_SUSPECTED: { value: 'mark_suspected', label: '批量标记疑似风险', icon: 'Warning', type: 'warning' },
+} as const
+
+export const USER_PUNISHMENT_THRESHOLD = {
+  MUTE_TRIGGER: 3,
+  LIMIT_FLOW_TRIGGER: 5,
+  BAN_TRIGGER: 10,
+} as const
+
+

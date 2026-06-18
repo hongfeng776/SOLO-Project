@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes, Op } = require('sequelize');
+﻿const { Sequelize, DataTypes, Op } = require('sequelize');
 const config = require('./index');
 
 const sequelize = new Sequelize(
@@ -10,7 +10,7 @@ const sequelize = new Sequelize(
     port: config.database.port,
     dialect: config.database.dialect,
     pool: config.database.pool,
-    logging: config.database.logging,
+    logging: config.database.logging ? console.log : false,
     timezone: config.database.timezone,
     define: {
       timestamps: true,

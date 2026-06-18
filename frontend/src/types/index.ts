@@ -1115,3 +1115,217 @@ export interface ArticleAuditQCResult {
   riskTagDistribution: Array<{ tag: string; count: number }>
 }
 
+export interface CommentAuditContextComment {
+  id: number
+  userId: number
+  userAvatar?: string
+  username: string
+  userLevel: number
+  content: string
+  status: number
+  violationLevel: number
+  createdAt: string
+  isTarget?: boolean
+}
+
+export interface CommentAuditDetail {
+  commentId: number
+  commentUid: string
+  contentId: number
+  contentTitle: string
+  contentCoverImage?: string
+  contentCategory: number
+  userId: number
+  username: string
+  userAvatar?: string
+  userUid: string
+  userLevel: number
+  userViolationCount: number
+  userIsMuted: boolean
+  userMuteExpireAt?: string
+  commentContent: string
+  commentImages: string[]
+  commentSource: string
+  commentIp: string
+  violationLevel: number
+  violationType?: string
+  auditStatus: number
+  auditSource: string
+  reportedCount: number
+  likeCount: number
+  replyCount: number
+  createdAt: string
+  publishedAt: string
+  context: {
+    beforeComments: CommentAuditContextComment[]
+    afterComments: CommentAuditContextComment[]
+    hasContext: boolean
+  }
+  riskDetails: {
+    riskScore: number
+    riskTags: string[]
+    autoDetected: Array<{ type: string; label: string; severity: string; matchText?: string }>
+  }
+  reportInfo?: {
+    reportCount: number
+    reportReasons: string[]
+    reportUsers: Array<{ userId: number; username: string; reason: string; time: string }[]>
+  }
+  previousAudit?: Array<{
+    auditorId: number
+    auditorName: string
+    action: string
+    reason?: string
+    time: string
+    remark?: string
+  }>
+}
+
+export interface CommentAuditPoolItem {
+  commentId: number
+  commentUid: string
+  contentId: number
+  contentTitle: string
+  userId: number
+  userUid: string
+  username: string
+  userAvatar?: string
+  commentContentPreview: string
+  commentContentShort: string
+  hasImage: boolean
+  violationLevel: number
+  violationType?: string
+  auditStatus: number
+  auditSource: string
+  auditSourceLabel: string
+  riskScore: number
+  reportedCount: number
+  likeCount: number
+  replyCount: number
+  auditorName?: string
+  commentSource: string
+  createdAt: string
+  isOverdue: boolean
+  hasContext: boolean
+  batchId?: string
+}
+
+export interface CommentAuditSubmitData {
+  commentId: number
+  action: 'approve' | 'hide' | 'delete' | 'mute'
+  violationType?: string
+  violationRemark?: string
+  muteLevel?: number
+  muteDays?: number
+  remark?: string
+  userLimitFlowTriggered?: boolean
+}
+
+export interface BatchCommentAuditParams {
+  action: 'clean_history' | 'approve_compliant' | 'mark_suspected'
+  commentIds: number[]
+  violationType?: string
+  startTime?: string
+  endTime?: string
+  contentId?: number
+  remark?: string
+}
+
+export interface UserMuteResult {
+  userId: number
+  muted: boolean
+  muteLevel: number
+  muteDays: number
+  mutedAt: string
+  expireAt?: string
+  violationCount: number
+  flowLimited: boolean
+  flowLimitLevel?: string
+}
+
+export interface CommentAuditActionResult {
+  success: boolean
+  commentStatus: number
+  userViolationCount: number
+  limitFlowTriggered: boolean
+  punishInfo?: UserMuteResult
+  message?: string
+}
+
+export interface BatchCommentProgress {
+  batchId: string
+  total: number
+  processed: number
+  successCount: number
+  failedCount: number
+  skippedCount: number
+  progress: number
+  status: 'running' | 'completed' | 'failed'
+  startedAt: string
+  errorMessage?: string
+}
+
+export interface CommentAuditTraceRecord {
+  traceId: string
+  commentUid: string
+  commentId: number
+  userUid: string
+  contentId: number
+  currentStatus: number
+  currentStatusLabel: string
+  timeline: Array<{
+    time: string
+    operator: string
+    operatorRole: string
+    action: string
+    detail: string
+    ip?: string
+    source?: string
+  }>
+  userPunishmentChain: Array<{
+    time: string
+    reason: string
+    action: string
+    duration: string
+  }>
+  auditConsistency: {
+    sameTypeRate: number
+    deviationReasons: string[]
+    abnormalJudgements: string[]
+  }
+  exceptions: Array<{
+    type: string
+    description: string
+    severity: string
+  }>
+}
+
+export interface CommentAuditQCResult {
+  qcId: string
+  period: string
+  totalAudited: number
+  totalMuted: number
+  totalLimitFlow: number
+  exceptionRate: string
+  auditors: Array<{
+    auditorId: number
+    auditorName: string
+    auditCount: number
+    approveCount: number
+    muteCount: number
+    deleteCount: number
+    avgHandleTime: number
+    exceptionCount: number
+    consistency: number
+  }>
+  violationTypeDistribution: Array<{ type: string; count: number; ratio: number }>
+}
+
+export interface CommentContentRelatedContent {
+  id: number
+  title: string
+  type: number
+  status: number
+  auditor?: string
+}
+

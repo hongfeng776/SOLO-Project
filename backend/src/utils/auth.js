@@ -1,7 +1,9 @@
-const jwt = require('jsonwebtoken');
+﻿const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const config = require('../config');
 const { setCache, getCache, deleteCache } = require('../config/redis');
+
+const memoryStore = new Map();
 
 const generateAccessToken = (payload) => {
   return jwt.sign(
@@ -45,17 +47,32 @@ const comparePassword = async (password, hashedPassword) => {
 const saveTokenToRedis = async (userId, accessToken, refreshToken) => {
   const accessTtl = jwt.decode(accessToken).exp - Math.floor(Date.now() / 1000);
   const refreshTtl = jwt.decode(refreshToken).exp - Math.floor(Date.now() / 1000);
-  await setCache(`token:access:${userId}`, accessToken, accessTtl);
-  await setCache(`token:refresh:${userId}`, refreshToken, refreshTtl);
+  try {
+    await setCache('token:access:' + userId, accessToken, accessTtl);
+    await setCache('token:refresh:' + userId, refreshToken, refreshTtl);
+  } catch {
+    memoryStore.set('token:access:' + userId, accessToken);
+    memoryStore.set('token:refresh:' + userId, refreshToken);
+  }
 };
 
 const removeTokenFromRedis = async (userId) => {
-  await deleteCache(`token:access:${userId}`);
-  await deleteCache(`token:refresh:${userId}`);
+  try {
+    await deleteCache('token:access:' + userId);
+    await deleteCache('token:refresh:' + userId);
+  } catch {
+  }
+  memoryStore.delete('token:access:' + userId);
+  memoryStore.delete('token:refresh:' + userId);
 };
 
 const getStoredToken = async (userId, type = 'access') => {
-  return getCache(`token:${type}:${userId}`);
+  try {
+    const cached = await getCache('token:' + type + ':' + userId);
+    if (cached) return cached;
+  } catch {
+  }
+  return memoryStore.get('token:' + type + ':' + userId) || null;
 };
 
 module.exports = {

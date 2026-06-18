@@ -85,6 +85,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '评论管理', icon: 'ChatDotRound', roles: ['comment:view'] },
       },
       {
+        path: 'comment-audit',
+        name: 'CommentAudit',
+        component: () => import('@/views/comment/audit.vue'),
+        meta: { title: '评论审核', icon: 'ChatLineSquare', roles: ['content:audit', 'comment:audit'] },
+      },
+      {
         path: 'messages',
         name: 'Messages',
         component: () => import('@/views/message/index.vue'),
