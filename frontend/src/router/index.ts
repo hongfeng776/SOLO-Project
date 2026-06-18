@@ -308,6 +308,45 @@ const asyncRoutes: RouteRecordRaw[] = [
           permissions: ['business:deposit:trace'],
           roles: ['admin', 'manager', 'auditor']
         }
+      },
+      {
+        path: 'loan/index',
+        name: 'BusinessLoanIndex',
+        component: () => import('@views/business/loan/index.vue'),
+        meta: {
+          title: '贷款申请受理',
+          icon: 'CreditCard',
+          componentName: 'BusinessLoanIndex',
+          keepAlive: true,
+          permissions: ['business:loan:query'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'loan/batch',
+        name: 'BusinessLoanBatch',
+        component: () => import('@views/business/loan/batch.vue'),
+        meta: {
+          title: '批量贷款预审',
+          icon: 'Files',
+          componentName: 'BusinessLoanBatch',
+          keepAlive: true,
+          permissions: ['business:loan:batch'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'loan/trace',
+        name: 'BusinessLoanTrace',
+        component: () => import('@views/business/loan/trace.vue'),
+        meta: {
+          title: '贷款溯源查询',
+          icon: 'Search',
+          componentName: 'BusinessLoanTrace',
+          keepAlive: false,
+          permissions: ['business:loan:trace'],
+          roles: ['admin', 'manager', 'auditor']
+        }
       }
     ]
   },

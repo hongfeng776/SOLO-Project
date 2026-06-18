@@ -256,7 +256,21 @@ export async function seedPermissions(): Promise<void> {
     { id: 'perm056', parent_id: 'perm055', name: '批量录入', code: 'business:deposit:batch', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:deposit:batch' },
     { id: 'perm057', parent_id: 'perm055', name: '批量审核', code: 'business:deposit:review', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:deposit:review' },
     { id: 'perm058', parent_id: 'perm049', name: '存款溯源', code: 'business:deposit:trace', type: 2, path: 'trace', component: 'deposit/trace', icon: 'Search', sort: 3, visible: 1, status: 1, perms: '' },
-    { id: 'perm059', parent_id: 'perm058', name: '溯源查询', code: 'business:deposit:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:deposit:trace' }
+    { id: 'perm059', parent_id: 'perm058', name: '溯源查询', code: 'business:deposit:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:deposit:trace' },
+
+    // ========== 贷款业务权限 ==========
+    { id: 'perm060', parent_id: null, name: '贷款业务', code: 'business:loan', type: 1, path: '/loan', component: 'Layout', icon: 'CreditCard', sort: 6, visible: 1, status: 1 },
+    { id: 'perm061', parent_id: 'perm060', name: '贷款申请', code: 'business:loan:apply', type: 2, path: 'apply', component: 'loan/index', icon: 'EditPen', sort: 1, visible: 1, status: 1, perms: '' },
+    { id: 'perm062', parent_id: 'perm061', name: '贷款查询', code: 'business:loan:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:loan:query' },
+    { id: 'perm063', parent_id: 'perm061', name: '贷款申请', code: 'business:loan:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:loan:create' },
+    { id: 'perm064', parent_id: 'perm061', name: '贷款更新', code: 'business:loan:update', type: 3, sort: 3, visible: 1, status: 1, perms: 'business:loan:update' },
+    { id: 'perm065', parent_id: 'perm061', name: '贷款预审', code: 'business:loan:preapprove', type: 3, sort: 4, visible: 1, status: 1, perms: 'business:loan:preapprove' },
+    { id: 'perm066', parent_id: 'perm061', name: '贷款终审', code: 'business:loan:finalapprove', type: 3, sort: 5, visible: 1, status: 1, perms: 'business:loan:finalapprove' },
+    { id: 'perm067', parent_id: 'perm060', name: '批量贷款', code: 'business:loan:batch', type: 2, path: 'batch', component: 'loan/batch', icon: 'Files', sort: 2, visible: 1, status: 1, perms: '' },
+    { id: 'perm068', parent_id: 'perm067', name: '批量录入', code: 'business:loan:batch', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:loan:batch' },
+    { id: 'perm069', parent_id: 'perm067', name: '批量复核', code: 'business:loan:review', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:loan:review' },
+    { id: 'perm070', parent_id: 'perm060', name: '贷款溯源', code: 'business:loan:trace', type: 2, path: 'trace', component: 'loan/trace', icon: 'Search', sort: 3, visible: 1, status: 1, perms: '' },
+    { id: 'perm071', parent_id: 'perm070', name: '溯源查询', code: 'business:loan:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:loan:trace' }
   ];
 
   await bulkCreateInBatches(Permission, permissions as any);
@@ -306,7 +320,10 @@ export async function seedRolePermissions(): Promise<void> {
       'opening:review:first', 'opening:review:second', 'opening:review:cancel', 'opening:review:trace',
       'status:flow:query', 'status:flow:operate', 'status:flow:batch', 'status:flow:trace',
       'business:deposit:query', 'business:deposit:create', 'business:deposit:update', 'business:deposit:confirm',
-      'business:deposit:batch', 'business:deposit:review', 'business:deposit:trace'
+      'business:deposit:batch', 'business:deposit:review', 'business:deposit:trace',
+      'business:loan:query', 'business:loan:create', 'business:loan:update',
+      'business:loan:preapprove', 'business:loan:finalapprove',
+      'business:loan:batch', 'business:loan:review', 'business:loan:trace'
     ];
     const perms = allPermissions.filter(p => managerCodes.includes(p.code) || p.type !== 3);
     const managerRPs = perms.map(p => ({
@@ -328,9 +345,11 @@ export async function seedRolePermissions(): Promise<void> {
       'opening:review:query', 'opening:review:submit', 'opening:review:first',
       'status:flow:query', 'status:flow:operate',
       'business:deposit:query', 'business:deposit:create', 'business:deposit:update',
-      'business:deposit:batch'
+      'business:deposit:batch',
+      'business:loan:query', 'business:loan:create', 'business:loan:update',
+      'business:loan:batch'
     ];
-    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:batch' || p.code === 'business:deposit:trace')));
+    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:batch' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:batch' || p.code === 'business:loan:trace')));
     const operatorRPs = perms.map(p => ({
       id: `rp_${operatorRole.id}_${p.id}`,
       role_id: operatorRole.id,
@@ -349,9 +368,10 @@ export async function seedRolePermissions(): Promise<void> {
       'log:operation:query',
       'opening:review:query', 'opening:review:trace',
       'status:flow:query', 'status:flow:trace',
-      'business:deposit:query', 'business:deposit:trace'
+      'business:deposit:query', 'business:deposit:trace',
+      'business:loan:query', 'business:loan:trace'
     ];
-    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:trace')));
+    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:trace')));
     const auditorRPs = perms.map(p => ({
       id: `rp_${auditorRole.id}_${p.id}`,
       role_id: auditorRole.id,
@@ -742,6 +762,70 @@ export async function seedProducts(): Promise<void> {
       sort: 14,
       status: 1,
       deposit_type: 2
+    },
+    {
+      id: 'prod000000000000000000000000000015',
+      name: '个人消费贷-灵活用',
+      code: 'LOAN_CONSUMPTION_FLEX',
+      category: '贷款',
+      type: 'retail',
+      description: '个人消费贷款，随借随还',
+      risk_level: 3,
+      min_amount: 10000,
+      max_amount: 500000,
+      interest_rate: 5.6,
+      term_days: 1095,
+      sort: 15,
+      status: 1,
+      loan_type: 1
+    },
+    {
+      id: 'prod000000000000000000000000000016',
+      name: '经营贷-助业通',
+      code: 'LOAN_BUSINESS_HELP',
+      category: '贷款',
+      type: 'retail',
+      description: '小微企业主经营周转贷款',
+      risk_level: 4,
+      min_amount: 100000,
+      max_amount: 5000000,
+      interest_rate: 4.8,
+      term_days: 1825,
+      sort: 16,
+      status: 1,
+      loan_type: 2
+    },
+    {
+      id: 'prod000000000000000000000000000017',
+      name: '个人住房贷款',
+      code: 'LOAN_HOUSE_PERSONAL',
+      category: '贷款',
+      type: 'retail',
+      description: '个人住房按揭贷款',
+      risk_level: 2,
+      min_amount: 100000,
+      max_amount: 10000000,
+      interest_rate: 3.45,
+      term_days: 10950,
+      sort: 17,
+      status: 1,
+      loan_type: 3
+    },
+    {
+      id: 'prod000000000000000000000000000018',
+      name: '个人汽车贷款',
+      code: 'LOAN_CAR_PERSONAL',
+      category: '贷款',
+      type: 'retail',
+      description: '个人购车消费贷款',
+      risk_level: 3,
+      min_amount: 50000,
+      max_amount: 2000000,
+      interest_rate: 4.5,
+      term_days: 1825,
+      sort: 18,
+      status: 1,
+      loan_type: 4
     }
   ] as any);
 

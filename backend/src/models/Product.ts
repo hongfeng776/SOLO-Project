@@ -122,6 +122,13 @@ export class Product extends Model<Product> {
   })
   deposit_type?: number;
 
+  @Column({
+    type: DataType.TINYINT,
+    allowNull: true,
+    comment: '贷款类型 1个人消费贷 2经营贷 3房贷 4车贷'
+  })
+  loan_type?: number;
+
   @HasMany(() => Transaction, { foreignKey: 'product_id' })
   transactions?: Transaction[];
 

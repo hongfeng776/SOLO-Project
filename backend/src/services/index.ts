@@ -16,3 +16,4 @@ export { CorporateAccountOpeningService } from './CorporateAccountOpeningService
 export { OpeningReviewService } from './OpeningReviewService';
 export { StatusFlowService } from './StatusFlowService';
 export { DepositService } from './DepositService';
+export { LoanService } from './LoanService';

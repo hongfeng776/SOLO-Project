@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -12,6 +12,7 @@ const corporateOpeningController = new CorporateAccountOpeningController();
 const openingReviewController = new OpeningReviewController();
 const statusFlowController = new StatusFlowController();
 const depositController = new DepositController();
+const loanController = new LoanController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -127,5 +128,31 @@ router.post('/deposit/batch', requirePermission('business:deposit:batch'), (req,
 router.post('/deposit/batch/review', requirePermission('business:deposit:review'), (req, res, next) => depositController.batchReview(req, res, next));
 // 溯源查询
 router.post('/deposit/trace', requirePermission('business:deposit:trace'), (req, res, next) => depositController.trace(req, res, next));
+
+// ========== 贷款申请受理管控 ==========
+// 配置枚举
+router.get('/loan/config', requireAuth, (req, res, next) => loanController.config(req, res, next));
+// 前置校验
+router.post('/loan/precheck', requirePermission('business:loan:create'), (req, res, next) => loanController.preCheck(req, res, next));
+// 列表查询
+router.get('/loan/list', requirePermission('business:loan:query'), (req, res, next) => loanController.list(req, res, next));
+// 详情查询
+router.get('/loan/:id', requirePermission('business:loan:query'), (req, res, next) => loanController.detail(req, res, next));
+// 申请贷款
+router.post('/loan', requirePermission('business:loan:create'), (req, res, next) => loanController.create(req, res, next));
+// 撤销申请
+router.post('/loan/:id/cancel', requirePermission('business:loan:update'), (req, res, next) => loanController.cancel(req, res, next));
+// 预审
+router.post('/loan/:id/preapprove', requirePermission('business:loan:preapprove'), (req, res, next) => loanController.preApprove(req, res, next));
+// 终审
+router.post('/loan/:id/finalapprove', requirePermission('business:loan:finalapprove'), (req, res, next) => loanController.finalApprove(req, res, next));
+// 批量预审校验
+router.post('/loan/batch/precheck', requirePermission('business:loan:batch'), (req, res, next) => loanController.batchPreCheck(req, res, next));
+// 批量贷款申请
+router.post('/loan/batch', requirePermission('business:loan:batch'), (req, res, next) => loanController.batch(req, res, next));
+// 批量复核
+router.post('/loan/batch/review', requirePermission('business:loan:review'), (req, res, next) => loanController.batchReview(req, res, next));
+// 溯源查询
+router.post('/loan/trace', requirePermission('business:loan:trace'), (req, res, next) => loanController.trace(req, res, next));
 
 export default router;

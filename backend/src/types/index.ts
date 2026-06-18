@@ -90,3 +90,34 @@ export {
   type DepositTraceResult,
   type DepositLimitConfig
 } from './deposit';
+
+export {
+  LoanType,
+  LoanStatus,
+  LoanTerm,
+  RepaymentMethod,
+  LoanPurpose,
+  LoanTypeText,
+  LoanStatusText,
+  LoanTermText,
+  RepaymentMethodText,
+  LoanPurposeText,
+  LOAN_TYPE_CONFIG,
+  LARGE_LOAN_THRESHOLD,
+  LOW_QUALITY_CUSTOMER_LEVEL,
+  type LoanTypeConfig,
+  type LoanPreCheckRequest,
+  type LoanPreCheckResult,
+  type CreateLoanRequest,
+  type LoanUpdateRequest,
+  type LoanQueryParams,
+  type LoanVO,
+  type BatchLoanItem,
+  type BatchLoanRequest,
+  type BatchLoanResultItem,
+  type BatchLoanReviewRequest,
+  type LoanTraceRequest,
+  type LoanTraceOverdueItem,
+  type LoanTraceMultiLendItem,
+  type LoanTraceResult
+} from './loan';
