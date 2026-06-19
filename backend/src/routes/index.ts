@@ -52,6 +52,10 @@ import merchantQualificationRouter from './merchantQualification';
 import merchantQualificationAuditRouter from './merchantQualificationAudit';
 import merchantQualificationBatchRouter from './merchantQualificationBatch';
 import merchantQualificationTraceRouter from './merchantQualificationTrace';
+import shopInfoRouter from './shopInfo';
+import shopStatusRouter from './shopStatus';
+import shopBatchRouter from './shopBatch';
+import shopTraceRouter from './shopTrace';
 
 const router = Router();
 
@@ -108,5 +112,9 @@ router.use('/merchantQualification', merchantQualificationRouter);
 router.use('/merchantQualificationAudit', merchantQualificationAuditRouter);
 router.use('/merchantQualificationBatch', merchantQualificationBatchRouter);
 router.use('/merchantQualificationTrace', merchantQualificationTraceRouter);
+router.use('/shopInfo', shopInfoRouter);
+router.use('/shopStatus', shopStatusRouter);
+router.use('/shopBatch', shopBatchRouter);
+router.use('/shopTrace', shopTraceRouter);
 
 export default router;

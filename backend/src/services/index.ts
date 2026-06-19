@@ -47,6 +47,10 @@ import MerchantQualificationService, { merchantQualificationService } from './Me
 import MerchantQualificationAuditService, { merchantQualificationAuditService } from './MerchantQualificationAuditService';
 import MerchantQualificationBatchService, { merchantQualificationBatchService } from './MerchantQualificationBatchService';
 import MerchantQualificationTraceService, { merchantQualificationTraceService } from './MerchantQualificationTraceService';
+import ShopInfoService, { shopInfoService } from './ShopInfoService';
+import ShopStatusService, { shopStatusService } from './ShopStatusService';
+import ShopBatchService, { shopBatchService } from './ShopBatchService';
+import ShopTraceService, { shopTraceService } from './ShopTraceService';
 
 export {
   AfterSaleAuditService,
@@ -98,6 +102,10 @@ export {
   MerchantQualificationAuditService,
   MerchantQualificationBatchService,
   MerchantQualificationTraceService,
+  ShopInfoService,
+  ShopStatusService,
+  ShopBatchService,
+  ShopTraceService,
 };
 
 export const services: Record<string, any> = {
@@ -150,6 +158,10 @@ export const services: Record<string, any> = {
   merchantQualificationAuditService,
   merchantQualificationBatchService,
   merchantQualificationTraceService,
+  shopInfoService,
+  shopStatusService,
+  shopBatchService,
+  shopTraceService,
 };
 
 export default services;

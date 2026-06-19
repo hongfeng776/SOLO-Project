@@ -52,6 +52,9 @@ import { AfterSaleLedgerDao } from './AfterSaleLedgerDao';
 import { AfterSaleOperationLogDao } from './AfterSaleOperationLogDao';
 import { MerchantQualificationLedgerDao } from './MerchantQualificationLedgerDao';
 import { QualificationChangeLogDao } from './QualificationChangeLogDao';
+import { ShopStatusChangeLogDao } from './ShopStatusChangeLogDao';
+import { ShopInfoChangeLogDao } from './ShopInfoChangeLogDao';
+import { ShopOperationLedgerDao } from './ShopOperationLedgerDao';
 
 export {
   BaseDao,
@@ -110,6 +113,9 @@ export {
   AfterSaleOperationLogDao,
   MerchantQualificationLedgerDao,
   QualificationChangeLogDao,
+  ShopStatusChangeLogDao,
+  ShopInfoChangeLogDao,
+  ShopOperationLedgerDao,
 };
 
 export const daos = {
@@ -166,6 +172,9 @@ export const daos = {
   afterSaleOperationLogDao: new AfterSaleOperationLogDao(),
   merchantQualificationLedgerDao: new MerchantQualificationLedgerDao(),
   qualificationChangeLogDao: new QualificationChangeLogDao(),
+  shopStatusChangeLogDao: new ShopStatusChangeLogDao(),
+  shopInfoChangeLogDao: new ShopInfoChangeLogDao(),
+  shopOperationLedgerDao: new ShopOperationLedgerDao(),
 };
 
 export default daos;

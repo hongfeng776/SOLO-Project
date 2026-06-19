@@ -95,6 +95,18 @@ const routes: RouteRecordRaw[] = [
             name: 'MerchantAuditManage',
             component: () => import('@/views/merchant/qualificationAudit.vue'),
             meta: { title: '资质审核', icon: 'Checked', requiresAuth: true }
+          },
+          {
+            path: 'shop',
+            name: 'MerchantShopManage',
+            component: () => import('@/views/merchant/shopManage.vue'),
+            meta: { title: '店铺管理', icon: 'ShoppingCart', requiresAuth: true }
+          },
+          {
+            path: 'shopInfo',
+            name: 'MerchantShopInfo',
+            component: () => import('@/views/merchant/shopInfoManage.vue'),
+            meta: { title: '店铺信息', icon: 'Edit', requiresAuth: true }
           }
         ]
       },

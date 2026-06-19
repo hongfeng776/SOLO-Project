@@ -50,6 +50,9 @@ import { UserPermissionLog } from './UserPermissionLog';
 import { UserFreezeRecord } from './UserFreezeRecord';
 import { MerchantQualificationLedger } from './MerchantQualificationLedger';
 import { QualificationChangeLog } from './QualificationChangeLog';
+import { ShopStatusChangeLog } from './ShopStatusChangeLog';
+import { ShopInfoChangeLog } from './ShopInfoChangeLog';
+import { ShopOperationLedger } from './ShopOperationLedger';
 
 export {
   Admin,
@@ -104,6 +107,9 @@ export {
   UserFreezeRecord,
   MerchantQualificationLedger,
   QualificationChangeLog,
+  ShopStatusChangeLog,
+  ShopInfoChangeLog,
+  ShopOperationLedger,
 };
 
 export const models = {
@@ -159,6 +165,9 @@ export const models = {
   UserFreezeRecord,
   MerchantQualificationLedger,
   QualificationChangeLog,
+  ShopStatusChangeLog,
+  ShopInfoChangeLog,
+  ShopOperationLedger,
 };
 
 export default models;

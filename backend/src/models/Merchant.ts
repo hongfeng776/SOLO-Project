@@ -42,6 +42,145 @@ export class Merchant extends Model<Merchant> {
   name!: string;
 
   @Column({
+    type: DataType.STRING(100),
+    comment: '店铺名称',
+    unique: true,
+  })
+  shop_name?: string;
+
+  @Column({
+    type: DataType.STRING(500),
+    comment: '店铺Logo URL',
+  })
+  shop_logo?: string;
+
+  @Column({
+    type: DataType.STRING(500),
+    comment: '店铺Banner图 URL',
+  })
+  shop_banner?: string;
+
+  @Column({
+    type: DataType.TEXT,
+    comment: '店铺简介',
+  })
+  shop_intro?: string;
+
+  @Column({
+    type: DataType.STRING(100),
+    comment: '店铺主营类目',
+  })
+  shop_category?: string;
+
+  @Column({
+    type: DataType.STRING(100),
+    comment: '店铺二级类目',
+  })
+  shop_sub_category?: string;
+
+  @Column({
+    type: DataType.STRING(500),
+    comment: '店铺标签(逗号分隔)',
+  })
+  shop_tags?: string;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 1,
+    comment: '店铺等级：1-新店 2-铜牌 3-银牌 4-金牌 5-钻石',
+  })
+  shop_level?: number;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 1,
+    comment: '店铺状态：1-正常 2-停业 3-整改 4-封禁',
+  })
+  shop_status?: number;
+
+  @Column({
+    type: DataType.STRING(1000),
+    comment: '店铺状态变更原因',
+  })
+  shop_status_reason?: string;
+
+  @Column({
+    type: DataType.STRING(20),
+    comment: '状态来源：merchant商家 platform违规 system系统',
+  })
+  shop_status_source?: string;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '订单接单权限：0-禁止 1-允许',
+  })
+  order_accept_permission?: number;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '营销活动参与资格：0-无资格 1-有资格',
+  })
+  marketing_participate_permission?: number;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '结算功能：0-关闭 1-开启',
+  })
+  settlement_permission?: number;
+
+  @Column({
+    type: DataType.DATEONLY,
+    comment: '开店日期',
+  })
+  shop_open_date?: Date;
+
+  @Column({
+    type: DataType.STRING(50),
+    comment: '店铺所在省份',
+  })
+  shop_province?: string;
+
+  @Column({
+    type: DataType.STRING(50),
+    comment: '店铺所在城市',
+  })
+  shop_city?: string;
+
+  @Column({
+    type: DataType.STRING(50),
+    comment: '店铺所在区县',
+  })
+  shop_district?: string;
+
+  @Column({
+    type: DataType.STRING(255),
+    comment: '店铺详细地址',
+  })
+  shop_address?: string;
+
+  @Column({
+    type: DataType.STRING(20),
+    comment: '客服电话',
+  })
+  customer_service_phone?: string;
+
+  @Column({
+    type: DataType.STRING(100),
+    comment: '客服工作时间',
+  })
+  customer_service_hours?: string;
+
+  @Column({
+    type: DataType.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '经营时长(天)',
+  })
+  shop_operation_duration_days?: number;
+
+  @Column({
     type: DataType.STRING(50),
     comment: '联系人',
   })
