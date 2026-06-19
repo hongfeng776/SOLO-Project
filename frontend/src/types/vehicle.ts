@@ -67,6 +67,24 @@ export interface Vehicle {
   maintenanceRecords?: VehicleMaintenanceRecord[]
   violationRecords?: VehicleViolationRecord[]
   statusLogs?: VehicleStatusLog[]
+  complianceLevel: number
+  complianceStatus: number
+  lastComplianceCheckDate: string
+  nextComplianceCheckDate: string
+  complianceCheckCycle: number
+  complianceTag: string
+  complianceRiskCount: number
+  fakeComplianceDetected: number
+  missedCheckCount: number
+  pendingRectificationCount: number
+  lastInsuranceCheckDate: string
+  lastInspectionCheckDate: string
+  lastViolationCheckDate: string
+  trafficDataSyncTime: string
+  cityTier: number
+  complianceChecks?: VehicleComplianceCheck[]
+  complianceViolations?: VehicleComplianceViolation[]
+  complianceAlerts?: VehicleComplianceAlert[]
 }
 
 export interface OrderScope {
@@ -155,6 +173,9 @@ export interface VehicleQueryParams {
   operationStatus?: number
   bannedType?: number
   maintenanceWarningLevel?: number
+  complianceLevel?: number
+  complianceStatus?: number
+  cityTier?: number
 }
 
 export interface LevelBreakdownItem {
@@ -317,4 +338,161 @@ export interface CapacityDashboard {
     expired: number
     banned: number
   }>
+}
+
+export interface VehicleComplianceCheck {
+  id: number
+  vehicleId: number
+  plateNumber: string
+  checkType: number
+  checkMode: number
+  checkStatus: number
+  checkCycle: number
+  insuranceCheckResult: any
+  inspectionCheckResult: any
+  violationCheckResult: any
+  parameterCheckResult: any
+  trafficDataCompare: any
+  overallResult: any
+  riskItems: any[]
+  complianceScore: number
+  complianceLevel: number
+  highlightedFields: any[]
+  syncFromTraffic: number
+  syncTime: string
+  rectificationRequired: number
+  rectificationDeadline: string
+  rectificationStatus: number
+  remark: string
+  operatorId: number
+  operatorName: string
+  createTime: string
+}
+
+export interface VehicleComplianceViolation {
+  id: number
+  vehicleId: number
+  plateNumber: string
+  checkId: number
+  violationType: number
+  violationLevel: number
+  violationStatus: number
+  relatedField: string
+  relatedValue: string
+  expectedValue: string
+  description: string
+  evidence: any[]
+  discoverySource: number
+  rectificationPlan: string
+  rectificationTime: string
+  rectificationResult: string
+  rectificationEvidence: any[]
+  penaltyType: number
+  penaltyAmount: number
+  deadline: string
+  auditOperatorId: number
+  auditOperatorName: string
+  auditTime: string
+  auditRemark: string
+  remark: string
+  operatorId: number
+  operatorName: string
+  createTime: string
+}
+
+export interface VehicleComplianceAlert {
+  id: number
+  vehicleId: number
+  plateNumber: string
+  checkId: number
+  alertType: number
+  alertLevel: number
+  alertStatus: number
+  riskType: number
+  description: string
+  affectedFields: string[]
+  compareDetails: any
+  riskEvidence: any[]
+  suggestion: string
+  handledTime: string
+  handledResult: string
+  handledOperatorId: number
+  handledOperatorName: string
+  autoLocked: number
+  operatorId: number
+  operatorName: string
+  createTime: string
+}
+
+export interface CompliancePolicy {
+  cycle: number
+  strict: boolean
+  thresholds: { insurance: number; inspection: number; violation: number }
+  scorePass: number
+  requirements: string[]
+}
+
+export interface ComplianceBatchResult {
+  success: number[]
+  failed: Array<{ id: number; plateNumber: string; error: string }>
+  total: number
+  reportUrl?: string
+}
+
+export interface VehicleRectification {
+  id: number
+  vehicleId: number
+  plateNumber: string
+  checkId: number
+  rectificationType: number
+  rectificationStatus: number
+  violationType: string
+  violationDescription: string
+  violationEvidence: any[]
+  rectificationDeadline: string
+  rectificationContent: string
+  rectificationEvidence: any[]
+  rectificationRemark: string
+  reviewResult: number
+  reviewRemark: string
+  rectificationDays: number
+  remindCount: number
+  lastRemindTime: string
+  penaltyAmount: number
+  operatorId: number
+  operatorName: string
+  reviewerId: number
+  reviewerName: string
+  createTime: string
+  updateTime: string
+}
+
+export interface ComplianceStandards {
+  cityTier: number
+  checkCycleDays: number
+  checkLevel: number
+  strictDocumentCheck: boolean
+  violationThreshold: number
+  maxMissedCheckLimit: number
+}
+
+export interface ComplianceReport {
+  summary: {
+    totalChecks: number
+    passCount: number
+    failCount: number
+    avgScore: number
+    currentLevel: number
+  }
+  trend: { dates: string[]; scores: number[] }
+  riskAssessment: { level: number; risks: any[] }
+  rectificationStats: { total: number; completed: number; pending: number }
+}
+
+export interface FieldValidationResult {
+  field: string
+  valid: boolean
+  highlighted: boolean
+  message: string
+  abnormalItem?: string
 }

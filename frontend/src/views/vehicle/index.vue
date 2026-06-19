@@ -6,6 +6,12 @@
       @success="handleBatchSuccess"
     />
 
+    <VehicleBatchCompliance
+      v-if="selectedRows.length > 0"
+      :selected-rows="selectedRows"
+      @success="handleBatchSuccess"
+    />
+
     <CommonTable
       ref="tableRef"
       :loading="loading"
@@ -188,6 +194,23 @@
           </div>
         </template>
       </el-table-column>
+      <el-table-column label="合规等级" width="110" align="center">
+        <template #default="{ row }">
+          <div class="compliance-level-cell">
+            <el-tag
+              :type="row.complianceLevel === 1 ? 'success' : row.complianceLevel === 2 ? '' : row.complianceLevel === 3 ? 'warning' : 'danger'"
+              effect="dark"
+              size="small"
+              :class="{ 'level-special': row.complianceLevel === 1 }"
+            >
+              {{ ComplianceLevelMap[row.complianceLevel as keyof typeof ComplianceLevelMap] || '未评定' }}
+            </el-tag>
+            <div class="compliance-score" :style="{ color: ComplianceLevelColorMap[row.complianceLevel as keyof typeof ComplianceLevelColorMap] }">
+              {{ Number(row.complianceScore || 0).toFixed(1) }}分
+            </div>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="审核状态" width="100" align="center">
         <template #default="{ row }">
           <el-tag
@@ -201,7 +224,7 @@
       <el-table-column prop="createTime" label="录入时间" width="170">
         <template #default="{ row }">{{ formatDate(row.createTime) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="320" fixed="right" align="center">
+      <el-table-column label="操作" width="380" fixed="right" align="center">
         <template #default="{ row }">
           <el-button type="primary" link size="small" @click="handleViewTrace(row)">
             <el-icon><Document /></el-icon>
@@ -242,6 +265,14 @@
           <el-button type="info" link size="small" @click="handleViewMaintenance(row)">
             <el-icon><Van /></el-icon>
             检修
+          </el-button>
+          <el-button type="primary" link size="small" @click="handleComplianceCheck(row)">
+            <el-icon><DocumentChecked /></el-icon>
+            合规
+          </el-button>
+          <el-button type="info" link size="small" @click="handleViewComplianceTrace(row)">
+            <el-icon><DataAnalysis /></el-icon>
+            溯源
           </el-button>
         </template>
       </el-table-column>
@@ -298,6 +329,25 @@
         @refresh="getList"
       />
     </el-dialog>
+
+    <VehicleComplianceCheckDialog
+      v-model="complianceCheckDialogVisible"
+      :vehicle="currentVehicle"
+      @success="handleComplianceCheckSuccess"
+    />
+
+    <el-dialog
+      v-model="complianceTraceDialogVisible"
+      :title="`合规溯源 - ${currentVehicle?.plateNumber || ''}`"
+      width="1100px"
+      :close-on-click-modal="false"
+      v-if="complianceTraceDialogVisible && currentVehicle"
+    >
+      <VehicleComplianceTrace
+        :vehicle-id="currentVehicleId!"
+        :vehicle="currentVehicle"
+      />
+    </el-dialog>
   </div>
 </template>
 
@@ -314,7 +364,10 @@ import {
   Warning,
   WarningFilled,
   SetUp,
-  Van
+  Van,
+  DocumentChecked,
+  Stamp,
+  DataAnalysis
 } from '@element-plus/icons-vue'
 import CommonTable from '@/components/CommonTable/index.vue'
 import StatusTag from '@/components/StatusTag/index.vue'
@@ -325,6 +378,9 @@ import VehicleStatusChangeDialog from '@/components/VehicleStatusChangeDialog/in
 import VehicleBatchStatusOperation from '@/components/VehicleBatchStatusOperation/index.vue'
 import VehicleStatusTrace from '@/components/VehicleStatusTrace/index.vue'
 import VehicleMaintenancePanel from '@/components/VehicleMaintenancePanel/index.vue'
+import VehicleComplianceCheckDialog from '@/components/VehicleComplianceCheckDialog/index.vue'
+import VehicleBatchCompliance from '@/components/VehicleBatchCompliance/index.vue'
+import VehicleComplianceTrace from '@/components/VehicleComplianceTrace/index.vue'
 import {
   getVehicleListApi,
   deleteVehicleApi,
@@ -345,7 +401,12 @@ import {
   OperationStatusColorMap,
   OperationStatusTypeMap,
   MaintenanceWarningLevelMap,
-  BannedTypeMap
+  BannedTypeMap,
+  ComplianceLevelMap,
+  ComplianceLevelColorMap,
+  ComplianceStatusMap,
+  ComplianceWarningMap,
+  FakeComplianceStatusMap
 } from '@/enums/vehicle'
 import { CapacityTypeMap, CapacityTypeColorMap } from '@/enums/capacity'
 import { formatDate } from '@/utils/format'
@@ -364,6 +425,8 @@ const currentVehicle = ref<Vehicle | null>(null)
 const statusDialogVisible = ref(false)
 const statusTraceDialogVisible = ref(false)
 const maintenanceDialogVisible = ref(false)
+const complianceCheckDialogVisible = ref(false)
+const complianceTraceDialogVisible = ref(false)
 const capacityDashboard = ref<any>(null)
 
 const queryParams = reactive({
@@ -419,6 +482,18 @@ const searchFields = [
     { value: 2, label: '停运检修' },
     { value: 3, label: '证件过期' },
     { value: 4, label: '违规封禁' }
+  ]},
+  { prop: 'complianceLevel', label: '合规等级', type: 'select', options: [
+    { value: 1, label: 'A级' },
+    { value: 2, label: 'B级' },
+    { value: 3, label: 'C级' },
+    { value: 4, label: 'D级' }
+  ]},
+  { prop: 'complianceStatus', label: '合规状态', type: 'select', options: [
+    { value: 1, label: '合规' },
+    { value: 2, label: '待校验' },
+    { value: 3, label: '已预警' },
+    { value: 4, label: '已锁定' }
   ]}
 ]
 
@@ -587,6 +662,23 @@ const handleViewMaintenance = (row: Vehicle) => {
   maintenanceDialogVisible.value = true
 }
 
+const handleComplianceCheck = (row: Vehicle) => {
+  currentVehicleId.value = row.id
+  currentVehicle.value = row
+  complianceCheckDialogVisible.value = true
+}
+
+const handleViewComplianceTrace = (row: Vehicle) => {
+  currentVehicleId.value = row.id
+  currentVehicle.value = row
+  complianceTraceDialogVisible.value = true
+}
+
+const handleComplianceCheckSuccess = () => {
+  getList()
+  ElMessage.success('合规校验完成')
+}
+
 const handleStatusChangeSuccess = () => {
   getList()
   ElMessage.success('运营状态变更成功')
@@ -734,6 +826,24 @@ onMounted(() => {
     flex-direction: column;
     align-items: center;
     gap: 4px;
+  }
+
+  .compliance-level-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+
+    .level-special {
+      background: linear-gradient(135deg, #ffd700, #ffb700);
+      border-color: #ffb700;
+      color: #fff;
+    }
+
+    .compliance-score {
+      font-size: 11px;
+      font-weight: 600;
+    }
   }
 }
 </style>

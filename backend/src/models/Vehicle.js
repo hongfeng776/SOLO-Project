@@ -199,6 +199,96 @@ const Vehicle = sequelize.define('Vehicle', {
     defaultValue: 0,
     comment: '检修预警等级：0无预警 1临近 2紧急 3过期'
   },
+  complianceLevel: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '合规等级：0未评定 1A级 2B级 3C级 4D级'
+  },
+  complianceScore: {
+    type: DataTypes.DECIMAL(5, 2),
+    defaultValue: 0,
+    comment: '合规评分'
+  },
+  complianceStatus: {
+    type: DataTypes.TINYINT,
+    defaultValue: 1,
+    comment: '合规状态：1合规 2待校验 3已预警 4已锁定'
+  },
+  lastComplianceCheckDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '上次合规校验日期'
+  },
+  nextComplianceCheckDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '下次合规校验日期'
+  },
+  complianceCheckCycle: {
+    type: DataTypes.INTEGER,
+    defaultValue: 30,
+    comment: '合规校验周期(天)'
+  },
+  complianceTags: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '合规标签列表'
+  },
+  complianceRiskCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: '合规风险项数量'
+  },
+  rectificationCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: '待整改数量'
+  },
+  lastInsuranceCheckDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '上次保险校验日期'
+  },
+  lastInspectionCheckDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '上次年检校验日期'
+  },
+  lastViolationCheckDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '上次违章校验日期'
+  },
+  trafficDataMatchRate: {
+    type: DataTypes.DECIMAL(5, 2),
+    defaultValue: 100,
+    comment: '交管数据匹配率(%)'
+  },
+  trafficDataSyncTime: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '交管数据同步时间'
+  },
+  complianceWarning: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '合规预警：0无预警 1临近校验 2校验超期 3合规风险'
+  },
+  fakeComplianceDetected: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '虚假合规检测：0未检测 1疑似虚假 2已确认虚假'
+  },
+  missedCheckCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: '漏审次数'
+  },
+  cityTier: {
+    type: DataTypes.TINYINT,
+    defaultValue: 2,
+    comment: '城市分级：1一线城市 2二线城市 3三线及以下'
+  },
   auditStatus: {
     type: DataTypes.TINYINT,
     defaultValue: 0,
@@ -253,6 +343,36 @@ const Vehicle = sequelize.define('Vehicle', {
     type: DataTypes.STRING(50),
     allowNull: true,
     comment: '绑定司机姓名'
+  },
+  ownerName: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: '车主姓名'
+  },
+  ownerIdCard: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+    comment: '车主身份证号'
+  },
+  ownerPhone: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+    comment: '车主联系电话'
+  },
+  manufactureDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '出厂日期'
+  },
+  totalScore: {
+    type: DataTypes.DECIMAL(5, 2),
+    defaultValue: 0,
+    comment: '运营等级综合得分'
+  },
+  trafficDataVerified: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '交管数据核验：0未核验 1核验一致 2核验不一致'
   }
 }, {
   tableName: 'biz_vehicle',
@@ -268,7 +388,13 @@ const Vehicle = sequelize.define('Vehicle', {
     { fields: ['isLocked'] },
     { fields: ['operationStatus'] },
     { fields: ['bannedType'] },
-    { fields: ['maintenanceWarningLevel'] }
+    { fields: ['maintenanceWarningLevel'] },
+    { fields: ['complianceLevel'] },
+    { fields: ['complianceStatus'] },
+    { fields: ['complianceWarning'] },
+    { fields: ['cityTier'] },
+    { fields: ['nextComplianceCheckDate'] },
+    { fields: ['fakeComplianceDetected'] }
   ]
 })
 

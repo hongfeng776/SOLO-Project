@@ -4,7 +4,8 @@ const { success, pageResult, AppError } = require('../utils/response')
 const { validateVehicle, checkPlateUniqueness, checkVINUniqueness, validatePlateNumber, validateVIN } = require('../services/vehicleValidationService')
 const { calculateOperationLevel, syncDriverOrderPermission, getLevelPrivileges } = require('../services/vehicleLevelService')
 const { validateStatusChange, determineMaintenanceWarning, autoDetermineOperationStatus, checkAbnormalStatus, syncCapacityAndSchedule } = require('../services/vehicleStatusService')
-const { VehicleMaintenance, VehicleViolation, VehicleStatusLog } = require('../models')
+const { performComplianceCheck, detectFakeCompliance, detectMissedChecks, generateComplianceReport, getCityTier, getComplianceStandards, calculateComplianceLevel, batchComplianceCheck } = require('../services/vehicleComplianceService')
+const { VehicleMaintenance, VehicleViolation, VehicleStatusLog, VehicleComplianceCheck, VehicleRectification } = require('../models')
 
 const OPERATION_TYPE_NAMES = {
   1: '新增备案',
@@ -26,7 +27,13 @@ const OPERATION_TYPE_NAMES = {
   17: '批量发起检修',
   18: '批量提醒换证',
   19: '异常拦截',
-  20: '自动状态判定'
+  20: '自动状态判定',
+  21: '合规校验',
+  22: '批量合规校验',
+  23: '合规整改',
+  24: '合规报告导出',
+  25: '虚假合规拦截',
+  26: '漏审检测'
 }
 
 const createAuditLog = async (vehicle, operationType, extraData = {}, operatorId = null, operatorName = null) => {
@@ -1485,6 +1492,411 @@ const getCapacityDashboard = async (req, res, next) => {
   }
 }
 
+const performCheck = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { checkType } = req.body || req.query
+    const operatorId = req.user?.id
+    const operatorName = req.user?.name
+
+    const vehicle = await Vehicle.findByPk(id)
+    if (!vehicle) throw new AppError('车辆不存在', 404, 404)
+
+    const checkResult = await performComplianceCheck(vehicle, checkType)
+
+    const checkRecord = await VehicleComplianceCheck.create({
+      vehicleId: vehicle.id,
+      plateNumber: vehicle.plateNumber,
+      checkType: checkType || 1,
+      checkStatus: checkResult.passed ? 1 : 2,
+      complianceLevel: checkResult.complianceLevel,
+      complianceScore: checkResult.complianceScore,
+      checkItems: checkResult.checkItems,
+      issues: checkResult.issues,
+      warnings: checkResult.warnings,
+      fakeComplianceDetected: checkResult.fakeComplianceDetected ? 1 : 0,
+      missedChecks: checkResult.missedChecks,
+      operatorId,
+      operatorName
+    })
+
+    const updateData = {
+      complianceLevel: checkResult.complianceLevel,
+      complianceScore: checkResult.complianceScore,
+      lastComplianceCheckDate: new Date(),
+      nextComplianceCheckDate: checkResult.nextCheckDate,
+      complianceStatus: checkResult.passed ? 1 : 2,
+      complianceWarning: checkResult.warnings && checkResult.warnings.length > 0 ? 1 : 0
+    }
+
+    if (checkResult.fakeComplianceDetected) {
+      updateData.fakeComplianceDetected = 1
+      updateData.isLocked = 1
+      updateData.status = 4
+      updateData.lockReason = '虚假合规检测'
+    }
+
+    if (checkResult.complianceLevel === 'D' || (checkResult.issues && checkResult.issues.some(i => i.severity === 'major'))) {
+      updateData.isLocked = 1
+      updateData.status = 4
+      if (!updateData.lockReason) {
+        updateData.lockReason = '合规校验不通过'
+      }
+    }
+
+    await vehicle.update(updateData)
+
+    if (vehicle.driverId && (updateData.isLocked || updateData.complianceStatus !== vehicle.complianceStatus)) {
+      await syncDriverOrderPermission(vehicle, Driver, DriverAuditLog, operatorId, operatorName)
+    }
+
+    const auditType = checkResult.fakeComplianceDetected ? 25 : 21
+    await createAuditLog(
+      vehicle,
+      auditType,
+      {
+        remark: checkResult.fakeComplianceDetected ? '虚假合规检测，车辆已锁定' : `合规校验完成，等级：${checkResult.complianceLevel}`,
+        validationResult: checkResult
+      },
+      operatorId,
+      operatorName
+    )
+
+    res.json(success({
+      checkRecord,
+      checkResult,
+      vehicleUpdated: true
+    }, '合规校验完成'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getComplianceChecks = async (req, res, next) => {
+  try {
+    const { vehicleId } = req.params
+    const { page = 1, pageSize = 10, checkType, checkStatus, complianceLevel } = req.query
+
+    const where = { vehicleId }
+    if (checkType !== undefined && checkType !== '') where.checkType = checkType
+    if (checkStatus !== undefined && checkStatus !== '') where.checkStatus = checkStatus
+    if (complianceLevel !== undefined && complianceLevel !== '') where.complianceLevel = complianceLevel
+
+    const { count, rows } = await VehicleComplianceCheck.findAndCountAll({
+      where,
+      order: [['createTime', 'DESC']],
+      offset: (page - 1) * pageSize,
+      limit: parseInt(pageSize)
+    })
+
+    res.json(pageResult(rows, count, page, pageSize))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const createRectification = async (req, res, next) => {
+  try {
+    const { vehicleId } = req.params
+    const operatorId = req.user?.id
+    const operatorName = req.user?.name
+
+    const vehicle = await Vehicle.findByPk(vehicleId)
+    if (!vehicle) throw new AppError('车辆不存在', 404, 404)
+
+    const data = {
+      ...req.body,
+      vehicleId,
+      plateNumber: vehicle.plateNumber,
+      rectificationStatus: 0,
+      operatorId,
+      operatorName
+    }
+
+    const record = await VehicleRectification.create(data)
+
+    const rectificationCount = (vehicle.rectificationCount || 0) + 1
+    const updateData = { rectificationCount }
+
+    if (data.issueType && data.issueType === 'compliance') {
+      updateData.complianceStatus = 3
+    }
+
+    await vehicle.update(updateData)
+
+    await createAuditLog(
+      vehicle,
+      23,
+      {
+        remark: `创建合规整改记录：${data.description || '整改'}`
+      },
+      operatorId,
+      operatorName
+    )
+
+    res.json(success(record, '整改记录创建成功'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getRectifications = async (req, res, next) => {
+  try {
+    const { vehicleId } = req.params
+    const { page = 1, pageSize = 10, rectificationStatus, issueType } = req.query
+
+    const where = { vehicleId }
+    if (rectificationStatus !== undefined && rectificationStatus !== '') where.rectificationStatus = rectificationStatus
+    if (issueType !== undefined && issueType !== '') where.issueType = issueType
+
+    const { count, rows } = await VehicleRectification.findAndCountAll({
+      where,
+      order: [['createTime', 'DESC']],
+      offset: (page - 1) * pageSize,
+      limit: parseInt(pageSize)
+    })
+
+    res.json(pageResult(rows, count, page, pageSize))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const reviewRectification = async (req, res, next) => {
+  try {
+    const { id, rectId } = req.params
+    const { reviewResult, reviewRemark } = req.body
+    const operatorId = req.user?.id
+    const operatorName = req.user?.name
+
+    const record = await VehicleRectification.findByPk(rectId)
+    if (!record) throw new AppError('整改记录不存在', 404, 404)
+
+    const vehicle = await Vehicle.findByPk(record.vehicleId)
+    if (!vehicle) throw new AppError('车辆不存在', 404, 404)
+
+    const oldStatus = record.rectificationStatus
+    const status = reviewResult === 'pass' ? 1 : 2
+
+    await record.update({
+      rectificationStatus: status,
+      reviewResult,
+      reviewRemark,
+      reviewerId: operatorId,
+      reviewerName: operatorName,
+      reviewTime: new Date()
+    })
+
+    if (status === 1 && oldStatus !== 1) {
+      const newCount = Math.max(0, (vehicle.rectificationCount || 0) - 1)
+      const vehicleUpdate = { rectificationCount: newCount }
+
+      if (newCount === 0 && vehicle.complianceStatus === 3) {
+        vehicleUpdate.complianceStatus = 1
+      }
+
+      await vehicle.update(vehicleUpdate)
+
+      if (vehicle.driverId) {
+        await syncDriverOrderPermission(vehicle, Driver, DriverAuditLog, operatorId, operatorName)
+      }
+    }
+
+    res.json(success(record, '整改审核完成'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchComplianceCheckHandler = async (req, res, next) => {
+  try {
+    const { ids, checkType } = req.body
+    const operatorId = req.user?.id
+    const operatorName = req.user?.name
+
+    const results = {
+      total: ids.length,
+      success: [],
+      failed: [],
+      results: []
+    }
+
+    for (const id of ids) {
+      try {
+        const vehicle = await Vehicle.findByPk(id)
+        if (!vehicle) {
+          results.failed.push({ id, error: '车辆不存在' })
+          continue
+        }
+
+        const checkResult = await performComplianceCheck(vehicle, checkType)
+
+        await VehicleComplianceCheck.create({
+          vehicleId: vehicle.id,
+          plateNumber: vehicle.plateNumber,
+          checkType: checkType || 1,
+          checkStatus: checkResult.passed ? 1 : 2,
+          complianceLevel: checkResult.complianceLevel,
+          complianceScore: checkResult.complianceScore,
+          checkItems: checkResult.checkItems,
+          issues: checkResult.issues,
+          warnings: checkResult.warnings,
+          fakeComplianceDetected: checkResult.fakeComplianceDetected ? 1 : 0,
+          missedChecks: checkResult.missedChecks,
+          operatorId,
+          operatorName
+        })
+
+        const updateData = {
+          complianceLevel: checkResult.complianceLevel,
+          complianceScore: checkResult.complianceScore,
+          lastComplianceCheckDate: new Date(),
+          nextComplianceCheckDate: checkResult.nextCheckDate,
+          complianceStatus: checkResult.passed ? 1 : 2,
+          complianceWarning: checkResult.warnings && checkResult.warnings.length > 0 ? 1 : 0
+        }
+
+        if (checkResult.fakeComplianceDetected) {
+          updateData.fakeComplianceDetected = 1
+          updateData.isLocked = 1
+          updateData.status = 4
+          updateData.lockReason = '虚假合规检测'
+        }
+
+        if (checkResult.complianceLevel === 'D' || (checkResult.issues && checkResult.issues.some(i => i.severity === 'major'))) {
+          updateData.isLocked = 1
+          updateData.status = 4
+          if (!updateData.lockReason) {
+            updateData.lockReason = '合规校验不通过'
+          }
+        }
+
+        await vehicle.update(updateData)
+
+        if (vehicle.driverId) {
+          await syncDriverOrderPermission(vehicle, Driver, DriverAuditLog, operatorId, operatorName)
+        }
+
+        results.success.push({
+          id: vehicle.id,
+          plateNumber: vehicle.plateNumber,
+          complianceLevel: checkResult.complianceLevel,
+          complianceScore: checkResult.complianceScore,
+          passed: checkResult.passed
+        })
+      } catch (error) {
+        results.failed.push({ id, error: error.message })
+      }
+    }
+
+    res.json(success(results, `批量合规校验完成：成功${results.success.length}条，失败${results.failed.length}条`))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchRemindRectification = async (req, res, next) => {
+  try {
+    const { ids } = req.body
+    const operatorId = req.user?.id
+    const operatorName = req.user?.name
+
+    const results = {
+      total: ids.length,
+      success: [],
+      failed: []
+    }
+
+    for (const id of ids) {
+      try {
+        const record = await VehicleRectification.findByPk(id)
+        if (!record) {
+          results.failed.push({ id, error: '整改记录不存在' })
+          continue
+        }
+
+        const remindCount = (record.remindCount || 0) + 1
+        await record.update({ remindCount, lastRemindTime: new Date() })
+
+        results.success.push({ id, remindCount })
+      } catch (error) {
+        results.failed.push({ id, error: error.message })
+      }
+    }
+
+    res.json(success(results, `批量提醒完成：成功${results.success.length}条，失败${results.failed.length}条`))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const exportComplianceReport = async (req, res, next) => {
+  try {
+    const { vehicleId } = req.params
+    const operatorId = req.user?.id
+    const operatorName = req.user?.name
+
+    const vehicle = await Vehicle.findByPk(vehicleId)
+    if (!vehicle) throw new AppError('车辆不存在', 404, 404)
+
+    const report = await generateComplianceReport(vehicle)
+
+    await createAuditLog(
+      vehicle,
+      24,
+      {
+        remark: '导出合规报告'
+      },
+      operatorId,
+      operatorName
+    )
+
+    res.json(success(report, '报告生成成功'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getComplianceStandardsByCity = async (req, res, next) => {
+  try {
+    const { city } = req.query
+
+    const cityTier = getCityTier(city)
+    const standards = getComplianceStandards(cityTier)
+
+    res.json(success({
+      city,
+      cityTier,
+      standards
+    }))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const validateComplianceField = async (req, res, next) => {
+  try {
+    const { field, value, vehicleId } = req.body
+
+    const vehicle = vehicleId ? await Vehicle.findByPk(vehicleId) : null
+
+    const result = calculateComplianceLevel([{ field, value, status: 'valid' }])
+
+    const isHighlighted = result.level === 'D' || result.level === 'C'
+
+    res.json(success({
+      field,
+      value,
+      valid: true,
+      highlighted: isHighlighted,
+      status: isHighlighted ? 'warning' : 'normal',
+      complianceLevel: result.level
+    }))
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   getList,
   getDetail,
@@ -1514,5 +1926,15 @@ module.exports = {
   batchInitiateMaintenance,
   batchRemindRenewal,
   autoCheckStatus,
-  getCapacityDashboard
+  getCapacityDashboard,
+  performCheck,
+  getComplianceChecks,
+  createRectification,
+  getRectifications,
+  reviewRectification,
+  batchComplianceCheck: batchComplianceCheckHandler,
+  batchRemindRectification,
+  exportComplianceReport,
+  getComplianceStandardsByCity,
+  validateComplianceField
 }

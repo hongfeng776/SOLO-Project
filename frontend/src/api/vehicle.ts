@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { Vehicle, VehicleQueryParams, VehicleAuditLog, ValidationResult, BatchImportResult, BatchOperationResult, ImportTemplate, RecalculateLevelResult, VehicleMaintenanceRecord, VehicleViolationRecord, VehicleStatusLog, StatusChangeValidation, CapacityDashboard } from '@/types/vehicle'
+import type { Vehicle, VehicleQueryParams, VehicleAuditLog, ValidationResult, BatchImportResult, BatchOperationResult, ImportTemplate, RecalculateLevelResult, VehicleMaintenanceRecord, VehicleViolationRecord, VehicleStatusLog, StatusChangeValidation, CapacityDashboard, VehicleComplianceCheck, VehicleRectification, ComplianceStandards, ComplianceReport, FieldValidationResult } from '@/types/vehicle'
 import type { PageResult } from '@/utils/request'
 
 export const getVehicleListApi = (params: VehicleQueryParams) => {
@@ -124,4 +124,55 @@ export const getCapacityDashboardApi = () => {
 
 export const validateStatusChangeApi = (id: number, operationStatus: number) => {
   return request.post<StatusChangeValidation>(`/vehicle/${id}/validate-status`, { operationStatus })
+}
+
+export const performComplianceCheckApi = (id: number, checkType: number = 4) => {
+  return request.post<VehicleComplianceCheck>(`/vehicle/${id}/compliance-check`, { checkType })
+}
+
+export const getComplianceChecksApi = (vehicleId: number, params?: {
+  page?: number
+  pageSize?: number
+  checkType?: number
+  checkStatus?: number
+  complianceLevel?: number
+}) => {
+  return request.get<PageResult<VehicleComplianceCheck>>(`/vehicle/${vehicleId}/compliance-checks`, params)
+}
+
+export const getComplianceStandardsApi = (city: string) => {
+  return request.get<ComplianceStandards>('/vehicle/compliance/standards', { city })
+}
+
+export const validateComplianceFieldApi = (field: string, value: any, vehicleId?: number) => {
+  return request.post<FieldValidationResult>('/vehicle/compliance/validate-field', { field, value, vehicleId })
+}
+
+export const createRectificationApi = (vehicleId: number, data: Partial<VehicleRectification>) => {
+  return request.post<VehicleRectification>(`/vehicle/${vehicleId}/rectification`, data)
+}
+
+export const getRectificationsApi = (vehicleId: number, params?: {
+  page?: number
+  pageSize?: number
+  rectificationType?: number
+  rectificationStatus?: number
+}) => {
+  return request.get<PageResult<VehicleRectification>>(`/vehicle/${vehicleId}/rectifications`, params)
+}
+
+export const reviewRectificationApi = (id: number, rectId: number, reviewResult: number, reviewRemark?: string) => {
+  return request.put<VehicleRectification>(`/vehicle/${id}/rectification/${rectId}/review`, { reviewResult, reviewRemark })
+}
+
+export const batchComplianceCheckApi = (ids: number[], checkType: number = 4) => {
+  return request.post<BatchOperationResult>('/vehicle/batch/compliance-check', { ids, checkType })
+}
+
+export const batchRemindRectificationApi = (ids: number[]) => {
+  return request.post<BatchOperationResult>('/vehicle/batch/remind-rectification', { ids })
+}
+
+export const exportComplianceReportApi = (vehicleId: number) => {
+  return request.get<ComplianceReport>(`/vehicle/${vehicleId}/compliance-report`)
 }

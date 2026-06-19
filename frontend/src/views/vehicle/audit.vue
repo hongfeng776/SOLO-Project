@@ -176,6 +176,16 @@
           </el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="合规等级" width="100" align="center">
+        <template #default="{ row }">
+          <el-tag
+            :type="row.complianceLevel === 1 ? 'success' : row.complianceLevel === 2 ? '' : row.complianceLevel === 3 ? 'warning' : 'danger'"
+            size="small"
+          >
+            {{ ComplianceLevelMap[row.complianceLevel as keyof typeof ComplianceLevelMap] || '未评定' }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column prop="createTime" label="申请时间" width="170">
         <template #default="{ row }">{{ formatDate(row.createTime) }}</template>
       </el-table-column>
@@ -457,6 +467,81 @@
               </div>
             </div>
           </el-tab-pane>
+
+          <el-tab-pane label="合规校验" name="compliance">
+            <div class="compliance-section">
+              <div class="compliance-overview">
+                <div class="overview-card">
+                  <div class="card-title">合规状态</div>
+                  <div class="card-value">
+                    <el-tag :type="currentVehicle.complianceStatus === 1 ? 'success' : currentVehicle.complianceStatus === 3 ? 'warning' : 'danger'" effect="dark" size="large">
+                      {{ ComplianceStatusMap[currentVehicle.complianceStatus as keyof typeof ComplianceStatusMap] }}
+                    </el-tag>
+                  </div>
+                </div>
+                <div class="overview-card">
+                  <div class="card-title">合规等级</div>
+                  <div class="card-value level-value">
+                    <span :style="{ color: ComplianceLevelColorMap[currentVehicle.complianceLevel as keyof typeof ComplianceLevelColorMap] }">
+                      {{ ComplianceLevelMap[currentVehicle.complianceLevel as keyof typeof ComplianceLevelMap] || '未评定' }}
+                    </span>
+                    <span class="score-text">{{ Number(currentVehicle.complianceScore || 0).toFixed(1) }}分</span>
+                  </div>
+                </div>
+                <div class="overview-card">
+                  <div class="card-title">城市等级</div>
+                  <div class="card-value">{{ CityTierMap[currentVehicle.cityTier as keyof typeof CityTierMap] }}</div>
+                </div>
+                <div class="overview-card">
+                  <div class="card-title">待整改</div>
+                  <div class="card-value" :class="{ 'text-danger': (currentVehicle.rectificationCount || 0) > 0 }">
+                    {{ currentVehicle.rectificationCount || 0 }} 项
+                  </div>
+                </div>
+              </div>
+
+              <el-descriptions :column="2" border class="mt-16">
+                <el-descriptions-item label="上次校验日期">
+                  {{ currentVehicle.lastComplianceCheckDate ? formatDate(currentVehicle.lastComplianceCheckDate) : '-' }}
+                </el-descriptions-item>
+                <el-descriptions-item label="下次校验日期">
+                  <span :class="{ 'text-warning': isCheckSoon, 'text-danger': isCheckOverdue }">
+                    {{ currentVehicle.nextComplianceCheckDate ? formatDate(currentVehicle.nextComplianceCheckDate) : '-' }}
+                  </span>
+                  <el-tag v-if="currentVehicle.complianceWarning > 0" :type="currentVehicle.complianceWarning >= 2 ? 'danger' : 'warning'" size="small" style="margin-left: 8px">
+                    {{ ComplianceWarningMap[currentVehicle.complianceWarning as keyof typeof ComplianceWarningMap] }}
+                  </el-tag>
+                </el-descriptions-item>
+                <el-descriptions-item label="校验周期">
+                  {{ currentVehicle.complianceCheckCycle || 30 }} 天
+                </el-descriptions-item>
+                <el-descriptions-item label="漏审次数">
+                  <span :class="{ 'text-danger': (currentVehicle.missedCheckCount || 0) > 0 }">
+                    {{ currentVehicle.missedCheckCount || 0 }} 次
+                  </span>
+                </el-descriptions-item>
+                <el-descriptions-item label="交管数据匹配率">
+                  {{ Number(currentVehicle.trafficDataMatchRate || 100).toFixed(1) }}%
+                </el-descriptions-item>
+                <el-descriptions-item label="虚假合规检测">
+                  <el-tag :type="currentVehicle.fakeComplianceDetected === 0 ? 'success' : 'danger'" size="small">
+                    {{ FakeComplianceStatusMap[currentVehicle.fakeComplianceDetected as keyof typeof FakeComplianceStatusMap] }}
+                  </el-tag>
+                </el-descriptions-item>
+              </el-descriptions>
+
+              <div class="action-bar">
+                <el-button type="primary" @click="handleComplianceCheck">
+                  <el-icon><DocumentChecked /></el-icon>
+                  发起合规校验
+                </el-button>
+                <el-button type="info" @click="handleViewComplianceTrace">
+                  <el-icon><DataAnalysis /></el-icon>
+                  查看合规溯源
+                </el-button>
+              </div>
+            </div>
+          </el-tab-pane>
         </el-tabs>
 
         <div v-if="currentVehicle.auditStatus === 0 && currentVehicle.isLocked !== 1" class="audit-actions">
@@ -533,6 +618,25 @@
       />
     </el-dialog>
 
+    <VehicleComplianceCheckDialog
+      v-model="complianceCheckDialogVisible"
+      :vehicle="currentVehicle"
+      @success="handleComplianceCheckSuccess"
+    />
+
+    <el-dialog
+      v-model="complianceTraceDialogVisible"
+      :title="`合规溯源 - ${currentVehicle?.plateNumber || ''}`"
+      width="1100px"
+      :close-on-click-modal="false"
+      v-if="complianceTraceDialogVisible && currentVehicle"
+    >
+      <VehicleComplianceTrace
+        :vehicle-id="currentVehicleId!"
+        :vehicle="currentVehicle"
+      />
+    </el-dialog>
+
     <el-dialog
       v-model="rejectDialogVisible"
       title="驳回申请"
@@ -585,7 +689,9 @@ import {
   Position,
   Money,
   SetUp,
-  Van
+  Van,
+  DocumentChecked,
+  DataAnalysis
 } from '@element-plus/icons-vue'
 import CommonTable from '@/components/CommonTable/index.vue'
 import StatusTag from '@/components/StatusTag/index.vue'
@@ -594,6 +700,8 @@ import VehicleOperationTrace from '@/components/VehicleOperationTrace/index.vue'
 import VehicleStatusChangeDialog from '@/components/VehicleStatusChangeDialog/index.vue'
 import VehicleStatusTrace from '@/components/VehicleStatusTrace/index.vue'
 import VehicleMaintenancePanel from '@/components/VehicleMaintenancePanel/index.vue'
+import VehicleComplianceCheckDialog from '@/components/VehicleComplianceCheckDialog/index.vue'
+import VehicleComplianceTrace from '@/components/VehicleComplianceTrace/index.vue'
 import {
   getVehicleListApi,
   batchReviewApi,
@@ -607,7 +715,13 @@ import {
   OperationStatusMap,
   OperationStatusTypeMap,
   BannedTypeMap,
-  MaintenanceWarningLevelMap
+  MaintenanceWarningLevelMap,
+  ComplianceLevelMap,
+  ComplianceLevelColorMap,
+  ComplianceStatusMap,
+  ComplianceWarningMap,
+  CityTierMap,
+  FakeComplianceStatusMap
 } from '@/enums/vehicle'
 import { CapacityTypeMap, CapacityTypeColorMap } from '@/enums/capacity'
 import { formatDate } from '@/utils/format'
@@ -625,6 +739,8 @@ const rejectDialogVisible = ref(false)
 const statusDialogVisible = ref(false)
 const statusTraceDialogVisible = ref(false)
 const maintenanceDialogVisible = ref(false)
+const complianceCheckDialogVisible = ref(false)
+const complianceTraceDialogVisible = ref(false)
 const detailTab = ref('basic')
 const currentVehicleId = ref<number | null>(null)
 const currentVehicle = ref<Vehicle | null>(null)
@@ -682,6 +798,17 @@ const searchFields = [
 
 const validSelectedCount = computed(() => {
   return selectedRows.value.filter(row => row.isLocked !== 1 && row.auditStatus === 0).length
+})
+
+const isCheckSoon = computed(() => {
+  if (!currentVehicle.value?.nextComplianceCheckDate) return false
+  const days = Math.ceil((new Date(currentVehicle.value.nextComplianceCheckDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  return days > 0 && days <= 7
+})
+
+const isCheckOverdue = computed(() => {
+  if (!currentVehicle.value?.nextComplianceCheckDate) return false
+  return new Date(currentVehicle.value.nextComplianceCheckDate).getTime() < Date.now()
 })
 
 const getList = async () => {
@@ -951,6 +1078,19 @@ const handleViewMaintenance = () => {
 const handleStatusChangeSuccess = () => {
   getList()
   ElMessage.success('运营状态变更成功')
+}
+
+const handleComplianceCheck = () => {
+  complianceCheckDialogVisible.value = true
+}
+
+const handleViewComplianceTrace = () => {
+  complianceTraceDialogVisible.value = true
+}
+
+const handleComplianceCheckSuccess = () => {
+  getList()
+  ElMessage.success('合规校验完成')
 }
 
 const isExpired = (dateStr: string) => {
@@ -1450,6 +1590,54 @@ onMounted(() => {
         display: flex;
         gap: 12px;
         margin-top: 16px;
+      }
+    }
+
+    .compliance-section {
+      .compliance-overview {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 16px;
+
+        .overview-card {
+          background: #f5f7fa;
+          border-radius: 8px;
+          padding: 16px;
+          text-align: center;
+
+          .card-title {
+            font-size: 13px;
+            color: #909399;
+            margin-bottom: 8px;
+          }
+
+          .card-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #303133;
+
+            &.level-value {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 4px;
+
+              .score-text {
+                font-size: 12px;
+                font-weight: 500;
+                color: #909399;
+              }
+            }
+          }
+        }
+      }
+
+      .action-bar {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+        justify-content: center;
       }
     }
 

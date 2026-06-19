@@ -145,7 +145,13 @@ export enum OperationType {
   BATCH_MAINTENANCE = 17,
   BATCH_REMIND_RENEWAL = 18,
   ANOMALY_INTERCEPT = 19,
-  AUTO_DETERMINE = 20
+  AUTO_DETERMINE = 20,
+  COMPLIANCE_CHECK = 21,
+  BATCH_COMPLIANCE_CHECK = 22,
+  COMPLIANCE_RECTIFICATION = 23,
+  COMPLIANCE_REPORT_EXPORT = 24,
+  FAKE_COMPLIANCE_INTERCEPT = 25,
+  MISSED_CHECK_DETECTION = 26
 }
 
 export const OperationTypeMap: Record<number, string> = {
@@ -168,7 +174,13 @@ export const OperationTypeMap: Record<number, string> = {
   [OperationType.BATCH_MAINTENANCE]: '批量发起检修',
   [OperationType.BATCH_REMIND_RENEWAL]: '批量提醒换证',
   [OperationType.ANOMALY_INTERCEPT]: '异常拦截',
-  [OperationType.AUTO_DETERMINE]: '自动状态判定'
+  [OperationType.AUTO_DETERMINE]: '自动状态判定',
+  [OperationType.COMPLIANCE_CHECK]: '合规校验',
+  [OperationType.BATCH_COMPLIANCE_CHECK]: '批量合规校验',
+  [OperationType.COMPLIANCE_RECTIFICATION]: '合规整改',
+  [OperationType.COMPLIANCE_REPORT_EXPORT]: '合规报告导出',
+  [OperationType.FAKE_COMPLIANCE_INTERCEPT]: '虚假合规拦截',
+  [OperationType.MISSED_CHECK_DETECTION]: '漏审检测'
 }
 
 export const OperationTypeColorMap: Record<number, string> = {
@@ -191,7 +203,13 @@ export const OperationTypeColorMap: Record<number, string> = {
   [OperationType.BATCH_MAINTENANCE]: '#e6a23c',
   [OperationType.BATCH_REMIND_RENEWAL]: '#409eff',
   [OperationType.ANOMALY_INTERCEPT]: '#f56c6c',
-  [OperationType.AUTO_DETERMINE]: '#909399'
+  [OperationType.AUTO_DETERMINE]: '#909399',
+  [OperationType.COMPLIANCE_CHECK]: '#409eff',
+  [OperationType.BATCH_COMPLIANCE_CHECK]: '#67c23a',
+  [OperationType.COMPLIANCE_RECTIFICATION]: '#e6a23c',
+  [OperationType.COMPLIANCE_REPORT_EXPORT]: '#909399',
+  [OperationType.FAKE_COMPLIANCE_INTERCEPT]: '#f56c6c',
+  [OperationType.MISSED_CHECK_DETECTION]: '#e6a23c'
 }
 
 export enum OperationStatus {
@@ -383,4 +401,326 @@ export const TriggerTypeMap: Record<number, string> = {
   [TriggerType.SYSTEM]: '系统自动',
   [TriggerType.SCHEDULED]: '定时任务',
   [TriggerType.THRESHOLD]: '阈值触发'
+}
+
+export enum ComplianceLevel {
+  UNRATED = 0,
+  A = 1,
+  B = 2,
+  C = 3,
+  D = 4
+}
+
+export const ComplianceLevelMap: Record<number, string> = {
+  [ComplianceLevel.UNRATED]: '未评定',
+  [ComplianceLevel.A]: 'A级',
+  [ComplianceLevel.B]: 'B级',
+  [ComplianceLevel.C]: 'C级',
+  [ComplianceLevel.D]: 'D级'
+}
+
+export const ComplianceLevelColorMap: Record<number, string> = {
+  [ComplianceLevel.UNRATED]: '#909399',
+  [ComplianceLevel.A]: '#ffd700',
+  [ComplianceLevel.B]: '#67c23a',
+  [ComplianceLevel.C]: '#e6a23c',
+  [ComplianceLevel.D]: '#f56c6c'
+}
+
+export enum ComplianceStatus {
+  COMPLIANT = 1,
+  PENDING_CHECK = 2,
+  WARNING = 3,
+  LOCKED = 4
+}
+
+export const ComplianceStatusMap: Record<number, string> = {
+  [ComplianceStatus.COMPLIANT]: '合规',
+  [ComplianceStatus.PENDING_CHECK]: '待校验',
+  [ComplianceStatus.WARNING]: '已预警',
+  [ComplianceStatus.LOCKED]: '已锁定'
+}
+
+export const ComplianceStatusColorMap: Record<number, string> = {
+  [ComplianceStatus.COMPLIANT]: '#67c23a',
+  [ComplianceStatus.PENDING_CHECK]: '#909399',
+  [ComplianceStatus.WARNING]: '#e6a23c',
+  [ComplianceStatus.LOCKED]: '#f56c6c'
+}
+
+export enum ComplianceCheckType {
+  INSURANCE = 1,
+  INSPECTION = 2,
+  VIOLATION = 3,
+  COMPREHENSIVE = 4
+}
+
+export const ComplianceCheckTypeMap: Record<number, string> = {
+  [ComplianceCheckType.INSURANCE]: '保险校验',
+  [ComplianceCheckType.INSPECTION]: '年检校验',
+  [ComplianceCheckType.VIOLATION]: '违章校验',
+  [ComplianceCheckType.COMPREHENSIVE]: '综合校验'
+}
+
+export enum ComplianceCheckStatus {
+  PENDING = 0,
+  CHECKING = 1,
+  PASSED = 2,
+  FAILED = 3,
+  ABNORMAL = 4
+}
+
+export const ComplianceCheckStatusMap: Record<number, string> = {
+  [ComplianceCheckStatus.PENDING]: '待校验',
+  [ComplianceCheckStatus.CHECKING]: '校验中',
+  [ComplianceCheckStatus.PASSED]: '校验通过',
+  [ComplianceCheckStatus.FAILED]: '校验不通过',
+  [ComplianceCheckStatus.ABNORMAL]: '校验异常'
+}
+
+export enum RectificationType {
+  INSURANCE = 1,
+  INSPECTION = 2,
+  VIOLATION = 3,
+  PARAMETER = 4,
+  COMPREHENSIVE = 5
+}
+
+export const RectificationTypeMap: Record<number, string> = {
+  [RectificationType.INSURANCE]: '保险整改',
+  [RectificationType.INSPECTION]: '年检整改',
+  [RectificationType.VIOLATION]: '违章整改',
+  [RectificationType.PARAMETER]: '参数整改',
+  [RectificationType.COMPREHENSIVE]: '综合整改'
+}
+
+export enum RectificationStatus {
+  PENDING = 0,
+  IN_PROGRESS = 1,
+  SUBMITTED = 2,
+  REVIEWED = 3,
+  REJECTED = 4
+}
+
+export const RectificationStatusMap: Record<number, string> = {
+  [RectificationStatus.PENDING]: '待整改',
+  [RectificationStatus.IN_PROGRESS]: '整改中',
+  [RectificationStatus.SUBMITTED]: '已提交',
+  [RectificationStatus.REVIEWED]: '已复核',
+  [RectificationStatus.REJECTED]: '已驳回'
+}
+
+export enum CheckLevel {
+  NORMAL = 1,
+  STRICT = 2,
+  DEEP = 3
+}
+
+export const CheckLevelMap: Record<number, string> = {
+  [CheckLevel.NORMAL]: '常规校验',
+  [CheckLevel.STRICT]: '严格校验',
+  [CheckLevel.DEEP]: '深度校验'
+}
+
+export enum CityTier {
+  TIER1 = 1,
+  TIER2 = 2,
+  TIER3 = 3
+}
+
+export const CityTierMap: Record<number, string> = {
+  [CityTier.TIER1]: '一线城市',
+  [CityTier.TIER2]: '二线城市',
+  [CityTier.TIER3]: '三线及以下'
+}
+
+export enum ComplianceWarning {
+  NONE = 0,
+  APPROACHING = 1,
+  OVERDUE = 2,
+  RISK = 3
+}
+
+export const ComplianceWarningMap: Record<number, string> = {
+  [ComplianceWarning.NONE]: '无预警',
+  [ComplianceWarning.APPROACHING]: '临近校验',
+  [ComplianceWarning.OVERDUE]: '校验超期',
+  [ComplianceWarning.RISK]: '合规风险'
+}
+
+export enum FakeComplianceStatus {
+  NOT_DETECTED = 0,
+  SUSPECTED = 1,
+  CONFIRMED = 2
+}
+
+export const FakeComplianceStatusMap: Record<number, string> = {
+  [FakeComplianceStatus.NOT_DETECTED]: '未检测',
+  [FakeComplianceStatus.SUSPECTED]: '疑似虚假',
+  [FakeComplianceStatus.CONFIRMED]: '已确认虚假'
+}
+
+export enum CheckType {
+  INSURANCE = 1,
+  INSPECTION = 2,
+  VIOLATION = 3,
+  COMPREHENSIVE = 4,
+  RECHECK = 5
+}
+
+export const CheckTypeMap: Record<number, string> = {
+  [CheckType.INSURANCE]: '保险校验',
+  [CheckType.INSPECTION]: '年检校验',
+  [CheckType.VIOLATION]: '违章校验',
+  [CheckType.COMPREHENSIVE]: '综合校验',
+  [CheckType.RECHECK]: '合规复查'
+}
+
+export enum CheckMode {
+  MANUAL = 1,
+  AUTO = 2,
+  BATCH = 3
+}
+
+export const CheckModeMap: Record<number, string> = {
+  [CheckMode.MANUAL]: '手动校验',
+  [CheckMode.AUTO]: '自动校验',
+  [CheckMode.BATCH]: '批量校验'
+}
+
+export enum CheckStatus {
+  IN_PROGRESS = 0,
+  PASSED = 1,
+  FAILED = 2,
+  PARTIAL = 3
+}
+
+export const CheckStatusMap: Record<number, string> = {
+  [CheckStatus.IN_PROGRESS]: '校验中',
+  [CheckStatus.PASSED]: '校验通过',
+  [CheckStatus.FAILED]: '校验失败',
+  [CheckStatus.PARTIAL]: '部分通过'
+}
+
+export const CheckStatusColorMap: Record<number, string> = {
+  [CheckStatus.IN_PROGRESS]: '#e6a23c',
+  [CheckStatus.PASSED]: '#67c23a',
+  [CheckStatus.FAILED]: '#f56c6c',
+  [CheckStatus.PARTIAL]: '#409eff'
+}
+
+export enum ComplianceViolationType {
+  INSURANCE_EXPIRED = 1,
+  INSPECTION_EXPIRED = 2,
+  UNRESOLVED_VIOLATION = 3,
+  PARAM_MISMATCH = 4,
+  FALSE_DECLARATION = 5,
+  MISSED_CHECK = 6,
+  OTHER = 7
+}
+
+export const ComplianceViolationTypeMap: Record<number, string> = {
+  [ComplianceViolationType.INSURANCE_EXPIRED]: '保险过期',
+  [ComplianceViolationType.INSPECTION_EXPIRED]: '年检过期',
+  [ComplianceViolationType.UNRESOLVED_VIOLATION]: '违章未处理',
+  [ComplianceViolationType.PARAM_MISMATCH]: '参数不符',
+  [ComplianceViolationType.FALSE_DECLARATION]: '虚假申报',
+  [ComplianceViolationType.MISSED_CHECK]: '漏审',
+  [ComplianceViolationType.OTHER]: '其他'
+}
+
+export enum ComplianceViolationLevel {
+  MINOR = 1,
+  MODERATE = 2,
+  SEVERE = 3,
+  CRITICAL = 4
+}
+
+export const ComplianceViolationLevelMap: Record<number, string> = {
+  [ComplianceViolationLevel.MINOR]: '轻微',
+  [ComplianceViolationLevel.MODERATE]: '一般',
+  [ComplianceViolationLevel.SEVERE]: '严重',
+  [ComplianceViolationLevel.CRITICAL]: '重大'
+}
+
+export enum ComplianceViolationStatus {
+  PENDING = 0,
+  IN_PROGRESS = 1,
+  RESOLVED = 2,
+  IGNORED = 3,
+  OVERDUE = 4
+}
+
+export const ComplianceViolationStatusMap: Record<number, string> = {
+  [ComplianceViolationStatus.PENDING]: '待处理',
+  [ComplianceViolationStatus.IN_PROGRESS]: '整改中',
+  [ComplianceViolationStatus.RESOLVED]: '已整改',
+  [ComplianceViolationStatus.IGNORED]: '已忽略',
+  [ComplianceViolationStatus.OVERDUE]: '逾期未改'
+}
+
+export enum AlertType {
+  MISSED_CHECK = 1,
+  FALSE_COMPLIANCE = 2,
+  DATA_INCONSISTENCY = 3,
+  COMPLIANCE_RISK = 4,
+  RECTIFICATION_OVERDUE = 5,
+  CHECK_OVERDUE = 6
+}
+
+export const AlertTypeMap: Record<number, string> = {
+  [AlertType.MISSED_CHECK]: '漏审预警',
+  [AlertType.FALSE_COMPLIANCE]: '虚假合规',
+  [AlertType.DATA_INCONSISTENCY]: '数据不一致',
+  [AlertType.COMPLIANCE_RISK]: '合规风险',
+  [AlertType.RECTIFICATION_OVERDUE]: '整改逾期',
+  [AlertType.CHECK_OVERDUE]: '校验超期'
+}
+
+export enum AlertLevel {
+  INFO = 1,
+  WARNING = 2,
+  SEVERE = 3
+}
+
+export const AlertLevelMap: Record<number, string> = {
+  [AlertLevel.INFO]: '提示',
+  [AlertLevel.WARNING]: '警告',
+  [AlertLevel.SEVERE]: '严重'
+}
+
+export const AlertLevelColorMap: Record<number, string> = {
+  [AlertLevel.INFO]: '#409eff',
+  [AlertLevel.WARNING]: '#e6a23c',
+  [AlertLevel.SEVERE]: '#f56c6c'
+}
+
+export enum AlertStatus {
+  UNHANDLED = 0,
+  HANDLING = 1,
+  RESOLVED = 2,
+  IGNORED = 3
+}
+
+export const AlertStatusMap: Record<number, string> = {
+  [AlertStatus.UNHANDLED]: '未处理',
+  [AlertStatus.HANDLING]: '处理中',
+  [AlertStatus.RESOLVED]: '已解决',
+  [AlertStatus.IGNORED]: '已忽略'
+}
+
+export enum DiscoverySource {
+  COMPLIANCE_CHECK = 1,
+  OPERATION_INSPECTION = 2,
+  COMPLAINT = 3,
+  TRAFFIC_NOTICE = 4,
+  OTHER = 5
+}
+
+export const DiscoverySourceMap: Record<number, string> = {
+  [DiscoverySource.COMPLIANCE_CHECK]: '合规校验',
+  [DiscoverySource.OPERATION_INSPECTION]: '运营巡检',
+  [DiscoverySource.COMPLAINT]: '投诉举报',
+  [DiscoverySource.TRAFFIC_NOTICE]: '交管通报',
+  [DiscoverySource.OTHER]: '其他'
 }

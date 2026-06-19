@@ -35,6 +35,8 @@ const VehicleAuditLog = require('./VehicleAuditLog')
 const VehicleMaintenance = require('./VehicleMaintenance')
 const VehicleViolation = require('./VehicleViolation')
 const VehicleStatusLog = require('./VehicleStatusLog')
+const VehicleComplianceCheck = require('./VehicleComplianceCheck')
+const VehicleRectification = require('./VehicleRectification')
 
 Driver.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
 Vehicle.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
@@ -50,6 +52,15 @@ VehicleViolation.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
 
 Vehicle.hasMany(VehicleStatusLog, { foreignKey: 'vehicleId', as: 'statusLogs' })
 VehicleStatusLog.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
+
+Vehicle.hasMany(VehicleComplianceCheck, { foreignKey: 'vehicleId', as: 'complianceChecks' })
+VehicleComplianceCheck.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
+
+Vehicle.hasMany(VehicleRectification, { foreignKey: 'vehicleId', as: 'rectifications' })
+VehicleRectification.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
+
+VehicleComplianceCheck.hasMany(VehicleRectification, { foreignKey: 'checkId', as: 'rectifications' })
+VehicleRectification.belongsTo(VehicleComplianceCheck, { foreignKey: 'checkId', as: 'complianceCheck' })
 
 Order.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
 Order.belongsTo(Passenger, { foreignKey: 'passengerId', as: 'passenger' })
@@ -117,6 +128,8 @@ module.exports = {
   VehicleMaintenance,
   VehicleViolation,
   VehicleStatusLog,
+  VehicleComplianceCheck,
+  VehicleRectification,
   CapacityType,
   FinanceStatement,
   FinanceSettlement,
