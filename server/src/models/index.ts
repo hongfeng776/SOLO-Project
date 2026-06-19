@@ -30,6 +30,7 @@ import ChannelBlacklist from './ChannelBlacklist.model';
 import ChannelQualification from './ChannelQualification.model';
 import Product from './Product.model';
 import ProductAuditLog from './ProductAuditLog.model';
+import ProductEditApproval from './ProductEditApproval.model';
 
 const models = {
   User,
@@ -64,6 +65,7 @@ const models = {
   ChannelQualification,
   Product,
   ProductAuditLog,
+  ProductEditApproval,
 };
 
 const associate = (): void => {
@@ -137,8 +139,13 @@ const associate = (): void => {
 
   ProductAuditLog.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
   ProductAuditLog.belongsTo(User, { foreignKey: 'operatorId', as: 'operator' });
+
+  Product.hasMany(ProductEditApproval, { foreignKey: 'productId', as: 'editApprovals' });
+  ProductEditApproval.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+  ProductEditApproval.belongsTo(User, { foreignKey: 'applicantId', as: 'applicant' });
+  ProductEditApproval.belongsTo(User, { foreignKey: 'approverId', as: 'approver' });
 };
 
 export { associate };
-export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification, Product, ProductAuditLog };
+export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification, Product, ProductAuditLog, ProductEditApproval };
 export default models;

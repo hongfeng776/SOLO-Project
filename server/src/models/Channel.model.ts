@@ -76,6 +76,11 @@ Channel.init(
       allowNull: false,
       defaultValue: ChannelType.OTHER,
     },
+    level: {
+      type: DataTypes.ENUM(ChannelLevel.STAR, ChannelLevel.BRONZE, ChannelLevel.SILVER, ChannelLevel.GOLD, ChannelLevel.PLATINUM, ChannelLevel.DIAMOND),
+      allowNull: false,
+      defaultValue: ChannelLevel.SILVER,
+    },
     contactName: {
       type: DataTypes.STRING(50),
       allowNull: true,

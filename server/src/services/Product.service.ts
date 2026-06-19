@@ -2,6 +2,8 @@ import {
   productDao,
   productAuditLogDao,
   userDao,
+  orderDao,
+  productEditApprovalDao,
 } from '../dao';
 import { ProductAttributes } from '../models/Product.model';
 import { PaginationParams, PaginationResult } from '../types';
@@ -21,9 +23,18 @@ import {
   PRODUCT_REJECT_ISSUE_LABELS,
   PRODUCT_IMPORT_TEMPLATE_FIELDS,
   ProductRejectIssueType,
+  ProductEditApprovalStatus,
+  PRODUCT_EDIT_APPROVAL_STATUS_LABELS,
+  PRODUCT_CORE_FIELDS,
+  PRODUCT_CORE_FIELD_LABELS,
+  PRODUCT_NON_CORE_FIELDS,
+  PRODUCT_BATCH_EDIT_FIELDS,
+  PRODUCT_BATCH_EDIT_FIELD_LABELS,
+  PRODUCT_CATEGORY_PROMOTION_WEIGHT_DEFAULTS,
 } from '../constants/enum';
 import CacheUtils, { CacheKey, CacheTTL } from '../utils/cache';
 import dayjs from 'dayjs';
+import { Op } from 'sequelize';
 
 const FIELD_LABEL_MAP: Record<string, string> = {
   name: '商品名称',
@@ -38,6 +49,8 @@ const FIELD_LABEL_MAP: Record<string, string> = {
   costPrice: '成本价',
   stock: '库存数量',
   commissionRate: '佣金比例',
+  minCommission: '最低佣金',
+  maxCommission: '最高佣金',
   status: '商品状态',
   qualificationImgs: '资质文件',
   qualificationExpireAt: '资质有效期',
@@ -46,6 +59,11 @@ const FIELD_LABEL_MAP: Record<string, string> = {
   promotionEndTime: '推广结束时间',
   isHot: '热销标记',
   isRecommended: '推荐标记',
+  sort: '展示排序',
+  promotionWeight: '推广权重',
+  tags: '商品标签',
+  remark: '备注',
+  promotionMaterials: '推广素材',
 };
 
 interface ProductValidateResult {
@@ -101,6 +119,52 @@ interface TraceabilityRecord {
   remark?: string;
 }
 
+interface FieldDiff {
+  field: string;
+  fieldLabel: string;
+  oldValue: any;
+  newValue: any;
+  isCore: boolean;
+}
+
+interface EditProductResult {
+  updated: any;
+  changedFields: FieldDiff[];
+  needApproval: boolean;
+  approvalId?: string;
+}
+
+interface AdjustCommissionResult {
+  product: any;
+  oldCommissionRate: number;
+  newCommissionRate: number;
+  affectedOrderCount: number;
+  effectiveTime: Date;
+  preservedCommissionForExisting: boolean;
+}
+
+interface BatchEditResult {
+  total: number;
+  success: number;
+  failed: number;
+  skipped: number;
+  details: Array<{
+    id: string;
+    name: string;
+    status: 'success' | 'failed' | 'skipped';
+    reason?: string;
+    changes?: FieldDiff[];
+  }>;
+}
+
+interface EditApprovalSubmitResult {
+  approvalId: string;
+  product: any;
+  coreFields: FieldDiff[];
+  nonCoreFields: FieldDiff[];
+  affectedOrderCount: number;
+}
+
 const SUBMIT_LOCK_TTL = 1;
 
 function getFieldLabel(field: string): string {
@@ -116,6 +180,83 @@ function validatePrice(originalPrice: number, salePrice: number, costPrice?: num
 
 function validateStock(stock: number): boolean {
   return Number.isInteger(stock) && stock >= 0;
+}
+
+function normalizeValue(value: any): string {
+  if (value === null || value === undefined) return '';
+  if (Array.isArray(value)) return JSON.stringify(value);
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
+
+function compareFieldDiff(
+  oldData: any,
+  newData: any,
+  fields: string[]
+): FieldDiff[] {
+  const diffs: FieldDiff[] = [];
+  for (const field of fields) {
+    const oldVal = oldData[field];
+    const newVal = newData[field];
+    if (normalizeValue(oldVal) !== normalizeValue(newVal)) {
+      diffs.push({
+        field,
+        fieldLabel: getFieldLabel(field),
+        oldValue: oldVal,
+        newValue: newVal,
+        isCore: PRODUCT_CORE_FIELDS.includes(field),
+      });
+    }
+  }
+  return diffs;
+}
+
+function formatValueForDisplay(value: any): string {
+  if (value === null || value === undefined) return '空';
+  if (typeof value === 'number' && value < 1) return (value * 100).toFixed(2) + '%';
+  if (Array.isArray(value)) return '[' + value.join(', ') + ']';
+  return String(value);
+}
+
+function generateDiffSummary(diffs: FieldDiff[]): string {
+  return diffs
+    .map(
+      (d) =>
+        d.fieldLabel +
+        ': ' +
+        formatValueForDisplay(d.oldValue) +
+        ' → ' +
+        formatValueForDisplay(d.newValue)
+    )
+    .join('; ');
+}
+
+function isCoreField(field: string): boolean {
+  return PRODUCT_CORE_FIELDS.includes(field);
+}
+
+function isBatchEditAllowedField(field: string): boolean {
+  return PRODUCT_BATCH_EDIT_FIELDS.includes(field);
+}
+
+async function checkProductHasOrders(productId: string, sku?: string): Promise<{ hasOrders: boolean; count: number }> {
+  const where: any = {};
+  if (productId) {
+    where.productSku = { [Op.like]: '%' + sku + '%' } as any;
+  }
+  const count = await orderDao.count({ where });
+  return { hasOrders: count > 0, count };
+}
+
+async function countProductOrders(productId: string, sku?: string, beforeTime?: Date): Promise<number> {
+  const where: any = {};
+  if (sku) {
+    where.productSku = { [Op.like]: '%' + sku + '%' } as any;
+  }
+  if (beforeTime) {
+    where.createdAt = { [Op.lt]: beforeTime } as any;
+  }
+  return orderDao.count({ where });
 }
 
 class ProductService {
@@ -1222,8 +1363,9 @@ class ProductService {
     productId: string,
     operatorId: string,
     data: Partial<ProductAttributes> & { [key: string]: any },
+    applyReason?: string,
     ipAddress?: string
-  ): Promise<any> {
+  ): Promise<EditProductResult> {
     const product = await productDao.findById(productId);
     if (!product) {
       throw new AppError('商品不存在', BusinessCode.NOT_FOUND);
@@ -1232,9 +1374,49 @@ class ProductService {
     const plain = product.get({ plain: true });
     const editFields = Object.keys(data);
 
-    const lockedStatuses = [ProductStatus.LISTED, ProductStatus.PENDING_AUDIT];
-    if (lockedStatuses.includes((product as any).status)) {
-      throw new AppError('当前状态不允许编辑商品信息', BusinessCode.ERROR);
+    const pendingApproval = await productEditApprovalDao.findPendingApproval(productId);
+    if (pendingApproval) {
+      throw new AppError('该商品已有待审批的修改申请，请先处理', BusinessCode.ERROR);
+    }
+
+    const orderInfo = await checkProductHasOrders(productId, plain.sku);
+    const allFields = [...new Set([...PRODUCT_CORE_FIELDS, ...PRODUCT_NON_CORE_FIELDS, ...editFields])];
+    const allDiffs = compareFieldDiff(plain, data, allFields);
+    const coreDiffs = allDiffs.filter((d) => d.isCore);
+    const nonCoreDiffs = allDiffs.filter((d) => !d.isCore);
+
+    if (allDiffs.length === 0) {
+      return {
+        updated: plain,
+        changedFields: [],
+        needApproval: false,
+      };
+    }
+
+    if (orderInfo.hasOrders && coreDiffs.length > 0) {
+      const coreFieldNames = coreDiffs.map((d) => d.fieldLabel).join('、');
+      throw new AppError(
+        '该商品已产生' + orderInfo.count + '笔推广订单，禁止修改核心字段：' + coreFieldNames + '。如需修改请提交特殊审批',
+        BusinessCode.ERROR
+      );
+    }
+
+    const coreEditConflicts = coreDiffs.filter((d) => {
+      const oldVal = Number((plain as any)[d.field] || 0);
+      const newVal = Number((data as any)[d.field] || 0);
+      if (d.field === 'commissionRate') {
+        const range = PRODUCT_CATEGORY_COMMISSION_RANGES[plain.category as ProductCategory];
+        return range && (newVal < range.min || newVal > range.max);
+      }
+      if (d.field.includes('Price')) {
+        return newVal <= 0 || (d.field === 'salePrice' && newVal > Number(plain.originalPrice));
+      }
+      return false;
+    });
+
+    if (coreEditConflicts.length > 0) {
+      const conflictMsgs = coreEditConflicts.map((d) => d.fieldLabel + '参数设置冲突');
+      throw new AppError('参数修改冲突：' + conflictMsgs.join('；'), BusinessCode.PARAM_ERROR);
     }
 
     const validation = await this.validateProduct({ ...plain, ...data }, productId);
@@ -1255,32 +1437,80 @@ class ProductService {
       throw new AppError('疑似虚假商品：' + fakeCheck.reason, BusinessCode.PARAM_ERROR);
     }
 
+    if (coreDiffs.length > 0) {
+      if (!applyReason || applyReason.trim().length < 5) {
+        throw new AppError('修改核心字段必须填写修改原因（至少5个字符）', BusinessCode.PARAM_ERROR);
+      }
+
+      const operator = await userDao.findById(operatorId);
+      const operatorName = (operator as any)?.nickname || operator?.username || '系统';
+
+      const approval = await productEditApprovalDao.create({
+        productId,
+        applicantId: operatorId,
+        applicantName: operatorName,
+        applyReason: applyReason.trim(),
+        editFields: allDiffs.map((d) => d.field),
+        oldValues: allDiffs.reduce((acc, d) => {
+          acc[d.field] = d.oldValue;
+          return acc;
+        }, {} as any),
+        newValues: allDiffs.reduce((acc, d) => {
+          acc[d.field] = d.newValue;
+          return acc;
+        }, {} as any),
+        diffSummary: generateDiffSummary(allDiffs),
+        affectedOrderCount: orderInfo.count,
+      });
+
+      await this.recordAuditLog({
+        productId,
+        operatorId,
+        operatorName,
+        action: ProductAuditAction.EDIT_CORE,
+        fromStage: (product as any).auditStage,
+        toStage: (product as any).auditStage,
+        fromStatus: (product as any).status,
+        toStatus: (product as any).status,
+        remark: '提交核心字段修改审批，申请编号：' + approval.id,
+        metadata: {
+          approvalId: approval.id,
+          changes: allDiffs,
+          orderCount: orderInfo.count,
+        },
+        ipAddress,
+      });
+
+      return {
+        updated: plain,
+        changedFields: allDiffs,
+        needApproval: true,
+        approvalId: approval.id,
+      };
+    }
+
     const operator = await userDao.findById(operatorId);
     const operatorName = (operator as any)?.nickname || operator?.username || '系统';
 
     const updateData: any = {};
-    for (const field of editFields) {
-      const oldValue = (plain as any)[field];
-      const newValue = (data as any)[field];
-      if (String(oldValue) !== String(newValue)) {
-        (updateData as any)[field] = newValue;
-        await this.recordAuditLog({
-          productId,
-          operatorId,
-          operatorName,
-          action: ProductAuditAction.SUBMIT,
-          fromStage: (product as any).auditStage,
-          toStage: (product as any).auditStage,
-          fromStatus: (product as any).status,
-          toStatus: (product as any).status,
-          fieldName: field,
-          fieldLabel: getFieldLabel(field),
-          oldValue: oldValue !== undefined && oldValue !== null ? String(oldValue) : undefined,
-          newValue: newValue !== undefined && newValue !== null ? String(newValue) : undefined,
-          remark: '修改商品信息',
-          ipAddress,
-        });
-      }
+    for (const diff of nonCoreDiffs) {
+      updateData[diff.field] = diff.newValue;
+      await this.recordAuditLog({
+        productId,
+        operatorId,
+        operatorName,
+        action: ProductAuditAction.EDIT,
+        fromStage: (product as any).auditStage,
+        toStage: (product as any).auditStage,
+        fromStatus: (product as any).status,
+        toStatus: (product as any).status,
+        fieldName: diff.field,
+        fieldLabel: diff.fieldLabel,
+        oldValue: diff.oldValue !== undefined && diff.oldValue !== null ? String(diff.oldValue) : undefined,
+        newValue: diff.newValue !== undefined && diff.newValue !== null ? String(diff.newValue) : undefined,
+        remark: '修改商品非核心信息',
+        ipAddress,
+      });
     }
 
     if (Object.keys(updateData).length > 0) {
@@ -1290,7 +1520,551 @@ class ProductService {
     await CacheUtils.del(CacheKey.PRODUCT_DETAIL + productId);
     await CacheUtils.delPattern(CacheKey.PRODUCT_LIST + '*');
 
-    return this.getProductDetail(productId);
+    const updated = await this.getProductDetail(productId);
+
+    return {
+      updated,
+      changedFields: nonCoreDiffs,
+      needApproval: false,
+    };
+  }
+
+  public async adjustCommission(
+    productId: string,
+    operatorId: string,
+    newCommissionRate: number,
+    applyReason: string,
+    ipAddress?: string
+  ): Promise<AdjustCommissionResult> {
+    const product = await productDao.findById(productId);
+    if (!product) {
+      throw new AppError('商品不存在', BusinessCode.NOT_FOUND);
+    }
+
+    const plain = product.get({ plain: true });
+    const oldCommissionRate = Number(plain.commissionRate);
+
+    if (newCommissionRate <= 0 || newCommissionRate > 1) {
+      throw new AppError('佣金比例必须在0到1之间', BusinessCode.PARAM_ERROR);
+    }
+
+    const range = PRODUCT_CATEGORY_COMMISSION_RANGES[plain.category as ProductCategory];
+    if (range && (newCommissionRate < range.min || newCommissionRate > range.max)) {
+      throw new AppError(
+        '佣金比例超出' + plain.category + '类商品佣金区间[' + (range.min * 100) + '%, ' + (range.max * 100) + '%]',
+        BusinessCode.PARAM_ERROR
+      );
+    }
+
+    if (oldCommissionRate === newCommissionRate) {
+      throw new AppError('新佣金比例与当前值相同，无需调整', BusinessCode.PARAM_ERROR);
+    }
+
+    const pendingApproval = await productEditApprovalDao.findPendingApproval(productId);
+    if (pendingApproval) {
+      throw new AppError('该商品已有待审批的修改申请，请先处理', BusinessCode.ERROR);
+    }
+
+    const effectiveTime = new Date();
+    const affectedOrderCount = await countProductOrders(productId, plain.sku, effectiveTime);
+
+    const operator = await userDao.findById(operatorId);
+    const operatorName = (operator as any)?.nickname || operator?.username || '系统';
+
+    const approval = await productEditApprovalDao.create({
+      productId,
+      applicantId: operatorId,
+      applicantName: operatorName,
+      applyReason,
+      editFields: ['commissionRate'],
+      oldValues: { commissionRate: oldCommissionRate },
+      newValues: { commissionRate: newCommissionRate },
+      diffSummary:
+        '佣金比例: ' +
+        (oldCommissionRate * 100).toFixed(2) +
+        '% → ' +
+        (newCommissionRate * 100).toFixed(2) +
+        '%',
+      affectedOrderCount,
+      effectiveTime,
+    });
+
+    await this.recordAuditLog({
+      productId,
+      operatorId,
+      operatorName,
+      action: ProductAuditAction.COMMISSION_ADJUST,
+      fromStage: (product as any).auditStage,
+      toStage: (product as any).auditStage,
+      fromStatus: (product as any).status,
+      toStatus: (product as any).status,
+      fieldName: 'commissionRate',
+      fieldLabel: '佣金比例',
+      oldValue: String(oldCommissionRate),
+      newValue: String(newCommissionRate),
+      remark:
+        '调整佣金比例，生效时间：' +
+        effectiveTime.toLocaleString() +
+        '，存量订单数：' +
+        affectedOrderCount +
+        '笔',
+      metadata: {
+        approvalId: approval.id,
+        oldCommissionRate,
+        newCommissionRate,
+        effectiveTime,
+        affectedOrderCount,
+      },
+      ipAddress,
+    });
+
+    await productDao.update(
+      { commissionRate: newCommissionRate } as any,
+      { where: { id: productId } }
+    );
+
+    await CacheUtils.del(CacheKey.PRODUCT_DETAIL + productId);
+    await CacheUtils.delPattern(CacheKey.PRODUCT_LIST + '*');
+
+    const updated = await this.getProductDetail(productId);
+
+    return {
+      product: updated,
+      oldCommissionRate,
+      newCommissionRate,
+      affectedOrderCount,
+      effectiveTime,
+      preservedCommissionForExisting: true,
+    };
+  }
+
+  public async batchEdit(
+    productIds: string[],
+    operatorId: string,
+    data: Partial<ProductAttributes> & { [key: string]: any },
+    ipAddress?: string
+  ): Promise<BatchEditResult> {
+    if (!productIds || productIds.length === 0) {
+      throw new AppError('请选择要批量修改的商品', BusinessCode.PARAM_ERROR);
+    }
+
+    const editFields = Object.keys(data);
+    const invalidFields = editFields.filter((f) => !isBatchEditAllowedField(f));
+    if (invalidFields.length > 0) {
+      const invalidNames = invalidFields.map((f) => getFieldLabel(f)).join('、');
+      throw new AppError('禁止批量修改核心结算参数：' + invalidNames, BusinessCode.PARAM_ERROR);
+    }
+
+    if (editFields.length === 0) {
+      throw new AppError('请指定要修改的字段', BusinessCode.PARAM_ERROR);
+    }
+
+    const operator = await userDao.findById(operatorId);
+    const operatorName = (operator as any)?.nickname || operator?.username || '系统';
+
+    const details: BatchEditResult['details'] = [];
+    let success = 0;
+    let failed = 0;
+    let skipped = 0;
+
+    for (const id of productIds) {
+      try {
+        const product = await productDao.findById(id);
+        if (!product) {
+          skipped++;
+          details.push({ id, name: '-', status: 'skipped', reason: '商品不存在' });
+          continue;
+        }
+
+        const plain = product.get({ plain: true });
+        const pendingApproval = await productEditApprovalDao.findPendingApproval(id);
+        if (pendingApproval) {
+          skipped++;
+          details.push({
+            id,
+            name: plain.name,
+            status: 'skipped',
+            reason: '商品有待审批的修改申请',
+          });
+          continue;
+        }
+
+        const finalData: any = { ...data };
+        if (data.promotionWeight === undefined || data.promotionWeight === null) {
+          if (!data.promotionWeight && data.promotionWeight !== 0) {
+            const defaultWeight = PRODUCT_CATEGORY_PROMOTION_WEIGHT_DEFAULTS[plain.category as ProductCategory];
+            if (defaultWeight !== undefined) {
+              finalData.promotionWeight = defaultWeight;
+            }
+          }
+        }
+
+        if (data.isHot !== undefined && Number(plain.salesCount || 0) < 100) {
+          if ((plain as any).isHot && !data.isHot) {
+          } else if (!data.isHot) {
+          } else {
+            finalData.isHot = false;
+          }
+        }
+
+        const diffs = compareFieldDiff(plain, finalData, editFields);
+        if (diffs.length === 0) {
+          skipped++;
+          details.push({ id, name: plain.name, status: 'skipped', reason: '字段值未变化' });
+          continue;
+        }
+
+        const updateData: any = {};
+        for (const diff of diffs) {
+          updateData[diff.field] = diff.newValue;
+          await this.recordAuditLog({
+            productId: id,
+            operatorId,
+            operatorName,
+            action: ProductAuditAction.BATCH_EDIT,
+            fromStage: (product as any).auditStage,
+            toStage: (product as any).auditStage,
+            fromStatus: (product as any).status,
+            toStatus: (product as any).status,
+            fieldName: diff.field,
+            fieldLabel: diff.fieldLabel,
+            oldValue: diff.oldValue !== undefined && diff.oldValue !== null ? String(diff.oldValue) : undefined,
+            newValue: diff.newValue !== undefined && diff.newValue !== null ? String(diff.newValue) : undefined,
+            remark: '批量修改商品信息',
+            metadata: { batch: true },
+            ipAddress,
+          });
+        }
+
+        await productDao.update(updateData, { where: { id } });
+
+        success++;
+        details.push({ id, name: plain.name, status: 'success', changes: diffs });
+      } catch (err: any) {
+        failed++;
+        const product = await productDao.findById(id);
+        details.push({
+          id,
+          name: product?.name || '-',
+          status: 'failed',
+          reason: err.message || '操作失败',
+        });
+      }
+    }
+
+    await CacheUtils.delPattern(CacheKey.PRODUCT_LIST + '*');
+    for (const id of productIds) {
+      await CacheUtils.del(CacheKey.PRODUCT_DETAIL + id);
+    }
+
+    return {
+      total: productIds.length,
+      success,
+      failed,
+      skipped,
+      details,
+    };
+  }
+
+  public async getEditApprovalList(
+    params: PaginationParams & {
+      productId?: string;
+      applicantId?: string;
+      approverId?: string;
+      status?: ProductEditApprovalStatus;
+      startTime?: string;
+      endTime?: string;
+    }
+  ): Promise<PaginationResult<any>> {
+    const { page, pageSize, ...query } = params;
+    const { rows, count } = await productEditApprovalDao.findAllPaged({
+      page,
+      pageSize,
+      ...query,
+    });
+
+    const list = rows.map((row: any) => {
+      const plain = row.get({ plain: true });
+      const status = plain.status as ProductEditApprovalStatus;
+      return {
+        ...plain,
+        statusLabel: PRODUCT_EDIT_APPROVAL_STATUS_LABELS[status]?.label,
+        statusType: PRODUCT_EDIT_APPROVAL_STATUS_LABELS[status]?.type,
+      };
+    });
+
+    return {
+      list,
+      total: count,
+      page,
+      pageSize,
+      totalPages: Math.ceil(count / pageSize),
+    };
+  }
+
+  public async getEditApprovalDetail(approvalId: string): Promise<any> {
+    const approval = await productEditApprovalDao.findById(approvalId);
+    if (!approval) {
+      throw new AppError('审批记录不存在', BusinessCode.NOT_FOUND);
+    }
+
+    const plain = approval.get({ plain: true });
+    const product = await productDao.findById(plain.productId);
+
+    const allDiffs: FieldDiff[] = plain.editFields.map((field: string) => ({
+      field,
+      fieldLabel: getFieldLabel(field),
+      oldValue: plain.oldValues[field],
+      newValue: plain.newValues[field],
+      isCore: isCoreField(field),
+    }));
+
+    return {
+      ...plain,
+      statusLabel: PRODUCT_EDIT_APPROVAL_STATUS_LABELS[plain.status]?.label,
+      statusType: PRODUCT_EDIT_APPROVAL_STATUS_LABELS[plain.status]?.type,
+      productName: product?.name,
+      productSku: product?.sku,
+      fieldDiffs: allDiffs,
+    };
+  }
+
+  public async approveEdit(
+    approvalId: string,
+    approverId: string,
+    remark?: string,
+    ipAddress?: string
+  ): Promise<void> {
+    const approval = await productEditApprovalDao.findById(approvalId);
+    if (!approval) {
+      throw new AppError('审批记录不存在', BusinessCode.NOT_FOUND);
+    }
+    if ((approval as any).status !== ProductEditApprovalStatus.PENDING) {
+      throw new AppError('该申请已处理，无法重复审批', BusinessCode.ERROR);
+    }
+
+    const approver = await userDao.findById(approverId);
+    const approverName = (approver as any)?.nickname || approver?.username || '系统';
+
+    const plain = approval.get({ plain: true });
+    const product = await productDao.findById(plain.productId);
+    if (!product) {
+      throw new AppError('关联商品不存在', BusinessCode.NOT_FOUND);
+    }
+
+    const productPlain = product.get({ plain: true });
+    const updateData: any = { ...plain.newValues };
+    const effectiveTime = new Date();
+
+    await productDao.update(updateData, { where: { id: plain.productId } });
+
+    await productEditApprovalDao.update(
+      {
+        status: ProductEditApprovalStatus.APPROVED,
+        approverId,
+        approverName,
+        approveRemark: remark,
+        approveAt: effectiveTime,
+        effectiveTime,
+      } as any,
+      { where: { id: approvalId } }
+    );
+
+    for (const field of plain.editFields) {
+      const oldValue = plain.oldValues[field];
+      const newValue = plain.newValues[field];
+      await this.recordAuditLog({
+        productId: plain.productId,
+        operatorId: approverId,
+        operatorName: approverName,
+        action: ProductAuditAction.EDIT_APPROVE,
+        fromStage: (product as any).auditStage,
+        toStage: (product as any).auditStage,
+        fromStatus: (product as any).status,
+        toStatus: (product as any).status,
+        fieldName: field,
+        fieldLabel: getFieldLabel(field),
+        oldValue: oldValue !== undefined && oldValue !== null ? String(oldValue) : undefined,
+        newValue: newValue !== undefined && newValue !== null ? String(newValue) : undefined,
+        remark: '审批通过，修改已生效。' + (remark || ''),
+        metadata: { approvalId, effectiveTime },
+        ipAddress,
+      });
+    }
+
+    await CacheUtils.del(CacheKey.PRODUCT_DETAIL + plain.productId);
+    await CacheUtils.delPattern(CacheKey.PRODUCT_LIST + '*');
+  }
+
+  public async rejectEdit(
+    approvalId: string,
+    approverId: string,
+    remark: string,
+    ipAddress?: string
+  ): Promise<void> {
+    const approval = await productEditApprovalDao.findById(approvalId);
+    if (!approval) {
+      throw new AppError('审批记录不存在', BusinessCode.NOT_FOUND);
+    }
+    if ((approval as any).status !== ProductEditApprovalStatus.PENDING) {
+      throw new AppError('该申请已处理，无法重复审批', BusinessCode.ERROR);
+    }
+
+    if (!remark || remark.trim().length < 5) {
+      throw new AppError('驳回原因至少需要5个字符', BusinessCode.PARAM_ERROR);
+    }
+
+    const approver = await userDao.findById(approverId);
+    const approverName = (approver as any)?.nickname || approver?.username || '系统';
+
+    const plain = approval.get({ plain: true });
+    const product = await productDao.findById(plain.productId);
+
+    await productEditApprovalDao.update(
+      {
+        status: ProductEditApprovalStatus.REJECTED,
+        approverId,
+        approverName,
+        approveRemark: remark,
+        approveAt: new Date(),
+      } as any,
+      { where: { id: approvalId } }
+    );
+
+    await this.recordAuditLog({
+      productId: plain.productId,
+      operatorId: approverId,
+      operatorName: approverName,
+      action: ProductAuditAction.EDIT_REJECT,
+      fromStage: product ? (product as any).auditStage : ProductAuditStage.PENDING_SUBMIT,
+      toStage: product ? (product as any).auditStage : ProductAuditStage.PENDING_SUBMIT,
+      fromStatus: product ? (product as any).status : ProductStatus.DRAFT,
+      toStatus: product ? (product as any).status : ProductStatus.DRAFT,
+      remark: '驳回修改申请：' + remark,
+      metadata: { approvalId },
+      ipAddress,
+    });
+  }
+
+  public async getEditHistory(
+    productId: string,
+    params: PaginationParams
+  ): Promise<PaginationResult<any>> {
+    const product = await productDao.findById(productId);
+    if (!product) {
+      throw new AppError('商品不存在', BusinessCode.NOT_FOUND);
+    }
+
+    const { page, pageSize } = params;
+    const { rows, count } = await productAuditLogDao.findAllPaged({
+      productId,
+      page,
+      pageSize,
+    });
+
+    const editActions = [
+      ProductAuditAction.EDIT,
+      ProductAuditAction.EDIT_CORE,
+      ProductAuditAction.EDIT_APPROVE,
+      ProductAuditAction.EDIT_REJECT,
+      ProductAuditAction.BATCH_EDIT,
+      ProductAuditAction.COMMISSION_ADJUST,
+    ];
+
+    const editLogs = rows.filter((log: any) => {
+      const plain = log.get({ plain: true });
+      return editActions.includes(plain.action);
+    });
+
+    const list = editLogs.map((log: any) => {
+      const plain = log.get({ plain: true });
+      let diff: FieldDiff | null = null;
+      if (plain.fieldName) {
+        diff = {
+          field: plain.fieldName,
+          fieldLabel: plain.fieldLabel || getFieldLabel(plain.fieldName),
+          oldValue: plain.oldValue,
+          newValue: plain.newValue,
+          isCore: isCoreField(plain.fieldName),
+        };
+      }
+      return {
+        id: plain.id,
+        action: plain.action,
+        operatorId: plain.operatorId,
+        operatorName: plain.operatorName,
+        operateAt: plain.createdAt,
+        remark: plain.remark,
+        ipAddress: plain.ipAddress,
+        diff,
+        metadata: plain.metadata,
+      };
+    });
+
+    return {
+      list,
+      total: count,
+      page,
+      pageSize,
+      totalPages: Math.ceil(count / pageSize),
+    };
+  }
+
+  public async getFieldDiff(
+    productId: string,
+    newData: Partial<ProductAttributes> & { [key: string]: any }
+  ): Promise<{
+    allDiffs: FieldDiff[];
+    coreDiffs: FieldDiff[];
+    nonCoreDiffs: FieldDiff[];
+    hasOrders: boolean;
+    orderCount: number;
+    needApproval: boolean;
+  }> {
+    const product = await productDao.findById(productId);
+    if (!product) {
+      throw new AppError('商品不存在', BusinessCode.NOT_FOUND);
+    }
+
+    const plain = product.get({ plain: true });
+    const editFields = Object.keys(newData);
+    const allFields = [...new Set([...PRODUCT_CORE_FIELDS, ...PRODUCT_NON_CORE_FIELDS, ...editFields])];
+    const allDiffs = compareFieldDiff(plain, newData, allFields);
+    const coreDiffs = allDiffs.filter((d) => d.isCore);
+    const nonCoreDiffs = allDiffs.filter((d) => !d.isCore);
+
+    const orderInfo = await checkProductHasOrders(productId, plain.sku);
+    const needApproval = coreDiffs.length > 0;
+
+    return {
+      allDiffs,
+      coreDiffs,
+      nonCoreDiffs,
+      hasOrders: orderInfo.hasOrders,
+      orderCount: orderInfo.count,
+      needApproval,
+    };
+  }
+
+  public async getEditFieldConfig(): Promise<{
+    coreFields: Array<{ field: string; label: string }>;
+    nonCoreFields: Array<{ field: string; label: string }>;
+    batchEditFields: Array<{ field: string; label: string }>;
+  }> {
+    return {
+      coreFields: PRODUCT_CORE_FIELDS.map((f) => ({
+        field: f,
+        label: PRODUCT_CORE_FIELD_LABELS[f] || f,
+      })),
+      nonCoreFields: PRODUCT_NON_CORE_FIELDS.map((f) => ({
+        field: f,
+        label: FIELD_LABEL_MAP[f] || f,
+      })),
+      batchEditFields: PRODUCT_BATCH_EDIT_FIELDS.map((f) => ({
+        field: f,
+        label: PRODUCT_BATCH_EDIT_FIELD_LABELS[f] || f,
+      })),
+    };
   }
 }
 

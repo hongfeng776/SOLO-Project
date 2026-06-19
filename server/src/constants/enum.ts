@@ -795,7 +795,75 @@ export enum ProductAuditAction {
   LIST = 'list',
   DELIST = 'delist',
   OFFLINE = 'offline',
+  EDIT = 'edit',
+  EDIT_CORE = 'edit_core',
+  EDIT_APPROVE = 'edit_approve',
+  EDIT_REJECT = 'edit_reject',
+  BATCH_EDIT = 'batch_edit',
+  COMMISSION_ADJUST = 'commission_adjust',
 }
+
+export enum ProductEditApprovalStatus {
+  PENDING = 0,
+  APPROVED = 1,
+  REJECTED = -1,
+  CANCELLED = 2,
+}
+
+export const PRODUCT_EDIT_APPROVAL_STATUS_LABELS: Record<ProductEditApprovalStatus, { label: string; type: 'warning' | 'success' | 'danger' | 'info' }> = {
+  [ProductEditApprovalStatus.PENDING]: { label: '待审批', type: 'warning' },
+  [ProductEditApprovalStatus.APPROVED]: { label: '已通过', type: 'success' },
+  [ProductEditApprovalStatus.REJECTED]: { label: '已驳回', type: 'danger' },
+  [ProductEditApprovalStatus.CANCELLED]: { label: '已撤销', type: 'info' },
+};
+
+export const PRODUCT_CORE_FIELDS: string[] = [
+  'originalPrice',
+  'salePrice',
+  'costPrice',
+  'commissionRate',
+  'minCommission',
+  'maxCommission',
+];
+
+export const PRODUCT_CORE_FIELD_LABELS: Record<string, string> = {
+  originalPrice: '商品原价',
+  salePrice: '销售价格',
+  costPrice: '成本价格',
+  commissionRate: '佣金比例',
+  minCommission: '最低佣金',
+  maxCommission: '最高佣金',
+};
+
+export const PRODUCT_NON_CORE_FIELDS: string[] = [
+  'name',
+  'description',
+  'brand',
+  'mainImage',
+  'images',
+  'promotionMaterials',
+  'remark',
+  'isHot',
+  'isRecommended',
+  'sort',
+  'tags',
+];
+
+export const PRODUCT_BATCH_EDIT_FIELDS: string[] = [
+  'isHot',
+  'isRecommended',
+  'sort',
+  'tags',
+  'promotionWeight',
+];
+
+export const PRODUCT_BATCH_EDIT_FIELD_LABELS: Record<string, string> = {
+  isHot: '热销标记',
+  isRecommended: '推荐状态',
+  sort: '展示排序',
+  tags: '商品标签',
+  promotionWeight: '推广权重',
+};
 
 export enum ProductCategory {
   ELECTRONICS = 'electronics',
@@ -831,6 +899,18 @@ export const PRODUCT_CATEGORY_COMMISSION_RANGES: Record<ProductCategory, { min: 
   [ProductCategory.BOOKS]: { min: 0.05, max: 0.20, warning: 0.15 },
   [ProductCategory.TOYS]: { min: 0.08, max: 0.30, warning: 0.25 },
   [ProductCategory.OTHER]: { min: 0.05, max: 0.25, warning: 0.20 },
+};
+
+export const PRODUCT_CATEGORY_PROMOTION_WEIGHT_DEFAULTS: Record<ProductCategory, number> = {
+  [ProductCategory.ELECTRONICS]: 80,
+  [ProductCategory.CLOTHING]: 90,
+  [ProductCategory.FOOD]: 85,
+  [ProductCategory.BEAUTY]: 95,
+  [ProductCategory.HOME]: 75,
+  [ProductCategory.SPORTS]: 70,
+  [ProductCategory.BOOKS]: 65,
+  [ProductCategory.TOYS]: 85,
+  [ProductCategory.OTHER]: 60,
 };
 
 export const PRODUCT_AUDIT_STAGES = [

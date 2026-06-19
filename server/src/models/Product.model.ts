@@ -42,6 +42,8 @@ interface ProductAttributes {
   isHot?: boolean;
   isRecommended?: boolean;
   sort?: number;
+  promotionWeight?: number;
+  tags?: string[] | string;
   channelId?: string;
   auditorId?: string;
   auditAt?: Date;
@@ -67,7 +69,7 @@ interface ProductAttributes {
   deletedAt?: Date;
 }
 
-interface ProductCreationAttributes extends Optional<ProductAttributes, 'id' | 'brand' | 'description' | 'mainImage' | 'images' | 'costPrice' | 'lockedStock' | 'minCommission' | 'maxCommission' | 'status' | 'auditStage' | 'qualificationVerified' | 'qualificationImgs' | 'qualificationExpireAt' | 'qualificationRemark' | 'promotionMaterials' | 'commissionRuleId' | 'promoteEnabled' | 'listStartTime' | 'listEndTime' | 'limitedPromotion' | 'promotionStartTime' | 'promotionEndTime' | 'isHot' | 'isRecommended' | 'sort' | 'channelId' | 'auditorId' | 'auditAt' | 'auditRemark' | 'rejectIssueType' | 'rejectCustomRemark' | 'rejectedAt' | 'submitterId' | 'submitAt' | 'listerId' | 'listAt' | 'delisterId' | 'delistAt' | 'salesCount' | 'salesAmount' | 'promoteCount' | 'fakeProductFlag' | 'fakeProductReason' | 'complianceScore' | 'remark' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
+interface ProductCreationAttributes extends Optional<ProductAttributes, 'id' | 'brand' | 'description' | 'mainImage' | 'images' | 'costPrice' | 'lockedStock' | 'minCommission' | 'maxCommission' | 'status' | 'auditStage' | 'qualificationVerified' | 'qualificationImgs' | 'qualificationExpireAt' | 'qualificationRemark' | 'promotionMaterials' | 'commissionRuleId' | 'promoteEnabled' | 'listStartTime' | 'listEndTime' | 'limitedPromotion' | 'promotionStartTime' | 'promotionEndTime' | 'isHot' | 'isRecommended' | 'sort' | 'promotionWeight' | 'tags' | 'channelId' | 'auditorId' | 'auditAt' | 'auditRemark' | 'rejectIssueType' | 'rejectCustomRemark' | 'rejectedAt' | 'submitterId' | 'submitAt' | 'listerId' | 'listAt' | 'delisterId' | 'delistAt' | 'salesCount' | 'salesAmount' | 'promoteCount' | 'fakeProductFlag' | 'fakeProductReason' | 'complianceScore' | 'remark' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
 
 class Product extends Model<ProductAttributes, ProductCreationAttributes> implements ProductAttributes {
   public id!: string;
@@ -103,6 +105,8 @@ class Product extends Model<ProductAttributes, ProductCreationAttributes> implem
   public isHot?: boolean;
   public isRecommended?: boolean;
   public sort?: number;
+  public promotionWeight?: number;
+  public tags?: string[] | string;
   public channelId?: string;
   public auditorId?: string;
   public auditAt?: Date;
@@ -298,6 +302,26 @@ Product.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
+    },
+    promotionWeight: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    tags: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      get() {
+        const raw = this.getDataValue('tags') as string | null;
+        return raw ? JSON.parse(raw) : [];
+      },
+      set(value: string[] | string) {
+        if (Array.isArray(value)) {
+          this.setDataValue('tags', JSON.stringify(value));
+        } else {
+          this.setDataValue('tags', value);
+        }
+      },
     },
     channelId: {
       type: DataTypes.STRING(36),

@@ -85,17 +85,7 @@ class ProductController {
     }
   }
 
-  public async updateProductInfo(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
-      const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string) || '';
-      const result = await productService.updateProductInfo(id, operatorId, req.body, ipAddress);
-      ResponseUtils.success(res, result, '商品信息更新成功');
-    } catch (err: any) {
-      ResponseUtils.error(res, err.message, err.code);
-    }
-  }
+
 
   public async submitForAudit(req: Request, res: Response): Promise<void> {
     try {
@@ -228,6 +218,147 @@ class ProductController {
     try {
       const result = await productService.processExpiredProducts();
       ResponseUtils.success(res, result, `处理完成，自动下架${result.delisted}件商品`);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async updateProductInfo(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { data, applyReason } = req.body;
+      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
+      const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string) || '';
+      const result = await productService.updateProductInfo(id, operatorId, data, applyReason, ipAddress);
+      if (result.needApproval) {
+        ResponseUtils.success(res, result, '核心字段修改已提交审批，请等待审核');
+      } else {
+        ResponseUtils.success(res, result, '商品信息更新成功');
+      }
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async adjustCommission(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { newCommissionRate, applyReason } = req.body;
+      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
+      const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string) || '';
+      const result = await productService.adjustCommission(
+        id,
+        operatorId,
+        Number(newCommissionRate),
+        applyReason,
+        ipAddress
+      );
+      ResponseUtils.success(
+        res,
+        result,
+        '佣金比例调整成功，已自动区分存量与新增订单，存量订单保持原有佣金规则'
+      );
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async batchEdit(req: Request, res: Response): Promise<void> {
+    try {
+      const { ids, data } = req.body;
+      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
+      const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string) || '';
+      const result = await productService.batchEdit(ids, operatorId, data, ipAddress);
+      ResponseUtils.success(res, result, '批量修改完成');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getFieldDiff(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { newData } = req.body;
+      const result = await productService.getFieldDiff(id, newData);
+      ResponseUtils.success(res, result);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getEditFieldConfig(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await productService.getEditFieldConfig();
+      ResponseUtils.success(res, result);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getEditApprovalList(req: Request, res: Response): Promise<void> {
+    try {
+      const page = parseInt((req.query.page as string) || '1', 10);
+      const pageSize = parseInt((req.query.pageSize as string) || '10', 10);
+      const { productId, applicantId, approverId, status, startTime, endTime } = req.query;
+      const result = await productService.getEditApprovalList({
+        page,
+        pageSize,
+        productId: productId as string,
+        applicantId: applicantId as string,
+        approverId: approverId as string,
+        status: status ? parseInt(status as string, 10) : undefined,
+        startTime: startTime as string,
+        endTime: endTime as string,
+      });
+      ResponseUtils.paginated(res, result.list, result.total, result.page, result.pageSize);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getEditApprovalDetail(req: Request, res: Response): Promise<void> {
+    try {
+      const { approvalId } = req.params;
+      const result = await productService.getEditApprovalDetail(approvalId);
+      ResponseUtils.success(res, result);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async approveEdit(req: Request, res: Response): Promise<void> {
+    try {
+      const { approvalId } = req.params;
+      const { remark } = req.body;
+      const approverId = (req as any).user?.id || (req as any).user?.userId || '';
+      const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string) || '';
+      await productService.approveEdit(approvalId, approverId, remark, ipAddress);
+      ResponseUtils.success(res, null, '审批通过，修改已生效');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async rejectEdit(req: Request, res: Response): Promise<void> {
+    try {
+      const { approvalId } = req.params;
+      const { remark } = req.body;
+      const approverId = (req as any).user?.id || (req as any).user?.userId || '';
+      const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string) || '';
+      await productService.rejectEdit(approvalId, approverId, remark, ipAddress);
+      ResponseUtils.success(res, null, '已驳回修改申请');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getEditHistory(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const page = parseInt((req.query.page as string) || '1', 10);
+      const pageSize = parseInt((req.query.pageSize as string) || '10', 10);
+      const result = await productService.getEditHistory(id, { page, pageSize });
+      ResponseUtils.paginated(res, result.list, result.total, result.page, result.pageSize);
     } catch (err: any) {
       ResponseUtils.error(res, err.message, err.code);
     }

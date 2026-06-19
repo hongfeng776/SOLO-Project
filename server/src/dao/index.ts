@@ -26,6 +26,7 @@ import channelBlacklistDao from './ChannelBlacklist.dao';
 import channelQualificationDao from './ChannelQualification.dao';
 import productDao from './Product.dao';
 import productAuditLogDao from './ProductAuditLog.dao';
+import productEditApprovalDao from './ProductEditApproval.dao';
 
 export {
   userDao,
@@ -56,4 +57,5 @@ export {
   channelQualificationDao,
   productDao,
   productAuditLogDao,
+  productEditApprovalDao,
 };
