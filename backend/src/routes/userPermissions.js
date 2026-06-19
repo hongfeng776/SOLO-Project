@@ -1,0 +1,21 @@
+const express = require('express')
+const router = express.Router()
+const userPermissionController = require('../controllers/userPermissionController')
+const { authMiddleware, roleMiddleware } = require('../middlewares/auth')
+
+router.get('/users', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userPermissionController.getUserPermissionList)
+router.get('/users/:userId', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userPermissionController.getUserPermissionDetail)
+router.post('/assign-role', authMiddleware(), roleMiddleware(['super_admin']), userPermissionController.assignRole)
+router.post('/add-permissions', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userPermissionController.addDirectPermissions)
+router.post('/remove-permissions', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userPermissionController.removeDirectPermissions)
+router.post('/batch-assign', authMiddleware(), roleMiddleware(['super_admin']), userPermissionController.batchAssign)
+router.get('/trace/:userId', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userPermissionController.traceUserPermissions)
+router.get('/logs', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userPermissionController.getPermissionLogs)
+router.post('/clean/:userId', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userPermissionController.cleanRedundantPermissions)
+router.get('/roles', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userPermissionController.getAllRoles)
+router.get('/users/select', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userPermissionController.getAllUsersForSelect)
+router.get('/validate/status/:userId', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userPermissionController.validateUserStatus)
+router.post('/validate/match', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userPermissionController.validateRolePermissionMatch)
+router.post('/validate/unique', authMiddleware(), roleMiddleware(['super_admin', 'admin']), userPermissionController.validatePermissionUniqueness)
+
+module.exports = router

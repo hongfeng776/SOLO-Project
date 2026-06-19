@@ -20,7 +20,13 @@ import type {
   SystemLogCleanupParams,
   SystemLogCleanupResult,
   SystemLogTraceabilityResult,
-  SystemLogOption
+  SystemLogOption,
+  CronLog,
+  CronLogListParams,
+  CronLogStatsData,
+  CronLogBatchStatsData,
+  CronLogTraceabilityResult,
+  CronLogOption
 } from '@/types'
 
 export const validateLogParams = (params: LogListParams) => {
@@ -119,4 +125,54 @@ export const getSystemLogModuleList = () => {
 
 export const createSystemLog = (data: Partial<SystemLog>) => {
   return request.post<SystemLog>('/system-logs', data)
+}
+
+// ==================== 定时任务日志 ====================
+
+export const validateCronLogParams = (params: CronLogListParams) => {
+  return request.get<LogValidationResult>('/cron-logs/validate', params)
+}
+
+export const getCronLogList = (params: CronLogListParams) => {
+  return request.get<PageResult<CronLog> & { warnings?: string[] }>('/cron-logs', params)
+}
+
+export const getCronLogDetail = (id: number) => {
+  return request.get<CronLog>(`/cron-logs/${id}`)
+}
+
+export const getCronLogStats = (params?: { startDate?: string; endDate?: string; taskType?: string; taskGroup?: string }) => {
+  return request.get<CronLogStatsData>('/cron-logs/stats', params)
+}
+
+export const getCronLogBatchStats = (params?: { period?: string; taskType?: string; taskGroup?: string }) => {
+  return request.get<CronLogBatchStatsData>('/cron-logs/batch-stats', params)
+}
+
+export const getCronLogTraceability = (params?: { startDate?: string; endDate?: string; taskType?: string; taskGroup?: string; anomalyType?: string }) => {
+  return request.get<CronLogTraceabilityResult>('/cron-logs/traceability', params)
+}
+
+export const getCronTaskTypeList = () => {
+  return request.get<CronLogOption[]>('/cron-logs/task-types')
+}
+
+export const getCronStatusList = () => {
+  return request.get<CronLogOption[]>('/cron-logs/statuses')
+}
+
+export const getCronTriggerTypeList = () => {
+  return request.get<CronLogOption[]>('/cron-logs/trigger-types')
+}
+
+export const getCronTaskNameList = (params?: { taskType?: string; taskGroup?: string }) => {
+  return request.get<CronLogOption[]>('/cron-logs/task-names', params)
+}
+
+export const getCronTaskGroupList = () => {
+  return request.get<CronLogOption[]>('/cron-logs/task-groups')
+}
+
+export const createCronLog = (data: Partial<CronLog>) => {
+  return request.post<CronLog>('/cron-logs', data)
 }

@@ -706,65 +706,95 @@ export const ComplianceIssueSeverityTagType: Record<string, string> = {
 
 // ================ 账号权限分配管理 ================
 
-export const AccountStatusLabel: Record<string, string> = {
-  active: '正常',
-  frozen: '冻结',
-  temp_banned: '临时封禁',
-  permanent_banned: '永久封禁'
+export const PermSourceLabel: Record<string, string> = {
+  role_inherit: '角色继承',
+  direct_assign: '直接分配',
+  batch_assign: '批量分配',
+  auto_grant: '自动授予'
 }
 
-export const AccountStatusTagType: Record<string, string> = {
-  active: 'success',
-  frozen: 'warning',
-  temp_banned: 'danger',
-  permanent_banned: 'danger'
+export const PermSourceTagType: Record<string, string> = {
+  role_inherit: 'primary',
+  direct_assign: 'success',
+  batch_assign: 'warning',
+  auto_grant: 'info'
 }
 
-export const AccountStatusOption = [
-  { value: '', label: '全部状态' },
+export const UserPermChangeTypeLabel: Record<string, string> = {
+  assign_role: '分配角色',
+  unassign_role: '移除角色',
+  add_perm: '新增权限',
+  remove_perm: '移除权限',
+  batch_assign: '批量分配',
+  override_perm: '覆盖权限',
+  sync: '权限同步',
+  clear_expired: '清理过期'
+}
+
+export const UserPermChangeTypeTagType: Record<string, string> = {
+  assign_role: 'success',
+  unassign_role: 'danger',
+  add_perm: 'primary',
+  remove_perm: 'warning',
+  batch_assign: 'warning',
+  override_perm: 'primary',
+  sync: 'info',
+  clear_expired: 'info'
+}
+
+export const CheckResultLabel: Record<string, string> = {
+  pass: '通过',
+  duplicate: '重复分配',
+  overreach: '越权配置',
+  conflict: '权限冲突',
+  redundant: '权限冗余',
+  status_block: '状态拦截'
+}
+
+export const CheckResultTagType: Record<string, string> = {
+  pass: 'success',
+  duplicate: 'warning',
+  overreach: 'danger',
+  conflict: 'danger',
+  redundant: 'info',
+  status_block: 'danger'
+}
+
+export const UserPermValidationTypeLabel: Record<string, string> = {
+  duplicate: '重复分配',
+  conflict: '权限冲突',
+  overreach: '越权配置',
+  redundant: '权限冗余',
+  missing: '权限缺失'
+}
+
+export const UserPermValidationTypeTagType: Record<string, string> = {
+  duplicate: 'warning',
+  conflict: 'danger',
+  overreach: 'danger',
+  redundant: 'info',
+  missing: 'warning'
+}
+
+export const UserStatusOption = [
+  { value: 'all', label: '全部状态' },
   { value: 'active', label: '正常' },
-  { value: 'frozen', label: '冻结' },
-  { value: 'temp_banned', label: '临时封禁' },
-  { value: 'permanent_banned', label: '永久封禁' }
+  { value: 'pending', label: '待审核' },
+  { value: 'banned', label: '已封禁' },
+  { value: 'frozen', label: '已冻结' },
+  { value: 'disabled', label: '已停用' }
 ]
 
-export const AccountPermChangeTypeLabel: Record<string, string> = {
-  assign_role: '分配角色',
-  revoke_role: '撤销角色',
-  add_permission: '增加权限',
-  remove_permission: '移除权限',
-  batch_assign_role: '批量分配角色',
-  batch_add_permission: '批量增加权限',
-  sync_role_perms: '同步角色权限',
-  cleanup_redundant: '清理冗余权限',
-  conflict_resolve: '冲突解决'
-}
+export const UserFilterRoleOption = [
+  { value: 'all', label: '全部角色' },
+  { value: 'super_admin', label: '超级管理员' },
+  { value: 'admin', label: '管理员' },
+  { value: 'auditor', label: '审核员' },
+  { value: 'operator', label: '运营员' },
+  { value: 'member', label: '普通用户' }
+]
 
-export const AccountPermChangeTypeTagType: Record<string, string> = {
-  assign_role: 'success',
-  revoke_role: 'danger',
-  add_permission: 'primary',
-  remove_permission: 'warning',
-  batch_assign_role: 'success',
-  batch_add_permission: 'primary',
-  sync_role_perms: 'info',
-  cleanup_redundant: 'warning',
-  conflict_resolve: 'danger'
-}
-
-export const AccountPermIssueTypeLabel: Record<string, string> = {
-  conflict: '权限冲突',
-  overprivileged: '越权配置',
-  redundant: '冗余权限'
-}
-
-export const BindingTypeLabel: Record<string, string> = {
-  core_role: '核心角色',
-  auxiliary: '附属权限'
-}
-
-export const BindingSourceLabel: Record<string, string> = {
-  role: '角色继承',
-  manual: '手动分配',
-  batch: '批量分配'
+export const OverrideTypeLabel: Record<string, string> = {
+  grant: '额外授予',
+  deny: '拒绝(角色有但用户无)'
 }

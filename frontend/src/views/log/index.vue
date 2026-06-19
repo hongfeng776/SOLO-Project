@@ -17,6 +17,14 @@
           </span>
         </template>
       </el-tab-pane>
+      <el-tab-pane label="定时任务日志" name="cron">
+        <template #label>
+          <span class="tab-label">
+            <el-icon><Timer /></el-icon>
+            <span>定时任务日志</span>
+          </span>
+        </template>
+      </el-tab-pane>
     </el-tabs>
 
     <div v-if="activeTab === 'operation'">
@@ -208,6 +216,8 @@
     </div>
 
     <SystemLog v-if="activeTab === 'system'" />
+
+    <CronLog v-if="activeTab === 'cron'" />
 
     <el-dialog v-model="detailDialogVisible" :title="`日志详情 #${currentLog?.id || ''}`" width="900px"
       class="detail-dialog" :close-on-click-modal="false" @close="closeDetailDialog">
@@ -473,7 +483,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import {
   Search, Refresh, Download, View, Connection, List, History, Document, Sunny,
   CircleCheck, Warning, CircleClose, ArrowLeft, ArrowRight, Right, Loading, User, Calendar,
-  Monitor
+  Monitor, Timer
 } from '@element-plus/icons-vue'
 import { ElMessage, type FormInstance } from 'element-plus'
 import {
@@ -486,13 +496,14 @@ import type {
 } from '@/types'
 import { UserRoleLabel } from '@/constants'
 import SystemLog from './SystemLog.vue'
+import CronLog from './CronLog.vue'
 
 const HISTORY_STORAGE_KEY = 'log_query_history'
 const MAX_HISTORY = 20
 
-const activeTab = ref<'operation' | 'system'>('operation')
+const activeTab = ref<'operation' | 'system' | 'cron'>('operation')
 const handleTabChange = (tab: string) => {
-  activeTab.value = tab as 'operation' | 'system'
+  activeTab.value = tab as 'operation' | 'system' | 'cron'
 }
 
 const loading = ref(false)
