@@ -766,5 +766,76 @@ export const PERMISSION_LABEL: Record<string, string> = {
   canDistribute: '内容分发',
 }
 
+// ============ 用户分层运营 ============
+export const SEGMENT_DIMENSION = {
+  PLAY: { value: 'PLAY', label: '播放行为', field: 'playDurationDays', unit: '天', desc: '近30天有播放行为的天数', color: '#409EFF', type: 'primary' },
+  INTERACTION: { value: 'INTERACTION', label: '互动行为', field: 'interactionCount', unit: '次', desc: '近30天评论/点赞/分享总次数', color: '#67C23A', type: 'success' },
+  CONSUMPTION: { value: 'CONSUMPTION', label: '消费能力', field: 'consumptionAmount', unit: '元', desc: '近90天累计消费金额', color: '#E6A23C', type: 'warning' },
+  PUBLISH: { value: 'PUBLISH', label: '投稿产出', field: 'publishCount', unit: '篇', desc: '近30天有效投稿数量', color: '#F56C6C', type: 'danger' },
+  COMPOSITE: { value: 'COMPOSITE', label: '综合评分', field: 'compositeScore', unit: '分', desc: '多维度加权综合得分', color: '#909399', type: 'info' },
+} as const
+
+export const SEGMENT_LEVEL = {
+  L1: { value: 1, label: '新手层', desc: '新注册用户，引导期', color: '#909399', type: 'info', icon: 'Odometer' },
+  L2: { value: 2, label: '活跃层', desc: '已养成使用习惯', color: '#67C23A', type: 'success', icon: 'Sunny' },
+  L3: { value: 3, label: '成长层', desc: '高活跃强互动用户', color: '#409EFF', type: 'primary', icon: 'TrendCharts' },
+  L4: { value: 4, label: '高价值层', desc: '有付费行为的优质用户', color: '#E6A23C', type: 'warning', icon: 'Trophy' },
+  L5: { value: 5, label: '核心VIP层', desc: '高贡献高付费用户', color: '#F56C6C', type: 'danger', icon: 'Crown' },
+} as const
+
+export const SEGMENT_RULE_STATUS = {
+  DRAFT: { value: 1, label: '草稿', color: '#909399', type: 'info' },
+  ACTIVE: { value: 2, label: '生效中', color: '#67C23A', type: 'success' },
+  PAUSED: { value: 3, label: '已暂停', color: '#E6A23C', type: 'warning' },
+  EXPIRED: { value: 4, label: '已过期', color: '#F56C6C', type: 'danger' },
+} as const
+
+export const SEGMENT_CHANGE_TYPE = {
+  AUTO: { value: 'AUTO', label: '自动迭代', color: '#409EFF', type: 'primary', desc: '根据规则自动计算' },
+  MANUAL_UP: { value: 'MANUAL_UP', label: '手动上调', color: '#67C23A', type: 'success', desc: '运营手动提升层级' },
+  MANUAL_DOWN: { value: 'MANUAL_DOWN', label: '手动下调', color: '#F56C6C', type: 'danger', desc: '运营手动降低层级' },
+  RULE_CHANGE: { value: 'RULE_CHANGE', label: '规则变更', color: '#909399', type: 'info', desc: '规则调整导致变更' },
+} as const
+
+export const STRATEGY_TRIGGER_MODE = {
+  INSTANT: { value: 1, label: '即时生效', desc: '创建后立即执行', color: '#67C23A', type: 'success' },
+  SCHEDULED: { value: 2, label: '定时生效', desc: '指定时间点执行', color: '#409EFF', type: 'primary' },
+  RECURRING: { value: 3, label: '周期推送', desc: '按Cron循环执行', color: '#909399', type: 'info' },
+} as const
+
+export const STRATEGY_STATUS = {
+  PENDING: { value: 1, label: '待生效', color: '#909399', type: 'info' },
+  RUNNING: { value: 2, label: '执行中', color: '#67C23A', type: 'success' },
+  COMPLETED: { value: 3, label: '已完成', color: '#409EFF', type: 'primary' },
+  CANCELLED: { value: 4, label: '已取消', color: '#F56C6C', type: 'danger' },
+} as const
+
+export const STRATEGY_TYPE = {
+  BENEFIT: { value: 'BENEFIT', label: '专属权益', desc: '为高价值用户配置专属会员/优惠券等权益', color: '#E6A23C', type: 'warning', icon: 'Medal' },
+  PUSH: { value: 'PUSH', label: '推送通知', desc: '对沉睡用户推送唤醒活动消息', color: '#409EFF', type: 'primary', icon: 'Bell' },
+  WELFARE: { value: 'WELFARE', label: '福利配置', desc: '批量发放积分、优惠券等福利', color: '#F56C6C', type: 'danger', icon: 'Present' },
+  GUIDE: { value: 'GUIDE', label: '引导任务', desc: '为新手用户配置引导任务与奖励', color: '#67C23A', type: 'success', icon: 'Guide' },
+} as const
+
+export const BENEFIT_TYPE = {
+  VIP_DAY: { value: 'VIP_DAY', label: '会员天数', unit: '天', color: '#E6A23C', type: 'warning' },
+  COUPON: { value: 'COUPON', label: '优惠券', unit: '张', color: '#F56C6C', type: 'danger' },
+  CREDIT: { value: 'CREDIT', label: '积分奖励', unit: '分', color: '#67C23A', type: 'success' },
+  BADGE: { value: 'BADGE', label: '专属徽章', unit: '个', color: '#409EFF', type: 'primary' },
+  CONTENT: { value: 'CONTENT', label: '内容解锁', unit: '项', color: '#909399', type: 'info' },
+  PRIORITY: { value: 'PRIORITY', label: '优先特权', unit: '项', color: '#9C27B0', type: 'danger' },
+} as const
+
+export const STRATEGY_PRESET_TEMPLATES = [
+  { id: 'benefit_high_value', label: '高价值用户专属权益套餐', type: 'BENEFIT', targetLevels: [4, 5], desc: 'L4/L5用户：会员30天+积分500+专属徽章',
+    config: { benefitConfig: { type: 'MULTI', items: [{ type: 'VIP_DAY', value: 30, expireDays: 90 }, { type: 'CREDIT', value: 500 }, { type: 'BADGE', value: 1 }] } } },
+  { id: 'wake_dormant', label: '沉睡用户唤醒活动', type: 'PUSH', targetLevels: [1, 2], targetMinActivity: [0, 1], desc: 'L1/L2且活跃度低：推送回归奖励',
+    config: { pushConfig: { templateId: 'WAKE_001', channels: ['APP', 'SMS'] }, welfareConfig: { type: 'COUPON', value: 3, conditions: '登录即送' } } },
+  { id: 'newbie_guide', label: '新手引导福利', type: 'GUIDE', targetLevels: [1], desc: '新手层：完成3项任务领7天会员',
+    config: { guideConfig: { taskIds: ['WATCH_3', 'COMMENT_1', 'SHARE_1'], rewards: [{ type: 'VIP_DAY', value: 7 }] } } },
+  { id: 'limit_low_quality', label: '成长层激励升级', type: 'WELFARE', targetLevels: [3], desc: 'L3用户：投稿激励积分翻倍',
+    config: { benefitConfig: { type: 'CREDIT', value: 300 }, welfareConfig: { type: 'CREDIT', value: 500, conditions: '本周投稿≥3篇' } } },
+] as const
+
 
 

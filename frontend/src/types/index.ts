@@ -2102,5 +2102,166 @@ export interface EndUserQueryParams extends PaginationParams {
   userTag?: string | null
 }
 
+// ============ 用户分层运营 ============
+export interface SegmentThreshold {
+  level: number
+  min: number | null
+  max: number | null
+}
+
+export interface SegmentRuleItem {
+  id: number
+  ruleName: string
+  ruleCode: string
+  description?: string
+  dimension: string
+  thresholds: SegmentThreshold[]
+  weights?: Record<string, number>
+  targetUserType?: number[]
+  targetMinLevel?: number
+  autoCalcEnabled: number
+  calcCron: string
+  lastCalcAt?: string
+  nextCalcAt?: string
+  status: number
+  effectiveStartAt?: string
+  effectiveEndAt?: string
+  priority: number
+  tagTemplate?: Record<string, string[]>
+  userCount?: number
+  levelStats?: Array<{ level: number; count: number }>
+  creatorId?: number
+  creatorName?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SegmentTagItem {
+  id: number
+  userId: number
+  uid: string
+  ruleId?: number
+  ruleCode?: string
+  currentLevel: number
+  previousLevel?: number
+  tags: string[]
+  behaviorSnapshot?: Record<string, any>
+  scoreSnapshot?: Record<string, any>
+  assignedAt?: string
+  changedAt?: string
+  changeType?: string
+  expireAt?: string
+  remark?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SegmentLogItem {
+  id: number
+  userId: number
+  uid: string
+  ruleId?: number
+  ruleCode?: string
+  fromLevel?: number
+  toLevel: number
+  changeType: string
+  operationBatch?: string
+  operatorId?: number
+  operatorName?: string
+  adjustReason?: string
+  adjustRemark?: string
+  behaviorSnapshot?: Record<string, any>
+  appliedStrategies?: number[]
+  ipAddress?: string
+  createdAt: string
+}
+
+export interface SegmentStrategyItem {
+  id: number
+  strategyName: string
+  strategyCode: string
+  strategyType: string
+  description?: string
+  targetLevels: number[]
+  targetMinActivity?: number[]
+  targetUserType?: number[]
+  targetMinConsumption?: number
+  targetUserIds?: number[]
+  benefitConfig?: Record<string, any>
+  pushConfig?: Record<string, any>
+  welfareConfig?: Record<string, any>
+  guideConfig?: Record<string, any>
+  triggerMode: number
+  triggerTime?: string
+  recurringCron?: string
+  executeBatch?: string
+  status: number
+  executedAt?: string
+  targetUserCount: number
+  successCount: number
+  failedCount: number
+  matchResult?: Record<string, any>
+  creatorId?: number
+  creatorName?: string
+  approverId?: number
+  approverName?: string
+  approvedAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SegmentStats {
+  ruleCount: number
+  activeRuleCount: number
+  strategyCount: number
+  tagCount: number
+  byLevel: Array<{ level: number; count: number }>
+}
+
+export interface SegmentValidateResult {
+  valid: boolean
+  reason?: string
+}
+
+export interface SegmentBenefitFit {
+  fit: boolean
+  allowedTypes: string[]
+  suggestions: string[]
+}
+
+export interface SegmentMatchPreview {
+  total: number
+  byLevel: Array<{ level: number; count: number }>
+}
+
+export interface SegmentValidateMatch {
+  rule: SegmentRuleItem
+  sampleCount: number
+  mismatchCount: number
+  issues: Array<{
+    userId: number
+    uid: string
+    expectedLevel: number
+    actualLevel: number
+    behaviorValue: number
+    reason: string
+  }>
+}
+
+export interface SegmentTraceResult {
+  tag: SegmentTagItem
+  logs: SegmentLogItem[]
+}
+
+export interface ManualAdjustResult {
+  operationBatch?: string
+  fromLevel?: number
+  toLevel: number
+  changeType?: string
+  appliedStrategiesCount?: number
+  skipped?: boolean
+  message?: string
+}
+
 
 

@@ -143,10 +143,16 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '用户运营管理', icon: 'User' },
         children: [
           {
-            path: '',
+            path: 'account',
             name: 'UserAccountManagement',
             component: () => import('@/views/user-operation/account/index.vue'),
             meta: { title: '用户账号管理', icon: 'UserFilled', roles: ['endUser:view'] },
+          },
+          {
+            path: 'segment',
+            name: 'UserSegmentManagement',
+            component: () => import('@/views/user-operation/segment/index.vue'),
+            meta: { title: '用户分层运营', icon: 'TrendCharts', roles: ['userSegment:view'] },
           },
         ],
       },

@@ -15,6 +15,10 @@ const { TopicContent } = require('./TopicContent');
 const { AuditRule } = require('./AuditRule');
 const { AuditRuleModifyLog } = require('./AuditRuleModifyLog');
 const { EndUser, AccountStatusLog } = require('./EndUser');
+const { UserSegmentRule, UserSegmentTag, UserSegmentLog, SegmentStrategy,
+  SEGMENT_DIMENSION, SEGMENT_LEVEL, SEGMENT_RULE_STATUS, SEGMENT_CHANGE_TYPE,
+  STRATEGY_TRIGGER_MODE, STRATEGY_STATUS, STRATEGY_TYPE, BENEFIT_TYPE,
+} = require('./UserSegment');
 
 Content.belongsTo(Copyright, { foreignKey: 'copyright_id', as: 'copyright' });
 Copyright.hasMany(Content, { foreignKey: 'copyright_id', as: 'contents' });
@@ -54,4 +58,16 @@ module.exports = {
   AuditRuleModifyLog,
   EndUser,
   AccountStatusLog,
+  UserSegmentRule,
+  UserSegmentTag,
+  UserSegmentLog,
+  SegmentStrategy,
+  SEGMENT_DIMENSION,
+  SEGMENT_LEVEL,
+  SEGMENT_RULE_STATUS,
+  SEGMENT_CHANGE_TYPE,
+  STRATEGY_TRIGGER_MODE,
+  STRATEGY_STATUS,
+  STRATEGY_TYPE,
+  BENEFIT_TYPE,
 };

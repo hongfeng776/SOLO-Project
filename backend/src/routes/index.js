@@ -26,5 +26,6 @@ router.use(`${config.apiPrefix}/comment-audit`, require('./comment-audit'));
 router.use(`${config.apiPrefix}/audit-rules`, require('./audit-rule'));
 router.use(`${config.apiPrefix}/copyright-validity`, require('./copyrightValidity'));
 router.use(`${config.apiPrefix}/end-users`, require('./end-user'));
+router.use(`${config.apiPrefix}/user-segment`, require('./user-segment'));
 
 module.exports = router;
