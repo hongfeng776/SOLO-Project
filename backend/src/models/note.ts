@@ -11,8 +11,13 @@ class Note extends Model<InferAttributes<Note>, InferCreationAttributes<Note>> {
   declare authorName: string
   declare viewCount: CreationOptional<number>
   declare likeCount: CreationOptional<number>
+  declare favoriteCount: CreationOptional<number>
   declare commentCount: CreationOptional<number>
   declare shareCount: CreationOptional<number>
+  declare interactionQuality: CreationOptional<number>
+  declare abnormalInteraction: CreationOptional<number>
+  declare isQualityInteraction: CreationOptional<number>
+  declare lastInteractionCheckTime: CreationOptional<Date | null>
   declare rejectReason: CreationOptional<string>
   declare publishTime: CreationOptional<Date | null>
   declare reviewLevel: CreationOptional<number>
@@ -84,17 +89,49 @@ Note.init(
     likeCount: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 0
+      defaultValue: 0,
+      comment: '点赞数'
+    },
+    favoriteCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '收藏数'
     },
     commentCount: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 0
+      defaultValue: 0,
+      comment: '评论数'
     },
     shareCount: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 0
+      defaultValue: 0,
+      comment: '转发数'
+    },
+    interactionQuality: {
+      type: DataTypes.DECIMAL(5, 2),
+      allowNull: false,
+      defaultValue: 0,
+      comment: '互动质量分 0-100'
+    },
+    abnormalInteraction: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '异常互动数'
+    },
+    isQualityInteraction: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: '是否优质互动笔记 0否 1是'
+    },
+    lastInteractionCheckTime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '最后互动检测时间'
     },
     rejectReason: {
       type: DataTypes.STRING(500),
@@ -240,7 +277,11 @@ Note.init(
       { fields: ['review_level', 'status'] },
       { fields: ['author_id', 'schedule_time'] },
       { fields: ['review_weight', 'create_time'] },
-      { fields: ['flow_level', 'is_hot', 'status'] }
+      { fields: ['flow_level', 'is_hot', 'status'] },
+      { fields: ['is_quality_interaction', 'flow_level'] },
+      { fields: ['abnormal_interaction', 'create_time'] },
+      { fields: ['interaction_quality', 'create_time'] },
+      { fields: ['like_count', 'create_time'] }
     ]
   }
 )

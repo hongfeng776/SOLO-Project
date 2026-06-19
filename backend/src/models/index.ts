@@ -41,6 +41,8 @@ import MerchantCreditArchive from './merchant-credit-archive'
 import DirectMessage from './direct-message'
 import DmConversation from './dm-conversation'
 import DmAuditLog from './dm-audit-log'
+import InteractionAbnormalLog from './interaction-abnormal-log'
+import InteractionAuditLog from './interaction-audit-log'
 
 const UserRole = User.sequelize!.define('sys_user_role', {}, { tableName: 'sys_user_role', timestamps: false })
 const NoteTag = Note.sequelize!.define('biz_note_tag', {}, { tableName: 'biz_note_tag', timestamps: false })
@@ -111,4 +113,13 @@ DmAuditLog.belongsTo(DirectMessage, { as: 'message', foreignKey: 'messageId' })
 DmConversation.hasMany(DmAuditLog, { as: 'conversationAuditLogs', foreignKey: 'conversationId' })
 DmAuditLog.belongsTo(DmConversation, { as: 'dmConversation', foreignKey: 'conversationId' })
 
-export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, CommentAuditLog, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, MerchantOnboardingApply, MerchantOnboardingLog, MerchantCreditArchive, DirectMessage, DmConversation, DmAuditLog, UserRole, NoteTag }
+Note.hasMany(InteractionAbnormalLog, { as: 'interactionAbnormalLogs', foreignKey: 'noteId' })
+InteractionAbnormalLog.belongsTo(Note, { as: 'note', foreignKey: 'noteId' })
+
+Note.hasMany(InteractionAuditLog, { as: 'interactionAuditLogs', foreignKey: 'noteId' })
+InteractionAuditLog.belongsTo(Note, { as: 'note', foreignKey: 'noteId' })
+
+InteractionAbnormalLog.hasMany(InteractionAuditLog, { as: 'auditLogs', foreignKey: 'abnormalIds' })
+
+
+export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, CommentAuditLog, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, MerchantOnboardingApply, MerchantOnboardingLog, MerchantCreditArchive, DirectMessage, DmConversation, DmAuditLog, InteractionAbnormalLog, InteractionAuditLog, UserRole, NoteTag }
