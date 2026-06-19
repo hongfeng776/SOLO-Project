@@ -81,6 +81,12 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: 'DmManagement',
         component: () => import(/* webpackChunkName: "content" */ '@views/content/dm/index.vue'),
         meta: { title: '私信管控', icon: 'Message', roles: ['admin', 'risk_admin', 'editor'] }
+      },
+      {
+        path: 'interaction-ops',
+        name: 'InteractionOps',
+        component: () => import(/* webpackChunkName: "content" */ '@views/content/interaction-ops/index.vue'),
+        meta: { title: '互动数据运维', icon: 'DataAnalysis', roles: ['admin', 'risk_admin', 'editor'] }
       }
     ]
   },

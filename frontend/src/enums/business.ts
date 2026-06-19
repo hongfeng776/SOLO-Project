@@ -950,3 +950,117 @@ export const DM_AUDIT_ACTION_NAMES: Record<number, string> = {
   [DmAuditAction.CONVERSATION_UNRESTRICT]: '解除限制',
   [DmAuditAction.MANUAL_REVIEW]: '人工复核'
 }
+
+export enum InteractionDataType {
+  LIKE = 'like',
+  FAVORITE = 'favorite',
+  SHARE = 'share',
+  COMMENT = 'comment'
+}
+
+export const INTERACTION_DATA_TYPE_NAMES: Record<string, string> = {
+  [InteractionDataType.LIKE]: '点赞',
+  [InteractionDataType.FAVORITE]: '收藏',
+  [InteractionDataType.SHARE]: '转发',
+  [InteractionDataType.COMMENT]: '评论'
+}
+
+export const INTERACTION_DATA_TYPE_ICONS: Record<string, string> = {
+  like: '👍', favorite: '⭐', share: '🔗', comment: '💬'
+}
+
+export enum InteractionAnomalyLevel {
+  NORMAL = 0,
+  LOW = 1,
+  MEDIUM = 2,
+  HIGH = 3
+}
+
+export const INTERACTION_ANOMALY_LEVEL_NAMES: Record<number, string> = {
+  [InteractionAnomalyLevel.NORMAL]: '正常',
+  [InteractionAnomalyLevel.LOW]: '轻微异常',
+  [InteractionAnomalyLevel.MEDIUM]: '中度异常',
+  [InteractionAnomalyLevel.HIGH]: '重度异常'
+}
+
+export const INTERACTION_ANOMALY_LEVEL_COLORS: Record<number, string> = {
+  [InteractionAnomalyLevel.NORMAL]: '#67c23a',
+  [InteractionAnomalyLevel.LOW]: '#e6a23c',
+  [InteractionAnomalyLevel.MEDIUM]: '#f56c6c',
+  [InteractionAnomalyLevel.HIGH]: '#c45656'
+}
+
+export enum InteractionDataStatus {
+  ZEROED = 0,
+  NORMAL = 1,
+  CALIBRATED = 2,
+  QUALITY = 3
+}
+
+export const INTERACTION_DATA_STATUS_NAMES: Record<number, string> = {
+  [InteractionDataStatus.ZEROED]: '已清零',
+  [InteractionDataStatus.NORMAL]: '正常',
+  [InteractionDataStatus.CALIBRATED]: '已校准',
+  [InteractionDataStatus.QUALITY]: '优质标记'
+}
+
+export const INTERACTION_DATA_STATUS_TAG_TYPES: Record<number, string> = {
+  [InteractionDataStatus.ZEROED]: 'danger',
+  [InteractionDataStatus.NORMAL]: 'success',
+  [InteractionDataStatus.CALIBRATED]: 'warning',
+  [InteractionDataStatus.QUALITY]: ''
+}
+
+export enum InteractionFlowLevel {
+  NORMAL = 1,
+  QUALITY = 2,
+  HOT = 3
+}
+
+export const INTERACTION_FLOW_LEVEL_NAMES: Record<number, string> = {
+  [InteractionFlowLevel.NORMAL]: '普通池',
+  [InteractionFlowLevel.QUALITY]: '优质池',
+  [InteractionFlowLevel.HOT]: '热门池'
+}
+
+export const INTERACTION_FLOW_LEVEL_COLORS: Record<number, string> = {
+  [InteractionFlowLevel.NORMAL]: '#909399',
+  [InteractionFlowLevel.QUALITY]: '#409eff',
+  [InteractionFlowLevel.HOT]: '#e6a23c'
+}
+
+export enum InteractionAnomalyType {
+  SUDDEN_SURGE = 'sudden_surge',
+  NO_REAL_TRACE = 'no_real_trace',
+  MACHINE_BRUSH = 'machine_brush',
+  DUPLICATE = 'duplicate',
+  REPEATED = 'repeated'
+}
+
+export const INTERACTION_ANOMALY_TYPE_NAMES: Record<string, string> = {
+  [InteractionAnomalyType.SUDDEN_SURGE]: '数据暴涨',
+  [InteractionAnomalyType.NO_REAL_TRACE]: '无真实轨迹',
+  [InteractionAnomalyType.MACHINE_BRUSH]: '机器刷量',
+  [InteractionAnomalyType.DUPLICATE]: '重复互动',
+  [InteractionAnomalyType.REPEATED]: '频繁操作'
+}
+
+export enum InteractionOpsAction {
+  AUTO_DETECT = 0,
+  MANUAL_MARK = 1,
+  BATCH_CALIBRATE = 2,
+  BATCH_ZERO = 3,
+  BATCH_QUALITY = 4,
+  WEIGHT_LINK = 5,
+  RESTORE = 6
+}
+
+export const INTERACTION_OPS_ACTION_NAMES: Record<number, string> = {
+  [InteractionOpsAction.AUTO_DETECT]: '自动检测异常',
+  [InteractionOpsAction.MANUAL_MARK]: '人工标记异常',
+  [InteractionOpsAction.BATCH_CALIBRATE]: '批量校准',
+  [InteractionOpsAction.BATCH_ZERO]: '批量清零',
+  [InteractionOpsAction.BATCH_QUALITY]: '批量标记优质',
+  [InteractionOpsAction.WEIGHT_LINK]: '权重联动',
+  [InteractionOpsAction.RESTORE]: '恢复'
+}

@@ -42,6 +42,7 @@ import activityOperationRoutes from '@routes/activity-operation'
 import creatorQualificationRoutes from '@routes/creator-qualification'
 import merchantOnboardingRoutes from '@routes/merchant-onboarding'
 import directMessageRoutes from '@routes/direct-message'
+import interactionOpsRoutes from '@routes/interaction-ops'
 
 const app = express()
 
@@ -95,6 +96,7 @@ app.use('/api/activity-operation', activityOperationRoutes)
 app.use('/api/creator-qualification', creatorQualificationRoutes)
 app.use('/api/merchant-onboarding', merchantOnboardingRoutes)
 app.use('/api/dm', directMessageRoutes)
+app.use('/api/interaction-ops', interactionOpsRoutes)
 
 app.use(celebrateErrors())
 app.use(errorHandler)

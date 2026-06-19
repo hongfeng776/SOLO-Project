@@ -1528,3 +1528,142 @@ export interface DmStats {
   interceptionRate: number
   riskRate: number
 }
+
+export interface InteractionData {
+  id: number
+  noteId: number
+  dataType: string
+  totalCount: number
+  realCount: number
+  fakeCount: number
+  anomalyCount: number
+  isAnomaly: number
+  anomalyType: string
+  anomalyDetail: string
+  hotScore: number
+  originalHotScore: number
+  weightScore: number
+  flowLevel: number
+  originalFlowLevel: number
+  status: number
+  lastCalibrationTime: string
+  lastCalibrationUserId: number
+  lastCalibrationUserName: string
+  isQuality: number
+  qualityScore: number
+  createTime: string
+  updateTime: string
+}
+
+export interface InteractionAnomalyLog {
+  id: number
+  interactionDataId: number
+  noteId: number
+  dataType: string
+  action: number
+  anomalyType: string
+  anomalyDetail: string
+  beforeTotalCount: number
+  afterTotalCount: number
+  beforeRealCount: number
+  afterRealCount: number
+  beforeHotScore: number
+  afterHotScore: number
+  beforeFlowLevel: number
+  afterFlowLevel: number
+  beforeWeightScore: number
+  afterWeightScore: number
+  userId: number
+  userName: string
+  userRiskLevel: number
+  userViolationCount: number
+  sourceIp: string
+  sourceDevice: string
+  handlerId: number
+  handlerName: string
+  handleNote: string
+  createTime: string
+}
+
+export interface InteractionOpsStats {
+  total: number
+  anomalyCount: number
+  highAnomalyCount: number
+  qualityCount: number
+  calibratedCount: number
+  zeroedCount: number
+  todayAnomalyLogs: number
+  anomalyRate: number
+  avgHotScore: string
+  flowDistribution: Array<{ flowLevel: number; count: number }>
+}
+
+export interface InteractionTraceResult {
+  note: {
+    id: number
+    title: string
+    authorId: number
+    authorName: string
+    flowLevel: number
+    isHot: number
+    viewCount: number
+    likeCount: number
+    commentCount: number
+    shareCount: number
+    createTime: string
+  }
+  summary: {
+    totalReal: number
+    totalFake: number
+    totalAnomaly: number
+    avgQuality: string
+    uniqueIps: number
+    uniqueUsers: number
+    maxHourly: number
+    authenticityRatio: string
+  }
+  interactions: Array<{
+    dataType: string
+    totalCount: number
+    realCount: number
+    fakeCount: number
+    anomalyCount: number
+    isAnomaly: number
+    anomalyType: string
+    hotScore: number
+    weightScore: number
+    flowLevel: number
+    isQuality: number
+    qualityScore: number
+    status: number
+  }>
+  logs: Array<{
+    id: number
+    action: number
+    anomalyType: string
+    beforeTotalCount: number
+    afterTotalCount: number
+    beforeRealCount: number
+    afterRealCount: number
+    beforeHotScore: number
+    afterHotScore: number
+    beforeFlowLevel: number
+    afterFlowLevel: number
+    beforeWeightScore: number
+    afterWeightScore: number
+    handlerName: string
+    handleNote: string
+    createTime: string
+  }>
+  behaviors: Array<{
+    id: number
+    userId: number
+    userName: string
+    behaviorType: string
+    ip: string
+    isAbnormal: number
+    abnormalType: string
+    riskLevel: number
+    createTime: string
+  }>
+}
