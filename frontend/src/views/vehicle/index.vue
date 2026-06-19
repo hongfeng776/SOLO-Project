@@ -1,6 +1,6 @@
 <template>
   <div class="vehicle-list">
-    <VehicleBatchOperation
+    <VehicleBatchStatusOperation
       v-if="selectedRows.length > 0"
       :selected-rows="selectedRows"
       @success="handleBatchSuccess"
@@ -155,6 +155,39 @@
           />
         </template>
       </el-table-column>
+      <el-table-column label="运营状态" width="110" align="center">
+        <template #default="{ row }">
+          <div class="operation-status-cell">
+            <el-tag
+              :type="OperationStatusTypeMap[row.operationStatus as keyof typeof OperationStatusTypeMap]"
+              size="small"
+            >
+              {{ OperationStatusMap[row.operationStatus as keyof typeof OperationStatusMap] }}
+            </el-tag>
+            <el-tag
+              v-if="row.bannedType === 2"
+              type="danger"
+              size="small"
+              effect="dark"
+            >
+              永久封禁
+            </el-tag>
+            <el-tooltip
+              v-if="row.maintenanceWarningLevel >= 1"
+              :content="MaintenanceWarningLevelMap[row.maintenanceWarningLevel as keyof typeof MaintenanceWarningLevelMap]"
+              placement="top"
+            >
+              <el-tag
+                :type="row.maintenanceWarningLevel >= 2 ? 'danger' : 'warning'"
+                size="small"
+                effect="plain"
+              >
+                <el-icon><Warning /></el-icon>
+              </el-tag>
+            </el-tooltip>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="审核状态" width="100" align="center">
         <template #default="{ row }">
           <el-tag
@@ -168,7 +201,7 @@
       <el-table-column prop="createTime" label="录入时间" width="170">
         <template #default="{ row }">{{ formatDate(row.createTime) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="260" fixed="right" align="center">
+      <el-table-column label="操作" width="320" fixed="right" align="center">
         <template #default="{ row }">
           <el-button type="primary" link size="small" @click="handleViewTrace(row)">
             <el-icon><Document /></el-icon>
@@ -198,6 +231,18 @@
             <el-icon><Key /></el-icon>
             解锁
           </el-button>
+          <el-button type="warning" link size="small" @click="handleChangeStatus(row)">
+            <el-icon><SetUp /></el-icon>
+            状态
+          </el-button>
+          <el-button type="primary" link size="small" @click="handleViewStatusTrace(row)">
+            <el-icon><Document /></el-icon>
+            运维
+          </el-button>
+          <el-button type="info" link size="small" @click="handleViewMaintenance(row)">
+            <el-icon><Van /></el-icon>
+            检修
+          </el-button>
         </template>
       </el-table-column>
     </CommonTable>
@@ -220,6 +265,39 @@
         :vehicle="currentVehicle"
       />
     </el-dialog>
+
+    <VehicleStatusChangeDialog
+      v-model="statusDialogVisible"
+      :vehicle="currentVehicle"
+      @success="handleStatusChangeSuccess"
+    />
+
+    <el-dialog
+      v-model="statusTraceDialogVisible"
+      :title="`运营状态溯源 - ${currentVehicle?.plateNumber || ''}`"
+      width="1200px"
+      :close-on-click-modal="false"
+      v-if="statusTraceDialogVisible && currentVehicle"
+    >
+      <VehicleStatusTrace
+        :vehicle-id="currentVehicleId!"
+        :vehicle="currentVehicle"
+      />
+    </el-dialog>
+
+    <el-dialog
+      v-model="maintenanceDialogVisible"
+      :title="`检修管理 - ${currentVehicle?.plateNumber || ''}`"
+      width="1000px"
+      :close-on-click-modal="false"
+      v-if="maintenanceDialogVisible && currentVehicle"
+    >
+      <VehicleMaintenancePanel
+        :vehicle-id="currentVehicleId!"
+        :vehicle="currentVehicle"
+        @refresh="getList"
+      />
+    </el-dialog>
   </div>
 </template>
 
@@ -234,19 +312,26 @@ import {
   Document,
   TrendCharts,
   Warning,
-  WarningFilled
+  WarningFilled,
+  SetUp,
+  Van
 } from '@element-plus/icons-vue'
 import CommonTable from '@/components/CommonTable/index.vue'
 import StatusTag from '@/components/StatusTag/index.vue'
 import VehicleEditDialog from '@/components/VehicleEditDialog/index.vue'
 import VehicleBatchOperation from '@/components/VehicleBatchOperation/index.vue'
 import VehicleOperationTrace from '@/components/VehicleOperationTrace/index.vue'
+import VehicleStatusChangeDialog from '@/components/VehicleStatusChangeDialog/index.vue'
+import VehicleBatchStatusOperation from '@/components/VehicleBatchStatusOperation/index.vue'
+import VehicleStatusTrace from '@/components/VehicleStatusTrace/index.vue'
+import VehicleMaintenancePanel from '@/components/VehicleMaintenancePanel/index.vue'
 import {
   getVehicleListApi,
   deleteVehicleApi,
   lockVehicleApi,
   unlockVehicleApi,
-  recalculateLevelApi
+  recalculateLevelApi,
+  getCapacityDashboardApi
 } from '@/api/vehicle'
 import {
   VehicleStatusMap,
@@ -255,7 +340,12 @@ import {
   OperationLevel,
   OperationLevelMap,
   EmissionStandard,
-  EmissionStandardMap
+  EmissionStandardMap,
+  OperationStatusMap,
+  OperationStatusColorMap,
+  OperationStatusTypeMap,
+  MaintenanceWarningLevelMap,
+  BannedTypeMap
 } from '@/enums/vehicle'
 import { CapacityTypeMap, CapacityTypeColorMap } from '@/enums/capacity'
 import { formatDate } from '@/utils/format'
@@ -271,6 +361,10 @@ const editDialogVisible = ref(false)
 const traceDialogVisible = ref(false)
 const currentVehicleId = ref<number | null>(null)
 const currentVehicle = ref<Vehicle | null>(null)
+const statusDialogVisible = ref(false)
+const statusTraceDialogVisible = ref(false)
+const maintenanceDialogVisible = ref(false)
+const capacityDashboard = ref<any>(null)
 
 const queryParams = reactive({
   page: 1,
@@ -319,6 +413,12 @@ const searchFields = [
   { prop: 'isLocked', label: '锁定状态', type: 'select', options: [
     { value: 0, label: '未锁定' },
     { value: 1, label: '已锁定' }
+  ]},
+  { prop: 'operationStatus', label: '运营状态', type: 'select', options: [
+    { value: 1, label: '正常运营' },
+    { value: 2, label: '停运检修' },
+    { value: 3, label: '证件过期' },
+    { value: 4, label: '违规封禁' }
   ]}
 ]
 
@@ -469,6 +569,29 @@ const handleBatchSuccess = () => {
   getList()
 }
 
+const handleChangeStatus = (row: Vehicle) => {
+  currentVehicleId.value = row.id
+  currentVehicle.value = row
+  statusDialogVisible.value = true
+}
+
+const handleViewStatusTrace = (row: Vehicle) => {
+  currentVehicleId.value = row.id
+  currentVehicle.value = row
+  statusTraceDialogVisible.value = true
+}
+
+const handleViewMaintenance = (row: Vehicle) => {
+  currentVehicleId.value = row.id
+  currentVehicle.value = row
+  maintenanceDialogVisible.value = true
+}
+
+const handleStatusChangeSuccess = () => {
+  getList()
+  ElMessage.success('运营状态变更成功')
+}
+
 const isExpired = (dateStr: string) => {
   if (!dateStr) return false
   const today = new Date()
@@ -604,6 +727,13 @@ onMounted(() => {
     .risk-tag {
       margin-left: 4px;
     }
+  }
+
+  .operation-status-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
   }
 }
 </style>

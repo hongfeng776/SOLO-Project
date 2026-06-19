@@ -3,6 +3,8 @@ const { Vehicle, VehicleAuditLog, Driver, DriverAuditLog } = require('../models'
 const { success, pageResult, AppError } = require('../utils/response')
 const { validateVehicle, checkPlateUniqueness, checkVINUniqueness, validatePlateNumber, validateVIN } = require('../services/vehicleValidationService')
 const { calculateOperationLevel, syncDriverOrderPermission, getLevelPrivileges } = require('../services/vehicleLevelService')
+const { validateStatusChange, determineMaintenanceWarning, autoDetermineOperationStatus, checkAbnormalStatus, syncCapacityAndSchedule } = require('../services/vehicleStatusService')
+const { VehicleMaintenance, VehicleViolation, VehicleStatusLog } = require('../models')
 
 const OPERATION_TYPE_NAMES = {
   1: '新增备案',
@@ -16,7 +18,15 @@ const OPERATION_TYPE_NAMES = {
   9: '资料复核',
   10: '虚假备案拦截',
   11: '重复备案拦截',
-  12: '证件造假拦截'
+  12: '证件造假拦截',
+  13: '运营状态变更',
+  14: '发起检修',
+  15: '违规记录',
+  16: '批量恢复运营',
+  17: '批量发起检修',
+  18: '批量提醒换证',
+  19: '异常拦截',
+  20: '自动状态判定'
 }
 
 const createAuditLog = async (vehicle, operationType, extraData = {}, operatorId = null, operatorName = null) => {
@@ -867,6 +877,614 @@ const recalculateLevel = async (req, res, next) => {
   }
 }
 
+const changeOperationStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { operationStatus, bannedType, bannedReason, bannedExpireDate, remark } = req.body
+    const operatorId = req.user?.id
+    const operatorName = req.user?.name
+
+    const vehicle = await Vehicle.findByPk(id)
+    if (!vehicle) throw new AppError('车辆不存在', 404, 404)
+
+    const oldOperationStatus = vehicle.operationStatus
+
+    const validation = await validateStatusChange(vehicle, operationStatus, operatorId, operatorName)
+    if (!validation.valid) {
+      throw new AppError(`运营状态变更校验不通过：${validation.errors.join('; ')}`, 400, 400)
+    }
+
+    const anomalyResult = await checkAbnormalStatus(vehicle, operationStatus, oldOperationStatus)
+
+    const updateData = { operationStatus }
+    if (operationStatus === 4) {
+      if (bannedType !== undefined) updateData.bannedType = bannedType
+      if (bannedReason !== undefined) updateData.bannedReason = bannedReason
+      if (bannedExpireDate !== undefined) updateData.bannedExpireDate = bannedExpireDate
+    }
+    if (operationStatus === 1) {
+      updateData.bannedType = 0
+    }
+
+    await vehicle.update(updateData)
+
+    await VehicleStatusLog.create({
+      vehicleId: vehicle.id,
+      plateNumber: vehicle.plateNumber,
+      changeType: 1,
+      oldOperationStatus,
+      newOperationStatus: operationStatus,
+      triggerType: 1,
+      triggerReason: remark || '手动变更运营状态',
+      validationResults: validation,
+      maintenanceCheck: validation.checks.maintenance,
+      documentCheck: validation.checks.documents,
+      violationCheck: validation.checks.violations,
+      alertLevel: anomalyResult.alertLevel,
+      alertMessage: anomalyResult.alertMessage,
+      isAnomaly: anomalyResult.isAnomaly ? 1 : 0,
+      anomalyType: anomalyResult.anomalyType,
+      remark: remark || '',
+      operatorId,
+      operatorName
+    })
+
+    if (anomalyResult.isAnomaly) {
+      await VehicleStatusLog.create({
+        vehicleId: vehicle.id,
+        plateNumber: vehicle.plateNumber,
+        changeType: 6,
+        oldOperationStatus,
+        newOperationStatus: operationStatus,
+        triggerType: 1,
+        triggerReason: `异常拦截：${anomalyResult.alertMessage}`,
+        alertLevel: anomalyResult.alertLevel,
+        alertMessage: anomalyResult.alertMessage,
+        isAnomaly: 1,
+        anomalyType: anomalyResult.anomalyType,
+        remark: '系统自动记录异常拦截',
+        operatorId,
+        operatorName
+      })
+    }
+
+    const capacityResult = syncCapacityAndSchedule(vehicle, oldOperationStatus, operationStatus)
+
+    if (vehicle.driverId) {
+      await syncDriverOrderPermission(vehicle, Driver, DriverAuditLog, operatorId, operatorName)
+    }
+
+    res.json(success({
+      validation,
+      anomalyDetected: anomalyResult.isAnomaly,
+      anomalyResult,
+      capacityImpact: capacityResult.capacityImpact,
+      scheduleImpact: capacityResult.scheduleImpact
+    }, '运营状态变更成功'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getMaintenanceRecords = async (req, res, next) => {
+  try {
+    const { vehicleId } = req.params
+    const { page = 1, pageSize = 10, maintenanceType, maintenanceStatus } = req.query
+
+    const where = { vehicleId }
+    if (maintenanceType !== undefined && maintenanceType !== '') where.maintenanceType = maintenanceType
+    if (maintenanceStatus !== undefined && maintenanceStatus !== '') where.maintenanceStatus = maintenanceStatus
+
+    const { count, rows } = await VehicleMaintenance.findAndCountAll({
+      where,
+      order: [['createTime', 'DESC']],
+      offset: (page - 1) * pageSize,
+      limit: parseInt(pageSize)
+    })
+
+    res.json(pageResult(rows, count, page, pageSize))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const createMaintenanceRecord = async (req, res, next) => {
+  try {
+    const { vehicleId } = req.params
+    const operatorId = req.user?.id
+    const operatorName = req.user?.name
+
+    const vehicle = await Vehicle.findByPk(vehicleId)
+    if (!vehicle) throw new AppError('车辆不存在', 404, 404)
+
+    const data = {
+      ...req.body,
+      vehicleId,
+      plateNumber: vehicle.plateNumber,
+      operatorId,
+      operatorName
+    }
+
+    const record = await VehicleMaintenance.create(data)
+
+    if (data.maintenanceStatus === 0 || data.maintenanceStatus === 1) {
+      const oldOperationStatus = vehicle.operationStatus
+      await vehicle.update({ operationStatus: 2 })
+
+      await VehicleStatusLog.create({
+        vehicleId: vehicle.id,
+        plateNumber: vehicle.plateNumber,
+        changeType: 2,
+        oldOperationStatus,
+        newOperationStatus: 2,
+        triggerType: 1,
+        triggerReason: `发起检修：${record.maintenanceType}`,
+        maintenanceCheck: { maintenanceId: record.id, maintenanceType: record.maintenanceType, maintenanceStatus: record.maintenanceStatus },
+        remark: '发起检修，车辆进入停运检修状态',
+        operatorId,
+        operatorName
+      })
+    }
+
+    res.json(success(record, '检修记录创建成功'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const updateMaintenanceRecord = async (req, res, next) => {
+  try {
+    const { id, recordId } = req.params
+    const operatorId = req.user?.id
+    const operatorName = req.user?.name
+
+    const record = await VehicleMaintenance.findByPk(recordId)
+    if (!record) throw new AppError('检修记录不存在', 404, 404)
+
+    const oldStatus = record.maintenanceStatus
+    await record.update(req.body)
+
+    if (req.body.maintenanceStatus === 2 && oldStatus !== 2) {
+      const vehicle = await Vehicle.findByPk(record.vehicleId)
+      if (vehicle) {
+        const updateData = {
+          lastMaintenanceMileage: record.mileageAtMaintenance || vehicle.mileage,
+          lastMaintenanceDate: record.endDate || new Date(),
+          nextMaintenanceDate: record.nextMaintenanceDate
+        }
+
+        const warningResult = determineMaintenanceWarning({ ...vehicle.toJSON(), ...updateData })
+        updateData.maintenanceWarningLevel = warningResult.level
+
+        await vehicle.update(updateData)
+
+        const otherPending = await VehicleMaintenance.count({
+          where: {
+            vehicleId: vehicle.id,
+            maintenanceStatus: { [Op.in]: [0, 1] },
+            id: { [Op.ne]: recordId }
+          }
+        })
+
+        if (otherPending === 0) {
+          const autoResult = await autoDetermineOperationStatus(vehicle)
+          if (autoResult.status !== vehicle.operationStatus) {
+            const oldOpStatus = vehicle.operationStatus
+            await vehicle.update({ operationStatus: autoResult.status })
+
+            await VehicleStatusLog.create({
+              vehicleId: vehicle.id,
+              plateNumber: vehicle.plateNumber,
+              changeType: 2,
+              oldOperationStatus: oldOpStatus,
+              newOperationStatus: autoResult.status,
+              triggerType: 2,
+              triggerReason: `检修完成，自动判定运营状态：${autoResult.reasons.join('; ')}`,
+              remark: '检修完成，系统自动判定运营状态',
+              operatorId,
+              operatorName
+            })
+          }
+        }
+      }
+    }
+
+    res.json(success(record, '检修记录更新成功'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getViolationRecords = async (req, res, next) => {
+  try {
+    const { vehicleId } = req.params
+    const { page = 1, pageSize = 10, violationType, violationStatus } = req.query
+
+    const where = { vehicleId }
+    if (violationType !== undefined && violationType !== '') where.violationType = violationType
+    if (violationStatus !== undefined && violationStatus !== '') where.violationStatus = violationStatus
+
+    const { count, rows } = await VehicleViolation.findAndCountAll({
+      where,
+      order: [['createTime', 'DESC']],
+      offset: (page - 1) * pageSize,
+      limit: parseInt(pageSize)
+    })
+
+    res.json(pageResult(rows, count, page, pageSize))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const createViolationRecord = async (req, res, next) => {
+  try {
+    const { vehicleId } = req.params
+    const operatorId = req.user?.id
+    const operatorName = req.user?.name
+
+    const vehicle = await Vehicle.findByPk(vehicleId)
+    if (!vehicle) throw new AppError('车辆不存在', 404, 404)
+
+    const data = {
+      ...req.body,
+      vehicleId,
+      plateNumber: vehicle.plateNumber,
+      operatorId,
+      operatorName
+    }
+
+    const record = await VehicleViolation.create(data)
+
+    await vehicle.update({ violationCount: vehicle.violationCount + 1 })
+
+    if (data.penaltyType === 4 || data.penaltyType === 5) {
+      const oldOperationStatus = vehicle.operationStatus
+      const bannedType = data.penaltyType === 5 ? 2 : 1
+      await vehicle.update({
+        operationStatus: 4,
+        bannedType,
+        bannedReason: data.description || `违规处罚：${data.violationType}`
+      })
+
+      await VehicleStatusLog.create({
+        vehicleId: vehicle.id,
+        plateNumber: vehicle.plateNumber,
+        changeType: 3,
+        oldOperationStatus,
+        newOperationStatus: 4,
+        triggerType: 1,
+        triggerReason: `违规处罚：${data.penaltyType === 5 ? '永久封禁' : '临时封禁'}`,
+        violationCheck: { violationId: record.id, violationType: data.violationType, penaltyType: data.penaltyType },
+        remark: '违规处罚，车辆进入封禁状态',
+        operatorId,
+        operatorName
+      })
+
+      if (vehicle.driverId) {
+        await syncDriverOrderPermission(vehicle, Driver, DriverAuditLog, operatorId, operatorName)
+      }
+    }
+
+    res.json(success(record, '违规记录创建成功'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getStatusLogs = async (req, res, next) => {
+  try {
+    const { vehicleId } = req.params
+    const { page = 1, pageSize = 10, changeType, triggerType, alertLevel, isAnomaly } = req.query
+
+    const where = { vehicleId }
+    if (changeType !== undefined && changeType !== '') where.changeType = changeType
+    if (triggerType !== undefined && triggerType !== '') where.triggerType = triggerType
+    if (alertLevel !== undefined && alertLevel !== '') where.alertLevel = alertLevel
+    if (isAnomaly !== undefined && isAnomaly !== '') where.isAnomaly = isAnomaly
+
+    const { count, rows } = await VehicleStatusLog.findAndCountAll({
+      where,
+      order: [['createTime', 'DESC']],
+      offset: (page - 1) * pageSize,
+      limit: parseInt(pageSize)
+    })
+
+    res.json(pageResult(rows, count, page, pageSize))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchRestoreOperation = async (req, res, next) => {
+  try {
+    const { ids } = req.body
+    const operatorId = req.user?.id
+    const operatorName = req.user?.name
+
+    const results = { success: [], failed: [], total: ids.length }
+
+    for (const id of ids) {
+      try {
+        const vehicle = await Vehicle.findByPk(id)
+        if (!vehicle) {
+          results.failed.push({ id, error: '车辆不存在' })
+          continue
+        }
+
+        if (vehicle.bannedType === 2) {
+          results.failed.push({ id, plateNumber: vehicle.plateNumber, error: '车辆已被永久封禁，禁止恢复' })
+          continue
+        }
+
+        const validation = await validateStatusChange(vehicle, 1, operatorId, operatorName)
+        if (!validation.valid) {
+          results.failed.push({ id, plateNumber: vehicle.plateNumber, error: validation.errors.join('; ') })
+          continue
+        }
+
+        const oldOperationStatus = vehicle.operationStatus
+        await vehicle.update({ operationStatus: 1, bannedType: 0 })
+
+        await VehicleStatusLog.create({
+          vehicleId: vehicle.id,
+          plateNumber: vehicle.plateNumber,
+          changeType: 1,
+          oldOperationStatus,
+          newOperationStatus: 1,
+          triggerType: 1,
+          triggerReason: '批量恢复运营',
+          validationResults: validation,
+          remark: '批量恢复运营',
+          operatorId,
+          operatorName
+        })
+
+        if (vehicle.driverId) {
+          await syncDriverOrderPermission(vehicle, Driver, DriverAuditLog, operatorId, operatorName)
+        }
+
+        results.success.push({ id, plateNumber: vehicle.plateNumber })
+      } catch (error) {
+        results.failed.push({ id, error: error.message })
+      }
+    }
+
+    res.json(success(results, `批量恢复运营完成：成功${results.success.length}条，失败${results.failed.length}条`))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchInitiateMaintenance = async (req, res, next) => {
+  try {
+    const { ids, maintenanceType, maintenanceItems, maintenanceStation, remark } = req.body
+    const operatorId = req.user?.id
+    const operatorName = req.user?.name
+
+    const results = { success: [], failed: [], total: ids.length }
+
+    for (const id of ids) {
+      try {
+        const vehicle = await Vehicle.findByPk(id)
+        if (!vehicle) {
+          results.failed.push({ id, error: '车辆不存在' })
+          continue
+        }
+
+        const record = await VehicleMaintenance.create({
+          vehicleId: vehicle.id,
+          plateNumber: vehicle.plateNumber,
+          maintenanceType: maintenanceType || 1,
+          maintenanceStatus: 0,
+          maintenanceItems: maintenanceItems || [],
+          maintenanceStation: maintenanceStation || '',
+          remark: remark || '批量发起检修',
+          operatorId,
+          operatorName
+        })
+
+        const oldOperationStatus = vehicle.operationStatus
+        await vehicle.update({ operationStatus: 2 })
+
+        await VehicleStatusLog.create({
+          vehicleId: vehicle.id,
+          plateNumber: vehicle.plateNumber,
+          changeType: 2,
+          oldOperationStatus,
+          newOperationStatus: 2,
+          triggerType: 1,
+          triggerReason: '批量发起检修',
+          maintenanceCheck: { maintenanceId: record.id, maintenanceType: record.maintenanceType },
+          remark: '批量发起检修，车辆进入停运检修状态',
+          operatorId,
+          operatorName
+        })
+
+        results.success.push({ id, plateNumber: vehicle.plateNumber, maintenanceId: record.id })
+      } catch (error) {
+        results.failed.push({ id, error: error.message })
+      }
+    }
+
+    res.json(success(results, `批量发起检修完成：成功${results.success.length}条，失败${results.failed.length}条`))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchRemindRenewal = async (req, res, next) => {
+  try {
+    const { ids } = req.body
+    const operatorId = req.user?.id
+    const operatorName = req.user?.name
+
+    const results = { success: [], failed: [], total: ids.length }
+    const now = new Date()
+    const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+
+    for (const id of ids) {
+      try {
+        const vehicle = await Vehicle.findByPk(id)
+        if (!vehicle) {
+          results.failed.push({ id, error: '车辆不存在' })
+          continue
+        }
+
+        const expiringDocs = []
+        if (vehicle.drivingLicenseDate && new Date(vehicle.drivingLicenseDate) <= thirtyDaysLater && new Date(vehicle.drivingLicenseDate) > now) {
+          expiringDocs.push('行驶证')
+        }
+        if (vehicle.inspectionDate && new Date(vehicle.inspectionDate) <= thirtyDaysLater && new Date(vehicle.inspectionDate) > now) {
+          expiringDocs.push('年检')
+        }
+        if (vehicle.insuranceDate && new Date(vehicle.insuranceDate) <= thirtyDaysLater && new Date(vehicle.insuranceDate) > now) {
+          expiringDocs.push('保险')
+        }
+
+        if (expiringDocs.length === 0) {
+          results.failed.push({ id, plateNumber: vehicle.plateNumber, error: '无即将过期的证件' })
+          continue
+        }
+
+        await VehicleStatusLog.create({
+          vehicleId: vehicle.id,
+          plateNumber: vehicle.plateNumber,
+          changeType: 5,
+          triggerType: 1,
+          triggerReason: `批量提醒换证：${expiringDocs.join('、')}即将到期`,
+          documentCheck: { expiringDocs },
+          alertLevel: 1,
+          alertMessage: `${expiringDocs.join('、')}即将到期，请及时换证`,
+          remark: '批量提醒换证',
+          operatorId,
+          operatorName
+        })
+
+        results.success.push({ id, plateNumber: vehicle.plateNumber, expiringDocs })
+      } catch (error) {
+        results.failed.push({ id, error: error.message })
+      }
+    }
+
+    res.json(success(results, `批量提醒换证完成：成功${results.success.length}条，失败${results.failed.length}条`))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const autoCheckStatus = async (req, res, next) => {
+  try {
+    const vehicles = await Vehicle.findAll({ where: { operationStatus: 1 } })
+
+    const summary = {
+      totalChecked: vehicles.length,
+      statusChanged: [],
+      warningUpdated: []
+    }
+
+    for (const vehicle of vehicles) {
+      try {
+        const autoResult = await autoDetermineOperationStatus(vehicle)
+
+        if (autoResult.status !== vehicle.operationStatus) {
+          const oldOperationStatus = vehicle.operationStatus
+          await vehicle.update({ operationStatus: autoResult.status })
+
+          await VehicleStatusLog.create({
+            vehicleId: vehicle.id,
+            plateNumber: vehicle.plateNumber,
+            changeType: 7,
+            oldOperationStatus,
+            newOperationStatus: autoResult.status,
+            triggerType: 3,
+            triggerReason: autoResult.reasons.join('; '),
+            remark: '定时任务自动判定运营状态',
+            operatorId: null,
+            operatorName: '系统'
+          })
+
+          summary.statusChanged.push({
+            id: vehicle.id,
+            plateNumber: vehicle.plateNumber,
+            from: oldOperationStatus,
+            to: autoResult.status,
+            reasons: autoResult.reasons
+          })
+        }
+
+        const warningResult = determineMaintenanceWarning(vehicle)
+        if (warningResult.level !== vehicle.maintenanceWarningLevel) {
+          await vehicle.update({ maintenanceWarningLevel: warningResult.level })
+          summary.warningUpdated.push({
+            id: vehicle.id,
+            plateNumber: vehicle.plateNumber,
+            from: vehicle.maintenanceWarningLevel,
+            to: warningResult.level,
+            message: warningResult.message
+          })
+        }
+      } catch (error) {
+        summary.statusChanged.push({
+          id: vehicle.id,
+          plateNumber: vehicle.plateNumber,
+          error: error.message
+        })
+      }
+    }
+
+    res.json(success(summary, `自动检查完成：共检查${summary.totalChecked}辆，状态变更${summary.statusChanged.filter(s => !s.error).length}辆`))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getCapacityDashboard = async (req, res, next) => {
+  try {
+    const allVehicles = await Vehicle.findAll({
+      attributes: ['city', 'capacityType', 'operationStatus']
+    })
+
+    const total = allVehicles.length
+    const normal = allVehicles.filter(v => v.operationStatus === 1).length
+    const maintenance = allVehicles.filter(v => v.operationStatus === 2).length
+    const expired = allVehicles.filter(v => v.operationStatus === 3).length
+    const banned = allVehicles.filter(v => v.operationStatus === 4).length
+
+    const groupMap = {}
+    for (const v of allVehicles) {
+      const key = `${v.city || '未知'}_${v.capacityType || '未知'}`
+      if (!groupMap[key]) {
+        groupMap[key] = {
+          city: v.city || '未知',
+          capacityType: v.capacityType || '未知',
+          total: 0,
+          normal: 0,
+          maintenance: 0,
+          expired: 0,
+          banned: 0
+        }
+      }
+      groupMap[key].total++
+      if (v.operationStatus === 1) groupMap[key].normal++
+      else if (v.operationStatus === 2) groupMap[key].maintenance++
+      else if (v.operationStatus === 3) groupMap[key].expired++
+      else if (v.operationStatus === 4) groupMap[key].banned++
+    }
+
+    res.json(success({
+      total,
+      normal,
+      maintenance,
+      expired,
+      banned,
+      groups: Object.values(groupMap)
+    }))
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   getList,
   getDetail,
@@ -884,5 +1502,17 @@ module.exports = {
   batchMarkExpired,
   batchLock,
   getImportTemplate,
-  recalculateLevel
+  recalculateLevel,
+  changeOperationStatus,
+  getMaintenanceRecords,
+  createMaintenanceRecord,
+  updateMaintenanceRecord,
+  getViolationRecords,
+  createViolationRecord,
+  getStatusLogs,
+  batchRestoreOperation,
+  batchInitiateMaintenance,
+  batchRemindRenewal,
+  autoCheckStatus,
+  getCapacityDashboard
 }

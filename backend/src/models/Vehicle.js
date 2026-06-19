@@ -124,10 +124,80 @@ const Vehicle = sequelize.define('Vehicle', {
     defaultValue: 12,
     comment: '运营时效（小时/天）'
   },
+  operationStatus: {
+    type: DataTypes.TINYINT,
+    defaultValue: 1,
+    comment: '运营状态：1正常运营 2停运检修 3证件过期 4违规封禁'
+  },
   status: {
     type: DataTypes.TINYINT,
     defaultValue: 0,
     comment: '状态：0空闲 1运营中 2维修中 3已报废 4已锁定'
+  },
+  mileage: {
+    type: DataTypes.DECIMAL(10, 1),
+    defaultValue: 0,
+    comment: '行驶里程（km）'
+  },
+  maintenanceCycle: {
+    type: DataTypes.INTEGER,
+    defaultValue: 50000,
+    comment: '检修周期（km）'
+  },
+  lastMaintenanceMileage: {
+    type: DataTypes.DECIMAL(10, 1),
+    defaultValue: 0,
+    comment: '上次检修时里程（km）'
+  },
+  lastMaintenanceDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '上次检修日期'
+  },
+  nextMaintenanceDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '下次检修日期'
+  },
+  violationCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: '违规次数'
+  },
+  bannedType: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '封禁类型：0未封禁 1临时封禁 2永久封禁'
+  },
+  bannedReason: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    comment: '封禁原因'
+  },
+  bannedExpireDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '临时封禁到期日期'
+  },
+  currentLatitude: {
+    type: DataTypes.DECIMAL(10, 7),
+    allowNull: true,
+    comment: '当前纬度'
+  },
+  currentLongitude: {
+    type: DataTypes.DECIMAL(10, 7),
+    allowNull: true,
+    comment: '当前经度'
+  },
+  lastLocationTime: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '最后定位时间'
+  },
+  maintenanceWarningLevel: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '检修预警等级：0无预警 1临近 2紧急 3过期'
   },
   auditStatus: {
     type: DataTypes.TINYINT,
@@ -195,7 +265,10 @@ const Vehicle = sequelize.define('Vehicle', {
     { fields: ['capacityType'] },
     { fields: ['operationLevel'] },
     { fields: ['city'] },
-    { fields: ['isLocked'] }
+    { fields: ['isLocked'] },
+    { fields: ['operationStatus'] },
+    { fields: ['bannedType'] },
+    { fields: ['maintenanceWarningLevel'] }
   ]
 })
 

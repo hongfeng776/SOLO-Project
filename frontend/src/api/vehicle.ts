@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { Vehicle, VehicleQueryParams, VehicleAuditLog, ValidationResult, BatchImportResult, BatchOperationResult, ImportTemplate, RecalculateLevelResult } from '@/types/vehicle'
+import type { Vehicle, VehicleQueryParams, VehicleAuditLog, ValidationResult, BatchImportResult, BatchOperationResult, ImportTemplate, RecalculateLevelResult, VehicleMaintenanceRecord, VehicleViolationRecord, VehicleStatusLog, StatusChangeValidation, CapacityDashboard } from '@/types/vehicle'
 import type { PageResult } from '@/utils/request'
 
 export const getVehicleListApi = (params: VehicleQueryParams) => {
@@ -76,4 +76,52 @@ export const lockVehicleApi = (id: number, lockReason: string) => {
 
 export const unlockVehicleApi = (id: number) => {
   return request.post(`/vehicle/${id}/unlock`)
+}
+
+export const changeOperationStatusApi = (id: number, operationStatus: number, remark?: string) => {
+  return request.post<{ validation: StatusChangeValidation; capacityImpact: any }>(`/vehicle/${id}/operation-status`, { operationStatus, remark })
+}
+
+export const getMaintenanceRecordsApi = (vehicleId: number, params?: { page?: number; pageSize?: number; maintenanceType?: number; maintenanceStatus?: number }) => {
+  return request.get<PageResult<VehicleMaintenanceRecord>>(`/vehicle/${vehicleId}/maintenance`, params)
+}
+
+export const createMaintenanceRecordApi = (vehicleId: number, data: Partial<VehicleMaintenanceRecord>) => {
+  return request.post<VehicleMaintenanceRecord>(`/vehicle/${vehicleId}/maintenance`, data)
+}
+
+export const updateMaintenanceRecordApi = (id: number, recordId: number, data: Partial<VehicleMaintenanceRecord>) => {
+  return request.put<VehicleMaintenanceRecord>(`/vehicle/${id}/maintenance/${recordId}`, data)
+}
+
+export const getViolationRecordsApi = (vehicleId: number, params?: { page?: number; pageSize?: number; violationType?: number; violationStatus?: number }) => {
+  return request.get<PageResult<VehicleViolationRecord>>(`/vehicle/${vehicleId}/violations`, params)
+}
+
+export const createViolationRecordApi = (vehicleId: number, data: Partial<VehicleViolationRecord>) => {
+  return request.post<VehicleViolationRecord>(`/vehicle/${vehicleId}/violations`, data)
+}
+
+export const getStatusLogsApi = (vehicleId: number, params?: { page?: number; pageSize?: number; changeType?: number; triggerType?: number; alertLevel?: number; isAnomaly?: number }) => {
+  return request.get<PageResult<VehicleStatusLog>>(`/vehicle/${vehicleId}/status-logs`, params)
+}
+
+export const batchRestoreOperationApi = (ids: number[], remark?: string) => {
+  return request.post<BatchOperationResult>('/vehicle/batch/restore', { ids, remark })
+}
+
+export const batchInitiateMaintenanceApi = (ids: number[], data?: Partial<VehicleMaintenanceRecord>) => {
+  return request.post<BatchOperationResult>('/vehicle/batch/maintenance', { ids, ...data })
+}
+
+export const batchRemindRenewalApi = (ids: number[]) => {
+  return request.post<BatchOperationResult>('/vehicle/batch/remind-renewal', { ids })
+}
+
+export const getCapacityDashboardApi = () => {
+  return request.get<CapacityDashboard>('/vehicle/capacity/dashboard')
+}
+
+export const validateStatusChangeApi = (id: number, operationStatus: number) => {
+  return request.post<StatusChangeValidation>(`/vehicle/${id}/validate-status`, { operationStatus })
 }

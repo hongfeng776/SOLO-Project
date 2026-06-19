@@ -50,6 +50,23 @@ export interface Vehicle {
   updateTime: string
   levelPrivileges?: LevelPrivileges
   auditLogs?: VehicleAuditLog[]
+  operationStatus: number
+  mileage: number
+  maintenanceCycle: number
+  lastMaintenanceMileage: number
+  lastMaintenanceDate: string
+  nextMaintenanceDate: string
+  violationCount: number
+  bannedType: number
+  bannedReason: string
+  bannedExpireDate: string
+  currentLatitude: number
+  currentLongitude: number
+  lastLocationTime: string
+  maintenanceWarningLevel: number
+  maintenanceRecords?: VehicleMaintenanceRecord[]
+  violationRecords?: VehicleViolationRecord[]
+  statusLogs?: VehicleStatusLog[]
 }
 
 export interface OrderScope {
@@ -135,6 +152,9 @@ export interface VehicleQueryParams {
   city?: string
   isLocked?: number
   vin?: string
+  operationStatus?: number
+  bannedType?: number
+  maintenanceWarningLevel?: number
 }
 
 export interface LevelBreakdownItem {
@@ -190,4 +210,111 @@ export interface RecalculateLevelResult {
   breakdown: LevelBreakdownItem[]
   privileges: LevelPrivileges
   levelChanged: boolean
+}
+
+export interface VehicleMaintenanceRecord {
+  id: number
+  vehicleId: number
+  plateNumber: string
+  maintenanceType: number
+  maintenanceStatus: number
+  mileageAtMaintenance: number
+  maintenanceItems: string[]
+  maintenanceCost: number
+  maintenanceStation: string
+  startDate: string
+  endDate: string
+  nextMaintenanceDate: string
+  nextMaintenanceMileage: number
+  result: string
+  remark: string
+  operatorId: number
+  operatorName: string
+  createTime: string
+  updateTime: string
+}
+
+export interface VehicleViolationRecord {
+  id: number
+  vehicleId: number
+  plateNumber: string
+  driverId: number
+  driverName: string
+  violationType: number
+  violationLevel: number
+  violationStatus: number
+  description: string
+  evidence: any[]
+  penaltyType: number
+  penaltyAmount: number
+  penaltyDays: number
+  penaltyStartDate: string
+  penaltyEndDate: string
+  appealReason: string
+  appealResult: string
+  appealTime: string
+  remark: string
+  operatorId: number
+  operatorName: string
+  createTime: string
+  updateTime: string
+}
+
+export interface VehicleStatusLog {
+  id: number
+  vehicleId: number
+  plateNumber: string
+  changeType: number
+  oldOperationStatus: number
+  newOperationStatus: number
+  oldStatus: number
+  newStatus: number
+  triggerType: number
+  triggerReason: string
+  validationResults: any
+  maintenanceCheck: any
+  documentCheck: any
+  violationCheck: any
+  capacityImpact: any
+  scheduleImpact: any
+  alertLevel: number
+  alertMessage: string
+  isAnomaly: number
+  anomalyType: string
+  remark: string
+  operatorId: number
+  operatorName: string
+  operatorRole: string
+  ipAddress: string
+  createTime: string
+}
+
+export interface StatusChangeValidation {
+  valid: boolean
+  checks: {
+    maintenance: { passed: boolean; message: string; details?: any }
+    documents: { passed: boolean; message: string; details?: any }
+    violations: { passed: boolean; message: string; details?: any }
+    banned: { passed: boolean; message: string; details?: any }
+    mutualExclusion: { passed: boolean; message: string; details?: any }
+  }
+  errors: string[]
+  warnings: string[]
+}
+
+export interface CapacityDashboard {
+  total: number
+  normal: number
+  maintenance: number
+  expired: number
+  banned: number
+  groups: Array<{
+    city: string
+    capacityType: number
+    total: number
+    normal: number
+    maintenance: number
+    expired: number
+    banned: number
+  }>
 }
