@@ -792,6 +792,56 @@ export const PriceChangeDirectionEnum = {
   FLAT: { value: 'flat', label: '价格持平', color: '#909399', icon: 'Minus' }
 }
 
+export const FlightInventoryTypeEnum = {
+  FIXED: { value: 'fixed', label: '固定库存', color: '#1890ff', icon: 'Box', minStock: 0, maxStock: 500, defaultTotal: 100 },
+  DYNAMIC: { value: 'dynamic', label: '动态库存', color: '#52c41a', icon: 'TrendCharts', minStock: 0, maxStock: 1000, defaultTotal: 200 },
+  RESERVED: { value: 'reserved', label: '预留库存', color: '#faad14', icon: 'Lock', minStock: 0, maxStock: 200, defaultTotal: 50 },
+  SUPPLEMENT: { value: 'supplement', label: '补录库存', color: '#722ed1', icon: 'Plus', minStock: 0, maxStock: 300, defaultTotal: 100 }
+}
+
+export const FlightInventoryStatusEnum = {
+  DISABLED: { value: 0, label: '已停用', color: '#909399', type: 'info', icon: 'Close' },
+  NORMAL: { value: 1, label: '正常', color: '#52c41a', type: 'success', icon: 'Check' },
+  WARNING: { value: 2, label: '库存预警', color: '#faad14', type: 'warning', icon: 'Warning' },
+  SOLD_OUT: { value: 3, label: '已售罄', color: '#ff4d4f', type: 'danger', icon: 'Close' }
+}
+
+export const FlightInventoryLogTypeEnum = {
+  CREATE: { value: 1, label: '创建库存', color: '#1890ff', icon: 'Plus' },
+  ADJUST: { value: 2, label: '库存调整', color: '#722ed1', icon: 'Edit' },
+  OCCUPY: { value: 3, label: '库存占用', color: '#faad14', icon: 'Sell' },
+  RELEASE: { value: 4, label: '库存释放', color: '#52c41a', icon: 'RefreshRight' },
+  LOCK: { value: 5, label: '库存锁定', color: '#ff4d4f', icon: 'Lock' },
+  UNLOCK: { value: 6, label: '库存解锁', color: '#13c2c2', icon: 'Unlock' },
+  RESERVE: { value: 7, label: '预留库存', color: '#fa8c16', icon: 'Clock' },
+  RELEASE_RESERVE: { value: 8, label: '释放预留', color: '#a0d911', icon: 'Present' },
+  SUPPLEMENT: { value: 9, label: '库存补录', color: '#eb2f96', icon: 'Add' },
+  BATCH: { value: 10, label: '批量操作', color: '#1890ff', icon: 'DataAnalysis' },
+  STATUS_CHANGE: { value: 11, label: '状态变更', color: '#909399', icon: 'Switch' },
+  DELETE: { value: 12, label: '删除库存', color: '#ff4d4f', icon: 'Delete' }
+}
+
+export const FlightInventorySourceEnum = {
+  MANUAL: { value: 'manual', label: '手动录入', color: '#1890ff' },
+  SYSTEM: { value: 'system', label: '系统生成', color: '#52c41a' },
+  BATCH: { value: 'batch', label: '批量导入', color: '#722ed1' },
+  API: { value: 'api', label: 'API同步', color: '#faad14' }
+}
+
+export const FlightInventoryBatchOperationEnum = {
+  LOCK: { value: 'lock', label: '批量锁定', icon: 'Lock', color: '#faad14', unit: '张' },
+  UNLOCK: { value: 'unlock', label: '批量解锁', icon: 'Unlock', color: '#52c41a', unit: '张' },
+  SUPPLEMENT: { value: 'supplement', label: '批量补录', icon: 'Plus', color: '#1890ff', unit: '张' },
+  RELEASE_EXPIRED: { value: 'release_expired', label: '释放过期预留', icon: 'Clock', color: '#722ed1', unit: '' },
+  ADJUST_TOTAL: { value: 'adjust_total', label: '调整总库存', icon: 'Edit', color: '#13c2c2', unit: '张' }
+}
+
+export const StockChangeDirectionEnum = {
+  INCREASE: { value: 'increase', label: '库存增加', color: '#52c41a', icon: 'Top' },
+  DECREASE: { value: 'decrease', label: '库存减少', color: '#ff4d4f', icon: 'Bottom' },
+  UNCHANGED: { value: 'unchanged', label: '无变化', color: '#909399', icon: 'Minus' }
+}
+
 export default {
   OrderStatusEnum,
   OrderSourceEnum,
@@ -883,6 +933,12 @@ export default {
   FlightPriceBatchOperationEnum,
   FlightPriceValidateFieldEnum,
   PriceChangeDirectionEnum,
+  FlightInventoryTypeEnum,
+  FlightInventoryStatusEnum,
+  FlightInventoryLogTypeEnum,
+  FlightInventorySourceEnum,
+  FlightInventoryBatchOperationEnum,
+  StockChangeDirectionEnum,
   getEnumLabel,
   getEnumType,
   getEnumOptions,

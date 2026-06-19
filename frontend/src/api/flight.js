@@ -218,3 +218,128 @@ export function getFlightPriceStats(params) {
     params
   })
 }
+
+export function getFlightInventoryList(params) {
+  return request({
+    url: '/flight-inventories',
+    method: 'get',
+    params
+  })
+}
+
+export function getFlightInventory(id) {
+  return request({
+    url: `/flight-inventories/${id}`,
+    method: 'get'
+  })
+}
+
+export function createFlightInventory(data) {
+  return request({
+    url: '/flight-inventories',
+    method: 'post',
+    data
+  })
+}
+
+export function updateFlightInventory(id, data) {
+  return request({
+    url: `/flight-inventories/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+export function deleteFlightInventory(id) {
+  return request({
+    url: `/flight-inventories/${id}`,
+    method: 'delete'
+  })
+}
+
+export function validateFlightInventory(data) {
+  return request({
+    url: '/flight-inventories/validate',
+    method: 'post',
+    data
+  })
+}
+
+export function validateFlightInventoryField(fieldName, value, params) {
+  return request({
+    url: '/flight-inventories/validate/field',
+    method: 'get',
+    params: { fieldName, value, ...params }
+  })
+}
+
+export function lockFlightInventory(id, lockQuantity) {
+  return request({
+    url: `/flight-inventories/${id}/lock`,
+    method: 'post',
+    data: { lockQuantity }
+  })
+}
+
+export function unlockFlightInventory(id, unlockQuantity) {
+  return request({
+    url: `/flight-inventories/${id}/unlock`,
+    method: 'post',
+    data: { unlockQuantity }
+  })
+}
+
+export function releaseFlightInventoryReservation(id, releaseQuantity) {
+  return request({
+    url: `/flight-inventories/${id}/release-reservation`,
+    method: 'post',
+    data: { releaseQuantity }
+  })
+}
+
+export function batchLockFlightInventory(ids, lockQuantity) {
+  return request({
+    url: '/flight-inventories/batch/lock',
+    method: 'post',
+    data: { ids, lockQuantity }
+  })
+}
+
+export function batchUnlockFlightInventory(ids, unlockQuantity) {
+  return request({
+    url: '/flight-inventories/batch/unlock',
+    method: 'post',
+    data: { ids, unlockQuantity }
+  })
+}
+
+export function batchSupplementFlightInventory(ids, supplementQuantity, isHolidayBatch) {
+  return request({
+    url: '/flight-inventories/batch/supplement',
+    method: 'post',
+    data: { ids, supplementQuantity, isHolidayBatch }
+  })
+}
+
+export function batchReleaseExpiredReservation() {
+  return request({
+    url: '/flight-inventories/batch/release-expired',
+    method: 'post'
+  })
+}
+
+export function getFlightInventoryLogs(params) {
+  return request({
+    url: '/flight-inventories/logs',
+    method: 'get',
+    params
+  })
+}
+
+export function getFlightInventoryStats(params) {
+  return request({
+    url: '/flight-inventories/stats/summary',
+    method: 'get',
+    params
+  })
+}

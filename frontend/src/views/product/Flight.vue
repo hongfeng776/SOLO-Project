@@ -19,6 +19,15 @@
             </div>
           </template>
         </el-tab-pane>
+        <el-tab-pane label="库存动态管控" name="inventory">
+          <template #label>
+            <div class="tab-label">
+              <el-icon><Box /></el-icon>
+              <span>库存动态管控</span>
+              <el-badge :value="inventoryStats.total || 0" :max="999" class="tab-badge" />
+            </div>
+          </template>
+        </el-tab-pane>
       </el-tabs>
     </div>
 
@@ -556,6 +565,321 @@
     >
       <FlightPriceLogPanel :price-id="currentLogPriceId" />
     </el-dialog>
+
+    <!-- 库存动态管控模块 -->
+    <div v-show="activeModule === 'inventory'">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">库存总条目</div>
+          <div class="stat-value">{{ inventoryStats.total || 0 }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">正常库存</div>
+          <div class="stat-value" style="color: #52c41a">{{ inventoryStats.normal || 0 }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">库存预警</div>
+          <div class="stat-value" style="color: #faad14">{{ inventoryStats.warning || 0 }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">已售罄</div>
+          <div class="stat-value" style="color: #ff4d4f">{{ inventoryStats.soldOut || 0 }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">总票数</div>
+          <div class="stat-value" style="color: #1890ff">{{ inventoryStats.totalStock || 0 }}</div>
+        </div>
+      </div>
+
+      <div class="type-tabs">
+        <el-tabs v-model="activeInventoryType" @tab-change="handleInventoryTypeChange">
+          <el-tab-pane label="全部库存" name="all">
+            <span class="type-tab-badge">{{ inventoryStats.total || 0 }}</span>
+          </el-tab-pane>
+          <el-tab-pane label="固定库存" name="fixed">
+            <span class="type-tab-badge">{{ inventoryStats.byType?.fixed || 0 }}</span>
+          </el-tab-pane>
+          <el-tab-pane label="动态库存" name="dynamic">
+            <span class="type-tab-badge">{{ inventoryStats.byType?.dynamic || 0 }}</span>
+          </el-tab-pane>
+          <el-tab-pane label="预留库存" name="reserved">
+            <span class="type-tab-badge">{{ inventoryStats.byType?.reserved || 0 }}</span>
+          </el-tab-pane>
+          <el-tab-pane label="补录库存" name="supplement">
+            <span class="type-tab-badge">{{ inventoryStats.byType?.supplement || 0 }}</span>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
+
+      <div class="search-bar">
+        <el-form :inline="true" :model="inventorySearchForm">
+          <el-form-item label="航班号">
+            <el-input
+              v-model="inventorySearchForm.flightNo"
+              placeholder="请输入航班号"
+              clearable
+              style="width: 180px"
+              @keyup.enter="handleInventorySearch"
+            />
+          </el-form-item>
+          <el-form-item label="舱位">
+            <el-select
+              v-model="inventorySearchForm.cabinClass"
+              placeholder="请选择舱位"
+              clearable
+              style="width: 140px"
+            >
+              <el-option
+                v-for="(item, key) in CabinClassEnum"
+                :key="key"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="库存状态">
+            <el-select
+              v-model="inventorySearchForm.status"
+              placeholder="请选择状态"
+              clearable
+              style="width: 140px"
+            >
+              <el-option
+                v-for="(item, key) in FlightInventoryStatusEnum"
+                :key="key"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="航司">
+            <el-select
+              v-model="inventorySearchForm.airline"
+              placeholder="请选择航司"
+              clearable
+              filterable
+              style="width: 180px"
+            >
+              <el-option
+                v-for="airline in airlineOptions"
+                :key="airline"
+                :label="airline"
+                :value="airline"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :icon="Search" @click="handleInventorySearch">搜索</el-button>
+            <el-button :icon="RefreshRight" @click="handleInventoryReset">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <div class="inventory-toolbar">
+        <div class="toolbar-left">
+          <el-button
+            type="primary"
+            :icon="Plus"
+            :disabled="!hasInventoryManagePermission"
+            @click="handleAddInventory"
+          >
+            新增库存
+          </el-button>
+          <el-button
+            type="warning"
+            :icon="Operation"
+            :disabled="inventorySelectedIds.length === 0 || !hasInventoryManagePermission"
+            @click="handleOpenInventoryBatchDialog"
+          >
+            批量操作 ({{ inventorySelectedIds.length }})
+          </el-button>
+          <el-button
+            :icon="Clock"
+            @click="handleReleaseExpiredReservations"
+          >
+            释放过期预留
+          </el-button>
+        </div>
+        <div class="toolbar-right">
+          <el-button :icon="Refresh" circle @click="loadInventoryList" />
+          <el-tag v-if="inventorySelectedIds.length > 0" type="primary" size="small">
+            已选择 {{ inventorySelectedIds.length }} 条库存
+          </el-tag>
+        </div>
+      </div>
+
+      <div class="table-container" :class="{ 'table-fade-refresh': isInventoryRefreshing }">
+        <el-table
+          ref="inventoryTableRef"
+          :data="inventoryTableData"
+          v-loading="inventoryLoading"
+          border
+          stripe
+          class="sticky-table-header inventory-table"
+          @selection-change="handleInventorySelectionChange"
+        >
+          <el-table-column type="selection" width="50" align="center" />
+          <el-table-column prop="flightNo" label="航班号" width="110" align="center">
+            <template #default="{ row }">
+              <span class="flight-no-text">{{ row.flightNo }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="airline" label="航司" width="100" align="center" />
+          <el-table-column prop="cabinClass" label="舱位" width="80" align="center">
+            <template #default="{ row }">
+              <el-tag size="small" :type="getCabinTagType(row.cabinClass)">
+                {{ getCabinLabel(row.cabinClass) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="inventoryType" label="库存类型" width="90" align="center">
+            <template #default="{ row }">
+              <el-tag
+                size="small"
+                :type="getInventoryTypeTagType(row.inventoryType)"
+                effect="light"
+              >
+                {{ getInventoryTypeLabel(row.inventoryType) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="totalStock" label="总库存" width="80" align="center" />
+          <el-table-column prop="soldStock" label="已售" width="70" align="center">
+            <template #default="{ row }">
+              <span style="color: #faad14">{{ row.soldStock || 0 }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="reservedStock" label="预留" width="70" align="center">
+            <template #default="{ row }">
+              <span style="color: #1890ff">{{ row.reservedStock || 0 }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="lockedStock" label="锁定" width="70" align="center">
+            <template #default="{ row }">
+              <span style="color: #722ed1">{{ row.lockedStock || 0 }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="availableStock" label="可售" width="80" align="center">
+            <template #default="{ row }">
+              <span
+                class="available-stock-text"
+                :class="{
+                  'stock-warning': parseInt(row.availableStock) <= parseInt(row.minStockWarning) && parseInt(row.availableStock) > 0,
+                  'stock-sold-out': parseInt(row.availableStock) <= 0
+                }"
+              >
+                {{ row.availableStock || 0 }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="status" label="状态" width="90" align="center">
+            <template #default="{ row }">
+              <div :class="['status-tag-wrapper', 'status-' + row.status]">
+                <span class="status-dot"></span>
+                <span class="status-text">{{ getInventoryStatusLabel(row.status) }}</span>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="minStockWarning" label="预警值" width="70" align="center" />
+          <el-table-column prop="reserveExpireTime" label="预留到期" width="160" align="center">
+            <template #default="{ row }">
+              <span v-if="row.reserveExpireTime">
+                {{ formatDateTime(row.reserveExpireTime) }}
+              </span>
+              <span v-else class="text-placeholder">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="240" align="center" fixed="right">
+            <template #default="{ row }">
+              <el-button
+                type="primary"
+                size="small"
+                link
+                :disabled="!hasInventoryManagePermission"
+                @click="handleEditInventory(row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                type="success"
+                size="small"
+                link
+                :disabled="parseInt(row.lockedStock) >= parseInt(row.availableStock)"
+                @click="handleLockStock(row)"
+              >
+                锁定
+              </el-button>
+              <el-button
+                type="warning"
+                size="small"
+                link
+                :disabled="parseInt(row.lockedStock) <= 0"
+                @click="handleUnlockStock(row)"
+              >
+                解锁
+              </el-button>
+              <el-button
+                type="info"
+                size="small"
+                link
+                @click="handleViewInventoryLogs(row)"
+              >
+                日志
+              </el-button>
+              <el-button
+                type="danger"
+                size="small"
+                link
+                :disabled="!hasInventoryManagePermission"
+                @click="handleDeleteInventory(row)"
+              >
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <div class="pagination-container">
+        <el-pagination
+          v-model:current-page="inventoryPagination.page"
+          v-model:page-size="inventoryPagination.pageSize"
+          :total="inventoryPagination.total"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="loadInventoryList"
+          @current-change="loadInventoryList"
+        />
+      </div>
+    </div>
+
+    <FlightInventoryEditDialog
+      v-model="inventoryEditDialogVisible"
+      :inventory-type="activeInventoryType === 'all' ? 'fixed' : activeInventoryType"
+      :inventory-id="currentInventoryId"
+      @success="handleInventorySuccess"
+    />
+
+    <FlightInventoryBatchDialog
+      v-model="inventoryBatchDialogVisible"
+      :selected-inventories="selectedInventoryItems"
+      :inventory-type="activeInventoryType"
+      :has-special-permission="hasSpecialPermission"
+      @success="handleInventorySuccess"
+    />
+
+    <el-dialog
+      v-model="inventoryLogDialogVisible"
+      title="库存操作日志"
+      width="950px"
+      class="inventory-log-dialog"
+      :close-on-click-modal="false"
+    >
+      <FlightInventoryLogPanel
+        :inventory-id="currentLogInventoryId"
+        :flight-id="currentLogFlightId"
+      />
+    </el-dialog>
   </div>
 </template>
 
@@ -576,7 +900,10 @@ import {
   Setting,
   DataAnalysis,
   Upload,
-  Download
+  Download,
+  Box,
+  Operation,
+  Clock
 } from '@element-plus/icons-vue'
 import {
   getFlightList,
@@ -588,13 +915,24 @@ import {
   getFlightPriceStats,
   deleteFlightPrice,
   updateFlightPriceDisplayStatus,
-  batchUpdateFlightPriceDisplayStatus
+  batchUpdateFlightPriceDisplayStatus,
+  getFlightInventoryList,
+  getFlightInventoryStats,
+  createFlightInventory,
+  updateFlightInventory,
+  deleteFlightInventory,
+  lockFlightInventory,
+  unlockFlightInventory,
+  releaseFlightInventoryReservation,
+  batchReleaseExpiredReservation
 } from '@/api/flight'
 import {
   FlightTypeEnum,
   FlightOperationStatusEnum,
   CabinClassEnum,
-  FlightPriceSourceEnum
+  FlightPriceSourceEnum,
+  FlightInventoryTypeEnum,
+  FlightInventoryStatusEnum
 } from '@/utils/enums'
 import FlightBatchToolbar from '@/components/Flight/FlightBatchToolbar.vue'
 import FlightEditDialog from '@/components/Flight/FlightEditDialog.vue'
@@ -603,6 +941,9 @@ import FlightPriceEditDialog from '@/components/Flight/FlightPriceEditDialog.vue
 import FlightPriceBatchDialog from '@/components/Flight/FlightPriceBatchDialog.vue'
 import FlightPriceRuleDialog from '@/components/Flight/FlightPriceRuleDialog.vue'
 import FlightPriceLogPanel from '@/components/Flight/FlightPriceLogPanel.vue'
+import FlightInventoryEditDialog from '@/components/Flight/FlightInventoryEditDialog.vue'
+import FlightInventoryBatchDialog from '@/components/Flight/FlightInventoryBatchDialog.vue'
+import FlightInventoryLogPanel from '@/components/Flight/FlightInventoryLogPanel.vue'
 
 const activeModule = ref('flight')
 
@@ -684,6 +1025,48 @@ const priceLogDialogVisible = ref(false)
 const currentLogPriceId = ref(null)
 
 const hasSpecialPermission = ref(true)
+const hasInventoryManagePermission = ref(true)
+
+const activeInventoryType = ref('all')
+const inventoryLoading = ref(false)
+const isInventoryRefreshing = ref(false)
+const inventoryTableRef = ref(null)
+const inventorySelectedIds = ref([])
+const inventoryStats = ref({
+  total: 0,
+  normal: 0,
+  warning: 0,
+  soldOut: 0,
+  totalStock: 0,
+  byType: {
+    fixed: 0,
+    dynamic: 0,
+    reserved: 0,
+    supplement: 0
+  }
+})
+const inventorySearchForm = reactive({
+  flightNo: '',
+  cabinClass: null,
+  status: null,
+  airline: null
+})
+const inventoryPagination = reactive({
+  page: 1,
+  pageSize: 20,
+  total: 0
+})
+const inventoryTableData = ref([])
+const inventoryEditDialogVisible = ref(false)
+const currentInventoryId = ref(null)
+const inventoryBatchDialogVisible = ref(false)
+const inventoryLogDialogVisible = ref(false)
+const currentLogInventoryId = ref(null)
+const currentLogFlightId = ref(null)
+
+const selectedInventoryItems = computed(() => {
+  return inventoryTableData.value.filter(i => inventorySelectedIds.value.includes(i.id))
+})
 
 const selectedPriceItems = computed(() => {
   return priceTableData.value.filter(p => priceSelectedIds.value.includes(p.id))
@@ -697,6 +1080,9 @@ const handleModuleChange = (val) => {
   if (val === 'price') {
     fetchPriceData()
     fetchPriceStats()
+  } else if (val === 'inventory') {
+    loadInventoryList()
+    loadInventoryStats()
   } else {
     fetchData()
     fetchStats()
@@ -1140,6 +1526,238 @@ const handleRuleSave = (rules) => {
   ElMessage.success('动态定价规则已更新')
 }
 
+const loadInventoryList = async () => {
+  inventoryLoading.value = true
+  try {
+    const params = {
+      page: inventoryPagination.page,
+      pageSize: inventoryPagination.pageSize,
+      flightNo: inventorySearchForm.flightNo || undefined,
+      cabinClass: inventorySearchForm.cabinClass || undefined,
+      status: inventorySearchForm.status || undefined,
+      airline: inventorySearchForm.airline || undefined
+    }
+    if (activeInventoryType.value !== 'all') {
+      params.inventoryType = activeInventoryType.value
+    }
+    const res = await getFlightInventoryList(params)
+    inventoryTableData.value = res.items || []
+    inventoryPagination.total = res.total || 0
+  } catch (e) {
+    console.error(e)
+  } finally {
+    inventoryLoading.value = false
+  }
+}
+
+const loadInventoryStats = async () => {
+  try {
+    const res = await getFlightInventoryStats()
+    inventoryStats.value = res || inventoryStats.value
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const handleInventoryTypeChange = (type) => {
+  inventoryPagination.page = 1
+  loadInventoryList()
+}
+
+const handleInventorySearch = () => {
+  inventoryPagination.page = 1
+  loadInventoryList()
+}
+
+const handleInventoryReset = () => {
+  inventorySearchForm.flightNo = ''
+  inventorySearchForm.cabinClass = null
+  inventorySearchForm.status = null
+  inventorySearchForm.airline = null
+  inventoryPagination.page = 1
+  loadInventoryList()
+}
+
+const handleInventorySelectionChange = (selection) => {
+  inventorySelectedIds.value = selection.map(item => item.id)
+}
+
+const handleAddInventory = () => {
+  currentInventoryId.value = null
+  inventoryEditDialogVisible.value = true
+}
+
+const handleEditInventory = (row) => {
+  currentInventoryId.value = row.id
+  inventoryEditDialogVisible.value = true
+}
+
+const handleDeleteInventory = async (row) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除航班 ${row.flightNo} ${getCabinLabel(row.cabinClass)}舱的${getInventoryTypeLabel(row.inventoryType)}吗？`,
+      '删除确认',
+      { type: 'warning' }
+    )
+    await deleteFlightInventory(row.id)
+    ElMessage.success('删除成功')
+    loadInventoryList()
+    loadInventoryStats()
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error(e.message || '删除失败')
+    }
+  }
+}
+
+const handleLockStock = async (row) => {
+  try {
+    const { value } = await ElMessageBox.prompt(
+      `请输入锁定数量（最多 ${row.availableStock} 张）`,
+      '锁定库存',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputValidator: (val) => {
+          const num = parseInt(val)
+          if (!num || num <= 0) return '请输入有效数量'
+          if (num > parseInt(row.availableStock)) return '锁定数量不能超过可售库存'
+          return true
+        },
+        inputPlaceholder: '请输入锁定数量'
+      }
+    )
+    await lockFlightInventory(row.id, {
+      quantity: parseInt(value),
+      reason: '手动锁定'
+    })
+    ElMessage.success('锁定成功')
+    loadInventoryList()
+    loadInventoryStats()
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error(e.message || '锁定失败')
+    }
+  }
+}
+
+const handleUnlockStock = async (row) => {
+  try {
+    const { value } = await ElMessageBox.prompt(
+      `请输入解锁数量（最多 ${row.lockedStock} 张）`,
+      '解锁库存',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputValidator: (val) => {
+          const num = parseInt(val)
+          if (!num || num <= 0) return '请输入有效数量'
+          if (num > parseInt(row.lockedStock)) return '解锁数量不能超过锁定库存'
+          return true
+        },
+        inputPlaceholder: '请输入解锁数量'
+      }
+    )
+    await unlockFlightInventory(row.id, {
+      quantity: parseInt(value),
+      reason: '手动解锁'
+    })
+    ElMessage.success('解锁成功')
+    loadInventoryList()
+    loadInventoryStats()
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error(e.message || '解锁失败')
+    }
+  }
+}
+
+const handleViewInventoryLogs = (row) => {
+  currentLogInventoryId.value = row.id
+  currentLogFlightId.value = row.flightId
+  inventoryLogDialogVisible.value = true
+}
+
+const handleOpenInventoryBatchDialog = () => {
+  inventoryBatchDialogVisible.value = true
+}
+
+const handleReleaseExpiredReservations = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要自动释放所有过期的预留库存吗？',
+      '释放过期预留',
+      { type: 'warning' }
+    )
+    const res = await batchReleaseExpiredReservation({ reason: '自动释放过期预留' })
+    ElMessage.success(`已释放 ${res.released || 0} 条过期预留库存`)
+    loadInventoryList()
+    loadInventoryStats()
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error(e.message || '操作失败')
+    }
+  }
+}
+
+const handleInventorySuccess = () => {
+  loadInventoryList()
+  loadInventoryStats()
+}
+
+const getInventoryTypeLabel = (type) => {
+  const key = Object.keys(FlightInventoryTypeEnum).find(
+    k => FlightInventoryTypeEnum[k].value === type
+  )
+  return FlightInventoryTypeEnum[key]?.label || type
+}
+
+const getInventoryTypeTagType = (type) => {
+  const typeMap = {
+    fixed: 'success',
+    dynamic: 'primary',
+    reserved: 'warning',
+    supplement: 'info'
+  }
+  return typeMap[type] || ''
+}
+
+const getInventoryStatusLabel = (status) => {
+  const key = Object.keys(FlightInventoryStatusEnum).find(
+    k => FlightInventoryStatusEnum[k].value === parseInt(status)
+  )
+  return FlightInventoryStatusEnum[key]?.label || status
+}
+
+const getCabinTagType = (cabinClass) => {
+  const map = {
+    economy: 'info',
+    premium_economy: '',
+    business: 'warning',
+    first: 'danger'
+  }
+  return map[cabinClass] || ''
+}
+
+const inventoryTableRowClassName = ({ row }) => {
+  if (inventorySelectedIds.value.includes(row.id)) {
+    return 'selected-row-shadow'
+  }
+  return ''
+}
+
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 onMounted(() => {
   fetchData()
   fetchStats()
@@ -1309,6 +1927,155 @@ onMounted(() => {
   .price-log-dialog {
     :deep(.el-dialog__body) {
       padding: 0;
+    }
+  }
+
+  .inventory-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 0 4px;
+
+    .toolbar-left,
+    .toolbar-right {
+      display: flex;
+      gap: 12px;
+    }
+  }
+
+  .inventory-table {
+    .flight-no-text {
+      font-weight: 600;
+      color: #303133;
+    }
+
+    .available-stock-text {
+      font-weight: 700;
+      font-size: 14px;
+
+      &.stock-warning {
+        color: #faad14;
+        animation: warningPulse 1.5s ease-in-out infinite;
+      }
+
+      &.stock-sold-out {
+        color: #ff4d4f;
+      }
+    }
+
+    .status-tag-wrapper {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+
+      .status-text {
+        font-size: 12px;
+      }
+
+      &.status-0 {
+        background: #f0f0f0;
+        color: #909399;
+
+        .status-dot {
+          background: #909399;
+        }
+      }
+
+      &.status-1 {
+        background: #f6ffed;
+        color: #52c41a;
+
+        .status-dot {
+          background: #52c41a;
+          animation: statusGlowGreen 2s ease-in-out infinite;
+          box-shadow: 0 0 8px rgba(82, 196, 26, 0.6);
+        }
+      }
+
+      &.status-2 {
+        background: #fffbe6;
+        color: #faad14;
+
+        .status-dot {
+          background: #faad14;
+          animation: statusGlowYellow 1.2s ease-in-out infinite;
+          box-shadow: 0 0 8px rgba(250, 173, 20, 0.7);
+        }
+      }
+
+      &.status-3 {
+        background: #fff1f0;
+        color: #ff4d4f;
+
+        .status-dot {
+          background: #ff4d4f;
+          animation: statusGlowRed 0.8s ease-in-out infinite;
+          box-shadow: 0 0 10px rgba(255, 77, 79, 0.8);
+        }
+      }
+    }
+  }
+
+  .text-placeholder {
+    color: #c0c4cc;
+  }
+
+  .inventory-log-dialog {
+    :deep(.el-dialog__body) {
+      padding: 0;
+    }
+  }
+
+  @keyframes statusGlowGreen {
+    0%, 100% {
+      opacity: 1;
+      box-shadow: 0 0 6px rgba(82, 196, 26, 0.4);
+    }
+    50% {
+      opacity: 0.7;
+      box-shadow: 0 0 12px rgba(82, 196, 26, 0.8);
+    }
+  }
+
+  @keyframes statusGlowYellow {
+    0%, 100% {
+      opacity: 1;
+      box-shadow: 0 0 6px rgba(250, 173, 20, 0.5);
+    }
+    50% {
+      opacity: 0.6;
+      box-shadow: 0 0 14px rgba(250, 173, 20, 0.9);
+    }
+  }
+
+  @keyframes statusGlowRed {
+    0%, 100% {
+      opacity: 1;
+      box-shadow: 0 0 8px rgba(255, 77, 79, 0.6);
+    }
+    50% {
+      opacity: 0.5;
+      box-shadow: 0 0 16px rgba(255, 77, 79, 1);
+    }
+  }
+
+  @keyframes warningPulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.08);
     }
   }
 
