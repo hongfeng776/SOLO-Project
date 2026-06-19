@@ -655,3 +655,158 @@ export const SIDE_LABELS: Record<string, string> = {
   '1': '买入',
   '2': '卖出',
 }
+
+import {
+  CustomerRiskLevel,
+  RiskLevelChangeType,
+  ReviewPriority,
+  AssessmentDataSource,
+  BatchLevelUpdateMode,
+  DataIntegrityStatus,
+} from '@/enums'
+
+export const CUSTOMER_RISK_LEVEL_LABELS: Record<CustomerRiskLevel, string> = {
+  [CustomerRiskLevel.LOW]: '低风险',
+  [CustomerRiskLevel.MEDIUM]: '中风险',
+  [CustomerRiskLevel.HIGH]: '较高风险',
+  [CustomerRiskLevel.VERY_HIGH]: '高风险',
+}
+
+export const CUSTOMER_RISK_LEVEL_SHORT_LABELS: Record<CustomerRiskLevel, string> = {
+  [CustomerRiskLevel.LOW]: '低',
+  [CustomerRiskLevel.MEDIUM]: '中',
+  [CustomerRiskLevel.HIGH]: '较高',
+  [CustomerRiskLevel.VERY_HIGH]: '高',
+}
+
+export const CUSTOMER_RISK_LEVEL_COLORS: Record<CustomerRiskLevel, string> = {
+  [CustomerRiskLevel.LOW]: '#27AE60',
+  [CustomerRiskLevel.MEDIUM]: '#2980B9',
+  [CustomerRiskLevel.HIGH]: '#E67E22',
+  [CustomerRiskLevel.VERY_HIGH]: '#C0392B',
+}
+
+export const CUSTOMER_RISK_LEVEL_BG_COLORS: Record<CustomerRiskLevel, string> = {
+  [CustomerRiskLevel.LOW]: 'rgba(39, 174, 96, 0.12)',
+  [CustomerRiskLevel.MEDIUM]: 'rgba(41, 128, 185, 0.12)',
+  [CustomerRiskLevel.HIGH]: 'rgba(230, 126, 34, 0.12)',
+  [CustomerRiskLevel.VERY_HIGH]: 'rgba(192, 57, 43, 0.15)',
+}
+
+export const CUSTOMER_RISK_LEVEL_GRADIENTS: Record<CustomerRiskLevel, string> = {
+  [CustomerRiskLevel.LOW]: 'linear-gradient(135deg, #27AE60 0%, #2ECC71 100%)',
+  [CustomerRiskLevel.MEDIUM]: 'linear-gradient(135deg, #2980B9 0%, #3498DB 100%)',
+  [CustomerRiskLevel.HIGH]: 'linear-gradient(135deg, #D35400 0%, #E67E22 100%)',
+  [CustomerRiskLevel.VERY_HIGH]: 'linear-gradient(135deg, #C0392B 0%, #E74C3C 100%)',
+}
+
+export const CUSTOMER_RISK_LEVEL_SCORES: Record<CustomerRiskLevel, [number, number]> = {
+  [CustomerRiskLevel.LOW]: [0, 30],
+  [CustomerRiskLevel.MEDIUM]: [31, 60],
+  [CustomerRiskLevel.HIGH]: [61, 80],
+  [CustomerRiskLevel.VERY_HIGH]: [81, 100],
+}
+
+export const RISK_LEVEL_CHANGE_TYPE_LABELS: Record<RiskLevelChangeType, string> = {
+  [RiskLevelChangeType.UPGRADE]: '等级升级',
+  [RiskLevelChangeType.DOWNGRADE]: '等级降级',
+  [RiskLevelChangeType.INITIAL]: '初始评定',
+  [RiskLevelChangeType.RESET]: '等级重置',
+  [RiskLevelChangeType.MANUAL]: '人工调整',
+  [RiskLevelChangeType.EXPIRE]: '等级过期',
+}
+
+export const RISK_LEVEL_CHANGE_TYPE_COLORS: Record<RiskLevelChangeType, string> = {
+  [RiskLevelChangeType.UPGRADE]: '#E74C3C',
+  [RiskLevelChangeType.DOWNGRADE]: '#3498DB',
+  [RiskLevelChangeType.INITIAL]: '#9B59B6',
+  [RiskLevelChangeType.RESET]: '#95A5A6',
+  [RiskLevelChangeType.MANUAL]: '#F39C12',
+  [RiskLevelChangeType.EXPIRE]: '#7F8C8D',
+}
+
+export const REVIEW_PRIORITY_LABELS: Record<ReviewPriority, string> = {
+  [ReviewPriority.NONE]: '免审核',
+  [ReviewPriority.NORMAL]: '普通审核',
+  [ReviewPriority.HIGH]: '优先审核',
+  [ReviewPriority.VERY_HIGH]: '特级审核',
+}
+
+export const REVIEW_PRIORITY_COLORS: Record<ReviewPriority, string> = {
+  [ReviewPriority.NONE]: '#27AE60',
+  [ReviewPriority.NORMAL]: '#3498DB',
+  [ReviewPriority.HIGH]: '#E67E22',
+  [ReviewPriority.VERY_HIGH]: '#C0392B',
+}
+
+export const ASSESSMENT_DATA_SOURCE_LABELS: Record<AssessmentDataSource, string> = {
+  [AssessmentDataSource.TRADE_DATA]: '交易数据',
+  [AssessmentDataSource.ASSET_DATA]: '资产数据',
+  [AssessmentDataSource.BEHAVIOR_DATA]: '行为数据',
+  [AssessmentDataSource.MANUAL_INPUT]: '人工录入',
+  [AssessmentDataSource.ASSESSMENT_SURVEY]: '风险测评',
+  [AssessmentDataSource.EXTERNAL_DATA]: '外部数据',
+}
+
+export const DATA_INTEGRITY_STATUS_LABELS: Record<DataIntegrityStatus, string> = {
+  [DataIntegrityStatus.COMPLETE]: '数据完整',
+  [DataIntegrityStatus.PARTIAL]: '数据缺失（部分）',
+  [DataIntegrityStatus.MISSING]: '数据严重缺失',
+}
+
+export const DATA_INTEGRITY_STATUS_COLORS: Record<DataIntegrityStatus, string> = {
+  [DataIntegrityStatus.COMPLETE]: '#27AE60',
+  [DataIntegrityStatus.PARTIAL]: '#E67E22',
+  [DataIntegrityStatus.MISSING]: '#C0392B',
+}
+
+export const BATCH_UPDATE_MODE_LABELS: Record<BatchLevelUpdateMode, string> = {
+  [BatchLevelUpdateMode.BY_FREQUENCY]: '按异常交易频次',
+  [BatchLevelUpdateMode.BY_ASSESSMENT]: '按周期测评结果',
+  [BatchLevelUpdateMode.BY_CUSTOM_LIST]: '按自定义名单',
+  [BatchLevelUpdateMode.BY_LEVEL]: '按当前等级批量转换',
+}
+
+export const RISK_LEVEL_STRATEGY_TEMPLATES: Record<CustomerRiskLevel, {
+  tradeLimit: string
+  positionLimit: string
+  reviewPriority: ReviewPriority
+  specialRestrictions: string[]
+}> = {
+  [CustomerRiskLevel.LOW]: {
+    tradeLimit: '单笔500万 / 日累计2000万',
+    positionLimit: '单票40% / 总仓80%',
+    reviewPriority: ReviewPriority.NONE,
+    specialRestrictions: ['免审核快速交易', '全市场交易权限', '融资融券可用'],
+  },
+  [CustomerRiskLevel.MEDIUM]: {
+    tradeLimit: '单笔200万 / 日累计800万',
+    positionLimit: '单票30% / 总仓70%',
+    reviewPriority: ReviewPriority.NORMAL,
+    specialRestrictions: ['常规审核', 'ST股票限制', '融资融券可用'],
+  },
+  [CustomerRiskLevel.HIGH]: {
+    tradeLimit: '单笔50万 / 日累计300万',
+    positionLimit: '单票20% / 总仓60%',
+    reviewPriority: ReviewPriority.HIGH,
+    specialRestrictions: ['优先审核队列', '禁止高风险板块', '融资融券受限'],
+  },
+  [CustomerRiskLevel.VERY_HIGH]: {
+    tradeLimit: '单笔10万 / 日累计50万',
+    positionLimit: '单票10% / 总仓40%',
+    reviewPriority: ReviewPriority.VERY_HIGH,
+    specialRestrictions: ['全量人工审核', '仅允许主板交易', '暂停融资融券'],
+  },
+}
+
+export const LEVEL_SWITCH_TABS: Array<{
+  key: string
+  label: string
+  level: CustomerRiskLevel
+}> = [
+  { key: 'all', label: '全部客户', level: CustomerRiskLevel.LOW },
+  { key: CustomerRiskLevel.LOW, label: '低风险', level: CustomerRiskLevel.LOW },
+  { key: CustomerRiskLevel.MEDIUM, label: '中风险', level: CustomerRiskLevel.MEDIUM },
+  { key: CustomerRiskLevel.HIGH, label: '较高风险', level: CustomerRiskLevel.HIGH },
+  { key: CustomerRiskLevel.VERY_HIGH, label: '高风险', level: CustomerRiskLevel.VERY_HIGH },
+]

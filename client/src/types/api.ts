@@ -1216,3 +1216,317 @@ export interface IAlertMessage {
   isRead: boolean
   createdAt: string
 }
+
+import {
+  CustomerRiskLevel,
+  RiskLevelChangeType,
+  ReviewPriority,
+  AssessmentDataSource,
+  BatchLevelUpdateMode,
+  DataIntegrityStatus,
+} from '@/enums'
+
+export interface IRiskLevelStrategyConfig {
+  tradeLimit: {
+    singleTradeMax: number
+    dailyTotalMax: number
+  }
+  positionLimit: {
+    singleStockRatio: number
+    totalPositionRatio: number
+    totalAmountMax?: number
+  }
+  reviewPriority: ReviewPriority
+  volatilityTolerance: number
+  frequencyControl: {
+    maxDailyTrades: number
+    maxTradesPerHour: number
+  }
+  specialRestrictions: string[]
+  allowedMarkets: string[]
+  blockedStocks?: string[]
+  marginEnabled: boolean
+  optionsEnabled: boolean
+}
+
+export interface IDataIntegrityCheck {
+  source: AssessmentDataSource
+  status: DataIntegrityStatus
+  completeness: number
+  lastUpdated: string
+  missingFields: string[]
+}
+
+export interface ICustomerRiskProfile {
+  id: number
+  customerId: number
+  customerName: string
+  customerAccount: string
+  customerLevel: string
+  riskLevel: CustomerRiskLevel
+  riskLevelLabel?: string
+  riskScore: number
+  assessmentDate: string
+  nextAssessmentDate: string
+  validUntil?: string
+  dataIntegrity: IDataIntegrityCheck[]
+  overallIntegrity: number
+  canBeAssessed: boolean
+  assessmentBlockers: string[]
+  strategyConfig: IRiskLevelStrategyConfig
+  reviewPriority: ReviewPriority
+  tradeStats: {
+    totalTrades30d: number
+    totalAmount30d: number
+    avgTradeAmount: number
+    maxDailyTrades: number
+    interceptionCount30d: number
+    abnormalRatio: number
+  }
+  assetStats: {
+    totalAssets: number
+    netAssets: number
+    availableCash: number
+    positionAmount: number
+    positionRatio: number
+    totalMargin: number
+    marginRatio: number
+    assetChange30d: number
+    assetChange30dRatio: number
+  }
+  behaviorScores: {
+    tradeFrequencyScore: number
+    volatilityScore: number
+    concentrationScore: number
+    interceptionScore: number
+    marketAdaptabilityScore: number
+    overallScore: number
+  }
+  createdAt: string
+  updatedAt: string
+  assessedBy?: number
+  assessedByName?: string
+}
+
+export interface ICustomerRiskListParams {
+  page: number
+  pageSize: number
+  riskLevel?: CustomerRiskLevel
+  keyword?: string
+  customerLevel?: string
+  minRiskScore?: number
+  maxRiskScore?: number
+  canBeAssessed?: boolean
+  reviewPriority?: ReviewPriority
+  startDate?: string
+  endDate?: string
+  interceptionCountRange?: [number, number]
+}
+
+export interface IRiskLevelChangeRecord {
+  id: number
+  customerId: number
+  customerName?: string
+  customerAccount?: string
+  changeType: RiskLevelChangeType
+  changeTypeLabel?: string
+  fromLevel: CustomerRiskLevel | null
+  fromLevelLabel?: string
+  toLevel: CustomerRiskLevel
+  toLevelLabel?: string
+  fromScore: number
+  toScore: number
+  changedAt: string
+  changeReason: string
+  supportingData: {
+    dataSources: AssessmentDataSource[]
+    dataIntegrity: number
+    keyMetrics: Record<string, number>
+    triggeredRules?: string[]
+  }
+  ruleComplianceCheck: {
+    valid: boolean
+    complianceScore: number
+    violations: Array<{ rule: string; severity: string; suggestion?: string }>
+  }
+  impactAnalysis: {
+    affectedStrategyFields: string[]
+    estimatedLimitChange: string
+    estimatedReviewChange: string
+  }
+  operatorId: number
+  operatorName?: string
+  operationType: 'auto' | 'manual' | 'batch'
+  batchOperationId?: number
+  remark?: string
+}
+
+export interface IRiskLevelHistoryParams {
+  page: number
+  pageSize: number
+  customerId?: number
+  changeType?: RiskLevelChangeType
+  fromLevel?: CustomerRiskLevel
+  toLevel?: CustomerRiskLevel
+  startDate?: string
+  endDate?: string
+}
+
+export interface IRiskLevelStats {
+  levelDistribution: Array<{
+    level: CustomerRiskLevel
+    count: number
+    ratio: number
+    avgScore: number
+    totalAssets: number
+    abnormalRatio: number
+  }>
+  levelChanges: Array<{
+    date: string
+    upgrades: number
+    downgrades: number
+    initial: number
+  }>
+  dataIntegrityStats: {
+    complete: number
+    partial: number
+    missing: number
+  }
+  reviewDistribution: Array<{
+    priority: ReviewPriority
+    count: number
+    avgWaitTime: number
+  }>
+  riskIncidence: Record<CustomerRiskLevel, {
+    totalTrades: number
+    interceptions: number
+    incidenceRate: number
+    lossRate: number
+  }>
+  assessmentCompletion: {
+    overdueCount: number
+    expiringCount: number
+    completedCount: number
+    pendingCount: number
+  }
+  metrics: {
+    totalCustomers: number
+    assessedCustomers: number
+    avgRiskScore: number
+    medianRiskScore: number
+  }
+}
+
+export interface IRiskLevelUpdateData {
+  customerId: number
+  targetLevel: CustomerRiskLevel
+  targetScore?: number
+  changeReason: string
+  supportingEvidence?: string
+  autoSyncStrategy?: boolean
+  sendNotification?: boolean
+  effectiveImmediately?: boolean
+  scheduledTime?: string
+}
+
+export interface IBatchLevelUpdateParams {
+  mode: BatchLevelUpdateMode
+  targetLevel: CustomerRiskLevel
+  customerIds?: number[]
+  sourceLevel?: CustomerRiskLevel
+  interceptionThreshold?: {
+    minCount30d: number
+    minAbnormalRatio: number
+  }
+  assessmentResultFilter?: {
+    minScore?: number
+    maxScore?: number
+    passedOnly?: boolean
+  }
+  changeReason: string
+  operatorRemark?: string
+  autoSyncStrategies?: boolean
+  dryRun?: boolean
+}
+
+export interface IBatchLevelUpdatePreview {
+  totalAffected: number
+  byLevel: Record<CustomerRiskLevel, number>
+  byCurrentLevel: Record<CustomerRiskLevel, number>
+  sampleCustomers: Array<{
+    id: number
+    name: string
+    currentLevel: CustomerRiskLevel
+    targetLevel: CustomerRiskLevel
+    currentScore: number
+  }>
+  estimatedImpacts: {
+    strategySyncCount: number
+    priorityChangeCount: number
+    notifiedCustomerCount: number
+  }
+  validationErrors: Array<{ customerId: number; reason: string }>
+}
+
+export interface IBatchLevelUpdateResult {
+  success: boolean
+  total: number
+  processed: number
+  successful: number
+  failed: number
+  failedItems: Array<{ customerId: number; customerName: string; reason: string }>
+  batchOperationId: number
+  previewEstimatedImpact?: string
+}
+
+export interface IRiskAssessmentCreateData {
+  customerIds: number[]
+  assessmentType: 'standard' | 'simplified' | 'comprehensive'
+  dataSources: AssessmentDataSource[]
+  autoApplyLevel?: boolean
+  notifyCustomer?: boolean
+  expirationDays?: number
+  operatorRemark?: string
+}
+
+export interface IRiskAssessmentResult {
+  total: number
+  completed: number
+  withLevelChanges: number
+  failed: number
+  assessmentIds: number[]
+  changedCustomers: Array<{
+    customerId: number
+    fromLevel: CustomerRiskLevel
+    toLevel: CustomerRiskLevel
+    fromScore: number
+    toScore: number
+  }>
+}
+
+export interface ILevelStandardOptimizationSuggestion {
+  id: number
+  metricName: string
+  currentThreshold: number | string
+  suggestedThreshold: number | string
+  rationale: string
+  impactAnalysis: string
+  historicalEvidence: {
+    metricChange: string
+    incidenceChange: string
+  }
+  priority: 'high' | 'medium' | 'low'
+}
+
+export interface IRiskLevelStandard {
+  level: CustomerRiskLevel
+  scoreRange: [number, number]
+  criteria: Array<{
+    metric: string
+    operator: 'gte' | 'lte' | 'gt' | 'lt' | 'eq' | 'between'
+    threshold: number | [number, number]
+    weight: number
+  }>
+  optimizationSuggestions: ILevelStandardOptimizationSuggestion[]
+  updatedAt: string
+}

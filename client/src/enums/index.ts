@@ -151,3 +151,48 @@ export enum AppealStatus {
   APPROVED = 'approved',
   REJECTED = 'rejected',
 }
+
+export enum CustomerRiskLevel {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  VERY_HIGH = 'very_high',
+}
+
+export enum RiskLevelChangeType {
+  UPGRADE = 'upgrade',
+  DOWNGRADE = 'downgrade',
+  INITIAL = 'initial',
+  RESET = 'reset',
+  MANUAL = 'manual',
+  EXPIRE = 'expire',
+}
+
+export enum AssessmentDataSource {
+  TRADE_DATA = 'trade_data',
+  ASSET_DATA = 'asset_data',
+  BEHAVIOR_DATA = 'behavior_data',
+  MANUAL_INPUT = 'manual_input',
+  ASSESSMENT_SURVEY = 'assessment_survey',
+  EXTERNAL_DATA = 'external_data',
+}
+
+export enum ReviewPriority {
+  NONE = 'none',
+  NORMAL = 'normal',
+  HIGH = 'high',
+  VERY_HIGH = 'very_high',
+}
+
+export enum BatchLevelUpdateMode {
+  BY_FREQUENCY = 'by_frequency',
+  BY_ASSESSMENT = 'by_assessment',
+  BY_CUSTOM_LIST = 'by_custom_list',
+  BY_LEVEL = 'by_level',
+}
+
+export enum DataIntegrityStatus {
+  COMPLETE = 'complete',
+  PARTIAL = 'partial',
+  MISSING = 'missing',
+}
