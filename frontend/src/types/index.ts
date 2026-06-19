@@ -1382,3 +1382,193 @@ export interface BatchAssignResult {
   failed: { id: number; username: string; reason: string }[]
   filteredCount: number
 }
+
+// ================ 系统运行日志管理 ================
+
+export type SystemLogType = 'system' | 'api' | 'error' | 'performance' | 'security' | 'cron'
+export type SystemLogLevel = 'debug' | 'info' | 'warning' | 'error' | 'critical'
+
+export interface SystemLog {
+  id: number
+  traceId: string
+  logType: SystemLogType
+  logTypeLabel: string
+  logLevel: SystemLogLevel
+  logLevelLabel: string
+  module: string
+  moduleLabel: string
+  title: string
+  content: string
+  stackTrace: string
+  requestMethod: string
+  requestUrl: string
+  requestParams: any
+  requestBody: any
+  responseStatus: number
+  responseData: any
+  duration: number
+  userId: number
+  username: string
+  ip: string
+  userAgent: string
+  serverName: string
+  processId: number
+  threadId: string
+  errorCode: string
+  errorName: string
+  isHighRisk: boolean
+  isRetained: boolean
+  retentionDays: number
+  expireAt: string
+  backupFile: string
+  backupAt: string
+  extraInfo: any
+  createdAt: string
+}
+
+export interface SystemLogPermission {
+  canViewError: boolean
+  canViewApi: boolean
+  canViewSystem: boolean
+  canBackup: boolean
+  canCleanup: boolean
+  canViewTraceability: boolean
+}
+
+export interface SystemLogListParams extends PageParams {
+  logType?: SystemLogType
+  logLevel?: SystemLogLevel
+  module?: string
+  responseStatus?: number
+  durationMin?: number
+  isHighRisk?: boolean
+  startDate?: string
+  endDate?: string
+  keyword?: string
+}
+
+export interface SystemLogStatsData {
+  totalCount: number
+  todayCount: number
+  highRiskCount: number
+  slowApiCount: number
+  byType: { type: string; label: string; count: number }[]
+  byLevel: { level: string; label: string; count: number }[]
+  levelCounts: { info: number; warning: number; error: number; critical: number }
+  levelPercentages: { info: number; warning: number; error: number; critical: number }
+  last7Days: { date: string; count: number; errorCount: number }[]
+  topErrorModules: { module: string; moduleLabel: string; count: number }[]
+  peakHours: { hour: number; count: number }[]
+}
+
+export interface SystemLogBackupParams {
+  startDate: string
+  endDate: string
+  logType?: SystemLogType
+  logLevel?: SystemLogLevel
+  module?: string
+}
+
+export interface SystemLogBackupResult {
+  total: number
+  backedUp: number
+  backupFile: string
+  backupPath: string
+  message: string
+}
+
+export interface SystemLogCleanupParams {
+  days?: number
+  startDate?: string
+  endDate?: string
+  logType?: SystemLogType
+  module?: string
+}
+
+export interface SystemLogCleanupResult {
+  total: number
+  cleaned: number
+  protectedCount: number
+  message: string
+}
+
+export interface SystemLogTraceErrorType {
+  name: string
+  errorCode: string
+  module: string
+  count: number
+  firstOccur: string
+  lastOccur: string
+  samples: { id: number; stackTrace: string; createdAt: string }[]
+}
+
+export interface SystemLogTraceSlowApi {
+  url: string
+  method: string
+  duration: number
+  count: number
+  lastOccur: string
+}
+
+export interface SystemLogStabilityScore {
+  score: number
+  level: 'excellent' | 'good' | 'fair' | 'poor'
+  levelLabel: string
+  totalLogs: number
+  errorLogs: number
+  warningLogs: number
+  slowApiLogs: number
+  highRiskLogs: number
+}
+
+export interface SystemLogOptimizationIssue {
+  severity: 'high' | 'medium' | 'low'
+  type: string
+  description: string
+  details: string[]
+}
+
+export interface SystemLogOptimizationSuggestion {
+  priority: 'high' | 'medium' | 'low'
+  title: string
+  description: string
+  affected: string
+}
+
+export interface SystemLogOptimizationReport {
+  generatedAt: string
+  period: string
+  totalIssues: number
+  issues: SystemLogOptimizationIssue[]
+  suggestions: SystemLogOptimizationSuggestion[]
+  summary: string
+}
+
+export interface SystemLogTraceabilityResult {
+  abnormalLogs: SystemLog[]
+  statistics: {
+    totalAbnormal: number
+    byType: { type: string; label: string; count: number }[]
+    byModule: { module: string; label: string; count: number }[]
+    byHour: { hour: number; count: number }[]
+    byDay: { day: string; count: number }[]
+    slowApis: SystemLogTraceSlowApi[]
+    errorTypes: SystemLogTraceErrorType[]
+  }
+  stabilityScore: SystemLogStabilityScore
+  optimizationReport: SystemLogOptimizationReport
+}
+
+export interface SystemLogOption {
+  value: string
+  label: string
+}
+
+export interface SystemLogViewRecord {
+  id: string
+  logId: number
+  logTitle: string
+  logType: SystemLogType
+  logLevel: SystemLogLevel
+  viewedAt: string
+}

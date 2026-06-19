@@ -10,7 +10,17 @@ import type {
   LogStatsData,
   LogTraceResult,
   LogExportParams,
-  LogExportResult
+  LogExportResult,
+  SystemLog,
+  SystemLogPermission,
+  SystemLogListParams,
+  SystemLogStatsData,
+  SystemLogBackupParams,
+  SystemLogBackupResult,
+  SystemLogCleanupParams,
+  SystemLogCleanupResult,
+  SystemLogTraceabilityResult,
+  SystemLogOption
 } from '@/types'
 
 export const validateLogParams = (params: LogListParams) => {
@@ -59,4 +69,54 @@ export const exportLogs = (params: LogExportParams) => {
 
 export const createOperationLog = (data: Partial<OperationLog>) => {
   return request.post<OperationLog>('/logs', data)
+}
+
+// ==================== 系统日志 ====================
+
+export const getSystemLogPermission = () => {
+  return request.get<SystemLogPermission>('/system-logs/permission')
+}
+
+export const validateSystemLogParams = (params: SystemLogListParams) => {
+  return request.get<LogValidationResult>('/system-logs/validate', params)
+}
+
+export const getSystemLogList = (params: SystemLogListParams) => {
+  return request.get<PageResult<SystemLog> & { warnings?: string[] }>('/system-logs', params)
+}
+
+export const getSystemLogDetail = (id: number) => {
+  return request.get<SystemLog>(`/system-logs/${id}`)
+}
+
+export const getSystemLogStats = (params?: { startDate?: string; endDate?: string }) => {
+  return request.get<SystemLogStatsData>('/system-logs/stats', params)
+}
+
+export const getSystemLogTraceability = (params?: { startDate?: string; endDate?: string; module?: string; logType?: string }) => {
+  return request.get<SystemLogTraceabilityResult>('/system-logs/traceability', params)
+}
+
+export const backupSystemLogs = (params: SystemLogBackupParams) => {
+  return request.post<SystemLogBackupResult>('/system-logs/backup', params)
+}
+
+export const cleanupSystemLogs = (params: SystemLogCleanupParams) => {
+  return request.post<SystemLogCleanupResult>('/system-logs/cleanup', params)
+}
+
+export const getSystemLogTypeList = () => {
+  return request.get<SystemLogOption[]>('/system-logs/types')
+}
+
+export const getSystemLogLevelList = () => {
+  return request.get<SystemLogOption[]>('/system-logs/levels')
+}
+
+export const getSystemLogModuleList = () => {
+  return request.get<SystemLogOption[]>('/system-logs/modules')
+}
+
+export const createSystemLog = (data: Partial<SystemLog>) => {
+  return request.post<SystemLog>('/system-logs', data)
 }

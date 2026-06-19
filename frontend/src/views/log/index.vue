@@ -1,6 +1,26 @@
 <template>
   <div class="log-page">
-    <div class="log-stats" v-if="statsLoaded">
+    <el-tabs v-model="activeTab" class="log-tabs" @tab-change="handleTabChange">
+      <el-tab-pane label="操作日志" name="operation">
+        <template #label>
+          <span class="tab-label">
+            <el-icon><Document /></el-icon>
+            <span>操作日志</span>
+          </span>
+        </template>
+      </el-tab-pane>
+      <el-tab-pane label="系统日志" name="system">
+        <template #label>
+          <span class="tab-label">
+            <el-icon><Monitor /></el-icon>
+            <span>系统日志</span>
+          </span>
+        </template>
+      </el-tab-pane>
+    </el-tabs>
+
+    <div v-if="activeTab === 'operation'">
+      <div class="log-stats" v-if="statsLoaded">
       <div class="stat-card">
         <div class="stat-icon stat-total"><el-icon :size="24"><Document /></el-icon></div>
         <div class="stat-info">
@@ -185,6 +205,9 @@
           @size-change="handleSizeChange" @current-change="handlePageChange" />
       </div>
     </div>
+    </div>
+
+    <SystemLog v-if="activeTab === 'system'" />
 
     <el-dialog v-model="detailDialogVisible" :title="`日志详情 #${currentLog?.id || ''}`" width="900px"
       class="detail-dialog" :close-on-click-modal="false" @close="closeDetailDialog">
@@ -248,7 +271,7 @@
             <div class="compare-col">
               <div class="compare-header before-header"><el-icon><ArrowLeft /></el-icon>变更前</div>
               <div class="compare-content">
-                <div v-for="(value, key) in currentLog.beforeData || {}" :key="key" class="compare-item" :class="{ 'is-changed': isFieldChanged(key) }">
+                <div v-for="(value, key) in currentLog.beforeData || {}" :key="key" class="compare-item" :class="{ 'is-changed': isFieldChanged(String(key)) }">
                   <span class="field-name">{{ key }}:</span>
                   <span class="field-value">{{ formatValue(value) }}</span>
                 </div>
@@ -259,10 +282,10 @@
             <div class="compare-col">
               <div class="compare-header after-header"><el-icon><ArrowRight /></el-icon>变更后</div>
               <div class="compare-content">
-                <div v-for="(value, key) in currentLog.afterData || {}" :key="key" class="compare-item" :class="{ 'is-changed': isFieldChanged(key) }">
+                <div v-for="(value, key) in currentLog.afterData || {}" :key="key" class="compare-item" :class="{ 'is-changed': isFieldChanged(String(key)) }">
                   <span class="field-name">{{ key }}:</span>
                   <span class="field-value">{{ formatValue(value) }}</span>
-                  <el-tag v-if="isFieldChanged(key)" type="warning" size="small" effect="dark" style="margin-left: 6px">已变更</el-tag>
+                  <el-tag v-if="isFieldChanged(String(key))" type="warning" size="small" effect="dark" style="margin-left: 6px">已变更</el-tag>
                 </div>
                 <el-empty v-if="!currentLog.afterData || Object.keys(currentLog.afterData).length === 0" description="无数据" :image-size="60" />
               </div>
@@ -449,7 +472,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import {
   Search, Refresh, Download, View, Connection, List, History, Document, Sunny,
-  CircleCheck, Warning, CircleClose, ArrowLeft, ArrowRight, Right, Loading, User, Calendar
+  CircleCheck, Warning, CircleClose, ArrowLeft, ArrowRight, Right, Loading, User, Calendar,
+  Monitor
 } from '@element-plus/icons-vue'
 import { ElMessage, type FormInstance } from 'element-plus'
 import {
@@ -461,9 +485,15 @@ import type {
   LogModuleOption, LogActionOption, LogExportParams, LogQueryRecord
 } from '@/types'
 import { UserRoleLabel } from '@/constants'
+import SystemLog from './SystemLog.vue'
 
 const HISTORY_STORAGE_KEY = 'log_query_history'
 const MAX_HISTORY = 20
+
+const activeTab = ref<'operation' | 'system'>('operation')
+const handleTabChange = (tab: string) => {
+  activeTab.value = tab as 'operation' | 'system'
+}
 
 const loading = ref(false)
 const tableData = ref<OperationLog[]>([])
@@ -750,6 +780,25 @@ onMounted(async () => { loadQueryHistory(); await fetchOptions(); await Promise.
 <style scoped lang="scss">
 @use '@/styles/variables.scss' as *;
 .log-page {
+  .log-tabs {
+    margin-bottom: 16px;
+    background: $bg-color-ffffff;
+    border-radius: $border-radius-large;
+    padding: 4px 16px 0;
+    box-shadow: $shadow-light;
+    :deep(.el-tabs__header) {
+      margin-bottom: 0;
+    }
+    :deep(.el-tabs__nav-wrap::after) {
+      height: 1px;
+    }
+    .tab-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+    }
+  }
   .log-stats {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px;
     .stat-card {

@@ -24,6 +24,7 @@ const RolePermission = require('./RolePermission')
 const RolePermissionLog = require('./RolePermissionLog')
 const AccountPermission = require('./AccountPermission')
 const AccountPermissionLog = require('./AccountPermissionLog')
+const SystemLog = require('./SystemLog')
 
 User.hasMany(Resource, { foreignKey: 'authorId', as: 'resources' })
 Resource.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
@@ -136,5 +137,6 @@ module.exports = {
   RolePermission,
   RolePermissionLog,
   AccountPermission,
-  AccountPermissionLog
+  AccountPermissionLog,
+  SystemLog
 }
