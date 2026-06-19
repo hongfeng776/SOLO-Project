@@ -801,6 +801,11 @@ export enum ProductAuditAction {
   EDIT_REJECT = 'edit_reject',
   BATCH_EDIT = 'batch_edit',
   COMMISSION_ADJUST = 'commission_adjust',
+  FORCE_DELIST = 'force_delist',
+  SCHEDULE_LIST = 'schedule_list',
+  SCHEDULE_DELIST = 'schedule_delist',
+  BATCH_LIST = 'batch_list',
+  BATCH_DELIST = 'batch_delist',
 }
 
 export enum ProductEditApprovalStatus {
@@ -1004,3 +1009,77 @@ export const PRODUCT_IMPORT_TEMPLATE_FIELDS = [
   { key: 'description', label: '商品描述', required: false },
   { key: 'brand', label: '品牌', required: false },
 ] as const;
+
+export enum ProductScheduleRuleStatus {
+  PENDING = 0,
+  ACTIVE = 1,
+  EXECUTED = 2,
+  CANCELLED = 3,
+  EXPIRED = 4,
+}
+
+export const PRODUCT_SCHEDULE_RULE_STATUS_LABELS: Record<ProductScheduleRuleStatus, { label: string; type: 'info' | 'warning' | 'success' | 'danger' }> = {
+  [ProductScheduleRuleStatus.PENDING]: { label: '待生效', type: 'info' },
+  [ProductScheduleRuleStatus.ACTIVE]: { label: '生效中', type: 'warning' },
+  [ProductScheduleRuleStatus.EXECUTED]: { label: '已执行', type: 'success' },
+  [ProductScheduleRuleStatus.CANCELLED]: { label: '已取消', type: 'danger' },
+  [ProductScheduleRuleStatus.EXPIRED]: { label: '已过期', type: 'info' },
+};
+
+export enum ProductScheduleRuleAction {
+  LIST = 'list',
+  DELIST = 'delist',
+}
+
+export const PRODUCT_SCHEDULE_RULE_ACTION_LABELS: Record<ProductScheduleRuleAction, string> = {
+  [ProductScheduleRuleAction.LIST]: '定时上架',
+  [ProductScheduleRuleAction.DELIST]: '定时下架',
+};
+
+export enum ProductScheduleRepeatCycle {
+  NONE = 'none',
+  DAILY = 'daily',
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+}
+
+export const PRODUCT_SCHEDULE_REPEAT_CYCLE_LABELS: Record<ProductScheduleRepeatCycle, string> = {
+  [ProductScheduleRepeatCycle.NONE]: '不重复',
+  [ProductScheduleRepeatCycle.DAILY]: '每天',
+  [ProductScheduleRepeatCycle.WEEKLY]: '每周',
+  [ProductScheduleRepeatCycle.MONTHLY]: '每月',
+};
+
+export enum ProductListingTrigger {
+  MANUAL = 'manual',
+  SCHEDULED = 'scheduled',
+  VIOLATION = 'violation',
+  BATCH = 'batch',
+  AUTO_EXPIRED = 'auto_expired',
+  AUTO_ORDER_COMPLETE = 'auto_order_complete',
+}
+
+export const PRODUCT_LISTING_TRIGGER_LABELS: Record<ProductListingTrigger, string> = {
+  [ProductListingTrigger.MANUAL]: '手动操作',
+  [ProductListingTrigger.SCHEDULED]: '定时任务',
+  [ProductListingTrigger.VIOLATION]: '违规下架',
+  [ProductListingTrigger.BATCH]: '批量操作',
+  [ProductListingTrigger.AUTO_EXPIRED]: '到期自动下架',
+  [ProductListingTrigger.AUTO_ORDER_COMPLETE]: '订单完结自动下架',
+};
+
+export enum ProductListingAction {
+  LIST = 'list',
+  DELIST = 'delist',
+  FORCE_DELIST = 'force_delist',
+}
+
+export const PRODUCT_LISTING_ACTION_LABELS: Record<ProductListingAction, string> = {
+  [ProductListingAction.LIST]: '上架',
+  [ProductListingAction.DELIST]: '下架',
+  [ProductListingAction.FORCE_DELIST]: '强制下架',
+};
+
+export const PRODUCT_FREQUENT_LISTING_THRESHOLD = 5;
+export const PRODUCT_FREQUENT_LISTING_WINDOW_DAYS = 7;
+export const PRODUCT_HOT_SALES_THRESHOLD = 100;

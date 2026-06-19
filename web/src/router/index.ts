@@ -47,6 +47,12 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/views/channel-audit/index.vue'),
             meta: { title: '渠道入驻审核', icon: 'UserCheck' },
           },
+          {
+            path: 'grade',
+            name: 'ChannelGrade',
+            component: () => import('@/views/channel-grade/index.vue'),
+            meta: { title: '渠道分级管控', icon: 'Stamp' },
+          },
         ],
       },
       {

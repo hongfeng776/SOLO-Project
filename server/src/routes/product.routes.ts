@@ -44,4 +44,20 @@ router.get('/edit-approvals/:approvalId', productController.getEditApprovalDetai
 router.put('/edit-approvals/:approvalId/approve', productController.approveEdit);
 router.put('/edit-approvals/:approvalId/reject', productController.rejectEdit);
 
+router.put('/:id/manual-list', productController.manualList);
+router.put('/:id/manual-delist', productController.manualDelist);
+router.get('/:id/delist-precondition', productController.checkDelistPrecondition);
+
+router.post('/schedule-rules', productController.createScheduleRule);
+router.put('/schedule-rules/:ruleId', productController.updateScheduleRule);
+router.put('/schedule-rules/:ruleId/cancel', productController.cancelScheduleRule);
+router.get('/schedule-rules', productController.getScheduleRuleList);
+router.get('/schedule-rules/:ruleId', productController.getScheduleRuleDetail);
+router.post('/schedule-rules/process', productController.processScheduleRules);
+
+router.post('/batch/delist', productController.batchDelist);
+
+router.get('/listing-history', productController.getListingHistory);
+router.get('/:id/listing-stats', productController.getListingStats);
+
 export default router;

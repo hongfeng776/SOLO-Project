@@ -27,6 +27,8 @@ import channelQualificationDao from './ChannelQualification.dao';
 import productDao from './Product.dao';
 import productAuditLogDao from './ProductAuditLog.dao';
 import productEditApprovalDao from './ProductEditApproval.dao';
+import productScheduleRuleDao from './ProductScheduleRule.dao';
+import productListingLogDao from './ProductListingLog.dao';
 
 export {
   userDao,
@@ -58,4 +60,6 @@ export {
   productDao,
   productAuditLogDao,
   productEditApprovalDao,
+  productScheduleRuleDao,
+  productListingLogDao,
 };

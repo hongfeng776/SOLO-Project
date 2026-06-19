@@ -721,3 +721,74 @@ export const CHANNEL_AUDIT_STAGES = [
   { key: 2, label: '资质核验', description: '核验渠道资质文件有效性' },
   { key: 3, label: '权限开通', description: '开通渠道合作权限' },
 ] as const
+
+export const CHANNEL_LEVEL_OPTIONS = [
+  { label: '星级渠道', value: 'STAR', type: 'info' },
+  { label: '铜牌渠道', value: 'BRONZE', type: '' },
+  { label: '银牌渠道', value: 'SILVER', type: 'primary' },
+  { label: '金牌渠道', value: 'GOLD', type: 'warning' },
+  { label: '铂金渠道', value: 'PLATINUM', type: 'success' },
+  { label: '钻石渠道', value: 'DIAMOND', type: 'danger' },
+] as const
+
+export const CHANNEL_LEVEL_MAP: Record<string, { label: string; type: string }> = {
+  STAR: { label: '星级渠道', type: 'info' },
+  BRONZE: { label: '铜牌渠道', type: '' },
+  SILVER: { label: '银牌渠道', type: 'primary' },
+  GOLD: { label: '金牌渠道', type: 'warning' },
+  PLATINUM: { label: '铂金渠道', type: 'success' },
+  DIAMOND: { label: '钻石渠道', type: 'danger' },
+}
+
+export const CHANNEL_LEVEL_ORDER: string[] = ['STAR', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND']
+
+export const CHANNEL_GRADE_TAB_OPTIONS = [
+  { value: 'rules', label: '分级规则', icon: 'Setting' },
+  { value: 'adjust', label: '等级调整', icon: 'Promotion' },
+  { value: 'batch', label: '批量操作', icon: 'Operation' },
+  { value: 'trace', label: '变更溯源', icon: 'Connection' },
+] as const
+
+export const CHANNEL_GRADE_CHANGE_SOURCE_OPTIONS = [
+  { value: 'auto_evaluate', label: '系统自动评级', type: 'primary' },
+  { value: 'manual_adjust', label: '人工手动调整', type: 'warning' },
+  { value: 'batch_adjust', label: '批量调整', type: 'info' },
+  { value: 'rule_change', label: '规则变更触发', type: '' },
+]
+
+export const CHANNEL_GRADE_CHANGE_SOURCE_MAP: Record<string, { label: string; type: string }> = {
+  auto_evaluate: { label: '系统自动评级', type: 'primary' },
+  manual_adjust: { label: '人工手动调整', type: 'warning' },
+  batch_adjust: { label: '批量调整', type: 'info' },
+  rule_change: { label: '规则变更触发', type: '' },
+}
+
+export const CHANNEL_GRADE_ADJUST_STATUS_OPTIONS = [
+  { value: 0, label: '待审批', type: 'warning' },
+  { value: 1, label: '已通过', type: 'success' },
+  { value: -1, label: '已拒绝', type: 'danger' },
+] as const
+
+export const CHANNEL_GRADE_ADJUST_STATUS_MAP: Record<number, { label: string; type: string }> = {
+  0: { label: '待审批', type: 'warning' },
+  1: { label: '已通过', type: 'success' },
+  '-1': { label: '已拒绝', type: 'danger' },
+}
+
+export const CHANNEL_GRADE_THRESHOLD_LABELS: Record<string, string> = {
+  minMonthlyAmount: '渠道体量',
+  minMonthlyOrders: '订单量',
+  minCooperationMonths: '合作时长',
+  minFulfillmentRate: '履约质量',
+  minPromotionScore: '推广能力',
+}
+
+export const RESOURCE_SUPPORT_LEVEL_OPTIONS = [
+  { label: '无', value: 0 },
+  { label: '基础扶持', value: 1 },
+  { label: '标准扶持', value: 2 },
+  { label: '增强扶持', value: 3 },
+  { label: '优质扶持', value: 4 },
+  { label: 'VIP专属', value: 5 },
+  { label: '定制化扶持', value: 6 },
+]

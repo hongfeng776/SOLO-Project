@@ -4,6 +4,8 @@ import {
   userDao,
   orderDao,
   productEditApprovalDao,
+  productScheduleRuleDao,
+  productListingLogDao,
 } from '../dao';
 import { ProductAttributes } from '../models/Product.model';
 import { PaginationParams, PaginationResult } from '../types';
@@ -31,6 +33,20 @@ import {
   PRODUCT_BATCH_EDIT_FIELDS,
   PRODUCT_BATCH_EDIT_FIELD_LABELS,
   PRODUCT_CATEGORY_PROMOTION_WEIGHT_DEFAULTS,
+  ProductScheduleRuleStatus,
+  ProductScheduleRuleAction,
+  ProductScheduleRepeatCycle,
+  PRODUCT_SCHEDULE_RULE_STATUS_LABELS,
+  PRODUCT_SCHEDULE_RULE_ACTION_LABELS,
+  PRODUCT_SCHEDULE_REPEAT_CYCLE_LABELS,
+  ProductListingAction,
+  ProductListingTrigger,
+  PRODUCT_LISTING_ACTION_LABELS,
+  PRODUCT_LISTING_TRIGGER_LABELS,
+  PRODUCT_FREQUENT_LISTING_THRESHOLD,
+  PRODUCT_FREQUENT_LISTING_WINDOW_DAYS,
+  PRODUCT_HOT_SALES_THRESHOLD,
+  OrderStatus,
 } from '../constants/enum';
 import CacheUtils, { CacheKey, CacheTTL } from '../utils/cache';
 import dayjs from 'dayjs';
@@ -1033,126 +1049,6 @@ class ProductService {
     };
   }
 
-  public async batchList(
-    productIds: string[],
-    operatorId: string,
-    ipAddress?: string
-  ): Promise<BatchListResult> {
-    if (!productIds || productIds.length === 0) {
-      throw new AppError('请选择要上架的商品', BusinessCode.PARAM_ERROR);
-    }
-
-    const operator = await userDao.findById(operatorId);
-    const operatorName = (operator as any)?.nickname || operator?.username || '系统';
-
-    const details: BatchListResult['details'] = [];
-    let success = 0;
-    let failed = 0;
-    let skipped = 0;
-
-    for (const id of productIds) {
-      try {
-        const product = await productDao.findById(id);
-        if (!product) {
-          skipped++;
-          details.push({ id, name: '-', status: 'skipped', reason: '商品不存在' });
-          continue;
-        }
-
-        const plain = product.get({ plain: true });
-        const status = (product as any).status;
-        const name = product.name;
-
-        if (status !== ProductStatus.AUDIT_PASSED && status !== ProductStatus.DELISTED) {
-          skipped++;
-          const statusLabel = PRODUCT_STATUS_LABELS[status as ProductStatus]?.label || String(status);
-          details.push({
-            id,
-            name,
-            status: 'skipped',
-            reason: '当前状态「' + statusLabel + '」不支持上架操作',
-          });
-          continue;
-        }
-
-        if (Number(plain.stock) <= 0) {
-          skipped++;
-          details.push({
-            id,
-            name,
-            status: 'skipped',
-            reason: '库存不足',
-          });
-          continue;
-        }
-
-        if (
-          !(plain as any).qualificationVerified &&
-          PRODUCT_QUALIFICATION_REQUIRED.includes(plain.category as ProductCategory)
-        ) {
-          skipped++;
-          details.push({
-            id,
-            name,
-            status: 'skipped',
-            reason: '资质未审核通过',
-          });
-          continue;
-        }
-
-        const category = plain.category as ProductCategory;
-        const materials = (plain as any).promotionMaterials || DEFAULT_PRODUCT_MATERIALS[category] || [];
-
-        await productDao.update(
-          {
-            status: ProductStatus.LISTED,
-            promoteEnabled: true,
-            promotionMaterials: materials,
-            listerId: operatorId,
-            listAt: new Date(),
-          } as any,
-          { where: { id } }
-        );
-
-        await this.recordAuditLog({
-          productId: id,
-          operatorId,
-          operatorName,
-          action: ProductAuditAction.LIST,
-          fromStage: (product as any).auditStage,
-          toStage: ProductAuditStage.COMPLETED,
-          fromStatus: status,
-          toStatus: ProductStatus.LISTED,
-          remark: '批量上架商品',
-          metadata: { batch: true },
-          ipAddress,
-        });
-
-        success++;
-        details.push({ id, name, status: 'success' });
-      } catch (err: any) {
-        failed++;
-        const product = await productDao.findById(id);
-        details.push({
-          id,
-          name: product?.name || '-',
-          status: 'failed',
-          reason: err.message || '操作失败',
-        });
-      }
-    }
-
-    await CacheUtils.delPattern(CacheKey.PRODUCT_LIST + '*');
-
-    return {
-      total: productIds.length,
-      success,
-      failed,
-      skipped,
-      details,
-    };
-  }
-
   public async getProductList(
     params: PaginationParams & { [key: string]: any }
   ): Promise<PaginationResult<any>> {
@@ -2064,6 +1960,1119 @@ class ProductService {
         field: f,
         label: PRODUCT_BATCH_EDIT_FIELD_LABELS[f] || f,
       })),
+    };
+  }
+
+  public async manualDelist(
+    productId: string,
+    operatorId: string,
+    forceDelist: boolean,
+    reason?: string,
+    ipAddress?: string
+  ): Promise<{
+    delisted: boolean;
+    activeOrderCount: number;
+    autoDelistScheduled: boolean;
+    message: string;
+  }> {
+    const product = await productDao.findById(productId);
+    if (!product) {
+      throw new AppError('商品不存在', BusinessCode.NOT_FOUND);
+    }
+    if ((product as any).status !== ProductStatus.LISTED) {
+      throw new AppError('只有已上架状态的商品才能下架', BusinessCode.ERROR);
+    }
+
+    const plain = product.get({ plain: true });
+    const activeOrderCount = await orderDao.count({
+      where: {
+        productName: plain.name,
+        status: {
+          [Op.in]: [
+            OrderStatus.PENDING_PAY,
+            OrderStatus.PAID,
+            OrderStatus.SHIPPED,
+          ],
+        },
+      },
+    } as any);
+
+    const operator = await userDao.findById(operatorId);
+    const operatorName = (operator as any)?.nickname || operator?.username || '系统';
+
+    if (activeOrderCount > 0 && !forceDelist) {
+      return {
+        delisted: false,
+        activeOrderCount,
+        autoDelistScheduled: false,
+        message: `商品存在${activeOrderCount}个未完结在售订单，请选择强制下架或等待订单完结后自动下架`,
+      };
+    }
+
+    const oldStatus = (product as any).status;
+    const oldStage = (product as any).auditStage;
+
+    await productDao.update(
+      {
+        status: ProductStatus.DELISTED,
+        promoteEnabled: false,
+        delisterId: operatorId,
+        delistAt: new Date() as any,
+      } as any,
+      { where: { id: productId } }
+    );
+
+    const listingAction = forceDelist
+      ? ProductListingAction.FORCE_DELIST
+      : ProductListingAction.DELIST;
+    const auditAction = forceDelist
+      ? ProductAuditAction.FORCE_DELIST
+      : ProductAuditAction.DELIST;
+
+    await productListingLogDao.create({
+      productId,
+      action: listingAction,
+      trigger: ProductListingTrigger.MANUAL,
+      fromStatus: oldStatus,
+      toStatus: ProductStatus.DELISTED,
+      operatorId,
+      operatorName,
+      reason: reason || (forceDelist ? '强制下架' : '手动下架'),
+      activeOrderCount,
+      forceDelist,
+      ipAddress,
+      metadata: { forceDelist, activeOrderCount },
+    });
+
+    await this.recordAuditLog({
+      productId,
+      operatorId,
+      operatorName,
+      action: auditAction,
+      fromStage: oldStage,
+      toStage: oldStage,
+      fromStatus: oldStatus,
+      toStatus: ProductStatus.DELISTED,
+      remark: reason || (forceDelist ? '强制下架，停止新增推广订单，存量订单正常履约' : '手动下架'),
+      metadata: { forceDelist, activeOrderCount },
+      ipAddress,
+    });
+
+    await CacheUtils.del(CacheKey.PRODUCT_DETAIL + productId);
+    await CacheUtils.delPattern(CacheKey.PRODUCT_LIST + '*');
+
+    return {
+      delisted: true,
+      activeOrderCount,
+      autoDelistScheduled: false,
+      message: forceDelist
+        ? `已强制下架，存在${activeOrderCount}个存量订单将正常履约结算，已停止新增推广订单`
+        : '商品已下架',
+    };
+  }
+
+  public async manualList(
+    productId: string,
+    operatorId: string,
+    reason?: string,
+    ipAddress?: string
+  ): Promise<void> {
+    const product = await productDao.findById(productId);
+    if (!product) {
+      throw new AppError('商品不存在', BusinessCode.NOT_FOUND);
+    }
+    const currentStatus = (product as any).status;
+    if (
+      currentStatus !== ProductStatus.AUDIT_PASSED &&
+      currentStatus !== ProductStatus.DELISTED
+    ) {
+      throw new AppError('只有审核通过或已下架状态的商品才能上架', BusinessCode.ERROR);
+    }
+
+    const frequentCount = await productListingLogDao.countByProductIdInDays(
+      productId,
+      PRODUCT_FREQUENT_LISTING_WINDOW_DAYS
+    );
+    if (frequentCount >= PRODUCT_FREQUENT_LISTING_THRESHOLD) {
+      throw new AppError(
+        `该商品在${PRODUCT_FREQUENT_LISTING_WINDOW_DAYS}天内上下架操作已达${PRODUCT_FREQUENT_LISTING_THRESHOLD}次，涉嫌频繁上下架操作，已被拦截`,
+        BusinessCode.ERROR
+      );
+    }
+
+    const plain = product.get({ plain: true });
+    if (Number(plain.stock) <= 0) {
+      throw new AppError('商品库存为0，无法上架', BusinessCode.ERROR);
+    }
+
+    const operator = await userDao.findById(operatorId);
+    const operatorName = (operator as any)?.nickname || operator?.username || '系统';
+    const oldStatus = currentStatus;
+    const oldStage = (product as any).auditStage;
+
+    const category = plain.category as ProductCategory;
+    const materials = (plain as any).promotionMaterials || DEFAULT_PRODUCT_MATERIALS[category] || [];
+
+    await productDao.update(
+      {
+        status: ProductStatus.LISTED,
+        promoteEnabled: true,
+        listerId: operatorId,
+        listAt: new Date(),
+        promotionMaterials: materials,
+      } as any,
+      { where: { id: productId } }
+    );
+
+    await productListingLogDao.create({
+      productId,
+      action: ProductListingAction.LIST,
+      trigger: ProductListingTrigger.MANUAL,
+      fromStatus: oldStatus,
+      toStatus: ProductStatus.LISTED,
+      operatorId,
+      operatorName,
+      reason: reason || '手动上架',
+      ipAddress,
+    });
+
+    await this.recordAuditLog({
+      productId,
+      operatorId,
+      operatorName,
+      action: ProductAuditAction.LIST,
+      fromStage: oldStage,
+      toStage: ProductAuditStage.COMPLETED,
+      fromStatus: oldStatus,
+      toStatus: ProductStatus.LISTED,
+      remark: reason || '手动上架',
+      ipAddress,
+    });
+
+    await CacheUtils.del(CacheKey.PRODUCT_DETAIL + productId);
+    await CacheUtils.delPattern(CacheKey.PRODUCT_LIST + '*');
+  }
+
+  public async createScheduleRule(
+    data: {
+      productId: string;
+      ruleName: string;
+      action: ProductScheduleRuleAction;
+      startTime: string;
+      endTime?: string;
+      repeatCycle?: ProductScheduleRepeatCycle;
+      repeatConfig?: any;
+      notifyOperators?: string[];
+      remark?: string;
+    },
+    operatorId: string,
+    ipAddress?: string
+  ): Promise<any> {
+    const product = await productDao.findById(data.productId);
+    if (!product) {
+      throw new AppError('商品不存在', BusinessCode.NOT_FOUND);
+    }
+
+    const start = new Date(data.startTime);
+    if (start <= new Date()) {
+      throw new AppError('定时规则的开始时间必须晚于当前时间', BusinessCode.PARAM_ERROR);
+    }
+
+    if (data.action === ProductScheduleRuleAction.LIST) {
+      if (
+        (product as any).status !== ProductStatus.AUDIT_PASSED &&
+        (product as any).status !== ProductStatus.DELISTED
+      ) {
+        throw new AppError('只有审核通过或已下架状态的商品才能设置定时上架', BusinessCode.ERROR);
+      }
+    } else if (data.action === ProductScheduleRuleAction.DELIST) {
+      if ((product as any).status !== ProductStatus.LISTED) {
+        throw new AppError('只有已上架状态的商品才能设置定时下架', BusinessCode.ERROR);
+      }
+    }
+
+    const activeRules = await productScheduleRuleDao.findActiveByProductId(data.productId);
+    const conflictingRules = activeRules.filter(
+      (r: any) => (r as any).action === data.action && (r as any).status !== ProductScheduleRuleStatus.EXECUTED
+    );
+    if (conflictingRules.length > 0) {
+      throw new AppError('该商品已存在相同操作的待执行定时规则，请先取消现有规则', BusinessCode.ERROR);
+    }
+
+    const operator = await userDao.findById(operatorId);
+    const operatorName = (operator as any)?.nickname || operator?.username || '系统';
+
+    const repeatCycle = data.repeatCycle || ProductScheduleRepeatCycle.NONE;
+    let nextExecuteTime = start;
+
+    const rule = await productScheduleRuleDao.create({
+      productId: data.productId,
+      ruleName: data.ruleName,
+      action: data.action,
+      startTime: start,
+      endTime: data.endTime ? new Date(data.endTime) : undefined,
+      repeatCycle,
+      repeatConfig: data.repeatConfig,
+      status: ProductScheduleRuleStatus.PENDING,
+      creatorId: operatorId,
+      creatorName: operatorName,
+      nextExecuteTime,
+      executeCount: 0,
+      notifyOperators: data.notifyOperators || [],
+      remark: data.remark,
+    });
+
+    await this.recordAuditLog({
+      productId: data.productId,
+      operatorId,
+      operatorName,
+      action: data.action === ProductScheduleRuleAction.LIST
+        ? ProductAuditAction.SCHEDULE_LIST
+        : ProductAuditAction.SCHEDULE_DELIST,
+      fromStage: (product as any).auditStage,
+      toStage: (product as any).auditStage,
+      fromStatus: (product as any).status,
+      toStatus: (product as any).status,
+      remark: `创建定时${data.action === ProductScheduleRuleAction.LIST ? '上架' : '下架'}规则：${data.ruleName}`,
+      metadata: { ruleId: (rule as any).id, startTime: data.startTime, repeatCycle },
+      ipAddress,
+    });
+
+    await CacheUtils.del(CacheKey.PRODUCT_DETAIL + data.productId);
+
+    return rule;
+  }
+
+  public async updateScheduleRule(
+    ruleId: string,
+    data: {
+      ruleName?: string;
+      startTime?: string;
+      endTime?: string;
+      repeatCycle?: ProductScheduleRepeatCycle;
+      repeatConfig?: any;
+      notifyOperators?: string[];
+      remark?: string;
+    },
+    operatorId: string,
+    ipAddress?: string
+  ): Promise<void> {
+    const rule = await productScheduleRuleDao.findById(ruleId);
+    if (!rule) {
+      throw new AppError('定时规则不存在', BusinessCode.NOT_FOUND);
+    }
+
+    const plainRule = (rule as any).get ? (rule as any).get({ plain: true }) : rule;
+    if (plainRule.status !== ProductScheduleRuleStatus.PENDING) {
+      throw new AppError('只有待生效状态的定时规则才能编辑', BusinessCode.ERROR);
+    }
+
+    const updateData: any = {};
+    if (data.ruleName) updateData.ruleName = data.ruleName;
+    if (data.startTime) {
+      const start = new Date(data.startTime);
+      if (start <= new Date()) {
+        throw new AppError('定时规则的开始时间必须晚于当前时间', BusinessCode.PARAM_ERROR);
+      }
+      updateData.startTime = start;
+      updateData.nextExecuteTime = start;
+    }
+    if (data.endTime !== undefined) {
+      updateData.endTime = data.endTime ? new Date(data.endTime) : null;
+    }
+    if (data.repeatCycle) updateData.repeatCycle = data.repeatCycle;
+    if (data.repeatConfig !== undefined) updateData.repeatConfig = data.repeatConfig;
+    if (data.notifyOperators) updateData.notifyOperators = data.notifyOperators;
+    if (data.remark !== undefined) updateData.remark = data.remark;
+
+    await productScheduleRuleDao.update(updateData, { where: { id: ruleId } });
+
+    const operator = await userDao.findById(operatorId);
+    const operatorName = (operator as any)?.nickname || operator?.username || '系统';
+
+    await this.recordAuditLog({
+      productId: plainRule.productId,
+      operatorId,
+      operatorName,
+      action: ProductAuditAction.SCHEDULE_LIST,
+      fromStage: ProductAuditStage.COMPLETED,
+      toStage: ProductAuditStage.COMPLETED,
+      fromStatus: ProductStatus.LISTED,
+      toStatus: ProductStatus.LISTED,
+      remark: `编辑定时规则：${plainRule.ruleName}`,
+      metadata: { ruleId, updatedFields: Object.keys(updateData) },
+      ipAddress,
+    });
+  }
+
+  public async cancelScheduleRule(
+    ruleId: string,
+    operatorId: string,
+    reason?: string,
+    ipAddress?: string
+  ): Promise<void> {
+    const rule = await productScheduleRuleDao.findById(ruleId);
+    if (!rule) {
+      throw new AppError('定时规则不存在', BusinessCode.NOT_FOUND);
+    }
+
+    const plainRule = (rule as any).get ? (rule as any).get({ plain: true }) : rule;
+    if (
+      plainRule.status !== ProductScheduleRuleStatus.PENDING &&
+      plainRule.status !== ProductScheduleRuleStatus.ACTIVE
+    ) {
+      throw new AppError('只有待生效或生效中的定时规则才能取消', BusinessCode.ERROR);
+    }
+
+    await productScheduleRuleDao.update(
+      {
+        status: ProductScheduleRuleStatus.CANCELLED,
+        cancelReason: reason || '手动取消',
+      },
+      { where: { id: ruleId } }
+    );
+
+    const operator = await userDao.findById(operatorId);
+    const operatorName = (operator as any)?.nickname || operator?.username || '系统';
+
+    await this.recordAuditLog({
+      productId: plainRule.productId,
+      operatorId,
+      operatorName,
+      action: ProductAuditAction.SCHEDULE_DELIST,
+      fromStage: ProductAuditStage.COMPLETED,
+      toStage: ProductAuditStage.COMPLETED,
+      fromStatus: ProductStatus.LISTED,
+      toStatus: ProductStatus.LISTED,
+      remark: `取消定时规则：${plainRule.ruleName}，原因：${reason || '手动取消'}`,
+      metadata: { ruleId },
+      ipAddress,
+    });
+
+    await CacheUtils.del(CacheKey.PRODUCT_DETAIL + plainRule.productId);
+  }
+
+  public async getScheduleRuleList(
+    params: {
+      page: number;
+      pageSize: number;
+      productId?: string;
+      action?: string;
+      status?: ProductScheduleRuleStatus;
+      creatorId?: string;
+      startTime?: string;
+      endTime?: string;
+    }
+  ): Promise<PaginationResult<any>> {
+    const { rows, count } = await productScheduleRuleDao.findAllPaged(params);
+
+    const list = rows.map((row: any) => {
+      const plain = row.get ? row.get({ plain: true }) : row;
+      const status = plain.status as ProductScheduleRuleStatus;
+      return {
+        ...plain,
+        statusLabel: PRODUCT_SCHEDULE_RULE_STATUS_LABELS[status]?.label || '未知',
+        statusType: PRODUCT_SCHEDULE_RULE_STATUS_LABELS[status]?.type || 'info',
+        actionLabel: PRODUCT_SCHEDULE_RULE_ACTION_LABELS[plain.action as ProductScheduleRuleAction] || plain.action,
+        repeatCycleLabel: PRODUCT_SCHEDULE_REPEAT_CYCLE_LABELS[plain.repeatCycle as ProductScheduleRepeatCycle] || plain.repeatCycle,
+      };
+    });
+
+    return {
+      list,
+      total: count,
+      page: params.page,
+      pageSize: params.pageSize,
+      totalPages: Math.ceil(count / params.pageSize),
+    };
+  }
+
+  public async getScheduleRuleDetail(ruleId: string): Promise<any> {
+    const rule = await productScheduleRuleDao.findById(ruleId);
+    if (!rule) {
+      throw new AppError('定时规则不存在', BusinessCode.NOT_FOUND);
+    }
+
+    const plain = (rule as any).get ? (rule as any).get({ plain: true }) : rule;
+    const status = plain.status as ProductScheduleRuleStatus;
+
+    const product = await productDao.findById(plain.productId);
+    let productInfo = null;
+    if (product) {
+      const productPlain = product.get({ plain: true });
+      productInfo = {
+        id: productPlain.id,
+        name: productPlain.name,
+        sku: productPlain.sku,
+        status: productPlain.status,
+        statusLabel: PRODUCT_STATUS_LABELS[productPlain.status as ProductStatus]?.label || '未知',
+      };
+    }
+
+    return {
+      ...plain,
+      statusLabel: PRODUCT_SCHEDULE_RULE_STATUS_LABELS[status]?.label || '未知',
+      statusType: PRODUCT_SCHEDULE_RULE_STATUS_LABELS[status]?.type || 'info',
+      actionLabel: PRODUCT_SCHEDULE_RULE_ACTION_LABELS[plain.action as ProductScheduleRuleAction] || plain.action,
+      repeatCycleLabel: PRODUCT_SCHEDULE_REPEAT_CYCLE_LABELS[plain.repeatCycle as ProductScheduleRepeatCycle] || plain.repeatCycle,
+      productInfo,
+    };
+  }
+
+  public async processScheduleRules(): Promise<{ executed: number; failed: number }> {
+    const pendingRules = await productScheduleRuleDao.findPendingToExecute();
+
+    let executed = 0;
+    let failed = 0;
+
+    for (const ruleRow of pendingRules) {
+      const rule = (ruleRow as any).get ? (ruleRow as any).get({ plain: true }) : ruleRow;
+      try {
+        const product = await productDao.findById(rule.productId);
+        if (!product) {
+          await productScheduleRuleDao.update(
+            { status: ProductScheduleRuleStatus.EXPIRED },
+            { where: { id: rule.id } }
+          );
+          failed++;
+          continue;
+        }
+
+        const currentStatus = (product as any).status;
+
+        if (rule.action === ProductScheduleRuleAction.LIST) {
+          if (
+            currentStatus !== ProductStatus.AUDIT_PASSED &&
+            currentStatus !== ProductStatus.DELISTED
+          ) {
+            await productScheduleRuleDao.update(
+              { status: ProductScheduleRuleStatus.EXPIRED },
+              { where: { id: rule.id } }
+            );
+            failed++;
+            continue;
+          }
+
+          await productDao.update(
+            {
+              status: ProductStatus.LISTED,
+              promoteEnabled: true,
+              listerId: 'system',
+              listAt: new Date(),
+            } as any,
+            { where: { id: rule.productId } }
+          );
+
+          await productListingLogDao.create({
+            productId: rule.productId,
+            action: ProductListingAction.LIST,
+            trigger: ProductListingTrigger.SCHEDULED,
+            fromStatus: currentStatus,
+            toStatus: ProductStatus.LISTED,
+            operatorId: rule.creatorId,
+            operatorName: rule.creatorName || '系统',
+            reason: `定时上架规则执行：${rule.ruleName}`,
+            scheduleRuleId: rule.id,
+            scheduleRuleName: rule.ruleName,
+          });
+        } else if (rule.action === ProductScheduleRuleAction.DELIST) {
+          if (currentStatus !== ProductStatus.LISTED) {
+            await productScheduleRuleDao.update(
+              { status: ProductScheduleRuleStatus.EXPIRED },
+              { where: { id: rule.id } }
+            );
+            failed++;
+            continue;
+          }
+
+          await productDao.update(
+            {
+              status: ProductStatus.DELISTED,
+              promoteEnabled: false,
+              delisterId: 'system',
+              delistAt: new Date() as any,
+            } as any,
+            { where: { id: rule.productId } }
+          );
+
+          await productListingLogDao.create({
+            productId: rule.productId,
+            action: ProductListingAction.DELIST,
+            trigger: ProductListingTrigger.SCHEDULED,
+            fromStatus: currentStatus,
+            toStatus: ProductStatus.DELISTED,
+            operatorId: rule.creatorId,
+            operatorName: rule.creatorName || '系统',
+            reason: `定时下架规则执行：${rule.ruleName}`,
+            scheduleRuleId: rule.id,
+            scheduleRuleName: rule.ruleName,
+          });
+        }
+
+        const newExecuteCount = (rule.executeCount || 0) + 1;
+        let nextExecuteTime: Date | undefined = undefined;
+        let newStatus = ProductScheduleRuleStatus.EXECUTED;
+
+        if (rule.repeatCycle !== ProductScheduleRepeatCycle.NONE && (!rule.endTime || new Date() < new Date(rule.endTime))) {
+          nextExecuteTime = this.calculateNextExecuteTime(
+            rule.repeatCycle,
+            rule.startTime,
+            rule.repeatConfig
+          );
+          newStatus = ProductScheduleRuleStatus.ACTIVE;
+        }
+
+        await productScheduleRuleDao.update(
+          {
+            status: newStatus,
+            executorId: 'system',
+            executorName: '系统自动',
+            executedAt: new Date(),
+            lastExecuteTime: new Date(),
+            nextExecuteTime,
+            executeCount: newExecuteCount,
+          },
+          { where: { id: rule.id } }
+        );
+
+        await CacheUtils.del(CacheKey.PRODUCT_DETAIL + rule.productId);
+        await CacheUtils.delPattern(CacheKey.PRODUCT_LIST + '*');
+
+        executed++;
+      } catch (err) {
+        failed++;
+      }
+    }
+
+    return { executed, failed };
+  }
+
+  private calculateNextExecuteTime(
+    cycle: ProductScheduleRepeatCycle,
+    baseTime: Date | string,
+    config?: any
+  ): Date {
+    const base = new Date(baseTime);
+    switch (cycle) {
+      case ProductScheduleRepeatCycle.DAILY:
+        base.setDate(base.getDate() + 1);
+        return base;
+      case ProductScheduleRepeatCycle.WEEKLY:
+        base.setDate(base.getDate() + 7);
+        return base;
+      case ProductScheduleRepeatCycle.MONTHLY:
+        base.setMonth(base.getMonth() + 1);
+        return base;
+      default:
+        return base;
+    }
+  }
+
+  public async batchDelist(
+    params: {
+      type: 'slow_selling' | 'violation' | 'expired';
+      productIds?: string[];
+      excludeHotSales?: boolean;
+      reason?: string;
+    },
+    operatorId: string,
+    ipAddress?: string
+  ): Promise<{
+    total: number;
+    success: number;
+    failed: number;
+    skipped: number;
+    details: Array<{
+      productId: string;
+      productName: string;
+      status: 'success' | 'failed' | 'skipped';
+      reason?: string;
+    }>;
+  }> {
+    const { type, productIds, excludeHotSales = true, reason } = params;
+
+    let products: any[] = [];
+
+    if (productIds && productIds.length > 0) {
+      for (const id of productIds) {
+        const product = await productDao.findById(id);
+        if (product) {
+          products.push(product);
+        }
+      }
+    } else {
+      const where: any = { status: ProductStatus.LISTED };
+
+      if (type === 'slow_selling') {
+        where.salesCount = { [Op.lt]: 10 };
+      } else if (type === 'violation') {
+        where.fakeProductFlag = true;
+      } else if (type === 'expired') {
+        where.listEndTime = { [Op.lt]: new Date() };
+      }
+
+      const result = await productDao.findAndCountAll({ where });
+      products = result.rows;
+    }
+
+    const operator = await userDao.findById(operatorId);
+    const operatorName = (operator as any)?.nickname || operator?.username || '系统';
+    const batchId = `batch_delist_${Date.now()}`;
+
+    const details: Array<{
+      productId: string;
+      productName: string;
+      status: 'success' | 'failed' | 'skipped';
+      reason?: string;
+    }> = [];
+
+    let success = 0;
+    let failed = 0;
+    let skipped = 0;
+
+    for (const productRow of products) {
+      const plain = productRow.get ? productRow.get({ plain: true }) : productRow;
+
+      if (excludeHotSales && (plain as any).isHot && (plain as any).salesCount >= PRODUCT_HOT_SALES_THRESHOLD) {
+        skipped++;
+        details.push({
+          productId: plain.id,
+          productName: plain.name,
+          status: 'skipped',
+          reason: '热销商品，已自动规避',
+        });
+        continue;
+      }
+
+      if ((plain as any).status !== ProductStatus.LISTED) {
+        skipped++;
+        details.push({
+          productId: plain.id,
+          productName: plain.name,
+          status: 'skipped',
+          reason: '商品不在已上架状态',
+        });
+        continue;
+      }
+
+      try {
+        await productDao.update(
+          {
+            status: ProductStatus.DELISTED,
+            promoteEnabled: false,
+            delisterId: operatorId,
+            delistAt: new Date() as any,
+          } as any,
+          { where: { id: plain.id } }
+        );
+
+        await productListingLogDao.create({
+          productId: plain.id,
+          action: ProductListingAction.DELIST,
+          trigger: ProductListingTrigger.BATCH,
+          fromStatus: ProductStatus.LISTED,
+          toStatus: ProductStatus.DELISTED,
+          operatorId,
+          operatorName,
+          reason: reason || `批量下架(${type === 'slow_selling' ? '滞销' : type === 'violation' ? '违规' : '过期'})`,
+          batchId,
+          ipAddress,
+          metadata: { batchType: type },
+        });
+
+        await this.recordAuditLog({
+          productId: plain.id,
+          operatorId,
+          operatorName,
+          action: ProductAuditAction.BATCH_DELIST,
+          fromStage: ProductAuditStage.COMPLETED,
+          toStage: ProductAuditStage.COMPLETED,
+          fromStatus: ProductStatus.LISTED,
+          toStatus: ProductStatus.DELISTED,
+          remark: reason || `批量下架(${type === 'slow_selling' ? '滞销' : type === 'violation' ? '违规' : '过期'})`,
+          metadata: { batchId, batchType: type },
+          ipAddress,
+        });
+
+        await CacheUtils.del(CacheKey.PRODUCT_DETAIL + plain.id);
+
+        success++;
+        details.push({
+          productId: plain.id,
+          productName: plain.name,
+          status: 'success',
+        });
+      } catch (err: any) {
+        failed++;
+        details.push({
+          productId: plain.id,
+          productName: plain.name,
+          status: 'failed',
+          reason: err.message || '下架失败',
+        });
+      }
+    }
+
+    await CacheUtils.delPattern(CacheKey.PRODUCT_LIST + '*');
+
+    return {
+      total: products.length,
+      success,
+      failed,
+      skipped,
+      details,
+    };
+  }
+
+  public async batchList(
+    params: {
+      productIds?: string[];
+      autoFilter?: boolean;
+      reason?: string;
+    },
+    operatorId: string,
+    ipAddress?: string
+  ): Promise<{
+    total: number;
+    success: number;
+    failed: number;
+    skipped: number;
+    details: Array<{
+      productId: string;
+      productName: string;
+      status: 'success' | 'failed' | 'skipped';
+      reason?: string;
+    }>;
+  }> {
+    const { productIds, autoFilter = false, reason } = params;
+
+    let products: any[] = [];
+
+    if (productIds && productIds.length > 0) {
+      for (const id of productIds) {
+        const product = await productDao.findById(id);
+        if (product) {
+          products.push(product);
+        }
+      }
+    } else if (autoFilter) {
+      const result = await productDao.findAndCountAll({
+        where: {
+          status: {
+            [Op.in]: [ProductStatus.AUDIT_PASSED, ProductStatus.DELISTED],
+          },
+        },
+      });
+      products = result.rows;
+    }
+
+    const operator = await userDao.findById(operatorId);
+    const operatorName = (operator as any)?.nickname || operator?.username || '系统';
+    const batchId = `batch_list_${Date.now()}`;
+
+    const details: Array<{
+      productId: string;
+      productName: string;
+      status: 'success' | 'failed' | 'skipped';
+      reason?: string;
+    }> = [];
+
+    let success = 0;
+    let failed = 0;
+    let skipped = 0;
+
+    for (const productRow of products) {
+      const plain = productRow.get ? productRow.get({ plain: true }) : productRow;
+      const currentStatus = (plain as any).status;
+
+      if (
+        currentStatus !== ProductStatus.AUDIT_PASSED &&
+        currentStatus !== ProductStatus.DELISTED
+      ) {
+        skipped++;
+        details.push({
+          productId: plain.id,
+          productName: plain.name,
+          status: 'skipped',
+          reason: '商品状态不允许上架',
+        });
+        continue;
+      }
+
+      if (Number(plain.stock) <= 0) {
+        skipped++;
+        details.push({
+          productId: plain.id,
+          productName: plain.name,
+          status: 'skipped',
+          reason: '商品库存为0',
+        });
+        continue;
+      }
+
+      if (
+        !(plain as any).qualificationVerified &&
+        PRODUCT_QUALIFICATION_REQUIRED.includes(plain.category as ProductCategory)
+      ) {
+        skipped++;
+        details.push({
+          productId: plain.id,
+          productName: plain.name,
+          status: 'skipped',
+          reason: '商品资质未通过审核',
+        });
+        continue;
+      }
+
+      try {
+        const category = plain.category as ProductCategory;
+        const materials = (plain as any).promotionMaterials || DEFAULT_PRODUCT_MATERIALS[category] || [];
+
+        await productDao.update(
+          {
+            status: ProductStatus.LISTED,
+            promoteEnabled: true,
+            listerId: operatorId,
+            listAt: new Date(),
+            promotionMaterials: materials,
+          } as any,
+          { where: { id: plain.id } }
+        );
+
+        await productListingLogDao.create({
+          productId: plain.id,
+          action: ProductListingAction.LIST,
+          trigger: ProductListingTrigger.BATCH,
+          fromStatus: currentStatus,
+          toStatus: ProductStatus.LISTED,
+          operatorId,
+          operatorName,
+          reason: reason || '批量上架',
+          batchId,
+          ipAddress,
+        });
+
+        await this.recordAuditLog({
+          productId: plain.id,
+          operatorId,
+          operatorName,
+          action: ProductAuditAction.BATCH_LIST,
+          fromStage: ProductAuditStage.COMPLETED,
+          toStage: ProductAuditStage.COMPLETED,
+          fromStatus: currentStatus,
+          toStatus: ProductStatus.LISTED,
+          remark: reason || '批量上架',
+          metadata: { batchId },
+          ipAddress,
+        });
+
+        await CacheUtils.del(CacheKey.PRODUCT_DETAIL + plain.id);
+
+        success++;
+        details.push({
+          productId: plain.id,
+          productName: plain.name,
+          status: 'success',
+        });
+      } catch (err: any) {
+        failed++;
+        details.push({
+          productId: plain.id,
+          productName: plain.name,
+          status: 'failed',
+          reason: err.message || '上架失败',
+        });
+      }
+    }
+
+    await CacheUtils.delPattern(CacheKey.PRODUCT_LIST + '*');
+
+    return {
+      total: products.length,
+      success,
+      failed,
+      skipped,
+      details,
+    };
+  }
+
+  public async getListingHistory(
+    params: {
+      page: number;
+      pageSize: number;
+      productId?: string;
+      action?: ProductListingAction;
+      trigger?: ProductListingTrigger;
+      operatorId?: string;
+      batchId?: string;
+      startTime?: string;
+      endTime?: string;
+    }
+  ): Promise<PaginationResult<any>> {
+    const { rows, count } = await productListingLogDao.findAllPaged(params);
+
+    const list = rows.map((row: any) => {
+      const plain = row.get ? row.get({ plain: true }) : row;
+      return {
+        ...plain,
+        actionLabel: PRODUCT_LISTING_ACTION_LABELS[plain.action as ProductListingAction] || plain.action,
+        triggerLabel: PRODUCT_LISTING_TRIGGER_LABELS[plain.trigger as ProductListingTrigger] || plain.trigger,
+        fromStatusLabel: PRODUCT_STATUS_LABELS[plain.fromStatus as ProductStatus]?.label || '未知',
+        toStatusLabel: PRODUCT_STATUS_LABELS[plain.toStatus as ProductStatus]?.label || '未知',
+      };
+    });
+
+    return {
+      list,
+      total: count,
+      page: params.page,
+      pageSize: params.pageSize,
+      totalPages: Math.ceil(count / params.pageSize),
+    };
+  }
+
+  public async getListingStats(
+    productId: string
+  ): Promise<{
+    totalListCount: number;
+    totalDelistCount: number;
+    frequentListing: boolean;
+    frequentCount: number;
+    threshold: number;
+    windowDays: number;
+    recentOperations: Array<{
+      action: string;
+      actionLabel: string;
+      trigger: string;
+      triggerLabel: string;
+      operateAt: Date;
+      operatorName: string;
+    }>;
+  }> {
+    const product = await productDao.findById(productId);
+    if (!product) {
+      throw new AppError('商品不存在', BusinessCode.NOT_FOUND);
+    }
+
+    const recentLogs = await productListingLogDao.findAll({
+      where: { productId },
+      limit: 10,
+      order: [['createdAt', 'DESC']],
+    });
+
+    const frequentCount = await productListingLogDao.countByProductIdInDays(
+      productId,
+      PRODUCT_FREQUENT_LISTING_WINDOW_DAYS
+    );
+
+    let totalListCount = 0;
+    let totalDelistCount = 0;
+    const allLogs = await productListingLogDao.findAll({
+      where: { productId },
+    });
+    for (const log of allLogs) {
+      const plain = (log as any).get ? (log as any).get({ plain: true }) : log;
+      if (plain.action === ProductListingAction.LIST) totalListCount++;
+      else totalDelistCount++;
+    }
+
+    const recentOperations = recentLogs.map((log: any) => {
+      const plain = log.get ? log.get({ plain: true }) : log;
+      return {
+        action: plain.action,
+        actionLabel: PRODUCT_LISTING_ACTION_LABELS[plain.action as ProductListingAction] || plain.action,
+        trigger: plain.trigger,
+        triggerLabel: PRODUCT_LISTING_TRIGGER_LABELS[plain.trigger as ProductListingTrigger] || plain.trigger,
+        operateAt: plain.createdAt,
+        operatorName: plain.operatorName || '系统',
+      };
+    });
+
+    return {
+      totalListCount,
+      totalDelistCount,
+      frequentListing: frequentCount >= PRODUCT_FREQUENT_LISTING_THRESHOLD,
+      frequentCount,
+      threshold: PRODUCT_FREQUENT_LISTING_THRESHOLD,
+      windowDays: PRODUCT_FREQUENT_LISTING_WINDOW_DAYS,
+      recentOperations,
+    };
+  }
+
+  public async checkDelistPrecondition(
+    productId: string
+  ): Promise<{
+    canDelist: boolean;
+    productStatus: ProductStatus;
+    productStatusLabel: string;
+    activeOrderCount: number;
+    hasScheduleRule: boolean;
+    scheduleRules: Array<{
+      id: string;
+      ruleName: string;
+      action: string;
+      actionLabel: string;
+      startTime: Date;
+      status: number;
+    }>;
+    message: string;
+  }> {
+    const product = await productDao.findById(productId);
+    if (!product) {
+      throw new AppError('商品不存在', BusinessCode.NOT_FOUND);
+    }
+
+    const plain = product.get({ plain: true });
+    const currentStatus = (product as any).status as ProductStatus;
+
+    if (currentStatus !== ProductStatus.LISTED) {
+      return {
+        canDelist: false,
+        productStatus: currentStatus,
+        productStatusLabel: PRODUCT_STATUS_LABELS[currentStatus]?.label || '未知',
+        activeOrderCount: 0,
+        hasScheduleRule: false,
+        scheduleRules: [],
+        message: `商品当前状态为${PRODUCT_STATUS_LABELS[currentStatus]?.label || '未知'}，只有已上架状态的商品才能下架`,
+      };
+    }
+
+    const activeOrderCount = await orderDao.count({
+      where: {
+        productName: plain.name,
+        status: {
+          [Op.in]: [
+            OrderStatus.PENDING_PAY,
+            OrderStatus.PAID,
+            OrderStatus.SHIPPED,
+          ],
+        },
+      },
+    } as any);
+
+    const scheduleRules = await productScheduleRuleDao.findActiveByProductId(productId);
+    const formattedRules = scheduleRules.map((r: any) => {
+      const p = r.get ? r.get({ plain: true }) : r;
+      return {
+        id: p.id,
+        ruleName: p.ruleName,
+        action: p.action,
+        actionLabel: PRODUCT_SCHEDULE_RULE_ACTION_LABELS[p.action as ProductScheduleRuleAction] || p.action,
+        startTime: p.startTime,
+        status: p.status,
+      };
+    });
+
+    return {
+      canDelist: true,
+      productStatus: currentStatus,
+      productStatusLabel: PRODUCT_STATUS_LABELS[currentStatus]?.label || '已上架',
+      activeOrderCount,
+      hasScheduleRule: scheduleRules.length > 0,
+      scheduleRules: formattedRules,
+      message: activeOrderCount > 0
+        ? `商品存在${activeOrderCount}个未完结在售订单，可选择强制下架或等待订单完结`
+        : '商品可以正常下架',
     };
   }
 }

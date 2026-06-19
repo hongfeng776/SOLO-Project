@@ -180,12 +180,12 @@ class ProductController {
     }
   }
 
-  public async batchList(req: Request, res: Response): Promise<void> {
+  public async batchListOld(req: Request, res: Response): Promise<void> {
     try {
       const { ids } = req.body;
       const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
       const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string) || '';
-      const result = await productService.batchList(ids, operatorId, ipAddress);
+      const result = await productService.batchList({ productIds: ids }, operatorId, ipAddress);
       ResponseUtils.success(res, result, '批量上架完成');
     } catch (err: any) {
       ResponseUtils.error(res, err.message, err.code);
@@ -359,6 +359,186 @@ class ProductController {
       const pageSize = parseInt((req.query.pageSize as string) || '10', 10);
       const result = await productService.getEditHistory(id, { page, pageSize });
       ResponseUtils.paginated(res, result.list, result.total, result.page, result.pageSize);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async manualDelist(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { forceDelist, reason } = req.body;
+      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
+      const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string) || '';
+      const result = await productService.manualDelist(id, operatorId, forceDelist, reason, ipAddress);
+      if (result.delisted) {
+        ResponseUtils.success(res, result, result.message);
+      } else {
+        ResponseUtils.success(res, result, result.message);
+      }
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async manualList(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
+      const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string) || '';
+      await productService.manualList(id, operatorId, reason, ipAddress);
+      ResponseUtils.success(res, null, '商品上架成功');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async checkDelistPrecondition(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const result = await productService.checkDelistPrecondition(id);
+      ResponseUtils.success(res, result);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async createScheduleRule(req: Request, res: Response): Promise<void> {
+    try {
+      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
+      const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string) || '';
+      const result = await productService.createScheduleRule(req.body, operatorId, ipAddress);
+      ResponseUtils.success(res, result, '定时上下架规则创建成功');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async updateScheduleRule(req: Request, res: Response): Promise<void> {
+    try {
+      const { ruleId } = req.params;
+      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
+      const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string) || '';
+      await productService.updateScheduleRule(ruleId, req.body, operatorId, ipAddress);
+      ResponseUtils.success(res, null, '定时规则更新成功');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async cancelScheduleRule(req: Request, res: Response): Promise<void> {
+    try {
+      const { ruleId } = req.params;
+      const { reason } = req.body;
+      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
+      const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string) || '';
+      await productService.cancelScheduleRule(ruleId, operatorId, reason, ipAddress);
+      ResponseUtils.success(res, null, '定时规则已取消');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getScheduleRuleList(req: Request, res: Response): Promise<void> {
+    try {
+      const page = parseInt((req.query.page as string) || '1', 10);
+      const pageSize = parseInt((req.query.pageSize as string) || '10', 10);
+      const { productId, action, status, creatorId, startTime, endTime } = req.query;
+      const result = await productService.getScheduleRuleList({
+        page,
+        pageSize,
+        productId: productId as string,
+        action: action as string,
+        status: status ? parseInt(status as string, 10) : undefined,
+        creatorId: creatorId as string,
+        startTime: startTime as string,
+        endTime: endTime as string,
+      });
+      ResponseUtils.paginated(res, result.list, result.total, result.page, result.pageSize);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getScheduleRuleDetail(req: Request, res: Response): Promise<void> {
+    try {
+      const { ruleId } = req.params;
+      const result = await productService.getScheduleRuleDetail(ruleId);
+      ResponseUtils.success(res, result);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async processScheduleRules(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await productService.processScheduleRules();
+      ResponseUtils.success(res, result, `定时任务执行完成，成功${result.executed}条，失败${result.failed}条`);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async batchDelist(req: Request, res: Response): Promise<void> {
+    try {
+      const { type, productIds, excludeHotSales, reason } = req.body;
+      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
+      const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string) || '';
+      const result = await productService.batchDelist(
+        { type, productIds, excludeHotSales, reason },
+        operatorId,
+        ipAddress
+      );
+      ResponseUtils.success(res, result, '批量下架完成');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async batchList(req: Request, res: Response): Promise<void> {
+    try {
+      const { productIds, autoFilter, reason } = req.body;
+      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
+      const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string) || '';
+      const result = await productService.batchList(
+        { productIds, autoFilter, reason },
+        operatorId,
+        ipAddress
+      );
+      ResponseUtils.success(res, result, '批量上架完成');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getListingHistory(req: Request, res: Response): Promise<void> {
+    try {
+      const page = parseInt((req.query.page as string) || '1', 10);
+      const pageSize = parseInt((req.query.pageSize as string) || '10', 10);
+      const { productId, action, trigger, operatorId, batchId, startTime, endTime } = req.query;
+      const result = await productService.getListingHistory({
+        page,
+        pageSize,
+        productId: productId as string,
+        action: action as any,
+        trigger: trigger as any,
+        operatorId: operatorId as string,
+        batchId: batchId as string,
+        startTime: startTime as string,
+        endTime: endTime as string,
+      });
+      ResponseUtils.paginated(res, result.list, result.total, result.page, result.pageSize);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getListingStats(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const result = await productService.getListingStats(id);
+      ResponseUtils.success(res, result);
     } catch (err: any) {
       ResponseUtils.error(res, err.message, err.code);
     }
