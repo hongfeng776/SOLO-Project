@@ -37,69 +37,92 @@ const FlightInventory = sequelize.define('FlightInventory', {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 0,
-    comment: '总库存基数'
+    comment: '总库存数'
+  },
+  occupiedStock: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: '已占用库存（已下单未支付）'
   },
   soldStock: {
     type: DataTypes.INTEGER,
-    allowNull: false,
     defaultValue: 0,
-    comment: '已售库存'
+    comment: '已售出库存（已支付）'
   },
   reservedStock: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
-    comment: '预留库存数量'
+    comment: '预留库存'
   },
   lockedStock: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
-    comment: '锁定库存数量'
+    comment: '锁定库存'
   },
   availableStock: {
     type: DataTypes.INTEGER,
-    allowNull: false,
     defaultValue: 0,
-    comment: '可售库存 = 总库存 - 已售 - 预留 - 锁定'
+    comment: '可用库存（总库存 - 已占用 - 已售出 - 预留 - 锁定）'
   },
-  reservedRatio: {
+  reserveRatio: {
     type: DataTypes.DECIMAL(5, 2),
     defaultValue: 0.00,
-    comment: '预留比例(%)，预留库存占总库存的比例'
-  },
-  minStockWarning: {
-    type: DataTypes.INTEGER,
-    defaultValue: 10,
-    comment: '最低库存预警值'
-  },
-  maxStockLimit: {
-    type: DataTypes.INTEGER,
-    defaultValue: 500,
-    comment: '最大库存上限'
+    comment: '预留比例(%)'
   },
   reserveExpireTime: {
     type: DataTypes.DATE,
     allowNull: true,
     comment: '预留库存到期时间'
   },
-  isAutoRelease: {
+  isLocked: {
     type: DataTypes.TINYINT,
-    defaultValue: 1,
-    comment: '是否自动释放预留库存: 0-否, 1-是'
+    defaultValue: 0,
+    comment: '是否锁定: 0-否, 1-是'
   },
-  status: {
-    type: DataTypes.INTEGER,
-    defaultValue: 1,
-    comment: '库存状态: 0-停用, 1-正常, 2-预警, 3-售罄'
-  },
-  inventorySource: {
-    type: DataTypes.STRING(50),
-    defaultValue: 'manual',
-    comment: '库存来源: manual-手动录入, system-系统生成, batch-批量导入, api-API同步'
-  },
-  remark: {
+  lockReason: {
     type: DataTypes.STRING(500),
     allowNull: true,
-    comment: '备注'
+    comment: '锁定原因'
+  },
+  lockTime: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '锁定时间'
+  },
+  unlockTime: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '解锁时间'
+  },
+  isActive: {
+    type: DataTypes.TINYINT,
+    defaultValue: 1,
+    comment: '是否启用: 0-停用, 1-启用'
+  },
+  inventoryStatus: {
+    type: DataTypes.TINYINT,
+    defaultValue: 1,
+    comment: '库存状态: 1-充足, 2-紧张, 3-即将售罄, 4-已售罄'
+  },
+  lowStockThreshold: {
+    type: DataTypes.INTEGER,
+    defaultValue: 10,
+    comment: '低库存预警阈值'
+  },
+  soldOutThreshold: {
+    type: DataTypes.INTEGER,
+    defaultValue: 3,
+    comment: '即将售罄阈值'
+  },
+  supplementSource: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    comment: '补录库存来源'
+  },
+  supplementRemark: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    comment: '补录备注'
   },
   operatorId: {
     type: DataTypes.INTEGER,
@@ -111,11 +134,6 @@ const FlightInventory = sequelize.define('FlightInventory', {
     allowNull: true,
     comment: '操作人姓名'
   },
-  lastSyncTime: {
-    type: DataTypes.DATE,
-    allowNull: true,
-    comment: '最后同步时间'
-  },
   createdAt: {
     type: DataTypes.DATE,
     comment: '创建时间'
@@ -126,14 +144,15 @@ const FlightInventory = sequelize.define('FlightInventory', {
   }
 }, {
   tableName: 'flight_inventories',
-  comment: '机票库存表',
+  comment: '机票库存配置表',
   indexes: [
     { fields: ['flightId'] },
     { fields: ['flightNo'] },
     { fields: ['cabinClass'] },
     { fields: ['inventoryType'] },
-    { fields: ['status'] },
-    { fields: ['availableStock'] },
+    { fields: ['inventoryStatus'] },
+    { fields: ['isActive'] },
+    { fields: ['isLocked'] },
     { fields: ['reserveExpireTime'] },
     { unique: true, fields: ['flightId', 'cabinClass', 'inventoryType'] }
   ]

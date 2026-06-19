@@ -1,45 +1,45 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="批量库存操作"
+    title="批量库存管理"
     width="800px"
     class="flight-inventory-batch-dialog"
     :close-on-click-modal="false"
   >
     <template #header>
       <div class="dialog-header">
-        <el-icon color="#722ed1"><DataAnalysis /></el-icon>
-        <span class="title">批量库存操作</span>
-        <span class="count-badge">已选择 {{ selectedCount }} 条库存</span>
+        <el-icon color="#722ed1"><Files /></el-icon>
+        <span class="title">批量库存管理</span>
+        <span class="count-badge">已选择 {{ selectedCount }} 条库存配置</span>
       </div>
     </template>
 
-    <div class="batch-content">
+    <div v-if="!showProgress" class="batch-content">
       <div class="selected-info">
         <el-alert
-          :title="'将对以下范围的库存进行批量操作'"
+          title="将对以下范围的库存配置进行批量操作"
           type="info"
           :closable="false"
           show-icon
         >
           <template #default>
             <div class="info-detail">
-            <div class="info-item">
-              <span class="label">航班范围：</span>
-              <el-tag size="small" type="primary">{{ flightRangeLabel }}</el-tag>
+              <div class="info-item">
+                <span class="label">库存数量：</span>
+                <el-tag size="small" type="primary">{{ selectedCount }} 条</el-tag>
+              </div>
+              <div class="info-item">
+                <span class="label">库存类型：</span>
+                <el-tag :type="selectedOperation?.type || 'info'">{{ selectedOperation?.label || '请选择' }}</el-tag>
+              </div>
+              <div class="info-item">
+                <span class="label">操作类型：</span>
+                <span class="value" :style="{ color: selectedOperation?.color }">
+                  <el-icon><component :is="selectedOperation?.icon" /></el-icon>
+                  {{ selectedOperation?.label || '请选择操作' }}
+                </span>
+              </div>
             </div>
-            <div class="info-item">
-              <span class="label">库存类型：</span>
-              <el-tag :type="currentTypeTagType">{{ currentTypeLabel }}</el-tag>
-            </div>
-            <div class="info-item">
-              <span class="label">操作类型：</span>
-              <span class="value" :style="{ color: selectedOperation?.color }">
-                <el-icon><component :is="selectedOperation?.icon" /></el-icon>
-                {{ selectedOperation?.label }}
-              </span>
-            </div>
-          </div>
           </template>
         </el-alert>
       </div>
@@ -51,7 +51,7 @@
           class="operation-card"
           :class="{
             active: selectedOperationType === operation.value,
-            disabled: isOperationDisabled(operation)
+            disabled: operation.disabled
           }"
           :style="{ '--card-color': operation.color }"
           @click="handleSelectOperation(operation)"
@@ -62,7 +62,7 @@
           </div>
           <div class="card-content">
             <div class="card-title">{{ operation.label }}</div>
-            <div class="card-desc">{{ getOperationDesc(operation.value) }}</div>
+            <div class="card-desc">{{ operation.desc }}</div>
           </div>
           <div class="card-check" v-if="selectedOperationType === operation.value">
             <el-icon color="#52c41a"><CircleCheckFilled /></el-icon>
@@ -70,45 +70,52 @@
         </div>
       </div>
 
-      <div v-if="selectedOperationType && !isValueOperation" class="value-input-section">
+      <div v-if="selectedOperationType" class="operation-form">
         <el-divider content-position="left">操作参数</el-divider>
-        <div class="value-input-wrapper">
+
+        <div v-if="selectedOperationType === 'lock'" class="form-section">
           <el-form :model="form" label-width="120px">
-            <el-form-item label="操作数量">
-              <div class="value-input-group">
-                <el-input-number
-                  v-model="form.quantity"
-                  :min="1"
-                  :max="getMaxQuantity()"
-                  :step="10"
-                  size="large"
-                  class="large-input"
-                />
-                <span class="value-unit">张</span>
-              </div>
-              <div class="value-preview" v-if="form.quantity > 0">
-                <el-icon color="#1890ff"><InfoFilled /></el-icon>
-                <span>预计影响：{{ form.quantity }} 张库存</span>
-              </div>
-            </el-form-item>
-
-            <el-form-item v-if="selectedOperationType === 'supplement'" label="节假日批次">
-              <el-switch
-                v-model="form.isHolidayBatch"
-                active-text="是（需专项权限"
-                inactive-text="否"
-              />
-              <el-tooltip content="节假日高峰库存批量调整需专项权限核验" placement="top">
-                <el-icon class="help-icon"><QuestionFilled /></el-icon>
-              </el-tooltip>
-            </el-form-item>
-
-            <el-form-item label="操作原因">
+            <el-form-item label="锁定原因" required>
               <el-input
-                v-model="form.reason"
+                v-model="form.lockReason"
                 type="textarea"
                 :rows="2"
-                placeholder="请输入操作原因（必填）"
+                placeholder="请输入锁定原因（必填）"
+                maxlength="200"
+                show-word-limit
+                style="width: 400px"
+              />
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <div v-if="selectedOperationType === 'supplement'" class="form-section">
+          <el-form :model="form" label-width="120px">
+            <el-form-item label="补录数量" required>
+              <el-input-number
+                v-model="form.supplementQuantity"
+                :min="1"
+                :max="1000"
+                :step="10"
+                size="large"
+              />
+              <span class="form-unit">张</span>
+              <div class="form-tip">单条库存最多补录1000张</div>
+            </el-form-item>
+            <el-form-item label="补录来源">
+              <el-input
+                v-model="form.supplementSource"
+                placeholder="请输入补录来源"
+                maxlength="100"
+                style="width: 300px"
+              />
+            </el-form-item>
+            <el-form-item label="补录备注">
+              <el-input
+                v-model="form.supplementRemark"
+                type="textarea"
+                :rows="2"
+                placeholder="请输入补录备注"
                 maxlength="500"
                 show-word-limit
                 style="width: 400px"
@@ -116,20 +123,31 @@
             </el-form-item>
           </el-form>
         </div>
-      </div>
 
-      <div v-if="selectedOperationType" class="progress-section" v-show="isOperating">
-        <el-divider content-position="left">操作进度</el-divider>
-        <div class="progress-wrapper">
-          <el-progress
-            :percentage="progressPercent"
-            :status="progressStatus"
-            :stroke-width="12"
-          />
-          <div class="progress-text">
-            <span>{{ processedCount }} / {{ selectedCount }} 条</span>
-            <span class="progress-detail">成功: {{ successCount }} 失败: {{ failCount }}</span>
-          </div>
+        <div v-if="selectedOperationType === 'releaseReserve'" class="form-section">
+          <el-alert
+            title="确认释放所有选中库存的预留配额吗？"
+            type="warning"
+            :closable="false"
+            show-icon
+          >
+            <template #default>
+              <p>释放后，预留库存将转化为可用库存。此操作不可撤销。</p>
+            </template>
+          </el-alert>
+        </div>
+
+        <div v-if="selectedOperationType === 'unlock'" class="form-section">
+          <el-alert
+            title="确认解锁所有选中的锁定库存吗？"
+            type="success"
+            :closable="false"
+            show-icon
+          >
+            <template #default>
+              <p>解锁后，锁定库存将转化为可用库存，恢复销售。</p>
+            </template>
+          </el-alert>
         </div>
       </div>
 
@@ -138,33 +156,94 @@
         <div class="preview-cards">
           <div class="preview-card">
             <div class="preview-label">当前总库存</div>
-            <div class="preview-value current">{{ totalCurrentStock }} 张</div>
+            <div class="preview-value">{{ currentTotalStock }}</div>
+            <div class="preview-unit">张</div>
           </div>
           <div class="preview-arrow">
-            <el-icon :color="changeDirection === 'increase' ? '#52c41a' : '#ff4d4f'">
-              <component :is="changeDirection === 'increase' ? 'Top' : 'Bottom'" />
+            <el-icon :color="previewChangeColor">
+              <component :is="previewChangeDirection === 'increase' ? 'Right' : 'RefreshRight'" />
             </el-icon>
           </div>
-          <div class="preview-card">
+          <div class="preview-card target">
             <div class="preview-label">预计总库存</div>
-            <div class="preview-value target" :class="changeDirection">
-              {{ totalTargetStock }} 张
-            </div>
+            <div class="preview-value" :class="previewChangeDirection">{{ previewTotalStock }}</div>
+            <div class="preview-unit">张</div>
           </div>
+        </div>
+        <div class="preview-summary">
+          预计变动：<span :class="previewChangeDirection">
+            {{ previewChangeDirection === 'increase' ? '+' : '' }}{{ previewChangeAmount }} 张
+          </span>
         </div>
       </div>
     </div>
 
+    <div v-else class="progress-section">
+      <div class="progress-header">
+        <el-icon :class="progressIconClass"><component :is="progressIcon" /></el-icon>
+        <span class="progress-title">{{ progressTitle }}</span>
+      </div>
+
+      <div class="progress-bar-wrapper">
+        <el-progress
+          :percentage="progressPercent"
+          :status="progressStatus"
+          :stroke-width="24"
+          :text-inside="true"
+        />
+      </div>
+
+      <div class="progress-detail">
+        <div class="detail-item">
+          <span class="detail-label">总任务数</span>
+          <span class="detail-value">{{ selectedCount }}</span>
+        </div>
+        <div class="detail-item success">
+          <span class="detail-label">成功</span>
+          <span class="detail-value">{{ progressSuccess }}</span>
+        </div>
+        <div class="detail-item fail">
+          <span class="detail-label">失败</span>
+          <span class="detail-value">{{ progressFailed }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">进度</span>
+          <span class="detail-value">{{ progressPercent }}%</span>
+        </div>
+      </div>
+
+      <div v-if="progressCompleted" class="progress-result">
+        <el-alert
+          :title="progressResultTitle"
+          :type="progressResultType"
+          :closable="false"
+          show-icon
+        >
+          <template #default>
+            <p v-if="progressSuccess > 0">成功处理 {{ progressSuccess }} 条库存配置</p>
+            <p v-if="progressFailed > 0">失败 {{ progressFailed }} 条，请检查日志详情</p>
+          </template>
+        </el-alert>
+      </div>
+    </div>
+
     <template #footer>
-      <el-button @click="visible = false">取消</el-button>
-      <el-button
-        type="primary"
-        :loading="isOperating"
-        :disabled="!canSubmit"
-        @click="handleSubmit"
-      >
-        确认执行
-      </el-button>
+      <template v-if="!showProgress">
+        <el-button @click="handleCancel">取消</el-button>
+        <el-button
+          type="primary"
+          :disabled="!selectedOperationType || !canSubmit"
+          :loading="submitting"
+          @click="handleSubmit"
+        >
+          确认执行
+        </el-button>
+      </template>
+      <template v-else>
+        <el-button v-if="progressCompleted" type="primary" @click="handleClose">
+          关闭
+        </el-button>
+      </template>
     </template>
   </el-dialog>
 </template>
@@ -173,21 +252,24 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  DataAnalysis,
+  Files,
+  Lock,
+  Unlock,
+  RefreshRight,
+  Plus,
   CircleCheckFilled,
-  InfoFilled,
-  QuestionFilled
+  Right,
+  Check,
+  Loading,
+  Warning
 } from '@element-plus/icons-vue'
+import { InventoryBatchOperationEnum } from '@/utils/enums'
 import {
   batchLockFlightInventory,
   batchUnlockFlightInventory,
-  batchSupplementFlightInventory,
-  batchReleaseExpiredReservation
+  batchReleaseFlightReservations,
+  batchSupplementFlightInventory
 } from '@/api/flight'
-import {
-  FlightInventoryBatchOperationEnum,
-  FlightInventoryTypeEnum
-} from '@/utils/enums'
 
 const props = defineProps({
   modelValue: {
@@ -198,13 +280,13 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
-  inventoryType: {
-    type: String,
-    default: 'fixed'
-  },
-  hasSpecialPermission: {
+  hasSupplementPermission: {
     type: Boolean,
-    default: true
+    default: false
+  },
+  hasHolidayPermission: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -217,260 +299,251 @@ const visible = computed({
 
 const selectedOperationType = ref('')
 const showRipple = ref('')
-const isOperating = ref(false)
-const processedCount = ref(0)
-const successCount = ref(0)
-const failCount = ref(0)
+const submitting = ref(false)
+const showProgress = ref(false)
+const progressPercent = ref(0)
+const progressSuccess = ref(0)
+const progressFailed = ref(0)
+const progressCompleted = ref(false)
 
 const form = reactive({
-  quantity: 10,
-  reason: '',
-  isHolidayBatch: false
+  lockReason: '',
+  supplementQuantity: 50,
+  supplementSource: '',
+  supplementRemark: ''
 })
 
-const selectedCount = computed(() => props.selectedInventories?.length || 0)
-
-const flightRangeLabel = computed(() => {
-  if (!props.selectedInventories?.length === 0) return '无'
-  const flightIds = [...new Set(props.selectedInventories.map(i => i.flightId))]
-  if (flightIds.length === 1) {
-    return props.selectedInventories[0].flightNo || '单航班'
-  }
-  return `${flightIds.length} 个航班`
-})
-
-const currentTypeLabel = computed(() => {
-  const key = Object.keys(FlightInventoryTypeEnum).find(
-    k => FlightInventoryTypeEnum[k].value === props.inventoryType
-  )
-  return FlightInventoryTypeEnum[key]?.label || '全部类型'
-})
-
-const currentTypeTagType = computed(() => {
-  return 'primary'
-})
+const selectedCount = computed(() => props.selectedInventories.length)
 
 const displayOperations = computed(() => {
-  return FlightInventoryBatchOperationEnum
+  const ops = []
+  for (const [key, value] of Object.entries(InventoryBatchOperationEnum)) {
+    const item = { ...value, key, disabled: false }
+    if (value.value === 'supplement' && !props.hasSupplementPermission) {
+      item.disabled = true
+    }
+    if ((value.value === 'lock' || value.value === 'unlock') && !props.hasHolidayPermission) {
+      if (props.selectedInventories.some(inv => inv.inventoryType === 'reserved' || inv.inventoryType === 'special')) {
+        // 有节假日库存需要特殊权限
+      }
+    }
+    ops.push(item)
+  }
+  return ops
 })
 
 const selectedOperation = computed(() => {
-  const key = Object.keys(FlightInventoryBatchOperationEnum).find(
-    k => FlightInventoryBatchOperationEnum[k].value === selectedOperationType.value
-  )
-  return FlightInventoryBatchOperationEnum[key] || null
-})
-
-const isValueOperation = computed(() => {
-  return ['lock', 'unlock', 'supplement', 'adjust_total'].includes(selectedOperationType.value)
+  if (!selectedOperationType.value) return null
+  return displayOperations.value.find(op => op.value === selectedOperationType.value)
 })
 
 const canSubmit = computed(() => {
   if (!selectedOperationType.value) return false
-  if (isValueOperation.value && !form.quantity) return false
-  if (!form.reason) return false
+  if (selectedOperationType.value === 'lock' && !form.lockReason) return false
+  if (selectedOperationType.value === 'supplement' && (!form.supplementQuantity || form.supplementQuantity <= 0)) return false
   return true
 })
 
-const totalCurrentStock = computed(() => {
-  return props.selectedInventories?.reduce((sum, item) => sum + parseInt(item.totalStock || 0), 0)
+const currentTotalStock = computed(() => {
+  return props.selectedInventories.reduce((sum, inv) => sum + (inv.totalStock || 0), 0)
 })
 
-const changeDirection = computed(() => {
-  if (['lock'].includes(selectedOperationType.value)) return 'decrease'
-  if (['unlock', 'release_expired'].includes(selectedOperationType.value)) return 'increase'
-  if (['supplement', 'adjust_total'].includes(selectedOperationType.value)) return 'increase'
-  return 'unchanged'
+const previewChangeDirection = computed(() => {
+  const type = selectedOperationType.value
+  if (type === 'supplement') return 'increase'
+  if (type === 'lock') return 'decrease'
+  if (type === 'unlock') return 'increase'
+  if (type === 'releaseReserve') return 'increase'
+  return 'none'
 })
 
-const totalTargetStock = computed(() => {
-  const current = totalCurrentStock.value
-  const quantity = form.quantity * selectedCount.value
-  if (selectedOperationType.value === 'supplement') {
-    return current + quantity
+const previewChangeColor = computed(() => {
+  return previewChangeDirection.value === 'increase' ? '#52c41a' : '#faad14'
+})
+
+const previewChangeAmount = computed(() => {
+  const type = selectedOperationType.value
+  const count = selectedCount.value
+
+  if (type === 'supplement') {
+    return form.supplementQuantity * count
   }
-  if (selectedOperationType.value === 'adjust_total') {
-    return current + quantity
+  if (type === 'lock') {
+    return props.selectedInventories.reduce((sum, inv) => sum + (inv.availableStock || 0), 0)
   }
-  return current
+  if (type === 'unlock') {
+    return props.selectedInventories.reduce((sum, inv) => sum + (inv.lockedStock || 0), 0)
+  }
+  if (type === 'releaseReserve') {
+    return props.selectedInventories.reduce((sum, inv) => sum + (inv.reservedStock || 0), 0)
+  }
+  return 0
 })
 
-const progressPercent = computed(() => {
-  if (selectedCount.value === 0) return 0
-  return Math.round((processedCount.value / selectedCount.value) * 100)
+const previewTotalStock = computed(() => {
+  if (previewChangeDirection.value === 'increase') {
+    return currentTotalStock.value + previewChangeAmount.value
+  }
+  if (previewChangeDirection.value === 'decrease') {
+    return currentTotalStock.value - previewChangeAmount.value
+  }
+  return currentTotalStock.value
+})
+
+const progressIcon = computed(() => {
+  if (!progressCompleted.value) return Loading
+  if (progressFailed.value === 0) return Check
+  return Warning
+})
+
+const progressIconClass = computed({
+  'icon-spin': !progressCompleted.value,
+  'icon-success': progressCompleted.value && progressFailed.value === 0,
+  'icon-warning': progressCompleted.value && progressFailed.value > 0
 })
 
 const progressStatus = computed(() => {
-  if (!isOperating.value) return null
-  if (failCount.value > 0) return 'warning'
-  return null
+  if (!progressCompleted.value) return ''
+  if (progressFailed.value === 0) return 'success'
+  return 'exception'
 })
 
-const isOperationDisabled = (operation) => {
-  if (operation.value === 'supplement' && form.isHolidayBatch && !props.hasSpecialPermission) {
-    return true
-  }
-  return false
-}
+const progressTitle = computed(() => {
+  if (!progressCompleted.value) return `正在执行${selectedOperation.value?.label || '批量操作'}...`
+  return '操作完成'
+})
 
-const getOperationDesc = (type) => {
-  const descs = {
-    lock: '批量锁定选中的库存',
-    unlock: '批量解锁选中的锁定库存',
-    supplement: '为选中库存批量补录库存',
-    release_expired: '批量释放所有过期预留库存',
-    adjust_total: '批量调整总库存数量'
-  }
-  return descs[type] || ''
-}
+const progressResultTitle = computed(() => {
+  if (progressFailed.value === 0) return '批量操作全部成功！'
+  if (progressSuccess.value === 0) return '批量操作全部失败'
+  return '批量操作部分完成'
+})
 
-const getMaxQuantity = () => {
-  if (selectedOperationType.value === 'lock') {
-    const minAvailable = Math.min(
-      ...props.selectedInventories.map(i => parseInt(i.availableStock || 0))
-    )
-    return Math.max(1, minAvailable)
-  }
-  if (selectedOperationType.value === 'unlock') {
-    const minLocked = Math.min(
-      ...props.selectedInventories.map(i => parseInt(i.lockedStock || 0))
-    )
-    return Math.max(1, minLocked)
-  }
-  return 500
-}
+const progressResultType = computed(() => {
+  if (progressFailed.value === 0) return 'success'
+  if (progressSuccess.value === 0) return 'error'
+  return 'warning'
+})
 
-const handleSelectOperation = (operation) => {
-  if (isOperationDisabled(operation)) {
-    ElMessage.warning('您没有权限执行此操作')
+function handleSelectOperation(operation) {
+  if (operation.disabled) {
+    ElMessage.warning(operation.value === 'supplement' ? '无补录库存权限，请联系管理员' : '无此操作权限')
     return
   }
+
   showRipple.value = operation.value
   setTimeout(() => {
     showRipple.value = ''
   }, 600)
+
   selectedOperationType.value = operation.value
-  if (operation.value === 'release_expired') {
-    form.quantity = 0
-  }
 }
 
-const handleSubmit = async () => {
-  if (!canSubmit.value) return
-
+async function handleSubmit() {
   try {
     await ElMessageBox.confirm(
-      `确定要执行「${selectedOperation.value?.label}」操作吗？`,
+      `确定要对选中的 ${selectedCount.value} 条库存配置执行「${selectedOperation.value?.label}」操作吗？`,
       '确认操作',
-      { type: 'warning' }
+      { type: 'warning', confirmButtonText: '确认执行', cancelButtonText: '取消' }
     )
-  } catch (e) {
+  } catch {
     return
   }
 
-  isOperating.value = true
-  processedCount.value = 0
-  successCount.value = 0
-  failCount.value = 0
+  submitting.value = true
+  showProgress.value = true
+  progressPercent.value = 0
+  progressSuccess.value = 0
+  progressFailed.value = 0
+  progressCompleted.value = false
 
   try {
-    const ids = props.selectedInventories.map(i => i.id)
-    let result
+    const inventoryIds = props.selectedInventories.map(inv => inv.id)
 
+    let result
     switch (selectedOperationType.value) {
       case 'lock':
-        result = await batchLockFlightInventory(ids, form.quantity)
+        result = await batchLockFlightInventory(inventoryIds, form.lockReason)
         break
       case 'unlock':
-        result = await batchUnlockFlightInventory(ids, form.quantity)
+        result = await batchUnlockFlightInventory(inventoryIds)
+        break
+      case 'releaseReserve':
+        result = await batchReleaseFlightReservations(inventoryIds)
         break
       case 'supplement':
-        result = await batchSupplementFlightInventory(ids, form.quantity, form.isHolidayBatch)
+        result = await batchSupplementFlightInventory(
+          inventoryIds,
+          form.supplementQuantity,
+          form.supplementSource,
+          form.supplementRemark
+        )
         break
-      case 'release_expired':
-        result = await batchReleaseExpiredReservation()
-        break
-      default:
-        throw new Error('未知操作类型')
     }
 
-    successCount.value = result?.success || 0
-    failCount.value = result?.failed || 0
-    processedCount.value = selectedCount.value
+    await simulateProgress(result)
 
-    ElMessage.success(`操作完成：成功${successCount.value}条，失败${failCount.value}条`)
+    ElMessage.success(`批量操作完成，成功${result?.success || 0}条`)
     emit('success')
-    setTimeout(() => {
-      visible.value = false
-    }, 1000)
   } catch (e) {
-    ElMessage.error(e.message || '操作失败')
+    progressFailed.value = selectedCount.value
+    progressCompleted.value = true
+    progressPercent.value = 100
+    ElMessage.error(e.message || '批量操作失败')
   } finally {
-    setTimeout(() => {
-      isOperating.value = false
-    }, 500)
+    submitting.value = false
   }
+}
+
+function simulateProgress(result) {
+  return new Promise((resolve) => {
+    const total = selectedCount.value
+    const success = result?.success || 0
+    const failed = result?.failed || 0
+    let current = 0
+
+    const interval = setInterval(() => {
+      current += Math.ceil(total / 20)
+      if (current >= total) {
+        current = total
+        clearInterval(interval)
+        progressSuccess.value = success
+        progressFailed.value = failed
+        progressCompleted.value = true
+        setTimeout(resolve, 300)
+      }
+      progressPercent.value = Math.round((current / total) * 100)
+      progressSuccess.value = Math.floor(success * (current / total))
+      progressFailed.value = Math.floor(failed * (current / total))
+    }, 50)
+  })
+}
+
+function handleCancel() {
+  visible.value = false
+}
+
+function handleClose() {
+  visible.value = false
+  resetForm()
+}
+
+function resetForm() {
+  selectedOperationType.value = ''
+  showProgress.value = false
+  progressPercent.value = 0
+  progressSuccess.value = 0
+  progressFailed.value = 0
+  progressCompleted.value = false
+  form.lockReason = ''
+  form.supplementQuantity = 50
+  form.supplementSource = ''
+  form.supplementRemark = ''
 }
 
 watch(() => props.modelValue, (val) => {
   if (!val) {
-    selectedOperationType.value = ''
-    form.quantity = 10
-    form.reason = ''
-    form.isHolidayBatch = false
-    processedCount.value = 0
-    successCount.value = 0
-    failCount.value = 0
-    isOperating.value = false
+    resetForm()
   }
 })
 </script>
-
-<style lang="scss" scoped>
-.flight-inventory-batch-dialog {
-  .dialog-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 16px;
-    font-weight: 600;
-
-    .title {
-      flex: 1;
-    }
-
-    .count-badge {
-      font-size: 12px;
-      font-weight: 400;
-      color: #909399;
-      background: #f0f0f0;
-      padding: 4px 12px;
-      border-radius: 12px;
-    }
-  }
-
-  .help-icon {
-    margin-left: 8px;
-    color: #909399;
-    cursor: help;
-  }
-
-  .progress-section {
-    .progress-wrapper {
-      padding: 0 20px;
-
-      .progress-text {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 8px;
-        font-size: 13px;
-        color: #606266;
-
-        .progress-detail {
-          color: #909399;
-        }
-      }
-    }
-  }
-}
-</style>

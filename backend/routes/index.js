@@ -130,15 +130,19 @@ router.put('/flight-inventories/:id', auth(), flightInventoryController.updateIn
 router.delete('/flight-inventories/:id', auth(), flightInventoryController.deleteInventory.bind(flightInventoryController));
 router.post('/flight-inventories/validate', auth(), flightInventoryController.validateInventory.bind(flightInventoryController));
 router.get('/flight-inventories/validate/field', auth(), flightInventoryController.validateField.bind(flightInventoryController));
-router.post('/flight-inventories/:id/lock', auth(), flightInventoryController.lockStock.bind(flightInventoryController));
-router.post('/flight-inventories/:id/unlock', auth(), flightInventoryController.unlockStock.bind(flightInventoryController));
-router.post('/flight-inventories/:id/release-reservation', auth(), flightInventoryController.releaseReservation.bind(flightInventoryController));
-router.post('/flight-inventories/batch/lock', auth(['admin', 'operator', 'inventory_manager']), flightInventoryController.batchLock.bind(flightInventoryController));
-router.post('/flight-inventories/batch/unlock', auth(['admin', 'operator', 'inventory_manager']), flightInventoryController.batchUnlock.bind(flightInventoryController));
-router.post('/flight-inventories/batch/supplement', auth(['admin', 'operator', 'inventory_manager']), flightInventoryController.batchSupplement.bind(flightInventoryController));
-router.post('/flight-inventories/batch/release-expired', auth(['admin', 'operator', 'inventory_manager']), flightInventoryController.batchReleaseExpired.bind(flightInventoryController));
-router.get('/flight-inventories/logs', auth(), pagination, flightInventoryController.getInventoryLogs.bind(flightInventoryController));
+router.put('/flight-inventories/:id/active-status', auth(), flightInventoryController.updateActiveStatus.bind(flightInventoryController));
+router.put('/flight-inventories/:id/lock', auth(), flightInventoryController.lockInventory.bind(flightInventoryController));
+router.put('/flight-inventories/:id/unlock', auth(), flightInventoryController.unlockInventory.bind(flightInventoryController));
+router.post('/flight-inventories/batch/lock', auth(['admin', 'inventory_manager', 'holiday_inventory']), flightInventoryController.batchLockInventory.bind(flightInventoryController));
+router.post('/flight-inventories/batch/unlock', auth(['admin', 'inventory_manager', 'holiday_inventory']), flightInventoryController.batchUnlockInventory.bind(flightInventoryController));
+router.post('/flight-inventories/batch/release-reservations', auth(['admin', 'inventory_manager']), flightInventoryController.batchReleaseReservations.bind(flightInventoryController));
+router.post('/flight-inventories/batch/supplement', auth(['admin', 'inventory_manager', 'inventory_supplement']), flightInventoryController.batchSupplementInventory.bind(flightInventoryController));
+router.post('/flight-inventories/batch/active-status', auth(['admin', 'inventory_manager']), flightInventoryController.batchUpdateActiveStatus.bind(flightInventoryController));
+router.get('/flight-inventories/:id/logs', auth(), pagination, flightInventoryController.getInventoryLogs.bind(flightInventoryController));
+router.get('/flight-inventories/logs/all', auth(), pagination, flightInventoryController.getInventoryLogs.bind(flightInventoryController));
 router.get('/flight-inventories/stats/summary', auth(), flightInventoryController.getInventoryStats.bind(flightInventoryController));
+router.post('/flight-inventories/release-expired', auth(['admin', 'inventory_manager']), flightInventoryController.releaseExpiredReservations.bind(flightInventoryController));
+router.get('/flight-inventories/warnings/low-stock', auth(), flightInventoryController.checkLowStockWarning.bind(flightInventoryController));
 
 registerCrudRoutes('hotels', hotelController);
 registerCrudRoutes('cars', carController);

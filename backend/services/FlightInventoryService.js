@@ -9,32 +9,32 @@ const { Op } = require('sequelize');
 class FlightInventoryService {
   constructor() {
     this.inventoryTypeConfig = {
-      fixed: { name: '固定库存', minStock: 0, maxStock: 500, defaultTotal: 100, color: '#1890ff' },
-      dynamic: { name: '动态库存', minStock: 0, maxStock: 1000, defaultTotal: 200, color: '#52c41a' },
-      reserved: { name: '预留库存', minStock: 0, maxStock: 200, defaultTotal: 50, color: '#faad14' },
-      supplement: { name: '补录库存', minStock: 0, maxStock: 300, defaultTotal: 100, color: '#722ed1' }
+      fixed: { name: '固定库存', minStock: 0, maxStock: 1000, defaultLowStockThreshold: 10, defaultSoldOutThreshold: 3 },
+      dynamic: { name: '动态库存', minStock: 0, maxStock: 5000, defaultLowStockThreshold: 20, defaultSoldOutThreshold: 5 },
+      reserved: { name: '预留库存', minStock: 0, maxStock: 500, defaultLowStockThreshold: 5, defaultSoldOutThreshold: 2 },
+      supplement: { name: '补录库存', minStock: 0, maxStock: 2000, defaultLowStockThreshold: 10, defaultSoldOutThreshold: 3 }
     };
 
-    this.cabinClassStockLimits = {
-      economy: { minStock: 0, maxStock: 300, defaultMinWarning: 10 },
-      business: { minStock: 0, maxStock: 100, defaultMinWarning: 5 },
-      first: { minStock: 0, maxStock: 50, defaultMinWarning: 2 },
-      special: { minStock: 0, maxStock: 200, defaultMinWarning: 8 }
+    this.inventoryStatusConfig = {
+      1: { name: '充足', color: '#52c41a' },
+      2: { name: '紧张', color: '#faad14' },
+      3: { name: '即将售罄', color: '#fa8c16' },
+      4: { name: '已售罄', color: '#ff4d4f' }
     };
 
-    this.operationTypeMap = {
-      1: '创建库存',
-      2: '库存调整',
-      3: '库存占用',
-      4: '库存释放',
-      5: '库存锁定',
-      6: '库存解锁',
-      7: '预留库存',
-      8: '释放预留',
-      9: '库存补录',
-      10: '批量操作',
-      11: '状态变更',
-      12: '删除库存'
+    this.operationTypeConfig = {
+      1: { name: '创建库存', category: 'create', color: '#1890ff' },
+      2: { name: '调整库存', category: 'adjust', color: '#722ed1' },
+      3: { name: '占用库存(下单)', category: 'occupy', color: '#faad14' },
+      4: { name: '释放库存(取消)', category: 'release', color: '#52c41a' },
+      5: { name: '售出库存(支付)', category: 'occupy', color: '#13c2c2' },
+      6: { name: '锁定库存', category: 'lock', color: '#ff4d4f' },
+      7: { name: '解锁库存', category: 'unlock', color: '#52c41a' },
+      8: { name: '预留库存', category: 'reserve', color: '#eb2f96' },
+      9: { name: '释放预留', category: 'release', color: '#52c41a' },
+      10: { name: '补录库存', category: 'supplement', color: '#fa8c16' },
+      11: { name: '批量调整', category: 'batch', color: '#722ed1' },
+      12: { name: '库存预警', category: 'warning', color: '#ff4d4f' }
     };
   }
 
@@ -42,23 +42,35 @@ class FlightInventoryService {
     return this.inventoryTypeConfig[inventoryType] || this.inventoryTypeConfig.fixed;
   }
 
-  _getCabinStockLimit(cabinClass) {
-    return this.cabinClassStockLimits[cabinClass] || this.cabinClassStockLimits.economy;
+  _getInventoryStatus(availableStock, lowStockThreshold, soldOutThreshold) {
+    if (availableStock <= 0) return 4;
+    if (availableStock <= soldOutThreshold) return 3;
+    if (availableStock <= lowStockThreshold) return 2;
+    return 1;
   }
 
-  _checkInventoryPermission(inventoryType, cabinClass, userRoles) {
-    if (inventoryType === 'reserved' || cabinClass === 'special') {
-      if (!userRoles.includes('admin') && !userRoles.includes('inventory_manager')) {
-        return { valid: false, message: '无权限操作该类型库存，请联系库存管理员' };
+  _calculateAvailableStock(inventory) {
+    const total = parseInt(inventory.totalStock) || 0;
+    const occupied = parseInt(inventory.occupiedStock) || 0;
+    const sold = parseInt(inventory.soldStock) || 0;
+    const reserved = parseInt(inventory.reservedStock) || 0;
+    const locked = parseInt(inventory.lockedStock) || 0;
+    return Math.max(0, total - occupied - sold - reserved - locked);
+  }
+
+  _checkInventoryPermission(inventoryType, operationType, userRoles) {
+    if (operationType === 'supplement' || inventoryType === 'supplement') {
+      if (!userRoles.includes('admin') && !userRoles.includes('inventory_manager') && !userRoles.includes('inventory_supplement')) {
+        return { valid: false, message: '无补录库存权限，请联系库存管理员' };
       }
     }
-    return { valid: true };
-  }
 
-  _checkBatchHolidayPermission(userRoles) {
-    if (!userRoles.includes('admin') && !userRoles.includes('inventory_manager') && !userRoles.includes('holiday_operator')) {
-      return { valid: false, message: '节假日库存批量调整需要专项权限，请联系管理员' };
+    if (operationType === 'batch_lock' || operationType === 'batch_release') {
+      if (!userRoles.includes('admin') && !userRoles.includes('inventory_manager') && !userRoles.includes('holiday_inventory')) {
+        return { valid: false, message: '无节假日批量库存调整权限，请联系高级管理员' };
+      }
     }
+
     return { valid: true };
   }
 
@@ -69,268 +81,263 @@ class FlightInventoryService {
       errors.push({ field: 'flightId', message: '请选择航班' });
     }
 
-    if (!isUpdate && !data.cabinClass) {
-      errors.push({ field: 'cabinClass', message: '请选择舱位类型' });
+    if (!data.inventoryType || !this.inventoryTypeConfig[data.inventoryType]) {
+      errors.push({ field: 'inventoryType', message: '请选择有效的库存类型' });
     }
 
-    if (!isUpdate && !data.inventoryType) {
-      errors.push({ field: 'inventoryType', message: '请选择库存类型' });
-    }
-
-    if (!this.inventoryTypeConfig[data.inventoryType]) {
-      errors.push({ field: 'inventoryType', message: '无效的库存类型' });
-    }
-
-    const cabinLimit = this._getCabinStockLimit(data.cabinClass);
     const typeConfig = this._getInventoryTypeConfig(data.inventoryType);
-    const maxStock = Math.min(cabinLimit.maxStock, typeConfig.maxStock);
 
     if (data.totalStock !== undefined && data.totalStock !== null) {
       const totalStock = parseInt(data.totalStock);
       if (isNaN(totalStock) || totalStock < 0) {
-        errors.push({ field: 'totalStock', message: '总库存必须为非负整数' });
-      } else if (totalStock > maxStock) {
-        errors.push({ field: 'totalStock', message: `总库存不能超过${maxStock}张` });
+        errors.push({ field: 'totalStock', message: '总库存数必须为非负整数' });
+      } else if (totalStock > typeConfig.maxStock) {
+        errors.push({ field: 'totalStock', message: `${typeConfig.name}不能超过${typeConfig.maxStock}张` });
+      }
+    }
+
+    if (data.occupiedStock !== undefined && data.occupiedStock !== null) {
+      const occupied = parseInt(data.occupiedStock);
+      if (isNaN(occupied) || occupied < 0) {
+        errors.push({ field: 'occupiedStock', message: '占用库存数必须为非负整数' });
+      }
+    }
+
+    if (data.soldStock !== undefined && data.soldStock !== null) {
+      const sold = parseInt(data.soldStock);
+      if (isNaN(sold) || sold < 0) {
+        errors.push({ field: 'soldStock', message: '已售库存数必须为非负整数' });
       }
     }
 
     if (data.reservedStock !== undefined && data.reservedStock !== null) {
-      const reservedStock = parseInt(data.reservedStock);
-      const totalStock = parseInt(data.totalStock || 0);
-      if (isNaN(reservedStock) || reservedStock < 0) {
-        errors.push({ field: 'reservedStock', message: '预留库存必须为非负整数' });
-      } else if (totalStock > 0 && reservedStock > totalStock * 0.5) {
-        errors.push({ field: 'reservedStock', message: '预留库存不能超过总库存的50%' });
-      }
-    }
-
-    if (data.reservedRatio !== undefined && data.reservedRatio !== null) {
-      const ratio = parseFloat(data.reservedRatio);
-      if (isNaN(ratio) || ratio < 0 || ratio > 50) {
-        errors.push({ field: 'reservedRatio', message: '预留比例必须在0%-50%之间' });
-      }
-    }
-
-    if (data.minStockWarning !== undefined && data.minStockWarning !== null) {
-      const warning = parseInt(data.minStockWarning);
-      if (isNaN(warning) || warning < 0) {
-        errors.push({ field: 'minStockWarning', message: '库存预警值必须为非负整数' });
+      const reserved = parseInt(data.reservedStock);
+      const total = parseInt(data.totalStock) || 0;
+      if (isNaN(reserved) || reserved < 0) {
+        errors.push({ field: 'reservedStock', message: '预留库存数必须为非负整数' });
+      } else if (data.totalStock && reserved > total) {
+        errors.push({ field: 'reservedStock', message: '预留库存不能超过总库存' });
       }
     }
 
     if (data.lockedStock !== undefined && data.lockedStock !== null) {
       const locked = parseInt(data.lockedStock);
-      const total = parseInt(data.totalStock || 0);
+      const total = parseInt(data.totalStock) || 0;
       if (isNaN(locked) || locked < 0) {
-        errors.push({ field: 'lockedStock', message: '锁定库存必须为非负整数' });
-      } else if (data.soldStock !== undefined) {
-        const sold = parseInt(data.soldStock || 0);
-        const reserved = parseInt(data.reservedStock || 0);
-        if (locked + sold + reserved > total) {
-          errors.push({ field: 'lockedStock', message: '锁定库存不能超过可分配库存' });
-        }
+        errors.push({ field: 'lockedStock', message: '锁定库存数必须为非负整数' });
+      } else if (data.totalStock && locked > total) {
+        errors.push({ field: 'lockedStock', message: '锁定库存不能超过总库存' });
+      }
+    }
+
+    if (data.reserveRatio !== undefined && data.reserveRatio !== null) {
+      const ratio = parseFloat(data.reserveRatio);
+      if (isNaN(ratio) || ratio < 0 || ratio > 100) {
+        errors.push({ field: 'reserveRatio', message: '预留比例必须在0-100之间' });
+      }
+    }
+
+    if (data.inventoryType === 'reserved' && !data.reserveExpireTime) {
+      errors.push({ field: 'reserveExpireTime', message: '预留库存必须设置到期时间' });
+    }
+
+    if (data.lowStockThreshold !== undefined && data.lowStockThreshold !== null) {
+      const threshold = parseInt(data.lowStockThreshold);
+      if (isNaN(threshold) || threshold < 0) {
+        errors.push({ field: 'lowStockThreshold', message: '低库存预警阈值必须为非负整数' });
+      }
+    }
+
+    if (data.soldOutThreshold !== undefined && data.soldOutThreshold !== null) {
+      const threshold = parseInt(data.soldOutThreshold);
+      if (isNaN(threshold) || threshold < 0) {
+        errors.push({ field: 'soldOutThreshold', message: '即将售罄阈值必须为非负整数' });
       }
     }
 
     return { valid: errors.length === 0, errors };
   }
 
-  _calculateAvailableStock(totalStock, soldStock, reservedStock, lockedStock) {
-    total = parseInt(totalStock || 0);
-    sold = parseInt(soldStock || 0);
-    reserved = parseInt(reservedStock || 0);
-    locked = parseInt(lockedStock || 0);
-    const available = total - sold - reserved - locked;
-    return Math.max(0, available);
-  }
+  _validateStockConsistency(inventory) {
+    const total = parseInt(inventory.totalStock) || 0;
+    const occupied = parseInt(inventory.occupiedStock) || 0;
+    const sold = parseInt(inventory.soldStock) || 0;
+    const reserved = parseInt(inventory.reservedStock) || 0;
+    const locked = parseInt(inventory.lockedStock) || 0;
+    const available = parseInt(inventory.availableStock) || 0;
+    const calculatedAvailable = total - occupied - sold - reserved - locked;
 
-  _calculateStatus(availableStock, minStockWarning) {
-    available = parseInt(availableStock || 0);
-    warning = parseInt(minStockWarning || 10);
-    if (available <= 0) return 3;
-    if (available <= warning) return 2;
-    return 1;
-  }
-
-  async _checkInventoryDuplicate(flightId, cabinClass, inventoryType, excludeId = null) {
-    const where = { flightId, cabinClass, inventoryType };
-    if (excludeId) {
-      where.id = { [Op.ne]: excludeId };
-    }
-    const existing = await FlightInventory.findOne({ where });
-    return existing !== null;
-  }
-
-  _createLog(inventory, operationType, data = {}) {
-    return FlightInventoryLog.create({
-      inventoryId: inventory.id,
-      flightId: inventory.flightId,
-      flightNo: inventory.flightNo,
-      cabinClass: inventory.cabinClass,
-      inventoryType: inventory.inventoryType,
-      operationType,
-      operationName: this.operationTypeMap[operationType] || '未知操作',
-      beforeTotalStock: data.beforeTotalStock,
-      afterTotalStock: data.afterTotalStock !== undefined ? data.afterTotalStock : inventory.totalStock,
-      beforeSoldStock: data.beforeSoldStock,
-      afterSoldStock: data.afterSoldStock !== undefined ? data.afterSoldStock : inventory.soldStock,
-      beforeReservedStock: data.beforeReservedStock,
-      afterReservedStock: data.afterReservedStock !== undefined ? data.afterReservedStock : inventory.reservedStock,
-      beforeLockedStock: data.beforeLockedStock,
-      afterLockedStock: data.afterLockedStock !== undefined ? data.afterLockedStock : inventory.lockedStock,
-      beforeAvailableStock: data.beforeAvailableStock,
-      afterAvailableStock: data.afterAvailableStock !== undefined ? data.afterAvailableStock : inventory.availableStock,
-      changeQuantity: data.changeQuantity || 0,
-      changeType: data.changeType || 'unchanged',
-      changeFields: data.changeFields || null,
-      relatedOrderId: data.relatedOrderId || null,
-      relatedOrderNo: data.relatedOrderNo || null,
-      effectScope: data.effectScope || 'single',
-      affectedInventoryCount: data.affectedInventoryCount || 1,
-      operationReason: data.operationReason || '',
-      operationRemark: data.operationRemark || '',
-      operatorId: data.operatorId || null,
-      operatorName: data.operatorName || '',
-      operatorRole: data.operatorRole || '',
-      operationIp: data.operationIp || '',
-      operationStatus: data.operationStatus !== undefined ? data.operationStatus : 1,
-      failReason: data.failReason || ''
-    });
-  }
-
-  async _notifyStockChange(inventory, changeType, changeQuantity) {
-    try {
-      const users = await this._getAffectedUsers(inventory.flightId);
-      if (users.length === 0) return;
-
-      const notifications = users.map(userId => ({
-        userId,
-        type: 'stock',
-        title: `航班${inventory.flightNo}库存变动提醒`,
-        content: `${this._getCabinName(inventory.cabinClass)}库存${changeType === 'increase' ? '增加' : '减少'}${Math.abs(changeQuantity)}张`,
-        relatedId: inventory.flightId,
-        relatedType: 'flight'
-      }));
-
-      await Notification.bulkCreate(notifications);
-    } catch (err) {
-      console.error('发送库存变动通知失败:', err);
-    }
-  }
-
-  async _getAffectedUsers(flightId) {
-    const orders = await Order.findAll({
-      where: { flightId, status: { [Op.in]: [0, 1] } },
-      attributes: ['userId']
-    });
-    return [...new Set(orders.map(o => o.userId))];
-  }
-
-  _getCabinName(cabinClass) {
-    const map = { economy: '经济舱', business: '商务舱', first: '头等舱', special: '特惠舱' };
-    return map[cabinClass] || cabinClass;
-  }
-
-  async getInventoryList(params = {}) {
-    const { page = 1, pageSize = 10, flightNo, cabinClass, inventoryType, status, flightId } = params;
-    const where = {};
-
-    if (flightNo) where.flightNo = { [Op.like]: `%${flightNo}%` };
-    if (cabinClass && cabinClass !== 'all') where.cabinClass = cabinClass;
-    if (inventoryType) where.inventoryType = inventoryType;
-    if (status !== undefined && status !== null) where.status = status;
-    if (flightId) where.flightId = flightId;
-
-    const { count, rows } = await FlightInventory.findAndCountAll({
-      where,
-      include: [{ model: Flight, as: 'flight', attributes: ['id', 'flightNo', 'departureAirportCode', 'arrivalAirportCode', 'departureTime', 'arrivalTime'] }],
-      offset: (page - 1) * pageSize,
-      limit: pageSize,
-      order: [['createdAt', 'DESC']]
-    });
-
-    return { items: rows, total: count, page: parseInt(page), pageSize: parseInt(pageSize) };
-  }
-
-  async getInventoryById(id) {
-    return await FlightInventory.findByPk(id, {
-      include: [{ model: Flight, as: 'flight', attributes: ['id', 'flightNo', 'departureAirportCode', 'arrivalAirportCode'] }]
-    });
-  }
-
-  async validateInventory(data, userRoles = []) {
-    const permissionCheck = this._checkInventoryPermission(data.inventoryType, data.cabinClass, userRoles);
-    if (!permissionCheck.valid) {
-      return { valid: false, errors: [{ field: 'permission', message: permissionCheck.message }] };
+    if (available !== calculatedAvailable) {
+      return { valid: false, message: `库存数据不一致：可用库存应为${calculatedAvailable}，当前为${available}` };
     }
 
-    const validation = this._validateInventoryData(data);
-    if (!validation.valid) {
-      return validation;
+    if (occupied + sold > total) {
+      return { valid: false, message: '占用库存与已售库存之和不能超过总库存' };
     }
 
-    if (data.flightId && data.cabinClass && data.inventoryType) {
-      const isDuplicate = await this._checkInventoryDuplicate(data.flightId, data.cabinClass, data.inventoryType);
-      if (isDuplicate) {
-        return { valid: false, errors: [{ field: 'inventoryType', message: '该航班该舱位此类型库存已存在' }] };
-      }
+    if (reserved > total - occupied - sold) {
+      return { valid: false, message: '预留库存不能超过可用库存' };
+    }
+
+    if (locked > total - occupied - sold - reserved) {
+      return { valid: false, message: '锁定库存不能超过可锁定库存' };
     }
 
     return { valid: true };
   }
 
+  async _checkInventoryConflict(flightId, cabinClass, inventoryType, excludeId = null) {
+    const where = { flightId, cabinClass, inventoryType };
+    if (excludeId) {
+      where.id = { [Op.ne]: excludeId };
+    }
+    return FlightInventory.findOne({ where });
+  }
+
+  async _createInventoryLog(inventoryId, operationType, beforeData, afterData, options = {}) {
+    const operationConfig = this.operationTypeConfig[operationType];
+    const changeQuantity = options.changeQuantity !== undefined ? options.changeQuantity : null;
+    const changeDirection = options.changeDirection || null;
+
+    const logData = {
+      inventoryId,
+      flightId: options.flightId || (beforeData?.flightId || afterData?.flightId),
+      flightNo: options.flightNo || (beforeData?.flightNo || afterData?.flightNo),
+      cabinClass: options.cabinClass || (beforeData?.cabinClass || afterData?.cabinClass),
+      inventoryType: options.inventoryType || (beforeData?.inventoryType || afterData?.inventoryType),
+      operationType,
+      operationName: operationConfig.name,
+      operationCategory: operationConfig.category,
+      beforeTotalStock: beforeData?.totalStock || null,
+      afterTotalStock: afterData?.totalStock || null,
+      beforeOccupiedStock: beforeData?.occupiedStock || null,
+      afterOccupiedStock: afterData?.occupiedStock || null,
+      beforeSoldStock: beforeData?.soldStock || null,
+      afterSoldStock: afterData?.soldStock || null,
+      beforeReservedStock: beforeData?.reservedStock || null,
+      afterReservedStock: afterData?.reservedStock || null,
+      beforeLockedStock: beforeData?.lockedStock || null,
+      afterLockedStock: afterData?.lockedStock || null,
+      beforeAvailableStock: beforeData?.availableStock || null,
+      afterAvailableStock: afterData?.availableStock || null,
+      changeQuantity,
+      changeDirection,
+      changeFields: options.changeFields ? JSON.stringify(options.changeFields) : null,
+      relatedOrderId: options.orderId || null,
+      relatedOrderNo: options.orderNo || null,
+      effectScope: options.effectScope || null,
+      affectedFlightCount: options.affectedFlightCount || 0,
+      isBatchOperation: options.isBatchOperation ? 1 : 0,
+      operatorId: options.operatorId || null,
+      operatorName: options.operatorName || null,
+      operatorRole: options.operatorRole || null,
+      operationRemark: options.remark || null,
+      operationStatus: options.status !== undefined ? options.status : 1,
+      failReason: options.failReason || null,
+      operationIp: options.ip || null,
+      createdAt: new Date()
+    };
+
+    return FlightInventoryLog.create(logData);
+  }
+
+  async getInventoryList(params = {}) {
+    const { page = 1, pageSize = 10, flightNo, cabinClass, inventoryType, inventoryStatus, isActive, isLocked, flightId } = params;
+
+    const where = {};
+    if (flightNo) where.flightNo = { [Op.like]: `%${flightNo}%` };
+    if (cabinClass && cabinClass !== 'all') where.cabinClass = cabinClass;
+    if (inventoryType && inventoryType !== 'all') where.inventoryType = inventoryType;
+    if (inventoryStatus && inventoryStatus !== 'all') where.inventoryStatus = Number(inventoryStatus);
+    if (isActive !== undefined && isActive !== null && isActive !== '') where.isActive = Number(isActive);
+    if (isLocked !== undefined && isLocked !== null && isLocked !== '') where.isLocked = Number(isLocked);
+    if (flightId) where.flightId = flightId;
+
+    const offset = (page - 1) * pageSize;
+
+    const { count, rows } = await FlightInventory.findAndCountAll({
+      where,
+      include: [{ model: Flight, as: 'flight', attributes: ['id', 'flightNo', 'departure', 'arrival', 'departureAirportCode', 'arrivalAirportCode'] }],
+      offset,
+      limit: pageSize,
+      order: [['createdAt', 'DESC']]
+    });
+
+    return { items: rows, total: count, page: Number(page), pageSize: Number(pageSize) };
+  }
+
+  async getInventoryById(id) {
+    return FlightInventory.findByPk(id, {
+      include: [{ model: Flight, as: 'flight' }]
+    });
+  }
+
+  async getInventoryByFlightAndCabin(flightId, cabinClass) {
+    return FlightInventory.findAll({
+      where: { flightId, cabinClass },
+      order: [['inventoryType', 'ASC']]
+    });
+  }
+
+  async validateInventory(data, userRoles = []) {
+    const permissionCheck = this._checkInventoryPermission(data.inventoryType, 'create', userRoles);
+    if (!permissionCheck.valid) {
+      return { valid: false, errors: [{ field: 'inventoryType', message: permissionCheck.message }] };
+    }
+
+    return this._validateInventoryData(data, false);
+  }
+
   async validateField(field, value, data = {}, userRoles = []) {
     const errors = [];
 
-    switch (field) {
-      case 'totalStock':
-        const cabinLimit = this._getCabinStockLimit(data.cabinClass);
-        const typeConfig = this._getInventoryTypeConfig(data.inventoryType);
-        const maxStock = Math.min(cabinLimit.maxStock, typeConfig.maxStock);
-        const stock = parseInt(value);
-        if (isNaN(stock) || stock < 0) {
-          errors.push('总库存必须为非负整数');
-        } else if (stock > maxStock) {
-          errors.push(`总库存不能超过${maxStock}张`);
-        }
-        break;
-      case 'reservedStock':
-        const reserved = parseInt(value);
-        const total = parseInt(data.totalStock || 0);
-        if (isNaN(reserved) || reserved < 0) {
-          errors.push('预留库存必须为非负整数');
-        } else if (total > 0 && reserved > total * 0.5) {
-          errors.push('预留库存不能超过总库存的50%');
-        }
-        break;
-      case 'reservedRatio':
-        const ratio = parseFloat(value);
-        if (isNaN(ratio) || ratio < 0 || ratio > 50) {
-          errors.push('预留比例必须在0%-50%之间');
-        }
-        break;
+    if (field === 'totalStock') {
+      const typeConfig = this._getInventoryTypeConfig(data.inventoryType);
+      const total = parseInt(value);
+      if (isNaN(total) || total < 0) {
+        errors.push({ field, message: '总库存数必须为非负整数' });
+      } else if (total > typeConfig.maxStock) {
+        errors.push({ field, message: `${typeConfig.name}不能超过${typeConfig.maxStock}张` });
+      }
+    }
+
+    if (field === 'reservedStock') {
+      const reserved = parseInt(value);
+      const total = parseInt(data.totalStock) || 0;
+      if (isNaN(reserved) || reserved < 0) {
+        errors.push({ field, message: '预留库存数必须为非负整数' });
+      } else if (total && reserved > total) {
+        errors.push({ field, message: '预留库存不能超过总库存' });
+      }
+    }
+
+    if (field === 'reserveRatio') {
+      const ratio = parseFloat(value);
+      if (isNaN(ratio) || ratio < 0 || ratio > 100) {
+        errors.push({ field, message: '预留比例必须在0-100之间' });
+      }
     }
 
     return { valid: errors.length === 0, errors };
   }
 
   async createInventory(data, operator = {}) {
-    const transaction = await sequelize.transaction();
+    const t = await sequelize.transaction();
 
     try {
-      const permissionCheck = this._checkInventoryPermission(data.inventoryType, data.cabinClass, operator.roles || []);
+      const permissionCheck = this._checkInventoryPermission(data.inventoryType, 'create', operator.roles || []);
       if (!permissionCheck.valid) {
         throw new Error(permissionCheck.message);
       }
 
-      const validation = this._validateInventoryData(data);
+      const validation = this._validateInventoryData(data, false);
       if (!validation.valid) {
         throw new Error(validation.errors[0].message);
       }
 
-      const isDuplicate = await this._checkInventoryDuplicate(data.flightId, data.cabinClass, data.inventoryType);
-      if (isDuplicate) {
-        throw new Error('该航班该舱位此类型库存已存在');
+      const conflict = await this._checkInventoryConflict(data.flightId, data.cabinClass, data.inventoryType);
+      if (conflict) {
+        throw new Error('该航班舱位已存在相同类型的库存配置');
       }
 
       const flight = await Flight.findByPk(data.flightId);
@@ -338,600 +345,756 @@ class FlightInventoryService {
         throw new Error('航班不存在');
       }
 
-      const totalStock = parseInt(data.totalStock || 0);
-      const soldStock = parseInt(data.soldStock || 0);
-      const reservedStock = parseInt(data.reservedStock || 0);
-      const lockedStock = parseInt(data.lockedStock || 0);
-      const availableStock = this._calculateAvailableStock(totalStock, soldStock, reservedStock, lockedStock);
-      const status = this._calculateStatus(availableStock, data.minStockWarning);
+      const typeConfig = this._getInventoryTypeConfig(data.inventoryType);
 
-      const inventory = await FlightInventory.create({
+      const inventoryData = {
+        ...data,
+        flightNo: flight.flightNo,
+        totalStock: parseInt(data.totalStock) || 0,
+        occupiedStock: parseInt(data.occupiedStock) || 0,
+        soldStock: parseInt(data.soldStock) || 0,
+        reservedStock: parseInt(data.reservedStock) || 0,
+        lockedStock: parseInt(data.lockedStock) || 0,
+        lowStockThreshold: parseInt(data.lowStockThreshold) || typeConfig.defaultLowStockThreshold,
+        soldOutThreshold: parseInt(data.soldOutThreshold) || typeConfig.defaultSoldOutThreshold,
+        operatorId: operator.id || null,
+        operatorName: operator.name || null
+      };
+
+      inventoryData.availableStock = this._calculateAvailableStock(inventoryData);
+      inventoryData.inventoryStatus = this._getInventoryStatus(
+        inventoryData.availableStock,
+        inventoryData.lowStockThreshold,
+        inventoryData.soldOutThreshold
+      );
+
+      const consistencyCheck = this._validateStockConsistency(inventoryData);
+      if (!consistencyCheck.valid) {
+        throw new Error(consistencyCheck.message);
+      }
+
+      const inventory = await FlightInventory.create(inventoryData, { transaction: t });
+
+      await this._createInventoryLog(inventory.id, 1, null, inventoryData, {
         flightId: data.flightId,
         flightNo: flight.flightNo,
         cabinClass: data.cabinClass,
         inventoryType: data.inventoryType,
-        totalStock,
-        soldStock,
-        reservedStock,
-        lockedStock,
-        availableStock,
-        reservedRatio: data.reservedRatio || 0,
-        minStockWarning: data.minStockWarning || this._getCabinStockLimit(data.cabinClass).defaultMinWarning,
-        maxStockLimit: data.maxStockLimit || this.cabinClassStockLimits[data.cabinClass]?.maxStock || 500,
-        reserveExpireTime: data.reserveExpireTime || null,
-        isAutoRelease: data.isAutoRelease !== undefined ? data.isAutoRelease : 1,
-        status,
-        inventorySource: data.inventorySource || 'manual',
-        remark: data.remark || '',
-        operatorId: operator.id || null,
-        operatorName: operator.name || ''
-      }, { transaction });
-
-      await this._createLog(inventory, 1, {
-        beforeTotalStock: 0,
-        beforeSoldStock: 0,
-        beforeReservedStock: 0,
-        beforeLockedStock: 0,
-        beforeAvailableStock: 0,
-        afterTotalStock: totalStock,
-        afterSoldStock: soldStock,
-        afterReservedStock: reservedStock,
-        afterLockedStock: lockedStock,
-        afterAvailableStock: availableStock,
-        changeQuantity: totalStock,
-        changeType: 'increase',
-        operationReason: '创建库存',
         operatorId: operator.id,
         operatorName: operator.name,
         operatorRole: operator.role,
-        operationIp: operator.ip
+        remark: data.remark || '创建库存配置',
+        ip: operator.ip
       });
 
-      await transaction.commit();
+      await t.commit();
       return inventory;
-    } catch (err) {
-      await transaction.rollback();
-      throw err;
+    } catch (error) {
+      await t.rollback();
+      throw error;
     }
   }
 
   async updateInventory(id, data, operator = {}) {
-    const transaction = await sequelize.transaction();
+    const t = await sequelize.transaction();
 
     try {
-      const inventory = await FlightInventory.findByPk(id, { transaction });
+      const inventory = await FlightInventory.findByPk(id, { transaction: t });
       if (!inventory) {
-        throw new Error('库存记录不存在');
+        throw new Error('库存配置不存在');
       }
 
-      const permissionCheck = this._checkInventoryPermission(inventory.inventoryType, inventory.cabinClass, operator.roles || []);
+      const permissionCheck = this._checkInventoryPermission(inventory.inventoryType, 'update', operator.roles || []);
       if (!permissionCheck.valid) {
         throw new Error(permissionCheck.message);
       }
 
-      const beforeData = { ...inventory.get() };
+      const beforeData = { ...inventory.toJSON() };
 
-      const updateData = {};
+      const updateData = { ...data };
+      if (data.totalStock !== undefined) updateData.totalStock = parseInt(data.totalStock);
+      if (data.occupiedStock !== undefined) updateData.occupiedStock = parseInt(data.occupiedStock);
+      if (data.soldStock !== undefined) updateData.soldStock = parseInt(data.soldStock);
+      if (data.reservedStock !== undefined) updateData.reservedStock = parseInt(data.reservedStock);
+      if (data.lockedStock !== undefined) updateData.lockedStock = parseInt(data.lockedStock);
+
+      const mergedData = { ...beforeData, ...updateData };
+      updateData.availableStock = this._calculateAvailableStock(mergedData);
+      updateData.inventoryStatus = this._getInventoryStatus(
+        updateData.availableStock,
+        mergedData.lowStockThreshold,
+        mergedData.soldOutThreshold
+      );
+
+      const consistencyCheck = this._validateStockConsistency({ ...beforeData, ...updateData });
+      if (!consistencyCheck.valid) {
+        throw new Error(consistencyCheck.message);
+      }
+
       const changeFields = [];
-
-      if (data.totalStock !== undefined) {
-        const newTotal = parseInt(data.totalStock);
-        const oldTotal = parseInt(inventory.totalStock);
-        if (newTotal < inventory.soldStock + inventory.reservedStock + inventory.lockedStock) {
-          throw new Error('调整后的总库存不能小于已占用+预留+锁定库存');
+      for (const key of Object.keys(updateData)) {
+        if (beforeData[key] !== updateData[key]) {
+          changeFields.push(key);
         }
-        updateData.totalStock = newTotal;
-        changeFields.push('totalStock');
       }
 
-      if (data.reservedStock !== undefined) {
-        updateData.reservedStock = parseInt(data.reservedStock);
-        changeFields.push('reservedStock');
-      }
+      await inventory.update(updateData, { transaction: t });
 
-      if (data.reservedRatio !== undefined) {
-        updateData.reservedRatio = parseFloat(data.reservedRatio);
-        changeFields.push('reservedRatio');
-      }
+      const afterData = { ...beforeData, ...updateData };
 
-      if (data.minStockWarning !== undefined) {
-        updateData.minStockWarning = parseInt(data.minStockWarning);
-        changeFields.push('minStockWarning');
-      }
+      const changeQuantity = updateData.totalStock !== undefined ? (updateData.totalStock - beforeData.totalStock) : null;
+      const changeDirection = changeQuantity !== null ? (changeQuantity > 0 ? 'increase' : 'decrease') : null;
 
-      if (data.reserveExpireTime !== undefined) {
-        updateData.reserveExpireTime = data.reserveExpireTime;
-        changeFields.push('reserveExpireTime');
-      }
-
-      if (data.isAutoRelease !== undefined) {
-        updateData.isAutoRelease = data.isAutoRelease;
-        changeFields.push('isAutoRelease');
-      }
-
-      if (data.remark !== undefined) {
-        updateData.remark = data.remark;
-        changeFields.push('remark');
-      }
-
-      if (changeFields.length === 0) {
-        return inventory;
-      }
-
-      const totalStock = updateData.totalStock !== undefined ? updateData.totalStock : inventory.totalStock;
-      const reservedStock = updateData.reservedStock !== undefined ? updateData.reservedStock : inventory.reservedStock;
-      const availableStock = this._calculateAvailableStock(totalStock, inventory.soldStock, reservedStock, inventory.lockedStock);
-      const minWarning = updateData.minStockWarning !== undefined ? updateData.minStockWarning : inventory.minStockWarning;
-      const status = this._calculateStatus(availableStock, minWarning);
-
-      updateData.availableStock = availableStock;
-      updateData.status = status;
-      updateData.operatorId = operator.id || null;
-      updateData.operatorName = operator.name || '';
-
-      await inventory.update(updateData, { transaction });
-
-      const changeQuantity = (updateData.totalStock !== undefined ? updateData.totalStock : inventory.totalStock) - beforeData.totalStock;
-      const changeType = changeQuantity > 0 ? 'increase' : (changeQuantity < 0 ? 'decrease' : 'unchanged');
-
-      await this._createLog(inventory, 2, {
-        beforeTotalStock: beforeData.totalStock,
-        beforeSoldStock: beforeData.soldStock,
-        beforeReservedStock: beforeData.reservedStock,
-        beforeLockedStock: beforeData.lockedStock,
-        beforeAvailableStock: beforeData.availableStock,
-        afterTotalStock: inventory.totalStock,
-        afterSoldStock: inventory.soldStock,
-        afterReservedStock: inventory.reservedStock,
-        afterLockedStock: inventory.lockedStock,
-        afterAvailableStock: inventory.availableStock,
-        changeQuantity,
-        changeType,
+      await this._createInventoryLog(id, 2, beforeData, afterData, {
         changeFields,
-        operationReason: data.operationReason || '调整库存',
+        changeQuantity,
+        changeDirection,
         operatorId: operator.id,
         operatorName: operator.name,
         operatorRole: operator.role,
-        operationIp: operator.ip
+        remark: data.remark || '调整库存配置',
+        ip: operator.ip
       });
 
-      if (changeType !== 'unchanged') {
-        this._notifyStockChange(inventory, changeType, changeQuantity);
-      }
-
-      await transaction.commit();
+      await t.commit();
       return inventory;
-    } catch (err) {
-      await transaction.rollback();
-      throw err;
+    } catch (error) {
+      await t.rollback();
+      throw error;
     }
   }
 
   async deleteInventory(id, operator = {}) {
-    const transaction = await sequelize.transaction();
+    const t = await sequelize.transaction();
 
     try {
-      const inventory = await FlightInventory.findByPk(id, { transaction });
+      const inventory = await FlightInventory.findByPk(id, { transaction: t });
       if (!inventory) {
-        throw new Error('库存记录不存在');
+        throw new Error('库存配置不存在');
       }
 
-      if (inventory.soldStock > 0) {
-        throw new Error('存在已售库存，无法删除');
+      if (inventory.occupiedStock > 0 || inventory.soldStock > 0) {
+        throw new Error('存在已占用或已售出库存，无法删除');
       }
 
-      const permissionCheck = this._checkInventoryPermission(inventory.inventoryType, inventory.cabinClass, operator.roles || []);
-      if (!permissionCheck.valid) {
-        throw new Error(permissionCheck.message);
-      }
+      const beforeData = { ...inventory.toJSON() };
 
-      await this._createLog(inventory, 12, {
-        beforeTotalStock: inventory.totalStock,
-        beforeSoldStock: inventory.soldStock,
-        beforeReservedStock: inventory.reservedStock,
-        beforeLockedStock: inventory.lockedStock,
-        beforeAvailableStock: inventory.availableStock,
-        afterTotalStock: 0,
-        afterSoldStock: 0,
-        afterReservedStock: 0,
-        afterLockedStock: 0,
-        afterAvailableStock: 0,
-        changeQuantity: -inventory.totalStock,
-        changeType: 'decrease',
-        operationReason: '删除库存',
+      await inventory.destroy({ transaction: t });
+
+      await this._createInventoryLog(id, 2, beforeData, null, {
         operatorId: operator.id,
         operatorName: operator.name,
         operatorRole: operator.role,
-        operationIp: operator.ip
+        remark: '删除库存配置',
+        status: 1,
+        ip: operator.ip
       });
 
-      await inventory.destroy({ transaction });
-      await transaction.commit();
+      await t.commit();
       return true;
-    } catch (err) {
-      await transaction.rollback();
-      throw err;
+    } catch (error) {
+      await t.rollback();
+      throw error;
     }
   }
 
-  async lockStock(id, lockQuantity, operator = {}) {
-    const transaction = await sequelize.transaction();
+  async updateActiveStatus(id, isActive, operator = {}) {
+    const t = await sequelize.transaction();
 
     try {
-      const inventory = await FlightInventory.findByPk(id, { transaction });
+      const inventory = await FlightInventory.findByPk(id, { transaction: t });
       if (!inventory) {
-        throw new Error('库存记录不存在');
+        throw new Error('库存配置不存在');
       }
 
-      lockQuantity = parseInt(lockQuantity);
-      if (lockQuantity <= 0) {
-        throw new Error('锁定数量必须大于0');
-      }
+      const beforeData = { ...inventory.toJSON() };
 
-      if (lockQuantity > inventory.availableStock) {
-        throw new Error(`可锁定库存不足，当前可售库存: ${inventory.availableStock}`);
-      }
+      await inventory.update({ isActive: isActive ? 1 : 0 }, { transaction: t });
 
-      const beforeData = { ...inventory.get() };
+      const afterData = { ...beforeData, isActive: isActive ? 1 : 0 };
 
-      const newLockedStock = inventory.lockedStock + lockQuantity;
-      const newAvailableStock = inventory.availableStock - lockQuantity;
-      const status = this._calculateStatus(newAvailableStock, inventory.minStockWarning);
-
-      await inventory.update({
-        lockedStock: newLockedStock,
-        availableStock: newAvailableStock,
-        status,
-        operatorId: operator.id || null,
-        operatorName: operator.name || ''
-      }, { transaction });
-
-      await this._createLog(inventory, 5, {
-        beforeTotalStock: beforeData.totalStock,
-        beforeSoldStock: beforeData.soldStock,
-        beforeReservedStock: beforeData.reservedStock,
-        beforeLockedStock: beforeData.lockedStock,
-        beforeAvailableStock: beforeData.availableStock,
-        afterTotalStock: inventory.totalStock,
-        afterSoldStock: inventory.soldStock,
-        afterReservedStock: inventory.reservedStock,
-        afterLockedStock: inventory.lockedStock,
-        afterAvailableStock: inventory.availableStock,
-        changeQuantity: -lockQuantity,
-        changeType: 'decrease',
-        operationReason: '锁定库存',
+      await this._createInventoryLog(id, 2, beforeData, afterData, {
+        changeFields: ['isActive'],
         operatorId: operator.id,
         operatorName: operator.name,
         operatorRole: operator.role,
-        operationIp: operator.ip
+        remark: isActive ? '启用库存配置' : '停用库存配置',
+        ip: operator.ip
       });
 
-      await transaction.commit();
+      await t.commit();
       return inventory;
-    } catch (err) {
-      await transaction.rollback();
-      throw err;
+    } catch (error) {
+      await t.rollback();
+      throw error;
     }
   }
 
-  async unlockStock(id, unlockQuantity, operator = {}) {
-    const transaction = await sequelize.transaction();
+  async lockInventory(id, lockReason, operator = {}) {
+    const t = await sequelize.transaction();
 
     try {
-      const inventory = await FlightInventory.findByPk(id, { transaction });
+      const inventory = await FlightInventory.findByPk(id, { transaction: t });
       if (!inventory) {
-        throw new Error('库存记录不存在');
+        throw new Error('库存配置不存在');
       }
 
-      unlockQuantity = parseInt(unlockQuantity);
-      if (unlockQuantity <= 0) {
-        throw new Error('解锁数量必须大于0');
+      if (inventory.isLocked) {
+        throw new Error('库存已处于锁定状态');
       }
 
-      if (unlockQuantity > inventory.lockedStock) {
-        throw new Error(`解锁数量不能超过锁定库存，当前锁定: ${inventory.lockedStock}`);
-      }
+      const beforeData = { ...inventory.toJSON() };
 
-      const beforeData = { ...inventory.get() };
-
-      const newLockedStock = inventory.lockedStock - unlockQuantity;
-      const newAvailableStock = inventory.availableStock + unlockQuantity;
-      const status = this._calculateStatus(newAvailableStock, inventory.minStockWarning);
+      const availableStock = this._calculateAvailableStock(inventory);
+      const lockedStock = availableStock;
 
       await inventory.update({
-        lockedStock: newLockedStock,
-        availableStock: newAvailableStock,
-        status,
-        operatorId: operator.id || null,
-        operatorName: operator.name || ''
-      }, { transaction });
+        isLocked: 1,
+        lockReason,
+        lockTime: new Date(),
+        lockedStock,
+        availableStock: 0,
+        inventoryStatus: 1
+      }, { transaction: t });
 
-      await this._createLog(inventory, 6, {
-        beforeTotalStock: beforeData.totalStock,
-        beforeSoldStock: beforeData.soldStock,
-        beforeReservedStock: beforeData.reservedStock,
-        beforeLockedStock: beforeData.lockedStock,
-        beforeAvailableStock: beforeData.availableStock,
-        afterTotalStock: inventory.totalStock,
-        afterSoldStock: inventory.soldStock,
-        afterReservedStock: inventory.reservedStock,
-        afterLockedStock: inventory.lockedStock,
-        afterAvailableStock: inventory.availableStock,
-        changeQuantity: unlockQuantity,
-        changeType: 'increase',
-        operationReason: '解锁库存',
+      const afterData = { ...inventory.toJSON() };
+
+      await this._createInventoryLog(id, 6, beforeData, afterData, {
+        changeFields: ['isLocked', 'lockReason', 'lockTime', 'lockedStock', 'availableStock'],
+        changeQuantity: lockedStock,
+        changeDirection: 'decrease',
         operatorId: operator.id,
         operatorName: operator.name,
         operatorRole: operator.role,
-        operationIp: operator.ip
+        remark: lockReason || '锁定库存',
+        ip: operator.ip
       });
 
-      this._notifyStockChange(inventory, 'increase', unlockQuantity);
-
-      await transaction.commit();
+      await t.commit();
       return inventory;
-    } catch (err) {
-      await transaction.rollback();
-      throw err;
+    } catch (error) {
+      await t.rollback();
+      throw error;
+    }
+  }
+
+  async unlockInventory(id, operator = {}) {
+    const t = await sequelize.transaction();
+
+    try {
+      const inventory = await FlightInventory.findByPk(id, { transaction: t });
+      if (!inventory) {
+        throw new Error('库存配置不存在');
+      }
+
+      if (!inventory.isLocked) {
+        throw new Error('库存未处于锁定状态');
+      }
+
+      const beforeData = { ...inventory.toJSON() };
+      const unlockedStock = inventory.lockedStock;
+
+      const newAvailable = this._calculateAvailableStock({
+        ...beforeData,
+        lockedStock: 0
+      });
+
+      const newStatus = this._getInventoryStatus(newAvailable, inventory.lowStockThreshold, inventory.soldOutThreshold);
+
+      await inventory.update({
+        isLocked: 0,
+        lockedStock: 0,
+        unlockTime: new Date(),
+        availableStock: newAvailable,
+        inventoryStatus: newStatus
+      }, { transaction: t });
+
+      const afterData = { ...inventory.toJSON() };
+
+      await this._createInventoryLog(id, 7, beforeData, afterData, {
+        changeFields: ['isLocked', 'unlockTime', 'lockedStock', 'availableStock', 'inventoryStatus'],
+        changeQuantity: unlockedStock,
+        changeDirection: 'increase',
+        operatorId: operator.id,
+        operatorName: operator.name,
+        operatorRole: operator.role,
+        remark: '解锁库存',
+        ip: operator.ip
+      });
+
+      await t.commit();
+      return inventory;
+    } catch (error) {
+      await t.rollback();
+      throw error;
     }
   }
 
   async releaseExpiredReservations() {
-    const now = new Date();
-    const expiredInventories = await FlightInventory.findAll({
-      where: {
-        inventoryType: 'reserved',
-        isAutoRelease: 1,
-        reserveExpireTime: { [Op.lte]: now },
-        reservedStock: { [Op.gt]: 0 }
-      }
-    });
-
-    const results = [];
-    for (const inventory of expiredInventories) {
-      try {
-        const result = await this.releaseReservation(inventory.id, inventory.reservedStock, {
-          name: 'system',
-          role: 'system'
-        });
-        results.push(result);
-      } catch (err) {
-        console.error(`释放过期预留库存失败 ${inventory.id}:`, err);
-      }
-    }
-
-    return results;
-  }
-
-  async releaseReservation(id, releaseQuantity, operator = {}) {
-    const transaction = await sequelize.transaction();
+    const t = await sequelize.transaction();
 
     try {
-      const inventory = await FlightInventory.findByPk(id, { transaction });
-      if (!inventory) {
-        throw new Error('库存记录不存在');
-      }
-
-      releaseQuantity = parseInt(releaseQuantity);
-      if (releaseQuantity <= 0) {
-        throw new Error('释放数量必须大于0');
-      }
-
-      if (releaseQuantity > inventory.reservedStock) {
-        throw new Error(`释放数量不能超过预留库存，当前预留: ${inventory.reservedStock}`);
-      }
-
-      const beforeData = { ...inventory.get() };
-
-      const newReservedStock = inventory.reservedStock - releaseQuantity;
-      const newAvailableStock = inventory.availableStock + releaseQuantity;
-      const status = this._calculateStatus(newAvailableStock, inventory.minStockWarning);
-
-      await inventory.update({
-        reservedStock: newReservedStock,
-        availableStock: newAvailableStock,
-        status,
-        operatorId: operator.id || null,
-        operatorName: operator.name || ''
-      }, { transaction });
-
-      await this._createLog(inventory, 8, {
-        beforeTotalStock: beforeData.totalStock,
-        beforeSoldStock: beforeData.soldStock,
-        beforeReservedStock: beforeData.reservedStock,
-        beforeLockedStock: beforeData.lockedStock,
-        beforeAvailableStock: beforeData.availableStock,
-        afterTotalStock: inventory.totalStock,
-        afterSoldStock: inventory.soldStock,
-        afterReservedStock: inventory.reservedStock,
-        afterLockedStock: inventory.lockedStock,
-        afterAvailableStock: inventory.availableStock,
-        changeQuantity: releaseQuantity,
-        changeType: 'increase',
-        operationReason: operator.name === 'system' ? '预留库存到期自动释放' : '手动释放预留库存',
-        operatorId: operator.id,
-        operatorName: operator.name,
-        operatorRole: operator.role,
-        operationIp: operator.ip
+      const now = new Date();
+      const expiredReservations = await FlightInventory.findAll({
+        where: {
+          inventoryType: 'reserved',
+          reserveExpireTime: { [Op.lt]: now },
+          reservedStock: { [Op.gt]: 0 },
+          isActive: 1
+        },
+        transaction: t
       });
 
-      if (operator.name !== 'system') {
-        this._notifyStockChange(inventory, 'increase', releaseQuantity);
+      const results = [];
+
+      for (const inventory of expiredReservations) {
+        const beforeData = { ...inventory.toJSON() };
+        const releasedStock = inventory.reservedStock;
+
+        const newAvailable = this._calculateAvailableStock({
+          ...beforeData,
+          reservedStock: 0
+        });
+
+        const newStatus = this._getInventoryStatus(newAvailable, inventory.lowStockThreshold, inventory.soldOutThreshold);
+
+        await inventory.update({
+          reservedStock: 0,
+          reserveRatio: 0,
+          availableStock: newAvailable,
+          inventoryStatus: newStatus
+        }, { transaction: t });
+
+        const afterData = { ...inventory.toJSON() };
+
+        await this._createInventoryLog(inventory.id, 9, beforeData, afterData, {
+          changeFields: ['reservedStock', 'reserveRatio', 'availableStock', 'inventoryStatus'],
+          changeQuantity: releasedStock,
+          changeDirection: 'increase',
+          remark: '预留库存到期自动释放',
+          operatorName: '系统',
+          operatorRole: 'system'
+        });
+
+        results.push({ inventoryId: inventory.id, releasedStock });
       }
 
-      await transaction.commit();
-      return inventory;
-    } catch (err) {
-      await transaction.rollback();
-      throw err;
+      await t.commit();
+      return { releasedCount: results.length, results };
+    } catch (error) {
+      await t.rollback();
+      throw error;
     }
   }
 
-  async batchLockInventories(ids, lockQuantity, operator = {}) {
-    const results = { success: 0, failed: 0, items: [] };
+  async batchLockInventory(ids, lockReason, operator = {}) {
+    const t = await sequelize.transaction();
 
-    for (const id of ids) {
-      try {
-        const inventory = await this.lockStock(id, lockQuantity, operator);
-        results.success++;
-        results.items.push({ id, success: true, inventory });
-      } catch (err) {
-        results.failed++;
-        results.items.push({ id, success: false, error: err.message });
-      }
-    }
-
-    return results;
-  }
-
-  async batchUnlockInventories(ids, unlockQuantity, operator = {}) {
-    const results = { success: 0, failed: 0, items: [] };
-
-    for (const id of ids) {
-      try {
-        const inventory = await this.unlockStock(id, unlockQuantity, operator);
-        results.success++;
-        results.items.push({ id, success: true, inventory });
-      } catch (err) {
-        results.failed++;
-        results.items.push({ id, success: false, error: err.message });
-      }
-    }
-
-    return results;
-  }
-
-  async batchSupplementInventories(ids, supplementQuantity, operator = {}, isHolidayBatch = false) {
-    if (isHolidayBatch) {
-      const permissionCheck = this._checkBatchHolidayPermission(operator.roles || []);
+    try {
+      const permissionCheck = this._checkInventoryPermission(null, 'batch_lock', operator.roles || []);
       if (!permissionCheck.valid) {
         throw new Error(permissionCheck.message);
       }
-    }
 
-    const results = { success: 0, failed: 0, items: [] };
+      const results = { success: 0, failed: 0, total: ids.length };
 
-    for (const id of ids) {
-      try {
-        const inventory = await FlightInventory.findByPk(id);
-        if (!inventory) continue;
+      for (const id of ids) {
+        try {
+          const inventory = await FlightInventory.findByPk(id, { transaction: t });
+          if (!inventory || inventory.isLocked) {
+            results.failed++;
+            continue;
+          }
 
-        const newTotal = inventory.totalStock + parseInt(supplementQuantity);
-        const result = await this.updateInventory(id, {
-          totalStock: newTotal,
-          operationReason: isHolidayBatch ? '节假日库存补录' : '批量补录库存'
-        }, operator);
+          const beforeData = { ...inventory.toJSON() };
+          const availableStock = this._calculateAvailableStock(inventory);
 
-        results.success++;
-        results.items.push({ id, success: true, inventory: result });
-      } catch (err) {
-        results.failed++;
-        results.items.push({ id, success: false, error: err.message });
+          await inventory.update({
+            isLocked: 1,
+            lockReason,
+            lockTime: new Date(),
+            lockedStock: availableStock,
+            availableStock: 0,
+            inventoryStatus: 1
+          }, { transaction: t });
+
+          const afterData = { ...inventory.toJSON() };
+
+          await this._createInventoryLog(id, 6, beforeData, afterData, {
+            changeFields: ['isLocked', 'lockReason', 'lockTime', 'lockedStock', 'availableStock'],
+            isBatchOperation: true,
+            affectedFlightCount: ids.length,
+            operatorId: operator.id,
+            operatorName: operator.name,
+            operatorRole: operator.role,
+            remark: lockReason || '批量锁定库存',
+            ip: operator.ip
+          });
+
+          results.success++;
+        } catch (e) {
+          results.failed++;
+        }
       }
-    }
 
-    return results;
+      await t.commit();
+      return results;
+    } catch (error) {
+      await t.rollback();
+      throw error;
+    }
   }
 
-  async batchReleaseExpiredReservations(operator = {}) {
-    const now = new Date();
-    const expiredInventories = await FlightInventory.findAll({
-      where: {
-        inventoryType: 'reserved',
-        isAutoRelease: 1,
-        reserveExpireTime: { [Op.lte]: now },
-        reservedStock: { [Op.gt]: 0 }
-      }
-    });
+  async batchUnlockInventory(ids, operator = {}) {
+    const t = await sequelize.transaction();
 
-    const ids = expiredInventories.map(i => i.id);
-    const results = { success: 0, failed: 0, total: ids.length };
-
-    for (const inventory of expiredInventories) {
-      try {
-        await this.releaseReservation(inventory.id, inventory.reservedStock, operator);
-        results.success++;
-      } catch (err) {
-        results.failed++;
+    try {
+      const permissionCheck = this._checkInventoryPermission(null, 'batch_lock', operator.roles || []);
+      if (!permissionCheck.valid) {
+        throw new Error(permissionCheck.message);
       }
+
+      const results = { success: 0, failed: 0, total: ids.length };
+
+      for (const id of ids) {
+        try {
+          const inventory = await FlightInventory.findByPk(id, { transaction: t });
+          if (!inventory || !inventory.isLocked) {
+            results.failed++;
+            continue;
+          }
+
+          const beforeData = { ...inventory.toJSON() };
+          const unlockedStock = inventory.lockedStock;
+
+          const newAvailable = this._calculateAvailableStock({
+            ...beforeData,
+            lockedStock: 0
+          });
+
+          const newStatus = this._getInventoryStatus(newAvailable, inventory.lowStockThreshold, inventory.soldOutThreshold);
+
+          await inventory.update({
+            isLocked: 0,
+            lockedStock: 0,
+            unlockTime: new Date(),
+            availableStock: newAvailable,
+            inventoryStatus: newStatus
+          }, { transaction: t });
+
+          const afterData = { ...inventory.toJSON() };
+
+          await this._createInventoryLog(id, 7, beforeData, afterData, {
+            changeFields: ['isLocked', 'unlockTime', 'lockedStock', 'availableStock', 'inventoryStatus'],
+            isBatchOperation: true,
+            affectedFlightCount: ids.length,
+            changeQuantity: unlockedStock,
+            changeDirection: 'increase',
+            operatorId: operator.id,
+            operatorName: operator.name,
+            operatorRole: operator.role,
+            remark: '批量解锁库存',
+            ip: operator.ip
+          });
+
+          results.success++;
+        } catch (e) {
+          results.failed++;
+        }
+      }
+
+      await t.commit();
+      return results;
+    } catch (error) {
+      await t.rollback();
+      throw error;
     }
+  }
 
-    return results;
+  async batchReleaseExpiredReservations(ids, operator = {}) {
+    const t = await sequelize.transaction();
+
+    try {
+      const results = { success: 0, failed: 0, total: ids.length };
+
+      for (const id of ids) {
+        try {
+          const inventory = await FlightInventory.findByPk(id, { transaction: t });
+          if (!inventory || inventory.reservedStock <= 0) {
+            results.failed++;
+            continue;
+          }
+
+          const beforeData = { ...inventory.toJSON() };
+          const releasedStock = inventory.reservedStock;
+
+          const newAvailable = this._calculateAvailableStock({
+            ...beforeData,
+            reservedStock: 0
+          });
+
+          const newStatus = this._getInventoryStatus(newAvailable, inventory.lowStockThreshold, inventory.soldOutThreshold);
+
+          await inventory.update({
+            reservedStock: 0,
+            reserveRatio: 0,
+            availableStock: newAvailable,
+            inventoryStatus: newStatus
+          }, { transaction: t });
+
+          const afterData = { ...inventory.toJSON() };
+
+          await this._createInventoryLog(id, 9, beforeData, afterData, {
+            changeFields: ['reservedStock', 'reserveRatio', 'availableStock', 'inventoryStatus'],
+            isBatchOperation: true,
+            affectedFlightCount: ids.length,
+            changeQuantity: releasedStock,
+            changeDirection: 'increase',
+            operatorId: operator.id,
+            operatorName: operator.name,
+            operatorRole: operator.role,
+            remark: '批量释放过期预留库存',
+            ip: operator.ip
+          });
+
+          results.success++;
+        } catch (e) {
+          results.failed++;
+        }
+      }
+
+      await t.commit();
+      return results;
+    } catch (error) {
+      await t.rollback();
+      throw error;
+    }
+  }
+
+  async batchSupplementInventory(ids, supplementQuantity, supplementSource, supplementRemark, operator = {}) {
+    const t = await sequelize.transaction();
+
+    try {
+      const permissionCheck = this._checkInventoryPermission(null, 'supplement', operator.roles || []);
+      if (!permissionCheck.valid) {
+        throw new Error(permissionCheck.message);
+      }
+
+      if (!supplementQuantity || supplementQuantity <= 0) {
+        throw new Error('补录数量必须为正整数');
+      }
+
+      const results = { success: 0, failed: 0, total: ids.length };
+
+      for (const id of ids) {
+        try {
+          const inventory = await FlightInventory.findByPk(id, { transaction: t });
+          if (!inventory) {
+            results.failed++;
+            continue;
+          }
+
+          const beforeData = { ...inventory.toJSON() };
+          const newTotal = (beforeData.totalStock || 0) + supplementQuantity;
+          const newAvailable = this._calculateAvailableStock({
+            ...beforeData,
+            totalStock: newTotal
+          });
+
+          const newStatus = this._getInventoryStatus(newAvailable, inventory.lowStockThreshold, inventory.soldOutThreshold);
+
+          await inventory.update({
+            totalStock: newTotal,
+            availableStock: newAvailable,
+            inventoryStatus: newStatus,
+            supplementSource,
+            supplementRemark
+          }, { transaction: t });
+
+          const afterData = { ...inventory.toJSON() };
+
+          await this._createInventoryLog(id, 10, beforeData, afterData, {
+            changeFields: ['totalStock', 'availableStock', 'inventoryStatus', 'supplementSource', 'supplementRemark'],
+            isBatchOperation: true,
+            affectedFlightCount: ids.length,
+            changeQuantity: supplementQuantity,
+            changeDirection: 'increase',
+            operatorId: operator.id,
+            operatorName: operator.name,
+            operatorRole: operator.role,
+            remark: supplementRemark || `批量补录库存${supplementQuantity}张，来源：${supplementSource}`,
+            ip: operator.ip
+          });
+
+          results.success++;
+        } catch (e) {
+          results.failed++;
+        }
+      }
+
+      await t.commit();
+      return results;
+    } catch (error) {
+      await t.rollback();
+      throw error;
+    }
+  }
+
+  async batchUpdateActiveStatus(ids, isActive, operator = {}) {
+    const t = await sequelize.transaction();
+
+    try {
+      const results = { success: 0, failed: 0, total: ids.length };
+
+      for (const id of ids) {
+        try {
+          const inventory = await FlightInventory.findByPk(id, { transaction: t });
+          if (!inventory) {
+            results.failed++;
+            continue;
+          }
+
+          const beforeData = { ...inventory.toJSON() };
+
+          await inventory.update({ isActive: isActive ? 1 : 0 }, { transaction: t });
+
+          const afterData = { ...inventory.toJSON() };
+
+          await this._createInventoryLog(id, 2, beforeData, afterData, {
+            changeFields: ['isActive'],
+            isBatchOperation: true,
+            affectedFlightCount: ids.length,
+            operatorId: operator.id,
+            operatorName: operator.name,
+            operatorRole: operator.role,
+            remark: isActive ? '批量启用库存' : '批量停用库存',
+            ip: operator.ip
+          });
+
+          results.success++;
+        } catch (e) {
+          results.failed++;
+        }
+      }
+
+      await t.commit();
+      return results;
+    } catch (error) {
+      await t.rollback();
+      throw error;
+    }
   }
 
   async getInventoryLogs(params = {}) {
-    const { page = 1, pageSize = 10, inventoryId, flightId, operationType, cabinClass, inventoryType, startDate, endDate } = params;
-    const where = {};
+    const { page = 1, pageSize = 10, inventoryId, flightId, flightNo, cabinClass, operationType, operationCategory, operatorId, startTime, endTime } = params;
 
+    const where = {};
     if (inventoryId) where.inventoryId = inventoryId;
     if (flightId) where.flightId = flightId;
-    if (operationType) where.operationType = operationType;
+    if (flightNo) where.flightNo = { [Op.like]: `%${flightNo}%` };
     if (cabinClass && cabinClass !== 'all') where.cabinClass = cabinClass;
-    if (inventoryType && inventoryType !== 'all') where.inventoryType = inventoryType;
-    if (startDate || endDate) {
-      where.createdAt = {};
-      if (startDate) where.createdAt[Op.gte] = new Date(startDate);
-      if (endDate) where.createdAt[Op.lte] = new Date(endDate + ' 23:59:59');
-    }
+    if (operationType && operationType !== 'all') where.operationType = Number(operationType);
+    if (operationCategory && operationCategory !== 'all') where.operationCategory = operationCategory;
+    if (operatorId) where.operatorId = operatorId;
+    if (startTime) where.createdAt = { [Op.gte]: startTime };
+    if (endTime) where.createdAt = { ...where.createdAt, [Op.lte]: endTime };
+
+    const offset = (page - 1) * pageSize;
 
     const { count, rows } = await FlightInventoryLog.findAndCountAll({
       where,
-      offset: (page - 1) * pageSize,
+      offset,
       limit: pageSize,
       order: [['createdAt', 'DESC']]
     });
 
-    return { items: rows, total: count, page: parseInt(page), pageSize: parseInt(pageSize) };
+    return { items: rows, total: count, page: Number(page), pageSize: Number(pageSize) };
   }
 
   async getInventoryStats(params = {}) {
-    const { cabinClass, inventoryType } = params;
-    const where = {};
+    const { cabinClass, inventoryType, isActive } = params;
 
+    const where = {};
     if (cabinClass && cabinClass !== 'all') where.cabinClass = cabinClass;
-    if (inventoryType) where.inventoryType = inventoryType;
+    if (inventoryType && inventoryType !== 'all') where.inventoryType = inventoryType;
+    if (isActive !== undefined && isActive !== null && isActive !== '') where.isActive = Number(isActive);
 
     const inventories = await FlightInventory.findAll({ where });
 
-    const stats = {
-      total: inventories.length,
-      totalStock: 0,
-      soldStock: 0,
-      reservedStock: 0,
-      lockedStock: 0,
-      availableStock: 0,
-      warningCount: 0,
-      soldOutCount: 0,
-      byCabinClass: {},
-      byType: {}
-    };
+    let totalStock = 0;
+    let occupiedStock = 0;
+    let soldStock = 0;
+    let reservedStock = 0;
+    let lockedStock = 0;
+    let availableStock = 0;
+    let configCount = 0;
+    let lowStockCount = 0;
+    let soldOutCount = 0;
+
+    const byCabinClass = {};
+    const byInventoryType = {};
 
     for (const inv of inventories) {
-      stats.totalStock += parseInt(inv.totalStock);
-      stats.soldStock += parseInt(inv.soldStock);
-      stats.reservedStock += parseInt(inv.reservedStock);
-      stats.lockedStock += parseInt(inv.lockedStock);
-      stats.availableStock += parseInt(inv.availableStock);
+      configCount++;
+      totalStock += inv.totalStock || 0;
+      occupiedStock += inv.occupiedStock || 0;
+      soldStock += inv.soldStock || 0;
+      reservedStock += inv.reservedStock || 0;
+      lockedStock += inv.lockedStock || 0;
+      availableStock += inv.availableStock || 0;
 
-      if (inv.status === 2) stats.warningCount++;
-      if (inv.status === 3) stats.soldOutCount++;
-
-      if (!stats.byCabinClass[inv.cabinClass]) {
-        stats.byCabinClass[inv.cabinClass] = { count: 0, totalStock: 0, availableStock: 0 };
+      if (inv.inventoryStatus === 2 || inv.inventoryStatus === 3) {
+        lowStockCount++;
       }
-      stats.byCabinClass[inv.cabinClass].count++;
-      stats.byCabinClass[inv.cabinClass].totalStock += parseInt(inv.totalStock);
-      stats.byCabinClass[inv.cabinClass].availableStock += parseInt(inv.availableStock);
-
-      if (!stats.byType[inv.inventoryType]) {
-        stats.byType[inv.inventoryType] = { count: 0, totalStock: 0, availableStock: 0 };
+      if (inv.inventoryStatus === 4) {
+        soldOutCount++;
       }
-      stats.byType[inv.inventoryType].count++;
-      stats.byType[inv.inventoryType].totalStock += parseInt(inv.totalStock);
-      stats.byType[inv.inventoryType].availableStock += parseInt(inv.availableStock);
+
+      if (!byCabinClass[inv.cabinClass]) {
+        byCabinClass[inv.cabinClass] = { count: 0, totalStock: 0, availableStock: 0 };
+      }
+      byCabinClass[inv.cabinClass].count++;
+      byCabinClass[inv.cabinClass].totalStock += inv.totalStock || 0;
+      byCabinClass[inv.cabinClass].availableStock += inv.availableStock || 0;
+
+      if (!byInventoryType[inv.inventoryType]) {
+        byInventoryType[inv.inventoryType] = { count: 0, totalStock: 0, availableStock: 0 };
+      }
+      byInventoryType[inv.inventoryType].count++;
+      byInventoryType[inv.inventoryType].totalStock += inv.totalStock || 0;
+      byInventoryType[inv.inventoryType].availableStock += inv.availableStock || 0;
     }
 
-    return stats;
+    return {
+      configCount,
+      totalStock,
+      occupiedStock,
+      soldStock,
+      reservedStock,
+      lockedStock,
+      availableStock,
+      lowStockCount,
+      soldOutCount,
+      sellThroughRate: totalStock > 0 ? ((soldStock / totalStock) * 100).toFixed(2) : '0.00',
+      byCabinClass,
+      byInventoryType
+    };
+  }
+
+  async checkLowStockWarning() {
+    const lowStockItems = await FlightInventory.findAll({
+      where: {
+        [Op.or]: [
+          { inventoryStatus: 2 },
+          { inventoryStatus: 3 },
+          { inventoryStatus: 4 }
+        ],
+        isActive: 1
+      },
+      include: [{ model: Flight, as: 'flight' }]
+    });
+
+    return lowStockItems;
   }
 }
 

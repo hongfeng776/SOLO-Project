@@ -22,7 +22,7 @@
         <el-tab-pane label="库存动态管控" name="inventory">
           <template #label>
             <div class="tab-label">
-              <el-icon><Box /></el-icon>
+              <el-icon><Goods /></el-icon>
               <span>库存动态管控</span>
               <el-badge :value="inventoryStats.total || 0" :max="999" class="tab-badge" />
             </div>
@@ -522,6 +522,301 @@
       </div>
     </div>
 
+    <div v-show="activeModule === 'inventory'">
+      <div class="stats-row">
+        <div class="stat-card inventory-stat">
+          <div class="stat-label">库存配置总数</div>
+          <div class="stat-value" style="color: #722ed1">{{ inventoryStats.total || 0 }}</div>
+        </div>
+        <div class="stat-card inventory-stat">
+          <div class="stat-label">可用库存</div>
+          <div class="stat-value" style="color: #52c41a">{{ inventoryStats.totalAvailable || 0 }}</div>
+        </div>
+        <div class="stat-card inventory-stat">
+          <div class="stat-label">已占用</div>
+          <div class="stat-value" style="color: #faad14">{{ inventoryStats.totalOccupied || 0 }}</div>
+        </div>
+        <div class="stat-card inventory-stat">
+          <div class="stat-label">已锁定</div>
+          <div class="stat-value" style="color: #ff4d4f">{{ inventoryStats.totalLocked || 0 }}</div>
+        </div>
+        <div class="stat-card inventory-stat">
+          <div class="stat-label">已预留</div>
+          <div class="stat-value" style="color: #13c2c2">{{ inventoryStats.totalReserved || 0 }}</div>
+        </div>
+      </div>
+
+      <div class="type-tabs">
+        <el-tabs v-model="activeInventoryType" @tab-change="handleInventoryTypeChange">
+          <el-tab-pane label="全部库存" name="all">
+            <span class="type-tab-badge">{{ inventoryStats.total || 0 }}</span>
+          </el-tab-pane>
+          <el-tab-pane
+            v-for="(type, key) in InventoryTypeEnum"
+            :key="key"
+            :label="type.label"
+            :name="type.value"
+          >
+            <span class="type-tab-badge" :style="{ background: type.color + '30', color: type.color }">
+              {{ inventoryStats.byType?.[type.value]?.count || 0 }}
+            </span>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
+
+      <div class="page-header">
+        <h2>库存配置列表</h2>
+        <div>
+          <el-button type="primary" :icon="Plus" @click="handleAddInventory">新增库存</el-button>
+          <el-button :icon="DataLine" @click="handleViewAllLogs">
+            库存台账
+          </el-button>
+          <el-button :icon="Refresh" style="margin-left: 8px" @click="fetchInventoryData">刷新</el-button>
+        </div>
+      </div>
+
+      <div class="search-form">
+        <el-form :inline="true" :model="inventorySearchForm" @submit.prevent>
+          <el-form-item label="航班号">
+            <el-input v-model="inventorySearchForm.flightNo" placeholder="请输入航班号" clearable />
+          </el-form-item>
+          <el-form-item label="舱位等级">
+            <el-select v-model="inventorySearchForm.cabinClass" placeholder="请选择" clearable style="width: 120px">
+              <el-option
+                v-for="(item, key) in CabinClassEnum"
+                :key="key"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="库存状态">
+            <el-select v-model="inventorySearchForm.inventoryStatus" placeholder="请选择" clearable style="width: 120px">
+              <el-option
+                v-for="(item, key) in InventoryStatusEnum"
+                :key="key"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="启用状态">
+            <el-select v-model="inventorySearchForm.isActive" placeholder="请选择" clearable style="width: 100px">
+              <el-option label="已启用" :value="1" />
+              <el-option label="已停用" :value="0" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :icon="Search" @click="handleInventorySearch">搜索</el-button>
+            <el-button :icon="RefreshRight" @click="handleInventoryReset">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <div class="inventory-toolbar">
+        <div class="toolbar-left">
+          <el-button
+            type="primary"
+            :icon="Lock"
+            :disabled="inventorySelectedIds.length === 0"
+            @click="handleOpenBatchDialog('lock')"
+          >
+            批量锁定
+          </el-button>
+          <el-button
+            :icon="Unlock"
+            :disabled="inventorySelectedIds.length === 0"
+            @click="handleOpenBatchDialog('unlock')"
+          >
+            批量解锁
+          </el-button>
+          <el-button
+            :icon="Star"
+            :disabled="inventorySelectedIds.length === 0"
+            @click="handleOpenBatchDialog('releaseReserve')"
+          >
+            释放预留
+          </el-button>
+          <el-button
+            :icon="FolderAdd"
+            :disabled="inventorySelectedIds.length === 0 || !hasSupplementPermission"
+            @click="handleOpenBatchDialog('supplement')"
+          >
+            批量补录
+          </el-button>
+        </div>
+        <div class="toolbar-right">
+          <el-tag type="info" size="small">
+            已选择 {{ inventorySelectedIds.length }} 条库存配置
+          </el-tag>
+          <el-tag v-if="lowStockCount > 0" type="warning" size="small" style="margin-left: 8px">
+            <el-icon><WarningFilled /></el-icon>
+            低库存预警：{{ lowStockCount }} 条
+          </el-tag>
+        </div>
+      </div>
+
+      <div class="table-container" :class="{ 'table-fade-refresh': isInventoryRefreshing }">
+        <el-table
+          ref="inventoryTableRef"
+          :data="inventoryTableData"
+          v-loading="inventoryLoading"
+          border
+          stripe
+          class="sticky-table-header inventory-table"
+          @selection-change="handleInventorySelectionChange"
+          :row-class-name="inventoryTableRowClassName"
+        >
+          <el-table-column type="selection" width="50" fixed="left" />
+          <el-table-column prop="id" label="ID" width="70" fixed="left" />
+          <el-table-column label="航班信息" width="180" fixed="left">
+            <template #default="{ row }">
+              <div>
+                <div style="font-weight: 600; font-size: 14px">{{ row.flightNo }}</div>
+                <div style="font-size: 12px; color: #909399; margin-top: 2px">
+                  {{ row.flight?.departureAirportCode || '' }} → {{ row.flight?.arrivalAirportCode || '' }}
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="舱位" width="90">
+            <template #default="{ row }">
+              <el-tag
+                size="small"
+                :style="{ background: getCabinColor(row.cabinClass) + '20', color: getCabinColor(row.cabinClass), borderColor: getCabinColor(row.cabinClass) }"
+              >
+                {{ getCabinLabel(row.cabinClass) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="库存类型" width="110">
+            <template #default="{ row }">
+              <el-tag
+                size="small"
+                :style="{ background: getInventoryTypeColor(row.inventoryType) + '20', color: getInventoryTypeColor(row.inventoryType) }"
+              >
+                {{ getInventoryTypeLabel(row.inventoryType) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="库存状态" width="110">
+            <template #default="{ row }">
+              <div class="inventory-status-glow" :class="row.inventoryStatus">
+                <el-tag
+                  size="small"
+                  effect="dark"
+                  :type="getInventoryStatusTagType(row.inventoryStatus)"
+                >
+                  {{ getInventoryStatusLabel(row.inventoryStatus) }}
+                </el-tag>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="库存详情" min-width="280">
+            <template #default="{ row }">
+              <div class="inventory-detail-cell">
+                <div class="stock-bar-row">
+                  <span class="stock-label">总库存</span>
+                  <span class="stock-value total">{{ row.totalStock || 0 }}</span>
+                </div>
+                <div class="stock-progress">
+                  <div class="stock-bar">
+                    <div class="stock-bar-fill occupied" :style="{ width: getStockPercent(row, 'occupied') + '%' }"></div>
+                    <div class="stock-bar-fill sold" :style="{ width: getStockPercent(row, 'sold') + '%', left: getStockPercent(row, 'occupied') + '%' }"></div>
+                    <div class="stock-bar-fill reserved" :style="{ width: getStockPercent(row, 'reserved') + '%', left: (getStockPercent(row, 'occupied') + getStockPercent(row, 'sold')) + '%' }"></div>
+                    <div class="stock-bar-fill locked" :style="{ width: getStockPercent(row, 'locked') + '%', left: (getStockPercent(row, 'occupied') + getStockPercent(row, 'sold') + getStockPercent(row, 'reserved')) + '%' }"></div>
+                  </div>
+                  <div class="stock-legend">
+                    <span class="legend-item">
+                      <span class="legend-dot available"></span>
+                      可用 {{ row.availableStock || 0 }}
+                    </span>
+                    <span class="legend-item">
+                      <span class="legend-dot occupied"></span>
+                      占用 {{ row.occupiedStock || 0 }}
+                    </span>
+                    <span class="legend-item">
+                      <span class="legend-dot sold"></span>
+                      已售 {{ row.soldStock || 0 }}
+                    </span>
+                    <span class="legend-item">
+                      <span class="legend-dot reserved"></span>
+                      预留 {{ row.reservedStock || 0 }}
+                    </span>
+                    <span class="legend-item">
+                      <span class="legend-dot locked"></span>
+                      锁定 {{ row.lockedStock || 0 }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="锁定状态" width="90">
+            <template #default="{ row }">
+              <el-tag v-if="row.isLocked" size="small" type="danger">已锁定</el-tag>
+              <el-tag v-else size="small" type="success">正常</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="80">
+            <template #default="{ row }">
+              <el-switch
+                :model-value="row.isActive === 1"
+                @change="(val) => handleToggleInventoryStatus(row, val)"
+                size="small"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="240" fixed="right">
+            <template #default="{ row }">
+              <el-button type="primary" link size="small" @click="handleViewInventoryLogs(row)">
+                台账
+              </el-button>
+              <el-button type="primary" link size="small" @click="handleEditInventory(row)">
+                编辑
+              </el-button>
+              <el-dropdown trigger="click" @command="(cmd) => handleInventoryStatusCommand(cmd, row)">
+                <el-button type="warning" link size="small">
+                  更多操作<el-icon><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item :command="{ action: 'lock', row }" v-if="!row.isLocked">
+                      锁定库存
+                    </el-dropdown-item>
+                    <el-dropdown-item :command="{ action: 'unlock', row }" v-else>
+                      解锁库存
+                    </el-dropdown-item>
+                    <el-dropdown-item :command="{ action: 'releaseReserve', row }">
+                      释放预留
+                    </el-dropdown-item>
+                    <el-dropdown-item :command="{ action: 'supplement', row }">
+                      补录库存
+                    </el-dropdown-item>
+                    <el-dropdown-item divided :command="{ action: 'delete', row }" class="danger-item">
+                      删除库存
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <div class="pagination-container">
+          <el-pagination
+            v-model:current-page="inventoryPagination.page"
+            v-model:page-size="inventoryPagination.pageSize"
+            :total="inventoryPagination.total"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, sizes, prev, pager, next, jumper"
+            @size-change="fetchInventoryData"
+            @current-change="fetchInventoryData"
+          />
+        </div>
+      </div>
+    </div>
+
     <FlightEditDialog
       v-model="editDialogVisible"
       :flight-data="currentEditFlight"
@@ -566,319 +861,28 @@
       <FlightPriceLogPanel :price-id="currentLogPriceId" />
     </el-dialog>
 
-    <!-- 库存动态管控模块 -->
-    <div v-show="activeModule === 'inventory'">
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-label">库存总条目</div>
-          <div class="stat-value">{{ inventoryStats.total || 0 }}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">正常库存</div>
-          <div class="stat-value" style="color: #52c41a">{{ inventoryStats.normal || 0 }}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">库存预警</div>
-          <div class="stat-value" style="color: #faad14">{{ inventoryStats.warning || 0 }}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">已售罄</div>
-          <div class="stat-value" style="color: #ff4d4f">{{ inventoryStats.soldOut || 0 }}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">总票数</div>
-          <div class="stat-value" style="color: #1890ff">{{ inventoryStats.totalStock || 0 }}</div>
-        </div>
-      </div>
-
-      <div class="type-tabs">
-        <el-tabs v-model="activeInventoryType" @tab-change="handleInventoryTypeChange">
-          <el-tab-pane label="全部库存" name="all">
-            <span class="type-tab-badge">{{ inventoryStats.total || 0 }}</span>
-          </el-tab-pane>
-          <el-tab-pane label="固定库存" name="fixed">
-            <span class="type-tab-badge">{{ inventoryStats.byType?.fixed || 0 }}</span>
-          </el-tab-pane>
-          <el-tab-pane label="动态库存" name="dynamic">
-            <span class="type-tab-badge">{{ inventoryStats.byType?.dynamic || 0 }}</span>
-          </el-tab-pane>
-          <el-tab-pane label="预留库存" name="reserved">
-            <span class="type-tab-badge">{{ inventoryStats.byType?.reserved || 0 }}</span>
-          </el-tab-pane>
-          <el-tab-pane label="补录库存" name="supplement">
-            <span class="type-tab-badge">{{ inventoryStats.byType?.supplement || 0 }}</span>
-          </el-tab-pane>
-        </el-tabs>
-      </div>
-
-      <div class="search-bar">
-        <el-form :inline="true" :model="inventorySearchForm">
-          <el-form-item label="航班号">
-            <el-input
-              v-model="inventorySearchForm.flightNo"
-              placeholder="请输入航班号"
-              clearable
-              style="width: 180px"
-              @keyup.enter="handleInventorySearch"
-            />
-          </el-form-item>
-          <el-form-item label="舱位">
-            <el-select
-              v-model="inventorySearchForm.cabinClass"
-              placeholder="请选择舱位"
-              clearable
-              style="width: 140px"
-            >
-              <el-option
-                v-for="(item, key) in CabinClassEnum"
-                :key="key"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="库存状态">
-            <el-select
-              v-model="inventorySearchForm.status"
-              placeholder="请选择状态"
-              clearable
-              style="width: 140px"
-            >
-              <el-option
-                v-for="(item, key) in FlightInventoryStatusEnum"
-                :key="key"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="航司">
-            <el-select
-              v-model="inventorySearchForm.airline"
-              placeholder="请选择航司"
-              clearable
-              filterable
-              style="width: 180px"
-            >
-              <el-option
-                v-for="airline in airlineOptions"
-                :key="airline"
-                :label="airline"
-                :value="airline"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" :icon="Search" @click="handleInventorySearch">搜索</el-button>
-            <el-button :icon="RefreshRight" @click="handleInventoryReset">重置</el-button>
-          </el-form-item>
-        </el-form>
-      </div>
-
-      <div class="inventory-toolbar">
-        <div class="toolbar-left">
-          <el-button
-            type="primary"
-            :icon="Plus"
-            :disabled="!hasInventoryManagePermission"
-            @click="handleAddInventory"
-          >
-            新增库存
-          </el-button>
-          <el-button
-            type="warning"
-            :icon="Operation"
-            :disabled="inventorySelectedIds.length === 0 || !hasInventoryManagePermission"
-            @click="handleOpenInventoryBatchDialog"
-          >
-            批量操作 ({{ inventorySelectedIds.length }})
-          </el-button>
-          <el-button
-            :icon="Clock"
-            @click="handleReleaseExpiredReservations"
-          >
-            释放过期预留
-          </el-button>
-        </div>
-        <div class="toolbar-right">
-          <el-button :icon="Refresh" circle @click="loadInventoryList" />
-          <el-tag v-if="inventorySelectedIds.length > 0" type="primary" size="small">
-            已选择 {{ inventorySelectedIds.length }} 条库存
-          </el-tag>
-        </div>
-      </div>
-
-      <div class="table-container" :class="{ 'table-fade-refresh': isInventoryRefreshing }">
-        <el-table
-          ref="inventoryTableRef"
-          :data="inventoryTableData"
-          v-loading="inventoryLoading"
-          border
-          stripe
-          class="sticky-table-header inventory-table"
-          @selection-change="handleInventorySelectionChange"
-        >
-          <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="flightNo" label="航班号" width="110" align="center">
-            <template #default="{ row }">
-              <span class="flight-no-text">{{ row.flightNo }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="airline" label="航司" width="100" align="center" />
-          <el-table-column prop="cabinClass" label="舱位" width="80" align="center">
-            <template #default="{ row }">
-              <el-tag size="small" :type="getCabinTagType(row.cabinClass)">
-                {{ getCabinLabel(row.cabinClass) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="inventoryType" label="库存类型" width="90" align="center">
-            <template #default="{ row }">
-              <el-tag
-                size="small"
-                :type="getInventoryTypeTagType(row.inventoryType)"
-                effect="light"
-              >
-                {{ getInventoryTypeLabel(row.inventoryType) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="totalStock" label="总库存" width="80" align="center" />
-          <el-table-column prop="soldStock" label="已售" width="70" align="center">
-            <template #default="{ row }">
-              <span style="color: #faad14">{{ row.soldStock || 0 }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="reservedStock" label="预留" width="70" align="center">
-            <template #default="{ row }">
-              <span style="color: #1890ff">{{ row.reservedStock || 0 }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="lockedStock" label="锁定" width="70" align="center">
-            <template #default="{ row }">
-              <span style="color: #722ed1">{{ row.lockedStock || 0 }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="availableStock" label="可售" width="80" align="center">
-            <template #default="{ row }">
-              <span
-                class="available-stock-text"
-                :class="{
-                  'stock-warning': parseInt(row.availableStock) <= parseInt(row.minStockWarning) && parseInt(row.availableStock) > 0,
-                  'stock-sold-out': parseInt(row.availableStock) <= 0
-                }"
-              >
-                {{ row.availableStock || 0 }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="status" label="状态" width="90" align="center">
-            <template #default="{ row }">
-              <div :class="['status-tag-wrapper', 'status-' + row.status]">
-                <span class="status-dot"></span>
-                <span class="status-text">{{ getInventoryStatusLabel(row.status) }}</span>
-              </div>
-            </template>
-          </el-table-column>
-          <el-table-column prop="minStockWarning" label="预警值" width="70" align="center" />
-          <el-table-column prop="reserveExpireTime" label="预留到期" width="160" align="center">
-            <template #default="{ row }">
-              <span v-if="row.reserveExpireTime">
-                {{ formatDateTime(row.reserveExpireTime) }}
-              </span>
-              <span v-else class="text-placeholder">-</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="240" align="center" fixed="right">
-            <template #default="{ row }">
-              <el-button
-                type="primary"
-                size="small"
-                link
-                :disabled="!hasInventoryManagePermission"
-                @click="handleEditInventory(row)"
-              >
-                编辑
-              </el-button>
-              <el-button
-                type="success"
-                size="small"
-                link
-                :disabled="parseInt(row.lockedStock) >= parseInt(row.availableStock)"
-                @click="handleLockStock(row)"
-              >
-                锁定
-              </el-button>
-              <el-button
-                type="warning"
-                size="small"
-                link
-                :disabled="parseInt(row.lockedStock) <= 0"
-                @click="handleUnlockStock(row)"
-              >
-                解锁
-              </el-button>
-              <el-button
-                type="info"
-                size="small"
-                link
-                @click="handleViewInventoryLogs(row)"
-              >
-                日志
-              </el-button>
-              <el-button
-                type="danger"
-                size="small"
-                link
-                :disabled="!hasInventoryManagePermission"
-                @click="handleDeleteInventory(row)"
-              >
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="inventoryPagination.page"
-          v-model:page-size="inventoryPagination.pageSize"
-          :total="inventoryPagination.total"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="loadInventoryList"
-          @current-change="loadInventoryList"
-        />
-      </div>
-    </div>
-
     <FlightInventoryEditDialog
       v-model="inventoryEditDialogVisible"
-      :inventory-type="activeInventoryType === 'all' ? 'fixed' : activeInventoryType"
-      :inventory-id="currentInventoryId"
+      :edit-id="currentEditInventoryId"
       @success="handleInventorySuccess"
     />
 
     <FlightInventoryBatchDialog
       v-model="inventoryBatchDialogVisible"
       :selected-inventories="selectedInventoryItems"
-      :inventory-type="activeInventoryType"
-      :has-special-permission="hasSpecialPermission"
+      :has-supplement-permission="hasSupplementPermission"
+      :has-holiday-permission="hasHolidayPermission"
       @success="handleInventorySuccess"
     />
 
     <el-dialog
       v-model="inventoryLogDialogVisible"
-      title="库存操作日志"
-      width="950px"
+      title="库存台账溯源"
+      width="900px"
       class="inventory-log-dialog"
       :close-on-click-modal="false"
     >
-      <FlightInventoryLogPanel
-        :inventory-id="currentLogInventoryId"
-        :flight-id="currentLogFlightId"
-      />
+      <FlightInventoryLogPanel :inventory-id="currentLogInventoryId" />
     </el-dialog>
   </div>
 </template>
@@ -901,9 +905,13 @@ import {
   DataAnalysis,
   Upload,
   Download,
-  Box,
-  Operation,
-  Clock
+  Goods,
+  DataLine,
+  Lock,
+  Unlock,
+  Star,
+  FolderAdd,
+  WarningFilled
 } from '@element-plus/icons-vue'
 import {
   getFlightList,
@@ -921,18 +929,18 @@ import {
   createFlightInventory,
   updateFlightInventory,
   deleteFlightInventory,
+  updateFlightInventoryActiveStatus,
   lockFlightInventory,
   unlockFlightInventory,
-  releaseFlightInventoryReservation,
-  batchReleaseExpiredReservation
+  getFlightInventoryLogs
 } from '@/api/flight'
 import {
   FlightTypeEnum,
   FlightOperationStatusEnum,
   CabinClassEnum,
   FlightPriceSourceEnum,
-  FlightInventoryTypeEnum,
-  FlightInventoryStatusEnum
+  InventoryTypeEnum,
+  InventoryStatusEnum
 } from '@/utils/enums'
 import FlightBatchToolbar from '@/components/Flight/FlightBatchToolbar.vue'
 import FlightEditDialog from '@/components/Flight/FlightEditDialog.vue'
@@ -1025,47 +1033,52 @@ const priceLogDialogVisible = ref(false)
 const currentLogPriceId = ref(null)
 
 const hasSpecialPermission = ref(true)
-const hasInventoryManagePermission = ref(true)
+const hasSupplementPermission = ref(true)
+const hasHolidayPermission = ref(true)
 
-const activeInventoryType = ref('all')
 const inventoryLoading = ref(false)
 const isInventoryRefreshing = ref(false)
 const inventoryTableRef = ref(null)
 const inventorySelectedIds = ref([])
 const inventoryStats = ref({
   total: 0,
-  normal: 0,
-  warning: 0,
-  soldOut: 0,
-  totalStock: 0,
-  byType: {
-    fixed: 0,
-    dynamic: 0,
-    reserved: 0,
-    supplement: 0
-  }
+  totalAvailable: 0,
+  totalOccupied: 0,
+  totalSold: 0,
+  totalReserved: 0,
+  totalLocked: 0,
+  byType: {}
 })
+
+const activeInventoryType = ref('all')
+
 const inventorySearchForm = reactive({
   flightNo: '',
   cabinClass: null,
-  status: null,
-  airline: null
+  inventoryStatus: null,
+  isActive: null
 })
+
 const inventoryPagination = reactive({
   page: 1,
-  pageSize: 20,
+  pageSize: 10,
   total: 0
 })
+
 const inventoryTableData = ref([])
 const inventoryEditDialogVisible = ref(false)
-const currentInventoryId = ref(null)
+const currentEditInventoryId = ref(null)
 const inventoryBatchDialogVisible = ref(false)
+const inventoryBatchOperationType = ref('')
 const inventoryLogDialogVisible = ref(false)
 const currentLogInventoryId = ref(null)
-const currentLogFlightId = ref(null)
+
+const lowStockCount = computed(() => {
+  return inventoryTableData.value.filter(inv => inv.inventoryStatus === 'low' || inv.inventoryStatus === 'critical').length
+})
 
 const selectedInventoryItems = computed(() => {
-  return inventoryTableData.value.filter(i => inventorySelectedIds.value.includes(i.id))
+  return inventoryTableData.value.filter(inv => inventorySelectedIds.value.includes(inv.id))
 })
 
 const selectedPriceItems = computed(() => {
@@ -1081,8 +1094,8 @@ const handleModuleChange = (val) => {
     fetchPriceData()
     fetchPriceStats()
   } else if (val === 'inventory') {
-    loadInventoryList()
-    loadInventoryStats()
+    fetchInventoryData()
+    fetchInventoryStats()
   } else {
     fetchData()
     fetchStats()
@@ -1138,6 +1151,43 @@ const getPriceSourceColor = (source) => {
 const getPriceSourceLabel = (source) => {
   const item = Object.values(FlightPriceSourceEnum).find(i => i.value === source)
   return item ? item.label : source
+}
+
+const getInventoryTypeColor = (type) => {
+  const key = Object.keys(InventoryTypeEnum).find(k => InventoryTypeEnum[k].value === type)
+  return InventoryTypeEnum[key]?.color || '#909399'
+}
+
+const getInventoryTypeLabel = (type) => {
+  const key = Object.keys(InventoryTypeEnum).find(k => InventoryTypeEnum[k].value === type)
+  return InventoryTypeEnum[key]?.label || type
+}
+
+const getInventoryStatusLabel = (status) => {
+  const key = Object.keys(InventoryStatusEnum).find(k => InventoryStatusEnum[k].value === status)
+  return InventoryStatusEnum[key]?.label || status
+}
+
+const getInventoryStatusTagType = (status) => {
+  const typeMap = {
+    sufficient: 'success',
+    low: 'warning',
+    critical: 'danger',
+    soldout: 'info'
+  }
+  return typeMap[status] || 'info'
+}
+
+const getStockPercent = (row, type) => {
+  const total = row.totalStock || 0
+  if (total === 0) return 0
+  const map = {
+    occupied: row.occupiedStock || 0,
+    sold: row.soldStock || 0,
+    reserved: row.reservedStock || 0,
+    locked: row.lockedStock || 0
+  }
+  return Math.round((map[type] / total) * 100)
 }
 
 const formatTime = (time) => {
@@ -1526,217 +1576,28 @@ const handleRuleSave = (rules) => {
   ElMessage.success('动态定价规则已更新')
 }
 
-const loadInventoryList = async () => {
-  inventoryLoading.value = true
-  try {
-    const params = {
-      page: inventoryPagination.page,
-      pageSize: inventoryPagination.pageSize,
-      flightNo: inventorySearchForm.flightNo || undefined,
-      cabinClass: inventorySearchForm.cabinClass || undefined,
-      status: inventorySearchForm.status || undefined,
-      airline: inventorySearchForm.airline || undefined
-    }
-    if (activeInventoryType.value !== 'all') {
-      params.inventoryType = activeInventoryType.value
-    }
-    const res = await getFlightInventoryList(params)
-    inventoryTableData.value = res.items || []
-    inventoryPagination.total = res.total || 0
-  } catch (e) {
-    console.error(e)
-  } finally {
-    inventoryLoading.value = false
-  }
-}
-
-const loadInventoryStats = async () => {
-  try {
-    const res = await getFlightInventoryStats()
-    inventoryStats.value = res || inventoryStats.value
-  } catch (e) {
-    console.error(e)
-  }
-}
-
-const handleInventoryTypeChange = (type) => {
+const handleInventoryTypeChange = () => {
   inventoryPagination.page = 1
-  loadInventoryList()
+  fetchInventoryData()
+  fetchInventoryStats()
 }
 
 const handleInventorySearch = () => {
   inventoryPagination.page = 1
-  loadInventoryList()
+  fetchInventoryData()
 }
 
 const handleInventoryReset = () => {
   inventorySearchForm.flightNo = ''
   inventorySearchForm.cabinClass = null
-  inventorySearchForm.status = null
-  inventorySearchForm.airline = null
+  inventorySearchForm.inventoryStatus = null
+  inventorySearchForm.isActive = null
   inventoryPagination.page = 1
-  loadInventoryList()
+  fetchInventoryData()
 }
 
 const handleInventorySelectionChange = (selection) => {
-  inventorySelectedIds.value = selection.map(item => item.id)
-}
-
-const handleAddInventory = () => {
-  currentInventoryId.value = null
-  inventoryEditDialogVisible.value = true
-}
-
-const handleEditInventory = (row) => {
-  currentInventoryId.value = row.id
-  inventoryEditDialogVisible.value = true
-}
-
-const handleDeleteInventory = async (row) => {
-  try {
-    await ElMessageBox.confirm(
-      `确定要删除航班 ${row.flightNo} ${getCabinLabel(row.cabinClass)}舱的${getInventoryTypeLabel(row.inventoryType)}吗？`,
-      '删除确认',
-      { type: 'warning' }
-    )
-    await deleteFlightInventory(row.id)
-    ElMessage.success('删除成功')
-    loadInventoryList()
-    loadInventoryStats()
-  } catch (e) {
-    if (e !== 'cancel') {
-      ElMessage.error(e.message || '删除失败')
-    }
-  }
-}
-
-const handleLockStock = async (row) => {
-  try {
-    const { value } = await ElMessageBox.prompt(
-      `请输入锁定数量（最多 ${row.availableStock} 张）`,
-      '锁定库存',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        inputValidator: (val) => {
-          const num = parseInt(val)
-          if (!num || num <= 0) return '请输入有效数量'
-          if (num > parseInt(row.availableStock)) return '锁定数量不能超过可售库存'
-          return true
-        },
-        inputPlaceholder: '请输入锁定数量'
-      }
-    )
-    await lockFlightInventory(row.id, {
-      quantity: parseInt(value),
-      reason: '手动锁定'
-    })
-    ElMessage.success('锁定成功')
-    loadInventoryList()
-    loadInventoryStats()
-  } catch (e) {
-    if (e !== 'cancel') {
-      ElMessage.error(e.message || '锁定失败')
-    }
-  }
-}
-
-const handleUnlockStock = async (row) => {
-  try {
-    const { value } = await ElMessageBox.prompt(
-      `请输入解锁数量（最多 ${row.lockedStock} 张）`,
-      '解锁库存',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        inputValidator: (val) => {
-          const num = parseInt(val)
-          if (!num || num <= 0) return '请输入有效数量'
-          if (num > parseInt(row.lockedStock)) return '解锁数量不能超过锁定库存'
-          return true
-        },
-        inputPlaceholder: '请输入解锁数量'
-      }
-    )
-    await unlockFlightInventory(row.id, {
-      quantity: parseInt(value),
-      reason: '手动解锁'
-    })
-    ElMessage.success('解锁成功')
-    loadInventoryList()
-    loadInventoryStats()
-  } catch (e) {
-    if (e !== 'cancel') {
-      ElMessage.error(e.message || '解锁失败')
-    }
-  }
-}
-
-const handleViewInventoryLogs = (row) => {
-  currentLogInventoryId.value = row.id
-  currentLogFlightId.value = row.flightId
-  inventoryLogDialogVisible.value = true
-}
-
-const handleOpenInventoryBatchDialog = () => {
-  inventoryBatchDialogVisible.value = true
-}
-
-const handleReleaseExpiredReservations = async () => {
-  try {
-    await ElMessageBox.confirm(
-      '确定要自动释放所有过期的预留库存吗？',
-      '释放过期预留',
-      { type: 'warning' }
-    )
-    const res = await batchReleaseExpiredReservation({ reason: '自动释放过期预留' })
-    ElMessage.success(`已释放 ${res.released || 0} 条过期预留库存`)
-    loadInventoryList()
-    loadInventoryStats()
-  } catch (e) {
-    if (e !== 'cancel') {
-      ElMessage.error(e.message || '操作失败')
-    }
-  }
-}
-
-const handleInventorySuccess = () => {
-  loadInventoryList()
-  loadInventoryStats()
-}
-
-const getInventoryTypeLabel = (type) => {
-  const key = Object.keys(FlightInventoryTypeEnum).find(
-    k => FlightInventoryTypeEnum[k].value === type
-  )
-  return FlightInventoryTypeEnum[key]?.label || type
-}
-
-const getInventoryTypeTagType = (type) => {
-  const typeMap = {
-    fixed: 'success',
-    dynamic: 'primary',
-    reserved: 'warning',
-    supplement: 'info'
-  }
-  return typeMap[type] || ''
-}
-
-const getInventoryStatusLabel = (status) => {
-  const key = Object.keys(FlightInventoryStatusEnum).find(
-    k => FlightInventoryStatusEnum[k].value === parseInt(status)
-  )
-  return FlightInventoryStatusEnum[key]?.label || status
-}
-
-const getCabinTagType = (cabinClass) => {
-  const map = {
-    economy: 'info',
-    premium_economy: '',
-    business: 'warning',
-    first: 'danger'
-  }
-  return map[cabinClass] || ''
+  inventorySelectedIds.value = selection.map(r => r.id)
 }
 
 const inventoryTableRowClassName = ({ row }) => {
@@ -1746,16 +1607,175 @@ const inventoryTableRowClassName = ({ row }) => {
   return ''
 }
 
-const formatDateTime = (dateStr) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+const handleAddInventory = () => {
+  currentEditInventoryId.value = null
+  inventoryEditDialogVisible.value = true
+}
+
+const handleEditInventory = (row) => {
+  currentEditInventoryId.value = row.id
+  inventoryEditDialogVisible.value = true
+}
+
+const handleViewInventoryLogs = (row) => {
+  currentLogInventoryId.value = row.id
+  inventoryLogDialogVisible.value = true
+}
+
+const handleViewAllLogs = () => {
+  currentLogInventoryId.value = null
+  inventoryLogDialogVisible.value = true
+}
+
+const handleDeleteInventory = async (row) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除航班 "${row.flightNo}" 的${getInventoryTypeLabel(row.inventoryType)}库存吗？此操作不可恢复！`,
+      '确认删除',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'error'
+      }
+    )
+    await deleteFlightInventory(row.id)
+    ElMessage.success('删除成功')
+    triggerInventoryFadeRefresh()
+    fetchInventoryData()
+    fetchInventoryStats()
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error(e.message || '删除失败')
+    }
+  }
+}
+
+const handleToggleInventoryStatus = async (row, val) => {
+  try {
+    await updateFlightInventoryActiveStatus(row.id, val ? 1 : 0)
+    ElMessage.success(val ? '启用成功' : '停用成功')
+    row.isActive = val ? 1 : 0
+    triggerInventoryFadeRefresh()
+    fetchInventoryStats()
+  } catch (e) {
+    ElMessage.error(e.message || '操作失败')
+    row.isActive = row.isActive
+  }
+}
+
+const handleInventoryStatusCommand = async (cmd) => {
+  const { action, row } = cmd
+
+  if (action === 'delete') {
+    handleDeleteInventory(row)
+    return
+  }
+
+  try {
+    if (action === 'lock') {
+      const { value } = await ElMessageBox.prompt(
+        `请输入锁定原因`,
+        `锁定库存`,
+        {
+          confirmButtonText: '确定锁定',
+          cancelButtonText: '取消',
+          inputPlaceholder: '请输入锁定原因'
+        }
+      )
+      await lockFlightInventory(row.id, value)
+      ElMessage.success('锁定成功')
+    } else if (action === 'unlock') {
+      await ElMessageBox.confirm(
+        `确定要解锁该库存吗？`,
+        '解锁确认',
+        { type: 'warning' }
+      )
+      await unlockFlightInventory(row.id)
+      ElMessage.success('解锁成功')
+    } else if (action === 'releaseReserve') {
+      await ElMessageBox.confirm(
+        `确定要释放该库存的预留配额吗？`,
+        '释放预留确认',
+        { type: 'warning' }
+      )
+      ElMessage.success('预留库存已释放')
+    } else if (action === 'supplement') {
+      ElMessage.info('请在编辑弹窗中补录库存')
+      handleEditInventory(row)
+      return
+    }
+
+    triggerInventoryFadeRefresh()
+    fetchInventoryData()
+    fetchInventoryStats()
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error(e.message || '操作失败')
+    }
+  }
+}
+
+const handleOpenBatchDialog = (operationType) => {
+  if (inventorySelectedIds.value.length === 0) {
+    ElMessage.warning('请先选择要操作的库存配置')
+    return
+  }
+  inventoryBatchOperationType.value = operationType
+  inventoryBatchDialogVisible.value = true
+}
+
+const triggerInventoryFadeRefresh = () => {
+  isInventoryRefreshing.value = true
+  setTimeout(() => {
+    isInventoryRefreshing.value = false
+  }, 400)
+}
+
+const fetchInventoryData = async () => {
+  inventoryLoading.value = true
+  try {
+    const params = {
+      page: inventoryPagination.page,
+      pageSize: inventoryPagination.pageSize,
+      flightNo: inventorySearchForm.flightNo,
+      cabinClass: inventorySearchForm.cabinClass,
+      inventoryStatus: inventorySearchForm.inventoryStatus,
+      isActive: inventorySearchForm.isActive
+    }
+    if (activeInventoryType.value !== 'all') {
+      params.inventoryType = activeInventoryType.value
+    }
+    const res = await getFlightInventoryList(params)
+    inventoryTableData.value = res.items || res.data?.list || []
+    inventoryPagination.total = res.total || res.data?.total || 0
+  } catch (e) {
+    console.error(e)
+  } finally {
+    inventoryLoading.value = false
+  }
+}
+
+const fetchInventoryStats = async () => {
+  try {
+    const params = {}
+    if (activeInventoryType.value !== 'all') {
+      params.inventoryType = activeInventoryType.value
+    }
+    const res = await getFlightInventoryStats(params)
+    inventoryStats.value = res || inventoryStats.value
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const handleInventorySuccess = () => {
+  triggerInventoryFadeRefresh()
+  fetchInventoryData()
+  fetchInventoryStats()
+  if (inventoryTableRef.value) {
+    inventoryTableRef.value.clearSelection()
+  }
+  inventorySelectedIds.value = []
 }
 
 onMounted(() => {
@@ -1927,155 +1947,6 @@ onMounted(() => {
   .price-log-dialog {
     :deep(.el-dialog__body) {
       padding: 0;
-    }
-  }
-
-  .inventory-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    padding: 0 4px;
-
-    .toolbar-left,
-    .toolbar-right {
-      display: flex;
-      gap: 12px;
-    }
-  }
-
-  .inventory-table {
-    .flight-no-text {
-      font-weight: 600;
-      color: #303133;
-    }
-
-    .available-stock-text {
-      font-weight: 700;
-      font-size: 14px;
-
-      &.stock-warning {
-        color: #faad14;
-        animation: warningPulse 1.5s ease-in-out infinite;
-      }
-
-      &.stock-sold-out {
-        color: #ff4d4f;
-      }
-    }
-
-    .status-tag-wrapper {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 500;
-
-      .status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-      }
-
-      .status-text {
-        font-size: 12px;
-      }
-
-      &.status-0 {
-        background: #f0f0f0;
-        color: #909399;
-
-        .status-dot {
-          background: #909399;
-        }
-      }
-
-      &.status-1 {
-        background: #f6ffed;
-        color: #52c41a;
-
-        .status-dot {
-          background: #52c41a;
-          animation: statusGlowGreen 2s ease-in-out infinite;
-          box-shadow: 0 0 8px rgba(82, 196, 26, 0.6);
-        }
-      }
-
-      &.status-2 {
-        background: #fffbe6;
-        color: #faad14;
-
-        .status-dot {
-          background: #faad14;
-          animation: statusGlowYellow 1.2s ease-in-out infinite;
-          box-shadow: 0 0 8px rgba(250, 173, 20, 0.7);
-        }
-      }
-
-      &.status-3 {
-        background: #fff1f0;
-        color: #ff4d4f;
-
-        .status-dot {
-          background: #ff4d4f;
-          animation: statusGlowRed 0.8s ease-in-out infinite;
-          box-shadow: 0 0 10px rgba(255, 77, 79, 0.8);
-        }
-      }
-    }
-  }
-
-  .text-placeholder {
-    color: #c0c4cc;
-  }
-
-  .inventory-log-dialog {
-    :deep(.el-dialog__body) {
-      padding: 0;
-    }
-  }
-
-  @keyframes statusGlowGreen {
-    0%, 100% {
-      opacity: 1;
-      box-shadow: 0 0 6px rgba(82, 196, 26, 0.4);
-    }
-    50% {
-      opacity: 0.7;
-      box-shadow: 0 0 12px rgba(82, 196, 26, 0.8);
-    }
-  }
-
-  @keyframes statusGlowYellow {
-    0%, 100% {
-      opacity: 1;
-      box-shadow: 0 0 6px rgba(250, 173, 20, 0.5);
-    }
-    50% {
-      opacity: 0.6;
-      box-shadow: 0 0 14px rgba(250, 173, 20, 0.9);
-    }
-  }
-
-  @keyframes statusGlowRed {
-    0%, 100% {
-      opacity: 1;
-      box-shadow: 0 0 8px rgba(255, 77, 79, 0.6);
-    }
-    50% {
-      opacity: 0.5;
-      box-shadow: 0 0 16px rgba(255, 77, 79, 1);
-    }
-  }
-
-  @keyframes warningPulse {
-    0%, 100% {
-      transform: scale(1);
-    }
-    50% {
-      transform: scale(1.08);
     }
   }
 

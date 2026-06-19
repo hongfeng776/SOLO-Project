@@ -20,7 +20,7 @@ class FlightInventoryController {
       const { id } = req.params;
       const inventory = await flightInventoryService.getInventoryById(id);
       if (!inventory) {
-        return res.fail('库存记录不存在');
+        return res.fail('库存配置不存在');
       }
       res.success(inventory);
     } catch (error) {
@@ -53,13 +53,13 @@ class FlightInventoryController {
     try {
       const operator = {
         id: req.user?.id,
-        name: req.user?.username,
+        name: req.user?.username || req.user?.name,
         role: req.user?.role,
         roles: req.user?.roles || [],
         ip: req.ip
       };
       const inventory = await flightInventoryService.createInventory(req.body, operator);
-      res.success(inventory, '库存创建成功');
+      res.success(inventory, '库存配置创建成功');
     } catch (error) {
       res.fail(error.message);
     }
@@ -70,13 +70,13 @@ class FlightInventoryController {
       const { id } = req.params;
       const operator = {
         id: req.user?.id,
-        name: req.user?.username,
+        name: req.user?.username || req.user?.name,
         role: req.user?.role,
         roles: req.user?.roles || [],
         ip: req.ip
       };
       const inventory = await flightInventoryService.updateInventory(id, req.body, operator);
-      res.success(inventory, '库存更新成功');
+      res.success(inventory, '库存配置更新成功');
     } catch (error) {
       res.fail(error.message);
     }
@@ -87,136 +87,157 @@ class FlightInventoryController {
       const { id } = req.params;
       const operator = {
         id: req.user?.id,
-        name: req.user?.username,
+        name: req.user?.username || req.user?.name,
         role: req.user?.role,
         roles: req.user?.roles || [],
         ip: req.ip
       };
       await flightInventoryService.deleteInventory(id, operator);
-      res.success(null, '库存删除成功');
+      res.success(null, '库存配置删除成功');
     } catch (error) {
       res.fail(error.message);
     }
   }
 
-  async lockStock(req, res) {
+  async updateActiveStatus(req, res) {
     try {
       const { id } = req.params;
-      const { lockQuantity } = req.body;
+      const { isActive } = req.body;
       const operator = {
         id: req.user?.id,
-        name: req.user?.username,
+        name: req.user?.username || req.user?.name,
         role: req.user?.role,
         roles: req.user?.roles || [],
         ip: req.ip
       };
-      const inventory = await flightInventoryService.lockStock(id, lockQuantity, operator);
-      res.success(inventory, '库存锁定成功');
+      const result = await flightInventoryService.updateActiveStatus(id, isActive, operator);
+      res.success(result, isActive ? '库存已启用' : '库存已停用');
     } catch (error) {
       res.fail(error.message);
     }
   }
 
-  async unlockStock(req, res) {
+  async lockInventory(req, res) {
     try {
       const { id } = req.params;
-      const { unlockQuantity } = req.body;
+      const { lockReason } = req.body;
       const operator = {
         id: req.user?.id,
-        name: req.user?.username,
+        name: req.user?.username || req.user?.name,
         role: req.user?.role,
         roles: req.user?.roles || [],
         ip: req.ip
       };
-      const inventory = await flightInventoryService.unlockStock(id, unlockQuantity, operator);
-      res.success(inventory, '库存解锁成功');
+      const result = await flightInventoryService.lockInventory(id, lockReason, operator);
+      res.success(result, '库存锁定成功');
     } catch (error) {
       res.fail(error.message);
     }
   }
 
-  async releaseReservation(req, res) {
+  async unlockInventory(req, res) {
     try {
       const { id } = req.params;
-      const { releaseQuantity } = req.body;
       const operator = {
         id: req.user?.id,
-        name: req.user?.username,
+        name: req.user?.username || req.user?.name,
         role: req.user?.role,
         roles: req.user?.roles || [],
         ip: req.ip
       };
-      const inventory = await flightInventoryService.releaseReservation(id, releaseQuantity, operator);
-      res.success(inventory, '预留库存释放成功');
+      const result = await flightInventoryService.unlockInventory(id, operator);
+      res.success(result, '库存解锁成功');
     } catch (error) {
       res.fail(error.message);
     }
   }
 
-  async batchLock(req, res) {
+  async batchLockInventory(req, res) {
     try {
-      const { ids, lockQuantity } = req.body;
+      const { inventoryIds, lockReason } = req.body;
       const operator = {
         id: req.user?.id,
-        name: req.user?.username,
+        name: req.user?.username || req.user?.name,
         role: req.user?.role,
         roles: req.user?.roles || [],
         ip: req.ip
       };
-      const result = await flightInventoryService.batchLockInventories(ids, lockQuantity, operator);
-      res.success(result, `批量锁定完成：成功${result.success}条，失败${result.failed}条`);
+      const result = await flightInventoryService.batchLockInventory(inventoryIds, lockReason, operator);
+      res.success(result, `批量锁定成功，共锁定${result.success}条库存配置`);
     } catch (error) {
       res.fail(error.message);
     }
   }
 
-  async batchUnlock(req, res) {
+  async batchUnlockInventory(req, res) {
     try {
-      const { ids, unlockQuantity } = req.body;
+      const { inventoryIds } = req.body;
       const operator = {
         id: req.user?.id,
-        name: req.user?.username,
+        name: req.user?.username || req.user?.name,
         role: req.user?.role,
         roles: req.user?.roles || [],
         ip: req.ip
       };
-      const result = await flightInventoryService.batchUnlockInventories(ids, unlockQuantity, operator);
-      res.success(result, `批量解锁完成：成功${result.success}条，失败${result.failed}条`);
+      const result = await flightInventoryService.batchUnlockInventory(inventoryIds, operator);
+      res.success(result, `批量解锁成功，共解锁${result.success}条库存配置`);
     } catch (error) {
       res.fail(error.message);
     }
   }
 
-  async batchSupplement(req, res) {
+  async batchReleaseReservations(req, res) {
     try {
-      const { ids, supplementQuantity, isHolidayBatch } = req.body;
+      const { inventoryIds } = req.body;
       const operator = {
         id: req.user?.id,
-        name: req.user?.username,
+        name: req.user?.username || req.user?.name,
         role: req.user?.role,
         roles: req.user?.roles || [],
         ip: req.ip
       };
-      const result = await flightInventoryService.batchSupplementInventories(
-        ids, supplementQuantity, operator, isHolidayBatch
+      const result = await flightInventoryService.batchReleaseExpiredReservations(inventoryIds, operator);
+      res.success(result, `批量释放成功，共释放${result.success}条预留库存`);
+    } catch (error) {
+      res.fail(error.message);
+    }
+  }
+
+  async batchSupplementInventory(req, res) {
+    try {
+      const { inventoryIds, supplementQuantity, supplementSource, supplementRemark } = req.body;
+      const operator = {
+        id: req.user?.id,
+        name: req.user?.username || req.user?.name,
+        role: req.user?.role,
+        roles: req.user?.roles || [],
+        ip: req.ip
+      };
+      const result = await flightInventoryService.batchSupplementInventory(
+        inventoryIds,
+        supplementQuantity,
+        supplementSource,
+        supplementRemark,
+        operator
       );
-      res.success(result, `批量补录完成：成功${result.success}条，失败${result.failed}条`);
+      res.success(result, `批量补录成功，共补录${result.success}条库存配置`);
     } catch (error) {
       res.fail(error.message);
     }
   }
 
-  async batchReleaseExpired(req, res) {
+  async batchUpdateActiveStatus(req, res) {
     try {
+      const { inventoryIds, isActive } = req.body;
       const operator = {
         id: req.user?.id,
-        name: req.user?.username,
+        name: req.user?.username || req.user?.name,
         role: req.user?.role,
         roles: req.user?.roles || [],
         ip: req.ip
       };
-      const result = await flightInventoryService.batchReleaseExpiredReservations(operator);
-      res.success(result, `批量释放过期预留库存完成：成功${result.success}条，失败${result.failed}条`);
+      const result = await flightInventoryService.batchUpdateActiveStatus(inventoryIds, isActive, operator);
+      res.success(result, `批量${isActive ? '启用' : '停用'}成功，共更新${result.success}条库存配置`);
     } catch (error) {
       res.fail(error.message);
     }
@@ -229,6 +250,9 @@ class FlightInventoryController {
         page: parseInt(req.query.page) || 1,
         pageSize: parseInt(req.query.pageSize) || 20
       };
+      if (req.params.id) {
+        params.inventoryId = req.params.id;
+      }
       const result = await flightInventoryService.getInventoryLogs(params);
       res.success(result);
     } catch (error) {
@@ -238,8 +262,26 @@ class FlightInventoryController {
 
   async getInventoryStats(req, res) {
     try {
-      const stats = await flightInventoryService.getInventoryStats(req.query);
-      res.success(stats);
+      const result = await flightInventoryService.getInventoryStats(req.query);
+      res.success(result);
+    } catch (error) {
+      res.fail(error.message);
+    }
+  }
+
+  async releaseExpiredReservations(req, res) {
+    try {
+      const result = await flightInventoryService.releaseExpiredReservations();
+      res.success(result, `共释放${result.releasedCount}条过期预留库存`);
+    } catch (error) {
+      res.fail(error.message);
+    }
+  }
+
+  async checkLowStockWarning(req, res) {
+    try {
+      const result = await flightInventoryService.checkLowStockWarning();
+      res.success(result);
     } catch (error) {
       res.fail(error.message);
     }

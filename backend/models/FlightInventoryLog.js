@@ -1,120 +1,127 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
-const Flight = require('./Flight');
-const FlightInventory = require('./FlightInventory');
 
 const FlightInventoryLog = sequelize.define('FlightInventoryLog', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
-    comment: '日志ID'
+    comment: '库存日志ID'
   },
   inventoryId: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    comment: '库存ID',
-    references: {
-      model: FlightInventory,
-      key: 'id'
-    }
+    comment: '库存配置ID'
   },
   flightId: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    comment: '航班ID',
-    references: {
-      model: Flight,
-      key: 'id'
-    }
+    comment: '航班ID'
   },
   flightNo: {
     type: DataTypes.STRING(50),
-    allowNull: false,
+    allowNull: true,
     comment: '航班号'
   },
   cabinClass: {
     type: DataTypes.STRING(50),
-    allowNull: false,
+    allowNull: true,
     comment: '舱位等级'
   },
   inventoryType: {
     type: DataTypes.STRING(50),
+    allowNull: true,
     comment: '库存类型'
   },
   operationType: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.TINYINT,
     allowNull: false,
-    comment: '操作类型: 1-创建库存, 2-库存调整, 3-库存占用, 4-库存释放, 5-库存锁定, 6-库存解锁, 7-预留库存, 8-释放预留, 9-库存补录, 10-批量操作, 11-状态变更, 12-删除库存'
+    comment: '操作类型: 1-创建库存, 2-调整库存, 3-占用库存(下单), 4-释放库存(取消), 5-售出库存(支付), 6-锁定库存, 7-解锁库存, 8-预留库存, 9-释放预留, 10-补录库存, 11-批量调整, 12-库存预警'
   },
   operationName: {
-    type: DataTypes.STRING(50),
+    type: DataTypes.STRING(100),
     allowNull: false,
     comment: '操作名称'
   },
+  operationCategory: {
+    type: DataTypes.STRING(50),
+    defaultValue: 'adjust',
+    comment: '操作分类: create-创建, adjust-调整, occupy-占用, release-释放, lock-锁定, unlock-解锁, reserve-预留, supplement-补录, batch-批量, warning-预警'
+  },
   beforeTotalStock: {
     type: DataTypes.INTEGER,
-    defaultValue: 0,
-    comment: '操作前总库存'
+    allowNull: true,
+    comment: '调整前总库存'
   },
   afterTotalStock: {
     type: DataTypes.INTEGER,
-    defaultValue: 0,
-    comment: '操作后总库存'
+    allowNull: true,
+    comment: '调整后总库存'
+  },
+  beforeOccupiedStock: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: '调整前占用库存'
+  },
+  afterOccupiedStock: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: '调整后占用库存'
   },
   beforeSoldStock: {
     type: DataTypes.INTEGER,
-    defaultValue: 0,
-    comment: '操作前已售库存'
+    allowNull: true,
+    comment: '调整前已售库存'
   },
   afterSoldStock: {
     type: DataTypes.INTEGER,
-    defaultValue: 0,
-    comment: '操作后已售库存'
+    allowNull: true,
+    comment: '调整后已售库存'
   },
   beforeReservedStock: {
     type: DataTypes.INTEGER,
-    defaultValue: 0,
-    comment: '操作前预留库存'
+    allowNull: true,
+    comment: '调整前预留库存'
   },
   afterReservedStock: {
     type: DataTypes.INTEGER,
-    defaultValue: 0,
-    comment: '操作后预留库存'
+    allowNull: true,
+    comment: '调整后预留库存'
   },
   beforeLockedStock: {
     type: DataTypes.INTEGER,
-    defaultValue: 0,
-    comment: '操作前锁定库存'
+    allowNull: true,
+    comment: '调整前锁定库存'
   },
   afterLockedStock: {
     type: DataTypes.INTEGER,
-    defaultValue: 0,
-    comment: '操作后锁定库存'
+    allowNull: true,
+    comment: '调整后锁定库存'
   },
   beforeAvailableStock: {
     type: DataTypes.INTEGER,
-    defaultValue: 0,
-    comment: '操作前可售库存'
+    allowNull: true,
+    comment: '调整前可用库存'
   },
   afterAvailableStock: {
     type: DataTypes.INTEGER,
-    defaultValue: 0,
-    comment: '操作后可售库存'
+    allowNull: true,
+    comment: '调整后可用库存'
   },
   changeQuantity: {
     type: DataTypes.INTEGER,
-    defaultValue: 0,
-    comment: '变动数量，正数为增加，负数为减少'
+    allowNull: true,
+    comment: '变动数量'
   },
-  changeType: {
-    type: DataTypes.STRING(20),
-    comment: '变动方向: increase-增加, decrease-减少, unchanged-不变'
+  changeDirection: {
+    type: DataTypes.STRING(10),
+    allowNull: true,
+    comment: '变动方向: increase-增加, decrease-减少'
   },
   changeFields: {
-    type: DataTypes.JSON,
+    type: DataTypes.TEXT,
     allowNull: true,
-    comment: '变更字段，JSON数组'
+    comment: '变更字段列表(JSON)'
   },
   relatedOrderId: {
     type: DataTypes.INTEGER,
@@ -122,26 +129,24 @@ const FlightInventoryLog = sequelize.define('FlightInventoryLog', {
     comment: '关联订单ID'
   },
   relatedOrderNo: {
-    type: DataTypes.STRING(50),
+    type: DataTypes.STRING(100),
     allowNull: true,
     comment: '关联订单号'
   },
   effectScope: {
-    type: DataTypes.STRING(100),
-    comment: '生效范围: single-单条, batch-批量, global-全局'
+    type: DataTypes.STRING(200),
+    allowNull: true,
+    comment: '生效范围描述'
   },
-  affectedInventoryCount: {
+  affectedFlightCount: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
-    comment: '影响库存数量（批量操作）'
+    comment: '受影响航班数量(批量操作时)'
   },
-  operationReason: {
-    type: DataTypes.STRING(500),
-    comment: '操作原因'
-  },
-  operationRemark: {
-    type: DataTypes.STRING(500),
-    comment: '操作备注'
+  isBatchOperation: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '是否批量操作: 0-否, 1-是'
   },
   operatorId: {
     type: DataTypes.INTEGER,
@@ -154,12 +159,14 @@ const FlightInventoryLog = sequelize.define('FlightInventoryLog', {
     comment: '操作人姓名'
   },
   operatorRole: {
-    type: DataTypes.STRING(50),
+    type: DataTypes.STRING(100),
+    allowNull: true,
     comment: '操作人角色'
   },
-  operationIp: {
-    type: DataTypes.STRING(50),
-    comment: '操作IP'
+  operationRemark: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    comment: '操作备注/原因'
   },
   operationStatus: {
     type: DataTypes.TINYINT,
@@ -168,7 +175,13 @@ const FlightInventoryLog = sequelize.define('FlightInventoryLog', {
   },
   failReason: {
     type: DataTypes.STRING(500),
+    allowNull: true,
     comment: '失败原因'
+  },
+  operationIp: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: '操作IP'
   },
   createdAt: {
     type: DataTypes.DATE,
@@ -176,7 +189,8 @@ const FlightInventoryLog = sequelize.define('FlightInventoryLog', {
   }
 }, {
   tableName: 'flight_inventory_logs',
-  comment: '机票库存操作日志表',
+  comment: '机票库存台账日志表',
+  timestamps: false,
   indexes: [
     { fields: ['inventoryId'] },
     { fields: ['flightId'] },
@@ -184,14 +198,11 @@ const FlightInventoryLog = sequelize.define('FlightInventoryLog', {
     { fields: ['cabinClass'] },
     { fields: ['inventoryType'] },
     { fields: ['operationType'] },
+    { fields: ['operationCategory'] },
     { fields: ['operatorId'] },
-    { fields: ['createdAt'] },
-    { fields: ['relatedOrderId'] }
+    { fields: ['relatedOrderId'] },
+    { fields: ['createdAt'] }
   ]
 });
-
-FlightInventoryLog.belongsTo(FlightInventory, { foreignKey: 'inventoryId', as: 'inventory' });
-FlightInventoryLog.belongsTo(Flight, { foreignKey: 'flightId', as: 'flight' });
-FlightInventory.hasMany(FlightInventoryLog, { foreignKey: 'inventoryId', as: 'logs' });
 
 module.exports = FlightInventoryLog;
