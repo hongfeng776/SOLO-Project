@@ -216,7 +216,6 @@
     </div>
 
     <SystemLog v-if="activeTab === 'system'" />
-
     <CronLog v-if="activeTab === 'cron'" />
 
     <el-dialog v-model="detailDialogVisible" :title="`日志详情 #${currentLog?.id || ''}`" width="900px"

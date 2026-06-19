@@ -297,16 +297,156 @@ export interface Notification {
 
 export interface OperationLog {
   id: number
+  traceId: string
   userId: number
   username: string
+  userRole: string
   module: string
   action: string
   target: string
   targetId: number
-  detail: string
+  targetType: string
+  detail: any
+  beforeData: any
+  afterData: any
+  changedFields: string[]
   ip: string
-  result: string
+  ipLocation: string
+  userAgent: string
+  deviceInfo: any
+  os: string
+  browser: string
+  requestId: string
+  parentLogId: number
+  step: number
+  duration: number
+  result: 'success' | 'fail'
+  failReason: string
+  isMalicious: boolean
+  isTampered: boolean
+  tamperCheck: string
+  riskLevel: 'none' | 'low' | 'medium' | 'high' | 'critical'
+  verifyStatus: 'pending' | 'verified' | 'warning' | 'violation'
+  evidenceHash: string
+  integrityVerified?: boolean
+  chainLogs?: OperationLog[]
+  parentLog?: OperationLog
   createdAt: string
+}
+
+export interface LogValidationResult {
+  valid: boolean
+  errors: string[]
+  warnings: string[]
+}
+
+export interface LogOperator {
+  userId: number
+  username: string
+  userRole: string
+  operationCount: number
+}
+
+export interface LogModuleOption {
+  value: string
+  label: string
+}
+
+export interface LogActionOption {
+  value: string
+  label: string
+}
+
+export interface LogListParams extends PageParams {
+  keyword?: string
+  module?: string
+  action?: string
+  username?: string
+  userId?: number
+  result?: string
+  riskLevel?: string
+  isMalicious?: boolean
+  targetId?: number
+  targetType?: string
+  startDate?: string
+  endDate?: string
+}
+
+export interface LogStatsData {
+  totalCount: number
+  todayCount: number
+  maliciousCount: number
+  byModule: { module: string; count: number }[]
+  byAction: { action: string; count: number }[]
+  byResult: { result: string; count: number }[]
+  byRiskLevel: { level: string; count: number }[]
+  last7Days: { date: string; count: number }[]
+}
+
+export interface LogTraceConsistencyIssue {
+  logId: number
+  type: string
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  message: string
+}
+
+export interface LogTraceResult {
+  traceId: string
+  totalSteps: number
+  startTime: string
+  endTime: string
+  totalDuration: number
+  operator: {
+    userId: number
+    username: string
+    userRole: string
+    ip: string
+    ipLocation: string
+  }
+  target: {
+    targetId: number
+    targetType: string
+    target: string
+    module: string
+  }
+  logs: OperationLog[]
+  consistency: {
+    isConsistent: boolean
+    issues: LogTraceConsistencyIssue[]
+    allVerified: boolean
+  }
+  evidence: {
+    evidenceHashes: { logId: number; hash: string }[]
+    chainHash: string
+  }
+}
+
+export interface LogExportParams {
+  startDate: string
+  endDate: string
+  username?: string
+  module?: string
+  action?: string
+  result?: string
+  userId?: number
+  exportFields?: string[]
+}
+
+export interface LogExportResult {
+  total: number
+  exportedCount: number
+  filteredEmpty: number
+  fields: string[]
+  data: Record<string, any>[]
+  exportTime: string
+}
+
+export interface LogQueryRecord {
+  id: string
+  params: LogListParams
+  count: number
+  viewedAt: string
+  viewedLogIds: number[]
 }
 
 export interface DashboardStatistics {
@@ -1149,168 +1289,529 @@ export interface BatchModifyResult {
 
 // ================ 账号权限分配管理 ================
 
-export interface StatusCheck {
-  valid: boolean
-  reason?: string
-  level: 'success' | 'warning' | 'error'
-  status?: string
+export interface AccountPermissionItem {
+  id: number
+  uid: string
+  username: string
+  nickname: string
+  avatar: string
+  email: string
+  phone: string
+  role: string
+  status: 'active' | 'frozen' | 'temp_banned' | 'permanent_banned'
+  tags: string[]
+  permissionGroup: string
+  coreRoleName: string | null
+  coreRoleId: number | null
+  auxPermCount: number
+  allPermCount: number
+  lastLoginTime: string
+  createdAt: string
 }
 
-export interface UserPermRow {
+export interface AccountPermissionDetail {
   id: number
   uid: string
   username: string
   nickname: string
   role: string
   status: string
-  level: number
-  createdAt: string
-  roleId: number | null
-  roleName: string
-  directPermCount: number
-  rolePermCount: number
-  totalPermCount: number
-  statusCheck: StatusCheck
+  coreRole: { id: number; name: string; code: string; type: string; level: number } | null
+  coreRoleId: number | null
+  auxPermissions: { id: number; userId: number; permissionId: number; bindingType: string; source: string; permission: PermissionMenu }[]
+  effectivePermCount: number
 }
 
-export interface UserPermissionItem extends PermissionMenu {
-  userPermissionId?: number
-  source?: string
-  isOverride?: boolean
-  overrideType?: 'grant' | 'deny'
-  expiresAt?: string
-}
-
-export interface MatchIssue {
-  type: string
-  level: 'error' | 'warning'
-  reason: string
-  mutexGroup?: string
-  permissions?: { id: number; name: string; code: string }[]
-}
-
-export interface MatchCheckResult {
-  valid: boolean
-  matchScore: number
-  issues: MatchIssue[]
-  roleName?: string
-  permCount?: number
-}
-
-export interface UniqueCheckResult {
-  duplicates: number[]
-  overreach: { permissionId: number; permissionName: string; requiredLevel: number }[]
-  redundant: { permissionId: number; permissionName: string; reason: string }[]
-  valid: boolean
-}
-
-export interface UserPermDetail {
-  user: UserPermRow
-  statusCheck: StatusCheck
-  role: RoleItem | null
-  rolePermissions: PermissionMenu[]
-  directPermissions: UserPermissionItem[]
-  roleInheritedPermissions: PermissionMenu[]
-  overridePermissions: UserPermissionItem[]
-  denyPermissions: UserPermissionItem[]
-  grantExtraPermissions: UserPermissionItem[]
-}
-
-export interface AssignResult {
-  addedIds: number[]
-  checkResults: { permissionId: number; permissionName: string; result: string; reason: string }[]
-  totalRequested: number
-  totalAdded: number
-  totalBlocked: number
-}
-
-export interface RemoveResult {
-  removedIds: number[]
-  coreBlocked: { permissionId: number; reason: string }[]
-  totalRequested: number
-  totalRemoved: number
-}
-
-export interface BatchAssignResult {
-  success: { userId: number; username: string; permCount: number }[]
-  failed: { userId: number; username?: string; reason: string }[]
-  skipped: { userId: number; username?: string; reason: string }[]
-  total: number
-  batchId: string
-}
-
-export interface UserPermValidationIssue {
-  type: 'duplicate' | 'conflict' | 'overreach' | 'redundant' | 'missing'
-  severity: 'high' | 'medium' | 'low'
+export interface AccountPermConflict {
+  mutexGroup: string
   description: string
-  permissionId?: number
-  permissionName?: string
-  permissions?: { id: number; name: string; code: string }[]
-  module?: string
+  permissions: { id: number; name: string; code: string }[]
 }
 
-export interface UserPermValidation {
+export interface AccountRoleMatchResult {
+  matched: boolean
+  matchScore: number
+  roleName: string
+  roleLevel: number
+  totalPerms: number
+  mismatchCount: number
+}
+
+export interface AccountPermValidation {
   score: number
-  consistent: boolean
-  duplicateCount: number
-  conflictCount: number
-  overreachCount: number
-  redundantCount: number
-  corePermissionCount: number
-  totalPermissionCount: number
-  issues: UserPermValidationIssue[]
+  valid: boolean
+  issues: {
+    type: 'conflict' | 'overprivileged' | 'redundant'
+    severity: 'high' | 'medium' | 'low'
+    description: string
+    permissions: { id: number; name: string; code: string; requiredLevel?: number }[]
+  }[]
 }
 
-export interface UserPermTraceResult {
-  user: UserPermRow
-  role: RoleItem | null
-  statusCheck: StatusCheck
-  rolePermissions: PermissionMenu[]
-  directPermissions: UserPermissionItem[]
-  overridePermissions: UserPermissionItem[]
-  logs: UserPermLog[]
-  validation: UserPermValidation
+export interface AccountTraceResult {
+  user: { id: number; uid: string; username: string; nickname: string; role: string; status: string }
+  detail: AccountPermissionDetail
+  logs: AccountPermLog[]
+  validation: AccountPermValidation
 }
 
-export interface UserPermLog {
+export interface AccountPermLog {
   id: number
   userId: number
   userUid: string
-  userName: string
-  changeType: string
-  oldRoleId: number | null
-  newRoleId: number | null
-  oldRoleName: string | null
-  newRoleName: string | null
-  addedPermissions: { id: number; name: string; code: string }[]
-  removedPermissions: { id: number; name: string; code: string }[]
-  overridePermissions: any[]
-  checkResults: any[]
-  permissionSnapshot: any[]
+  username: string
+  changeType: 'assign_role' | 'revoke_role' | 'add_permission' | 'remove_permission' | 'batch_assign_role' | 'batch_add_permission' | 'sync_role_perms' | 'cleanup_redundant' | 'conflict_resolve'
+  beforeSnapshot: any
+  afterSnapshot: any
+  roleId: number | null
+  roleName: string | null
+  addedPermissions: number[]
+  removedPermissions: number[]
+  conflictInfo: any
   batchId: string | null
   operatorId: number | null
   operatorName: string | null
   operatorRole: string | null
   reason: string | null
-  tookEffectAt: string | null
   ip: string | null
   createdAt: string
 }
 
-export interface CleanResult {
-  cleanedCount: number
-  removedIds: number[]
-  cleanedPermissions: UserPermissionItem[]
+export interface BatchAssignResult {
+  success: { id: number; username: string }[]
+  failed: { id: number; username: string; reason: string }[]
+  filteredCount: number
 }
 
-export interface UserSelectOption {
+// ================ 系统运行日志管理 ================
+
+export type SystemLogType = 'system' | 'api' | 'error' | 'performance' | 'security' | 'cron'
+export type SystemLogLevel = 'debug' | 'info' | 'warning' | 'error' | 'critical'
+
+export interface SystemLog {
   id: number
-  uid: string
+  traceId: string
+  logType: SystemLogType
+  logTypeLabel: string
+  logLevel: SystemLogLevel
+  logLevelLabel: string
+  module: string
+  moduleLabel: string
+  title: string
+  content: string
+  stackTrace: string
+  requestMethod: string
+  requestUrl: string
+  requestParams: any
+  requestBody: any
+  responseStatus: number
+  responseData: any
+  duration: number
+  userId: number
   username: string
-  nickname: string
-  role: string
-  status: string
-  level: number
-  statusCheck: StatusCheck
-  blocked: boolean
+  ip: string
+  userAgent: string
+  serverName: string
+  processId: number
+  threadId: string
+  errorCode: string
+  errorName: string
+  isHighRisk: boolean
+  isRetained: boolean
+  retentionDays: number
+  expireAt: string
+  backupFile: string
+  backupAt: string
+  extraInfo: any
+  createdAt: string
+}
+
+export interface SystemLogPermission {
+  canViewError: boolean
+  canViewApi: boolean
+  canViewSystem: boolean
+  canBackup: boolean
+  canCleanup: boolean
+  canViewTraceability: boolean
+}
+
+export interface SystemLogListParams extends PageParams {
+  logType?: SystemLogType
+  logLevel?: SystemLogLevel
+  module?: string
+  responseStatus?: number
+  durationMin?: number
+  isHighRisk?: boolean
+  startDate?: string
+  endDate?: string
+  keyword?: string
+}
+
+export interface SystemLogStatsData {
+  totalCount: number
+  todayCount: number
+  highRiskCount: number
+  slowApiCount: number
+  byType: { type: string; label: string; count: number }[]
+  byLevel: { level: string; label: string; count: number }[]
+  levelCounts: { info: number; warning: number; error: number; critical: number }
+  levelPercentages: { info: number; warning: number; error: number; critical: number }
+  last7Days: { date: string; count: number; errorCount: number }[]
+  topErrorModules: { module: string; moduleLabel: string; count: number }[]
+  peakHours: { hour: number; count: number }[]
+}
+
+export interface SystemLogBackupParams {
+  startDate: string
+  endDate: string
+  logType?: SystemLogType
+  logLevel?: SystemLogLevel
+  module?: string
+}
+
+export interface SystemLogBackupResult {
+  total: number
+  backedUp: number
+  backupFile: string
+  backupPath: string
+  message: string
+}
+
+export interface SystemLogCleanupParams {
+  days?: number
+  startDate?: string
+  endDate?: string
+  logType?: SystemLogType
+  module?: string
+}
+
+export interface SystemLogCleanupResult {
+  total: number
+  cleaned: number
+  protectedCount: number
+  message: string
+}
+
+export interface SystemLogTraceErrorType {
+  name: string
+  errorCode: string
+  module: string
+  count: number
+  firstOccur: string
+  lastOccur: string
+  samples: { id: number; stackTrace: string; createdAt: string }[]
+}
+
+export interface SystemLogTraceSlowApi {
+  url: string
+  method: string
+  duration: number
+  count: number
+  lastOccur: string
+}
+
+export interface SystemLogStabilityScore {
+  score: number
+  level: 'excellent' | 'good' | 'fair' | 'poor'
+  levelLabel: string
+  totalLogs: number
+  errorLogs: number
+  warningLogs: number
+  slowApiLogs: number
+  highRiskLogs: number
+}
+
+export interface SystemLogOptimizationIssue {
+  severity: 'high' | 'medium' | 'low'
+  type: string
+  description: string
+  details: string[]
+}
+
+export interface SystemLogOptimizationSuggestion {
+  priority: 'high' | 'medium' | 'low'
+  title: string
+  description: string
+  affected: string
+}
+
+export interface SystemLogOptimizationReport {
+  generatedAt: string
+  period: string
+  totalIssues: number
+  issues: SystemLogOptimizationIssue[]
+  suggestions: SystemLogOptimizationSuggestion[]
+  summary: string
+}
+
+export interface SystemLogTraceabilityResult {
+  abnormalLogs: SystemLog[]
+  statistics: {
+    totalAbnormal: number
+    byType: { type: string; label: string; count: number }[]
+    byModule: { module: string; label: string; count: number }[]
+    byHour: { hour: number; count: number }[]
+    byDay: { day: string; count: number }[]
+    slowApis: SystemLogTraceSlowApi[]
+    errorTypes: SystemLogTraceErrorType[]
+  }
+  stabilityScore: SystemLogStabilityScore
+  optimizationReport: SystemLogOptimizationReport
+}
+
+export interface SystemLogOption {
+  value: string
+  label: string
+}
+
+export interface SystemLogViewRecord {
+  id: string
+  logId: number
+  logTitle: string
+  logType: SystemLogType
+  logLevel: SystemLogLevel
+  viewedAt: string
+}
+
+export type CronTaskType = 'data_sync' | 'backup' | 'cleanup' | 'report' | 'notification' | 'statistics' | 'health_check' | 'other'
+export type CronStatus = 'pending' | 'running' | 'success' | 'failed' | 'timeout' | 'skipped' | 'killed'
+export type CronTriggerType = 'scheduled' | 'manual' | 'retry' | 'api'
+export type CronAnomalyType = 'none' | 'duplicate' | 'timeout' | 'missed' | 'resource_exceeded' | 'config_error'
+export type CronRetryStrategy = 'exponential' | 'fixed' | 'linear' | 'none'
+export type StatsPeriod = 'daily' | 'weekly' | 'monthly'
+
+export interface CronLog {
+  id: number
+  taskId: string
+  taskName: string
+  taskType: CronTaskType
+  taskGroup?: string
+  triggerType: CronTriggerType
+  status: CronStatus
+  scheduledAt: string
+  startedAt?: string
+  finishedAt?: string
+  duration: number
+  timeoutThreshold: number
+  retryCount: number
+  maxRetries: number
+  retryStrategy: CronRetryStrategy
+  retryInterval: number
+  retryHistory?: any[]
+  parentLogId?: number
+  resultData?: any
+  output?: string
+  errorMessage?: string
+  errorStack?: string
+  errorCode?: string
+  configParams?: any
+  serverName?: string
+  processId?: number
+  cpuUsage?: number
+  memoryUsage?: number
+  memoryUsagePercent?: number
+  memoryUsageMB?: number
+  affectedRecords: number
+  processedRecords: number
+  failedRecords: number
+  isTimeout: boolean
+  isDuplicate: boolean
+  isMissed: boolean
+  anomalyType: CronAnomalyType
+  anomalyDetected: boolean
+  anomalyMessage?: string
+  optimizationSuggestion?: string
+  cronExpression?: string
+  nextRunAt?: string
+  createdBy?: number
+  createdByName?: string
+  traceId?: string
+  extraInfo?: any
+  defaultRetryStrategy?: {
+    strategy: CronRetryStrategy
+    maxRetries: number
+    interval: number
+    description: string
+  }
+  nextRetryTime?: string
+  retryLogs?: CronLog[]
+  parentLog?: CronLog
+  createdAt: string
+}
+
+export interface CronLogValidationResult {
+  valid: boolean
+  errors: string[]
+  warnings: string[]
+  validTaskConfig: boolean
+}
+
+export interface CronLogTaskValidation {
+  valid: boolean
+  message?: string
+  warning?: string
+}
+
+export interface CronLogListParams {
+  pageNum?: number
+  pageSize?: number
+  taskId?: string
+  taskName?: string
+  taskType?: CronTaskType
+  status?: CronStatus
+  triggerType?: CronTriggerType
+  anomalyType?: CronAnomalyType
+  startDate?: string
+  endDate?: string
+  keyword?: string
+}
+
+export interface CronLogStatsData {
+  summary: {
+    total: number
+    successCount: number
+    failedCount: number
+    timeoutCount: number
+    anomalyCount: number
+    successRate: number
+    failureRate: number
+    avgDuration: number
+  }
+  byTaskType: Record<string, {
+    label: string
+    total: number
+    success: number
+    failed: number
+    successRate: number
+  }>
+  trend: {
+    period: string
+    total: number
+    success: number
+    failed: number
+    timeout: number
+    anomaly: number
+  }[]
+  anomalyStats: {
+    duplicate: number
+    timeout: number
+    missed: number
+    resourceExceeded: number
+    configError: number
+  }
+  retryStats: {
+    withRetry: number
+    maxRetryReached: number
+    avgRetryCount: number
+  }
+  period: StatsPeriod
+}
+
+export interface CronLogRetryRecord {
+  attempt: number
+  startedAt: string
+  finishedAt?: string
+  duration: number
+  status: CronStatus
+  errorMessage?: string
+}
+
+export interface CronLogAnomaly {
+  type: string
+  severity: 'error' | 'warning' | 'info'
+  logId: number
+  scheduledAt: string
+  message: string
+}
+
+export interface CronLogConfigIssue {
+  severity: 'error' | 'warning' | 'info'
+  message: string
+}
+
+export interface CronLogResourceUsage {
+  cpu: {
+    avg: number
+    max: number
+    min: number
+  }
+  memory: {
+    avg: number
+    max: number
+    min: number
+  }
+}
+
+export interface CronLogExecutionAnalysis {
+  total: number
+  successCount: number
+  failedCount: number
+  timeoutCount: number
+  successRate: number
+  failureRate: number
+  avgDuration: number
+  maxDuration: number
+  minDuration: number
+  peakHours: {
+    hour: number
+    count: number
+    failed: number
+  }[]
+  stabilityScore: number
+}
+
+export interface CronLogOptimizationSuggestion {
+  priority: 'high' | 'medium' | 'low'
+  category: string
+  title: string
+  description: string
+  action: string
+}
+
+export interface CronLogOptimizationReport {
+  overallStatus: 'good' | 'warning' | 'poor'
+  suggestions: CronLogOptimizationSuggestion[]
+  summary: string
+}
+
+export interface CronLogTraceabilityResult {
+  taskOverview: {
+    taskId: string
+    taskName: string
+    taskType: CronTaskType
+    taskGroup?: string
+    cronExpression?: string
+    totalExecutions: number
+    recentExecutions: number
+    configParams?: any
+  }
+  executionFlow: CronLog[]
+  resourceUsage: CronLogResourceUsage
+  anomalies: CronLogAnomaly[]
+  configIssues: CronLogConfigIssue[]
+  analysis: CronLogExecutionAnalysis
+  optimization: CronLogOptimizationReport
+}
+
+export interface CronLogOption {
+  value: string
+  label: string
+  type?: string
+}
+
+export interface CronLogTaskInfo {
+  taskId: string
+  taskName: string
+  taskType: CronTaskType
+  taskGroup?: string
+}
+
+export interface CronLogViewRecord {
+  id: string
+  logId: number
+  taskId: string
+  taskName: string
+  taskType: CronTaskType
+  status: CronStatus
+  viewedAt: string
 }

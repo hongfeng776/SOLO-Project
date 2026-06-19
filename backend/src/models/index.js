@@ -22,8 +22,10 @@ const Role = require('./Role')
 const PermissionMenu = require('./PermissionMenu')
 const RolePermission = require('./RolePermission')
 const RolePermissionLog = require('./RolePermissionLog')
-const UserPermission = require('./UserPermission')
-const UserPermissionLog = require('./UserPermissionLog')
+const AccountPermission = require('./AccountPermission')
+const AccountPermissionLog = require('./AccountPermissionLog')
+const SystemLog = require('./SystemLog')
+const CronLog = require('./CronLog')
 
 User.hasMany(Resource, { foreignKey: 'authorId', as: 'resources' })
 Resource.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
@@ -102,15 +104,16 @@ PermissionMenu.belongsTo(PermissionMenu, { foreignKey: 'parentId', as: 'parent' 
 Role.hasMany(RolePermissionLog, { foreignKey: 'roleId', as: 'permissionLogs' })
 RolePermissionLog.belongsTo(Role, { foreignKey: 'roleId', as: 'role' })
 
-User.hasMany(UserPermission, { foreignKey: 'userId', as: 'userPermissions' })
-UserPermission.belongsTo(User, { foreignKey: 'userId', as: 'user' })
-UserPermission.belongsTo(PermissionMenu, { foreignKey: 'permissionId', as: 'permission' })
-UserPermission.belongsTo(Role, { foreignKey: 'roleId', as: 'sourceRole' })
-PermissionMenu.hasMany(UserPermission, { foreignKey: 'permissionId', as: 'userPermissions' })
-Role.hasMany(UserPermission, { foreignKey: 'roleId', as: 'grantedUserPermissions' })
+User.hasMany(AccountPermission, { foreignKey: 'userId', as: 'accountPermissions' })
+AccountPermission.belongsTo(User, { foreignKey: 'userId', as: 'user' })
+AccountPermission.belongsTo(Role, { foreignKey: 'roleId', as: 'role' })
+AccountPermission.belongsTo(PermissionMenu, { foreignKey: 'permissionId', as: 'permission' })
+User.hasMany(AccountPermissionLog, { foreignKey: 'userId', as: 'accountPermLogs' })
+AccountPermissionLog.belongsTo(User, { foreignKey: 'userId', as: 'user' })
+AccountPermissionLog.belongsTo(Role, { foreignKey: 'roleId', as: 'role' })
 
-User.hasMany(UserPermissionLog, { foreignKey: 'userId', as: 'permissionLogs' })
-UserPermissionLog.belongsTo(User, { foreignKey: 'userId', as: 'user' })
+CronLog.belongsTo(CronLog, { foreignKey: 'parentLogId', as: 'parentLog' })
+CronLog.hasMany(CronLog, { foreignKey: 'parentLogId', as: 'retryLogs' })
 
 module.exports = {
   User,
@@ -137,6 +140,8 @@ module.exports = {
   PermissionMenu,
   RolePermission,
   RolePermissionLog,
-  UserPermission,
-  UserPermissionLog
+  AccountPermission,
+  AccountPermissionLog,
+  SystemLog,
+  CronLog
 }

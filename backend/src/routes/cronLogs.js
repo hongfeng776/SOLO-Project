@@ -1,24 +1,18 @@
 const express = require('express')
 const router = express.Router()
-const { auth, authOptional } = require('../middlewares/auth')
-const controller = require('../controllers/cronLogController')
+const cronLogController = require('../controllers/cronLogController')
 
-router.get('/validate', authOptional, controller.validateParams)
-
-router.get('/task-types', authOptional, controller.getTaskTypeList)
-router.get('/statuses', authOptional, controller.getStatusList)
-router.get('/trigger-types', authOptional, controller.getTriggerTypeList)
-router.get('/task-names', authOptional, controller.getTaskNameList)
-router.get('/task-groups', authOptional, controller.getTaskGroupList)
-
-router.get('/stats', auth, controller.getStats)
-router.get('/batch-stats', auth, controller.getBatchStats)
-router.get('/traceability', auth, controller.getTraceability)
-
-router.get('/:id', auth, controller.getDetail)
-
-router.post('/', auth, controller.create)
-
-router.get('/', auth, controller.getList)
+router.get('/validate', cronLogController.validateParams)
+router.get('/types', cronLogController.getTypeList)
+router.get('/statuses', cronLogController.getStatusList)
+router.get('/trigger-types', cronLogController.getTriggerTypeList)
+router.get('/anomaly-types', cronLogController.getAnomalyTypeList)
+router.get('/retry-strategies', cronLogController.getRetryStrategyList)
+router.get('/tasks', cronLogController.getTaskList)
+router.get('/stats', cronLogController.getStats)
+router.get('/traceability', cronLogController.getTraceability)
+router.get('/:id', cronLogController.getDetail)
+router.get('/', cronLogController.getList)
+router.post('/', cronLogController.create)
 
 module.exports = router

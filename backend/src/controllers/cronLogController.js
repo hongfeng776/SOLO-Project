@@ -1,110 +1,130 @@
 const cronLogService = require('../services/cronLogService')
-const { success, fail, page } = require('../utils/response')
+const { success, failure } = require('../utils/response')
 
-exports.validateParams = async (req, res) => {
+const validateParams = async (req, res) => {
   try {
     const result = cronLogService.validateQueryParams(req.query)
-    return success(res, result)
+    return res.json(success(result))
   } catch (err) {
-    return fail(res, err.message, err.code || 400)
+    return res.json(failure(500, err.message))
   }
 }
 
-exports.getList = async (req, res) => {
+const getList = async (req, res) => {
   try {
-    const result = await cronLogService.getList(req.query)
-    return page(res, result.list, result.total, result.page, result.pageSize, { warnings: result.warnings })
+    const result = await cronLogService.getList({
+      ...req.query,
+      pageNum: parseInt(req.query.pageNum) || 1,
+      pageSize: parseInt(req.query.pageSize) || 20
+    })
+    return res.json(result)
   } catch (err) {
-    return fail(res, err.message, err.code || 400, { warnings: err.warnings })
+    return res.json(failure(500, err.message))
   }
 }
 
-exports.getDetail = async (req, res) => {
-  try {
-    const log = await cronLogService.getDetail(req.params.id)
-    return success(res, log)
-  } catch (err) {
-    return fail(res, err.message, err.code || 400)
-  }
-}
-
-exports.getStats = async (req, res) => {
+const getStats = async (req, res) => {
   try {
     const result = await cronLogService.getStats(req.query)
-    return success(res, result)
+    return res.json(result)
   } catch (err) {
-    return fail(res, err.message, err.code || 400)
+    return res.json(failure(500, err.message))
   }
 }
 
-exports.getBatchStats = async (req, res) => {
+const getDetail = async (req, res) => {
   try {
-    const result = await cronLogService.getBatchStats(req.query)
-    return success(res, result)
+    const { id } = req.params
+    const result = await cronLogService.getDetail(parseInt(id))
+    return res.json(result)
   } catch (err) {
-    return fail(res, err.message, err.code || 400)
+    return res.json(failure(500, err.message))
   }
 }
 
-exports.getTraceability = async (req, res) => {
+const create = async (req, res) => {
+  try {
+    const result = await cronLogService.create(req.body)
+    return res.json(result)
+  } catch (err) {
+    return res.json(failure(500, err.message))
+  }
+}
+
+const getTraceability = async (req, res) => {
   try {
     const result = await cronLogService.getTraceability(req.query)
-    return success(res, result)
+    return res.json(result)
   } catch (err) {
-    return fail(res, err.message, err.code || 400)
+    return res.json(failure(500, err.message))
   }
 }
 
-exports.create = async (req, res) => {
+const getTaskList = async (req, res) => {
   try {
-    const log = await cronLogService.create(req.body)
-    return success(res, log, '创建成功')
+    const result = await cronLogService.getTaskList()
+    return res.json(result)
   } catch (err) {
-    return fail(res, err.message, err.code || 400)
+    return res.json(failure(500, err.message))
   }
 }
 
-exports.getTaskTypeList = async (req, res) => {
+const getTypeList = async (req, res) => {
   try {
-    const result = await cronLogService.getTaskTypeList()
-    return success(res, result)
+    const result = cronLogService.getTypeList()
+    return res.json(result)
   } catch (err) {
-    return fail(res, err.message, err.code || 400)
+    return res.json(failure(500, err.message))
   }
 }
 
-exports.getStatusList = async (req, res) => {
+const getStatusList = async (req, res) => {
   try {
-    const result = await cronLogService.getStatusList()
-    return success(res, result)
+    const result = cronLogService.getStatusList()
+    return res.json(result)
   } catch (err) {
-    return fail(res, err.message, err.code || 400)
+    return res.json(failure(500, err.message))
   }
 }
 
-exports.getTriggerTypeList = async (req, res) => {
+const getTriggerTypeList = async (req, res) => {
   try {
-    const result = await cronLogService.getTriggerTypeList()
-    return success(res, result)
+    const result = cronLogService.getTriggerTypeList()
+    return res.json(result)
   } catch (err) {
-    return fail(res, err.message, err.code || 400)
+    return res.json(failure(500, err.message))
   }
 }
 
-exports.getTaskNameList = async (req, res) => {
+const getAnomalyTypeList = async (req, res) => {
   try {
-    const result = await cronLogService.getTaskNameList(req.query)
-    return success(res, result)
+    const result = cronLogService.getAnomalyTypeList()
+    return res.json(result)
   } catch (err) {
-    return fail(res, err.message, err.code || 400)
+    return res.json(failure(500, err.message))
   }
 }
 
-exports.getTaskGroupList = async (req, res) => {
+const getRetryStrategyList = async (req, res) => {
   try {
-    const result = await cronLogService.getTaskGroupList()
-    return success(res, result)
+    const result = cronLogService.getRetryStrategyList()
+    return res.json(result)
   } catch (err) {
-    return fail(res, err.message, err.code || 400)
+    return res.json(failure(500, err.message))
   }
+}
+
+module.exports = {
+  validateParams,
+  getList,
+  getStats,
+  getDetail,
+  create,
+  getTraceability,
+  getTaskList,
+  getTypeList,
+  getStatusList,
+  getTriggerTypeList,
+  getAnomalyTypeList,
+  getRetryStrategyList
 }

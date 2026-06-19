@@ -1,668 +1,729 @@
+const { Op } = require('sequelize')
 const { CronLog } = require('../models')
-const { Op, fn, col, literal } = require('sequelize')
-const { getPagination, buildFuzzyWhere } = require('../utils/common')
-const dayjs = require('dayjs')
+const { success, failure, page } = require('../utils/response')
+const crypto = require('crypto')
 
-const MAX_DATE_RANGE_DAYS = 60
-const SEGMENT_THRESHOLD_DAYS = 30
+const TASK_TYPE_OPTIONS = [
+  { value: 'data_sync', label: '数据同步' },
+  { value: 'backup', label: '数据备份' },
+  { value: 'cleanup', label: '数据清理' },
+  { value: 'report', label: '报表生成' },
+  { value: 'notification', label: '通知推送' },
+  { value: 'statistics', label: '统计计算' },
+  { value: 'health_check', label: '健康检查' },
+  { value: 'other', label: '其他任务' }
+]
 
-const TASK_TYPE_LABELS = {
-  data_sync: '数据同步',
-  data_cleanup: '数据清理',
-  report_generate: '报告生成',
-  backup: '备份',
-  monitor: '监控',
-  notification: '通知',
-  cache_refresh: '缓存刷新',
-  statistic: '统计',
-  custom: '自定义'
+const STATUS_OPTIONS = [
+  { value: 'pending', label: '等待中', type: 'info' },
+  { value: 'running', label: '执行中', type: 'primary' },
+  { value: 'success', label: '成功', type: 'success' },
+  { value: 'failed', label: '失败', type: 'danger' },
+  { value: 'timeout', label: '超时', type: 'warning' },
+  { value: 'skipped', label: '已跳过', type: 'info' },
+  { value: 'killed', label: '已终止', type: 'danger' }
+]
+
+const TRIGGER_TYPE_OPTIONS = [
+  { value: 'scheduled', label: '定时触发' },
+  { value: 'manual', label: '手动触发' },
+  { value: 'retry', label: '重试触发' },
+  { value: 'api', label: '接口触发' }
+]
+
+const ANOMALY_TYPE_OPTIONS = [
+  { value: 'none', label: '无异常' },
+  { value: 'duplicate', label: '重复执行' },
+  { value: 'timeout', label: '执行超时' },
+  { value: 'missed', label: '漏执行' },
+  { value: 'resource_exceeded', label: '资源超限' },
+  { value: 'config_error', label: '配置错误' }
+]
+
+const RETRY_STRATEGY_OPTIONS = [
+  { value: 'exponential', label: '指数退避' },
+  { value: 'fixed', label: '固定间隔' },
+  { value: 'linear', label: '线性递增' },
+  { value: 'none', label: '不重试' }
+]
+
+const validateQueryParams = (params) => {
+  const errors = []
+  const warnings = []
+
+  const { startDate, endDate, taskType, status, taskId, taskName, triggerType, anomalyType } = params
+
+  if (startDate && endDate) {
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24))
+
+    if (diffDays > 30) {
+      errors.push('查询时间跨度不能超过30天，请分段查询')
+    }
+
+    if (diffDays > 15) {
+      warnings.push('查询时间跨度较大，可能影响查询性能，建议缩小时间范围')
+    }
+
+    if (start > end) {
+      errors.push('开始时间不能晚于结束时间')
+    }
+  }
+
+  if (taskType && !TASK_TYPE_OPTIONS.some(opt => opt.value === taskType)) {
+    errors.push('无效的任务类型')
+  }
+
+  if (status && !STATUS_OPTIONS.some(opt => opt.value === status)) {
+    errors.push('无效的执行状态')
+  }
+
+  if (triggerType && !TRIGGER_TYPE_OPTIONS.some(opt => opt.value === triggerType)) {
+    errors.push('无效的触发类型')
+  }
+
+  if (anomalyType && !ANOMALY_TYPE_OPTIONS.some(opt => opt.value === anomalyType)) {
+    errors.push('无效的异常类型')
+  }
+
+  if (status === 'success' && anomalyType && anomalyType !== 'none') {
+    warnings.push('成功状态的任务通常无异常，筛选结果可能为空')
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings,
+    validTaskConfig: taskType ? TASK_TYPE_OPTIONS.some(opt => opt.value === taskType) : true
+  }
 }
 
-const STATUS_LABELS = {
-  pending: '待执行',
-  running: '执行中',
-  success: '成功',
-  failed: '失败',
-  timeout: '超时',
-  skipped: '跳过',
-  retrying: '重试中'
+const buildLogDetail = (log) => {
+  const result = log.get ? log.get({ plain: true }) : { ...log }
+
+  try {
+    if (result.configParams && typeof result.configParams === 'string') {
+      result.configParams = JSON.parse(result.configParams)
+    }
+  } catch (e) { /* 保持原样 */ }
+
+  try {
+    if (result.resultData && typeof result.resultData === 'string') {
+      result.resultData = JSON.parse(result.resultData)
+    }
+  } catch (e) { /* 保持原样 */ }
+
+  try {
+    if (result.retryHistory && typeof result.retryHistory === 'string') {
+      result.retryHistory = JSON.parse(result.retryHistory)
+    }
+  } catch (e) { /* 保持原样 */ }
+
+  try {
+    if (result.extraInfo && typeof result.extraInfo === 'string') {
+      result.extraInfo = JSON.parse(result.extraInfo)
+    }
+  } catch (e) { /* 保持原样 */ }
+
+  if (result.memoryUsage !== undefined && result.memoryUsage !== null) {
+    result.memoryUsageMB = Math.round(result.memoryUsage / (1024 * 1024))
+  }
+
+  return result
 }
 
-const TRIGGER_TYPE_LABELS = {
-  cron: '定时触发',
-  manual: '手动触发',
-  api: '接口触发',
-  dependency: '依赖触发',
-  event: '事件触发'
+const validateTaskConfig = async (taskId, taskType) => {
+  if (!taskId) return { valid: true, message: '' }
+
+  const recentLogs = await CronLog.findAll({
+    where: { taskId },
+    order: [['createdAt', 'DESC']],
+    limit: 10
+  })
+
+  if (recentLogs.length === 0) {
+    return { valid: false, message: '未找到该任务的执行记录，可能为无效任务ID' }
+  }
+
+  if (taskType && recentLogs.some(log => log.taskType !== taskType)) {
+    return { valid: false, message: '任务类型与历史记录不匹配，请检查筛选条件' }
+  }
+
+  const lastLog = recentLogs[0]
+  const now = Date.now()
+  const lastRun = new Date(lastLog.createdAt).getTime()
+  const daysSinceLastRun = Math.floor((now - lastRun) / (1000 * 60 * 60 * 24))
+
+  if (daysSinceLastRun > 7 && lastLog.status !== 'running') {
+    return { valid: true, warning: '该任务已超过7天未执行，可能已停用' }
+  }
+
+  return { valid: true, message: '' }
 }
 
-const RETRY_STRATEGY_LABELS = {
-  immediate: '立即重试',
-  fixed: '固定间隔',
-  interval: '递增间隔',
-  exponential: '指数退避'
+const getList = async (params) => {
+  const validation = validateQueryParams(params)
+  if (!validation.valid) {
+    return failure(400, validation.errors[0])
+  }
+
+  const taskValidation = await validateTaskConfig(params.taskId, params.taskType)
+  if (!taskValidation.valid) {
+    return success([], { total: 0, taskValidation, validation })
+  }
+
+  const { pageNum = 1, pageSize = 20, taskId, taskName, taskType, status, triggerType, anomalyType, startDate, endDate, keyword } = params
+
+  const where = {}
+
+  if (taskId) where.taskId = taskId
+  if (taskType) where.taskType = taskType
+  if (status) where.status = status
+  if (triggerType) where.triggerType = triggerType
+  if (anomalyType) where.anomalyType = anomalyType
+
+  if (taskName) {
+    where.taskName = { [Op.like]: `%${taskName}%` }
+  }
+
+  if (keyword) {
+    where[Op.or] = [
+      { taskName: { [Op.like]: `%${keyword}%` } },
+      { errorMessage: { [Op.like]: `%${keyword}%` } },
+      { output: { [Op.like]: `%${keyword}%` } }
+    ]
+  }
+
+  if (startDate && endDate) {
+    where.scheduledAt = {
+      [Op.between]: [new Date(startDate), new Date(endDate)]
+    }
+  }
+
+  const { count, rows } = await CronLog.findAndCountAll({
+    where,
+    order: [['scheduledAt', 'DESC']],
+    offset: (pageNum - 1) * pageSize,
+    limit: pageSize
+  })
+
+  const data = rows.map(buildLogDetail)
+
+  return page(data, count, pageNum, pageSize, {
+    validation,
+    taskValidation,
+    warnings: validation.warnings.concat(taskValidation.warning ? [taskValidation.warning] : [])
+  })
 }
 
-class CronLogService {
-  validateQueryParams(params = {}) {
-    const errors = []
-    const warnings = []
-
-    if (params.startDate && params.endDate) {
-      const start = dayjs(params.startDate)
-      const end = dayjs(params.endDate)
-      if (!start.isValid() || !end.isValid()) {
-        errors.push('日期格式不正确')
-      } else if (start.isAfter(end)) {
-        errors.push('开始日期不能晚于结束日期')
-      } else {
-        const diffDays = end.diff(start, 'day')
-        if (diffDays > MAX_DATE_RANGE_DAYS) {
-          errors.push(`查询时间跨度过大（超过${MAX_DATE_RANGE_DAYS}天），请分段查询`)
-        } else if (diffDays > SEGMENT_THRESHOLD_DAYS) {
-          warnings.push(`查询时间跨度${diffDays}天，数据量可能较大，建议分段查询`)
-        }
-      }
-    } else if (params.startDate || params.endDate) {
-      errors.push('请同时选择开始日期和结束日期')
-    }
-
-    if (params.taskType) {
-      const validTypes = Object.keys(TASK_TYPE_LABELS)
-      if (!validTypes.includes(params.taskType)) {
-        errors.push('任务类型不合法')
-      }
-    }
-
-    if (params.executeStatus) {
-      const validStatuses = Object.keys(STATUS_LABELS)
-      if (!validStatuses.includes(params.executeStatus)) {
-        errors.push('执行状态不合法')
-      }
-    }
-
-    if (params.executeStatus === 'success' && params.taskType) {
-      warnings.push('当前筛选成功状态的任务，将联动校验任务配置有效性')
-    }
-
-    if (params.minDuration !== undefined && params.minDuration !== null) {
-      if (isNaN(parseInt(params.minDuration)) || parseInt(params.minDuration) < 0) {
-        errors.push('最小执行耗时格式不正确')
-      }
-    }
-
-    return { valid: errors.length === 0, errors, warnings }
+const getStats = async (params) => {
+  const validation = validateQueryParams(params)
+  if (!validation.valid) {
+    return failure(400, validation.errors[0])
   }
 
-  buildLogDetail(log) {
-    const result = log.toJSON ? log.toJSON() : { ...log }
+  const { period = 'daily', startDate, endDate, taskType } = params
 
-    try { result.executeResult = result.executeResult ? JSON.parse(result.executeResult) : null } catch { }
-    try { result.retryRecords = result.retryRecords ? JSON.parse(result.retryRecords) : [] } catch { result.retryRecords = [] }
-    try { result.taskConfig = result.taskConfig ? JSON.parse(result.taskConfig) : null } catch { }
-    try { result.diskIo = result.diskIo ? JSON.parse(result.diskIo) : null } catch { }
-    try { result.networkIo = result.networkIo ? JSON.parse(result.networkIo) : null } catch { }
-    try { result.outputData = result.outputData ? JSON.parse(result.outputData) : null } catch { }
-    try { result.extraInfo = result.extraInfo ? JSON.parse(result.extraInfo) : null } catch { }
-
-    result.taskTypeLabel = TASK_TYPE_LABELS[result.taskType] || result.taskType
-    result.executeStatusLabel = STATUS_LABELS[result.executeStatus] || result.executeStatus
-    result.triggerTypeLabel = TRIGGER_TYPE_LABELS[result.triggerType] || result.triggerType
-    result.retryStrategyLabel = RETRY_STRATEGY_LABELS[result.retryStrategy] || result.retryStrategy
-
-    if (result.isDuplicate || result.isOvertime || result.isMissed) {
-      const anomalies = []
-      if (result.isDuplicate) anomalies.push('重复执行')
-      if (result.isOvertime) anomalies.push('超时执行')
-      if (result.isMissed) anomalies.push('漏执行')
-      result.anomalyDesc = anomalies.join('、')
-    }
-
-    return result
-  }
-
-  async getList(params = {}) {
-    const validation = this.validateQueryParams(params)
-    if (!validation.valid) {
-      const error = new Error(validation.errors.join('；'))
-      error.code = 400
-      error.warnings = validation.warnings
-      throw error
-    }
-
-    const { page, pageSize, offset, limit } = getPagination(params.page, params.pageSize)
-
-    const where = {}
-
-    if (params.taskName) {
-      where.taskName = { [Op.like]: `%${params.taskName}%` }
-    }
-
-    if (params.taskType) {
-      where.taskType = params.taskType
-    }
-
-    if (params.taskGroup) {
-      where.taskGroup = params.taskGroup
-    }
-
-    if (params.executeStatus) {
-      where.executeStatus = params.executeStatus
-    }
-
-    if (params.triggerType) {
-      where.triggerType = params.triggerType
-    }
-
-    if (params.isDuplicate !== undefined && params.isDuplicate !== null && params.isDuplicate !== '') {
-      where.isDuplicate = params.isDuplicate === 'true' || params.isDuplicate === true
-    }
-
-    if (params.isMissed !== undefined && params.isMissed !== null && params.isMissed !== '') {
-      where.isMissed = params.isMissed === 'true' || params.isMissed === true
-    }
-
-    if (params.isOvertime !== undefined && params.isOvertime !== null && params.isOvertime !== '') {
-      where.isOvertime = params.isOvertime === 'true' || params.isOvertime === true
-    }
-
-    if (params.minDuration !== undefined && params.minDuration !== null && params.minDuration !== '') {
-      where.duration = { [Op.gte]: parseInt(params.minDuration) }
-    }
-
-    if (params.startDate && params.endDate) {
-      const start = dayjs(params.startDate).startOf('day').toDate()
-      const end = dayjs(params.endDate).endOf('day').toDate()
-      where.startedAt = { [Op.between]: [start, end] }
-    }
-
-    if (params.keyword) {
-      const keywordWhere = buildFuzzyWhere(params.keyword, ['taskName', 'errorMessage', 'taskGroup'])
-      Object.assign(where, keywordWhere)
-    }
-
-    if (params.executeStatus === 'success') {
-      where.isTaskValid = true
-    }
-
-    const { count, rows } = await CronLog.findAndCountAll({
-      where,
-      offset,
-      limit,
-      order: [['createdAt', 'DESC']]
-    })
-
-    const list = rows.map(row => this.buildLogDetail(row))
-
-    return {
-      list,
-      total: count,
-      page,
-      pageSize,
-      warnings: validation.warnings
+  const where = {}
+  if (startDate && endDate) {
+    where.scheduledAt = {
+      [Op.between]: [new Date(startDate), new Date(endDate)]
     }
   }
+  if (taskType) where.taskType = taskType
 
-  async getDetail(id) {
-    const log = await CronLog.findByPk(id)
-    if (!log) {
-      const error = new Error('日志不存在')
-      error.code = 404
-      throw error
+  const allLogs = await CronLog.findAll({
+    where,
+    order: [['scheduledAt', 'ASC']],
+    attributes: ['id', 'status', 'taskType', 'scheduledAt', 'duration', 'isTimeout', 'isDuplicate', 'isMissed', 'anomalyType', 'anomalyDetected', 'retryCount']
+  })
+
+  const total = allLogs.length
+  const successCount = allLogs.filter(l => l.status === 'success').length
+  const failedCount = allLogs.filter(l => l.status === 'failed').length
+  const timeoutCount = allLogs.filter(l => l.isTimeout).length
+  const anomalyCount = allLogs.filter(l => l.anomalyDetected).length
+  const avgDuration = total > 0 ? Math.round(allLogs.reduce((sum, l) => sum + (l.duration || 0), 0) / total) : 0
+
+  const successRate = total > 0 ? parseFloat(((successCount / total) * 100).toFixed(2)) : 0
+  const failureRate = total > 0 ? parseFloat(((failedCount / total) * 100).toFixed(2)) : 0
+
+  const byTaskType = {}
+  TASK_TYPE_OPTIONS.forEach(opt => {
+    const typeLogs = allLogs.filter(l => l.taskType === opt.value)
+    byTaskType[opt.value] = {
+      label: opt.label,
+      total: typeLogs.length,
+      success: typeLogs.filter(l => l.status === 'success').length,
+      failed: typeLogs.filter(l => l.status === 'failed').length,
+      successRate: typeLogs.length > 0 ? parseFloat(((typeLogs.filter(l => l.status === 'success').length / typeLogs.length) * 100).toFixed(2)) : 0
     }
+  })
 
-    const detail = this.buildLogDetail(log)
-
-    if (detail.executeStatus === 'failed' || detail.executeStatus === 'timeout') {
-      detail.defaultRetryStrategy = {
-        maxRetries: detail.maxRetries || 3,
-        strategy: detail.retryStrategy || 'exponential',
-        strategyLabel: RETRY_STRATEGY_LABELS[detail.retryStrategy] || '指数退避',
-        intervals: this.calculateRetryIntervals(detail.retryStrategy || 'exponential', detail.maxRetries || 3)
-      }
-    }
-
-    if (detail.taskName) {
-      const recentLogs = await CronLog.findAll({
-        where: { taskName: detail.taskName, id: { [Op.ne]: id } },
-        order: [['createdAt', 'DESC']],
-        limit: 5,
-        raw: true
-      })
-      detail.recentExecutions = recentLogs.map(l => ({
-        id: l.id,
-        executeStatus: l.executeStatus,
-        duration: l.duration,
-        startedAt: l.startedAt,
-        errorMessage: l.errorMessage
-      }))
-    }
-
-    return detail
+  const periodFormat = {
+    daily: (date) => date.toISOString().split('T')[0],
+    weekly: (date) => {
+      const d = new Date(date)
+      const day = d.getDay()
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1)
+      return new Date(d.setDate(diff)).toISOString().split('T')[0]
+    },
+    monthly: (date) => date.toISOString().slice(0, 7)
   }
 
-  calculateRetryIntervals(strategy, maxRetries) {
-    const intervals = []
-    for (let i = 1; i <= maxRetries; i++) {
-      switch (strategy) {
-        case 'immediate': intervals.push(0); break
-        case 'fixed': intervals.push(5000); break
-        case 'interval': intervals.push(i * 5000); break
-        case 'exponential': intervals.push(Math.min(60000, Math.pow(2, i) * 1000)); break
-        default: intervals.push(Math.min(60000, Math.pow(2, i) * 1000))
-      }
+  const trendData = {}
+  allLogs.forEach(log => {
+    const key = periodFormat[period]?.(new Date(log.scheduledAt)) || periodFormat.daily(new Date(log.scheduledAt))
+    if (!trendData[key]) {
+      trendData[key] = { period: key, total: 0, success: 0, failed: 0, timeout: 0, anomaly: 0 }
     }
-    return intervals
+    trendData[key].total++
+    if (log.status === 'success') trendData[key].success++
+    if (log.status === 'failed') trendData[key].failed++
+    if (log.isTimeout) trendData[key].timeout++
+    if (log.anomalyDetected) trendData[key].anomaly++
+  })
+
+  const trend = Object.values(trendData).sort((a, b) => a.period.localeCompare(b.period))
+
+  const anomalyStats = {
+    duplicate: allLogs.filter(l => l.anomalyType === 'duplicate').length,
+    timeout: allLogs.filter(l => l.anomalyType === 'timeout').length,
+    missed: allLogs.filter(l => l.anomalyType === 'missed').length,
+    resourceExceeded: allLogs.filter(l => l.anomalyType === 'resource_exceeded').length,
+    configError: allLogs.filter(l => l.anomalyType === 'config_error').length
   }
 
-  async getStats(params = {}) {
-    const where = {}
+  const retryStats = {
+    withRetry: allLogs.filter(l => l.retryCount > 0).length,
+    maxRetryReached: allLogs.filter(l => l.retryCount >= 3 && l.status === 'failed').length,
+    avgRetryCount: total > 0 ? parseFloat((allLogs.reduce((sum, l) => sum + l.retryCount, 0) / total).toFixed(2)) : 0
+  }
 
-    if (params.startDate && params.endDate) {
-      const start = dayjs(params.startDate).startOf('day').toDate()
-      const end = dayjs(params.endDate).endOf('day').toDate()
-      where.startedAt = { [Op.between]: [start, end] }
-    }
-
-    if (params.taskType) {
-      where.taskType = params.taskType
-    }
-
-    if (params.taskGroup) {
-      where.taskGroup = params.taskGroup
-    }
-
-    const totalCount = await CronLog.count({ where })
-    const successCount = await CronLog.count({ where: { ...where, executeStatus: 'success' } })
-    const failedCount = await CronLog.count({ where: { ...where, executeStatus: 'failed' } })
-    const timeoutCount = await CronLog.count({ where: { ...where, executeStatus: 'timeout' } })
-    const runningCount = await CronLog.count({ where: { ...where, executeStatus: 'running' } })
-
-    const duplicateCount = await CronLog.count({ where: { ...where, isDuplicate: true } })
-    const missedCount = await CronLog.count({ where: { ...where, isMissed: true } })
-    const overtimeCount = await CronLog.count({ where: { ...where, isOvertime: true } })
-
-    const typeStats = await CronLog.findAll({
-      attributes: ['taskType', [fn('COUNT', '*'), 'count']],
-      where,
-      group: ['taskType']
-    })
-
-    const statusStats = await CronLog.findAll({
-      attributes: ['executeStatus', [fn('COUNT', '*'), 'count']],
-      where,
-      group: ['executeStatus']
-    })
-
-    const todayStart = dayjs().startOf('day').toDate()
-    const todayCount = await CronLog.count({ where: { ...where, startedAt: { [Op.gte]: todayStart } } })
-    const todaySuccess = await CronLog.count({ where: { ...where, startedAt: { [Op.gte]: todayStart }, executeStatus: 'success' } })
-
-    const avgDuration = await CronLog.findOne({
-      attributes: [[fn('AVG', col('duration')), 'avgDuration']],
-      where: { ...where, executeStatus: 'success' },
-      raw: true
-    })
-
-    const maxDurationLog = await CronLog.findOne({
-      where: { ...where, executeStatus: 'success' },
-      order: [['duration', 'DESC']],
-      raw: true
-    })
-
-    const last7Days = []
-    for (let i = 6; i >= 0; i--) {
-      const dayStart = dayjs().subtract(i, 'day').startOf('day').toDate()
-      const dayEnd = dayjs().subtract(i, 'day').endOf('day').toDate()
-      const dayWhere = { ...where, startedAt: { [Op.between]: [dayStart, dayEnd] } }
-      const dayTotal = await CronLog.count({ where: dayWhere })
-      const daySuccess = await CronLog.count({ where: { ...dayWhere, executeStatus: 'success' } })
-      const dayFailed = await CronLog.count({ where: { ...dayWhere, executeStatus: { [Op.in]: ['failed', 'timeout'] } } })
-      last7Days.push({
-        date: dayjs(dayStart).format('YYYY-MM-DD'),
-        total: dayTotal,
-        success: daySuccess,
-        failed: dayFailed,
-        successRate: dayTotal > 0 ? Math.round((daySuccess / dayTotal) * 100) : 0
-      })
-    }
-
-    const topFailedTasks = await CronLog.findAll({
-      attributes: ['taskName', [fn('COUNT', '*'), 'count']],
-      where: { ...where, executeStatus: { [Op.in]: ['failed', 'timeout'] } },
-      group: ['taskName'],
-      order: [[fn('COUNT', '*'), 'DESC']],
-      limit: 5,
-      raw: true
-    })
-
-    return {
-      totalCount,
+  return success({
+    summary: {
+      total,
       successCount,
       failedCount,
       timeoutCount,
-      runningCount,
-      anomalyCounts: { duplicate: duplicateCount, missed: missedCount, overtime: overtimeCount },
-      successRate: totalCount > 0 ? Math.round((successCount / totalCount) * 100) : 0,
-      failureRate: totalCount > 0 ? Math.round(((failedCount + timeoutCount) / totalCount) * 100) : 0,
-      todayCount,
-      todaySuccessRate: todayCount > 0 ? Math.round((todaySuccess / todayCount) * 100) : 0,
-      avgDuration: avgDuration ? Math.round(parseFloat(avgDuration.getDataValue('avgDuration')) || 0) : 0,
-      maxDuration: maxDurationLog ? maxDurationLog.duration : 0,
-      byType: typeStats.map(s => ({ type: s.taskType, label: TASK_TYPE_LABELS[s.taskType] || s.taskType, count: parseInt(s.getDataValue('count')) })),
-      byStatus: statusStats.map(s => ({ status: s.executeStatus, label: STATUS_LABEL[s.executeStatus] || s.executeStatus, count: parseInt(s.getDataValue('count')) })),
-      last7Days,
-      topFailedTasks: topFailedTasks.map(t => ({ taskName: t.taskName, count: parseInt(t.getDataValue('count')) }))
+      anomalyCount,
+      successRate,
+      failureRate,
+      avgDuration
+    },
+    byTaskType,
+    trend,
+    anomalyStats,
+    retryStats,
+    period
+  })
+}
+
+const getDetail = async (id) => {
+  const log = await CronLog.findByPk(id, {
+    include: [
+      { model: CronLog, as: 'retryLogs', order: [['createdAt', 'ASC']] },
+      { model: CronLog, as: 'parentLog' }
+    ]
+  })
+
+  if (!log) {
+    return failure(404, '日志不存在')
+  }
+
+  const detail = buildLogDetail(log)
+
+  if (detail.status === 'failed' || detail.status === 'timeout') {
+    detail.defaultRetryStrategy = {
+      strategy: detail.retryStrategy,
+      maxRetries: detail.maxRetries,
+      interval: detail.retryInterval,
+      description: getRetryStrategyDescription(detail.retryStrategy, detail.retryInterval, detail.maxRetries)
+    }
+
+    if (detail.retryCount < detail.maxRetries) {
+      detail.nextRetryTime = calculateNextRetryTime(detail)
     }
   }
 
-  async getBatchStats(params = {}) {
-    const where = {}
+  return success(detail)
+}
 
-    if (params.taskType) {
-      where.taskType = params.taskType
-    }
-    if (params.taskGroup) {
-      where.taskGroup = params.taskGroup
-    }
+const getRetryStrategyDescription = (strategy, interval, maxRetries) => {
+  const descriptions = {
+    exponential: `指数退避策略：首 retry 间隔 ${interval / 1000} 秒，之后每次翻倍，最多重试 ${maxRetries} 次`,
+    fixed: `固定间隔策略：每 ${interval / 1000} 秒重试一次，最多重试 ${maxRetries} 次`,
+    linear: `线性递增策略：首 retry 间隔 ${interval / 1000} 秒，之后每次增加 ${interval / 1000} 秒，最多重试 ${maxRetries} 次`,
+    none: '不进行自动重试，需手动触发'
+  }
+  return descriptions[strategy] || descriptions.fixed
+}
 
-    const periods = params.period || 'daily'
-    const days = periods === 'weekly' ? 28 : periods === 'monthly' ? 90 : 14
+const calculateNextRetryTime = (log) => {
+  if (!log.finishedAt) return null
 
-    const start = dayjs().subtract(days, 'day').startOf('day').toDate()
-    where.startedAt = { [Op.gte]: start }
+  const baseTime = new Date(log.finishedAt).getTime()
+  const retryCount = log.retryCount || 0
 
-    const allLogs = await CronLog.findAll({ where, raw: true })
+  let delay = log.retryInterval || 60000
 
-    const groupedData = {}
-    allLogs.forEach(log => {
-      let key
-      const logDate = dayjs(log.startedAt)
-      if (periods === 'weekly') {
-        key = logDate.startOf('week').format('YYYY-MM-DD')
-      } else if (periods === 'monthly') {
-        key = logDate.startOf('month').format('YYYY-MM')
-      } else {
-        key = logDate.format('YYYY-MM-DD')
-      }
-      if (!groupedData[key]) {
-        groupedData[key] = { total: 0, success: 0, failed: 0, timeout: 0, tasks: new Set() }
-      }
-      groupedData[key].total++
-      if (log.executeStatus === 'success') groupedData[key].success++
-      if (log.executeStatus === 'failed') groupedData[key].failed++
-      if (log.executeStatus === 'timeout') groupedData[key].timeout++
-      groupedData[key].tasks.add(log.taskName)
-    })
+  if (log.retryStrategy === 'exponential') {
+    delay = delay * Math.pow(2, retryCount)
+  } else if (log.retryStrategy === 'linear') {
+    delay = delay * (retryCount + 1)
+  }
 
-    const chartData = Object.entries(groupedData)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([period, data]) => ({
-        period,
-        total: data.total,
-        success: data.success,
-        failed: data.failed,
-        timeout: data.timeout,
-        taskCount: data.tasks.size,
-        successRate: data.total > 0 ? Math.round((data.success / data.total) * 100) : 0,
-        failureRate: data.total > 0 ? Math.round(((data.failed + data.timeout) / data.total) * 100) : 0
-      }))
+  return new Date(baseTime + delay).toISOString()
+}
 
-    const normalTasks = allLogs.filter(l => l.executeStatus === 'success' && !l.isDuplicate && !l.isOvertime)
-    const abnormalTasks = allLogs.filter(l => l.executeStatus !== 'success' || l.isDuplicate || l.isOvertime || l.isMissed)
+const create = async (data) => {
+  const log = await CronLog.create(data)
+  return success(log)
+}
 
-    const taskBreakdown = {}
-    allLogs.forEach(log => {
-      if (!taskBreakdown[log.taskName]) {
-        taskBreakdown[log.taskName] = { taskName: log.taskName, total: 0, success: 0, failed: 0, timeout: 0, avgDuration: 0, durations: [] }
-      }
-      taskBreakdown[log.taskName].total++
-      if (log.executeStatus === 'success') taskBreakdown[log.taskName].success++
-      if (log.executeStatus === 'failed') taskBreakdown[log.taskName].failed++
-      if (log.executeStatus === 'timeout') taskBreakdown[log.taskName].timeout++
-      taskBreakdown[log.taskName].durations.push(log.duration || 0)
-    })
+const getTraceability = async (params) => {
+  const validation = validateQueryParams(params)
+  if (!validation.valid) {
+    return failure(400, validation.errors[0])
+  }
 
-    Object.values(taskBreakdown).forEach(t => {
-      t.avgDuration = t.durations.length > 0 ? Math.round(t.durations.reduce((a, b) => a + b, 0) / t.durations.length) : 0
-      t.successRate = t.total > 0 ? Math.round((t.success / t.total) * 100) : 0
-      delete t.durations
-    })
+  const { taskId, startDate, endDate } = params
 
-    return {
-      chartData,
-      summary: {
-        totalPeriods: chartData.length,
-        overallSuccessRate: allLogs.length > 0 ? Math.round((normalTasks.length / allLogs.length) * 100) : 0,
-        normalTaskCount: normalTasks.length,
-        abnormalTaskCount: abnormalTasks.length,
-        avgSuccessRate: chartData.length > 0 ? Math.round(chartData.reduce((a, b) => a + b.successRate, 0) / chartData.length) : 0
-      },
-      taskBreakdown: Object.values(taskBreakdown).sort((a, b) => b.total - a.total)
+  if (!taskId) {
+    return failure(400, '请指定任务ID进行溯源')
+  }
+
+  const where = { taskId }
+  if (startDate && endDate) {
+    where.scheduledAt = {
+      [Op.between]: [new Date(startDate), new Date(endDate)]
     }
   }
 
-  async getTraceability(params = {}) {
-    const where = {
-      [Op.or]: [
-        { isDuplicate: true },
-        { isOvertime: true },
-        { isMissed: true },
-        { executeStatus: { [Op.in]: ['failed', 'timeout'] } },
-        { isTaskValid: false }
-      ]
+  const logs = await CronLog.findAll({
+    where,
+    order: [['scheduledAt', 'DESC']],
+    limit: 100,
+    include: [{ model: CronLog, as: 'retryLogs', order: [['createdAt', 'ASC']] }]
+  })
+
+  if (logs.length === 0) {
+    return failure(404, '未找到该任务的执行记录')
+  }
+
+  const recentLogs = logs.slice(0, 30)
+  const analysis = analyzeTaskExecutions(recentLogs)
+  const configIssues = validateTaskConfiguration(logs[0])
+  const anomalies = detectAnomalies(recentLogs)
+  const optimization = generateOptimizationReport(analysis, configIssues, anomalies)
+
+  return success({
+    taskOverview: {
+      taskId,
+      taskName: logs[0].taskName,
+      taskType: logs[0].taskType,
+      taskGroup: logs[0].taskGroup,
+      cronExpression: logs[0].cronExpression,
+      totalExecutions: logs.length,
+      recentExecutions: recentLogs.length,
+      configParams: buildLogDetail(logs[0]).configParams
+    },
+    executionFlow: recentLogs.map(buildLogDetail),
+    resourceUsage: analyzeResourceUsage(recentLogs),
+    anomalies,
+    configIssues,
+    analysis,
+    optimization
+  })
+}
+
+const analyzeTaskExecutions = (logs) => {
+  const total = logs.length
+  const successCount = logs.filter(l => l.status === 'success').length
+  const failedCount = logs.filter(l => l.status === 'failed').length
+  const timeoutCount = logs.filter(l => l.isTimeout).length
+
+  const durations = logs.filter(l => l.duration > 0).map(l => l.duration)
+  const avgDuration = durations.length > 0 ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : 0
+  const maxDuration = durations.length > 0 ? Math.max(...durations) : 0
+  const minDuration = durations.length > 0 ? Math.min(...durations) : 0
+
+  const byHour = {}
+  logs.forEach(log => {
+    const hour = new Date(log.scheduledAt).getHours()
+    if (!byHour[hour]) byHour[hour] = { hour, count: 0, failed: 0 }
+    byHour[hour].count++
+    if (log.status === 'failed') byHour[hour].failed++
+  })
+
+  const peakHours = Object.values(byHour)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3)
+
+  const stabilityScore = calculateStabilityScore(logs, successCount, total, timeoutCount)
+
+  return {
+    total,
+    successCount,
+    failedCount,
+    timeoutCount,
+    successRate: total > 0 ? parseFloat(((successCount / total) * 100).toFixed(2)) : 0,
+    failureRate: total > 0 ? parseFloat(((failedCount / total) * 100).toFixed(2)) : 0,
+    avgDuration,
+    maxDuration,
+    minDuration,
+    peakHours,
+    stabilityScore
+  }
+}
+
+const calculateStabilityScore = (logs, successCount, total, timeoutCount) => {
+  if (total === 0) return 0
+
+  let score = 100
+
+  const successRate = successCount / total
+  if (successRate < 0.95) score -= (0.95 - successRate) * 200
+  if (successRate < 0.8) score -= (0.8 - successRate) * 300
+
+  const timeoutRate = timeoutCount / total
+  if (timeoutRate > 0.1) score -= (timeoutRate - 0.1) * 200
+
+  const anomalyRate = logs.filter(l => l.anomalyDetected).length / total
+  if (anomalyRate > 0.05) score -= (anomalyRate - 0.05) * 300
+
+  const durations = logs.filter(l => l.duration > 0).map(l => l.duration)
+  if (durations.length > 5) {
+    const avg = durations.reduce((a, b) => a + b, 0) / durations.length
+    const variance = durations.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / durations.length
+    const cv = Math.sqrt(variance) / avg
+    if (cv > 0.5) score -= cv * 100
+  }
+
+  return Math.max(0, Math.min(100, Math.round(score)))
+}
+
+const validateTaskConfiguration = (log) => {
+  const issues = []
+
+  if (!log.cronExpression) {
+    issues.push({ severity: 'warning', message: '未配置Cron表达式，任务调度可能不规范' })
+  }
+
+  if (log.timeoutThreshold > 3600000 * 6) {
+    issues.push({ severity: 'warning', message: '超时阈值超过6小时，建议设置合理的超时时间' })
+  }
+
+  if (log.maxRetries > 5) {
+    issues.push({ severity: 'warning', message: '最大重试次数超过5次，可能导致资源浪费' })
+  }
+
+  if (log.retryStrategy === 'none' && log.status === 'failed') {
+    issues.push({ severity: 'info', message: '当前任务未配置重试策略，失败后需要手动处理' })
+  }
+
+  if (log.timeoutThreshold && log.retryInterval && log.retryInterval < log.timeoutThreshold / 2) {
+    issues.push({ severity: 'warning', message: '重试间隔小于超时时间的一半，可能导致重复执行' })
+  }
+
+  return issues
+}
+
+const detectAnomalies = (logs) => {
+  const anomalies = []
+
+  logs.forEach((log, index) => {
+    if (log.isDuplicate) {
+      anomalies.push({
+        type: 'duplicate',
+        severity: 'warning',
+        logId: log.id,
+        scheduledAt: log.scheduledAt,
+        message: '检测到重复执行，建议检查任务锁机制'
+      })
     }
 
-    if (params.startDate && params.endDate) {
-      const start = dayjs(params.startDate).startOf('day').toDate()
-      const end = dayjs(params.endDate).endOf('day').toDate()
-      where.startedAt = { [Op.between]: [start, end] }
-    } else {
-      const start = dayjs().subtract(7, 'day').startOf('day').toDate()
-      where.startedAt = { [Op.gte]: start }
+    if (log.isTimeout) {
+      anomalies.push({
+        type: 'timeout',
+        severity: 'error',
+        logId: log.id,
+        scheduledAt: log.scheduledAt,
+        message: `执行超时，耗时 ${log.duration}ms 超过阈值 ${log.timeoutThreshold}ms`
+      })
     }
 
-    if (params.taskType) {
-      where.taskType = params.taskType
-    }
-    if (params.taskGroup) {
-      where.taskGroup = params.taskGroup
-    }
-    if (params.anomalyType) {
-      where.anomalyType = params.anomalyType
-    }
-
-    const abnormalLogs = await CronLog.findAll({
-      where,
-      order: [['createdAt', 'DESC']],
-      limit: 500
-    })
-
-    const processedLogs = abnormalLogs.map(l => this.buildLogDetail(l))
-
-    const stats = {
-      totalAbnormal: processedLogs.length,
-      byAnomalyType: {},
-      byTask: {},
-      byType: {},
-      byHour: {},
-      byDay: {}
+    if (log.isMissed) {
+      anomalies.push({
+        type: 'missed',
+        severity: 'error',
+        logId: log.id,
+        scheduledAt: log.scheduledAt,
+        message: '检测到漏执行，建议检查调度器状态'
+      })
     }
 
-    processedLogs.forEach(log => {
-      if (log.anomalyType) {
-        stats.byAnomalyType[log.anomalyType] = (stats.byAnomalyType[log.anomalyType] || 0) + 1
-      }
-      stats.byTask[log.taskName] = (stats.byTask[log.taskName] || 0) + 1
-      stats.byType[log.taskType] = (stats.byType[log.taskType] || 0) + 1
+    if (index > 0) {
+      const prevTime = new Date(logs[index - 1].scheduledAt).getTime()
+      const currTime = new Date(log.scheduledAt).getTime()
+      const interval = currTime - prevTime
 
-      if (log.startedAt) {
-        const hour = dayjs(log.startedAt).hour()
-        stats.byHour[hour] = (stats.byHour[hour] || 0) + 1
-        const day = dayjs(log.startedAt).format('YYYY-MM-DD')
-        stats.byDay[day] = (stats.byDay[day] || 0) + 1
-      }
-    })
-
-    const resourceHighLogs = processedLogs.filter(l => l.cpuUsage > 80 || (l.memoryUsage && l.memoryUsage > 500 * 1024 * 1024))
-    const configInvalidLogs = processedLogs.filter(l => !l.isTaskValid)
-
-    const topAbnormalTasks = Object.entries(stats.byTask)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 10)
-      .map(([taskName, count]) => ({ taskName, count }))
-
-    const taskConfigAnalysis = []
-    for (const log of processedLogs) {
-      if (log.taskConfig) {
-        const config = log.taskConfig
-        taskConfigAnalysis.push({
-          taskName: log.taskName,
-          configValid: log.isTaskValid,
-          invalidReason: log.invalidReason,
-          cronExpression: log.cronExpression,
-          timeoutThreshold: log.timeoutThreshold,
-          maxRetries: log.maxRetries
+      if (log.cronExpression && interval < 60000) {
+        anomalies.push({
+          type: 'too_frequent',
+          severity: 'warning',
+          logId: log.id,
+          scheduledAt: log.scheduledAt,
+          message: `执行间隔过短（${interval / 1000}秒），可能存在调度异常`
         })
       }
     }
 
-    const suggestions = []
-    if (stats.byAnomalyType.duplicate > 0) {
-      suggestions.push({
-        priority: 'high',
-        type: 'duplicate',
-        title: '检测到重复执行任务',
-        description: `发现 ${stats.byAnomalyType.duplicate} 次重复执行，建议检查任务调度配置，添加分布式锁防止并发执行`,
-        count: stats.byAnomalyType.duplicate
+    if (log.cpuUsage > 80 || log.memoryUsagePercent > 80) {
+      anomalies.push({
+        type: 'resource_exceeded',
+        severity: 'warning',
+        logId: log.id,
+        scheduledAt: log.scheduledAt,
+        message: `资源使用过高 - CPU: ${log.cpuUsage}%, 内存: ${log.memoryUsagePercent}%`
       })
     }
-    if (stats.byAnomalyType.overtime > 0) {
-      suggestions.push({
-        priority: 'high',
-        type: 'overtime',
-        title: '检测到超时执行任务',
-        description: `发现 ${stats.byAnomalyType.overtime} 次超时执行，建议优化任务逻辑或增加超时阈值`,
-        count: stats.byAnomalyType.overtime
-      })
-    }
-    if (stats.byAnomalyType.missed > 0) {
-      suggestions.push({
-        priority: 'medium',
-        type: 'missed',
-        title: '检测到漏执行任务',
-        description: `发现 ${stats.byAnomalyType.missed} 次漏执行，建议检查调度器健康状态和系统资源`,
-        count: stats.byAnomalyType.missed
-      })
-    }
-    if (configInvalidLogs.length > 0) {
-      suggestions.push({
-        priority: 'medium',
-        type: 'config_invalid',
-        title: '检测到配置无效任务',
-        description: `发现 ${configInvalidLogs.length} 次配置无效执行，建议检查Cron表达式和任务参数`,
-        count: configInvalidLogs.length
-      })
-    }
-    if (resourceHighLogs.length > 0) {
-      suggestions.push({
-        priority: 'low',
-        type: 'resource_high',
-        title: '检测到资源占用异常',
-        description: `发现 ${resourceHighLogs.length} 次高资源占用执行，建议优化任务逻辑或限制资源使用`,
-        count: resourceHighLogs.length
-      })
-    }
+  })
 
-    return {
-      abnormalLogs: processedLogs,
-      statistics: {
-        totalAbnormal: stats.totalAbnormal,
-        byAnomalyType: Object.entries(stats.byAnomalyType).map(([type, count]) => ({
-          type,
-          label: { duplicate: '重复执行', overtime: '超时执行', missed: '漏执行', config_invalid: '配置无效', resource_high: '资源占用异常' }[type] || type,
-          count
-        })),
-        byTask: topAbnormalTasks,
-        byType: Object.entries(stats.byType).map(([type, count]) => ({ type, label: TASK_TYPE_LABELS[type] || type, count })),
-        byHour: Object.entries(stats.byHour).map(([hour, count]) => ({ hour: parseInt(hour), count })),
-        byDay: Object.entries(stats.byDay).map(([day, count]) => ({ day, count }))
-      },
-      resourceAnalysis: {
-        highResourceCount: resourceHighLogs.length,
-        avgCpuUsage: resourceHighLogs.length > 0 ? Math.round(resourceHighLogs.reduce((a, l) => a + (parseFloat(l.cpuUsage) || 0), 0) / resourceHighLogs.length) : 0,
-        avgMemoryUsage: resourceHighLogs.length > 0 ? Math.round(resourceHighLogs.reduce((a, l) => a + (l.memoryUsage || 0), 0) / resourceHighLogs.length) : 0
-      },
-      configAnalysis: taskConfigAnalysis.slice(0, 20),
-      optimizationSuggestions: suggestions
-    }
-  }
+  return anomalies
+}
 
-  async create(data) {
-    if (data.executeResult && typeof data.executeResult === 'object') {
-      data.executeResult = JSON.stringify(data.executeResult)
-    }
-    if (data.retryRecords && typeof data.retryRecords === 'object') {
-      data.retryRecords = JSON.stringify(data.retryRecords)
-    }
-    if (data.taskConfig && typeof data.taskConfig === 'object') {
-      data.taskConfig = JSON.stringify(data.taskConfig)
-    }
-    if (data.diskIo && typeof data.diskIo === 'object') {
-      data.diskIo = JSON.stringify(data.diskIo)
-    }
-    if (data.networkIo && typeof data.networkIo === 'object') {
-      data.networkIo = JSON.stringify(data.networkIo)
-    }
-    if (data.outputData && typeof data.outputData === 'object') {
-      data.outputData = JSON.stringify(data.outputData)
-    }
-    if (data.extraInfo && typeof data.extraInfo === 'object') {
-      data.extraInfo = JSON.stringify(data.extraInfo)
-    }
+const analyzeResourceUsage = (logs) => {
+  const cpuUsages = logs.filter(l => l.cpuUsage !== null && l.cpuUsage !== undefined).map(l => parseFloat(l.cpuUsage))
+  const memoryUsages = logs.filter(l => l.memoryUsagePercent !== null && l.memoryUsagePercent !== undefined).map(l => parseFloat(l.memoryUsagePercent))
 
-    if (data.duration && data.timeoutThreshold && data.duration > data.timeoutThreshold) {
-      data.isOvertime = true
-      if (!data.anomalyType) data.anomalyType = 'overtime'
+  return {
+    cpu: {
+      avg: cpuUsages.length > 0 ? parseFloat((cpuUsages.reduce((a, b) => a + b, 0) / cpuUsages.length).toFixed(2)) : 0,
+      max: cpuUsages.length > 0 ? Math.max(...cpuUsages) : 0,
+      min: cpuUsages.length > 0 ? Math.min(...cpuUsages) : 0
+    },
+    memory: {
+      avg: memoryUsages.length > 0 ? parseFloat((memoryUsages.reduce((a, b) => a + b, 0) / memoryUsages.length).toFixed(2)) : 0,
+      max: memoryUsages.length > 0 ? Math.max(...memoryUsages) : 0,
+      min: memoryUsages.length > 0 ? Math.min(...memoryUsages) : 0
     }
-
-    const log = await CronLog.create(data)
-    return log
-  }
-
-  async getTaskTypeList() {
-    return Object.entries(TASK_TYPE_LABELS).map(([value, label]) => ({ value, label }))
-  }
-
-  async getStatusList() {
-    return Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }))
-  }
-
-  async getTriggerTypeList() {
-    return Object.entries(TRIGGER_TYPE_LABELS).map(([value, label]) => ({ value, label }))
-  }
-
-  async getTaskNameList(params = {}) {
-    const where = {}
-    if (params.taskType) where.taskType = params.taskType
-    if (params.taskGroup) where.taskGroup = params.taskGroup
-
-    const results = await CronLog.findAll({
-      attributes: [[fn('DISTINCT', col('taskName')), 'taskName']],
-      where,
-      raw: true
-    })
-    return results.map(r => ({ value: r.taskName, label: r.taskName }))
-  }
-
-  async getTaskGroupList() {
-    const results = await CronLog.findAll({
-      attributes: [[fn('DISTINCT', col('taskGroup')), 'taskGroup']],
-      where: { taskGroup: { [Op.ne]: null } },
-      raw: true
-    })
-    return results.filter(r => r.taskGroup).map(r => ({ value: r.taskGroup, label: r.taskGroup }))
   }
 }
 
-module.exports = new CronLogService()
+const generateOptimizationReport = (analysis, configIssues, anomalies) => {
+  const suggestions = []
+
+  if (analysis.successRate < 90) {
+    suggestions.push({
+      priority: 'high',
+      category: 'reliability',
+      title: '提升任务成功率',
+      description: `当前成功率仅 ${analysis.successRate}%，低于90%的健康阈值`,
+      action: '建议检查任务逻辑、增加错误处理、优化重试策略'
+    })
+  }
+
+  if (analysis.stabilityScore < 70) {
+    suggestions.push({
+      priority: 'high',
+      category: 'stability',
+      title: '提升任务稳定性',
+      description: `稳定性评分 ${analysis.stabilityScore}/100，存在较大波动`,
+      action: '建议优化资源配置、增加监控告警、设置合理的超时时间'
+    })
+  }
+
+  if (anomalies.filter(a => a.type === 'duplicate').length > 0) {
+    suggestions.push({
+      priority: 'high',
+      category: 'concurrency',
+      title: '解决重复执行问题',
+      description: '检测到重复执行异常',
+      action: '建议实现分布式锁、增加任务幂等性校验、检查调度器配置'
+    })
+  }
+
+  if (anomalies.filter(a => a.type === 'timeout').length > 0) {
+    suggestions.push({
+      priority: 'medium',
+      category: 'performance',
+      title: '优化任务执行性能',
+      description: '存在超时执行的任务',
+      action: '建议优化任务逻辑、分批处理数据、增加并行处理能力'
+    })
+  }
+
+  if (configIssues.length > 0) {
+    suggestions.push({
+      priority: 'medium',
+      category: 'configuration',
+      title: '优化任务配置',
+      description: `发现 ${configIssues.length} 个配置问题`,
+      action: '建议审查并优化Cron表达式、超时时间、重试策略等配置'
+    })
+  }
+
+  if (analysis.avgDuration > 300000) {
+    suggestions.push({
+      priority: 'low',
+      category: 'performance',
+      title: '缩短任务执行时间',
+      description: `平均执行时间 ${analysis.avgDuration / 1000} 秒，超过5分钟`,
+      action: '建议优化算法、增加缓存、考虑异步处理'
+    })
+  }
+
+  if (suggestions.length === 0) {
+    suggestions.push({
+      priority: 'low',
+      category: 'maintenance',
+      title: '任务运行状态良好',
+      description: '当前任务各项指标均在健康范围内',
+      action: '继续保持监控，定期检查任务执行情况'
+    })
+  }
+
+  return {
+    overallStatus: analysis.stabilityScore >= 80 ? 'good' : analysis.stabilityScore >= 60 ? 'warning' : 'poor',
+    suggestions,
+    summary: `稳定性评分 ${analysis.stabilityScore}/100，成功率 ${analysis.successRate}%，共 ${anomalies.length} 个异常待处理`
+  }
+}
+
+const getTaskList = async () => {
+  const logs = await CronLog.findAll({
+    attributes: ['taskId', 'taskName', 'taskType', 'taskGroup'],
+    group: ['taskId', 'taskName', 'taskType', 'taskGroup'],
+    order: [['taskName', 'ASC']]
+  })
+
+  return success(logs.map(l => ({
+    taskId: l.taskId,
+    taskName: l.taskName,
+    taskType: l.taskType,
+    taskGroup: l.taskGroup
+  })))
+}
+
+const getTypeList = () => success(TASK_TYPE_OPTIONS)
+const getStatusList = () => success(STATUS_OPTIONS)
+const getTriggerTypeList = () => success(TRIGGER_TYPE_OPTIONS)
+const getAnomalyTypeList = () => success(ANOMALY_TYPE_OPTIONS)
+const getRetryStrategyList = () => success(RETRY_STRATEGY_OPTIONS)
+
+module.exports = {
+  validateQueryParams,
+  getList,
+  getStats,
+  getDetail,
+  create,
+  getTraceability,
+  getTaskList,
+  getTypeList,
+  getStatusList,
+  getTriggerTypeList,
+  getAnomalyTypeList,
+  getRetryStrategyList
+}
