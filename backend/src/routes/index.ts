@@ -56,6 +56,10 @@ import shopInfoRouter from './shopInfo';
 import shopStatusRouter from './shopStatus';
 import shopBatchRouter from './shopBatch';
 import shopTraceRouter from './shopTrace';
+import merchantBusinessRouter from './merchantBusiness';
+import merchantBusinessCorrectRouter from './merchantBusinessCorrect';
+import merchantBusinessBatchRouter from './merchantBusinessBatch';
+import merchantBusinessTraceRouter from './merchantBusinessTrace';
 
 const router = Router();
 
@@ -116,5 +120,9 @@ router.use('/shopInfo', shopInfoRouter);
 router.use('/shopStatus', shopStatusRouter);
 router.use('/shopBatch', shopBatchRouter);
 router.use('/shopTrace', shopTraceRouter);
+router.use('/merchantBusiness', merchantBusinessRouter);
+router.use('/merchantBusinessCorrect', merchantBusinessCorrectRouter);
+router.use('/merchantBusinessBatch', merchantBusinessBatchRouter);
+router.use('/merchantBusinessTrace', merchantBusinessTraceRouter);
 
 export default router;

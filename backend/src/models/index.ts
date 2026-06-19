@@ -53,6 +53,10 @@ import { QualificationChangeLog } from './QualificationChangeLog';
 import { ShopStatusChangeLog } from './ShopStatusChangeLog';
 import { ShopInfoChangeLog } from './ShopInfoChangeLog';
 import { ShopOperationLedger } from './ShopOperationLedger';
+import { MerchantBusinessData } from './MerchantBusinessData';
+import { MerchantBusinessCorrectLog } from './MerchantBusinessCorrectLog';
+import { MerchantLevelAssessLog } from './MerchantLevelAssessLog';
+import { MerchantBusinessAbnormalLog } from './MerchantBusinessAbnormalLog';
 
 export {
   Admin,
@@ -110,6 +114,10 @@ export {
   ShopStatusChangeLog,
   ShopInfoChangeLog,
   ShopOperationLedger,
+  MerchantBusinessData,
+  MerchantBusinessCorrectLog,
+  MerchantLevelAssessLog,
+  MerchantBusinessAbnormalLog,
 };
 
 export const models = {
@@ -168,6 +176,10 @@ export const models = {
   ShopStatusChangeLog,
   ShopInfoChangeLog,
   ShopOperationLedger,
+  MerchantBusinessData,
+  MerchantBusinessCorrectLog,
+  MerchantLevelAssessLog,
+  MerchantBusinessAbnormalLog,
 };
 
 export default models;

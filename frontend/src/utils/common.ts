@@ -42,3 +42,10 @@ export function deepClone<T>(obj: T): T {
 export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substring(2)
 }
+
+export function formatNumber(num: number | string | null | undefined, decimals: number = 0): string {
+  if (num === null || num === undefined || num === '') return '0'
+  const n = Number(num)
+  if (isNaN(n)) return '0'
+  return n.toLocaleString('zh-CN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+}

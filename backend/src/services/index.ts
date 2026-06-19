@@ -51,6 +51,10 @@ import ShopInfoService, { shopInfoService } from './ShopInfoService';
 import ShopStatusService, { shopStatusService } from './ShopStatusService';
 import ShopBatchService, { shopBatchService } from './ShopBatchService';
 import ShopTraceService, { shopTraceService } from './ShopTraceService';
+import MerchantBusinessService, { merchantBusinessService } from './MerchantBusinessService';
+import MerchantBusinessCorrectService, { merchantBusinessCorrectService } from './MerchantBusinessCorrectService';
+import MerchantBusinessBatchService, { merchantBusinessBatchService } from './MerchantBusinessBatchService';
+import MerchantBusinessTraceService, { merchantBusinessTraceService } from './MerchantBusinessTraceService';
 
 export {
   AfterSaleAuditService,
@@ -106,6 +110,10 @@ export {
   ShopStatusService,
   ShopBatchService,
   ShopTraceService,
+  MerchantBusinessService,
+  MerchantBusinessCorrectService,
+  MerchantBusinessBatchService,
+  MerchantBusinessTraceService,
 };
 
 export const services: Record<string, any> = {
@@ -162,6 +170,10 @@ export const services: Record<string, any> = {
   shopStatusService,
   shopBatchService,
   shopTraceService,
+  merchantBusinessService,
+  merchantBusinessCorrectService,
+  merchantBusinessBatchService,
+  merchantBusinessTraceService,
 };
 
 export default services;

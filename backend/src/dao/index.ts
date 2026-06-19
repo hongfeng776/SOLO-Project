@@ -55,6 +55,10 @@ import { QualificationChangeLogDao } from './QualificationChangeLogDao';
 import { ShopStatusChangeLogDao } from './ShopStatusChangeLogDao';
 import { ShopInfoChangeLogDao } from './ShopInfoChangeLogDao';
 import { ShopOperationLedgerDao } from './ShopOperationLedgerDao';
+import { MerchantBusinessDataDao } from './MerchantBusinessDataDao';
+import { MerchantBusinessCorrectLogDao } from './MerchantBusinessCorrectLogDao';
+import { MerchantLevelAssessLogDao } from './MerchantLevelAssessLogDao';
+import { MerchantBusinessAbnormalLogDao } from './MerchantBusinessAbnormalLogDao';
 
 export {
   BaseDao,
@@ -116,6 +120,10 @@ export {
   ShopStatusChangeLogDao,
   ShopInfoChangeLogDao,
   ShopOperationLedgerDao,
+  MerchantBusinessDataDao,
+  MerchantBusinessCorrectLogDao,
+  MerchantLevelAssessLogDao,
+  MerchantBusinessAbnormalLogDao,
 };
 
 export const daos = {
@@ -175,6 +183,10 @@ export const daos = {
   shopStatusChangeLogDao: new ShopStatusChangeLogDao(),
   shopInfoChangeLogDao: new ShopInfoChangeLogDao(),
   shopOperationLedgerDao: new ShopOperationLedgerDao(),
+  merchantBusinessDataDao: new MerchantBusinessDataDao(),
+  merchantBusinessCorrectLogDao: new MerchantBusinessCorrectLogDao(),
+  merchantLevelAssessLogDao: new MerchantLevelAssessLogDao(),
+  merchantBusinessAbnormalLogDao: new MerchantBusinessAbnormalLogDao(),
 };
 
 export default daos;
