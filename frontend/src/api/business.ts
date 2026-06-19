@@ -874,3 +874,371 @@ export function getCustomerProfileBatchListApi(params: BatchQueryParams) {
 export function getCustomerProfileBatchItemsApi(params: BatchItemQueryParams) {
   return get<PageResult<BatchItemVO>>('/business/customer-profile/batch/items', params)
 }
+
+// ========== 对公客户信息运维 ==========
+
+export interface CorpPreCheckFieldError {
+  field: string
+  message: string
+  code?: string
+}
+
+export interface CorpPreCheckResult {
+  passed: boolean
+  blocked: boolean
+  filing_verify_status: number
+  legal_verify_status: number
+  qualification_verify_status: number
+  info_completeness: number
+  missing_fields: string[]
+  errors: CorpPreCheckFieldError[]
+  warnings: string[]
+  block_reason?: string
+}
+
+export interface CorpTypeAdaptResult {
+  customer_type: number
+  customer_type_text: string
+  credit_limit: number
+  service_level: number
+  service_level_text: string
+  risk_level: number
+  risk_level_text: string
+  risk_tags: string[]
+  service_permissions: string[]
+  adapt_factors: {
+    registered_capital: number
+    business_years: number
+    business_status: number
+    industry_type: string
+  }
+  adapt_rules: string[]
+}
+
+export interface CorporateProfile {
+  id: string
+  profile_no: string
+  org_id?: string
+  org_name?: string
+  enterprise_name: string
+  credit_code: string
+  enterprise_short_name?: string
+  legal_representative: string
+  legal_id_card_no: string
+  legal_id_type?: number
+  legal_id_type_text?: string
+  legal_mobile?: string
+  industry_type?: string
+  industry_code?: string
+  registered_capital?: number
+  registered_address: string
+  business_address?: string
+  establish_date?: string
+  business_years?: number
+  business_status: number
+  business_status_text?: string
+  business_scope?: string
+  license_no?: string
+  license_valid_from?: string
+  license_valid_to?: string
+  license_permanent?: number
+  customer_type: number
+  customer_type_text?: string
+  credit_limit?: number
+  service_level: number
+  service_level_text?: string
+  risk_level: number
+  risk_level_text?: string
+  risk_tags?: string
+  risk_tag_list?: string[]
+  contact_person?: string
+  contact_phone?: string
+  contact_email?: string
+  filing_verify_status: number
+  legal_verify_status: number
+  qualification_verify_status: number
+  is_dishonest: number
+  dishonest_info?: string
+  info_completeness: number
+  missing_fields?: string
+  missing_field_list?: string[]
+  need_complete: number
+  is_abnormal: number
+  abnormal_reason?: string
+  service_permissions?: string
+  service_permission_list?: string[]
+  status: number
+  status_text?: string
+  creator_id?: string
+  creator_name?: string
+  profile_time?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface CorporateProfileForm {
+  id?: string
+  org_id?: string
+  enterprise_name: string
+  credit_code: string
+  enterprise_short_name?: string
+  legal_representative: string
+  legal_id_card_no: string
+  legal_id_type?: number
+  legal_mobile?: string
+  industry_type?: string
+  industry_code?: string
+  registered_capital?: number
+  registered_address: string
+  business_address?: string
+  establish_date?: string
+  business_years?: number
+  business_status?: number
+  business_scope?: string
+  license_no?: string
+  license_valid_from?: string
+  license_valid_to?: string
+  license_permanent?: number
+  customer_type?: number
+  contact_person?: string
+  contact_phone?: string
+  contact_email?: string
+  related_customer_id?: string
+  skip_precheck?: boolean
+  change_remark?: string
+}
+
+export interface CorporateProfileQueryParams extends PageParams {
+  keyword?: string
+  profile_no?: string
+  enterprise_name?: string
+  credit_code?: string
+  customer_type?: number
+  business_status?: number
+  risk_level?: number
+  status?: number
+  need_complete?: number
+  is_abnormal?: number
+  is_dishonest?: number
+  org_id?: string
+  start_time?: string
+  end_time?: string
+}
+
+export interface CorporateProfileLog {
+  id: string
+  profile_id: string
+  profile_no?: string
+  change_type: string
+  change_type_name?: string
+  before_content?: string
+  after_content?: string
+  change_remark?: string
+  operator_id?: string
+  operator_name?: string
+  operator_org_id?: string
+  operator_org_name?: string
+  operate_time?: string
+  reviewer_id?: string
+  reviewer_name?: string
+  review_time?: string
+  status: number
+}
+
+export interface CorporateTraceRequest {
+  credit_code: string
+  enterprise_name?: string
+}
+
+export interface CorporateTraceRecord {
+  id: string
+  profile_no: string
+  enterprise_name: string
+  credit_code: string
+  status: number
+  status_text?: string
+  customer_type: number
+  customer_type_text?: string
+  change_type?: string
+  change_type_name?: string
+  operate_time?: string
+  operator_name?: string
+  org_name?: string
+  remark?: string
+}
+
+export interface CorporateTraceResponse {
+  credit_code: string
+  matched: boolean
+  total_profiles: number
+  total_active: number
+  total_closed: number
+  total_abnormal: number
+  has_duplicate: boolean
+  has_dishonest: boolean
+  has_tampering: boolean
+  history_records: CorporateTraceRecord[]
+  change_logs: CorporateProfileLog[]
+  risk_prompts: string[]
+  allowed: boolean
+  block_reason?: string
+}
+
+export interface CorpBatchUpdateItem {
+  row_index: number
+  credit_code?: string
+  enterprise_name?: string
+  business_status?: number
+  industry_type?: string
+  registered_capital?: number
+  qualification_info?: string
+  risk_level?: number
+}
+
+export interface CorpBatchUpdateRequest {
+  org_id?: string
+  batch_name?: string
+  update_type: number
+  file_name?: string
+  file_url?: string
+  items: CorpBatchUpdateItem[]
+}
+
+export interface CorpBatchUpdateResultItem {
+  row_index: number
+  profile_id?: string
+  profile_no?: string
+  enterprise_name?: string
+  credit_code?: string
+  process_result: number
+  process_result_text?: string
+  process_message?: string
+  errors?: CorpPreCheckFieldError[]
+  missing_fields?: string[]
+  warnings?: string[]
+  need_review?: boolean
+  review_reason?: string
+}
+
+export interface CorpBatchUpdateResponse {
+  batch_id: string
+  batch_no: string
+  batch_name?: string
+  update_type: number
+  total_count: number
+  success_count: number
+  fail_count: number
+  need_complete_count: number
+  review_count: number
+  status: number
+  status_text?: string
+  items: CorpBatchUpdateResultItem[]
+}
+
+export interface CorpBatchQueryParams extends PageParams {
+  batch_no?: string
+  batch_name?: string
+  update_type?: number
+  status?: number
+  org_id?: string
+  start_time?: string
+  end_time?: string
+}
+
+export interface CorpBatchVO {
+  id: string
+  batch_no: string
+  org_id?: string
+  org_name?: string
+  batch_name?: string
+  update_type: number
+  update_type_text?: string
+  total_count: number
+  success_count: number
+  fail_count: number
+  need_complete_count: number
+  review_count: number
+  file_url?: string
+  file_name?: string
+  status: number
+  status_text?: string
+  fail_reason?: string
+  creator_id?: string
+  creator_name?: string
+  import_time?: string
+  finish_time?: string
+  created_at?: string
+}
+
+export interface CorpBatchItemVO {
+  id: string
+  batch_id: string
+  row_index: number
+  profile_id?: string
+  enterprise_name?: string
+  credit_code?: string
+  business_status?: number
+  industry_type?: string
+  registered_capital?: number
+  risk_level?: number
+  process_result: number
+  process_result_text?: string
+  process_message?: string
+  error_field_list?: CorpPreCheckFieldError[]
+  missing_field_list?: string[]
+  created_at?: string
+}
+
+export interface CorpReviewAbnormalRequest {
+  profile_id: string
+  passed: boolean
+  review_remark: string
+}
+
+export function preCheckCorporateProfileApi(data: CorporateProfileForm) {
+  return post<CorpPreCheckResult>('/business/corporate-profile/precheck', data)
+}
+
+export function adaptCorporateTypeApi(data: { registered_capital: number; business_years: number; business_status: number; industry_type: string }) {
+  return post<CorpTypeAdaptResult>('/business/corporate-profile/adapt-type', data)
+}
+
+export function getCorporateProfileListApi(params: CorporateProfileQueryParams) {
+  return get<PageResult<CorporateProfile>>('/business/corporate-profile/list', params)
+}
+
+export function getCorporateProfileDetailApi(id: string) {
+  return get<CorporateProfile>(`/business/corporate-profile/${id}`)
+}
+
+export function createCorporateProfileApi(data: CorporateProfileForm) {
+  return post<CorporateProfile>('/business/corporate-profile', data)
+}
+
+export function updateCorporateProfileApi(id: string, data: CorporateProfileForm) {
+  return put<CorporateProfile>(`/business/corporate-profile/${id}`, data)
+}
+
+export function getCorporateProfileLogsApi(id: string) {
+  return get<CorporateProfileLog[]>(`/business/corporate-profile/${id}/logs`)
+}
+
+export function traceCorporateProfileApi(data: CorporateTraceRequest) {
+  return post<CorporateTraceResponse>('/business/corporate-profile/trace', data)
+}
+
+export function reviewAbnormalCorporateApi(data: CorpReviewAbnormalRequest) {
+  return post<CorporateProfile>('/business/corporate-profile/review-abnormal', data)
+}
+
+export function batchUpdateCorporateProfileApi(data: CorpBatchUpdateRequest) {
+  return post<CorpBatchUpdateResponse>('/business/corporate-profile/batch/update', data)
+}
+
+export function getCorporateProfileBatchListApi(params: CorpBatchQueryParams) {
+  return get<PageResult<CorpBatchVO>>('/business/corporate-profile/batch/list', params)
+}
+
+export function getCorporateProfileBatchItemsApi(params: { batch_id: string; page?: number; pageSize?: number; process_result?: number; keyword?: string }) {
+  return get<PageResult<CorpBatchItemVO>>('/business/corporate-profile/batch/items', params)
+}

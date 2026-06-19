@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, CustomerProfileController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, CustomerProfileController, CorporateProfileController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -17,6 +17,7 @@ const loanApprovalController = new LoanApprovalController();
 const loanRepaymentController = new LoanRepaymentController();
 const settlementController = new SettlementController();
 const customerProfileController = new CustomerProfileController();
+const corporateProfileController = new CorporateProfileController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -243,5 +244,19 @@ router.post('/customer-profile/batch/import', requirePermission('customer:profil
 router.get('/customer-profile/batch/list', requirePermission('customer:profile:batch'), (req, res, next) => customerProfileController.batchList(req, res, next));
 // 批量导入明细列表
 router.get('/customer-profile/batch/items', requirePermission('customer:profile:batch'), (req, res, next) => customerProfileController.batchItemList(req, res, next));
+
+// ========== 对公客户信息运维路由 ==========
+router.post('/corporate-profile/precheck', requireAuth, (req, res, next) => corporateProfileController.precheck(req, res, next));
+router.post('/corporate-profile/adapt-type', requireAuth, (req, res, next) => corporateProfileController.adaptType(req, res, next));
+router.get('/corporate-profile/list', requirePermission('corporate:profile:query'), (req, res, next) => corporateProfileController.list(req, res, next));
+router.get('/corporate-profile/:id', requirePermission('corporate:profile:query'), (req, res, next) => corporateProfileController.detail(req, res, next));
+router.post('/corporate-profile', requirePermission('corporate:profile:create'), (req, res, next) => corporateProfileController.create(req, res, next));
+router.put('/corporate-profile/:id', requirePermission('corporate:profile:update'), (req, res, next) => corporateProfileController.update(req, res, next));
+router.get('/corporate-profile/:id/logs', requirePermission('corporate:profile:query'), (req, res, next) => corporateProfileController.logs(req, res, next));
+router.post('/corporate-profile/trace', requirePermission('corporate:profile:trace'), (req, res, next) => corporateProfileController.trace(req, res, next));
+router.post('/corporate-profile/review-abnormal', requirePermission('corporate:profile:review'), (req, res, next) => corporateProfileController.reviewAbnormal(req, res, next));
+router.post('/corporate-profile/batch/update', requirePermission('corporate:profile:batch'), (req, res, next) => corporateProfileController.batchUpdate(req, res, next));
+router.get('/corporate-profile/batch/list', requirePermission('corporate:profile:batch'), (req, res, next) => corporateProfileController.batchList(req, res, next));
+router.get('/corporate-profile/batch/items', requirePermission('corporate:profile:batch'), (req, res, next) => corporateProfileController.batchItemList(req, res, next));
 
 export default router;

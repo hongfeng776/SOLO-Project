@@ -21,3 +21,9 @@ export {
   CustomerProfileBatchRepository,
   CustomerProfileBatchItemRepository
 } from './CustomerProfileRepository';
+export {
+  CorporateProfileRepository,
+  CorporateProfileLogRepository,
+  CorporateProfileBatchRepository,
+  CorporateProfileBatchItemRepository
+} from './CorporateProfileRepository';

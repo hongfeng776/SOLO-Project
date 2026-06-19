@@ -27,3 +27,7 @@ export { CustomerProfile } from './CustomerProfile';
 export { CustomerProfileLog } from './CustomerProfileLog';
 export { CustomerProfileBatch } from './CustomerProfileBatch';
 export { CustomerProfileBatchItem } from './CustomerProfileBatchItem';
+export { CorporateProfile } from './CorporateProfile';
+export { CorporateProfileLog } from './CorporateProfileLog';
+export { CorporateProfileBatch } from './CorporateProfileBatch';
+export { CorporateProfileBatchItem } from './CorporateProfileBatchItem';

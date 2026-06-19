@@ -237,3 +237,35 @@ export {
   type BatchItemVO,
   type ReviewAbnormalRequest
 } from './customerProfile';
+
+export {
+  type CorporateCustomerType,
+  type CorporateStatus,
+  type BusinessStatus,
+  type CorpVerifyStatus,
+  type CorpBatchStatus,
+  type CorpProcessResult,
+  type CorpServiceLevel,
+  type CorpRiskLevel,
+  type CorpBatchUpdateType,
+  type CorpPreCheckFieldError,
+  type CorpPreCheckResult,
+  type CorpTypeAdaptResult,
+  type CreateCorporateProfileRequest,
+  type UpdateCorporateProfileRequest,
+  type CorporateProfileQueryParams,
+  type CorporateProfileVO,
+  type CorporateProfileLogVO,
+  type CorporateTraceRequest,
+  type CorporateTraceRecord,
+  type CorporateTraceResponse,
+  type CorpBatchUpdateItem,
+  type CorpBatchUpdateRequest,
+  type CorpBatchUpdateResultItem,
+  type CorpBatchUpdateResponse,
+  type CorpBatchQueryParams,
+  type CorpBatchItemQueryParams,
+  type CorpBatchVO,
+  type CorpBatchItemVO,
+  type CorpReviewAbnormalRequest
+} from './corporateProfile';

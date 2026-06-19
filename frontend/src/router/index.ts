@@ -160,6 +160,45 @@ const asyncRoutes: RouteRecordRaw[] = [
         }
       },
       {
+        path: 'corporate-profile',
+        name: 'BusinessCorporateProfile',
+        component: () => import('@views/business/corporate-profile/index.vue'),
+        meta: {
+          title: '对公客户运维',
+          icon: 'OfficeBuilding',
+          componentName: 'BusinessCorporateProfile',
+          keepAlive: true,
+          permissions: ['corporate:profile:query'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'corporate-profile/batch',
+        name: 'BusinessCorporateProfileBatch',
+        component: () => import('@views/business/corporate-profile/batch.vue'),
+        meta: {
+          title: '批量信息更新',
+          icon: 'Files',
+          componentName: 'BusinessCorporateProfileBatch',
+          keepAlive: true,
+          permissions: ['corporate:profile:batch'],
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'corporate-profile/trace',
+        name: 'BusinessCorporateProfileTrace',
+        component: () => import('@views/business/corporate-profile/trace.vue'),
+        meta: {
+          title: '企业信息溯源',
+          icon: 'Search',
+          componentName: 'BusinessCorporateProfileTrace',
+          keepAlive: false,
+          permissions: ['corporate:profile:trace'],
+          roles: ['admin', 'manager', 'auditor']
+        }
+      },
+      {
         path: 'opening',
         name: 'BusinessOpening',
         component: () => import('@views/business/opening/index.vue'),
