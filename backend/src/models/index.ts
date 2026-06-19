@@ -31,3 +31,7 @@ export { CorporateProfile } from './CorporateProfile';
 export { CorporateProfileLog } from './CorporateProfileLog';
 export { CorporateProfileBatch } from './CorporateProfileBatch';
 export { CorporateProfileBatchItem } from './CorporateProfileBatchItem';
+export { CustomerTag } from './CustomerTag';
+export { CustomerTagLog } from './CustomerTagLog';
+export { CustomerTagBatch } from './CustomerTagBatch';
+export { CustomerTagBatchItem } from './CustomerTagBatchItem';

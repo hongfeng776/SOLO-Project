@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, CustomerProfileController, CorporateProfileController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, CustomerProfileController, CorporateProfileController, CustomerTagController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -18,6 +18,7 @@ const loanRepaymentController = new LoanRepaymentController();
 const settlementController = new SettlementController();
 const customerProfileController = new CustomerProfileController();
 const corporateProfileController = new CorporateProfileController();
+const customerTagController = new CustomerTagController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -258,5 +259,20 @@ router.post('/corporate-profile/review-abnormal', requirePermission('corporate:p
 router.post('/corporate-profile/batch/update', requirePermission('corporate:profile:batch'), (req, res, next) => corporateProfileController.batchUpdate(req, res, next));
 router.get('/corporate-profile/batch/list', requirePermission('corporate:profile:batch'), (req, res, next) => corporateProfileController.batchList(req, res, next));
 router.get('/corporate-profile/batch/items', requirePermission('corporate:profile:batch'), (req, res, next) => corporateProfileController.batchItemList(req, res, next));
+
+// ========== 客户等级标签管理路由 ==========
+router.post('/customer-tag/precheck', requireAuth, (req, res, next) => customerTagController.precheck(req, res, next));
+router.post('/customer-tag/adapt', requireAuth, (req, res, next) => customerTagController.adaptTag(req, res, next));
+router.get('/customer-tag/list', requirePermission('customer:tag:query'), (req, res, next) => customerTagController.list(req, res, next));
+router.get('/customer-tag/:id', requirePermission('customer:tag:query'), (req, res, next) => customerTagController.detail(req, res, next));
+router.post('/customer-tag', requirePermission('customer:tag:create'), (req, res, next) => customerTagController.create(req, res, next));
+router.put('/customer-tag/:id', requirePermission('customer:tag:update'), (req, res, next) => customerTagController.update(req, res, next));
+router.post('/customer-tag/adjust', requirePermission('customer:tag:update'), (req, res, next) => customerTagController.adjust(req, res, next));
+router.delete('/customer-tag/:id', requirePermission('customer:tag:update'), (req, res, next) => customerTagController.remove(req, res, next));
+router.get('/customer-tag/:id/logs', requirePermission('customer:tag:query'), (req, res, next) => customerTagController.logs(req, res, next));
+router.post('/customer-tag/trace', requirePermission('customer:tag:trace'), (req, res, next) => customerTagController.trace(req, res, next));
+router.post('/customer-tag/batch', requirePermission('customer:tag:batch'), (req, res, next) => customerTagController.batchUpdate(req, res, next));
+router.get('/customer-tag/batch/list', requirePermission('customer:tag:batch'), (req, res, next) => customerTagController.batchList(req, res, next));
+router.get('/customer-tag/batch/items', requirePermission('customer:tag:batch'), (req, res, next) => customerTagController.batchItemList(req, res, next));
 
 export default router;

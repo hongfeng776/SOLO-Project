@@ -27,3 +27,9 @@ export {
   CorporateProfileBatchRepository,
   CorporateProfileBatchItemRepository
 } from './CorporateProfileRepository';
+export {
+  CustomerTagRepository,
+  CustomerTagLogRepository,
+  CustomerTagBatchRepository,
+  CustomerTagBatchItemRepository
+} from './CustomerTagRepository';

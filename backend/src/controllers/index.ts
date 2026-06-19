@@ -21,3 +21,4 @@ export { LoanRepaymentController } from './LoanRepaymentController';
 export { SettlementController } from './SettlementController';
 export { CustomerProfileController } from './CustomerProfileController';
 export { CorporateProfileController } from './CorporateProfileController';
+export { CustomerTagController } from './CustomerTagController';

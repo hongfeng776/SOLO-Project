@@ -199,6 +199,45 @@ const asyncRoutes: RouteRecordRaw[] = [
         }
       },
       {
+        path: 'customer-tag',
+        name: 'BusinessCustomerTag',
+        component: () => import('@views/business/customer-tag/index.vue'),
+        meta: {
+          title: '客户等级标签',
+          icon: 'PriceTag',
+          componentName: 'BusinessCustomerTag',
+          keepAlive: true,
+          permissions: ['customer:tag:query'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'customer-tag/batch',
+        name: 'BusinessCustomerTagBatch',
+        component: () => import('@views/business/customer-tag/batch.vue'),
+        meta: {
+          title: '批量标签操作',
+          icon: 'Files',
+          componentName: 'BusinessCustomerTagBatch',
+          keepAlive: true,
+          permissions: ['customer:tag:batch'],
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'customer-tag/trace',
+        name: 'BusinessCustomerTagTrace',
+        component: () => import('@views/business/customer-tag/trace.vue'),
+        meta: {
+          title: '标签溯源',
+          icon: 'Search',
+          componentName: 'BusinessCustomerTagTrace',
+          keepAlive: false,
+          permissions: ['customer:tag:trace'],
+          roles: ['admin', 'manager', 'auditor']
+        }
+      },
+      {
         path: 'opening',
         name: 'BusinessOpening',
         component: () => import('@views/business/opening/index.vue'),

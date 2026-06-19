@@ -269,3 +269,35 @@ export {
   type CorpBatchItemVO,
   type CorpReviewAbnormalRequest
 } from './corporateProfile';
+
+export {
+  type CustomerLevel,
+  type TagType,
+  type TagSource,
+  type TagStatus,
+  type TagBatchOperationType,
+  type TagBatchStatus,
+  type TagProcessResult,
+  type DataUpdateStatus,
+  type TagPreCheckFieldError,
+  type TagPreCheckResult,
+  type TagAdaptResult,
+  type TagComplianceCheckResult,
+  type CreateCustomerTagRequest,
+  type UpdateCustomerTagRequest,
+  type AdjustTagRequest,
+  type CustomerTagQueryParams,
+  type CustomerTagVO,
+  type CustomerTagLogVO,
+  type TagTraceRequest,
+  type TagTraceRecord,
+  type TagTraceResponse,
+  type TagBatchItem,
+  type TagBatchRequest,
+  type TagBatchResultItem,
+  type TagBatchResponse,
+  type TagBatchQueryParams,
+  type TagBatchItemQueryParams,
+  type TagBatchVO,
+  type TagBatchItemVO
+} from './customerTag';
