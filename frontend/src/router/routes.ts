@@ -75,6 +75,12 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: 'NoteOps',
         component: () => import(/* webpackChunkName: "content" */ '@views/content/ops/index.vue'),
         meta: { title: '状态运维', icon: 'Operation', roles: ['admin', 'editor', 'super_ops'] }
+      },
+      {
+        path: 'dm',
+        name: 'DmManagement',
+        component: () => import(/* webpackChunkName: "content" */ '@views/content/dm/index.vue'),
+        meta: { title: '私信管控', icon: 'Message', roles: ['admin', 'risk_admin', 'editor'] }
       }
     ]
   },

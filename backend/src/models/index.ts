@@ -38,6 +38,9 @@ import CreatorBenefitConfig from './creator-benefit-config'
 import MerchantOnboardingApply from './merchant-onboarding-apply'
 import MerchantOnboardingLog from './merchant-onboarding-log'
 import MerchantCreditArchive from './merchant-credit-archive'
+import DirectMessage from './direct-message'
+import DmConversation from './dm-conversation'
+import DmAuditLog from './dm-audit-log'
 
 const UserRole = User.sequelize!.define('sys_user_role', {}, { tableName: 'sys_user_role', timestamps: false })
 const NoteTag = Note.sequelize!.define('biz_note_tag', {}, { tableName: 'biz_note_tag', timestamps: false })
@@ -99,4 +102,13 @@ Comment.belongsTo(Note, { as: 'note', foreignKey: 'noteId' })
 Comment.hasMany(CommentAuditLog, { as: 'auditLogs', foreignKey: 'commentId' })
 CommentAuditLog.belongsTo(Comment, { as: 'comment', foreignKey: 'commentId' })
 
-export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, CommentAuditLog, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, MerchantOnboardingApply, MerchantOnboardingLog, MerchantCreditArchive, UserRole, NoteTag }
+DmConversation.hasMany(DirectMessage, { as: 'messages', foreignKey: 'conversationId' })
+DirectMessage.belongsTo(DmConversation, { as: 'conversation', foreignKey: 'conversationId' })
+
+DirectMessage.hasMany(DmAuditLog, { as: 'auditLogs', foreignKey: 'messageId' })
+DmAuditLog.belongsTo(DirectMessage, { as: 'message', foreignKey: 'messageId' })
+
+DmConversation.hasMany(DmAuditLog, { as: 'conversationAuditLogs', foreignKey: 'conversationId' })
+DmAuditLog.belongsTo(DmConversation, { as: 'dmConversation', foreignKey: 'conversationId' })
+
+export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, CommentAuditLog, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, MerchantOnboardingApply, MerchantOnboardingLog, MerchantCreditArchive, DirectMessage, DmConversation, DmAuditLog, UserRole, NoteTag }

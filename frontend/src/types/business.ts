@@ -1327,3 +1327,204 @@ export interface ActivityPermission {
   canAbnormal: boolean
   canStrategy: boolean
 }
+
+export interface DirectMessage {
+  id: number
+  conversationId: number
+  senderId: number
+  senderName: string
+  senderAvatar: string
+  receiverId: number
+  receiverName: string
+  receiverAvatar: string
+  content: string
+  contentType: number
+  status: number
+  readStatus: number
+  readTime?: string
+  riskLevel: number
+  violationType: string
+  violationDetail: string
+  sensitiveWords: string
+  intercepted: number
+  ip: string
+  deviceInfo: string
+  userAgent: string
+  isReported: number
+  reportCount: number
+  createTime: string
+  updateTime: string
+}
+
+export interface DmConversation {
+  id: number
+  participantAId: number
+  participantAName: string
+  participantAAvatar: string
+  participantBId: number
+  participantBName: string
+  participantBAvatar: string
+  lastMessageId: number
+  lastMessageContent: string
+  lastMessageTime?: string
+  messageCount: number
+  unreadCountA: number
+  unreadCountB: number
+  violationCount: number
+  riskLevel: number
+  isBlockedByA: number
+  isBlockedByB: number
+  status: number
+  createTime: string
+  updateTime: string
+}
+
+export interface DmComplianceViolation {
+  type: string
+  typeName: string
+  matched: string[]
+  level: number
+  message: string
+}
+
+export interface DmComplianceCheckResult {
+  passed: boolean
+  canSend: boolean
+  violations: DmComplianceViolation[]
+  sensitiveMatches: string[]
+  riskLevel: number
+  intercepted: boolean
+  senderStatus: {
+    isBanned: boolean
+    isFlowLimited: boolean
+    isDmRestricted: boolean
+    dailyCount: number
+    dailyLimit: number
+  }
+  recommendedPunishment?: {
+    type: string
+    typeName: string
+    duration: number
+    reason: string
+  }
+}
+
+export interface DmPunishment {
+  type: string
+  typeName: string
+  duration: number
+  reason: string
+}
+
+export interface DmMessageTraceResult {
+  message: DirectMessage
+  conversation: DmConversation | null
+  sender: {
+    id: number
+    nickname: string
+    username: string
+    avatar: string
+    status: number
+    riskLevel: number
+    violationCount: number
+    isPermanentBanned: number
+  } | null
+  receiver: {
+    id: number
+    nickname: string
+    username: string
+    avatar: string
+  } | null
+  riskAnalysis: {
+    isAbnormal: boolean
+    user24hMessageCount: number
+    sameContentCount: number
+    sameIpCount: number
+    sameSenderToReceiver1h: number
+    reportedByReceiver: number
+    senderTotalReported: number
+    finalRiskLevel: number
+    reasons: string[]
+  }
+  auditLogs: DmAuditLogItem[]
+  device: {
+    ip: string
+    deviceInfo: string
+    userAgent: string
+    sendTime: string
+  }
+}
+
+export interface DmConversationTraceResult {
+  conversation: DmConversation
+  participants: {
+    userA: {
+      id: number
+      nickname: string
+      avatar: string
+      riskLevel: number
+      violationCount: number
+    } | null
+    userB: {
+      id: number
+      nickname: string
+      avatar: string
+      riskLevel: number
+      violationCount: number
+    } | null
+  }
+  messages: DirectMessage[]
+  stats: {
+    totalMessages: number
+    interceptionCount: number
+    riskMsgCount: number
+    uniqueIps: number
+    maxHourly: number
+    avgPerHour: number
+  }
+  riskFlags: string[]
+  timeline: Array<{
+    id: number
+    time: string
+    senderId: number
+    status: number
+    riskLevel: number
+    preview: string
+  }>
+}
+
+export interface DmAuditLogItem {
+  id: number
+  messageId?: number
+  conversationId?: number
+  senderId: number
+  senderName: string
+  receiverId: number
+  receiverName: string
+  content?: string
+  action: number
+  violationType: string
+  violationDetail: string
+  sensitiveWords: string
+  punishmentType?: string
+  punishmentDuration?: number
+  handlerId?: number
+  handlerName: string
+  handleNote: string
+  ip: string
+  deviceInfo: string
+  createTime: string
+}
+
+export interface DmStats {
+  total: number
+  todayNew: number
+  intercepted: number
+  pending: number
+  riskHigh: number
+  reported: number
+  conversations: number
+  riskConversations: number
+  interceptionRate: number
+  riskRate: number
+}

@@ -814,3 +814,139 @@ export const COMPLIANCE_VIOLATION_TYPE_NAMES: Record<string, string> = {
   [ComplianceViolationType.DUPLICATE_CONTENT]: '重复评论',
   [ComplianceViolationType.IRRELEVANT]: '无关评论'
 }
+
+export enum DirectMessageStatus {
+  PENDING = 0,
+  NORMAL = 1,
+  INTERCEPTED = 2,
+  RECALLED = 3,
+  DELETED = 4
+}
+
+export const DM_STATUS_NAMES: Record<number, string> = {
+  [DirectMessageStatus.PENDING]: '待审核',
+  [DirectMessageStatus.NORMAL]: '已发送',
+  [DirectMessageStatus.INTERCEPTED]: '已拦截',
+  [DirectMessageStatus.RECALLED]: '已撤回',
+  [DirectMessageStatus.DELETED]: '已删除'
+}
+
+export const DM_STATUS_TAG_TYPES: Record<number, string> = {
+  [DirectMessageStatus.PENDING]: 'warning',
+  [DirectMessageStatus.NORMAL]: 'success',
+  [DirectMessageStatus.INTERCEPTED]: 'danger',
+  [DirectMessageStatus.RECALLED]: 'info',
+  [DirectMessageStatus.DELETED]: 'info'
+}
+
+export enum DmRiskLevel {
+  NONE = 0,
+  LOW = 1,
+  MEDIUM = 2,
+  HIGH = 3
+}
+
+export const DM_RISK_LEVEL_NAMES: Record<number, string> = {
+  [DmRiskLevel.NONE]: '正常',
+  [DmRiskLevel.LOW]: '轻微',
+  [DmRiskLevel.MEDIUM]: '中度',
+  [DmRiskLevel.HIGH]: '重度'
+}
+
+export const DM_RISK_LEVEL_COLORS: Record<number, string> = {
+  [DmRiskLevel.NONE]: '#67c23a',
+  [DmRiskLevel.LOW]: '#e6a23c',
+  [DmRiskLevel.MEDIUM]: '#f56c6c',
+  [DmRiskLevel.HIGH]: '#c45656'
+}
+
+export enum DmConversationStatus {
+  BANNED = 0,
+  NORMAL = 1,
+  RESTRICTED = 2
+}
+
+export const DM_CONVERSATION_STATUS_NAMES: Record<number, string> = {
+  [DmConversationStatus.BANNED]: '已封禁',
+  [DmConversationStatus.NORMAL]: '正常',
+  [DmConversationStatus.RESTRICTED]: '已限制'
+}
+
+export const DM_CONVERSATION_STATUS_TAG_TYPES: Record<number, string> = {
+  [DmConversationStatus.BANNED]: 'danger',
+  [DmConversationStatus.NORMAL]: 'success',
+  [DmConversationStatus.RESTRICTED]: 'warning'
+}
+
+export enum DmPunishmentType {
+  WARNING = 'warning',
+  TEMP_RESTRICT_DM = 'temp_restrict_dm',
+  TEMP_BAN_DM = 'temp_ban_dm',
+  PERMANENT_BAN_DM = 'permanent_ban_dm'
+}
+
+export const DM_PUNISHMENT_TYPE_NAMES: Record<string, string> = {
+  [DmPunishmentType.WARNING]: '弹窗预警',
+  [DmPunishmentType.TEMP_RESTRICT_DM]: '限制私信',
+  [DmPunishmentType.TEMP_BAN_DM]: '临时封禁私信',
+  [DmPunishmentType.PERMANENT_BAN_DM]: '永久封禁私信'
+}
+
+export const DM_PUNISHMENT_DURATIONS: Record<string, number> = {
+  warning: 0,
+  temp_restrict_dm: 24 * 60,
+  temp_ban_dm: 3 * 24 * 60,
+  permanent_ban_dm: 0
+}
+
+export enum DmViolationType {
+  ACCOUNT_BANNED = 'account_banned',
+  DM_RESTRICTED = 'dm_restricted',
+  FLOW_LIMITED = 'flow_limited',
+  CONVERSATION_RESTRICTED = 'conversation_restricted',
+  SENSITIVE_WORD = 'sensitive_word',
+  VIOLATION_PHRASE = 'violation_phrase',
+  TRAFFIC_KEYWORD = 'traffic_keyword',
+  HARASSMENT = 'harassment',
+  DAILY_LIMIT_EXCEEDED = 'daily_limit_exceeded',
+  HIGH_FREQUENCY = 'high_frequency',
+  DUPLICATE_CONTENT = 'duplicate_content'
+}
+
+export const DM_VIOLATION_TYPE_NAMES: Record<string, string> = {
+  [DmViolationType.ACCOUNT_BANNED]: '账号封禁',
+  [DmViolationType.DM_RESTRICTED]: '私信受限',
+  [DmViolationType.FLOW_LIMITED]: '账号限流',
+  [DmViolationType.CONVERSATION_RESTRICTED]: '会话受限',
+  [DmViolationType.SENSITIVE_WORD]: '敏感词',
+  [DmViolationType.VIOLATION_PHRASE]: '违规话术',
+  [DmViolationType.TRAFFIC_KEYWORD]: '引流关键词',
+  [DmViolationType.HARASSMENT]: '骚扰话术',
+  [DmViolationType.DAILY_LIMIT_EXCEEDED]: '日发送超限',
+  [DmViolationType.HIGH_FREQUENCY]: '高频发送',
+  [DmViolationType.DUPLICATE_CONTENT]: '重复内容'
+}
+
+export enum DmAuditAction {
+  AUTO_INTERCEPT = 0,
+  COMPLIANCE_PASS = 1,
+  VIOLATION_DELETE = 2,
+  ACCOUNT_PUNISH = 3,
+  BATCH_CLEAN = 4,
+  BATCH_BAN = 5,
+  CONVERSATION_RESTRICT = 6,
+  CONVERSATION_UNRESTRICT = 7,
+  MANUAL_REVIEW = 8
+}
+
+export const DM_AUDIT_ACTION_NAMES: Record<number, string> = {
+  [DmAuditAction.AUTO_INTERCEPT]: '自动拦截',
+  [DmAuditAction.COMPLIANCE_PASS]: '合规通过',
+  [DmAuditAction.VIOLATION_DELETE]: '违规删除',
+  [DmAuditAction.ACCOUNT_PUNISH]: '账号处罚',
+  [DmAuditAction.BATCH_CLEAN]: '批量清理',
+  [DmAuditAction.BATCH_BAN]: '批量封禁',
+  [DmAuditAction.CONVERSATION_RESTRICT]: '会话限制',
+  [DmAuditAction.CONVERSATION_UNRESTRICT]: '解除限制',
+  [DmAuditAction.MANUAL_REVIEW]: '人工复核'
+}
