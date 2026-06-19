@@ -105,3 +105,49 @@ export enum BatchOperationType {
   DISABLE = 'disable',
   RESET = 'reset',
 }
+
+export enum InterceptionType {
+  LARGE_AMOUNT = 'large_amount',
+  CONCENTRATED_TRADE = 'concentrated_trade',
+  FREQUENT_CANCEL = 'frequent_cancel',
+  ABNORMAL_WAVE = 'abnormal_wave',
+  PRICE_MANIPULATION = 'price_manipulation',
+  BLACKLIST_STOCK = 'blacklist_stock',
+  RISK_CUSTOMER = 'risk_customer',
+  OVER_POSITION_LIMIT = 'over_position_limit',
+  OVER_TRADE_LIMIT = 'over_trade_limit',
+  VOLATILITY_TRIGGER = 'volatility_trigger',
+  FREQUENCY_TRIGGER = 'frequency_trigger',
+}
+
+export enum InterceptionStatus {
+  TEMPORARY = 'temporary',
+  PERMANENT = 'permanent',
+  MANUAL_REVIEW = 'manual_review',
+  APPEALING = 'appealing',
+  APPEAL_PASSED = 'appeal_passed',
+  APPEAL_REJECTED = 'appeal_rejected',
+  AUTO_RELEASED = 'auto_released',
+}
+
+export enum InterceptionLevel {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical',
+}
+
+export enum InterceptionAction {
+  BLOCK_TRADE = 'block_trade',
+  FREEZE_FUNDS = 'freeze_funds',
+  FREEZE_POSITION = 'freeze_position',
+  RESTRICT_OPERATION = 'restrict_operation',
+  WARN_ONLY = 'warn_only',
+}
+
+export enum AppealStatus {
+  NOT_SUBMITTED = 'not_submitted',
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+}

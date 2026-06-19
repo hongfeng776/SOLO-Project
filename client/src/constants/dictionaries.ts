@@ -519,3 +519,139 @@ export const RISK_RULE_STEP_TITLES: Record<number, string> = {
   4: '配置生效时段',
   5: '确认提交',
 }
+
+import {
+  InterceptionType,
+  InterceptionStatus,
+  InterceptionLevel,
+  InterceptionAction,
+  AppealStatus,
+} from '@/enums'
+
+export const INTERCEPTION_TYPE_LABELS: Record<InterceptionType, string> = {
+  [InterceptionType.LARGE_AMOUNT]: '大额交易',
+  [InterceptionType.CONCENTRATED_TRADE]: '集中交易',
+  [InterceptionType.FREQUENT_CANCEL]: '频繁撤单',
+  [InterceptionType.ABNORMAL_WAVE]: '异常波段',
+  [InterceptionType.PRICE_MANIPULATION]: '价格操纵',
+  [InterceptionType.BLACKLIST_STOCK]: '黑名单股票',
+  [InterceptionType.RISK_CUSTOMER]: '风险客户',
+  [InterceptionType.OVER_POSITION_LIMIT]: '超限持仓',
+  [InterceptionType.OVER_TRADE_LIMIT]: '超限交易',
+  [InterceptionType.VOLATILITY_TRIGGER]: '波动触发',
+  [InterceptionType.FREQUENCY_TRIGGER]: '频次触发',
+}
+
+export const INTERCEPTION_TYPE_COLORS: Record<InterceptionType, string> = {
+  [InterceptionType.LARGE_AMOUNT]: '#E6A23C',
+  [InterceptionType.CONCENTRATED_TRADE]: '#909399',
+  [InterceptionType.FREQUENT_CANCEL]: '#409EFF',
+  [InterceptionType.ABNORMAL_WAVE]: '#F56C6C',
+  [InterceptionType.PRICE_MANIPULATION]: '#D93025',
+  [InterceptionType.BLACKLIST_STOCK]: '#606266',
+  [InterceptionType.RISK_CUSTOMER]: '#E6A23C',
+  [InterceptionType.OVER_POSITION_LIMIT]: '#67C23A',
+  [InterceptionType.OVER_TRADE_LIMIT]: '#67C23A',
+  [InterceptionType.VOLATILITY_TRIGGER]: '#E6A23C',
+  [InterceptionType.FREQUENCY_TRIGGER]: '#409EFF',
+}
+
+export const INTERCEPTION_TYPE_ICONS: Record<InterceptionType, string> = {
+  [InterceptionType.LARGE_AMOUNT]: 'Money',
+  [InterceptionType.CONCENTRATED_TRADE]: 'Collection',
+  [InterceptionType.FREQUENT_CANCEL]: 'Close',
+  [InterceptionType.ABNORMAL_WAVE]: 'TrendCharts',
+  [InterceptionType.PRICE_MANIPULATION]: 'Warning',
+  [InterceptionType.BLACKLIST_STOCK]: 'CircleClose',
+  [InterceptionType.RISK_CUSTOMER]: 'UserFilled',
+  [InterceptionType.OVER_POSITION_LIMIT]: 'Goods',
+  [InterceptionType.OVER_TRADE_LIMIT]: 'Money',
+  [InterceptionType.VOLATILITY_TRIGGER]: 'TrendCharts',
+  [InterceptionType.FREQUENCY_TRIGGER]: 'Timer',
+}
+
+export const INTERCEPTION_STATUS_LABELS: Record<InterceptionStatus, string> = {
+  [InterceptionStatus.TEMPORARY]: '临时拦截',
+  [InterceptionStatus.PERMANENT]: '永久拦截',
+  [InterceptionStatus.MANUAL_REVIEW]: '人工复核中',
+  [InterceptionStatus.APPEALING]: '申诉中',
+  [InterceptionStatus.APPEAL_PASSED]: '申诉通过',
+  [InterceptionStatus.APPEAL_REJECTED]: '申诉驳回',
+  [InterceptionStatus.AUTO_RELEASED]: '自动解除',
+}
+
+export const INTERCEPTION_STATUS_COLORS: Record<InterceptionStatus, string> = {
+  [InterceptionStatus.TEMPORARY]: 'warning',
+  [InterceptionStatus.PERMANENT]: 'danger',
+  [InterceptionStatus.MANUAL_REVIEW]: 'primary',
+  [InterceptionStatus.APPEALING]: 'info',
+  [InterceptionStatus.APPEAL_PASSED]: 'success',
+  [InterceptionStatus.APPEAL_REJECTED]: 'danger',
+  [InterceptionStatus.AUTO_RELEASED]: 'info',
+}
+
+export const INTERCEPTION_LEVEL_LABELS: Record<InterceptionLevel, string> = {
+  [InterceptionLevel.LOW]: '一般',
+  [InterceptionLevel.MEDIUM]: '关注',
+  [InterceptionLevel.HIGH]: '严重',
+  [InterceptionLevel.CRITICAL]: '紧急',
+}
+
+export const INTERCEPTION_LEVEL_COLORS: Record<InterceptionLevel, string> = {
+  [InterceptionLevel.LOW]: '#909399',
+  [InterceptionLevel.MEDIUM]: '#409EFF',
+  [InterceptionLevel.HIGH]: '#E6A23C',
+  [InterceptionLevel.CRITICAL]: '#F56C6C',
+}
+
+export const INTERCEPTION_LEVEL_BG_COLORS: Record<InterceptionLevel, string> = {
+  [InterceptionLevel.LOW]: 'rgba(144, 147, 153, 0.1)',
+  [InterceptionLevel.MEDIUM]: 'rgba(64, 158, 255, 0.1)',
+  [InterceptionLevel.HIGH]: 'rgba(230, 162, 60, 0.1)',
+  [InterceptionLevel.CRITICAL]: 'rgba(245, 108, 108, 0.12)',
+}
+
+export const INTERCEPTION_ACTION_LABELS: Record<InterceptionAction, string> = {
+  [InterceptionAction.BLOCK_TRADE]: '禁止交易',
+  [InterceptionAction.FREEZE_FUNDS]: '冻结资金',
+  [InterceptionAction.FREEZE_POSITION]: '冻结持仓',
+  [InterceptionAction.RESTRICT_OPERATION]: '限制操作',
+  [InterceptionAction.WARN_ONLY]: '仅警告',
+}
+
+export const APPEAL_STATUS_LABELS: Record<AppealStatus, string> = {
+  [AppealStatus.NOT_SUBMITTED]: '未申诉',
+  [AppealStatus.PENDING]: '申诉审核中',
+  [AppealStatus.APPROVED]: '申诉通过',
+  [AppealStatus.REJECTED]: '申诉驳回',
+}
+
+export const APPEAL_STATUS_COLORS: Record<AppealStatus, string> = {
+  [AppealStatus.NOT_SUBMITTED]: 'info',
+  [AppealStatus.PENDING]: 'warning',
+  [AppealStatus.APPROVED]: 'success',
+  [AppealStatus.REJECTED]: 'danger',
+}
+
+export const INTERCEPTION_TYPE_DESCRIPTIONS: Record<InterceptionType, string> = {
+  [InterceptionType.LARGE_AMOUNT]: '单笔交易金额超过客户等级允许的最大限额',
+  [InterceptionType.CONCENTRATED_TRADE]: '短时间内集中买入/卖出同一股票',
+  [InterceptionType.FREQUENT_CANCEL]: '撤单频次异常，疑似扰乱市场行为',
+  [InterceptionType.ABNORMAL_WAVE]: '交易方向与市场波动异常一致',
+  [InterceptionType.PRICE_MANIPULATION]: '连续报单/撤单涉嫌操纵股价',
+  [InterceptionType.BLACKLIST_STOCK]: '目标股票属于黑名单限制范围',
+  [InterceptionType.RISK_CUSTOMER]: '客户账户处于风险监控状态',
+  [InterceptionType.OVER_POSITION_LIMIT]: '持仓数量/比例超过限制阈值',
+  [InterceptionType.OVER_TRADE_LIMIT]: '日累计交易金额超限',
+  [InterceptionType.VOLATILITY_TRIGGER]: '市场波动率触发熔断阈值',
+  [InterceptionType.FREQUENCY_TRIGGER]: '交易频率超过允许的最大频次',
+}
+
+export const SIDE_LABELS: Record<string, string> = {
+  buy: '买入',
+  sell: '卖出',
+  BUY: '买入',
+  SELL: '卖出',
+  '1': '买入',
+  '2': '卖出',
+}

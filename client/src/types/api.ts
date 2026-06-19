@@ -1036,3 +1036,183 @@ export interface IRiskRuleScenarioMatch {
   volatilityRange: [number, number]
   suggestedRules: Array<{ ruleId: number; ruleName: string; ruleType: RiskRuleType }>
 }
+
+import {
+  InterceptionType,
+  InterceptionStatus,
+  InterceptionLevel,
+  InterceptionAction,
+  AppealStatus,
+} from '@/enums'
+
+export interface ITradePreCheckParams {
+  customerId: number
+  stockCode?: string
+  stockName?: string
+  side: string
+  price: number
+  quantity: number
+  orderType?: string
+  tradeTime?: string
+}
+
+export interface ITriggeredRule {
+  ruleId: number
+  ruleCode: string
+  ruleName: string
+  ruleType: string
+  thresholdValue?: number | string
+  actualValue: number | string
+  severity: 'info' | 'warning' | 'error'
+  triggerReason: string
+  ruleDescription?: string
+}
+
+export interface ITradePreCheckResult {
+  allowTrade: boolean
+  interceptionLevel: InterceptionLevel
+  interceptionType?: InterceptionType
+  triggeredRules: ITriggeredRule[]
+  riskScore: number
+  blockActions: InterceptionAction[]
+  freezeFundAmount?: number
+  freezePositionCodes?: string[]
+  restrictions?: string[]
+  warningMessage?: string
+  estimatedWaitSeconds?: number
+}
+
+export interface IInterceptionRecord {
+  id: number
+  interceptionNo: string
+  customerId: number
+  customerName?: string
+  customerAccount?: string
+  customerLevel?: string
+  interceptionType: InterceptionType
+  interceptionTypeLabel?: string
+  interceptionLevel: InterceptionLevel
+  interceptionLevelLabel?: string
+  status: InterceptionStatus
+  statusLabel?: string
+  stockCode?: string
+  stockName?: string
+  side?: string
+  sideLabel?: string
+  price?: number
+  quantity?: number
+  amount?: number
+  triggeredRules: ITriggeredRule[]
+  riskScore: number
+  actions: InterceptionAction[]
+  actionLabels?: string[]
+  freezeFundAmount?: number
+  freezePositionCodes?: string[]
+  restrictionExpireTime?: string
+  appealStatus: AppealStatus
+  appealStatusLabel?: string
+  appealId?: number
+  handledBy?: number
+  handledByName?: string
+  handledAt?: string
+  handlerRemark?: string
+  createdBy?: number
+  createdByName?: string
+  createdAt: string
+  updatedAt?: string
+  remark?: string
+  relatedOrderNo?: string
+  relatedTradeIds?: number[]
+}
+
+export interface IInterceptionListParams {
+  page: number
+  pageSize: number
+  interceptionType?: InterceptionType
+  status?: InterceptionStatus
+  interceptionLevel?: InterceptionLevel
+  customerId?: number
+  customerAccount?: string
+  stockCode?: string
+  startDate?: string
+  endDate?: string
+  appealStatus?: AppealStatus
+  keyword?: string
+}
+
+export interface IInterceptionStats {
+  total: number
+  byType: Array<{ type: InterceptionType; count: number; amount: number }>
+  byLevel: Array<{ level: InterceptionLevel; count: number }>
+  byStatus: Array<{ status: InterceptionStatus; count: number }>
+  todayCount: number
+  todayAmount: number
+  frozenFundTotal: number
+  pendingAppealCount: number
+  pendingManualReviewCount: number
+  trend: Array<{ date: string; count: number; amount: number }>
+}
+
+export interface IAppealCreateData {
+  interceptionId: number
+  reason: string
+  description?: string
+  attachmentUrls?: string[]
+  contactInfo?: string
+}
+
+export interface IAppealRecord {
+  id: number
+  interceptionId: number
+  customerId: number
+  customerName?: string
+  reason: string
+  description?: string
+  attachmentUrls?: string[]
+  status: AppealStatus
+  statusLabel?: string
+  reviewerId?: number
+  reviewerName?: string
+  reviewedAt?: string
+  reviewRemark?: string
+  createdBy: number
+  createdByName?: string
+  createdAt: string
+  updatedAt?: string
+}
+
+export interface IInterceptionHandleData {
+  interceptionId: number
+  targetStatus: InterceptionStatus
+  action?: InterceptionAction[]
+  releaseFundAmount?: number
+  releasePositionCodes?: string[]
+  remark: string
+  sendAlert?: boolean
+  notifyCustomer?: boolean
+}
+
+export interface IAccountRiskStatus {
+  customerId: number
+  riskLevel: 'normal' | 'watch' | 'warning' | 'critical'
+  isRestricted: boolean
+  restrictions: string[]
+  frozenFunds: number
+  frozenPositions: Array<{ stockCode: string; stockName: string; quantity: number; amount: number }>
+  activeInterceptionCount: number
+  lastRiskScanTime: string
+  triggers: Array<{ type: string; message: string; level: string }>
+}
+
+export interface IAlertMessage {
+  id: number
+  alertType: string
+  title: string
+  content: string
+  level: InterceptionLevel
+  relatedId?: number
+  relatedType?: string
+  targetUserIds?: number[]
+  isRead: boolean
+  createdAt: string
+}
