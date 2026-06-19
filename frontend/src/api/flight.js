@@ -116,3 +116,105 @@ export function getFlightStats() {
     method: 'get'
   })
 }
+
+export function getFlightPriceList(params) {
+  return request({
+    url: '/flight-prices',
+    method: 'get',
+    params
+  })
+}
+
+export function getFlightPrice(id) {
+  return request({
+    url: `/flight-prices/${id}`,
+    method: 'get'
+  })
+}
+
+export function createFlightPrice(data) {
+  return request({
+    url: '/flight-prices',
+    method: 'post',
+    data
+  })
+}
+
+export function updateFlightPrice(id, data) {
+  return request({
+    url: `/flight-prices/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+export function deleteFlightPrice(id) {
+  return request({
+    url: `/flight-prices/${id}`,
+    method: 'delete'
+  })
+}
+
+export function validateFlightPrice(data) {
+  return request({
+    url: '/flight-prices/validate',
+    method: 'post',
+    data
+  })
+}
+
+export function validateFlightPriceField(fieldName, value, params) {
+  return request({
+    url: '/flight-prices/validate/field',
+    method: 'get',
+    params: { fieldName, value, ...params }
+  })
+}
+
+export function updateFlightPriceDisplayStatus(id, isActive) {
+  return request({
+    url: `/flight-prices/${id}/display-status`,
+    method: 'put',
+    data: { isActive }
+  })
+}
+
+export function batchUpdateFlightPriceTime(data) {
+  return request({
+    url: '/flight-prices/batch/time',
+    method: 'post',
+    data
+  })
+}
+
+export function batchUpdateFlightPrice(data) {
+  return request({
+    url: '/flight-prices/batch/price',
+    method: 'post',
+    data
+  })
+}
+
+export function batchUpdateFlightPriceDisplayStatus(priceIds, isActive) {
+  return request({
+    url: '/flight-prices/batch/display-status',
+    method: 'post',
+    data: { priceIds, isActive }
+  })
+}
+
+export function getFlightPriceLogs(id, params) {
+  return request({
+    url: `/flight-prices/${id}/logs`,
+    method: 'get',
+    params
+  })
+}
+
+export function getFlightPriceStats(params) {
+  return request({
+    url: '/flight-prices/stats/summary',
+    method: 'get',
+    params
+  })
+}

@@ -456,3 +456,925 @@
     border-bottom: 1px solid $border-color-lighter;
   }
 }
+
+.flight-price-edit-dialog {
+  .cabin-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .cabin-tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 12px;
+    border: 2px solid $border-color-lighter;
+    border-radius: $border-radius-base;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #fff;
+
+    &:hover {
+      border-color: var(--cabin-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    &.active {
+      border-color: var(--cabin-color);
+      background-color: var(--cabin-color);
+      color: #fff;
+
+      .price-range {
+        color: rgba(255, 255, 255, 0.9);
+      }
+    }
+
+    .price-range {
+      font-size: 11px;
+      color: $text-color-secondary;
+      margin-top: 4px;
+    }
+  }
+
+  .flight-info-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f7ff 100%);
+    border-radius: $border-radius-base;
+    margin-bottom: 20px;
+
+    &.fade-in {
+      animation: cardFadeIn 0.5s ease-out;
+    }
+
+    .flight-route {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .flight-no {
+        font-weight: 700;
+        font-size: 16px;
+        color: $text-color;
+      }
+
+      .route-detail {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 12px;
+
+        .airport {
+          font-weight: 600;
+          color: $primary-color;
+        }
+      }
+    }
+
+    .flight-time {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: $text-color-secondary;
+      font-size: 13px;
+    }
+  }
+
+  @keyframes cardFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .price-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .currency {
+      position: absolute;
+      left: 12px;
+      color: $text-color-secondary;
+      font-weight: 600;
+      font-size: 14px;
+      z-index: 1;
+    }
+
+    .price-input {
+      :deep(.el-input__inner) {
+        padding-left: 28px;
+        font-weight: 600;
+        font-size: 15px;
+        transition: all 0.3s ease;
+      }
+
+      &:focus-within {
+        :deep(.el-input__wrapper) {
+          transform: scale(1.02);
+          box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+      }
+
+      &.input-error {
+        :deep(.el-input__wrapper) {
+          border-color: $danger-color !important;
+          box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2);
+          animation: validate-shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+      }
+
+      &.input-success {
+        :deep(.el-input__wrapper) {
+          border-color: $success-color !important;
+        }
+      }
+    }
+
+    .validate-success-icon {
+      position: absolute;
+      right: 12px;
+      z-index: 1;
+    }
+  }
+
+  .error-message {
+    color: $danger-color;
+    font-size: 12px;
+    margin-top: 4px;
+    padding-left: 4px;
+  }
+
+  .field-hint {
+    font-size: 11px;
+    color: $text-color-secondary;
+    margin-top: 4px;
+    padding-left: 4px;
+  }
+
+  .price-change-tag {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  @keyframes validate-shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+  }
+
+  .dynamic-rules-section {
+    padding: 16px;
+    background-color: $background-color-page;
+    border-radius: $border-radius-base;
+    margin-bottom: 16px;
+
+    .rule-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px dashed $border-color-lighter;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .rule-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: $text-color;
+
+        .rule-icon {
+          color: $primary-color;
+        }
+      }
+
+      .rule-value {
+        font-weight: 600;
+        color: $primary-color;
+      }
+    }
+  }
+
+  .price-protection-tip {
+    padding: 12px 16px;
+    background-color: #fff7e6;
+    border-left: 4px solid #faad14;
+    border-radius: $border-radius-base;
+    font-size: 12px;
+    color: #ad6800;
+
+    .tip-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+  }
+}
+
+.flight-price-batch-dialog {
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+
+    .count-badge {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 400;
+      color: $text-color-secondary;
+      background-color: $background-color-page;
+      padding: 4px 12px;
+      border-radius: 12px;
+    }
+  }
+
+  .selected-info {
+    margin-bottom: 20px;
+
+    .info-detail {
+      display: flex;
+      gap: 24px;
+      margin-top: 8px;
+
+      .info-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+
+        .label {
+          color: $text-color-secondary;
+        }
+
+        .value {
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+      }
+    }
+  }
+
+  .operation-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .operation-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid $border-color-lighter;
+    border-radius: $border-radius-base;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+
+    &:hover:not(.disabled) {
+      transform: translateY(-6px);
+      border-color: var(--card-color);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    &.active {
+      border-color: var(--card-color);
+      background-color: var(--card-color);
+      color: #fff;
+
+      .card-desc {
+        color: rgba(255, 255, 255, 0.85);
+      }
+    }
+
+    &.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background-color: $background-color-page;
+    }
+
+    .card-ripple {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100px;
+      height: 100px;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      animation: ripple 0.6s ease-out;
+      pointer-events: none;
+    }
+
+    @keyframes ripple {
+      to {
+        transform: translate(-50%, -50%) scale(4);
+        opacity: 0;
+      }
+    }
+
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--card-color);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 20px;
+      flex-shrink: 0;
+      transition: transform 0.3s ease;
+
+      .active & {
+        background-color: #fff;
+        color: var(--card-color);
+      }
+    }
+
+    &:hover:not(.disabled) .card-icon {
+      transform: scale(1.1) rotate(5deg);
+    }
+
+    .card-content {
+      flex: 1;
+
+      .card-title {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 2px;
+      }
+
+      .card-desc {
+        font-size: 11px;
+        color: $text-color-secondary;
+      }
+    }
+
+    .card-check {
+      font-size: 20px;
+    }
+  }
+
+  .value-input-section {
+    .value-input-wrapper {
+      padding: 0 8px;
+    }
+
+    .value-input-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .large-input {
+        width: 200px;
+
+        :deep(.el-input-number__input) {
+          font-size: 18px;
+          font-weight: 700;
+          text-align: center;
+        }
+      }
+
+      .value-unit {
+        font-size: 15px;
+        font-weight: 600;
+        color: $text-color;
+      }
+    }
+
+    .value-preview {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      font-size: 13px;
+      color: $primary-color;
+      font-weight: 500;
+    }
+  }
+
+  .preview-section {
+    .preview-cards {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+      background-color: $background-color-page;
+      border-radius: $border-radius-base;
+    }
+
+    .preview-card {
+      text-align: center;
+      padding: 16px 32px;
+      background-color: #fff;
+      border-radius: $border-radius-base;
+      box-shadow: $box-shadow-light;
+
+      .preview-label {
+        font-size: 12px;
+        color: $text-color-secondary;
+        margin-bottom: 8px;
+      }
+
+      .preview-value {
+        font-size: 24px;
+        font-weight: 700;
+
+        &.current {
+          color: $text-color;
+        }
+
+        &.target.up {
+          color: #faad14;
+          animation: priceUp 0.5s ease-out;
+        }
+
+        &.target.down {
+          color: $success-color;
+          animation: priceDown 0.5s ease-out;
+        }
+      }
+    }
+
+    @keyframes priceUp {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-8px); color: #ff7a45; }
+      100% { transform: translateY(0); }
+    }
+
+    @keyframes priceDown {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(8px); color: #389e0d; }
+      100% { transform: translateY(0); }
+    }
+
+    .preview-arrow {
+      font-size: 24px;
+      animation: arrowPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes arrowPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+    }
+  }
+}
+
+.flight-price-log-panel {
+  padding: 20px;
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .header-filters {
+      display: flex;
+      gap: 12px;
+    }
+  }
+
+  .table-container {
+    :deep(.el-table__header-wrapper) {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+  }
+
+  .price-log-table {
+    .header-cell {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+
+      .resize-handle {
+        position: absolute;
+        right: -5px;
+        top: 0;
+        width: 10px;
+        height: 100%;
+        cursor: col-resize;
+        z-index: 10;
+
+        &:hover,
+        &.resizing {
+          background-color: $primary-color;
+          opacity: 0.3;
+        }
+      }
+    }
+
+    .operation-type-cell {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      .el-icon {
+        font-size: 16px;
+      }
+    }
+
+    .price-change-up {
+      color: #faad14;
+      font-weight: 600;
+    }
+
+    .price-change-down {
+      color: $success-color;
+      font-weight: 600;
+    }
+
+    :deep(.el-table__row) {
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: #f5f7fa !important;
+      }
+    }
+
+    :deep(.el-table__row.expanded) {
+      background-color: rgba(24, 144, 255, 0.04) !important;
+    }
+
+    :deep(.el-table__expand-icon) {
+      transition: transform 0.3s ease;
+    }
+  }
+
+  .expand-detail {
+    animation: expandFadeIn 0.3s ease-out;
+
+    .old-price {
+      color: $text-color-secondary;
+      text-decoration: line-through;
+    }
+
+    .new-price {
+      color: $text-color;
+      font-weight: 600;
+    }
+
+    .price-up {
+      color: #faad14;
+      font-weight: 600;
+    }
+
+    .price-down {
+      color: $success-color;
+      font-weight: 600;
+    }
+
+    .change-fields {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .fail-reason {
+      margin-left: 8px;
+      color: $danger-color;
+      font-size: 12px;
+    }
+  }
+
+  @keyframes expandFadeIn {
+    from {
+      opacity: 0;
+      max-height: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      max-height: 600px;
+      transform: translateY(0);
+    }
+  }
+
+  .pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+  }
+
+  .double-click-hint {
+    text-align: center;
+    color: $text-color-secondary;
+    font-size: 12px;
+    padding: 12px;
+    background-color: $background-color-page;
+    border-radius: $border-radius-base;
+    margin-bottom: 12px;
+  }
+}
+
+.price-update-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 3000;
+  max-width: 360px;
+  animation: slideInRight 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .notification-card {
+    background: #fff;
+    border-radius: $border-radius-base;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    padding: 16px;
+    border-left: 4px solid $primary-color;
+
+    &.price-up {
+      border-left-color: #faad14;
+    }
+
+    &.price-down {
+      border-left-color: $success-color;
+    }
+
+    .notification-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+
+      .notification-icon {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: $primary-color;
+        color: #fff;
+        border-radius: 50%;
+        font-size: 16px;
+
+        .price-up & {
+          background-color: #faad14;
+        }
+
+        .price-down & {
+          background-color: $success-color;
+        }
+      }
+
+      .notification-title {
+        font-weight: 600;
+        font-size: 14px;
+        color: $text-color;
+      }
+    }
+
+    .notification-body {
+      font-size: 13px;
+      color: $text-color-secondary;
+      line-height: 1.6;
+
+      .price-value {
+        font-weight: 700;
+        font-size: 16px;
+
+        &.up {
+          color: #faad14;
+        }
+
+        &.down {
+          color: $success-color;
+        }
+      }
+
+      .thousand-format {
+        font-variant-numeric: tabular-nums;
+      }
+    }
+
+    .notification-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid $border-color-lighter;
+    }
+  }
+}
+
+.price-thousand-format {
+  font-variant-numeric: tabular-nums;
+}
+
+.flight-price-rule-dialog {
+  .rule-section {
+    margin-bottom: 24px;
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: $text-color;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      &::before {
+        content: '';
+        width: 3px;
+        height: 14px;
+        background-color: $primary-color;
+        border-radius: 2px;
+      }
+    }
+
+    .rule-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px dashed $border-color-lighter;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .rule-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .rule-icon {
+          color: $primary-color;
+          font-size: 18px;
+        }
+
+        .rule-name {
+          font-size: 14px;
+          color: $text-color;
+        }
+
+        .rule-desc {
+          font-size: 12px;
+          color: $text-color-secondary;
+          margin-left: 8px;
+        }
+      }
+
+      .rule-control {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        width: 320px;
+
+        .rule-slider {
+          flex: 1;
+        }
+
+        .rule-input {
+          width: 100px;
+
+          :deep(.el-input__inner) {
+            text-align: right;
+          }
+        }
+
+        .rule-unit {
+          font-size: 14px;
+          color: $text-color-secondary;
+          width: 20px;
+        }
+      }
+    }
+  }
+
+  .price-protection-section {
+    padding: 16px;
+    background: linear-gradient(135deg, #fff7e6 0%, #fff1f0 100%);
+    border-radius: $border-radius-base;
+    margin-bottom: 20px;
+
+    .protection-title {
+      font-weight: 600;
+      font-size: 14px;
+      color: #ad6800;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .protection-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+
+      .protection-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background-color: #fff;
+        border-radius: 4px;
+        font-size: 13px;
+
+        .protection-label {
+          color: $text-color-secondary;
+        }
+
+        .protection-value {
+          font-weight: 600;
+          color: #fa8c16;
+        }
+      }
+    }
+  }
+
+  .preview-section {
+    .preview-table {
+      :deep(.el-table__header th) {
+        background-color: $background-color-page !important;
+      }
+
+      .effect-bar {
+        height: 8px;
+        background-color: $border-color-lighter;
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+
+        .effect-fill {
+          height: 100%;
+          border-radius: 4px;
+          transition: width 0.5s ease;
+
+          &.positive {
+            background: linear-gradient(90deg, #ffd666 0%, #fa8c16 100%);
+          }
+
+          &.negative {
+            background: linear-gradient(90deg, #95de64 0%, #52c41a 100%);
+          }
+        }
+      }
+
+      .effect-value {
+        font-weight: 600;
+        font-size: 13px;
+
+        &.positive {
+          color: #fa8c16;
+        }
+
+        &.negative {
+          color: $success-color;
+        }
+      }
+    }
+  }
+}

@@ -705,9 +705,10 @@ export const FlightSaleStatusEnum = {
 }
 
 export const CabinClassEnum = {
-  ECONOMY: { value: 'economy', label: '经济舱', color: '#1890ff' },
-  BUSINESS: { value: 'business', label: '商务舱', color: '#faad14' },
-  FIRST: { value: 'first', label: '头等舱', color: '#722ed1' }
+  ECONOMY: { value: 'economy', label: '经济舱', color: '#1890ff', minPrice: 100, maxPrice: 10000 },
+  BUSINESS: { value: 'business', label: '商务舱', color: '#faad14', minPrice: 500, maxPrice: 30000 },
+  FIRST: { value: 'first', label: '头等舱', color: '#722ed1', minPrice: 1000, maxPrice: 100000 },
+  SPECIAL: { value: 'special', label: '特惠舱', color: '#52c41a', minPrice: 50, maxPrice: 5000 }
 }
 
 export const FlightLogTypeEnum = {
@@ -745,6 +746,50 @@ export const FlightValidateFieldEnum = {
   transferAirportCode: '中转机场三字码',
   charterContractNo: '包机合同编号',
   qualificationCode: '运营资质编码'
+}
+
+export const FlightPriceLogTypeEnum = {
+  CREATE: { value: 1, label: '创建价格配置', color: '#52c41a', icon: 'Plus' },
+  UPDATE: { value: 2, label: '修改价格配置', color: '#1890ff', icon: 'Edit' },
+  BATCH: { value: 3, label: '批量调整', color: '#722ed1', icon: 'Files' },
+  DYNAMIC: { value: 4, label: '动态定价', color: '#faad14', icon: 'TrendCharts' },
+  RESET: { value: 5, label: '恢复基准价', color: '#13c2c2', icon: 'RefreshRight' },
+  DISABLE: { value: 6, label: '停用价格', color: '#909399', icon: 'Download' },
+  ENABLE: { value: 7, label: '启用价格', color: '#52c41a', icon: 'Upload' }
+}
+
+export const FlightPriceSourceEnum = {
+  MANUAL: { value: 'manual', label: '手动配置', color: '#1890ff' },
+  DYNAMIC: { value: 'dynamic', label: '动态定价', color: '#faad14' },
+  BATCH: { value: 'batch', label: '批量调整', color: '#722ed1' },
+  IMPORT: { value: 'import', label: '批量导入', color: '#52c41a' }
+}
+
+export const FlightPriceBatchOperationEnum = {
+  DISCOUNT: { value: 'discount', label: '统一折扣', icon: 'Discount', color: '#52c41a', unit: '折' },
+  INCREASE: { value: 'increase', label: '价格上浮', icon: 'Top', color: '#faad14', unit: '元' },
+  DECREASE: { value: 'decrease', label: '价格下调', icon: 'Bottom', color: '#1890ff', unit: '元' },
+  PERCENTAGE_INCREASE: { value: 'percentageIncrease', label: '比例上浮', icon: 'CaretTop', color: '#fa8c16', unit: '%' },
+  PERCENTAGE_DECREASE: { value: 'percentageDecrease', label: '比例下调', icon: 'CaretBottom', color: '#13c2c2', unit: '%' },
+  RESET: { value: 'reset', label: '恢复基准价', icon: 'RefreshRight', color: '#722ed1', unit: '' }
+}
+
+export const FlightPriceValidateFieldEnum = {
+  basePrice: '基准票价',
+  currentPrice: '当前售价',
+  discount: '折扣比例',
+  taxRate: '税费比例',
+  surcharge: '附加费',
+  premiumLimit: '溢价上限',
+  minDiscount: '最低折扣',
+  effectiveStartTime: '生效开始时间',
+  effectiveEndTime: '生效结束时间'
+}
+
+export const PriceChangeDirectionEnum = {
+  UP: { value: 'up', label: '价格上涨', color: '#faad14', icon: 'Top' },
+  DOWN: { value: 'down', label: '价格下降', color: '#52c41a', icon: 'Bottom' },
+  FLAT: { value: 'flat', label: '价格持平', color: '#909399', icon: 'Minus' }
 }
 
 export default {
@@ -833,6 +878,11 @@ export default {
   CabinClassEnum,
   FlightLogTypeEnum,
   FlightValidateFieldEnum,
+  FlightPriceLogTypeEnum,
+  FlightPriceSourceEnum,
+  FlightPriceBatchOperationEnum,
+  FlightPriceValidateFieldEnum,
+  PriceChangeDirectionEnum,
   getEnumLabel,
   getEnumType,
   getEnumOptions,

@@ -14,6 +14,7 @@ const permissionController = require('../controllers/PermissionController')
 const userBehaviorController = require('../controllers/UserBehaviorController')
 const benefitController = require('../controllers/BenefitController')
 const flightController = require('../controllers/FlightController')
+const flightPriceController = require('../controllers/FlightPriceController')
 const hotelController = require('../controllers/HotelController')
 const carController = require('../controllers/CarController')
 const ticketController = require('../controllers/TicketController')
@@ -105,6 +106,22 @@ router.post('/flights/batch/display-status', auth(['admin', 'operator']), flight
 router.post('/flights/batch/offline-abnormal', auth(['admin', 'operator', 'international_operator']), flightController.batchOfflineAbnormal.bind(flightController));
 router.get('/flights/:id/logs', auth(), pagination, flightController.getLogs.bind(flightController));
 router.get('/flights/stats/summary', auth(), flightController.getStats.bind(flightController));
+
+registerCrudRoutes('flight-prices', flightPriceController);
+router.get('/flight-prices', auth(), pagination, flightPriceController.getPriceList.bind(flightPriceController));
+router.get('/flight-prices/:id', auth(), flightPriceController.getPriceById.bind(flightPriceController));
+router.post('/flight-prices', auth(), flightPriceController.createPrice.bind(flightPriceController));
+router.put('/flight-prices/:id', auth(), flightPriceController.updatePrice.bind(flightPriceController));
+router.delete('/flight-prices/:id', auth(), flightPriceController.deletePrice.bind(flightPriceController));
+router.post('/flight-prices/validate', auth(), flightPriceController.validatePrice.bind(flightPriceController));
+router.get('/flight-prices/validate/field', auth(), flightPriceController.validateField.bind(flightPriceController));
+router.put('/flight-prices/:id/display-status', auth(), flightPriceController.updateDisplayStatus.bind(flightPriceController));
+router.post('/flight-prices/batch/time', auth(['admin', 'operator', 'price_manager']), flightPriceController.batchUpdateTime.bind(flightPriceController));
+router.post('/flight-prices/batch/price', auth(['admin', 'operator', 'price_manager']), flightPriceController.batchUpdatePrice.bind(flightPriceController));
+router.post('/flight-prices/batch/display-status', auth(['admin', 'operator', 'price_manager']), flightPriceController.batchUpdateDisplayStatus.bind(flightPriceController));
+router.get('/flight-prices/:id/logs', auth(), pagination, flightPriceController.getPriceLogs.bind(flightPriceController));
+router.get('/flight-prices/stats/summary', auth(), flightPriceController.getPriceStats.bind(flightPriceController));
+
 registerCrudRoutes('hotels', hotelController);
 registerCrudRoutes('cars', carController);
 registerCrudRoutes('tickets', ticketController);
