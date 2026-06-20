@@ -1,0 +1,22 @@
+const express = require('express')
+const router = express.Router()
+const serverMonitorController = require('../controllers/serverMonitorController')
+
+router.get('/permission', serverMonitorController.getPermission)
+router.get('/validate', serverMonitorController.validateParams)
+router.get('/alert-types', serverMonitorController.getAlertTypeList)
+router.get('/alert-levels', serverMonitorController.getAlertLevelList)
+router.get('/environments', serverMonitorController.getEnvironmentList)
+router.get('/api-load-levels', serverMonitorController.getApiLoadLevelList)
+router.get('/risk-levels', serverMonitorController.getRiskLevelList)
+router.get('/servers', serverMonitorController.getServerList)
+router.get('/stats', serverMonitorController.getStats)
+router.get('/realtime', serverMonitorController.getRealtimeData)
+router.get('/history', serverMonitorController.getHistoryData)
+router.get('/peak', serverMonitorController.getPeakData)
+router.get('/traceability', serverMonitorController.getTraceability)
+router.get('/export', serverMonitorController.exportData)
+router.get('/alert/:id', serverMonitorController.getAlertDetail)
+router.get('/', serverMonitorController.getList)
+
+module.exports = router

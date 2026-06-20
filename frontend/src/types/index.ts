@@ -1815,3 +1815,295 @@ export interface CronLogViewRecord {
   status: CronStatus
   viewedAt: string
 }
+
+export type ServerEnvironment = 'production' | 'staging' | 'testing' | 'development'
+export type MonitorType = 'snapshot' | 'interval' | 'alert' | 'peak'
+export type AlertType = 'none' | 'cpu' | 'memory' | 'disk' | 'network' | 'api' | 'system'
+export type AlertLevel = 'none' | 'info' | 'warning' | 'critical'
+export type ApiLoadLevel = 'low' | 'normal' | 'medium' | 'high' | 'overload'
+export type PeakType = 'none' | 'cpu' | 'memory' | 'disk' | 'network' | 'api'
+
+export interface ServerMonitor {
+  id: number
+  serverId: string
+  serverName: string
+  serverIp: string
+  region?: string
+  environment: ServerEnvironment
+  monitorType: MonitorType
+  cpuUsage: number
+  cpuCores: number
+  cpuLoad1: number
+  cpuLoad5: number
+  cpuLoad15: number
+  memoryTotal: number
+  memoryUsed: number
+  memoryUsage: number
+  memoryBuffers: number
+  memoryCached: number
+  memorySwapTotal: number
+  memorySwapUsed: number
+  diskTotal: number
+  diskUsed: number
+  diskUsage: number
+  diskReadIO: number
+  diskWriteIO: number
+  diskReadBytes: number
+  diskWriteBytes: number
+  networkIn: number
+  networkOut: number
+  networkConnections: number
+  apiTotalRequests: number
+  apiSuccessRequests: number
+  apiFailedRequests: number
+  apiAvgResponseTime: number
+  apiP95ResponseTime: number
+  apiP99ResponseTime: number
+  apiQps: number
+  apiLoadLevel: ApiLoadLevel
+  processCount: number
+  threadCount: number
+  uptime: number
+  hasAlert: boolean
+  alertType: AlertType
+  alertLevel: AlertLevel
+  alertMessage?: string
+  alertThreshold?: any
+  alertValue?: string
+  alertResolved: boolean
+  alertResolvedAt?: string
+  businessVolume: number
+  loadMatchScore: number
+  riskLevel: RiskLevel
+  traceId?: string
+  isPeak: boolean
+  peakType: PeakType
+  extraInfo?: any
+  memoryTotalMB: number
+  memoryUsedMB: number
+  diskTotalGB: number
+  diskUsedGB: number
+  networkInKB: number
+  networkOutKB: number
+  anomalyPeriod?: ServerMonitor[]
+  createdAt: string
+}
+
+export interface ServerMonitorPermission {
+  canViewMonitor: boolean
+  canViewSensitive: boolean
+  canExport: boolean
+  canTrace: boolean
+}
+
+export interface ServerMonitorValidationResult {
+  valid: boolean
+  errors: string[]
+  warnings: string[]
+}
+
+export interface ServerMonitorListParams {
+  pageNum?: number
+  pageSize?: number
+  serverId?: string
+  serverName?: string
+  environment?: ServerEnvironment
+  alertType?: AlertType
+  alertLevel?: AlertLevel
+  hasAlert?: string | boolean
+  startDate?: string
+  endDate?: string
+  monitorType?: MonitorType
+}
+
+export interface ServerMonitorConnectivity {
+  connected: boolean
+  lastUpdate?: string
+  message: string
+}
+
+export interface ServerMonitorRealtimeData {
+  data: ServerMonitor[]
+  connectivity: ServerMonitorConnectivity
+  timestamp: string
+}
+
+export interface ServerMonitorHistoryData {
+  data: ServerMonitor[]
+  granularity: string
+  total: number
+}
+
+export interface ServerMonitorPeakData {
+  data: ServerMonitor[]
+  peakStats: {
+    cpu: number
+    memory: number
+    disk: number
+    network: number
+    api: number
+  }
+  total: number
+}
+
+export interface ServerMonitorStatsData {
+  summary: {
+    totalRecords: number
+    avgCpu: number
+    avgMemory: number
+    avgDisk: number
+    avgQps: number
+    alertCount: number
+  }
+  alertsByType: Record<string, number>
+  alertsByLevel: Record<string, number>
+  riskDistribution: Record<string, number>
+  loadDistribution: Record<string, number>
+  trend: {
+    time: string
+    avgCpu: number
+    avgMemory: number
+    avgQps: number
+    alertCount: number
+  }[]
+}
+
+export interface ServerMonitorExportParams {
+  startDate?: string
+  endDate?: string
+  serverId?: string
+  includeAlerts?: boolean
+  format?: 'json' | 'csv'
+}
+
+export interface ServerMonitorExportResult {
+  data: ServerMonitor[]
+  exportInfo: {
+    exportTime: string
+    totalRecords: number
+    validRecords: number
+    emptyRecords: number
+    filters: any
+    format: string
+  }
+  fileName: string
+}
+
+export interface ServerMonitorAnomaly {
+  type: string
+  severity: 'critical' | 'warning'
+  time: string
+  recordId: number
+  message: string
+  value: number | string
+}
+
+export interface ServerMonitorAnomalyDetection {
+  anomalies: ServerMonitorAnomaly[]
+  totalAnomalies: number
+  criticalCount: number
+  warningCount: number
+  byType: {
+    cpu_overload: number
+    memory_overload: number
+    disk_overload: number
+    api_overload: number
+    api_timeout: number
+    system_crash: number
+  }
+}
+
+export interface ServerMonitorLoadMatching {
+  valid: boolean
+  message?: string
+  avgMatchScore: number
+  lowVolumeHighLoadCount: number
+  highVolumeLowLoadCount: number
+  totalMismatches: number
+  mismatchedPeriods: {
+    time: string
+    type: string
+    businessVolume: number
+    avgLoad: string
+    message: string
+  }[]
+}
+
+export interface ServerMonitorRisk {
+  type: string
+  level: RiskLevel
+  title: string
+  description: string
+  suggestion: string
+}
+
+export interface ServerMonitorRiskPrediction {
+  risks: ServerMonitorRisk[]
+  overallRisk: RiskLevel
+  predictionWindow: string
+  message?: string
+}
+
+export interface ServerMonitorResourceAnalysis {
+  cpu: { avg: number; max: number; min: number; p95: number }
+  memory: { avg: number; max: number; min: number; p95: number }
+  disk: { avg: number; max: number; min: number; p95: number }
+  api: { avgQps: number; maxQps: number; avgResponseTime: number; p95ResponseTime: number }
+}
+
+export interface ServerMonitorOptimizationSuggestion {
+  priority: 'high' | 'medium' | 'low'
+  category: string
+  title: string
+  description: string
+  action: string
+}
+
+export interface ServerMonitorOptimizationReport {
+  suggestions: ServerMonitorOptimizationSuggestion[]
+  overallStatus: RiskLevel
+  summary: string
+}
+
+export interface ServerMonitorTraceabilityResult {
+  serverOverview: {
+    serverId: string
+    serverName: string
+    serverIp: string
+    environment: ServerEnvironment
+    region?: string
+    totalRecords: number
+    analysisPeriod: string
+  }
+  executionTimeline: ServerMonitor[]
+  resourceAnalysis: ServerMonitorResourceAnalysis
+  anomalyDetection: ServerMonitorAnomalyDetection
+  loadMatching: ServerMonitorLoadMatching
+  riskPrediction: ServerMonitorRiskPrediction
+  optimizationSuggestions: ServerMonitorOptimizationReport
+}
+
+export interface ServerMonitorOption {
+  value: string
+  label: string
+  type?: string
+}
+
+export interface ServerInfo {
+  serverId: string
+  serverName: string
+  serverIp: string
+  environment: ServerEnvironment
+  region?: string
+}
+
+export interface ServerMonitorAlertRecord {
+  id: string
+  recordId: number
+  serverId: string
+  serverName: string
+  alertType: AlertType
+  alertLevel: AlertLevel
+  alertMessage?: string
+  viewedAt: string
+}

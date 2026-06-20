@@ -27,7 +27,20 @@ import type {
   CronLogStatsData,
   CronLogTraceabilityResult,
   CronLogOption,
-  CronLogTaskInfo
+  CronLogTaskInfo,
+  ServerMonitor,
+  ServerMonitorPermission,
+  ServerMonitorValidationResult,
+  ServerMonitorListParams,
+  ServerMonitorRealtimeData,
+  ServerMonitorHistoryData,
+  ServerMonitorPeakData,
+  ServerMonitorStatsData,
+  ServerMonitorExportParams,
+  ServerMonitorExportResult,
+  ServerMonitorTraceabilityResult,
+  ServerMonitorOption,
+  ServerInfo
 } from '@/types'
 
 export const validateLogParams = (params: LogListParams) => {
@@ -183,4 +196,88 @@ export const getCronTaskList = () => {
 
 export const createCronLog = (data: Partial<CronLog>) => {
   return request.post<CronLog>('/cron-logs', data)
+}
+
+export const getServerMonitorPermission = () => {
+  return request.get<ServerMonitorPermission>('/server-monitors/permission')
+}
+
+export const validateServerMonitorParams = (params: ServerMonitorListParams) => {
+  return request.get<ServerMonitorValidationResult>('/server-monitors/validate', params)
+}
+
+export const getServerMonitorList = (params: ServerMonitorListParams) => {
+  return request.get<PageResult<ServerMonitor>>('/server-monitors', params)
+}
+
+export const getServerMonitorRealtime = (params?: { serverIds?: string; environment?: string }) => {
+  return request.get<ServerMonitorRealtimeData>('/server-monitors/realtime', params)
+}
+
+export const getServerMonitorHistory = (params: {
+  serverId: string
+  startDate?: string
+  endDate?: string
+  granularity?: string
+}) => {
+  return request.get<ServerMonitorHistoryData>('/server-monitors/history', params)
+}
+
+export const getServerMonitorPeak = (params: {
+  serverId?: string
+  startDate?: string
+  endDate?: string
+  peakType?: string
+}) => {
+  return request.get<ServerMonitorPeakData>('/server-monitors/peak', params)
+}
+
+export const getServerMonitorStats = (params: {
+  startDate?: string
+  endDate?: string
+  environment?: string
+  serverId?: string
+}) => {
+  return request.get<ServerMonitorStatsData>('/server-monitors/stats', params)
+}
+
+export const getServerMonitorAlertDetail = (id: number) => {
+  return request.get<ServerMonitor>(`/server-monitors/alert/${id}`)
+}
+
+export const exportServerMonitorData = (params: ServerMonitorExportParams) => {
+  return request.get<ServerMonitorExportResult>('/server-monitors/export', params)
+}
+
+export const getServerMonitorTraceability = (params: {
+  serverId: string
+  startDate?: string
+  endDate?: string
+  traceType?: string
+}) => {
+  return request.get<ServerMonitorTraceabilityResult>('/server-monitors/traceability', params)
+}
+
+export const getServerList = () => {
+  return request.get<ServerInfo[]>('/server-monitors/servers')
+}
+
+export const getServerMonitorAlertTypeList = () => {
+  return request.get<ServerMonitorOption[]>('/server-monitors/alert-types')
+}
+
+export const getServerMonitorAlertLevelList = () => {
+  return request.get<ServerMonitorOption[]>('/server-monitors/alert-levels')
+}
+
+export const getServerMonitorEnvironmentList = () => {
+  return request.get<ServerMonitorOption[]>('/server-monitors/environments')
+}
+
+export const getServerMonitorApiLoadLevelList = () => {
+  return request.get<ServerMonitorOption[]>('/server-monitors/api-load-levels')
+}
+
+export const getServerMonitorRiskLevelList = () => {
+  return request.get<ServerMonitorOption[]>('/server-monitors/risk-levels')
 }
