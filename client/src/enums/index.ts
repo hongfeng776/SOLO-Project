@@ -317,3 +317,62 @@ export enum AuditLogAction {
   VIOLATION_INTERCEPT = 'violation_intercept',
 }
 
+export enum QualificationStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  EXPIRED = 'expired',
+  EXPIRE_SOON = 'expire_soon',
+  REVOKED = 'revoked',
+}
+
+export enum QualificationReviewType {
+  NEW_CUSTOMER = 'new_customer',
+  RECHECK = 'recheck',
+}
+
+export enum QualificationLevel {
+  BASIC = 'basic',
+  STANDARD = 'standard',
+  PREMIUM = 'premium',
+  INSTITUTION = 'institution',
+}
+
+export enum QualificationDocumentType {
+  ID_CARD = 'id_card',
+  PASSPORT = 'passport',
+  BUSINESS_LICENSE = 'business_license',
+  TAX_CERT = 'tax_cert',
+  ORG_CODE_CERT = 'org_code_cert',
+  LEGAL_REP_ID = 'legal_rep_id',
+  BANK_CARD = 'bank_card',
+  INVESTOR_PROFILE = 'investor_profile',
+  RISK_ASSESSMENT = 'risk_assessment',
+  OTHER = 'other',
+}
+
+export enum QualificationIssueType {
+  EXPIRED = 'expired',
+  MISSING = 'missing',
+  FAKE = 'fake',
+  INVALID = 'invalid',
+  MISMATCH = 'mismatch',
+  INCOMPLETE = 'incomplete',
+}
+
+export enum QualificationLogAction {
+  SUBMIT = 'submit',
+  PRE_CHECK = 'pre_check',
+  APPROVE = 'approve',
+  REJECT = 'reject',
+  REVOKE = 'revoke',
+  EXPIRE_REMIND = 'expire_remind',
+  RECHECK_INITIATE = 'recheck_initiate',
+  BATCH_RECHECK_INITIATE = 'batch_recheck_initiate',
+  BATCH_APPROVE = 'batch_approve',
+  BATCH_REJECT = 'batch_reject',
+  AUTHENTICITY_CHECK = 'authenticity_check',
+  FAKE_INTERCEPT = 'fake_intercept',
+  PERMISSION_UPDATE = 'permission_update',
+}
+

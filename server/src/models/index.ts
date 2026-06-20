@@ -21,6 +21,8 @@ import ReplaySession from './ReplaySession';
 import ReplayConclusion from './ReplayConclusion';
 import TradeComplianceAudit from './TradeComplianceAudit';
 import TradeComplianceAuditLog from './TradeComplianceAuditLog';
+import CustomerQualification from './CustomerQualification';
+import CustomerQualificationLog from './CustomerQualificationLog';
 
 const db = {
   sequelize,
@@ -46,6 +48,8 @@ const db = {
   ReplayConclusion,
   TradeComplianceAudit,
   TradeComplianceAuditLog,
+  CustomerQualification,
+  CustomerQualificationLog,
 };
 
 const setupAssociations = () => {
@@ -59,6 +63,8 @@ const setupAssociations = () => {
   ReplayConclusion.belongsTo(ReplaySession, { foreignKey: 'session_id', as: 'session' });
   TradeComplianceAudit.hasMany(TradeComplianceAuditLog, { as: 'logs', foreignKey: 'audit_id' });
   TradeComplianceAuditLog.belongsTo(TradeComplianceAudit, { foreignKey: 'audit_id', as: 'audit' });
+  CustomerQualification.hasMany(CustomerQualificationLog, { as: 'logs', foreignKey: 'qualification_id' });
+  CustomerQualificationLog.belongsTo(CustomerQualification, { foreignKey: 'qualification_id', as: 'qualification' });
 };
 
 setupAssociations();

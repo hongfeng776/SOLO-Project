@@ -1982,3 +1982,164 @@ export interface ITradeComplianceStats {
   byViolationType: Record<ViolationType, number>
 }
 
+import {
+  QualificationStatus,
+  QualificationReviewType,
+  QualificationLevel,
+  QualificationDocumentType,
+  QualificationIssueType,
+  QualificationLogAction,
+} from '@/enums'
+
+export interface IQualificationDocument {
+  type: QualificationDocumentType
+  name: string
+  fileUrl: string
+  uploader?: string
+  uploadedAt: string
+  expiryDate?: string
+  verified: boolean
+  authenticityVerified: boolean
+}
+
+export interface ICustomerQualification {
+  id: number
+  qualificationNo: string
+  customerId: number
+  customerName: string
+  customerType: string
+  qualificationStatus: QualificationStatus
+  reviewType: QualificationReviewType
+  qualificationLevel: QualificationLevel
+  documents: IQualificationDocument[]
+  missingDocuments: QualificationDocumentType[]
+  expiredDocuments: QualificationDocumentType[]
+  fakeSuspiciousDocuments: QualificationDocumentType[]
+  issueTypes: QualificationIssueType[]
+  issueReasons: string[]
+  reviewerId?: number
+  reviewerName?: string
+  reviewOpinion?: string
+  reviewAt?: string
+  effectiveDate: string
+  expiryDate: string
+  expireWarningSent: boolean
+  expireWarningAt?: string
+  permissions: string[]
+  tradingAllowed: boolean
+  customerProfileSynced: boolean
+  authenticityCheckPassed: boolean
+  regulatoryComplianceScore: number
+  lastRecheckAt?: string
+  recheckCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ICustomerQualificationPreCheckResult {
+  canReview: boolean
+  permissionValid: boolean
+  documentsComplete: boolean
+  documentsValid: boolean
+  documentsAuthentic: boolean
+  expiredDocuments: QualificationDocumentType[]
+  missingDocuments: QualificationDocumentType[]
+  fakeSuspiciousDocuments: QualificationDocumentType[]
+  blocked: boolean
+  messages: string[]
+  warnings: string[]
+  documentIntegrityScore: number
+}
+
+export interface ICustomerQualificationLog {
+  id: number
+  qualificationId: number
+  qualificationNo: string
+  action: QualificationLogAction
+  operatorId?: number
+  operatorName: string
+  detail: Record<string, any>
+  authenticityCheck?: {
+    passed: boolean
+    score: number
+    issues: Array<{
+      document: QualificationDocumentType
+      rule: string
+      message: string
+      severity: string
+      suggestion: string
+    }>
+  }
+  fakeIntercepted: boolean
+  interceptMessage?: string
+  createdAt: string
+}
+
+export interface IAuthenticityCheckResult {
+  passed: boolean
+  overallScore: number
+  documentResults: Record<QualificationDocumentType, {
+    passed: boolean
+    score: number
+    verified: boolean
+    issues: string[]
+  }>
+  regulatoryMatch: {
+    dimension: string
+    compliant: boolean
+    detail: string
+  }[]
+}
+
+export interface IQualificationBatchParams {
+  ids: number[]
+  action: 'approve' | 'reject' | 'initiate_recheck'
+  qualificationLevel?: QualificationLevel
+  rejectReasons?: string[]
+  issueTypes?: QualificationIssueType[]
+  reviewOpinion?: string
+}
+
+export interface IQualificationBatchPreview {
+  byCustomerType: Record<string, number>
+  byQualificationLevel: Record<QualificationLevel, number>
+  byRegistrationYear: Record<string, number>
+  blockReasons: Array<{
+    id: number
+    qualificationNo: string
+    customerName: string
+    reason: string
+  }>
+  simpleApprovableCount: number
+  totalCount: number
+}
+
+export interface IQualificationListParams {
+  page?: number
+  pageSize?: number
+  qualificationNo?: string
+  customerName?: string
+  customerType?: string
+  qualificationStatus?: QualificationStatus
+  reviewType?: QualificationReviewType
+  qualificationLevel?: QualificationLevel
+  expireWarningSent?: boolean
+  expiryDateFrom?: string
+  expiryDateTo?: string
+  tradingAllowed?: boolean
+}
+
+export interface IQualificationStats {
+  totalPending: number
+  totalApproved: number
+  totalRejected: number
+  totalExpired: number
+  totalExpireSoon: number
+  totalRevoked: number
+  avgComplianceScore: number
+  authenticityPassRate: number
+  byCustomerType: Record<string, number>
+  byQualificationLevel: Record<QualificationLevel, number>
+  byIssueType: Record<QualificationIssueType, number>
+}
+

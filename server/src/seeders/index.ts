@@ -3,7 +3,7 @@ import { db } from '@models/index';
 import bcrypt from 'bcryptjs';
 import { StockStatus } from '@enums/index';
 
-const { User, Role, Permission, UserRole, RolePermission, StockQuote, StockQuoteHistory, QuoteAuditTrail, AssetProduct, CustomerAsset, FundFlow, ComplianceAudit, Trade, CustomerHolding, RiskAlert, OperationLog, TradeComplianceAudit, TradeComplianceAuditLog } = db;
+const { User, Role, Permission, UserRole, RolePermission, StockQuote, StockQuoteHistory, QuoteAuditTrail, AssetProduct, CustomerAsset, FundFlow, ComplianceAudit, Trade, CustomerHolding, RiskAlert, OperationLog, TradeComplianceAudit, TradeComplianceAuditLog, CustomerQualification, CustomerQualificationLog } = db;
 
 async function seedPermissions() {
   const modules = [
@@ -32,6 +32,9 @@ async function seedPermissions() {
       { name: '审核通过', code: 'compliance:audit:approve', type: 'button', sortOrder: 3 },
       { name: '审核驳回', code: 'compliance:audit:reject', type: 'button', sortOrder: 4 },
       { name: '批量审核', code: 'compliance:audit:batch', type: 'button', sortOrder: 5 },
+      { name: '资质审核通过', code: 'compliance:qualification:approve', type: 'button', sortOrder: 6 },
+      { name: '资质审核驳回', code: 'compliance:qualification:reject', type: 'button', sortOrder: 7 },
+      { name: '资质批量操作', code: 'compliance:qualification:batch', type: 'button', sortOrder: 8 },
     ]},
     { name: '证券交易', code: 'trade', path: '/trades', icon: 'SwapOutlined', sortOrder: 7, children: [
       { name: '交易查看', code: 'trade:view', type: 'button', sortOrder: 1 },
@@ -134,7 +137,7 @@ async function seedRoles(allPermissions: InstanceType<typeof Permission>[]) {
     .map((p) => p.id);
   await RolePermission.bulkCreate(analystPermIds.map((perm_id) => ({ role_id: analyst.id, perm_id } as any)));
 
-  const auditorPermCodes = ['dashboard', 'dashboard:view', 'stock', 'stock:view', 'product', 'product:view', 'customer', 'customer:view', 'fund-flow', 'fund-flow:view', 'compliance', 'compliance:view', 'compliance:manage', 'compliance:audit:approve', 'compliance:audit:reject', 'compliance:audit:batch', 'trade', 'trade:view', 'holding', 'holding:view', 'alert', 'alert:view', 'alert:manage', 'log', 'log:view'];
+  const auditorPermCodes = ['dashboard', 'dashboard:view', 'stock', 'stock:view', 'product', 'product:view', 'customer', 'customer:view', 'fund-flow', 'fund-flow:view', 'compliance', 'compliance:view', 'compliance:manage', 'compliance:audit:approve', 'compliance:audit:reject', 'compliance:audit:batch', 'compliance:qualification:approve', 'compliance:qualification:reject', 'compliance:qualification:batch', 'trade', 'trade:view', 'holding', 'holding:view', 'alert', 'alert:view', 'alert:manage', 'log', 'log:view'];
   const auditorPermIds = allPermissions
     .filter((p) => auditorPermCodes.includes(p.perm_code))
     .map((p) => p.id);
@@ -891,6 +894,159 @@ async function seedTradeComplianceAudits() {
   console.log(`Seeded ${auditLogs.length} trade compliance audit logs`);
 }
 
+async function seedCustomerQualifications() {
+  const now = new Date();
+  const nowPlus2Years = new Date(now);
+  nowPlus2Years.setFullYear(nowPlus2Years.getFullYear() + 2);
+  const expiringSoon = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
+  const alreadyExpired = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const approvedLastYear = new Date(now);
+  approvedLastYear.setFullYear(approvedLastYear.getFullYear() - 1);
+
+  const qualifications = [
+    {
+      qualification_no: 'CQ20260115001', customer_id: 1, customer_name: '王建国', customer_type: 'individual',
+      qualification_status: 'approved', review_type: 'new_customer', qualification_level: 'standard',
+      documents: [
+        { type: 'id_card', name: '身份证正面', fileUrl: '/docs/id_wjg_01.jpg', uploader: '王建国', uploadedAt: '2026-01-15T09:00:00', expiryDate: '2035-01-15T00:00:00', verified: true, authenticityVerified: true },
+        { type: 'bank_card', name: '工商银行卡', fileUrl: '/docs/bank_wjg_01.jpg', uploader: '王建国', uploadedAt: '2026-01-15T09:05:00', verified: true, authenticityVerified: true },
+        { type: 'risk_assessment', name: '风险评估报告', fileUrl: '/docs/risk_wjg_01.pdf', uploader: 'system', uploadedAt: '2026-01-15T09:10:00', verified: true, authenticityVerified: true },
+      ],
+      missing_documents: [], expired_documents: [], fake_suspicious_documents: [],
+      issue_types: [], issue_reasons: [],
+      reviewer_id: 3, reviewer_name: 'auditor', review_opinion: '个人客户资料完整，审核通过', review_at: approvedLastYear,
+      effective_date: '2026-01-15T00:00:00', expiry_date: nowPlus2Years.toISOString(),
+      expire_warning_sent: false,
+      permissions: ['trade:view', 'trade:cash_buy', 'trade:stock_buy'],
+      trading_allowed: true, customer_profile_synced: true,
+      authenticity_check_passed: true, regulatory_compliance_score: 92.5,
+      recheck_count: 0,
+    },
+    {
+      qualification_no: 'CQ20260220002', customer_id: 2, customer_name: '李明辉', customer_type: 'individual',
+      qualification_status: 'approved', review_type: 'new_customer', qualification_level: 'premium',
+      documents: [
+        { type: 'id_card', name: '身份证', fileUrl: '/docs/id_lmh_01.jpg', uploader: '李明辉', uploadedAt: '2026-02-20T10:00:00', expiryDate: '2033-05-10T00:00:00', verified: true, authenticityVerified: true },
+        { type: 'bank_card', name: '建设银行卡', fileUrl: '/docs/bank_lmh_01.jpg', uploader: '李明辉', uploadedAt: '2026-02-20T10:05:00', verified: true, authenticityVerified: true },
+        { type: 'risk_assessment', name: '风险评估R4', fileUrl: '/docs/risk_lmh_01.pdf', uploader: 'system', uploadedAt: '2026-02-20T10:10:00', verified: true, authenticityVerified: true },
+        { type: 'investor_profile', name: '专业投资者证明', fileUrl: '/docs/profile_lmh_01.pdf', uploader: '李明辉', uploadedAt: '2026-02-20T10:15:00', verified: true, authenticityVerified: true },
+      ],
+      missing_documents: [], expired_documents: [], fake_suspicious_documents: [],
+      issue_types: [], issue_reasons: [],
+      reviewer_id: 3, reviewer_name: 'auditor', review_opinion: '高净值客户，尊享资质审核通过', review_at: '2026-02-20T14:30:00',
+      effective_date: '2026-02-20T00:00:00', expiry_date: expiringSoon.toISOString(),
+      expire_warning_sent: true, expire_warning_at: now.toISOString(),
+      permissions: ['trade:view', 'trade:cash_buy', 'trade:stock_buy', 'trade:margin', 'product:view', 'product:purchase'],
+      trading_allowed: true, customer_profile_synced: true,
+      authenticity_check_passed: true, regulatory_compliance_score: 96.0,
+      last_recheck_at: '2026-06-10T09:00:00', recheck_count: 1,
+    },
+    {
+      qualification_no: 'CQ20260305003', customer_id: 3, customer_name: '中科创新科技有限公司', customer_type: 'institution',
+      qualification_status: 'pending', review_type: 'recheck', qualification_level: 'institution',
+      documents: [
+        { type: 'business_license', name: '营业执照', fileUrl: '/docs/bl_zkcx_01.jpg', uploader: '中科创新', uploadedAt: '2026-03-05T09:00:00', verified: true, authenticityVerified: true },
+        { type: 'tax_cert', name: '税务登记证', fileUrl: '/docs/tax_zkcx_01.jpg', uploader: '中科创新', uploadedAt: '2026-03-05T09:10:00', verified: true, authenticityVerified: true },
+        { type: 'org_code_cert', name: '组织机构代码证', fileUrl: '/docs/org_zkcx_01.jpg', uploader: '中科创新', uploadedAt: '2026-03-05T09:20:00', verified: true, authenticityVerified: true },
+        { type: 'legal_rep_id', name: '法人身份证', fileUrl: '/docs/leg_zkcx_01.jpg', uploader: '中科创新', uploadedAt: '2026-03-05T09:30:00', expiryDate: alreadyExpired.toISOString(), verified: false, authenticityVerified: false },
+        { type: 'bank_card', name: '对公账户', fileUrl: '/docs/bank_zkcx_01.jpg', uploader: '中科创新', uploadedAt: '2026-03-05T09:40:00', verified: true, authenticityVerified: true },
+        { type: 'investor_profile', name: '机构投资者证明', fileUrl: '/docs/profile_zkcx_01.pdf', uploader: '中科创新', uploadedAt: '2026-03-05T09:50:00', verified: true, authenticityVerified: true },
+      ],
+      missing_documents: [], expired_documents: ['legal_rep_id'], fake_suspicious_documents: ['legal_rep_id'],
+      issue_types: ['expired', 'missing'], issue_reasons: ['法人身份证已过期'],
+      reviewer_id: null, reviewer_name: null, review_opinion: null, review_at: null,
+      effective_date: '2026-03-05T00:00:00', expiry_date: nowPlus2Years.toISOString(),
+      expire_warning_sent: false,
+      permissions: [],
+      trading_allowed: false, customer_profile_synced: false,
+      authenticity_check_passed: false, regulatory_compliance_score: 72.0,
+      last_recheck_at: now.toISOString(), recheck_count: 2,
+    },
+    {
+      qualification_no: 'CQ20240501004', customer_id: 4, customer_name: '张伟强', customer_type: 'individual',
+      qualification_status: 'expired', review_type: 'new_customer', qualification_level: 'basic',
+      documents: [
+        { type: 'id_card', name: '身份证', fileUrl: '/docs/id_zwq_01.jpg', uploader: '张伟强', uploadedAt: '2024-05-01T09:00:00', expiryDate: alreadyExpired.toISOString(), verified: true, authenticityVerified: true },
+        { type: 'bank_card', name: '农业银行卡', fileUrl: '/docs/bank_zwq_01.jpg', uploader: '张伟强', uploadedAt: '2024-05-01T09:05:00', verified: true, authenticityVerified: true },
+        { type: 'risk_assessment', name: '风险评估R2', fileUrl: '/docs/risk_zwq_01.pdf', uploader: 'system', uploadedAt: '2024-05-01T09:10:00', verified: true, authenticityVerified: true },
+      ],
+      missing_documents: [], expired_documents: [], fake_suspicious_documents: [],
+      issue_types: [], issue_reasons: [],
+      reviewer_id: 3, reviewer_name: 'auditor', review_opinion: '基础级客户审核通过', review_at: '2024-05-01T10:00:00',
+      effective_date: '2024-05-01T00:00:00', expiry_date: alreadyExpired.toISOString(),
+      expire_warning_sent: true, expire_warning_at: '2026-04-15T00:00:00',
+      permissions: ['trade:view', 'trade:cash_buy', 'trade:stock_buy'],
+      trading_allowed: false, customer_profile_synced: true,
+      authenticity_check_passed: true, regulatory_compliance_score: 85.0,
+      recheck_count: 0,
+    },
+    {
+      qualification_no: 'CQ20260501005', customer_id: 5, customer_name: '鼎盛资产管理有限公司', customer_type: 'institution',
+      qualification_status: 'rejected', review_type: 'new_customer', qualification_level: 'institution',
+      documents: [
+        { type: 'business_license', name: '营业执照', fileUrl: '/docs/bl_ds_01.jpg', uploader: '鼎盛资产', uploadedAt: '2026-05-01T09:00:00', verified: false, authenticityVerified: false },
+        { type: 'tax_cert', name: '税务登记证', fileUrl: '/docs/tax_ds_01.jpg', uploader: '鼎盛资产', uploadedAt: '2026-05-01T09:10:00', verified: true, authenticityVerified: true },
+      ],
+      missing_documents: ['org_code_cert', 'legal_rep_id', 'investor_profile'], expired_documents: [], fake_suspicious_documents: ['business_license'],
+      issue_types: ['missing', 'fake', 'incomplete'], issue_reasons: ['营业执照疑似造假', '缺少组织机构代码证、法人身份证、投资者适当性证明'],
+      reviewer_id: 3, reviewer_name: 'auditor', review_opinion: '资料不完整且存在疑似造假，驳回并要求补全资料', review_at: '2026-05-02T11:30:00',
+      effective_date: '2026-05-01T00:00:00', expiry_date: nowPlus2Years.toISOString(),
+      expire_warning_sent: false,
+      permissions: [],
+      trading_allowed: false, customer_profile_synced: true,
+      authenticity_check_passed: false, regulatory_compliance_score: 35.0,
+      recheck_count: 0,
+    },
+    {
+      qualification_no: 'CQ20260601006', customer_id: 6, customer_name: '陈小燕', customer_type: 'individual',
+      qualification_status: 'pending', review_type: 'new_customer', qualification_level: 'standard',
+      documents: [
+        { type: 'id_card', name: '身份证', fileUrl: '/docs/id_cxy_01.jpg', uploader: '陈小燕', uploadedAt: '2026-06-01T14:00:00', verified: true, authenticityVerified: true },
+        { type: 'bank_card', name: '招商银行卡', fileUrl: '/docs/bank_cxy_01.jpg', uploader: '陈小燕', uploadedAt: '2026-06-01T14:10:00', verified: true, authenticityVerified: true },
+        { type: 'risk_assessment', name: '风险评估R3', fileUrl: '/docs/risk_cxy_01.pdf', uploader: 'system', uploadedAt: '2026-06-01T14:20:00', verified: true, authenticityVerified: true },
+      ],
+      missing_documents: [], expired_documents: [], fake_suspicious_documents: [],
+      issue_types: [], issue_reasons: [],
+      reviewer_id: null, reviewer_name: null, review_opinion: null, review_at: null,
+      effective_date: '2026-06-01T00:00:00', expiry_date: nowPlus2Years.toISOString(),
+      expire_warning_sent: false,
+      permissions: [],
+      trading_allowed: false, customer_profile_synced: false,
+      authenticity_check_passed: true, regulatory_compliance_score: 88.0,
+      recheck_count: 0,
+    },
+  ];
+
+  await CustomerQualification.bulkCreate(qualifications as any);
+  console.log(`Seeded ${qualifications.length} customer qualifications`);
+
+  const logs = [
+    { qualification_id: 1, qualification_no: 'CQ20260115001', action: 'submit', operator_id: 1, operator_name: '王建国', detail: { reviewType: 'new_customer', customerType: 'individual' }, created_at: '2026-01-15T09:10:00' },
+    { qualification_id: 1, qualification_no: 'CQ20260115001', action: 'pre_check', operator_id: 3, operator_name: 'auditor', detail: { canReview: true, permissionValid: true, documentsComplete: true }, created_at: approvedLastYear },
+    { qualification_id: 1, qualification_no: 'CQ20260115001', action: 'authenticity_check', operator_id: 0, operator_name: 'system', detail: {}, authenticity_check: { passed: true, score: 92, issues: [], complianceRuleVersion: 'v2.1' }, created_at: approvedLastYear },
+    { qualification_id: 1, qualification_no: 'CQ20260115001', action: 'approve', operator_id: 3, operator_name: 'auditor', detail: { opinion: '个人客户资料完整，审核通过', qualificationLevel: 'standard', grantedPermissions: ['trade:view', 'trade:cash_buy', 'trade:stock_buy'] }, authenticity_check: { passed: true, score: 92, issues: [] }, created_at: approvedLastYear },
+    { qualification_id: 1, qualification_no: 'CQ20260115001', action: 'permission_update', operator_id: 0, operator_name: 'system', detail: { grantedPermissions: ['trade:view', 'trade:cash_buy', 'trade:stock_buy'], tradingAllowed: true }, created_at: approvedLastYear },
+
+    { qualification_id: 2, qualification_no: 'CQ20260220002', action: 'submit', operator_id: 2, operator_name: '李明辉', detail: { reviewType: 'new_customer', customerType: 'individual' }, created_at: '2026-02-20T10:20:00' },
+    { qualification_id: 2, qualification_no: 'CQ20260220002', action: 'approve', operator_id: 3, operator_name: 'auditor', detail: { opinion: '高净值客户，尊享资质审核通过', qualificationLevel: 'premium' }, authenticity_check: { passed: true, score: 96, issues: [] }, created_at: '2026-02-20T14:30:00' },
+    { qualification_id: 2, qualification_no: 'CQ20260220002', action: 'recheck_initiate', operator_id: 3, operator_name: 'auditor', detail: { recheckCount: 1, previousStatus: 'approved' }, created_at: '2026-06-10T09:00:00' },
+    { qualification_id: 2, qualification_no: 'CQ20260220002', action: 'expire_remind', operator_id: 0, operator_name: 'system', detail: { message: '资质将于7日内到期，请及时发起复核', expiryDate: expiringSoon.toISOString() }, created_at: now.toISOString() },
+
+    { qualification_id: 3, qualification_no: 'CQ20260305003', action: 'submit', operator_id: 0, operator_name: 'system', detail: { reviewType: 'recheck', customerType: 'institution' }, created_at: '2026-03-05T10:00:00' },
+    { qualification_id: 3, qualification_no: 'CQ20260305003', action: 'pre_check', operator_id: 3, operator_name: 'auditor', detail: { canReview: false, documentsComplete: false, expiredDocuments: ['legal_rep_id'] }, created_at: now.toISOString() },
+    { qualification_id: 3, qualification_no: 'CQ20260305003', action: 'fake_intercept', operator_id: 0, operator_name: 'system', detail: {}, fake_intercepted: true, intercept_message: '法人身份证资料过期且未验证，疑似造假资料拦截', created_at: now.toISOString() },
+
+    { qualification_id: 5, qualification_no: 'CQ20260501005', action: 'submit', operator_id: 0, operator_name: 'system', detail: { reviewType: 'new_customer', customerType: 'institution' }, created_at: '2026-05-01T10:00:00' },
+    { qualification_id: 5, qualification_no: 'CQ20260501005', action: 'authenticity_check', operator_id: 0, operator_name: 'system', detail: {}, authenticity_check: { passed: false, score: 35, issues: [{ document: 'business_license', rule: 'VERIFY_STATUS', message: '营业执照未通过系统核验', severity: 'high', suggestion: '请联系客户补充真实有效的营业执照' }] }, fake_intercepted: true, intercept_message: '营业执照疑似造假，真实性校验未通过', created_at: '2026-05-02T11:00:00' },
+    { qualification_id: 5, qualification_no: 'CQ20260501005', action: 'reject', operator_id: 3, operator_name: 'auditor', detail: { opinion: '资料不完整且存在疑似造假，驳回并要求补全资料', issueTypes: ['missing', 'fake', 'incomplete'], rejectReasons: ['营业执照疑似造假', '缺少组织机构代码证等必要资料'] }, created_at: '2026-05-02T11:30:00' },
+
+    { qualification_id: 6, qualification_no: 'CQ20260601006', action: 'submit', operator_id: 0, operator_name: 'system', detail: { reviewType: 'new_customer', customerType: 'individual' }, created_at: '2026-06-01T14:30:00' },
+  ];
+
+  await CustomerQualificationLog.bulkCreate(logs as any);
+  console.log(`Seeded ${logs.length} customer qualification logs`);
+}
+
 async function seed() {
   try {
     await sequelize.sync({ force: false, alter: true });
@@ -936,6 +1092,8 @@ async function seed() {
     await seedQuoteAuditTrails();
 
     await seedTradeComplianceAudits();
+
+    await seedCustomerQualifications();
 
     console.log('All seed data inserted successfully');
     process.exit(0);

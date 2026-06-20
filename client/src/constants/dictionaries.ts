@@ -1139,3 +1139,138 @@ export const TRADE_COMPLIANCE_TIMEOUT_THRESHOLD_MINUTES = 120
 
 export const TRADE_COMPLIANCE_LARGE_AMOUNT_THRESHOLD = 500000
 
+import {
+  QualificationStatus,
+  QualificationReviewType,
+  QualificationLevel,
+  QualificationDocumentType,
+  QualificationIssueType,
+  QualificationLogAction,
+} from '@/enums'
+
+export const QUALIFICATION_STATUS_LABELS: Record<QualificationStatus, string> = {
+  [QualificationStatus.PENDING]: '待审核',
+  [QualificationStatus.APPROVED]: '已通过',
+  [QualificationStatus.REJECTED]: '已驳回',
+  [QualificationStatus.EXPIRED]: '已过期',
+  [QualificationStatus.EXPIRE_SOON]: '即将过期',
+  [QualificationStatus.REVOKED]: '已撤销',
+}
+
+export const QUALIFICATION_STATUS_COLORS: Record<QualificationStatus, string> = {
+  [QualificationStatus.PENDING]: '#F39C12',
+  [QualificationStatus.APPROVED]: '#27AE60',
+  [QualificationStatus.REJECTED]: '#C0392B',
+  [QualificationStatus.EXPIRED]: '#7F8C8D',
+  [QualificationStatus.EXPIRE_SOON]: '#E67E22',
+  [QualificationStatus.REVOKED]: '#8E44AD',
+}
+
+export const QUALIFICATION_STATUS_TAG_TYPES: Record<QualificationStatus, string> = {
+  [QualificationStatus.PENDING]: 'warning',
+  [QualificationStatus.APPROVED]: 'success',
+  [QualificationStatus.REJECTED]: 'danger',
+  [QualificationStatus.EXPIRED]: 'info',
+  [QualificationStatus.EXPIRE_SOON]: 'warning',
+  [QualificationStatus.REVOKED]: 'danger',
+}
+
+export const QUALIFICATION_REVIEW_TYPE_LABELS: Record<QualificationReviewType, string> = {
+  [QualificationReviewType.NEW_CUSTOMER]: '新客户入网审核',
+  [QualificationReviewType.RECHECK]: '存量客户资质复核',
+}
+
+export const QUALIFICATION_LEVEL_LABELS: Record<QualificationLevel, string> = {
+  [QualificationLevel.BASIC]: '基础级',
+  [QualificationLevel.STANDARD]: '标准级',
+  [QualificationLevel.PREMIUM]: '尊享级',
+  [QualificationLevel.INSTITUTION]: '机构级',
+}
+
+export const QUALIFICATION_LEVEL_COLORS: Record<QualificationLevel, string> = {
+  [QualificationLevel.BASIC]: '#95A5A6',
+  [QualificationLevel.STANDARD]: '#3498DB',
+  [QualificationLevel.PREMIUM]: '#9B59B6',
+  [QualificationLevel.INSTITUTION]: '#C0392B',
+}
+
+export const QUALIFICATION_DOCUMENT_TYPE_LABELS: Record<QualificationDocumentType, string> = {
+  [QualificationDocumentType.ID_CARD]: '身份证',
+  [QualificationDocumentType.PASSPORT]: '护照',
+  [QualificationDocumentType.BUSINESS_LICENSE]: '营业执照',
+  [QualificationDocumentType.TAX_CERT]: '税务登记证',
+  [QualificationDocumentType.ORG_CODE_CERT]: '组织机构代码证',
+  [QualificationDocumentType.LEGAL_REP_ID]: '法人身份证',
+  [QualificationDocumentType.BANK_CARD]: '银行卡',
+  [QualificationDocumentType.INVESTOR_PROFILE]: '投资者适当性证明',
+  [QualificationDocumentType.RISK_ASSESSMENT]: '风险评估报告',
+  [QualificationDocumentType.OTHER]: '其他资料',
+}
+
+export const QUALIFICATION_ISSUE_TYPE_LABELS: Record<QualificationIssueType, string> = {
+  [QualificationIssueType.EXPIRED]: '资料过期',
+  [QualificationIssueType.MISSING]: '资料缺失',
+  [QualificationIssueType.FAKE]: '资料造假',
+  [QualificationIssueType.INVALID]: '资料无效',
+  [QualificationIssueType.MISMATCH]: '信息不符',
+  [QualificationIssueType.INCOMPLETE]: '信息不完整',
+}
+
+export const QUALIFICATION_ISSUE_TYPE_COLORS: Record<QualificationIssueType, string> = {
+  [QualificationIssueType.EXPIRED]: '#7F8C8D',
+  [QualificationIssueType.MISSING]: '#E67E22',
+  [QualificationIssueType.FAKE]: '#C0392B',
+  [QualificationIssueType.INVALID]: '#D93025',
+  [QualificationIssueType.MISMATCH]: '#F39C12',
+  [QualificationIssueType.INCOMPLETE]: '#E67E22',
+}
+
+export const QUALIFICATION_LOG_ACTION_LABELS: Record<QualificationLogAction, string> = {
+  [QualificationLogAction.SUBMIT]: '提交资质',
+  [QualificationLogAction.PRE_CHECK]: '前置校验',
+  [QualificationLogAction.APPROVE]: '审核通过',
+  [QualificationLogAction.REJECT]: '审核驳回',
+  [QualificationLogAction.REVOKE]: '撤销资质',
+  [QualificationLogAction.EXPIRE_REMIND]: '到期提醒',
+  [QualificationLogAction.RECHECK_INITIATE]: '发起复核',
+  [QualificationLogAction.BATCH_RECHECK_INITIATE]: '批量发起复核',
+  [QualificationLogAction.BATCH_APPROVE]: '批量通过',
+  [QualificationLogAction.BATCH_REJECT]: '批量驳回',
+  [QualificationLogAction.AUTHENTICITY_CHECK]: '真实性校验',
+  [QualificationLogAction.FAKE_INTERCEPT]: '造假拦截',
+  [QualificationLogAction.PERMISSION_UPDATE]: '权限更新',
+}
+
+export const QUALIFICATION_LOG_ACTION_COLORS: Record<QualificationLogAction, string> = {
+  [QualificationLogAction.SUBMIT]: '#3498DB',
+  [QualificationLogAction.PRE_CHECK]: '#2980B9',
+  [QualificationLogAction.APPROVE]: '#27AE60',
+  [QualificationLogAction.REJECT]: '#C0392B',
+  [QualificationLogAction.REVOKE]: '#8E44AD',
+  [QualificationLogAction.EXPIRE_REMIND]: '#F39C12',
+  [QualificationLogAction.RECHECK_INITIATE]: '#16A085',
+  [QualificationLogAction.BATCH_RECHECK_INITIATE]: '#16A085',
+  [QualificationLogAction.BATCH_APPROVE]: '#27AE60',
+  [QualificationLogAction.BATCH_REJECT]: '#C0392B',
+  [QualificationLogAction.AUTHENTICITY_CHECK]: '#2980B9',
+  [QualificationLogAction.FAKE_INTERCEPT]: '#D93025',
+  [QualificationLogAction.PERMISSION_UPDATE]: '#9B59B6',
+}
+
+export const QUALIFICATION_EXPIRE_WARNING_DAYS = 7
+
+export const QUALIFICATION_REQUIRED_DOCS_INDIVIDUAL = [
+  QualificationDocumentType.ID_CARD,
+  QualificationDocumentType.BANK_CARD,
+  QualificationDocumentType.RISK_ASSESSMENT,
+]
+
+export const QUALIFICATION_REQUIRED_DOCS_INSTITUTION = [
+  QualificationDocumentType.BUSINESS_LICENSE,
+  QualificationDocumentType.TAX_CERT,
+  QualificationDocumentType.ORG_CODE_CERT,
+  QualificationDocumentType.LEGAL_REP_ID,
+  QualificationDocumentType.BANK_CARD,
+  QualificationDocumentType.INVESTOR_PROFILE,
+]
+
