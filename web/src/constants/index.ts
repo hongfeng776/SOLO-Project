@@ -792,3 +792,81 @@ export const RESOURCE_SUPPORT_LEVEL_OPTIONS = [
   { label: 'VIP专属', value: 5 },
   { label: '定制化扶持', value: 6 },
 ]
+
+export const DISTRIBUTION_ORDER_EXPORT_FIELD_OPTIONS = [
+  { label: '订单号', value: 'orderNo' },
+  { label: '商品名称', value: 'productName' },
+  { label: '商品SKU', value: 'productSku' },
+  { label: '数量', value: 'quantity' },
+  { label: '单价', value: 'unitPrice' },
+  { label: '商品总价', value: 'totalAmount' },
+  { label: '实付金额', value: 'payAmount' },
+  { label: '佣金比例', value: 'commissionRate' },
+  { label: '佣金金额', value: 'commissionAmount' },
+  { label: '订单状态', value: 'status' },
+  { label: '支付时间', value: 'payTime' },
+  { label: '发货时间', value: 'shipTime' },
+  { label: '完成时间', value: 'completeTime' },
+  { label: '取消时间', value: 'cancelTime' },
+  { label: '订单备注', value: 'remark' },
+  { label: '收货人', value: 'receiverName' },
+  { label: '收货电话', value: 'receiverPhone' },
+  { label: '收货地址', value: 'receiverAddress' },
+  { label: '下单时间', value: 'createdAt' },
+] as const
+
+export const DISTRIBUTION_ORDER_SORT_FIELD_OPTIONS = [
+  { label: '下单时间', value: 'createdAt' },
+  { label: '支付时间', value: 'payTime' },
+  { label: '完成时间', value: 'completeTime' },
+  { label: '实付金额', value: 'payAmount' },
+  { label: '佣金金额', value: 'commissionAmount' },
+  { label: '订单号', value: 'orderNo' },
+] as const
+
+export const DISTRIBUTION_ORDER_ORDER_TYPE_OPTIONS = [
+  { label: '全部订单', value: 'all' },
+  { label: '异常订单', value: 'abnormal' },
+  { label: '待复核订单', value: 'pendingReview' },
+  { label: '未结算订单', value: 'unsettled' },
+] as const
+
+export const DISTRIBUTION_ORDER_TAB_OPTIONS = [
+  { label: '全部', value: 'all', type: '' },
+  { label: '待支付', value: 0, type: 'info' },
+  { label: '已支付', value: 1, type: 'primary' },
+  { label: '已发货', value: 2, type: 'warning' },
+  { label: '已完成', value: 3, type: 'success' },
+  { label: '异常订单', value: 'abnormal', type: 'danger' },
+  { label: '待复核', value: 'pendingReview', type: 'warning' },
+  { label: '未结算', value: 'unsettled', type: 'primary' },
+] as const
+
+export const DISTRIBUTION_ORDER_ABNORMAL_STATUSES = [4, 5, 6]
+export const DISTRIBUTION_ORDER_PENDING_REVIEW_STATUSES = [1, 2]
+
+export const DISTRIBUTION_ORDER_ROW_COLOR_MAP: Record<string, string> = {
+  abnormal: '#fef0f0',
+  pendingReview: '#fdf6ec',
+  unsettled: '#ecf5ff',
+}
+
+export const DISTRIBUTION_ORDER_COLUMN_DEFAULT_WIDTHS: Record<string, number> = {
+  selection: 50,
+  index: 60,
+  orderNo: 180,
+  productInfo: 240,
+  quantity: 80,
+  unitPrice: 100,
+  totalAmount: 110,
+  payAmount: 110,
+  commission: 110,
+  channel: 100,
+  promoter: 120,
+  status: 100,
+  tags: 160,
+  remark: 180,
+  createdAt: 180,
+  action: 150,
+}
+

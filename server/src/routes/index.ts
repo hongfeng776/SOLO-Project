@@ -18,6 +18,7 @@ import promoterLevelRoutes from './promoter-level.routes';
 import promoterRiskRoutes from './promoter-risk.routes';
 import channelAuditRoutes from './channel-audit.routes';
 import productRoutes from './product.routes';
+import distributionOrderRoutes from './distribution-order.routes';
 import ResponseUtils from '../utils/response';
 
 const router = Router();
@@ -45,5 +46,6 @@ router.use('/permissions', permissionRoutes);
 router.use('/operation-logs', operationLogRoutes);
 router.use('/commission-rules', commissionRuleRoutes);
 router.use('/permission-change-logs', permissionChangeLogRoutes);
+router.use('/distribution-orders', distributionOrderRoutes);
 
 export default router;

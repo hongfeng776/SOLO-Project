@@ -31,6 +31,8 @@ import productScheduleRuleDao from './ProductScheduleRule.dao';
 import productListingLogDao from './ProductListingLog.dao';
 import productRiskRuleDao from './ProductRiskRule.dao';
 import productRiskRecordDao from './ProductRiskRecord.dao';
+import distributionOrderDao from './DistributionOrder.dao';
+import distributionOrderQueryLogDao from './DistributionOrderQueryLog.dao';
 
 export {
   userDao,
@@ -66,4 +68,6 @@ export {
   productListingLogDao,
   productRiskRuleDao,
   productRiskRecordDao,
+  distributionOrderDao,
+  distributionOrderQueryLogDao,
 };

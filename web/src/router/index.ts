@@ -64,8 +64,22 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'order',
         name: 'Order',
-        component: () => import('@/views/order/index.vue'),
+        redirect: '/order/list',
         meta: { title: '订单管理', icon: 'List' },
+        children: [
+          {
+            path: 'list',
+            name: 'OrderList',
+            component: () => import('@/views/order/index.vue'),
+            meta: { title: '普通订单', icon: 'List' },
+          },
+          {
+            path: 'distribution',
+            name: 'DistributionOrder',
+            component: () => import('@/views/distribution-order/index.vue'),
+            meta: { title: '分销订单管理', icon: 'ShoppingCart' },
+          },
+        ],
       },
       {
         path: 'commission',

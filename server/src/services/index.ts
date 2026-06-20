@@ -19,6 +19,7 @@ import promoterLevelService from './PromoterLevel.service';
 import promoterRiskService from './PromoterRisk.service';
 import channelAuditService from './ChannelAudit.service';
 import productService from './Product.service';
+import distributionOrderService from './DistributionOrder.service';
 
 export {
   authService,
@@ -42,4 +43,5 @@ export {
   promoterRiskService,
   channelAuditService,
   productService,
+  distributionOrderService,
 };

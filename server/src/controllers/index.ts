@@ -16,6 +16,7 @@ import promoterLevelController from './PromoterLevel.controller';
 import promoterRiskController from './PromoterRisk.controller';
 import channelAuditController from './ChannelAudit.controller';
 import productController from './Product.controller';
+import distributionOrderController from './DistributionOrder.controller';
 
 export {
   authController,
@@ -36,4 +37,5 @@ export {
   promoterRiskController,
   channelAuditController,
   productController,
+  distributionOrderController,
 };

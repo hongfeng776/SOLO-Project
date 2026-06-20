@@ -15,7 +15,27 @@
         active-text-color="#409EFF"
       >
         <template v-for="route in menuRoutes" :key="route.path">
-          <el-menu-item v-if="!route.meta?.hidden" :index="resolvePath(route.path)">
+          <template v-if="hasVisibleChildren(route)">
+            <el-sub-menu :index="resolvePath(route.path)">
+              <template #title>
+                <el-icon v-if="route.meta?.icon">
+                  <component :is="route.meta.icon" />
+                </el-icon>
+                <span>{{ route.meta?.title }}</span>
+              </template>
+              <el-menu-item
+                v-for="child in getVisibleChildren(route)"
+                :key="child.path"
+                :index="resolveChildPath(route.path, child.path)"
+              >
+                <el-icon v-if="child.meta?.icon">
+                  <component :is="child.meta.icon" />
+                </el-icon>
+                <template #title>{{ child.meta?.title }}</template>
+              </el-menu-item>
+            </el-sub-menu>
+          </template>
+          <el-menu-item v-else-if="!route.meta?.hidden" :index="resolvePath(route.path)">
             <el-icon v-if="route.meta?.icon">
               <component :is="route.meta.icon" />
             </el-icon>
@@ -29,7 +49,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, type RouteRecordRaw } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 
 defineProps<{
@@ -49,8 +69,24 @@ const menuRoutes = computed(() => {
   return (layoutRoute?.children || []).filter((r) => r.meta && !r.meta.hidden)
 })
 
-function resolvePath(path: string) {
+function resolvePath(path: string): string {
   return path.startsWith('/') ? path : `/${path}`
+}
+
+function resolveChildPath(parentPath: string, childPath: string): string {
+  const parent = resolvePath(parentPath)
+  if (childPath.startsWith('/')) return childPath
+  return `${parent}/${childPath}`.replace(/\/+/g, '/')
+}
+
+function hasVisibleChildren(route: RouteRecordRaw): boolean {
+  if (!route.children || route.children.length === 0) return false
+  return route.children.some((c) => c.meta && !c.meta.hidden && !!c.component)
+}
+
+function getVisibleChildren(route: RouteRecordRaw): RouteRecordRaw[] {
+  if (!route.children) return []
+  return route.children.filter((c) => c.meta && !c.meta.hidden && !!c.component)
 }
 </script>
 
