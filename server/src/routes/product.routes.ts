@@ -60,4 +60,30 @@ router.post('/batch/delist', productController.batchDelist);
 router.get('/listing-history', productController.getListingHistory);
 router.get('/:id/listing-stats', productController.getListingStats);
 
+router.get('/risk/config', productController.getRiskConfig);
+router.get('/risk/default-rules', productController.getDefaultRiskRules);
+
+router.get('/risk/rules', productController.getRiskRuleList);
+router.post('/risk/rules', productController.createRiskRule);
+router.get('/risk/rules/:ruleId', productController.getRiskRuleDetail);
+router.put('/risk/rules/:ruleId', productController.updateRiskRule);
+router.put('/risk/rules/:ruleId/toggle', productController.toggleRiskRule);
+router.delete('/risk/rules/:ruleId', productController.deleteRiskRule);
+
+router.get('/risk/records', productController.getRiskRecordList);
+router.get('/risk/records/:recordId', productController.getRiskRecordDetail);
+router.put('/risk/records/:recordId/resolve', productController.resolveProductRisk);
+
+router.get('/risk/statistics', productController.getRiskStatistics);
+router.post('/risk/reset-daily', productController.resetDailyRiskData);
+
+router.post('/:id/risk/check', productController.checkAndTriggerRisk);
+router.post('/:id/risk/mark', productController.markProductRisk);
+router.get('/:id/risk/status', productController.getProductRiskStatus);
+router.get('/:id/risk/history', productController.getProductRiskHistory);
+
+router.post('/risk/batch/scan', productController.batchScanRiskProducts);
+router.post('/risk/batch/resolve', productController.batchResolveRisk);
+router.post('/risk/batch/ban', productController.batchBanProducts);
+
 export default router;

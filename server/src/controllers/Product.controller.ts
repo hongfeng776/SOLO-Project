@@ -543,6 +543,231 @@ class ProductController {
       ResponseUtils.error(res, err.message, err.code);
     }
   }
+
+  public async getRiskRuleList(req: Request, res: Response): Promise<void> {
+    try {
+      const page = parseInt((req.query.page as string) || '1', 10);
+      const pageSize = parseInt((req.query.pageSize as string) || '10', 10);
+      const { ruleType, severity, enabled, keyword } = req.query;
+      const result = await productService.getRiskRuleList({
+        page,
+        pageSize,
+        ruleType: ruleType as any,
+        severity: severity as any,
+        enabled: enabled !== undefined ? enabled === 'true' : undefined,
+        keyword: keyword as string,
+      });
+      ResponseUtils.paginated(res, result.list, result.total, result.page, result.pageSize);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getRiskRuleDetail(req: Request, res: Response): Promise<void> {
+    try {
+      const { ruleId } = req.params;
+      const result = await productService.getRiskRuleDetail(ruleId);
+      ResponseUtils.success(res, result);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async createRiskRule(req: Request, res: Response): Promise<void> {
+    try {
+      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
+      const result = await productService.createRiskRule(req.body, operatorId);
+      ResponseUtils.success(res, result, '风控规则创建成功');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async updateRiskRule(req: Request, res: Response): Promise<void> {
+    try {
+      const { ruleId } = req.params;
+      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
+      await productService.updateRiskRule(ruleId, req.body, operatorId);
+      ResponseUtils.success(res, null, '风控规则更新成功');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async toggleRiskRule(req: Request, res: Response): Promise<void> {
+    try {
+      const { ruleId } = req.params;
+      const { enabled } = req.body;
+      await productService.toggleRiskRule(ruleId, enabled);
+      ResponseUtils.success(res, null, enabled ? '风控规则已启用' : '风控规则已禁用');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async deleteRiskRule(req: Request, res: Response): Promise<void> {
+    try {
+      const { ruleId } = req.params;
+      await productService.deleteRiskRule(ruleId);
+      ResponseUtils.success(res, null, '风控规则已删除');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getDefaultRiskRules(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await productService.getDefaultRiskRules();
+      ResponseUtils.success(res, result);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async checkAndTriggerRisk(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      await productService.checkAndTriggerRisk(id);
+      ResponseUtils.success(res, null, '风控检查完成');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async markProductRisk(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
+      const result = await productService.markProductRisk(id, operatorId, req.body);
+      ResponseUtils.success(res, result, '风控标记成功，已限制商品新增推广并启动订单复核');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async resolveProductRisk(req: Request, res: Response): Promise<void> {
+    try {
+      const { recordId } = req.params;
+      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
+      await productService.resolveProductRisk(recordId, operatorId, req.body);
+      ResponseUtils.success(res, null, '风控处理完成，已恢复正常推广权限');
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getProductRiskStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const result = await productService.getProductRiskStatus(id);
+      ResponseUtils.success(res, result);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getProductRiskHistory(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const page = parseInt((req.query.page as string) || '1', 10);
+      const pageSize = parseInt((req.query.pageSize as string) || '10', 10);
+      const result = await productService.getProductRiskHistory(id, { page, pageSize });
+      ResponseUtils.paginated(res, result.list, result.total, result.page, result.pageSize);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async batchScanRiskProducts(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await productService.batchScanRiskProducts(req.body);
+      ResponseUtils.success(res, result, `风险筛查完成，发现${result.abnormal}个异常商品`);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async batchResolveRisk(req: Request, res: Response): Promise<void> {
+    try {
+      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
+      const result = await productService.batchResolveRisk(req.body, operatorId);
+      ResponseUtils.success(res, result, `批量解除完成，成功${result.success}条`);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async batchBanProducts(req: Request, res: Response): Promise<void> {
+    try {
+      const operatorId = (req as any).user?.id || (req as any).user?.userId || '';
+      const result = await productService.batchBanProducts(req.body, operatorId);
+      ResponseUtils.success(res, result, `批量封禁完成，成功${result.success}个商品`);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getRiskRecordList(req: Request, res: Response): Promise<void> {
+    try {
+      const page = parseInt((req.query.page as string) || '1', 10);
+      const pageSize = parseInt((req.query.pageSize as string) || '10', 10);
+      const { productId, riskType, riskStatus, riskSeverity, riskTrigger, resolved, isFalseAlarm, startTime, endTime, keyword } = req.query;
+      const result = await productService.getRiskRecordList({
+        page,
+        pageSize,
+        productId: productId as string,
+        riskType: riskType as any,
+        riskStatus: riskStatus ? parseInt(riskStatus as string, 10) as any : undefined,
+        riskSeverity: riskSeverity as any,
+        riskTrigger: riskTrigger as any,
+        resolved: resolved !== undefined ? resolved === 'true' : undefined,
+        isFalseAlarm: isFalseAlarm !== undefined ? isFalseAlarm === 'true' : undefined,
+        startTime: startTime as string,
+        endTime: endTime as string,
+        keyword: keyword as string,
+      });
+      ResponseUtils.paginated(res, result.list, result.total, result.page, result.pageSize);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getRiskRecordDetail(req: Request, res: Response): Promise<void> {
+    try {
+      const { recordId } = req.params;
+      const result = await productService.getRiskRecordDetail(recordId);
+      ResponseUtils.success(res, result);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getRiskStatistics(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await productService.getRiskStatistics();
+      ResponseUtils.success(res, result);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async resetDailyRiskData(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await productService.resetDailyRiskData();
+      ResponseUtils.success(res, result, `每日风控数据重置完成，共重置${result.resetCount}个商品`);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getRiskConfig(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await productService.getRiskConfig();
+      ResponseUtils.success(res, result);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
 }
 
 export default new ProductController();

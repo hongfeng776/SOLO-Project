@@ -1083,3 +1083,102 @@ export const PRODUCT_LISTING_ACTION_LABELS: Record<ProductListingAction, string>
 export const PRODUCT_FREQUENT_LISTING_THRESHOLD = 5;
 export const PRODUCT_FREQUENT_LISTING_WINDOW_DAYS = 7;
 export const PRODUCT_HOT_SALES_THRESHOLD = 100;
+
+export enum ProductRiskStatus {
+  NORMAL = 0,
+  WARNING = 1,
+  SUSPENDED = 2,
+  BANNED = 3,
+  REVIEWING = 4,
+}
+
+export const PRODUCT_RISK_STATUS_LABELS: Record<ProductRiskStatus, { label: string; type: 'info' | 'warning' | 'danger' | 'success' }> = {
+  [ProductRiskStatus.NORMAL]: { label: '正常', type: 'success' },
+  [ProductRiskStatus.WARNING]: { label: '预警', type: 'warning' },
+  [ProductRiskStatus.SUSPENDED]: { label: '推广暂停', type: 'danger' },
+  [ProductRiskStatus.BANNED]: { label: '永久封禁', type: 'danger' },
+  [ProductRiskStatus.REVIEWING]: { label: '复核中', type: 'warning' },
+};
+
+export enum ProductRiskType {
+  DAILY_PROMOTION_EXCEEDED = 'daily_promotion_exceeded',
+  SINGLE_COMMISSION_EXCEEDED = 'single_commission_exceeded',
+  HIGH_FREQUENCY_PROMOTION = 'high_frequency_promotion',
+  VIOLATION_PROMOTION = 'violation_promotion',
+  FAKE_TRANSACTION = 'fake_transaction',
+  PRICE_ABNORMAL = 'price_abnormal',
+  SUSPICIOUS_ORDER = 'suspicious_order',
+  OTHER = 'other',
+}
+
+export const PRODUCT_RISK_TYPE_LABELS: Record<ProductRiskType, string> = {
+  [ProductRiskType.DAILY_PROMOTION_EXCEEDED]: '单日推广量超限',
+  [ProductRiskType.SINGLE_COMMISSION_EXCEEDED]: '单笔佣金超限',
+  [ProductRiskType.HIGH_FREQUENCY_PROMOTION]: '高频推广',
+  [ProductRiskType.VIOLATION_PROMOTION]: '违规推广',
+  [ProductRiskType.FAKE_TRANSACTION]: '虚假交易',
+  [ProductRiskType.PRICE_ABNORMAL]: '价格异常',
+  [ProductRiskType.SUSPICIOUS_ORDER]: '可疑订单',
+  [ProductRiskType.OTHER]: '其他',
+};
+
+export enum ProductRiskTrigger {
+  AUTO = 'auto',
+  MANUAL = 'manual',
+  BATCH = 'batch',
+  SYSTEM = 'system',
+}
+
+export const PRODUCT_RISK_TRIGGER_LABELS: Record<ProductRiskTrigger, string> = {
+  [ProductRiskTrigger.AUTO]: '系统自动',
+  [ProductRiskTrigger.MANUAL]: '人工标记',
+  [ProductRiskTrigger.BATCH]: '批量操作',
+  [ProductRiskTrigger.SYSTEM]: '系统检测',
+};
+
+export enum ProductRiskSeverity {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical',
+}
+
+export const PRODUCT_RISK_SEVERITY_LABELS: Record<ProductRiskSeverity, string> = {
+  [ProductRiskSeverity.LOW]: '低',
+  [ProductRiskSeverity.MEDIUM]: '中',
+  [ProductRiskSeverity.HIGH]: '高',
+  [ProductRiskSeverity.CRITICAL]: '严重',
+};
+
+export enum ProductRiskAction {
+  SUSPEND_PROMOTION = 'suspend_promotion',
+  BAN_PERMANENTLY = 'ban_permanently',
+  ORDER_REVIEW = 'order_review',
+  COMMISSION_FREEZE = 'commission_freeze',
+  WARNING_NOTICE = 'warning_notice',
+  RESTORE_NORMAL = 'restore_normal',
+  FALSE_ALARM = 'false_alarm',
+}
+
+export const PRODUCT_RISK_ACTION_LABELS: Record<ProductRiskAction, string> = {
+  [ProductRiskAction.SUSPEND_PROMOTION]: '暂停推广',
+  [ProductRiskAction.BAN_PERMANENTLY]: '永久封禁',
+  [ProductRiskAction.ORDER_REVIEW]: '订单复核',
+  [ProductRiskAction.COMMISSION_FREEZE]: '佣金冻结',
+  [ProductRiskAction.WARNING_NOTICE]: '预警通知',
+  [ProductRiskAction.RESTORE_NORMAL]: '恢复正常',
+  [ProductRiskAction.FALSE_ALARM]: '误风控解除',
+};
+
+export const DEFAULT_PRODUCT_RISK_RULES = {
+  dailyMaxPromotionCount: 1000,
+  singleMaxCommission: 500,
+  highFrequencyThreshold: 100,
+  highFrequencyWindowMinutes: 10,
+  dailyMaxSuspiciousOrderRatio: 0.1,
+  priceAbnormalDeviationRate: 0.3,
+};
+
+export const PRODUCT_RISK_RESET_HOUR = 0;
+export const PRODUCT_RISK_FALSE_ALARM_THRESHOLD = 3;
+export const PRODUCT_RISK_DUPLICATE_CHECK_WINDOW_MINUTES = 30;

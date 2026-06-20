@@ -6,6 +6,8 @@ import {
   productEditApprovalDao,
   productScheduleRuleDao,
   productListingLogDao,
+  productRiskRuleDao,
+  productRiskRecordDao,
 } from '../dao';
 import { ProductAttributes } from '../models/Product.model';
 import { PaginationParams, PaginationResult } from '../types';
@@ -47,6 +49,20 @@ import {
   PRODUCT_FREQUENT_LISTING_WINDOW_DAYS,
   PRODUCT_HOT_SALES_THRESHOLD,
   OrderStatus,
+  ProductRiskStatus,
+  ProductRiskType,
+  ProductRiskTrigger,
+  ProductRiskSeverity,
+  ProductRiskAction,
+  PRODUCT_RISK_STATUS_LABELS,
+  PRODUCT_RISK_TYPE_LABELS,
+  PRODUCT_RISK_TRIGGER_LABELS,
+  PRODUCT_RISK_SEVERITY_LABELS,
+  PRODUCT_RISK_ACTION_LABELS,
+  DEFAULT_PRODUCT_RISK_RULES,
+  PRODUCT_RISK_RESET_HOUR,
+  PRODUCT_RISK_FALSE_ALARM_THRESHOLD,
+  PRODUCT_RISK_DUPLICATE_CHECK_WINDOW_MINUTES,
 } from '../constants/enum';
 import CacheUtils, { CacheKey, CacheTTL } from '../utils/cache';
 import dayjs from 'dayjs';
@@ -3073,6 +3089,1042 @@ class ProductService {
       message: activeOrderCount > 0
         ? `商品存在${activeOrderCount}个未完结在售订单，可选择强制下架或等待订单完结`
         : '商品可以正常下架',
+    };
+  }
+
+  public async getRiskRuleList(
+    params: {
+      page: number;
+      pageSize: number;
+      ruleType?: ProductRiskType;
+      severity?: ProductRiskSeverity;
+      enabled?: boolean;
+      keyword?: string;
+    }
+  ): Promise<PaginationResult<any>> {
+    const { rows, count } = await productRiskRuleDao.findAllPaged(params);
+
+    const list = rows.map((row: any) => {
+      const plain = row.get ? row.get({ plain: true }) : row;
+      return {
+        ...plain,
+        ruleTypeLabel: PRODUCT_RISK_TYPE_LABELS[plain.ruleType as ProductRiskType] || plain.ruleType,
+        severityLabel: PRODUCT_RISK_SEVERITY_LABELS[plain.severity as ProductRiskSeverity] || plain.severity,
+        actionLabel: PRODUCT_RISK_ACTION_LABELS[plain.action as ProductRiskAction] || plain.action,
+      };
+    });
+
+    return {
+      list,
+      total: count,
+      page: params.page,
+      pageSize: params.pageSize,
+      totalPages: Math.ceil(count / params.pageSize),
+    };
+  }
+
+  public async getRiskRuleDetail(ruleId: string): Promise<any> {
+    const rule = await productRiskRuleDao.findById(ruleId);
+    if (!rule) {
+      throw new AppError('风控规则不存在', BusinessCode.NOT_FOUND);
+    }
+
+    const plain = (rule as any).get ? (rule as any).get({ plain: true }) : rule;
+    return {
+      ...plain,
+      ruleTypeLabel: PRODUCT_RISK_TYPE_LABELS[plain.ruleType as ProductRiskType] || plain.ruleType,
+      severityLabel: PRODUCT_RISK_SEVERITY_LABELS[plain.severity as ProductRiskSeverity] || plain.severity,
+      actionLabel: PRODUCT_RISK_ACTION_LABELS[plain.action as ProductRiskAction] || plain.action,
+    };
+  }
+
+  public async createRiskRule(
+    data: any,
+    operatorId: string
+  ): Promise<any> {
+    const operator = await userDao.findById(operatorId);
+    const operatorName = (operator as any)?.nickname || operator?.username || '系统';
+
+    const rule = await productRiskRuleDao.create({
+      ...data,
+      creatorId: operatorId,
+      creatorName: operatorName,
+    });
+
+    return rule;
+  }
+
+  public async updateRiskRule(
+    ruleId: string,
+    data: any,
+    operatorId: string
+  ): Promise<void> {
+    const rule = await productRiskRuleDao.findById(ruleId);
+    if (!rule) {
+      throw new AppError('风控规则不存在', BusinessCode.NOT_FOUND);
+    }
+
+    await productRiskRuleDao.update(data, { where: { id: ruleId } });
+  }
+
+  public async toggleRiskRule(
+    ruleId: string,
+    enabled: boolean
+  ): Promise<void> {
+    const rule = await productRiskRuleDao.findById(ruleId);
+    if (!rule) {
+      throw new AppError('风控规则不存在', BusinessCode.NOT_FOUND);
+    }
+
+    await productRiskRuleDao.update({ enabled }, { where: { id: ruleId } });
+  }
+
+  public async deleteRiskRule(ruleId: string): Promise<void> {
+    const rule = await productRiskRuleDao.findById(ruleId);
+    if (!rule) {
+      throw new AppError('风控规则不存在', BusinessCode.NOT_FOUND);
+    }
+
+    await productRiskRuleDao.destroy({ where: { id: ruleId } });
+  }
+
+  public async getDefaultRiskRules(): Promise<any> {
+    return DEFAULT_PRODUCT_RISK_RULES;
+  }
+
+  public async checkAndTriggerRisk(productId: string): Promise<void> {
+    const product = await productDao.findById(productId);
+    if (!product) return;
+
+    const plain = product.get({ plain: true });
+    if ((plain as any).status !== ProductStatus.LISTED) return;
+    if ((plain as any).riskStatus === ProductRiskStatus.BANNED) return;
+
+    const rules = await productRiskRuleDao.findAllEnabled();
+
+    for (const ruleRow of rules) {
+      const rule = (ruleRow as any).get ? (ruleRow as any).get({ plain: true }) : ruleRow;
+      const ruleType = rule.ruleType as ProductRiskType;
+      let triggered = false;
+      let abnormalData: any = {};
+
+      const isDuplicate = await productRiskRecordDao.hasDuplicateRisk(
+        productId,
+        ruleType,
+        PRODUCT_RISK_DUPLICATE_CHECK_WINDOW_MINUTES
+      );
+      if (isDuplicate) continue;
+
+      switch (ruleType) {
+        case ProductRiskType.DAILY_PROMOTION_EXCEEDED:
+          const dailyLimit = rule.dailyMaxPromotionCount || DEFAULT_PRODUCT_RISK_RULES.dailyMaxPromotionCount;
+          const today = new Date().toISOString().split('T')[0];
+          let dailyCount = (plain as any).dailyPromotionCount || 0;
+          const lastDate = (plain as any).lastPromotionDate;
+          if (lastDate !== today) {
+            dailyCount = 0;
+          }
+          if (dailyCount >= dailyLimit) {
+            triggered = true;
+            abnormalData = { dailyCount, dailyLimit, today };
+          }
+          break;
+
+        case ProductRiskType.SINGLE_COMMISSION_EXCEEDED:
+          const singleMax = rule.singleMaxCommission || DEFAULT_PRODUCT_RISK_RULES.singleMaxCommission;
+          const maxCommission = (plain as any).maxCommission || 0;
+          if (maxCommission > singleMax) {
+            triggered = true;
+            abnormalData = { maxCommission, singleMax };
+          }
+          break;
+
+        case ProductRiskType.PRICE_ABNORMAL:
+          const deviationRate = rule.priceAbnormalDeviationRate || DEFAULT_PRODUCT_RISK_RULES.priceAbnormalDeviationRate;
+          const originalPrice = (plain as any).originalPrice || 0;
+          const salePrice = (plain as any).salePrice || 0;
+          if (originalPrice > 0) {
+            const actualDeviation = Math.abs(salePrice - originalPrice) / originalPrice;
+            if (actualDeviation > Number(deviationRate)) {
+              triggered = true;
+              abnormalData = { originalPrice, salePrice, actualDeviation, deviationRate };
+            }
+          }
+          break;
+
+        default:
+          break;
+      }
+
+      if (triggered) {
+        await this.triggerProductRisk(
+          productId,
+          ruleType,
+          rule.severity,
+          ProductRiskTrigger.AUTO,
+          rule.action,
+          abnormalData,
+          `触发风控规则：${rule.ruleName}`,
+          rule.id,
+          rule.ruleName
+        );
+      }
+    }
+  }
+
+  private async triggerProductRisk(
+    productId: string,
+    riskType: ProductRiskType,
+    severity: ProductRiskSeverity,
+    trigger: ProductRiskTrigger,
+    action: ProductRiskAction,
+    abnormalData: any,
+    reason: string,
+    ruleId?: string,
+    ruleName?: string,
+    triggeredBy?: string,
+    triggeredByName?: string
+  ): Promise<any> {
+    const product = await productDao.findById(productId);
+    if (!product) return null;
+
+    const plain = product.get({ plain: true });
+    const currentRiskStatus = (plain as any).riskStatus as ProductRiskStatus;
+
+    if (currentRiskStatus === ProductRiskStatus.BANNED) return null;
+
+    let newRiskStatus = ProductRiskStatus.WARNING;
+    let promoteEnabled = (plain as any).promoteEnabled;
+    let orderReviewRequired = (plain as any).orderReviewRequired;
+    let commissionFrozen = (plain as any).commissionFrozen;
+
+    switch (action) {
+      case ProductRiskAction.WARNING_NOTICE:
+        newRiskStatus = ProductRiskStatus.WARNING;
+        break;
+      case ProductRiskAction.SUSPEND_PROMOTION:
+        newRiskStatus = ProductRiskStatus.SUSPENDED;
+        promoteEnabled = false;
+        break;
+      case ProductRiskAction.ORDER_REVIEW:
+        newRiskStatus = ProductRiskStatus.REVIEWING;
+        orderReviewRequired = true;
+        break;
+      case ProductRiskAction.COMMISSION_FREEZE:
+        newRiskStatus = ProductRiskStatus.SUSPENDED;
+        commissionFrozen = true;
+        break;
+      case ProductRiskAction.BAN_PERMANENTLY:
+        newRiskStatus = ProductRiskStatus.BANNED;
+        promoteEnabled = false;
+        break;
+      default:
+        break;
+    }
+
+    const expireAt = severity === ProductRiskSeverity.LOW
+      ? new Date(Date.now() + 24 * 60 * 60 * 1000)
+      : severity === ProductRiskSeverity.MEDIUM
+      ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      : undefined;
+
+    const record = await productRiskRecordDao.create({
+      productId,
+      riskType,
+      riskSeverity: severity,
+      riskTrigger: trigger,
+      riskAction: action,
+      riskStatus: newRiskStatus,
+      abnormalData,
+      reason,
+      triggeredBy,
+      triggeredByName,
+      triggeredAt: new Date(),
+      resolved: false,
+      ruleId,
+      ruleName,
+      expireAt,
+    });
+
+    const recordPlain = (record as any).get ? (record as any).get({ plain: true }) : record;
+
+    await productDao.update(
+      {
+        riskStatus: newRiskStatus,
+        riskType,
+        riskTriggeredAt: new Date(),
+        riskTriggeredBy: triggeredBy,
+        riskTriggeredByName: triggeredByName,
+        riskReason: reason,
+        riskSeverity: severity,
+        riskExpireAt: expireAt,
+        promoteEnabled,
+        orderReviewRequired,
+        commissionFrozen,
+      } as any,
+      { where: { id: productId } }
+    );
+
+    await CacheUtils.del(CacheKey.PRODUCT_DETAIL + productId);
+    await CacheUtils.delPattern(CacheKey.PRODUCT_LIST + '*');
+
+    return recordPlain;
+  }
+
+  public async markProductRisk(
+    productId: string,
+    operatorId: string,
+    data: {
+      riskType: ProductRiskType;
+      severity?: ProductRiskSeverity;
+      action?: ProductRiskAction;
+      reason?: string;
+      abnormalData?: any;
+    }
+  ): Promise<any> {
+    const product = await productDao.findById(productId);
+    if (!product) {
+      throw new AppError('商品不存在', BusinessCode.NOT_FOUND);
+    }
+
+    const plain = product.get({ plain: true });
+    if ((plain as any).riskStatus === ProductRiskStatus.BANNED) {
+      throw new AppError('商品已被永久封禁，无需重复标记', BusinessCode.ERROR);
+    }
+
+    const operator = await userDao.findById(operatorId);
+    const operatorName = (operator as any)?.nickname || operator?.username || '系统';
+
+    const severity = data.severity || ProductRiskSeverity.MEDIUM;
+    const action = data.action || ProductRiskAction.ORDER_REVIEW;
+
+    const record = await this.triggerProductRisk(
+      productId,
+      data.riskType,
+      severity,
+      ProductRiskTrigger.MANUAL,
+      action,
+      data.abnormalData || {},
+      data.reason || '人工标记风控',
+      undefined,
+      undefined,
+      operatorId,
+      operatorName
+    );
+
+    return record;
+  }
+
+  public async resolveProductRisk(
+    recordId: string,
+    operatorId: string,
+    data: {
+      remark?: string;
+      isFalseAlarm?: boolean;
+    }
+  ): Promise<void> {
+    const record = await productRiskRecordDao.findById(recordId);
+    if (!record) {
+      throw new AppError('风控记录不存在', BusinessCode.NOT_FOUND);
+    }
+
+    const recordPlain = (record as any).get ? (record as any).get({ plain: true }) : record;
+    if (recordPlain.resolved) {
+      throw new AppError('该风控记录已处理', BusinessCode.ERROR);
+    }
+
+    const operator = await userDao.findById(operatorId);
+    const operatorName = (operator as any)?.nickname || operator?.username || '系统';
+
+    await productRiskRecordDao.update(
+      {
+        resolved: true,
+        resolvedBy: operatorId,
+        resolvedByName: operatorName,
+        resolvedAt: new Date(),
+        resolveRemark: data.remark,
+        isFalseAlarm: data.isFalseAlarm || false,
+      },
+      { where: { id: recordId } }
+    );
+
+    const activeRecords = await productRiskRecordDao.findActiveByProductId(recordPlain.productId);
+    const unresolvedCount = activeRecords.filter((r: any) => {
+      const p = r.get ? r.get({ plain: true }) : r;
+      return !p.resolved && p.id !== recordPlain.id;
+    }).length;
+
+    if (unresolvedCount === 0) {
+      const product = await productDao.findById(recordPlain.productId);
+      if (product) {
+        const plain = product.get({ plain: true });
+        if ((plain as any).riskStatus !== ProductRiskStatus.BANNED) {
+          await productDao.update(
+            {
+              riskStatus: ProductRiskStatus.NORMAL,
+              riskType: null as any,
+              riskTriggeredAt: null as any,
+              riskTriggeredBy: null as any,
+              riskTriggeredByName: null as any,
+              riskReason: null as any,
+              riskSeverity: null as any,
+              riskExpireAt: null as any,
+              promoteEnabled: true,
+              orderReviewRequired: false,
+              commissionFrozen: false,
+            } as any,
+            { where: { id: recordPlain.productId } }
+          );
+        }
+      }
+    }
+
+    await CacheUtils.del(CacheKey.PRODUCT_DETAIL + recordPlain.productId);
+  }
+
+  public async getProductRiskStatus(productId: string): Promise<any> {
+    const product = await productDao.findById(productId);
+    if (!product) {
+      throw new AppError('商品不存在', BusinessCode.NOT_FOUND);
+    }
+
+    const plain = product.get({ plain: true });
+    const riskStatus = (plain as any).riskStatus as ProductRiskStatus;
+    const riskSeverity = (plain as any).riskSeverity as ProductRiskSeverity;
+    const riskType = (plain as any).riskType as ProductRiskType;
+
+    const activeRecords = await productRiskRecordDao.findActiveByProductId(productId);
+    const recordCount = activeRecords.length;
+
+    const falseAlarmCount = await productRiskRecordDao.countFalseAlarmsByProductId(
+      productId,
+      30
+    );
+
+    return {
+      productId: plain.id,
+      productName: plain.name,
+      sku: plain.sku,
+      riskStatus,
+      riskStatusLabel: PRODUCT_RISK_STATUS_LABELS[riskStatus]?.label || '正常',
+      riskStatusType: PRODUCT_RISK_STATUS_LABELS[riskStatus]?.type || 'success',
+      riskType: riskType || null,
+      riskTypeLabel: riskType ? PRODUCT_RISK_TYPE_LABELS[riskType] : null,
+      riskSeverity: riskSeverity || null,
+      riskSeverityLabel: riskSeverity ? PRODUCT_RISK_SEVERITY_LABELS[riskSeverity] : null,
+      riskReason: (plain as any).riskReason || null,
+      riskTriggeredAt: (plain as any).riskTriggeredAt || null,
+      riskTriggeredByName: (plain as any).riskTriggeredByName || null,
+      riskExpireAt: (plain as any).riskExpireAt || null,
+      promoteEnabled: (plain as any).promoteEnabled,
+      orderReviewRequired: (plain as any).orderReviewRequired,
+      commissionFrozen: (plain as any).commissionFrozen,
+      activeRecordCount: recordCount,
+      falseAlarmCount30Days: falseAlarmCount,
+      dailyPromotionCount: (plain as any).dailyPromotionCount || 0,
+    };
+  }
+
+  public async batchScanRiskProducts(
+    params: {
+      scanType: 'abnormal_price' | 'high_commission' | 'fake_transaction' | 'all';
+      category?: ProductCategory;
+      autoMark?: boolean;
+    }
+  ): Promise<{
+    total: number;
+    abnormal: number;
+    marked: number;
+    details: Array<{
+      productId: string;
+      productName: string;
+      sku: string;
+      abnormalType: string;
+      abnormalValue: string;
+      marked: boolean;
+    }>;
+  }> {
+    const { scanType, category, autoMark = false } = params;
+
+    const where: any = {
+      status: ProductStatus.LISTED,
+      riskStatus: { [Op.in]: [ProductRiskStatus.NORMAL, ProductRiskStatus.WARNING] },
+    };
+    if (category) {
+      where.category = category;
+    }
+
+    const { rows } = await productDao.findAndCountAll({ where });
+    const details: Array<{
+      productId: string;
+      productName: string;
+      sku: string;
+      abnormalType: string;
+      abnormalValue: string;
+      marked: boolean;
+    }> = [];
+
+    let abnormal = 0;
+    let marked = 0;
+
+    for (const productRow of rows) {
+      const plain = productRow.get ? productRow.get({ plain: true }) : productRow;
+      const originalPrice = (plain as any).originalPrice || 0;
+      const salePrice = (plain as any).salePrice || 0;
+      const maxCommission = (plain as any).maxCommission || 0;
+
+      const priceDeviation = originalPrice > 0
+        ? Math.abs(salePrice - originalPrice) / originalPrice
+        : 0;
+
+      const hasPriceAbnormal = priceDeviation > DEFAULT_PRODUCT_RISK_RULES.priceAbnormalDeviationRate;
+      const hasHighCommission = maxCommission > DEFAULT_PRODUCT_RISK_RULES.singleMaxCommission;
+
+      let isAbnormal = false;
+      let abnormalType = '';
+      let abnormalValue = '';
+
+      if (scanType === 'abnormal_price' || scanType === 'all') {
+        if (hasPriceAbnormal) {
+          isAbnormal = true;
+          abnormalType = '价格异常';
+          abnormalValue = `偏离${(priceDeviation * 100).toFixed(1)}%`;
+        }
+      }
+
+      if (scanType === 'high_commission' || scanType === 'all') {
+        if (hasHighCommission) {
+          isAbnormal = true;
+          abnormalType = abnormalType ? abnormalType + '、高佣金' : '高佣金';
+          abnormalValue = abnormalValue ? abnormalValue + `、最高佣金${maxCommission}` : `最高佣金${maxCommission}`;
+        }
+      }
+
+      if (isAbnormal) {
+        abnormal++;
+        let wasMarked = false;
+
+        if (autoMark) {
+          try {
+            const riskType = hasPriceAbnormal
+              ? ProductRiskType.PRICE_ABNORMAL
+              : ProductRiskType.SINGLE_COMMISSION_EXCEEDED;
+            await this.triggerProductRisk(
+              plain.id,
+              riskType,
+              ProductRiskSeverity.MEDIUM,
+              ProductRiskTrigger.BATCH,
+              ProductRiskAction.ORDER_REVIEW,
+              { priceDeviation, maxCommission, originalPrice, salePrice },
+              '批量筛查标记',
+              undefined,
+              undefined,
+              'system',
+              '系统自动'
+            );
+            wasMarked = true;
+            marked++;
+          } catch (err) {
+          }
+        }
+
+        details.push({
+          productId: plain.id,
+          productName: plain.name,
+          sku: plain.sku,
+          abnormalType,
+          abnormalValue,
+          marked: wasMarked,
+        });
+      }
+    }
+
+    return {
+      total: rows.length,
+      abnormal,
+      marked,
+      details,
+    };
+  }
+
+  public async batchResolveRisk(
+    params: {
+      recordIds?: string[];
+      productIds?: string[];
+      resolveType: 'normal' | 'false_alarm' | 'all_unresolved';
+      remark?: string;
+    },
+    operatorId: string
+  ): Promise<{
+    total: number;
+    success: number;
+    failed: number;
+    skipped: number;
+  }> {
+    const { recordIds, productIds, resolveType, remark } = params;
+
+    let targetRecords: any[] = [];
+
+    if (recordIds && recordIds.length > 0) {
+      for (const id of recordIds) {
+        const record = await productRiskRecordDao.findById(id);
+        if (record) targetRecords.push(record);
+      }
+    } else if (productIds && productIds.length > 0) {
+      for (const pid of productIds) {
+        const records = await productRiskRecordDao.findActiveByProductId(pid);
+        targetRecords = [...targetRecords, ...records];
+      }
+    } else if (resolveType === 'all_unresolved') {
+      const { rows } = await productRiskRecordDao.findAndCountAll({
+        where: { resolved: false },
+      });
+      targetRecords = rows;
+    }
+
+    let success = 0;
+    let failed = 0;
+    let skipped = 0;
+
+    const operator = await userDao.findById(operatorId);
+    const operatorName = (operator as any)?.nickname || operator?.username || '系统';
+
+    for (const recordRow of targetRecords) {
+      try {
+        const plain = recordRow.get ? recordRow.get({ plain: true }) : recordRow;
+        if (plain.resolved) {
+          skipped++;
+          continue;
+        }
+
+        const isFalseAlarm = resolveType === 'false_alarm';
+
+        await productRiskRecordDao.update(
+          {
+            resolved: true,
+            resolvedBy: operatorId,
+            resolvedByName: operatorName,
+            resolvedAt: new Date(),
+            resolveRemark: remark,
+            isFalseAlarm,
+          },
+          { where: { id: plain.id } }
+        );
+
+        const activeRecords = await productRiskRecordDao.findActiveByProductId(plain.productId);
+        const unresolvedCount = activeRecords.filter((r: any) => {
+          const p = r.get ? r.get({ plain: true }) : r;
+          return !p.resolved && p.id !== plain.id;
+        }).length;
+
+        if (unresolvedCount === 0) {
+          const product = await productDao.findById(plain.productId);
+          if (product) {
+            const productPlain = product.get({ plain: true });
+            if ((productPlain as any).riskStatus !== ProductRiskStatus.BANNED) {
+              await productDao.update(
+                {
+                  riskStatus: ProductRiskStatus.NORMAL,
+                  riskType: null as any,
+                  riskTriggeredAt: null as any,
+                  riskTriggeredBy: null as any,
+                  riskTriggeredByName: null as any,
+                  riskReason: null as any,
+                  riskSeverity: null as any,
+                  riskExpireAt: null as any,
+                  promoteEnabled: true,
+                  orderReviewRequired: false,
+                  commissionFrozen: false,
+                } as any,
+                { where: { id: plain.productId } }
+              );
+            }
+          }
+        }
+
+        await CacheUtils.del(CacheKey.PRODUCT_DETAIL + plain.productId);
+        success++;
+      } catch (err) {
+        failed++;
+      }
+    }
+
+    return {
+      total: targetRecords.length,
+      success,
+      failed,
+      skipped,
+    };
+  }
+
+  public async batchBanProducts(
+    params: {
+      productIds?: string[];
+      reason?: string;
+      banType: 'permanent' | 'temporary';
+      durationDays?: number;
+    },
+    operatorId: string
+  ): Promise<{
+    total: number;
+    success: number;
+    failed: number;
+    skipped: number;
+  }> {
+    const { productIds, reason, banType, durationDays } = params;
+
+    let products: any[] = [];
+    if (productIds && productIds.length > 0) {
+      for (const id of productIds) {
+        const product = await productDao.findById(id);
+        if (product) products.push(product);
+      }
+    }
+
+    const operator = await userDao.findById(operatorId);
+    const operatorName = (operator as any)?.nickname || operator?.username || '系统';
+
+    let success = 0;
+    let failed = 0;
+    let skipped = 0;
+
+    const batchId = `batch_ban_${Date.now()}`;
+
+    for (const productRow of products) {
+      try {
+        const plain = productRow.get ? productRow.get({ plain: true }) : productRow;
+        if ((plain as any).riskStatus === ProductRiskStatus.BANNED) {
+          skipped++;
+          continue;
+        }
+
+        const expireAt = banType === 'permanent'
+          ? undefined
+          : new Date(Date.now() + (durationDays || 30) * 24 * 60 * 60 * 1000);
+
+        await productRiskRecordDao.create({
+          productId: plain.id,
+          riskType: ProductRiskType.VIOLATION_PROMOTION,
+          riskSeverity: banType === 'permanent' ? ProductRiskSeverity.CRITICAL : ProductRiskSeverity.HIGH,
+          riskTrigger: ProductRiskTrigger.BATCH,
+          riskAction: banType === 'permanent' ? ProductRiskAction.BAN_PERMANENTLY : ProductRiskAction.SUSPEND_PROMOTION,
+          riskStatus: banType === 'permanent' ? ProductRiskStatus.BANNED : ProductRiskStatus.SUSPENDED,
+          reason: reason || '批量封禁',
+          triggeredBy: operatorId,
+          triggeredByName: operatorName,
+          triggeredAt: new Date(),
+          resolved: false,
+          expireAt,
+          batchId,
+        });
+
+        await productDao.update(
+          {
+            riskStatus: banType === 'permanent' ? ProductRiskStatus.BANNED : ProductRiskStatus.SUSPENDED,
+            riskType: ProductRiskType.VIOLATION_PROMOTION,
+            riskTriggeredAt: new Date(),
+            riskTriggeredBy: operatorId,
+            riskTriggeredByName: operatorName,
+            riskReason: reason || '批量封禁',
+            riskSeverity: banType === 'permanent' ? ProductRiskSeverity.CRITICAL : ProductRiskSeverity.HIGH,
+            riskExpireAt: expireAt,
+            promoteEnabled: false,
+            orderReviewRequired: true,
+            commissionFrozen: true,
+          } as any,
+          { where: { id: plain.id } }
+        );
+
+        await CacheUtils.del(CacheKey.PRODUCT_DETAIL + plain.id);
+        success++;
+      } catch (err) {
+        failed++;
+      }
+    }
+
+    await CacheUtils.delPattern(CacheKey.PRODUCT_LIST + '*');
+
+    return {
+      total: products.length,
+      success,
+      failed,
+      skipped,
+    };
+  }
+
+  public async getRiskRecordList(
+    params: {
+      page: number;
+      pageSize: number;
+      productId?: string;
+      riskType?: ProductRiskType;
+      riskStatus?: ProductRiskStatus;
+      riskSeverity?: ProductRiskSeverity;
+      riskTrigger?: ProductRiskTrigger;
+      resolved?: boolean;
+      isFalseAlarm?: boolean;
+      startTime?: string;
+      endTime?: string;
+      keyword?: string;
+    }
+  ): Promise<PaginationResult<any>> {
+    const { rows, count } = await productRiskRecordDao.findAllPaged(params);
+
+    const list = rows.map((row: any) => {
+      const plain = row.get ? row.get({ plain: true }) : row;
+      return {
+        ...plain,
+        riskTypeLabel: PRODUCT_RISK_TYPE_LABELS[plain.riskType as ProductRiskType] || plain.riskType,
+        riskStatusLabel: PRODUCT_RISK_STATUS_LABELS[plain.riskStatus as ProductRiskStatus]?.label || plain.riskStatus,
+        riskSeverityLabel: PRODUCT_RISK_SEVERITY_LABELS[plain.riskSeverity as ProductRiskSeverity] || plain.riskSeverity,
+        riskTriggerLabel: PRODUCT_RISK_TRIGGER_LABELS[plain.riskTrigger as ProductRiskTrigger] || plain.riskTrigger,
+        riskActionLabel: PRODUCT_RISK_ACTION_LABELS[plain.riskAction as ProductRiskAction] || plain.riskAction,
+      };
+    });
+
+    return {
+      list,
+      total: count,
+      page: params.page,
+      pageSize: params.pageSize,
+      totalPages: Math.ceil(count / params.pageSize),
+    };
+  }
+
+  public async getRiskRecordDetail(recordId: string): Promise<any> {
+    const record = await productRiskRecordDao.findById(recordId);
+    if (!record) {
+      throw new AppError('风控记录不存在', BusinessCode.NOT_FOUND);
+    }
+
+    const plain = (record as any).get ? (record as any).get({ plain: true }) : record;
+
+    const product = await productDao.findById(plain.productId);
+    let productInfo = null;
+    if (product) {
+      const productPlain = product.get({ plain: true });
+      productInfo = {
+        id: productPlain.id,
+        name: productPlain.name,
+        sku: productPlain.sku,
+        status: (productPlain as any).status,
+        statusLabel: PRODUCT_STATUS_LABELS[(productPlain as any).status as ProductStatus]?.label,
+        riskStatus: (productPlain as any).riskStatus,
+        riskStatusLabel: PRODUCT_RISK_STATUS_LABELS[(productPlain as any).riskStatus as ProductRiskStatus]?.label,
+      };
+    }
+
+    return {
+      ...plain,
+      riskTypeLabel: PRODUCT_RISK_TYPE_LABELS[plain.riskType as ProductRiskType] || plain.riskType,
+      riskStatusLabel: PRODUCT_RISK_STATUS_LABELS[plain.riskStatus as ProductRiskStatus]?.label || plain.riskStatus,
+      riskSeverityLabel: PRODUCT_RISK_SEVERITY_LABELS[plain.riskSeverity as ProductRiskSeverity] || plain.riskSeverity,
+      riskTriggerLabel: PRODUCT_RISK_TRIGGER_LABELS[plain.riskTrigger as ProductRiskTrigger] || plain.riskTrigger,
+      riskActionLabel: PRODUCT_RISK_ACTION_LABELS[plain.riskAction as ProductRiskAction] || plain.riskAction,
+      productInfo,
+    };
+  }
+
+  public async getProductRiskHistory(
+    productId: string,
+    params: { page: number; pageSize: number }
+  ): Promise<PaginationResult<any>> {
+    return this.getRiskRecordList({
+      ...params,
+      productId,
+    });
+  }
+
+  public async getRiskStatistics(): Promise<{
+    totalRules: number;
+    enabledRules: number;
+    totalRecords: number;
+    pendingRecords: number;
+    resolvedRecords: number;
+    falseAlarmRecords: number;
+    bannedProducts: number;
+    suspendedProducts: number;
+    warningProducts: number;
+    normalProducts: number;
+    todayTriggered: number;
+    autoTriggered: number;
+    manualTriggered: number;
+    riskTypeDistribution: Array<{ type: string; label: string; count: number }>;
+    severityDistribution: Array<{ severity: string; label: string; count: number }>;
+  }> {
+    const totalRules = await productRiskRuleDao.count();
+    const enabledRules = await productRiskRuleDao.count({ where: { enabled: true } });
+    const totalRecords = await productRiskRecordDao.count();
+    const pendingRecords = await productRiskRecordDao.count({ where: { resolved: false } });
+    const resolvedRecords = await productRiskRecordDao.count({ where: { resolved: true } });
+    const falseAlarmRecords = await productRiskRecordDao.count({ where: { isFalseAlarm: true } });
+
+    const bannedProducts = await productDao.count({ where: { riskStatus: ProductRiskStatus.BANNED } });
+    const suspendedProducts = await productDao.count({ where: { riskStatus: ProductRiskStatus.SUSPENDED } });
+    const warningProducts = await productDao.count({ where: { riskStatus: ProductRiskStatus.WARNING } });
+    const normalProducts = await productDao.count({ where: { riskStatus: ProductRiskStatus.NORMAL } });
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayTriggered = await productRiskRecordDao.count({
+      where: { triggeredAt: { [Op.gte]: todayStart } },
+    });
+
+    const autoTriggered = await productRiskRecordDao.count({ where: { riskTrigger: ProductRiskTrigger.AUTO } });
+    const manualTriggered = await productRiskRecordDao.count({ where: { riskTrigger: ProductRiskTrigger.MANUAL } });
+
+    const riskTypeDistribution: Array<{ type: string; label: string; count: number }> = [];
+    for (const type of Object.values(ProductRiskType)) {
+      const count = await productRiskRecordDao.count({ where: { riskType: type } });
+      riskTypeDistribution.push({
+        type,
+        label: PRODUCT_RISK_TYPE_LABELS[type as ProductRiskType] || type,
+        count,
+      });
+    }
+
+    const severityDistribution: Array<{ severity: string; label: string; count: number }> = [];
+    for (const sev of Object.values(ProductRiskSeverity)) {
+      const count = await productRiskRecordDao.count({ where: { riskSeverity: sev } });
+      severityDistribution.push({
+        severity: sev,
+        label: PRODUCT_RISK_SEVERITY_LABELS[sev as ProductRiskSeverity] || sev,
+        count,
+      });
+    }
+
+    return {
+      totalRules,
+      enabledRules,
+      totalRecords,
+      pendingRecords,
+      resolvedRecords,
+      falseAlarmRecords,
+      bannedProducts,
+      suspendedProducts,
+      warningProducts,
+      normalProducts,
+      todayTriggered,
+      autoTriggered,
+      manualTriggered,
+      riskTypeDistribution,
+      severityDistribution,
+    };
+  }
+
+  public async resetDailyRiskData(): Promise<{ resetCount: number }> {
+    const today = new Date().toISOString().split('T')[0];
+
+    const { rows } = await productDao.findAndCountAll({
+      where: {
+        lastPromotionDate: {
+          [Op.or]: [{ [Op.not]: today }, { [Op.is]: null }],
+        },
+      },
+    });
+
+    let resetCount = 0;
+    for (const productRow of rows) {
+      const plain = productRow.get ? productRow.get({ plain: true }) : productRow;
+      const currentStatus = (plain as any).riskStatus as ProductRiskStatus;
+
+      if (
+        currentStatus === ProductRiskStatus.SUSPENDED ||
+        currentStatus === ProductRiskStatus.WARNING
+      ) {
+        const expireAt = (plain as any).riskExpireAt;
+        if (expireAt && new Date(expireAt) <= new Date()) {
+          await productDao.update(
+            {
+              dailyPromotionCount: 0,
+              lastPromotionDate: today,
+              riskStatus: ProductRiskStatus.NORMAL,
+              riskType: null as any,
+              riskTriggeredAt: null as any,
+              riskTriggeredBy: null as any,
+              riskTriggeredByName: null as any,
+              riskReason: null as any,
+              riskSeverity: null as any,
+              riskExpireAt: null as any,
+              promoteEnabled: true,
+              orderReviewRequired: false,
+              commissionFrozen: false,
+            } as any,
+            { where: { id: plain.id } }
+          );
+          resetCount++;
+        } else {
+          await productDao.update(
+            {
+              dailyPromotionCount: 0,
+              lastPromotionDate: today,
+            } as any,
+            { where: { id: plain.id } }
+          );
+          resetCount++;
+        }
+      } else {
+        await productDao.update(
+          {
+            dailyPromotionCount: 0,
+            lastPromotionDate: today,
+          } as any,
+          { where: { id: plain.id } }
+        );
+        resetCount++;
+      }
+
+      await CacheUtils.del(CacheKey.PRODUCT_DETAIL + plain.id);
+    }
+
+    await CacheUtils.delPattern(CacheKey.PRODUCT_LIST + '*');
+
+    return { resetCount };
+  }
+
+  public async getRiskConfig(): Promise<{
+    defaultRules: any;
+    riskTypes: Array<{ value: string; label: string }>;
+    riskStatuses: Array<{ value: number; label: string; type: string }>;
+    riskSeverities: Array<{ value: string; label: string }>;
+    riskTriggers: Array<{ value: string; label: string }>;
+    riskActions: Array<{ value: string; label: string }>;
+  }> {
+    const riskTypes = Object.values(ProductRiskType).map((t) => ({
+      value: t,
+      label: PRODUCT_RISK_TYPE_LABELS[t as ProductRiskType] || t,
+    }));
+
+    const riskStatuses = Object.values(ProductRiskStatus)
+      .filter((v) => typeof v === 'number')
+      .map((v) => ({
+        value: v as number,
+        label: PRODUCT_RISK_STATUS_LABELS[v as ProductRiskStatus]?.label || String(v),
+        type: PRODUCT_RISK_STATUS_LABELS[v as ProductRiskStatus]?.type || 'info',
+      }));
+
+    const riskSeverities = Object.values(ProductRiskSeverity).map((s) => ({
+      value: s,
+      label: PRODUCT_RISK_SEVERITY_LABELS[s as ProductRiskSeverity] || s,
+    }));
+
+    const riskTriggers = Object.values(ProductRiskTrigger).map((t) => ({
+      value: t,
+      label: PRODUCT_RISK_TRIGGER_LABELS[t as ProductRiskTrigger] || t,
+    }));
+
+    const riskActions = Object.values(ProductRiskAction).map((a) => ({
+      value: a,
+      label: PRODUCT_RISK_ACTION_LABELS[a as ProductRiskAction] || a,
+    }));
+
+    return {
+      defaultRules: DEFAULT_PRODUCT_RISK_RULES,
+      riskTypes,
+      riskStatuses,
+      riskSeverities,
+      riskTriggers,
+      riskActions,
     };
   }
 }

@@ -33,6 +33,8 @@ import ProductAuditLog from './ProductAuditLog.model';
 import ProductEditApproval from './ProductEditApproval.model';
 import ProductScheduleRule from './ProductScheduleRule.model';
 import ProductListingLog from './ProductListingLog.model';
+import ProductRiskRule from './ProductRiskRule.model';
+import ProductRiskRecord from './ProductRiskRecord.model';
 
 const models = {
   User,
@@ -70,6 +72,8 @@ const models = {
   ProductEditApproval,
   ProductScheduleRule,
   ProductListingLog,
+  ProductRiskRule,
+  ProductRiskRecord,
 };
 
 const associate = (): void => {
@@ -156,8 +160,13 @@ const associate = (): void => {
   Product.hasMany(ProductListingLog, { foreignKey: 'productId', as: 'listingLogs' });
   ProductListingLog.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
   ProductListingLog.belongsTo(User, { foreignKey: 'operatorId', as: 'operator' });
+
+  Product.hasMany(ProductRiskRecord, { foreignKey: 'productId', as: 'riskRecords' });
+  ProductRiskRecord.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+  ProductRiskRecord.belongsTo(User, { foreignKey: 'triggeredBy', as: 'triggeredByUser' });
+  ProductRiskRecord.belongsTo(User, { foreignKey: 'resolvedBy', as: 'resolvedByUser' });
 };
 
 export { associate };
-export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification, Product, ProductAuditLog, ProductEditApproval, ProductScheduleRule, ProductListingLog };
+export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification, Product, ProductAuditLog, ProductEditApproval, ProductScheduleRule, ProductListingLog, ProductRiskRule, ProductRiskRecord };
 export default models;

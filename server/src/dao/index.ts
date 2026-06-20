@@ -29,6 +29,8 @@ import productAuditLogDao from './ProductAuditLog.dao';
 import productEditApprovalDao from './ProductEditApproval.dao';
 import productScheduleRuleDao from './ProductScheduleRule.dao';
 import productListingLogDao from './ProductListingLog.dao';
+import productRiskRuleDao from './ProductRiskRule.dao';
+import productRiskRecordDao from './ProductRiskRecord.dao';
 
 export {
   userDao,
@@ -62,4 +64,6 @@ export {
   productEditApprovalDao,
   productScheduleRuleDao,
   productListingLogDao,
+  productRiskRuleDao,
+  productRiskRecordDao,
 };

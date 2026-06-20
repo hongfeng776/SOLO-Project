@@ -5,6 +5,8 @@ import {
   ProductAuditStage,
   ProductCategory,
   ProductMaterial,
+  ProductRiskStatus,
+  ProductRiskSeverity,
 } from '../constants/enum';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -63,13 +65,25 @@ interface ProductAttributes {
   fakeProductFlag?: boolean;
   fakeProductReason?: string;
   complianceScore?: number;
+  riskStatus?: ProductRiskStatus;
+  riskType?: string;
+  riskTriggeredAt?: Date;
+  riskTriggeredBy?: string;
+  riskTriggeredByName?: string;
+  riskReason?: string;
+  riskSeverity?: ProductRiskSeverity;
+  riskExpireAt?: Date;
+  orderReviewRequired?: boolean;
+  commissionFrozen?: boolean;
+  dailyPromotionCount?: number;
+  lastPromotionDate?: string;
   remark?: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
 }
 
-interface ProductCreationAttributes extends Optional<ProductAttributes, 'id' | 'brand' | 'description' | 'mainImage' | 'images' | 'costPrice' | 'lockedStock' | 'minCommission' | 'maxCommission' | 'status' | 'auditStage' | 'qualificationVerified' | 'qualificationImgs' | 'qualificationExpireAt' | 'qualificationRemark' | 'promotionMaterials' | 'commissionRuleId' | 'promoteEnabled' | 'listStartTime' | 'listEndTime' | 'limitedPromotion' | 'promotionStartTime' | 'promotionEndTime' | 'isHot' | 'isRecommended' | 'sort' | 'promotionWeight' | 'tags' | 'channelId' | 'auditorId' | 'auditAt' | 'auditRemark' | 'rejectIssueType' | 'rejectCustomRemark' | 'rejectedAt' | 'submitterId' | 'submitAt' | 'listerId' | 'listAt' | 'delisterId' | 'delistAt' | 'salesCount' | 'salesAmount' | 'promoteCount' | 'fakeProductFlag' | 'fakeProductReason' | 'complianceScore' | 'remark' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
+interface ProductCreationAttributes extends Optional<ProductAttributes, 'id' | 'brand' | 'description' | 'mainImage' | 'images' | 'costPrice' | 'lockedStock' | 'minCommission' | 'maxCommission' | 'status' | 'auditStage' | 'qualificationVerified' | 'qualificationImgs' | 'qualificationExpireAt' | 'qualificationRemark' | 'promotionMaterials' | 'commissionRuleId' | 'promoteEnabled' | 'listStartTime' | 'listEndTime' | 'limitedPromotion' | 'promotionStartTime' | 'promotionEndTime' | 'isHot' | 'isRecommended' | 'sort' | 'promotionWeight' | 'tags' | 'channelId' | 'auditorId' | 'auditAt' | 'auditRemark' | 'rejectIssueType' | 'rejectCustomRemark' | 'rejectedAt' | 'submitterId' | 'submitAt' | 'listerId' | 'listAt' | 'delisterId' | 'delistAt' | 'salesCount' | 'salesAmount' | 'promoteCount' | 'fakeProductFlag' | 'fakeProductReason' | 'complianceScore' | 'riskStatus' | 'riskType' | 'riskTriggeredAt' | 'riskTriggeredBy' | 'riskTriggeredByName' | 'riskReason' | 'riskSeverity' | 'riskExpireAt' | 'orderReviewRequired' | 'commissionFrozen' | 'dailyPromotionCount' | 'lastPromotionDate' | 'remark' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
 
 class Product extends Model<ProductAttributes, ProductCreationAttributes> implements ProductAttributes {
   public id!: string;
@@ -126,6 +140,18 @@ class Product extends Model<ProductAttributes, ProductCreationAttributes> implem
   public fakeProductFlag?: boolean;
   public fakeProductReason?: string;
   public complianceScore?: number;
+  public riskStatus?: ProductRiskStatus;
+  public riskType?: string;
+  public riskTriggeredAt?: Date;
+  public riskTriggeredBy?: string;
+  public riskTriggeredByName?: string;
+  public riskReason?: string;
+  public riskSeverity?: ProductRiskSeverity;
+  public riskExpireAt?: Date;
+  public orderReviewRequired?: boolean;
+  public commissionFrozen?: boolean;
+  public dailyPromotionCount?: number;
+  public lastPromotionDate?: string;
   public remark?: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -423,6 +449,58 @@ Product.init(
       type: DataTypes.DECIMAL(5, 2),
       allowNull: true,
       defaultValue: 100,
+    },
+    riskStatus: {
+      type: DataTypes.TINYINT,
+      allowNull: false,
+      defaultValue: ProductRiskStatus.NORMAL,
+    },
+    riskType: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    riskTriggeredAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    riskTriggeredBy: {
+      type: DataTypes.STRING(36),
+      allowNull: true,
+    },
+    riskTriggeredByName: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    riskReason: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    riskSeverity: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+    },
+    riskExpireAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    orderReviewRequired: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    commissionFrozen: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    dailyPromotionCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    lastPromotionDate: {
+      type: DataTypes.STRING(10),
+      allowNull: true,
     },
     remark: {
       type: DataTypes.TEXT,
