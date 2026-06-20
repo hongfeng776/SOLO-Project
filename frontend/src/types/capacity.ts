@@ -291,3 +291,174 @@ export interface ReportParams {
   endDate: string
   reportType?: 'comprehensive' | 'shortage' | 'surplus' | 'trend'
 }
+
+export interface SmartDispatchPrecheckParams {
+  city: string
+  area: string
+  dispatchType: 'manual' | 'auto' | 'emergency'
+  maxDispatchRadius: number
+  maxDispatchCount: number
+  dispatchTimeout: number
+}
+
+export interface AreaAnalysis {
+  area: string
+  city: string
+  orderHeat: 'low' | 'medium' | 'high' | 'extreme'
+  orderHeatScore: number
+  driverDensity: number
+  idleDriverCount: number
+  trafficLevel: 'smooth' | 'slow' | 'congested' | 'blocked'
+  congestionAreas: string[]
+  highDensityAreas: string[]
+  recommendedPriority: 'high' | 'medium' | 'low'
+  parameterValidation: {
+    maxDispatchRadius: { valid: boolean; message?: string }
+    maxDispatchCount: { valid: boolean; message?: string }
+    dispatchTimeout: { valid: boolean; message?: string }
+  }
+}
+
+export interface SmartDispatchPrecheckResult {
+  areaAnalysis: AreaAnalysis
+  canDispatch: boolean
+  warnings: string[]
+  suggestions: string[]
+}
+
+export interface MatchDriver {
+  driverId: number
+  driverName: string
+  phone: string
+  distance: number
+  serviceScore: number
+  loadStatus: number
+  currentOrders: number
+  matchScore: number
+  scoreBreakdown: {
+    urgencyScore: number
+    distanceScore: number
+    serviceScore: number
+    loadScore: number
+  }
+}
+
+export interface SmartMatchParams {
+  orderId: number
+  priority: 'urgent' | 'normal' | 'low'
+  targetArea: string
+  matchParams?: {
+    maxDistance?: number
+    minServiceScore?: number
+    maxLoad?: number
+  }
+}
+
+export interface SmartMatchResult {
+  orderId: number
+  matchedDriver: MatchDriver | null
+  matchTime: number
+  matchLogic: string
+  priorityWeights: {
+    urgency: number
+    distance: number
+    serviceScore: number
+    load: number
+  }
+  orderStatus: number
+  driverLoadUpdated: boolean
+  timestamp: string
+}
+
+export interface BatchSmartDispatchParams {
+  operation: 'dispatch_to_gap' | 'adjust_weight' | 'cancel_invalid'
+  targetAreaIds: string[]
+  periodStrategies?: Array<{
+    period: string
+    weightMultiplier: number
+    dispatchRadius: number
+  }>
+  weightParams?: {
+    areaId: string
+    weight: number
+  }[]
+  cancelReason?: string
+}
+
+export interface BatchSmartDispatchResult {
+  operation: string
+  totalTargets: number
+  successCount: number
+  failedCount: number
+  skippedCount: number
+  details: Array<{
+    targetId: string
+    targetName: string
+    status: 'success' | 'failed' | 'skipped'
+    reason?: string
+    affectedDrivers?: number
+  }>
+  refreshedAreas: Array<{
+    areaId: string
+    areaName: string
+    onlineCount: number
+    idleCount: number
+    orderCount: number
+  }>
+  timestamp: string
+}
+
+export interface DispatchTraceRecord {
+  taskId: string
+  triggerTime: string
+  triggerType: 'manual' | 'auto' | 'batch'
+  triggerCondition: string
+  targetArea: string
+  targetCity: string
+  matchingLogic: string
+  matchedDriverId: number | null
+  matchedDriverName: string | null
+  executionResult: 'success' | 'failed' | 'cancelled' | 'intercepted'
+  executionDuration: number
+  orderStatus: number
+  driverLoadBefore: number
+  driverLoadAfter: number
+  validationFlags: string[]
+  isInvalid: boolean
+  isRepeated: boolean
+  isCrossRegion: boolean
+}
+
+export interface DispatchTraceValidation {
+  totalTasks: number
+  invalidDispatches: number
+  repeatedDispatches: number
+  crossRegionViolations: number
+  validationChecks: Array<{
+    name: string
+    passed: boolean
+    detail: string
+  }>
+  overallPassed: boolean
+}
+
+export interface AlgorithmOptimization {
+  parameter: string
+  currentValue: number
+  suggestedValue: number
+  reason: string
+  impact: 'high' | 'medium' | 'low'
+}
+
+export interface DispatchTraceResult {
+  traces: DispatchTraceRecord[]
+  validation: DispatchTraceValidation
+  optimizations: AlgorithmOptimization[]
+  summary: {
+    avgMatchTime: number
+    successRate: number
+    topGapAreas: string[]
+    topInterceptReasons: string[]
+  }
+  timestamp: string
+}

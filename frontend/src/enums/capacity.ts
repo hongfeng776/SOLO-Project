@@ -129,3 +129,99 @@ export const TIME_PERIODS = [
   '夜间(19:00-23:00)',
   '凌晨(23:00-7:00)'
 ]
+
+export enum DispatchType {
+  MANUAL = 'manual',
+  AUTO = 'auto',
+  EMERGENCY = 'emergency'
+}
+
+export const DispatchTypeMap: Record<string, string> = {
+  [DispatchType.MANUAL]: '手动调度',
+  [DispatchType.AUTO]: '自动调度',
+  [DispatchType.EMERGENCY]: '紧急调度'
+}
+
+export enum OrderPriority {
+  URGENT = 'urgent',
+  NORMAL = 'normal',
+  LOW = 'low'
+}
+
+export const OrderPriorityMap: Record<string, string> = {
+  [OrderPriority.URGENT]: '紧急',
+  [OrderPriority.NORMAL]: '普通',
+  [OrderPriority.LOW]: '低优先级'
+}
+
+export const OrderPriorityColorMap: Record<string, string> = {
+  [OrderPriority.URGENT]: '#f56c6c',
+  [OrderPriority.NORMAL]: '#409eff',
+  [OrderPriority.LOW]: '#909399'
+}
+
+export enum OrderHeatLevel {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  EXTREME = 'extreme'
+}
+
+export const OrderHeatMap: Record<string, string> = {
+  [OrderHeatLevel.LOW]: '低热',
+  [OrderHeatLevel.MEDIUM]: '中热',
+  [OrderHeatLevel.HIGH]: '高热',
+  [OrderHeatLevel.EXTREME]: '极高热'
+}
+
+export enum TrafficLevel {
+  SMOOTH = 'smooth',
+  SLOW = 'slow',
+  CONGESTED = 'congested',
+  BLOCKED = 'blocked'
+}
+
+export const TrafficLevelMap: Record<string, string> = {
+  [TrafficLevel.SMOOTH]: '畅通',
+  [TrafficLevel.SLOW]: '缓行',
+  [TrafficLevel.CONGESTED]: '拥堵',
+  [TrafficLevel.BLOCKED]: '严重拥堵'
+}
+
+export enum BatchOperationType {
+  DISPATCH_TO_GAP = 'dispatch_to_gap',
+  ADJUST_WEIGHT = 'adjust_weight',
+  CANCEL_INVALID = 'cancel_invalid'
+}
+
+export const BatchOperationTypeMap: Record<string, string> = {
+  [BatchOperationType.DISPATCH_TO_GAP]: '批量调度至缺口区域',
+  [BatchOperationType.ADJUST_WEIGHT]: '批量调整调度权重',
+  [BatchOperationType.CANCEL_INVALID]: '批量取消无效任务'
+}
+
+export enum DispatchResult {
+  SUCCESS = 'success',
+  FAILED = 'failed',
+  CANCELLED = 'cancelled',
+  INTERCEPTED = 'intercepted'
+}
+
+export const DispatchResultMap: Record<string, string> = {
+  [DispatchResult.SUCCESS]: '调度成功',
+  [DispatchResult.FAILED]: '调度失败',
+  [DispatchResult.CANCELLED]: '已取消',
+  [DispatchResult.INTERCEPTED]: '已拦截'
+}
+
+export const PRIORITY_WEIGHTS = {
+  urgent: { urgency: 0.4, distance: 0.2, serviceScore: 0.2, load: 0.2 },
+  normal: { urgency: 0.2, distance: 0.3, serviceScore: 0.3, load: 0.2 },
+  low: { urgency: 0.1, distance: 0.3, serviceScore: 0.3, load: 0.3 }
+}
+
+export const DISPATCH_PARAM_LIMITS = {
+  maxDispatchRadius: { min: 1, max: 50, unit: 'km' },
+  maxDispatchCount: { min: 1, max: 500, unit: '人' },
+  dispatchTimeout: { min: 30, max: 600, unit: '秒' }
+}

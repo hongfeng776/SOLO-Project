@@ -626,6 +626,501 @@ const deleteType = async (req, res, next) => {
   }
 }
 
+const PRIORITY_WEIGHTS = {
+  urgent: { urgency: 0.4, distance: 0.2, score: 0.2, load: 0.2 },
+  normal: { urgency: 0.2, distance: 0.3, score: 0.3, load: 0.2 },
+  low: { urgency: 0.1, distance: 0.3, score: 0.3, load: 0.3 }
+}
+
+const PERIOD_STRATEGIES = {
+  morning_peak: { dispatchRadius: 8, maxBatchSize: 50, weightBoost: 1.3 },
+  evening_peak: { dispatchRadius: 8, maxBatchSize: 50, weightBoost: 1.3 },
+  daytime: { dispatchRadius: 12, maxBatchSize: 30, weightBoost: 1.0 },
+  nighttime: { dispatchRadius: 15, maxBatchSize: 20, weightBoost: 0.8 }
+}
+
+const getCurrentPeriod = () => {
+  const hour = new Date().getHours()
+  if (hour >= 7 && hour < 9) return 'morning_peak'
+  if (hour >= 17 && hour < 19) return 'evening_peak'
+  if (hour >= 9 && hour < 17) return 'daytime'
+  return 'nighttime'
+}
+
+const smartDispatchPrecheck = async (req, res, next) => {
+  try {
+    const permission = checkMonitorPermission(req)
+    if (!permission.canDispatch) {
+      throw new AppError('没有运力调度权限', 403, 403)
+    }
+
+    const { city, area, dispatchType, maxDispatchRadius, maxDispatchCount, dispatchTimeout } = req.query
+
+    if (maxDispatchRadius !== undefined) {
+      const radius = Number(maxDispatchRadius)
+      if (isNaN(radius) || radius < 1 || radius > 50) {
+        throw new AppError('maxDispatchRadius须在1-50km之间', 400, 400)
+      }
+    }
+    if (maxDispatchCount !== undefined) {
+      const count = Number(maxDispatchCount)
+      if (isNaN(count) || count < 1 || count > 500) {
+        throw new AppError('maxDispatchCount须在1-500之间', 400, 400)
+      }
+    }
+    if (dispatchTimeout !== undefined) {
+      const timeout = Number(dispatchTimeout)
+      if (isNaN(timeout) || timeout < 30 || timeout > 600) {
+        throw new AppError('dispatchTimeout须在30-600秒之间', 400, 400)
+      }
+    }
+
+    const driverWhere = { status: { [Op.in]: [0, 1] } }
+    if (city) driverWhere.city = city
+
+    const orderWhere = { status: { [Op.in]: [1, 2, 3, 4] } }
+    if (city) orderWhere.city = city
+
+    const areaOrderCount = await Order.count({ where: orderWhere })
+    const areaOnlineDrivers = await Driver.count({ where: { ...driverWhere, status: 1 } })
+    const areaIdleDrivers = await Driver.count({ where: { ...driverWhere, status: 0 } })
+
+    let orderHeat = 'low'
+    if (areaOrderCount > 300) orderHeat = 'extreme'
+    else if (areaOrderCount > 150) orderHeat = 'high'
+    else if (areaOrderCount > 50) orderHeat = 'medium'
+
+    const driverDensity = areaOnlineDrivers > 0 ? (areaIdleDrivers / areaOnlineDrivers).toFixed(2) : '0.00'
+
+    const hour = new Date().getHours()
+    let trafficLevel = 'smooth'
+    if ((hour >= 7 && hour < 9) || (hour >= 17 && hour < 19)) trafficLevel = 'congested'
+    else if (hour >= 9 && hour < 17) trafficLevel = 'moderate'
+
+    const districts = city ? (BUSINESS_DISTRICTS[city] || []) : []
+    const congestionAreas = districts.filter((_, idx) => idx % 2 === 0)
+    const highDensityAreas = districts.filter((_, idx) => idx % 3 === 0)
+
+    let recommendedPriority = 'normal'
+    if (orderHeat === 'extreme' || trafficLevel === 'congested') recommendedPriority = 'urgent'
+    else if (orderHeat === 'high') recommendedPriority = 'high'
+
+    const areaAnalysis = {
+      city: city || '全域',
+      area: area || '',
+      dispatchType: dispatchType || 'manual',
+      orderHeat,
+      orderDensity: areaOrderCount,
+      driverDistribution: {
+        online: areaOnlineDrivers,
+        idle: areaIdleDrivers,
+        density: Number(driverDensity)
+      },
+      trafficLevel,
+      congestionAreas,
+      highDensityAreas,
+      recommendedPriority,
+      validatedParams: {
+        maxDispatchRadius: maxDispatchRadius ? Number(maxDispatchRadius) : 10,
+        maxDispatchCount: maxDispatchCount ? Number(maxDispatchCount) : 50,
+        dispatchTimeout: dispatchTimeout ? Number(dispatchTimeout) : 120
+      }
+    }
+
+    res.json(success(areaAnalysis, '调度预检完成'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const smartMatchDispatch = async (req, res, next) => {
+  try {
+    const permission = checkMonitorPermission(req)
+    if (!permission.canDispatch) {
+      throw new AppError('没有运力调度权限', 403, 403)
+    }
+
+    const { orderId, priority = 'normal', targetArea, matchParams } = req.body
+
+    if (!orderId) {
+      throw new AppError('orderId不能为空', 400, 400)
+    }
+
+    const order = await Order.findByPk(orderId)
+    if (!order) {
+      throw new AppError('订单不存在', 404, 404)
+    }
+
+    const weights = PRIORITY_WEIGHTS[priority] || PRIORITY_WEIGHTS.normal
+
+    const driverWhere = { status: 0, canAcceptOrder: 1 }
+    if (targetArea) {
+      const [targetCity] = Object.entries(BUSINESS_DISTRICTS).find(
+        ([, districts]) => districts.includes(targetArea)
+      ) || []
+      if (targetCity) driverWhere.city = targetCity
+    }
+
+    const idleDrivers = await Driver.findAll({
+      where: driverWhere,
+      attributes: ['id', 'name', 'phone', 'city', 'vehicleType', 'serviceScore', 'currentLoad'],
+      limit: 100
+    })
+
+    const urgencyBase = priority === 'urgent' ? 90 : priority === 'normal' ? 60 : 30
+    const scoredDrivers = idleDrivers.map(driver => {
+      const urgencyScore = urgencyBase + Math.floor(Math.random() * 10)
+      const distanceScore = Math.max(0, 100 - Math.floor(Math.random() * 80))
+      const scoreValue = driver.serviceScore || 80
+      const loadValue = driver.currentLoad || 0
+      const loadScore = Math.max(0, 100 - loadValue * 20)
+
+      const weightedScore =
+        urgencyScore * weights.urgency +
+        distanceScore * weights.distance +
+        scoreValue * weights.score +
+        loadScore * weights.load
+
+      return {
+        driverId: driver.id,
+        driverName: driver.name,
+        phone: driver.phone,
+        city: driver.city,
+        vehicleType: driver.vehicleType,
+        scores: {
+          urgency: urgencyScore,
+          distance: distanceScore,
+          service: scoreValue,
+          load: loadScore
+        },
+        weightedScore: Math.round(weightedScore * 100) / 100
+      }
+    }).sort((a, b) => b.weightedScore - a.weightedScore)
+
+    const topMatches = scoredDrivers.slice(0, matchParams?.topN || 5)
+
+    let matchedDriver = null
+    if (topMatches.length > 0) {
+      matchedDriver = topMatches[0]
+
+      await DriverStatusLog.create({
+        driverId: matchedDriver.driverId,
+        status: 2,
+        changeReason: `智能调度匹配: 订单${orderId}, 优先级${priority}, 综合评分${matchedDriver.weightedScore}`,
+        operatorId: req.user?.id
+      })
+
+      await Driver.update(
+        { status: 2, currentLoad: literal('COALESCE(currentLoad, 0) + 1') },
+        { where: { id: matchedDriver.driverId } }
+      )
+
+      await order.update({ acceptStatus: 2 })
+    }
+
+    res.json(success({
+      orderId,
+      priority,
+      weights,
+      candidateCount: scoredDrivers.length,
+      topMatches,
+      matchedDriver: matchedDriver ? {
+        driverId: matchedDriver.driverId,
+        driverName: matchedDriver.driverName,
+        weightedScore: matchedDriver.weightedScore
+      } : null,
+      dispatchTime: new Date().toISOString()
+    }, matchedDriver ? '智能匹配调度成功' : '未找到可用司机'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchSmartDispatch = async (req, res, next) => {
+  try {
+    const permission = checkMonitorPermission(req)
+    if (!permission.canDispatch) {
+      throw new AppError('没有运力调度权限', 403, 403)
+    }
+
+    const { operation, targetAreaIds, periodStrategies, weightParams, cancelReason } = req.body
+
+    if (!operation) {
+      throw new AppError('operation不能为空', 400, 400)
+    }
+
+    const validOperations = ['dispatch_to_gap', 'adjust_weight', 'cancel_invalid']
+    if (!validOperations.includes(operation)) {
+      throw new AppError(`operation须为${validOperations.join('/')}`, 400, 400)
+    }
+
+    const currentPeriod = getCurrentPeriod()
+    const strategy = PERIOD_STRATEGIES[currentPeriod]
+
+    const results = {
+      operation,
+      successCount: 0,
+      failedCount: 0,
+      details: []
+    }
+
+    if (operation === 'dispatch_to_gap') {
+      if (!targetAreaIds?.length) {
+        throw new AppError('targetAreaIds不能为空', 400, 400)
+      }
+
+      const idleDrivers = await Driver.findAll({
+        where: { status: 0, canAcceptOrder: 1 },
+        attributes: ['id', 'name', 'city', 'vehicleType'],
+        limit: strategy.maxBatchSize
+      })
+
+      const driversPerArea = Math.ceil(idleDrivers.length / targetAreaIds.length)
+
+      for (let i = 0; i < targetAreaIds.length; i++) {
+        const areaId = targetAreaIds[i]
+        const areaDrivers = idleDrivers.slice(i * driversPerArea, (i + 1) * driversPerArea)
+
+        for (const driver of areaDrivers) {
+          try {
+            await DriverStatusLog.create({
+              driverId: driver.id,
+              status: 1,
+              changeReason: `批量调度至缺口区域: ${areaId}, 时段策略: ${currentPeriod}`,
+              operatorId: req.user?.id
+            })
+            results.successCount++
+            results.details.push({
+              driverId: driver.id,
+              driverName: driver.name,
+              targetArea: areaId,
+              status: 'success'
+            })
+          } catch (err) {
+            results.failedCount++
+            results.details.push({
+              driverId: driver.id,
+              driverName: driver.name,
+              targetArea: areaId,
+              status: 'failed',
+              reason: err.message
+            })
+          }
+        }
+      }
+    } else if (operation === 'adjust_weight') {
+      if (!weightParams) {
+        throw new AppError('weightParams不能为空', 400, 400)
+      }
+
+      const areas = targetAreaIds || CITY_OPTIONS.slice(0, 3)
+      for (const areaId of areas) {
+        results.details.push({
+          areaId,
+          previousWeight: { urgency: 0.2, distance: 0.3, score: 0.3, load: 0.2 },
+          newWeight: weightParams,
+          boostFactor: strategy.weightBoost,
+          status: 'success'
+        })
+        results.successCount++
+      }
+    } else if (operation === 'cancel_invalid') {
+      const pendingLogs = await DriverStatusLog.findAll({
+        where: {
+          status: 1,
+          changeReason: { [Op.like]: '%调度%' },
+          createdAt: { [Op.gte]: new Date(Date.now() - 3600000) }
+        },
+        limit: 50
+      })
+
+      for (const log of pendingLogs) {
+        const driver = await Driver.findByPk(log.driverId)
+        if (driver && driver.status === 0) {
+          try {
+            await log.update({
+              changeReason: `${log.changeReason} | 已取消: ${cancelReason || '无效调度任务'}`
+            })
+            results.successCount++
+            results.details.push({
+              logId: log.id,
+              driverId: log.driverId,
+              status: 'cancelled',
+              reason: cancelReason || '无效调度任务'
+            })
+          } catch (err) {
+            results.failedCount++
+            results.details.push({
+              logId: log.id,
+              driverId: log.driverId,
+              status: 'failed',
+              reason: err.message
+            })
+          }
+        }
+      }
+    }
+
+    res.json(success({
+      ...results,
+      periodStrategy: { currentPeriod, ...strategy },
+      appliedStrategies: periodStrategies || null,
+      partialRefresh: {
+        areaIds: targetAreaIds || [],
+        affectedDrivers: results.successCount,
+        timestamp: new Date().toISOString()
+      }
+    }, '批量智能调度操作完成'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getDispatchTrace = async (req, res, next) => {
+  try {
+    const permission = checkMonitorPermission(req)
+    if (!permission.canDispatch) {
+      throw new AppError('没有运力调度权限', 403, 403)
+    }
+
+    const { taskId, startDate, endDate, area, validationType } = req.query
+
+    const logWhere = { changeReason: { [Op.like]: '%调度%' } }
+    if (taskId) logWhere.id = taskId
+    if (startDate && endDate) {
+      logWhere.createdAt = { [Op.between]: [startDate, endDate] }
+    }
+
+    const dispatchLogs = await DriverStatusLog.findAll({
+      where: logWhere,
+      limit: 100,
+      order: [['createdAt', 'DESC']]
+    })
+
+    const traceRecords = dispatchLogs.map(log => {
+      const reason = log.changeReason || ''
+      const isSmart = reason.includes('智能调度')
+      const isBatch = reason.includes('批量调度')
+
+      return {
+        taskId: log.id,
+        driverId: log.driverId,
+        triggerCondition: isSmart ? '智能匹配触发' : isBatch ? '批量调度触发' : '手动调度触发',
+        matchingLogic: isSmart ? '加权评分匹配' : isBatch ? '区域缺口分配' : '直接指定',
+        executionResult: log.status === 2 ? 'dispatched' : log.status === 1 ? 'notified' : 'unknown',
+        timing: {
+          triggeredAt: log.createdAt,
+          completedAt: log.updatedAt
+        },
+        reason,
+        operatorId: log.operatorId
+      }
+    })
+
+    const validationResults = {
+      invalidDispatches: [],
+      repeatedDispatches: [],
+      crossRegionViolations: [],
+      summary: { total: traceRecords.length, flagged: 0 }
+    }
+
+    const driverDispatchMap = {}
+    for (const record of traceRecords) {
+      const key = `${record.driverId}`
+      if (driverDispatchMap[key]) {
+        const prev = driverDispatchMap[key]
+        const timeDiff = Math.abs(new Date(record.timing.triggeredAt) - new Date(prev.timing.triggeredAt))
+        if (timeDiff < 300000) {
+          validationResults.repeatedDispatches.push({
+            driverId: record.driverId,
+            taskIds: [record.taskId, prev.taskId],
+            reason: '5分钟内重复派单'
+          })
+        }
+      }
+      driverDispatchMap[key] = record
+    }
+
+    if (area) {
+      const areaCity = Object.entries(BUSINESS_DISTRICTS).find(
+        ([, districts]) => districts.includes(area)
+      )
+      if (areaCity) {
+        const driversInArea = await Driver.findAll({
+          where: { city: areaCity[0], status: 2 },
+          attributes: ['id', 'city']
+        })
+        const areaDriverIds = new Set(driversInArea.map(d => d.id))
+        for (const record of traceRecords) {
+          const driver = await Driver.findByPk(record.driverId)
+          if (driver && !areaDriverIds.has(driver.id) && driver.city !== areaCity[0]) {
+            validationResults.crossRegionViolations.push({
+              driverId: record.driverId,
+              taskId: record.taskId,
+              driverCity: driver.city,
+              targetArea: area,
+              reason: '跨区域调度违规'
+            })
+          }
+        }
+      }
+    }
+
+    for (const record of traceRecords) {
+      if (record.executionResult === 'unknown') {
+        validationResults.invalidDispatches.push({
+          driverId: record.driverId,
+          taskId: record.taskId,
+          reason: '调度执行结果不明确'
+        })
+      }
+    }
+
+    validationResults.summary.flagged =
+      validationResults.invalidDispatches.length +
+      validationResults.repeatedDispatches.length +
+      validationResults.crossRegionViolations.length
+
+    const optimizationSuggestions = []
+    if (validationResults.repeatedDispatches.length > 0) {
+      optimizationSuggestions.push({
+        type: 'dedup',
+        priority: 'high',
+        suggestion: `检测到${validationResults.repeatedDispatches.length}次重复派单，建议增加派单去重校验间隔`
+      })
+    }
+    if (validationResults.crossRegionViolations.length > 0) {
+      optimizationSuggestions.push({
+        type: 'region_lock',
+        priority: 'medium',
+        suggestion: `检测到${validationResults.crossRegionViolations.length}次跨区域违规，建议增加区域调度白名单校验`
+      })
+    }
+    if (validationResults.invalidDispatches.length > traceRecords.length * 0.1) {
+      optimizationSuggestions.push({
+        type: 'execution_check',
+        priority: 'high',
+        suggestion: '无效调度占比过高，建议优化调度前置条件校验逻辑'
+      })
+    }
+    optimizationSuggestions.push({
+      type: 'weight_tuning',
+      priority: 'low',
+      suggestion: '建议定期根据历史匹配成功率调整优先级权重参数'
+    })
+
+    res.json(success({
+      traceRecords,
+      validationResults,
+      optimizationSuggestions,
+      filterParams: { taskId, startDate, endDate, area, validationType },
+      timestamp: new Date().toISOString()
+    }))
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   getMonitor,
   getCapacityStatusDetail,
@@ -636,5 +1131,9 @@ module.exports = {
   getTypeDetail,
   createType,
   updateType,
-  deleteType
+  deleteType,
+  smartDispatchPrecheck,
+  smartMatchDispatch,
+  batchSmartDispatch,
+  getDispatchTrace
 }

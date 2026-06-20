@@ -9,7 +9,14 @@ import type {
   CapacityReport,
   MonitorFilters,
   BatchDispatchParams,
-  ReportParams
+  ReportParams,
+  SmartDispatchPrecheckParams,
+  SmartDispatchPrecheckResult,
+  SmartMatchParams,
+  SmartMatchResult,
+  BatchSmartDispatchParams,
+  BatchSmartDispatchResult,
+  DispatchTraceResult
 } from '@/types/capacity'
 import type { PageResult } from '@/utils/request'
 
@@ -51,4 +58,20 @@ export const updateCapacityTypeApi = (id: number, data: Partial<CapacityType>) =
 
 export const deleteCapacityTypeApi = (id: number) => {
   return request.delete(`/capacity/type/${id}`)
+}
+
+export const smartDispatchPrecheckApi = (data: SmartDispatchPrecheckParams) => {
+  return request.post<SmartDispatchPrecheckResult>('/capacity/smart-dispatch/precheck', data)
+}
+
+export const smartMatchDispatchApi = (data: SmartMatchParams) => {
+  return request.post<SmartMatchResult>('/capacity/smart-dispatch/match', data)
+}
+
+export const batchSmartDispatchApi = (data: BatchSmartDispatchParams) => {
+  return request.post<BatchSmartDispatchResult>('/capacity/smart-dispatch/batch', data)
+}
+
+export const getDispatchTraceApi = (params?: { taskId?: string; startDate?: string; endDate?: string; area?: string; validationType?: string }) => {
+  return request.get<DispatchTraceResult>('/capacity/smart-dispatch/trace', params)
 }

@@ -15,4 +15,9 @@ router.post('/type', authenticate, requireRole('admin', 'capacity_manager'), cap
 router.put('/type/:id', authenticate, requireRole('admin', 'capacity_manager'), capacityController.updateType)
 router.delete('/type/:id', authenticate, requireRole('admin', 'capacity_manager'), capacityController.deleteType)
 
+router.post('/smart-dispatch/precheck', authenticate, capacityController.smartDispatchPrecheck)
+router.post('/smart-dispatch/match', authenticate, requireRole('admin', 'capacity_manager', 'city_manager'), capacityController.smartMatchDispatch)
+router.post('/smart-dispatch/batch', authenticate, requireRole('admin', 'capacity_manager', 'city_manager'), capacityController.batchSmartDispatch)
+router.get('/smart-dispatch/trace', authenticate, capacityController.getDispatchTrace)
+
 module.exports = router
