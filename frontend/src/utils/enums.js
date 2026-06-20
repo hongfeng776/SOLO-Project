@@ -968,6 +968,62 @@ export const IdValidStatusEnum = {
   EXPIRING_SOON: { value: 2, label: '即将过期(30天内)', color: '#faad14', type: 'warning' }
 }
 
+export const HotelTypeEnum = {
+  domestic: { value: 'domestic', label: '国内酒店', tagClass: 'tag-type-domestic', icon: 'OfficeBuilding', color: '#1890ff' },
+  overseas: { value: 'overseas', label: '海外酒店', tagClass: 'tag-type-overseas', icon: 'Global', color: '#722ed1' },
+  apartment: { value: 'apartment', label: '民宿公寓', tagClass: 'tag-type-apartment', icon: 'House', color: '#fa541c' },
+  featured: { value: 'featured', label: '特色酒店', tagClass: 'tag-type-featured', icon: 'MagicStick', color: '#13c2c2' }
+}
+
+export const HotelBusinessStatusEnum = {
+  operating: { value: 'operating', label: '营业中', tagClass: 'tag-operating', color: '#52c41a', freezeOrder: false },
+  suspended: { value: 'suspended', label: '停业', tagClass: 'tag-suspended', color: '#faad14', freezeOrder: true },
+  rectification: { value: 'rectification', label: '整改中', tagClass: 'tag-rectification', color: '#ff4d4f', freezeOrder: true },
+  closed: { value: 'closed', label: '已关闭', tagClass: 'tag-closed', color: '#595959', freezeOrder: true }
+}
+
+export const HotelQualificationStatusEnum = {
+  compliant: { value: 'compliant', label: '资质合规', tagClass: 'tag-qual-compliant', color: '#52c41a' },
+  expired: { value: 'expired', label: '资质即将过期', tagClass: 'tag-qual-expired', color: '#faad14' },
+  pending: { value: 'pending', label: '待审核', tagClass: 'tag-qual-pending', color: '#1890ff' },
+  invalid: { value: 'invalid', label: '资质无效', tagClass: 'tag-qual-invalid', color: '#ff4d4f' }
+}
+
+export const HotelStarLevelEnum = {
+  national: { value: 'national', label: '国家评定' },
+  chain: { value: 'chain', label: '连锁品牌' },
+  user: { value: 'user', label: '用户评定' }
+}
+
+export const HotelLogTypeEnum = {
+  create: { value: 'create', label: '入驻录入', color: '#52c41a', icon: 'Plus' },
+  update: { value: 'update', label: '信息变更', color: '#1890ff', icon: 'Edit' },
+  on_shelf: { value: 'on_shelf', label: '门店上架', color: '#52c41a', icon: 'Upload' },
+  off_shelf: { value: 'off_shelf', label: '门店下架', color: '#909399', icon: 'Download' },
+  suspend: { value: 'suspend', label: '停业操作', color: '#faad14', icon: 'Warning' },
+  rectification: { value: 'rectification', label: '整改操作', color: '#ff4d4f', icon: 'WarningFilled' },
+  resume_operation: { value: 'resume_operation', label: '恢复营业', color: '#52c41a', icon: 'CircleCheck' },
+  weight_adjust: { value: 'weight_adjust', label: '权重调整', color: '#722ed1', icon: 'TrendCharts' },
+  batch_update: { value: 'batch_update', label: '批量更新', color: '#13c2c2', icon: 'Files' },
+  qualification_audit: { value: 'qualification_audit', label: '资质审核', color: '#eb2f96', icon: 'Stamp' },
+  fake_flag: { value: 'fake_flag', label: '虚假门店标记', color: '#f5222d', icon: 'Warning' },
+  duplicate_flag: { value: 'duplicate_flag', label: '重复门店标记', color: '#fa8c16', icon: 'DocumentCopy' }
+}
+
+export const HotelVerifyResultEnum = {
+  pass: { value: 'pass', label: '通过', class: 'verify-pass', icon: 'CircleCheckFilled' },
+  warning: { value: 'warning', label: '存在警告', class: 'verify-warning', icon: 'Warning' },
+  block: { value: 'block', label: '已拦截', class: 'verify-block', icon: 'CircleCloseFilled' }
+}
+
+export const HotelBatchOperationEnum = {
+  update_info: { value: 'update_info', label: '批量更新公示信息', icon: 'EditPen', color: '#1890ff' },
+  adjust_weight: { value: 'adjust_weight', label: '批量调整展示权重', icon: 'TrendCharts', color: '#722ed1' },
+  off_shelf: { value: 'off_shelf', label: '批量下架违规门店', icon: 'Download', color: '#ff4d4f' },
+  on_shelf: { value: 'on_shelf', label: '批量恢复上架', icon: 'Upload', color: '#52c41a' },
+  rectification: { value: 'rectification', label: '批量标记整改', icon: 'WarningFilled', color: '#faad14' }
+}
+
 export default {
   OrderStatusEnum,
   OrderSourceEnum,
@@ -1079,6 +1135,13 @@ export default {
   FlightChangeHandlePlanEnum,
   TicketVoucherStatusEnum,
   IdValidStatusEnum,
+  HotelTypeEnum,
+  HotelBusinessStatusEnum,
+  HotelQualificationStatusEnum,
+  HotelStarLevelEnum,
+  HotelLogTypeEnum,
+  HotelVerifyResultEnum,
+  HotelBatchOperationEnum,
   getEnumLabel,
   getEnumType,
   getEnumOptions,

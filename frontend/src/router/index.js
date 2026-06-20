@@ -97,6 +97,12 @@ export const routes = [
         meta: { title: '酒店管理', icon: 'OfficeBuilding', roles: ['admin', 'user'] }
       },
       {
+        path: 'hotel-store-ops',
+        name: 'HotelStoreOPS',
+        component: () => import('@/views/hotel/HotelStoreOPS.vue'),
+        meta: { title: '酒店门店运维', icon: 'Shop', roles: ['admin', 'hotel_operator', 'senior_hotel_operator'] }
+      },
+      {
         path: 'car',
         name: 'CarManage',
         component: () => import('@/views/product/Car.vue'),

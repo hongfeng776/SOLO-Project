@@ -165,6 +165,12 @@ router.get('/flight-fulfillments/stats/summary', auth(), flightFulfillmentContro
 router.post('/flight-fulfillments/check-timeout', auth(['admin', 'fulfillment_audit']), flightFulfillmentController.checkTicketTimeout.bind(flightFulfillmentController));
 
 registerCrudRoutes('hotels', hotelController);
+router.get('/hotels/ops/permission', auth(), hotelController.checkPermission.bind(hotelController));
+router.put('/hotels/:id/ops/status', auth(), hotelController.changeStatus.bind(hotelController));
+router.post('/hotels/ops/batch', auth(['admin', 'hotel_operator', 'senior_hotel_operator']), hotelController.batchOperation.bind(hotelController));
+router.get('/hotels/:id/ops/logs', auth(), pagination, hotelController.getLogs.bind(hotelController));
+router.get('/hotels/ops/logs/all', auth(), pagination, hotelController.getAllLogs.bind(hotelController));
+router.post('/hotels/:id/ops/verify', auth(['admin', 'senior_hotel_operator', 'hotel_auditor']), hotelController.verifyHotel.bind(hotelController));
 registerCrudRoutes('cars', carController);
 registerCrudRoutes('tickets', ticketController);
 
