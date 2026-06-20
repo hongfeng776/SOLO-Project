@@ -365,6 +365,32 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/traffic-pool',
+    component: Layout,
+    redirect: '/traffic-pool/list',
+    meta: { title: '流量分发管理', icon: 'Connection', roles: ['admin', 'operation_admin', 'senior_operator', 'operator'] },
+    children: [
+      {
+        path: 'list',
+        name: 'TrafficPoolList',
+        component: () => import(/* webpackChunkName: "traffic-pool" */ '@views/traffic-pool/list/index.vue'),
+        meta: { title: '流量池配置', icon: 'SetUp', roles: ['admin', 'operation_admin', 'senior_operator', 'operator'] }
+      },
+      {
+        path: 'batch',
+        name: 'TrafficPoolBatch',
+        component: () => import(/* webpackChunkName: "traffic-pool" */ '@views/traffic-pool/batch/index.vue'),
+        meta: { title: '批量运营', icon: 'Operation', roles: ['admin', 'operation_admin', 'senior_operator'] }
+      },
+      {
+        path: 'trace',
+        name: 'TrafficPoolTrace',
+        component: () => import(/* webpackChunkName: "traffic-pool" */ '@views/traffic-pool/trace/index.vue'),
+        meta: { title: '溯源复盘', icon: 'View', roles: ['admin', 'operation_admin', 'senior_operator', 'operator'] }
+      }
+    ]
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/404',
     meta: { hidden: true }

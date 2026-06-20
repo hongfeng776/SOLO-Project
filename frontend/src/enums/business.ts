@@ -1141,3 +1141,114 @@ export const HOT_COMMENT_LOG_ACTION_NAMES: Record<number, string> = {
   [HotCommentLogAction.CONFLICT_BLOCK]: '冲突拦截',
   [HotCommentLogAction.ANOMALY_BLOCK]: '异常拦截'
 }
+
+export enum TrafficPoolLevel {
+  NORMAL = 1,
+  QUALITY = 2,
+  HOT = 3,
+  PREMIUM = 4
+}
+
+export const TRAFFIC_POOL_LEVEL_NAMES: Record<number, string> = {
+  [TrafficPoolLevel.NORMAL]: '普通池',
+  [TrafficPoolLevel.QUALITY]: '优质池',
+  [TrafficPoolLevel.HOT]: '热门池',
+  [TrafficPoolLevel.PREMIUM]: '尊享池'
+}
+
+export const TRAFFIC_POOL_LEVEL_COLORS: Record<number, string> = {
+  [TrafficPoolLevel.NORMAL]: '#909399',
+  [TrafficPoolLevel.QUALITY]: '#409eff',
+  [TrafficPoolLevel.HOT]: '#e6a23c',
+  [TrafficPoolLevel.PREMIUM]: '#67c23a'
+}
+
+export const TRAFFIC_POOL_LEVEL_TAG_TYPES: Record<number, 'primary' | 'success' | 'warning' | 'danger' | 'info' | undefined> = {
+  [TrafficPoolLevel.NORMAL]: 'info',
+  [TrafficPoolLevel.QUALITY]: 'primary',
+  [TrafficPoolLevel.HOT]: 'warning',
+  [TrafficPoolLevel.PREMIUM]: 'success'
+}
+
+export enum TrafficPoolStatus {
+  DISABLED = 0,
+  ENABLED = 1
+}
+
+export const TRAFFIC_POOL_STATUS_NAMES: Record<number, string> = {
+  [TrafficPoolStatus.DISABLED]: '已停用',
+  [TrafficPoolStatus.ENABLED]: '已启用'
+}
+
+export const TRAFFIC_POOL_STATUS_COLORS: Record<number, string> = {
+  [TrafficPoolStatus.DISABLED]: '#f56c6c',
+  [TrafficPoolStatus.ENABLED]: '#67c23a'
+}
+
+export enum ContentAdaptType {
+  GENERAL = 'general',
+  IMAGE_TEXT = 'image_text',
+  VIDEO = 'video',
+  SHORT_VIDEO = 'short_video',
+  LIVE = 'live'
+}
+
+export const CONTENT_ADAPT_TYPE_NAMES: Record<string, string> = {
+  [ContentAdaptType.GENERAL]: '通用',
+  [ContentAdaptType.IMAGE_TEXT]: '图文',
+  [ContentAdaptType.VIDEO]: '视频',
+  [ContentAdaptType.SHORT_VIDEO]: '短视频',
+  [ContentAdaptType.LIVE]: '直播'
+}
+
+export enum TrafficPoolLogType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  QUOTA_CHANGE = 'quota_change',
+  RULE_CHANGE = 'rule_change',
+  STATUS_CHANGE = 'status_change',
+  WEIGHT_CHANGE = 'weight_change',
+  BATCH_OPERATION = 'batch_operation',
+  SYSTEM_ADJUST = 'system_adjust'
+}
+
+export const TRAFFIC_POOL_LOG_TYPE_NAMES: Record<string, string> = {
+  [TrafficPoolLogType.CREATE]: '创建流量池',
+  [TrafficPoolLogType.UPDATE]: '更新配置',
+  [TrafficPoolLogType.QUOTA_CHANGE]: '配额变更',
+  [TrafficPoolLogType.RULE_CHANGE]: '规则变更',
+  [TrafficPoolLogType.STATUS_CHANGE]: '状态变更',
+  [TrafficPoolLogType.WEIGHT_CHANGE]: '权重变更',
+  [TrafficPoolLogType.BATCH_OPERATION]: '批量操作',
+  [TrafficPoolLogType.SYSTEM_ADJUST]: '系统调整'
+}
+
+export enum TrafficPoolLogStatus {
+  PENDING = 0,
+  SUCCESS = 1,
+  BLOCKED = 2,
+  FAILED = 3
+}
+
+export const TRAFFIC_POOL_LOG_STATUS_NAMES: Record<number, string> = {
+  [TrafficPoolLogStatus.PENDING]: '待处理',
+  [TrafficPoolLogStatus.SUCCESS]: '成功',
+  [TrafficPoolLogStatus.BLOCKED]: '已拦截',
+  [TrafficPoolLogStatus.FAILED]: '失败'
+}
+
+export const TRAFFIC_POOL_LOG_STATUS_COLORS: Record<number, string> = {
+  [TrafficPoolLogStatus.PENDING]: '#909399',
+  [TrafficPoolLogStatus.SUCCESS]: '#67c23a',
+  [TrafficPoolLogStatus.BLOCKED]: '#f56c6c',
+  [TrafficPoolLogStatus.FAILED]: '#e6a23c'
+}
+
+export const TRAFFIC_POOL_LOG_STATUS_TAG_TYPES: Record<number, 'primary' | 'success' | 'warning' | 'danger' | 'info' | undefined> = {
+  [TrafficPoolLogStatus.PENDING]: 'info',
+  [TrafficPoolLogStatus.SUCCESS]: 'success',
+  [TrafficPoolLogStatus.BLOCKED]: 'danger',
+  [TrafficPoolLogStatus.FAILED]: 'warning'
+}
+
+export const PLATFORM_TOTAL_FLOW_QUOTA = 10000000

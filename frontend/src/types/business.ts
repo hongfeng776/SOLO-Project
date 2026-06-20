@@ -1825,3 +1825,156 @@ export interface HotCommentAnomalyResult {
   noteSuspicious: Array<{ noteId: number; manualTopCount: number }>
   rankHops: Array<{ commentId: number; hop: string; diff: number }>
 }
+
+export interface TrafficPool {
+  id: number
+  poolName: string
+  poolCode: string
+  poolLevel: number
+  contentAdaptType: string
+  dailyQuota: number
+  usedQuota: number
+  remainingQuota: number
+  weightMultiplier: number
+  minContentScore: number
+  maxViolationCount: number
+  admissionRules?: Record<string, any>
+  description: string
+  status: number
+  contentCount: number
+  avgExposure: number
+  clickRate: number
+  sortOrder: number
+  createTime: string
+  updateTime: string
+}
+
+export interface TrafficPoolPermission {
+  canView: boolean
+  canCreate: boolean
+  canEdit: boolean
+  canBatch: boolean
+  canBatchStartStop: boolean
+  canViewLogs: boolean
+}
+
+export interface AdmissionValidationResult {
+  valid: boolean
+  levelValid: boolean
+  scoreValid: boolean
+  violationValid: boolean
+  adaptTypeValid: boolean
+  errors: string[]
+  warnings: string[]
+}
+
+export interface LevelRatioInfo {
+  current: number
+  proposed: number
+  min: number
+  max: number
+  valid: boolean
+}
+
+export interface QuotaValidationResult {
+  valid: boolean
+  currentTotal: number
+  proposedTotal: number
+  platformMax: number
+  overAllocated: boolean
+  levelRatios: Record<number, LevelRatioInfo>
+  warnings: string[]
+  errors: string[]
+}
+
+export interface CreateValidationResult {
+  admission: AdmissionValidationResult
+  quota: QuotaValidationResult
+  valid: boolean
+}
+
+export interface ConfigChangeImpact {
+  affectedContentCount: number
+  oldWeightMultiplier: number
+  newWeightMultiplier: number
+  oldDailyQuota: number
+  newDailyQuota: number
+  weightChangePercent: number
+  quotaChangePercent: number
+  estimatedExposureChange: number
+}
+
+export interface TrafficPoolUpdateResult {
+  id: number
+  impact: ConfigChangeImpact
+}
+
+export interface BatchOperationResult {
+  total: number
+  success: number
+  fail: number
+  results: Array<{
+    id: number
+    poolName: string
+    success: boolean
+    error?: string
+  }>
+}
+
+export interface QuotaStats {
+  platformMax: number
+  totalQuota: number
+  totalUsed: number
+  totalRemaining: number
+  usageRate: number
+  byLevel: Record<number, {
+    quota: number
+    used: number
+    remaining: number
+    count: number
+  }>
+  levelRatios: Record<number, {
+    quotaRatio: number
+    usageRate: number
+  }>
+}
+
+export interface TrafficPoolLog {
+  id: number
+  poolId: number
+  poolName: string
+  logType: string
+  operatorId?: number
+  operatorName: string
+  operatorRole: string
+  oldConfig?: Record<string, any>
+  newConfig?: Record<string, any>
+  changedFields: string
+  reason: string
+  status: number
+  blockReason: string
+  validationResult?: Record<string, any>
+  affectedContentCount: number
+  oldWeightMultiplier?: number
+  newWeightMultiplier?: number
+  oldDailyQuota?: number
+  newDailyQuota?: number
+  ip: string
+  userAgent: string
+  createTime: string
+}
+
+export interface TrafficPoolLogAnalyzeResult {
+  log: TrafficPoolLog
+  pool: TrafficPool | null
+  oldConfig: Record<string, any> | null
+  newConfig: Record<string, any> | null
+  validationResult: Record<string, any> | null
+  diff: {
+    changedFields: string[]
+    oldWeightMultiplier?: number
+    newWeightMultiplier?: number
+    oldDailyQuota?: number
+    newDailyQuota?: number
+  }
+}

@@ -2,7 +2,7 @@ import { ElMessage } from 'element-plus'
 import { useClipboard } from './useCommon'
 
 export { useFetchList, useCrud, useSelection } from './useTable'
-export { useDateTime, useNumberFormat, formatDate, formatDateTime, fromNow } from './useFormat'
+export { useDateTime, useNumberFormat, formatDate, formatDateTime, fromNow, formatNumber } from './useFormat'
 export { useEventListener, useDebounce, useThrottle, useClipboard } from './useCommon'
 export { useVirtualList } from './useVirtualList'
 

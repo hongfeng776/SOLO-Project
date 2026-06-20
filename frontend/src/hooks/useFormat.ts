@@ -57,11 +57,12 @@ export function useDateTime() {
   }
 }
 
+export function formatNumber(num: number | null | undefined, decimals = 0): string {
+  if (num == null) return '-'
+  return num.toLocaleString('zh-CN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+}
+
 export function useNumberFormat() {
-  const formatNumber = (num: number | null | undefined, decimals = 0): string => {
-    if (num == null) return '-'
-    return num.toLocaleString('zh-CN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
-  }
 
   const formatCompact = (num: number | null | undefined): string => {
     if (num == null) return '-'
