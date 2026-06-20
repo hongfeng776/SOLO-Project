@@ -1,4 +1,5 @@
-import { Model, FindOptions, CreateOptions, UpdateOptions, DestroyOptions, CountOptions } from 'sequelize';
+import { Model, FindOptions, CreateOptions, UpdateOptions, DestroyOptions, CountOptions, QueryOptions } from 'sequelize';
+import sequelize from '../config/database';
 
 export interface IPaginationResult<T> {
   list: T[];
@@ -44,16 +45,20 @@ export class BaseDao<T extends Model> {
     return this.model.update(data, { ...options, returning: true });
   }
 
-  async updateById(id: number, data: any): Promise<[number, T[]]> {
-    return this.model.update(data, { where: { id }, returning: true });
+  async updateById(id: number, data: any, options?: Omit<UpdateOptions, 'where'>): Promise<[number, T[]]> {
+    return this.model.update(data, { where: { id }, ...options, returning: true });
   }
 
   async destroy(options: DestroyOptions): Promise<number> {
     return this.model.destroy(options);
   }
 
-  async destroyById(id: number): Promise<number> {
-    return this.model.destroy({ where: { id } });
+  async destroyById(id: number, options?: Omit<DestroyOptions, 'where'>): Promise<number> {
+    return this.model.destroy({ where: { id }, ...options });
+  }
+
+  async execute(sql: string, options?: QueryOptions): Promise<any> {
+    return sequelize.query(sql, options);
   }
 
   async count(options?: CountOptions): Promise<number> {

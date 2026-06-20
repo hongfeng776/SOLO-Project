@@ -2,8 +2,18 @@ import Company from './company.model';
 import Job from './job.model';
 import JobOperationLog from './job-operation-log.model';
 import Resume from './resume.model';
+import ResumeParseLog from './resume-parse-log.model';
+import ResumeScreenLog from './resume-screen-log.model';
+import ScreenTemplate from './screen-template.model';
 import Interview from './interview.model';
+import InterviewOperationLog from './interview-operation-log.model';
+import InterviewCancelRecord from './interview-cancel-record.model';
+import InterviewMessage from './interview-message.model';
+import InterviewerAllocationLog from './interviewer-allocation-log.model';
+import InterviewWarningLog from './interview-warning-log.model';
 import Onboard from './onboard.model';
+import OnboardOperationLog from './onboard-operation-log.model';
+import OnboardLedger from './onboard-ledger.model';
 import User from './user.model';
 import Qualification from './qualification.model';
 import QualificationAuditLog from './qualification-audit-log.model';
@@ -40,10 +50,40 @@ Resume.belongsTo(Job, { foreignKey: 'jobId', as: 'job' });
 Resume.hasMany(Interview, { foreignKey: 'resumeId', as: 'interviews' });
 Interview.belongsTo(Resume, { foreignKey: 'resumeId', as: 'resume' });
 Interview.belongsTo(Job, { foreignKey: 'jobId', as: 'job' });
+Interview.belongsTo(User, { foreignKey: 'interviewerId', as: 'interviewerUser' });
+
+Interview.hasMany(InterviewOperationLog, { foreignKey: 'interviewId', as: 'operationLogs' });
+InterviewOperationLog.belongsTo(Interview, { foreignKey: 'interviewId', as: 'interview' });
+
+Interview.hasOne(InterviewCancelRecord, { foreignKey: 'interviewId', as: 'cancelRecord' });
+InterviewCancelRecord.belongsTo(Interview, { foreignKey: 'interviewId', as: 'interview' });
+
+Interview.hasMany(InterviewMessage, { foreignKey: 'interviewId', as: 'messages' });
+InterviewMessage.belongsTo(Interview, { foreignKey: 'interviewId', as: 'interview' });
+
+Interview.hasMany(InterviewerAllocationLog, { foreignKey: 'interviewId', as: 'allocationLogs' });
+InterviewerAllocationLog.belongsTo(Interview, { foreignKey: 'interviewId', as: 'interview' });
+InterviewerAllocationLog.belongsTo(User, { foreignKey: 'interviewerId', as: 'interviewer' });
+InterviewerAllocationLog.belongsTo(User, { foreignKey: 'previousInterviewerId', as: 'previousInterviewer' });
+InterviewerAllocationLog.belongsTo(User, { foreignKey: 'operatorId', as: 'operator' });
+
+Interview.hasMany(InterviewWarningLog, { foreignKey: 'interviewId', as: 'warningLogs' });
+InterviewWarningLog.belongsTo(Interview, { foreignKey: 'interviewId', as: 'interview' });
+InterviewWarningLog.belongsTo(User, { foreignKey: 'handlerId', as: 'handler' });
+InterviewWarningLog.belongsTo(User, { foreignKey: 'operatorId', as: 'operator' });
 
 Resume.hasOne(Onboard, { foreignKey: 'resumeId', as: 'onboard' });
 Onboard.belongsTo(Resume, { foreignKey: 'resumeId', as: 'resume' });
 Onboard.belongsTo(Job, { foreignKey: 'jobId', as: 'job' });
+Onboard.belongsTo(Interview, { foreignKey: 'interviewId', as: 'interview' });
+Onboard.hasMany(OnboardOperationLog, { foreignKey: 'onboardId', as: 'operationLogs' });
+OnboardOperationLog.belongsTo(Onboard, { foreignKey: 'onboardId', as: 'onboard' });
+OnboardOperationLog.belongsTo(User, { foreignKey: 'operatorId', as: 'operator' });
+Onboard.hasOne(OnboardLedger, { foreignKey: 'onboardId', as: 'ledger' });
+OnboardLedger.belongsTo(Onboard, { foreignKey: 'onboardId', as: 'onboard' });
+OnboardLedger.belongsTo(User, { foreignKey: 'generatedBy', as: 'generator' });
+Onboard.belongsTo(User, { foreignKey: 'hrOperatorId', as: 'hrOperator' });
+Onboard.belongsTo(User, { foreignKey: 'auditUserId', as: 'auditUser' });
 
 Qualification.hasMany(QualificationAuditLog, { foreignKey: 'qualificationId', as: 'auditLogs' });
 QualificationAuditLog.belongsTo(Qualification, { foreignKey: 'qualificationId', as: 'qualification' });
@@ -51,4 +91,21 @@ QualificationAuditLog.belongsTo(Qualification, { foreignKey: 'qualificationId', 
 Job.hasMany(JobOperationLog, { foreignKey: 'jobId', as: 'operationLogs' });
 JobOperationLog.belongsTo(Job, { foreignKey: 'jobId', as: 'job' });
 
-export { Company, Job, JobOperationLog, Resume, Interview, Onboard, User, Qualification, QualificationAuditLog, CompanyChangeLog, RecruitmentConfig, RecruitmentConfigLog, PermissionLog, LoginLog };
+Resume.hasMany(ResumeParseLog, { foreignKey: 'resumeId', as: 'parseLogs' });
+ResumeParseLog.belongsTo(Resume, { foreignKey: 'resumeId', as: 'resume' });
+
+Resume.hasMany(ResumeScreenLog, { foreignKey: 'resumeId', as: 'screenLogs' });
+ResumeScreenLog.belongsTo(Resume, { foreignKey: 'resumeId', as: 'resume' });
+
+Job.hasMany(ResumeScreenLog, { foreignKey: 'jobId', as: 'screenLogs' });
+ResumeScreenLog.belongsTo(Job, { foreignKey: 'jobId', as: 'job' });
+
+export {
+  Company, Job, JobOperationLog,
+  Resume, ResumeParseLog, ResumeScreenLog, ScreenTemplate,
+  Interview, InterviewOperationLog, InterviewCancelRecord, InterviewMessage, InterviewerAllocationLog, InterviewWarningLog,
+  Onboard, OnboardOperationLog, OnboardLedger,
+  User, Qualification, QualificationAuditLog,
+  CompanyChangeLog, RecruitmentConfig, RecruitmentConfigLog,
+  PermissionLog, LoginLog
+};

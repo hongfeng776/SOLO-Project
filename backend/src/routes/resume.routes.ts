@@ -1,15 +1,41 @@
 import { Router } from 'express';
 import resumeController from '../controllers/resume.controller';
-import { authMiddleware } from '../middleware/auth.middleware';
+import { authMiddleware, roleMiddleware } from '../middleware/auth.middleware';
+import { UserRole } from '../constants/recruitment.enum';
 
 const router = Router();
 
 router.get('/', authMiddleware, resumeController.getList);
+router.get('/failed', authMiddleware, resumeController.getFailedList);
+router.get('/exception/export', authMiddleware, roleMiddleware(UserRole.ADMIN, UserRole.HR), resumeController.exportExceptionList);
+router.get('/screen-templates', authMiddleware, resumeController.getScreenTemplates);
+router.get('/match-optimization', authMiddleware, resumeController.getMatchOptimizationData);
+router.get('/screen-preconditions', authMiddleware, resumeController.checkScreenPreconditions);
 router.get('/:id', authMiddleware, resumeController.getDetail);
+router.get('/:id/parse-logs', authMiddleware, resumeController.getParseLogs);
+router.get('/:id/screen-logs', authMiddleware, resumeController.getScreenLogs);
 router.post('/', authMiddleware, resumeController.create);
-router.put('/:id', authMiddleware, resumeController.update);
-router.delete('/:id', authMiddleware, resumeController.remove);
+router.post('/upload-parse', authMiddleware, resumeController.uploadAndParse);
+router.post('/batch-upload-parse', authMiddleware, resumeController.batchUploadAndParse);
 router.post('/batch-remove', authMiddleware, resumeController.batchRemove);
+router.post('/validate-file', authMiddleware, resumeController.validateFile);
+router.post('/check-duplicate', authMiddleware, resumeController.checkDuplicate);
+router.post('/batch-retry-parse', authMiddleware, resumeController.batchRetryParse);
+router.post('/batch-trigger-parse', authMiddleware, resumeController.batchTriggerParse);
+router.post('/screen', authMiddleware, resumeController.screenResumes);
+router.post('/batch-screen', authMiddleware, resumeController.batchScreenResumes);
+router.post('/refresh-match-levels', authMiddleware, resumeController.refreshJobMatchLevels);
+router.post('/batch-tag', authMiddleware, resumeController.batchTagResumes);
+router.post('/screen-templates', authMiddleware, resumeController.saveScreenTemplate);
+router.post('/screen-templates/:id/use', authMiddleware, resumeController.useScreenTemplate);
+router.put('/:id', authMiddleware, resumeController.update);
 router.put('/:id/status', authMiddleware, resumeController.updateStatus);
+router.put('/:id/retry-parse', authMiddleware, resumeController.retryParse);
+router.put('/:id/complete-info', authMiddleware, resumeController.completeInfo);
+router.put('/:id/unlock', authMiddleware, roleMiddleware(UserRole.ADMIN), resumeController.unlockResume);
+router.put('/:id/match-level', authMiddleware, resumeController.updateMatchLevel);
+router.put('/:id/tag', authMiddleware, resumeController.tagResume);
+router.delete('/:id', authMiddleware, resumeController.remove);
+router.delete('/screen-templates/:id', authMiddleware, resumeController.deleteScreenTemplate);
 
 export default router;

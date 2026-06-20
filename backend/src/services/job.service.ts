@@ -46,6 +46,18 @@ interface BatchResult {
   errors: { jobId?: number; title?: string; message: string }[];
 }
 
+interface BatchOnlineOfflineFilter {
+  category?: string;
+  publishDaysMin?: number;
+  publishDaysMax?: number;
+  deliveryCountMin?: number;
+  deliveryCountMax?: number;
+  hireCompleteRateMin?: number;
+  hireCompleteRateMax?: number;
+  status?: string;
+  companyId?: number;
+}
+
 const JOB_EDITABLE_FIELDS_DRAFT = [
   'title', 'category', 'department', 'jobType',
   'salaryMin', 'salaryMax', 'salaryUnit',
@@ -1746,18 +1758,6 @@ class JobService {
     await this.checkAndMarkRiskWarning(id, newCount, currentUser);
 
     return result;
-  }
-
-  interface BatchOnlineOfflineFilter {
-    category?: string;
-    publishDaysMin?: number;
-    publishDaysMax?: number;
-    deliveryCountMin?: number;
-    deliveryCountMax?: number;
-    hireCompleteRateMin?: number;
-    hireCompleteRateMax?: number;
-    status?: string;
-    companyId?: number;
   }
 
   async batchOnline(ids: number[], filter: BatchOnlineOfflineFilter, remark?: string, currentUser?: CurrentUser): Promise<BatchResult> {

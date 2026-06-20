@@ -39,3 +39,25 @@ export class ConflictError extends AppError {
     super(40901, message, 409);
   }
 }
+
+export class BadRequestError extends AppError {
+  public errorCode?: string;
+  public details?: any;
+
+  constructor(message = '请求参数错误', errorCode?: string, details?: any) {
+    super(40002, message, 400);
+    this.errorCode = errorCode;
+    this.details = details;
+  }
+}
+
+export class ValidationError extends AppError {
+  public fields?: string[];
+  public details?: any;
+
+  constructor(message = '数据校验失败', fields?: string[], details?: any) {
+    super(42201, message, 422);
+    this.fields = fields;
+    this.details = details;
+  }
+}

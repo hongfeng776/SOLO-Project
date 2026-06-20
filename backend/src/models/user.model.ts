@@ -1,6 +1,7 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
 import { UserRole, AccountStatus } from '../constants/recruitment.enum';
+import { InterviewerStatus, InterviewerDomain } from '../constants/recruitment.enum';
 import bcrypt from 'bcryptjs';
 
 interface UserAttributes {
@@ -45,6 +46,14 @@ interface UserAttributes {
   trustedIps?: string;
   lastPasswordChangeTime?: Date;
   passwordResetRequired?: boolean;
+  interviewerStatus?: InterviewerStatus;
+  interviewerDomain?: InterviewerDomain;
+  expertise?: string;
+  maxDailyInterviews?: number;
+  currentWorkload?: number;
+  interviewPassCount?: number;
+  interviewTotalCount?: number;
+  interviewerStatusUpdateTime?: Date;
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'role' | 'status' | 'accountStatus' | 'isMainAccount' | 'isAnomalyLogin'> {}
@@ -91,6 +100,14 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public trustedIps?: string;
   public lastPasswordChangeTime?: Date;
   public passwordResetRequired?: boolean;
+  public interviewerStatus?: InterviewerStatus;
+  public interviewerDomain?: InterviewerDomain;
+  public expertise?: string;
+  public maxDailyInterviews?: number;
+  public currentWorkload?: number;
+  public interviewPassCount?: number;
+  public interviewTotalCount?: number;
+  public interviewerStatusUpdateTime?: Date;
 
   public readonly created_at!: Date;
   public readonly updated_at!: Date;
@@ -284,6 +301,44 @@ User.init(
       defaultValue: false,
       comment: '是否需要重置密码',
     },
+    interviewerStatus: {
+      type: DataTypes.ENUM('idle', 'interviewing', 'busy', 'on_leave'),
+      defaultValue: InterviewerStatus.IDLE,
+      comment: '面试官状态 idle-空闲 interviewing-面试中 busy-忙碌 on_leave-休假',
+    },
+    interviewerDomain: {
+      type: DataTypes.ENUM('tech', 'product', 'design', 'hr', 'finance', 'operations', 'marketing', 'admin', 'other'),
+      defaultValue: InterviewerDomain.OTHER,
+      comment: '面试官擅长领域',
+    },
+    expertise: {
+      type: DataTypes.STRING(500),
+      comment: '擅长领域描述，逗号分隔',
+    },
+    maxDailyInterviews: {
+      type: DataTypes.INTEGER,
+      defaultValue: 6,
+      comment: '每日最大面试场次数',
+    },
+    currentWorkload: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: '当前工作负荷（面试场次数）',
+    },
+    interviewPassCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: '面试通过场次数',
+    },
+    interviewTotalCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: '面试总场次数',
+    },
+    interviewerStatusUpdateTime: {
+      type: DataTypes.DATE,
+      comment: '面试官状态最后更新时间',
+    },
   },
   {
     sequelize,
@@ -296,6 +351,8 @@ User.init(
       { fields: ['accountStatus'] },
       { fields: ['isMainAccount'] },
       { fields: ['isAnomalyLogin'] },
+      { fields: ['interviewerStatus'] },
+      { fields: ['interviewerDomain'] },
     ],
     hooks: {
       beforeCreate: async (user: User) => {

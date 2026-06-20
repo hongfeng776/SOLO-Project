@@ -8,6 +8,7 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn';
 
 import App from './App.vue';
 import router from './router';
+import { vRipple } from '@/directives/ripple';
 import '@/styles/index.scss';
 
 const app = createApp(App);
@@ -17,6 +18,8 @@ pinia.use(piniaPluginPersistedstate);
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component);
 }
+
+app.directive('ripple', vRipple);
 
 app.use(pinia);
 app.use(router);
