@@ -19,6 +19,7 @@ const serverMonitorRoutes = require('./serverMonitors')
 const recycleRoutes = require('./recycles')
 const rolePermissionRoutes = require('./rolePermissions')
 const accountPermissionRoutes = require('./accountPermissions')
+const filterRoutes = require('./filters')
 
 router.use('/auth', authRoutes)
 router.use('/resources', resourceRoutes)
@@ -38,5 +39,6 @@ router.use('/server-monitors', serverMonitorRoutes)
 router.use('/recycles', recycleRoutes)
 router.use('/role-permissions', rolePermissionRoutes)
 router.use('/account-permissions', accountPermissionRoutes)
+router.use('/filters', filterRoutes)
 
 module.exports = router

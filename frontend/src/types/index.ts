@@ -2107,3 +2107,113 @@ export interface ServerMonitorAlertRecord {
   alertMessage?: string
   viewedAt: string
 }
+
+// ================ 特效滤镜素材录入 ================
+
+export type FilterFileFormat = 'glsl' | 'json' | 'lut_3d' | 'lut_1d' | 'custom'
+export type FilterStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'published' | 'offline'
+export type FilterEditChangeType = 'create' | 'edit' | 'edit_limited' | 'status_change' | 'batch_submit' | 'trace_verify'
+
+export interface FilterEffect {
+  id: number
+  filterCode: string
+  name: string
+  description: string
+  tags: string[]
+  categoryId: number
+  categoryName: string
+  fileUrl: string
+  fileFormat: FilterFileFormat
+  fileSize: number
+  coverUrl: string
+  previewUrl: string
+  resolution: string
+  width: number
+  height: number
+  adaptScene: string[]
+  adaptDevice: string[]
+  coreParams: Record<string, any>
+  sortWeight: number
+  status: FilterStatus
+  copyrightLicense: string
+  copyrightExpiredAt: string
+  source: string
+  authorId: number
+  authorName: string
+  integrityHash: string
+  isCompliant: boolean
+  complianceIssues: string[]
+  remark: string
+  publishedAt: string
+  offlineAt: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FilterValidationResult {
+  valid: boolean
+  errors: string[]
+  duplicate?: boolean
+}
+
+export interface FilterEditLog {
+  id: number
+  filterId: number
+  filterCode: string
+  filterName: string
+  editStep: number
+  changeType: FilterEditChangeType
+  changedFields: string[]
+  beforeData: Record<string, any> | null
+  afterData: Record<string, any> | null
+  operatorId: number
+  operatorName: string
+  operatorRole: string
+  ip: string
+  reason: string
+  batchId: string
+  remark: string
+  createdAt: string
+}
+
+export interface FilterBatchResult {
+  valid: Partial<FilterEffect>[]
+  invalid: { _validation: FilterValidationResult }[]
+  submitted: { id: number; filterCode: string; name: string }[]
+  batchId: string
+  total: number
+}
+
+export interface FilterTraceIssue {
+  type: string
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  message: string
+}
+
+export interface FilterTraceResultItem {
+  filter: FilterEffect
+  editLogs: FilterEditLog[]
+  integrityCheck: {
+    passed: boolean
+    issues: FilterTraceIssue[]
+  }
+  copyrightCheck: {
+    passed: boolean
+    issues: FilterTraceIssue[]
+  }
+  overallCheck: {
+    passed: boolean
+    isBlocked: boolean
+    issues: FilterTraceIssue[]
+  }
+}
+
+export interface FilterListParams extends PageParams {
+  keyword?: string
+  status?: FilterStatus
+  categoryId?: number
+  fileFormat?: FilterFileFormat
+  adaptScene?: string
+  filterCode?: string
+  isCompliant?: boolean
+}

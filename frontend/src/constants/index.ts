@@ -798,3 +798,114 @@ export const OverrideTypeLabel: Record<string, string> = {
   grant: '额外授予',
   deny: '拒绝(角色有但用户无)'
 }
+
+// ================ 特效滤镜素材录入 ================
+
+export enum FilterFileFormatEnum {
+  GLSL = 'glsl',
+  JSON = 'json',
+  LUT_3D = 'lut_3d',
+  LUT_1D = 'lut_1d',
+  CUSTOM = 'custom'
+}
+
+export const FilterFileFormatLabel: Record<string, string> = {
+  [FilterFileFormatEnum.GLSL]: 'GLSL着色器',
+  [FilterFileFormatEnum.JSON]: 'JSON配置',
+  [FilterFileFormatEnum.LUT_3D]: '3D LUT',
+  [FilterFileFormatEnum.LUT_1D]: '1D LUT',
+  [FilterFileFormatEnum.CUSTOM]: '自定义格式'
+}
+
+export enum FilterStatusEnum {
+  DRAFT = 'draft',
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  PUBLISHED = 'published',
+  OFFLINE = 'offline'
+}
+
+export const FilterStatusLabel: Record<string, string> = {
+  [FilterStatusEnum.DRAFT]: '草稿',
+  [FilterStatusEnum.PENDING]: '待审核',
+  [FilterStatusEnum.APPROVED]: '审核通过',
+  [FilterStatusEnum.REJECTED]: '审核拒绝',
+  [FilterStatusEnum.PUBLISHED]: '已上架',
+  [FilterStatusEnum.OFFLINE]: '已下架'
+}
+
+export const FilterStatusTagType: Record<string, string> = {
+  [FilterStatusEnum.DRAFT]: 'info',
+  [FilterStatusEnum.PENDING]: 'warning',
+  [FilterStatusEnum.APPROVED]: 'success',
+  [FilterStatusEnum.REJECTED]: 'danger',
+  [FilterStatusEnum.PUBLISHED]: 'primary',
+  [FilterStatusEnum.OFFLINE]: 'info'
+}
+
+export const FILTER_FILE_FORMAT_OPTIONS = [
+  { value: '', label: '全部格式' },
+  { value: 'glsl', label: 'GLSL着色器' },
+  { value: 'json', label: 'JSON配置' },
+  { value: 'lut_3d', label: '3D LUT' },
+  { value: 'lut_1d', label: '1D LUT' },
+  { value: 'custom', label: '自定义格式' }
+]
+
+export const FILTER_STATUS_OPTIONS = [
+  { value: '', label: '全部状态' },
+  { value: 'draft', label: '草稿' },
+  { value: 'pending', label: '待审核' },
+  { value: 'approved', label: '审核通过' },
+  { value: 'rejected', label: '审核拒绝' },
+  { value: 'published', label: '已上架' },
+  { value: 'offline', label: '已下架' }
+]
+
+export const FILTER_ADAPT_SCENE_OPTIONS = [
+  { value: 'photo', label: '照片' },
+  { value: 'video', label: '视频' },
+  { value: 'live', label: '直播' },
+  { value: 'short_video', label: '短视频' },
+  { value: 'portrait', label: '人像' },
+  { value: 'landscape', label: '风景' },
+  { value: 'food', label: '美食' },
+  { value: 'scenery', label: '风光' },
+  { value: 'night', label: '夜景' },
+  { value: 'vintage', label: '复古' }
+]
+
+export const FILTER_RESOLUTION_OPTIONS = [
+  { value: '1920x1080', label: '1920x1080 (1080p)' },
+  { value: '1280x720', label: '1280x720 (720p)' },
+  { value: '3840x2160', label: '3840x2160 (4K)' },
+  { value: '1080x1920', label: '1080x1920 (竖版1080p)' },
+  { value: '720x1280', label: '720x1280 (竖版720p)' },
+  { value: '2160x3840', label: '2160x3840 (竖版4K)' }
+]
+
+export const FILTER_CHANGE_TYPE_LABEL: Record<string, string> = {
+  create: '创建录入',
+  edit: '编辑修改',
+  edit_limited: '有限编辑',
+  status_change: '状态变更',
+  batch_submit: '批量录入',
+  trace_verify: '溯源校验'
+}
+
+export const FILTER_CHANGE_TYPE_TAG_TYPE: Record<string, string> = {
+  create: 'success',
+  edit: 'primary',
+  edit_limited: 'warning',
+  status_change: 'info',
+  batch_submit: 'warning',
+  trace_verify: 'primary'
+}
+
+export const FILTER_TRACE_SEVERITY_TAG_TYPE: Record<string, string> = {
+  low: 'info',
+  medium: 'warning',
+  high: 'danger',
+  critical: 'danger'
+}

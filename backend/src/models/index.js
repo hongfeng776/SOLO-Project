@@ -27,6 +27,8 @@ const AccountPermissionLog = require('./AccountPermissionLog')
 const SystemLog = require('./SystemLog')
 const CronLog = require('./CronLog')
 const ServerMonitor = require('./ServerMonitor')
+const FilterEffect = require('./FilterEffect')
+const FilterEditLog = require('./FilterEditLog')
 
 User.hasMany(Resource, { foreignKey: 'authorId', as: 'resources' })
 Resource.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
@@ -116,6 +118,13 @@ AccountPermissionLog.belongsTo(Role, { foreignKey: 'roleId', as: 'role' })
 CronLog.belongsTo(CronLog, { foreignKey: 'parentLogId', as: 'parentLog' })
 CronLog.hasMany(CronLog, { foreignKey: 'parentLogId', as: 'retryLogs' })
 
+User.hasMany(FilterEffect, { foreignKey: 'authorId', as: 'filterEffects' })
+FilterEffect.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
+Category.hasMany(FilterEffect, { foreignKey: 'categoryId', as: 'filterEffects' })
+FilterEffect.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' })
+FilterEffect.hasMany(FilterEditLog, { foreignKey: 'filterId', as: 'editLogs' })
+FilterEditLog.belongsTo(FilterEffect, { foreignKey: 'filterId', as: 'filter' })
+
 module.exports = {
   User,
   Category,
@@ -145,5 +154,7 @@ module.exports = {
   AccountPermissionLog,
   SystemLog,
   CronLog,
-  ServerMonitor
+  ServerMonitor,
+  FilterEffect,
+  FilterEditLog
 }

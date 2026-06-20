@@ -58,6 +58,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '特效模板', icon: 'MagicStick' }
       },
       {
+        path: 'filter',
+        name: 'FilterEffect',
+        component: () => import('@/views/filter/index.vue'),
+        meta: { title: '特效滤镜', icon: 'Brush' }
+      },
+      {
         path: 'audit',
         name: 'Audit',
         component: () => import('@/views/audit/index.vue'),
