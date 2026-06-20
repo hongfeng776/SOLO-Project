@@ -2111,8 +2111,8 @@ export interface ServerMonitorAlertRecord {
 // ================ 特效滤镜素材录入 ================
 
 export type FilterFileFormat = 'glsl' | 'json' | 'lut_3d' | 'lut_1d' | 'custom'
-export type FilterStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'published' | 'offline'
-export type FilterEditChangeType = 'create' | 'edit' | 'edit_limited' | 'status_change' | 'batch_submit' | 'trace_verify'
+export type FilterStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'published' | 'offline' | 'violation'
+export type FilterEditChangeType = 'create' | 'edit' | 'edit_limited' | 'status_change' | 'status_blocked' | 'batch_submit' | 'trace_verify' | 'batch_status' | 'status_hf_blocked'
 
 export interface FilterEffect {
   id: number
@@ -2144,6 +2144,15 @@ export interface FilterEffect {
   isCompliant: boolean
   complianceIssues: string[]
   remark: string
+  useHeat: number
+  inUseCount: number
+  statusChangeCount: number
+  lastStatusChangeAt: string
+  violationReason: string
+  violationAt: string
+  recommendWeight: number
+  canUserUse: boolean
+  lastStatusChangeOperator: string
   publishedAt: string
   offlineAt: string
   createdAt: string
@@ -2216,4 +2225,47 @@ export interface FilterListParams extends PageParams {
   adaptScene?: string
   filterCode?: string
   isCompliant?: boolean
+  useHeatMin?: number
+  statusChangeCountMin?: number
 }
+
+// ================ 特效滤镜状态管控 ================
+
+export interface FilterStatusOverview {
+  total: number
+  pending: number
+  published: number
+  offline: number
+  violation: number
+  mutexStatus: string[]
+  statusCounts: Record<string, number>
+  publishRate: number
+}
+
+export interface FilterUsingWork {
+  filterId: number
+  filterCode: string
+  filterName: string
+  inUseCount: number
+  useHeat: number
+}
+
+export interface FilterStatusUpdateResult {
+  updated?: boolean
+  filter?: FilterEffect
+  heatWarnings?: FilterTraceIssue[]
+  needSecondConfirm?: boolean
+  inUseCount?: number
+  useHeat?: number
+  usingWorks?: FilterUsingWork[]
+  message?: string
+}
+
+export interface BatchStatusResult {
+  total: number
+  success: { id: number; filterCode: string; name: string; status: FilterStatus }[]
+  failed: { id: number; reason: string; filterCode?: string; name?: string }[]
+  filtered: { id: number; filterCode: string; name: string; reason: string; status: FilterStatus }[]
+  batchId: string
+}
+

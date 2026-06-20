@@ -86,10 +86,39 @@ class FilterController {
   async updateStatus(req, res, next) {
     try {
       const { id } = req.params
-      const { status } = req.body
+      const { status, skipSecondConfirm, violationReason, operatorName } = req.body
       const userId = req.user?.id
-      const filter = await filterService.updateStatus(parseInt(id), status, userId)
-      res.json(ApiResponse.success(filter, '状态更新成功'))
+      const result = await filterService.updateStatus(
+        parseInt(id),
+        status,
+        userId,
+        { skipSecondConfirm, violationReason, operatorName }
+      )
+      if (result.needSecondConfirm) {
+        res.json(ApiResponse.success(result, '需要二次确认'))
+      } else {
+        res.json(ApiResponse.success(result, '状态更新成功'))
+      }
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async batchUpdateStatus(req, res, next) {
+    try {
+      const { ids, status, operatorName } = req.body
+      const userId = req.user?.id
+      const result = await filterService.batchStatusUpdate(ids, status, userId, { operatorName })
+      res.json(ApiResponse.success(result, '批量状态操作完成'))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async getStatusOverview(req, res, next) {
+    try {
+      const result = await filterService.getStatusOverview()
+      res.json(ApiResponse.success(result))
     } catch (error) {
       next(error)
     }

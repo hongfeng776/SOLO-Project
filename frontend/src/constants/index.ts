@@ -823,7 +823,8 @@ export enum FilterStatusEnum {
   APPROVED = 'approved',
   REJECTED = 'rejected',
   PUBLISHED = 'published',
-  OFFLINE = 'offline'
+  OFFLINE = 'offline',
+  VIOLATION = 'violation'
 }
 
 export const FilterStatusLabel: Record<string, string> = {
@@ -832,7 +833,8 @@ export const FilterStatusLabel: Record<string, string> = {
   [FilterStatusEnum.APPROVED]: '审核通过',
   [FilterStatusEnum.REJECTED]: '审核拒绝',
   [FilterStatusEnum.PUBLISHED]: '已上架',
-  [FilterStatusEnum.OFFLINE]: '已下架'
+  [FilterStatusEnum.OFFLINE]: '已下架',
+  [FilterStatusEnum.VIOLATION]: '违规禁用'
 }
 
 export const FilterStatusTagType: Record<string, string> = {
@@ -841,7 +843,8 @@ export const FilterStatusTagType: Record<string, string> = {
   [FilterStatusEnum.APPROVED]: 'success',
   [FilterStatusEnum.REJECTED]: 'danger',
   [FilterStatusEnum.PUBLISHED]: 'primary',
-  [FilterStatusEnum.OFFLINE]: 'info'
+  [FilterStatusEnum.OFFLINE]: 'info',
+  [FilterStatusEnum.VIOLATION]: 'danger'
 }
 
 export const FILTER_FILE_FORMAT_OPTIONS = [
@@ -860,7 +863,8 @@ export const FILTER_STATUS_OPTIONS = [
   { value: 'approved', label: '审核通过' },
   { value: 'rejected', label: '审核拒绝' },
   { value: 'published', label: '已上架' },
-  { value: 'offline', label: '已下架' }
+  { value: 'offline', label: '已下架' },
+  { value: 'violation', label: '违规禁用' }
 ]
 
 export const FILTER_ADAPT_SCENE_OPTIONS = [
@@ -890,8 +894,11 @@ export const FILTER_CHANGE_TYPE_LABEL: Record<string, string> = {
   edit: '编辑修改',
   edit_limited: '有限编辑',
   status_change: '状态变更',
+  status_blocked: '前置拦截',
   batch_submit: '批量录入',
-  trace_verify: '溯源校验'
+  trace_verify: '溯源校验',
+  batch_status: '批量状态',
+  status_hf_blocked: '高频拦截'
 }
 
 export const FILTER_CHANGE_TYPE_TAG_TYPE: Record<string, string> = {
@@ -899,8 +906,11 @@ export const FILTER_CHANGE_TYPE_TAG_TYPE: Record<string, string> = {
   edit: 'primary',
   edit_limited: 'warning',
   status_change: 'info',
+  status_blocked: 'danger',
   batch_submit: 'warning',
-  trace_verify: 'primary'
+  trace_verify: 'primary',
+  batch_status: 'warning',
+  status_hf_blocked: 'danger'
 }
 
 export const FILTER_TRACE_SEVERITY_TAG_TYPE: Record<string, string> = {
@@ -908,4 +918,34 @@ export const FILTER_TRACE_SEVERITY_TAG_TYPE: Record<string, string> = {
   medium: 'warning',
   high: 'danger',
   critical: 'danger'
+}
+
+// ================ 特效滤镜状态管控 ================
+
+export const FILTER_FOUR_MUTEX_STATUSES = ['pending', 'published', 'offline', 'violation']
+
+export const FILTER_STATUS_GLOW_CLASS: Record<string, string> = {
+  pending: 'glow-warning',
+  published: 'glow-primary',
+  offline: 'glow-info',
+  violation: 'glow-danger',
+  draft: 'glow-info',
+  approved: 'glow-success',
+  rejected: 'glow-danger'
+}
+
+export const FILTER_BATCH_STATUS_OPTIONS = [
+  { value: 'published', label: '批量上架' },
+  { value: 'offline', label: '批量下架' },
+  { value: 'violation', label: '批量禁用(违规)' }
+]
+
+export const FILTER_STATUS_TRANSITIONS: Record<string, string[]> = {
+  draft: ['pending'],
+  pending: ['approved', 'rejected'],
+  approved: ['published', 'violation'],
+  rejected: ['draft', 'pending'],
+  published: ['offline', 'violation'],
+  offline: ['draft', 'published', 'violation'],
+  violation: []
 }

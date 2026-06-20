@@ -149,10 +149,10 @@ const FilterEffect = sequelize.define(
       comment: '展示权重'
     },
     status: {
-      type: DataTypes.ENUM('draft', 'pending', 'approved', 'rejected', 'published', 'offline'),
+      type: DataTypes.ENUM('draft', 'pending', 'approved', 'rejected', 'published', 'offline', 'violation'),
       defaultValue: 'draft',
       allowNull: false,
-      comment: '状态'
+      comment: '状态(violation=违规禁用)'
     },
     copyrightLicense: {
       type: DataTypes.STRING(200),
@@ -211,6 +211,56 @@ const FilterEffect = sequelize.define(
       allowNull: true,
       comment: '备注'
     },
+    useHeat: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+      comment: '使用热度(被作品引用次数)'
+    },
+    inUseCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+      comment: '当前在用作品数量'
+    },
+    statusChangeCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+      comment: '状态变更频次'
+    },
+    lastStatusChangeAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '最后一次状态变更时间'
+    },
+    violationReason: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: '违规禁用原因'
+    },
+    violationAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '违规禁用时间'
+    },
+    recommendWeight: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+      comment: '推荐权重(状态联动调整)'
+    },
+    canUserUse: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      allowNull: false,
+      comment: '用户是否可使用(状态联动)'
+    },
+    lastStatusChangeOperator: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      comment: '最后状态变更操作人'
+    },
     publishedAt: {
       type: DataTypes.DATE,
       allowNull: true,
@@ -233,7 +283,10 @@ const FilterEffect = sequelize.define(
       { fields: ['sortWeight'] },
       { fields: ['authorId'] },
       { fields: ['fileFormat'] },
-      { fields: ['name'] }
+      { fields: ['name'] },
+      { fields: ['useHeat'] },
+      { fields: ['statusChangeCount'] },
+      { fields: ['lastStatusChangeAt'] }
     ]
   }
 )

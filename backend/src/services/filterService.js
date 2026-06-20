@@ -8,7 +8,7 @@ const crypto = require('crypto')
 const ALLOWED_FILE_FORMATS = ['glsl', 'json', 'lut_3d', 'lut_1d', 'custom']
 const ALLOWED_RESOLUTIONS = ['1920x1080', '1280x720', '3840x2160', '1080x1920', '720x1280', '2160x3840']
 const ALLOWED_SCENES = ['photo', 'video', 'live', 'short_video', 'portrait', 'landscape', 'food', 'scenery', 'night', 'vintage']
-const ALLOWED_STATUSES = ['draft', 'pending', 'approved', 'rejected', 'published', 'offline']
+const ALLOWED_STATUSES = ['draft', 'pending', 'approved', 'rejected', 'published', 'offline', 'violation']
 
 const CORE_FIELDS = ['fileUrl', 'fileFormat', 'fileSize', 'width', 'height', 'resolution', 'coreParams', 'adaptScene']
 const ALLOWED_EDIT_FIELDS_WHEN_PUBLISHED = ['sortWeight', 'description', 'remark']
@@ -16,11 +16,17 @@ const ALLOWED_EDIT_FIELDS_WHEN_PUBLISHED = ['sortWeight', 'description', 'remark
 const STATUS_TRANSITIONS = {
   draft: ['pending'],
   pending: ['approved', 'rejected'],
-  approved: ['published'],
+  approved: ['published', 'violation'],
   rejected: ['draft', 'pending'],
-  published: ['offline'],
-  offline: ['draft', 'published']
+  published: ['offline', 'violation'],
+  offline: ['draft', 'published', 'violation'],
+  violation: []
 }
+
+const STATUS_FOUR_MUTEX = ['pending', 'published', 'offline', 'violation']
+const HIGH_FREQUENCY_WINDOW_MS = 60 * 1000
+const HIGH_FREQUENCY_THRESHOLD = 5
+const HEAT_MATCH_TOLERANCE = 500
 
 class FilterService {
   async getList(params = {}) {
@@ -407,20 +413,199 @@ class FilterService {
     return results
   }
 
-  async updateStatus(id, targetStatus, userId) {
+  async checkFrontendUsage(filter) {
+    const inUseCount = filter.inUseCount || 0
+    const useHeat = filter.useHeat || 0
+    const usingWorks = []
+    if (inUseCount > 0) {
+      usingWorks.push({
+        filterId: filter.id,
+        filterCode: filter.filterCode,
+        filterName: filter.name,
+        inUseCount,
+        useHeat
+      })
+    }
+    return {
+      hasUsage: inUseCount > 0,
+      inUseCount,
+      useHeat,
+      usingWorks,
+      needSecondConfirm: inUseCount > 0
+    }
+  }
+
+  async checkHighFrequency(filter, userId, targetStatus) {
+    const windowStart = new Date(Date.now() - HIGH_FREQUENCY_WINDOW_MS)
+    const recentChanges = await FilterEditLog.count({
+      where: {
+        filterId: filter.id,
+        changeType: { [Op.in]: ['status_change', 'batch_status'] },
+        createdAt: { [Op.gte]: windowStart }
+      }
+    })
+    const isHighFrequency = recentChanges >= HIGH_FREQUENCY_THRESHOLD
+    return {
+      isHighFrequency,
+      recentChanges,
+      threshold: HIGH_FREQUENCY_THRESHOLD,
+      windowMs: HIGH_FREQUENCY_WINDOW_MS
+    }
+  }
+
+  async checkHeatMatch(filter, targetStatus) {
+    const heat = filter.useHeat || 0
+    const issues = []
+    if (targetStatus === 'offline' && heat > HEAT_MATCH_TOLERANCE) {
+      issues.push({
+        type: 'high_heat_offline',
+        severity: 'warning',
+        message: `该滤镜使用热度为${heat}，高于阈值${HEAT_MATCH_TOLERANCE}，下架可能影响用户体验`
+      })
+    }
+    if (targetStatus === 'published' && heat < 10 && filter.sortWeight > 500) {
+      issues.push({
+        type: 'low_heat_high_weight',
+        severity: 'info',
+        message: '该滤镜使用热度较低但推荐权重较高，建议先观察使用情况'
+      })
+    }
+    return {
+      passed: issues.length === 0,
+      issues,
+      heat,
+      tolerance: HEAT_MATCH_TOLERANCE
+    }
+  }
+
+  async updateStatus(id, targetStatus, userId, options = {}) {
+    const { skipSecondConfirm = false, operatorName = '', violationReason = '' } = options
+
     const filter = await FilterEffect.findByPk(id)
     if (!filter) throw ApiError.notFound('滤镜不存在')
 
+    if (filter.status === 'violation') {
+      await FilterEditLog.create({
+        filterId: id,
+        filterCode: filter.filterCode,
+        filterName: filter.name,
+        editStep: 1,
+        changeType: 'status_blocked',
+        changedFields: ['status'],
+        beforeData: filter.toJSON(),
+        afterData: { targetStatus },
+        operatorId: userId,
+        operatorName,
+        reason: '违规滤镜禁止变更状态'
+      })
+      throw ApiError.badRequest('违规滤镜禁止上架、编辑等任何操作')
+    }
+
+    if (filter.status === 'published' &&
+      ['fileUrl', 'fileFormat', 'coreParams', 'adaptScene', 'resolution'].some(
+        k => Object.keys(options).includes(k)
+      )) {
+      throw ApiError.badRequest('已上架滤镜禁止直接修改核心参数')
+    }
+
     const allowed = STATUS_TRANSITIONS[filter.status] || []
     if (!allowed.includes(targetStatus)) {
+      await FilterEditLog.create({
+        filterId: id,
+        filterCode: filter.filterCode,
+        filterName: filter.name,
+        editStep: 1,
+        changeType: 'status_blocked',
+        changedFields: ['status'],
+        beforeData: filter.toJSON(),
+        afterData: { targetStatus },
+        operatorId: userId,
+        operatorName,
+        reason: `非法状态流转：${filter.status}->${targetStatus}`
+      })
       throw ApiError.badRequest(`不允许从${filter.status}变更为${targetStatus}`)
     }
 
+    const usageResult = await this.checkFrontendUsage(filter)
+    if (usageResult.hasUsage && !skipSecondConfirm) {
+      return {
+        needSecondConfirm: true,
+        inUseCount: usageResult.inUseCount,
+        useHeat: usageResult.useHeat,
+        usingWorks: usageResult.usingWorks,
+        message: `该滤镜当前有${usageResult.inUseCount}个作品在用，需二次确认是否继续`
+      }
+    }
+
+    const hfResult = await this.checkHighFrequency(filter, userId, targetStatus)
+    if (hfResult.isHighFrequency) {
+      await FilterEditLog.create({
+        filterId: id,
+        filterCode: filter.filterCode,
+        filterName: filter.name,
+        editStep: 1,
+        changeType: 'status_hf_blocked',
+        changedFields: ['status'],
+        beforeData: filter.toJSON(),
+        afterData: { targetStatus },
+        operatorId: userId,
+        operatorName,
+        reason: `高频变更拦截：${hfResult.recentChanges}次/${hfResult.windowMs / 1000}秒`
+      })
+      throw ApiError.badRequest(
+        `短时间内变更频次过高（${hfResult.recentChanges}次/${hfResult.windowMs / 1000}秒），已自动拦截，请稍后再试`
+      )
+    }
+
+    const heatMatch = await this.checkHeatMatch(filter, targetStatus)
+
     const beforeData = filter.toJSON()
+    const now = new Date()
+
+    let canUserUse = filter.canUserUse
+    let recommendWeight = filter.recommendWeight
+    let newSortWeight = filter.sortWeight
+
+    switch (targetStatus) {
+      case 'published':
+        canUserUse = true
+        recommendWeight = Math.max(recommendWeight, 100)
+        break
+      case 'offline':
+        canUserUse = false
+        newSortWeight = 0
+        recommendWeight = 0
+        break
+      case 'violation':
+        canUserUse = false
+        newSortWeight = 0
+        recommendWeight = 0
+        break
+      case 'approved':
+        canUserUse = true
+        break
+      case 'pending':
+      case 'rejected':
+      case 'draft':
+        canUserUse = true
+        break
+    }
+
     await filter.update({
       status: targetStatus,
-      ...(targetStatus === 'published' ? { publishedAt: new Date() } : {}),
-      ...(targetStatus === 'offline' ? { offlineAt: new Date() } : {})
+      ...(targetStatus === 'published' ? { publishedAt: now } : {}),
+      ...(targetStatus === 'offline' ? { offlineAt: now } : {}),
+      ...(targetStatus === 'violation'
+        ? { violationReason, violationAt: now }
+        : {}),
+      canUserUse,
+      recommendWeight,
+      ...(targetStatus === 'offline' || targetStatus === 'violation'
+        ? { sortWeight: newSortWeight }
+        : {}),
+      statusChangeCount: (filter.statusChangeCount || 0) + 1,
+      lastStatusChangeAt: now,
+      lastStatusChangeOperator: operatorName || filter.lastStatusChangeOperator
     })
 
     await FilterEditLog.create({
@@ -429,21 +614,193 @@ class FilterService {
       filterName: filter.name,
       editStep: 1,
       changeType: 'status_change',
-      changedFields: ['status'],
+      changedFields: [
+        'status',
+        'canUserUse',
+        'recommendWeight',
+        'sortWeight',
+        'statusChangeCount',
+        'lastStatusChangeAt',
+        'lastStatusChangeOperator',
+        ...(targetStatus === 'published' ? ['publishedAt'] : []),
+        ...(targetStatus === 'offline' ? ['offlineAt'] : []),
+        ...(targetStatus === 'violation' ? ['violationReason', 'violationAt'] : [])
+      ],
       beforeData,
       afterData: filter.toJSON(),
       operatorId: userId,
-      reason: `状态变更为${targetStatus}`
+      operatorName,
+      reason: `状态变更为${targetStatus}` +
+        (heatMatch.issues.length ? `；热度匹配提示：${heatMatch.issues.map(i => i.message).join('；')}` : '')
     })
 
-    return filter
+    return {
+      updated: true,
+      filter: filter,
+      heatWarnings: heatMatch.issues,
+      needSecondConfirm: false
+    }
+  }
+
+  async batchStatusUpdate(ids, targetStatus, userId, options = {}) {
+    const { operatorName = '' } = options
+    const results = {
+      total: ids.length,
+      success: [],
+      failed: [],
+      filtered: [],
+      batchId: 'BATCH_STATUS_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)
+    }
+
+    for (const id of ids) {
+      try {
+        const filter = await FilterEffect.findByPk(id)
+        if (!filter) {
+          results.failed.push({ id, reason: '滤镜不存在' })
+          continue
+        }
+
+        if (filter.status === 'violation' || filter.status === 'pending') {
+          results.filtered.push({
+            id,
+            filterCode: filter.filterCode,
+            name: filter.name,
+            reason: filter.status === 'violation' ? '违规滤镜已过滤' : '待审核滤镜已过滤',
+            status: filter.status
+          })
+          continue
+        }
+
+        if (targetStatus === 'published' && !['approved', 'offline'].includes(filter.status)) {
+          results.filtered.push({
+            id,
+            filterCode: filter.filterCode,
+            name: filter.name,
+            reason: `${filter.status}状态不允许上架`,
+            status: filter.status
+          })
+          continue
+        }
+
+        if (targetStatus === 'offline' && filter.status !== 'published') {
+          results.filtered.push({
+            id,
+            filterCode: filter.filterCode,
+            name: filter.name,
+            reason: `${filter.status}状态无需下架`,
+            status: filter.status
+          })
+          continue
+        }
+
+        const hfCheck = await this.checkHighFrequency(filter, userId, targetStatus)
+        if (hfCheck.isHighFrequency) {
+          results.failed.push({
+            id,
+            filterCode: filter.filterCode,
+            name: filter.name,
+            reason: '高频变更被拦截'
+          })
+          await FilterEditLog.create({
+            filterId: id,
+            filterCode: filter.filterCode,
+            filterName: filter.name,
+            editStep: 1,
+            changeType: 'status_hf_blocked',
+            changedFields: ['status'],
+            beforeData: filter.toJSON(),
+            afterData: { targetStatus },
+            operatorId: userId,
+            operatorName,
+            batchId: results.batchId,
+            reason: '批量操作高频拦截'
+          })
+          continue
+        }
+
+        const beforeData = filter.toJSON()
+        const now = new Date()
+        const updates = {
+          status: targetStatus,
+          statusChangeCount: (filter.statusChangeCount || 0) + 1,
+          lastStatusChangeAt: now,
+          lastStatusChangeOperator: operatorName || filter.lastStatusChangeOperator
+        }
+
+        if (targetStatus === 'published') {
+          updates.publishedAt = now
+          updates.canUserUse = true
+          updates.recommendWeight = Math.max(filter.recommendWeight || 0, 100)
+        }
+        if (targetStatus === 'offline') {
+          updates.offlineAt = now
+          updates.canUserUse = false
+          updates.recommendWeight = 0
+          updates.sortWeight = 0
+        }
+
+        await filter.update(updates)
+
+        await FilterEditLog.create({
+          filterId: id,
+          filterCode: filter.filterCode,
+          filterName: filter.name,
+          editStep: 1,
+          changeType: 'batch_status',
+          changedFields: Object.keys(updates),
+          beforeData,
+          afterData: filter.toJSON(),
+          operatorId: userId,
+          operatorName,
+          batchId: results.batchId,
+          reason: `批量状态变更为${targetStatus}`
+        })
+
+        results.success.push({
+          id,
+          filterCode: filter.filterCode,
+          name: filter.name,
+          status: filter.status
+        })
+      } catch (err) {
+        results.failed.push({
+          id,
+          reason: err.message || '未知错误'
+        })
+      }
+    }
+
+    return results
+  }
+
+  async getStatusOverview() {
+    const statuses = STATUS_FOUR_MUTEX
+    const counts = {}
+    for (const s of statuses) {
+      counts[s] = await FilterEffect.count({ where: { status: s } })
+    }
+    const total = await FilterEffect.count()
+    const pendingCount = counts.pending || 0
+    const publishedCount = counts.published || 0
+    const offlineCount = counts.offline || 0
+    const violationCount = counts.violation || 0
+    return {
+      total,
+      pending: pendingCount,
+      published: publishedCount,
+      offline: offlineCount,
+      violation: violationCount,
+      mutexStatus: statuses,
+      statusCounts: counts,
+      publishRate: total ? Math.round((publishedCount / total) * 1000) / 10 : 0
+    }
   }
 
   async delete(id) {
     const filter = await FilterEffect.findByPk(id)
     if (!filter) throw ApiError.notFound('滤镜不存在')
-    if (filter.status === 'published') {
-      throw ApiError.badRequest('已上架滤镜不可删除，请先下架')
+    if (filter.status === 'published' || filter.status === 'violation') {
+      throw ApiError.badRequest('已上架或违规滤镜不可删除，请先变更状态')
     }
     await filter.destroy()
     return null
