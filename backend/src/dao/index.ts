@@ -59,6 +59,10 @@ import { MerchantBusinessDataDao } from './MerchantBusinessDataDao';
 import { MerchantBusinessCorrectLogDao } from './MerchantBusinessCorrectLogDao';
 import { MerchantLevelAssessLogDao } from './MerchantLevelAssessLogDao';
 import { MerchantBusinessAbnormalLogDao } from './MerchantBusinessAbnormalLogDao';
+import { SettleApplyOrderDao } from './SettleApplyOrderDao';
+import { SettleDeductDetailDao } from './SettleDeductDetailDao';
+import { SettleAuditLogDao } from './SettleAuditLogDao';
+import { SettleTransferVoucherDao } from './SettleTransferVoucherDao';
 
 export {
   BaseDao,
@@ -124,6 +128,10 @@ export {
   MerchantBusinessCorrectLogDao,
   MerchantLevelAssessLogDao,
   MerchantBusinessAbnormalLogDao,
+  SettleApplyOrderDao,
+  SettleDeductDetailDao,
+  SettleAuditLogDao,
+  SettleTransferVoucherDao,
 };
 
 export const daos = {
@@ -187,6 +195,10 @@ export const daos = {
   merchantBusinessCorrectLogDao: new MerchantBusinessCorrectLogDao(),
   merchantLevelAssessLogDao: new MerchantLevelAssessLogDao(),
   merchantBusinessAbnormalLogDao: new MerchantBusinessAbnormalLogDao(),
+  settleApplyOrderDao: new SettleApplyOrderDao(),
+  settleDeductDetailDao: new SettleDeductDetailDao(),
+  settleAuditLogDao: new SettleAuditLogDao(),
+  settleTransferVoucherDao: new SettleTransferVoucherDao(),
 };
 
 export default daos;

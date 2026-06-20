@@ -55,6 +55,10 @@ import MerchantBusinessService, { merchantBusinessService } from './MerchantBusi
 import MerchantBusinessCorrectService, { merchantBusinessCorrectService } from './MerchantBusinessCorrectService';
 import MerchantBusinessBatchService, { merchantBusinessBatchService } from './MerchantBusinessBatchService';
 import MerchantBusinessTraceService, { merchantBusinessTraceService } from './MerchantBusinessTraceService';
+import SettleValidateService, { settleValidateService } from './SettleValidateService';
+import SettleCalcService, { settleCalcService } from './SettleCalcService';
+import SettleBatchService, { settleBatchService } from './SettleBatchService';
+import SettleTraceService, { settleTraceService } from './SettleTraceService';
 
 export {
   AfterSaleAuditService,
@@ -114,6 +118,10 @@ export {
   MerchantBusinessCorrectService,
   MerchantBusinessBatchService,
   MerchantBusinessTraceService,
+  SettleValidateService,
+  SettleCalcService,
+  SettleBatchService,
+  SettleTraceService,
 };
 
 export const services: Record<string, any> = {
@@ -174,6 +182,10 @@ export const services: Record<string, any> = {
   merchantBusinessCorrectService,
   merchantBusinessBatchService,
   merchantBusinessTraceService,
+  settleValidateService,
+  settleCalcService,
+  settleBatchService,
+  settleTraceService,
 };
 
 export default services;

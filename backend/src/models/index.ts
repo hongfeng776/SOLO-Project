@@ -57,6 +57,10 @@ import { MerchantBusinessData } from './MerchantBusinessData';
 import { MerchantBusinessCorrectLog } from './MerchantBusinessCorrectLog';
 import { MerchantLevelAssessLog } from './MerchantLevelAssessLog';
 import { MerchantBusinessAbnormalLog } from './MerchantBusinessAbnormalLog';
+import { SettleApplyOrder } from './SettleApplyOrder';
+import { SettleDeductDetail } from './SettleDeductDetail';
+import { SettleAuditLog } from './SettleAuditLog';
+import { SettleTransferVoucher } from './SettleTransferVoucher';
 
 export {
   Admin,
@@ -118,6 +122,10 @@ export {
   MerchantBusinessCorrectLog,
   MerchantLevelAssessLog,
   MerchantBusinessAbnormalLog,
+  SettleApplyOrder,
+  SettleDeductDetail,
+  SettleAuditLog,
+  SettleTransferVoucher,
 };
 
 export const models = {
@@ -180,6 +188,10 @@ export const models = {
   MerchantBusinessCorrectLog,
   MerchantLevelAssessLog,
   MerchantBusinessAbnormalLog,
+  SettleApplyOrder,
+  SettleDeductDetail,
+  SettleAuditLog,
+  SettleTransferVoucher,
 };
 
 export default models;

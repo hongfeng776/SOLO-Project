@@ -371,6 +371,57 @@ export class Merchant extends Model<Merchant> {
   })
   deducted_settle_amount?: number;
 
+  @Column({
+    type: DataType.STRING(100),
+    comment: '银行开户名',
+  })
+  bank_account_name?: string;
+
+  @Column({
+    type: DataType.STRING(50),
+    comment: '银行账号',
+  })
+  bank_account_no?: string;
+
+  @Column({
+    type: DataType.STRING(100),
+    comment: '开户银行名称',
+  })
+  bank_name?: string;
+
+  @Column({
+    type: DataType.STRING(100),
+    comment: '开户支行名称',
+  })
+  bank_branch_name?: string;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '银行卡认证状态：0-未认证 1-认证中 2-认证通过 3-认证失败',
+  })
+  bank_verify_status?: number;
+
+  @Column({
+    type: DataType.DECIMAL(14, 2),
+    defaultValue: 0,
+    comment: '可结算余额',
+  })
+  available_settle_balance?: number;
+
+  @Column({
+    type: DataType.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '已提现次数',
+  })
+  settle_withdraw_count?: number;
+
+  @Column({
+    type: DataType.DATE,
+    comment: '最近结算时间',
+  })
+  last_settle_time?: Date;
+
   @CreatedAt
   @Column({
     type: DataType.DATE,

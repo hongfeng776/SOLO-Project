@@ -60,6 +60,10 @@ import merchantBusinessRouter from './merchantBusiness';
 import merchantBusinessCorrectRouter from './merchantBusinessCorrect';
 import merchantBusinessBatchRouter from './merchantBusinessBatch';
 import merchantBusinessTraceRouter from './merchantBusinessTrace';
+import settleValidateRouter from './settleValidate';
+import settleCalcRouter from './settleCalc';
+import settleBatchRouter from './settleBatch';
+import settleTraceRouter from './settleTrace';
 
 const router = Router();
 
@@ -124,5 +128,9 @@ router.use('/merchantBusiness', merchantBusinessRouter);
 router.use('/merchantBusinessCorrect', merchantBusinessCorrectRouter);
 router.use('/merchantBusinessBatch', merchantBusinessBatchRouter);
 router.use('/merchantBusinessTrace', merchantBusinessTraceRouter);
+router.use('/settleValidate', settleValidateRouter);
+router.use('/settleCalc', settleCalcRouter);
+router.use('/settleBatch', settleBatchRouter);
+router.use('/settleTrace', settleTraceRouter);
 
 export default router;

@@ -119,6 +119,18 @@ const routes: RouteRecordRaw[] = [
             name: 'MerchantBusinessData',
             component: () => import('@/views/merchant/businessDataManage.vue'),
             meta: { title: '数据录入', icon: 'EditPen', requiresAuth: true }
+          },
+          {
+            path: 'settle',
+            name: 'MerchantSettleManage',
+            component: () => import('@/views/merchant/settleManage.vue'),
+            meta: { title: '结算管理', icon: 'Money', requiresAuth: true }
+          },
+          {
+            path: 'settleApply',
+            name: 'MerchantSettleApply',
+            component: () => import('@/views/merchant/settleApply.vue'),
+            meta: { title: '结算申请', icon: 'EditPen', requiresAuth: true }
           }
         ]
       },
