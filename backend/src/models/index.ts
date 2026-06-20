@@ -37,3 +37,6 @@ export { CustomerTagBatch } from './CustomerTagBatch';
 export { CustomerTagBatchItem } from './CustomerTagBatchItem';
 export { CustomerPrivacyRule } from './CustomerPrivacyRule';
 export { CustomerPrivacyLog } from './CustomerPrivacyLog';
+export { RiskAssessment } from './RiskAssessment';
+export { RiskIndicator } from './RiskIndicator';
+export { RiskAssessmentBatch } from './RiskAssessmentBatch';

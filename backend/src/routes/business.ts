@@ -74,6 +74,30 @@ router.post('/risk/violation', requirePermission('risk:violation:create'), (req,
 router.post('/risk/violation/:id/handle', requirePermission('risk:violation:update'), (req, res, next) => riskController.violationHandle(req, res, next));
 router.get('/risk/statistics', requirePermission('risk:violation:query'), (req, res, next) => riskController.statistics(req, res, next));
 
+router.get('/risk/config', requireAuth, (req, res, next) => riskController.getRiskLevelConfig(req, res, next));
+
+router.get('/risk/assessment/data-sync/:customer_id', requireAuth, (req, res, next) => riskController.checkDataSync(req, res, next));
+router.get('/risk/assessment/multi-data/:customer_id', requireAuth, (req, res, next) => riskController.getMultiDimensionalData(req, res, next));
+router.get('/risk/assessment/validate-weights', requireAuth, (req, res, next) => riskController.validateWeights(req, res, next));
+router.post('/risk/assessment/check-illegal-downgrade/:customer_id', requireAuth, (req, res, next) => riskController.checkIllegalDowngrade(req, res, next));
+
+router.get('/risk/assessment/list', requirePermission('risk:assessment:query'), (req, res, next) => riskController.getRiskAssessmentList(req, res, next));
+router.get('/risk/assessment/:id', requirePermission('risk:assessment:query'), (req, res, next) => riskController.getRiskAssessmentDetail(req, res, next));
+router.post('/risk/assessment', requirePermission('risk:assessment:create'), (req, res, next) => riskController.createRiskAssessment(req, res, next));
+router.post('/risk/assessment/:id/review', requirePermission('risk:assessment:review'), (req, res, next) => riskController.reviewRiskAssessment(req, res, next));
+
+router.get('/risk/assessment/trace/:customer_id', requirePermission('risk:assessment:trace'), (req, res, next) => riskController.getCustomerRiskTrace(req, res, next));
+
+router.get('/risk/batch/list', requirePermission('risk:batch:query'), (req, res, next) => riskController.getBatchAssessmentList(req, res, next));
+router.get('/risk/batch/:id', requirePermission('risk:batch:query'), (req, res, next) => riskController.getBatchAssessmentDetail(req, res, next));
+router.post('/risk/batch', requirePermission('risk:batch:create'), (req, res, next) => riskController.createBatchAssessment(req, res, next));
+
+router.get('/risk/indicator/list', requirePermission('risk:indicator:query'), (req, res, next) => riskController.getRiskIndicatorList(req, res, next));
+router.get('/risk/indicator/:id', requirePermission('risk:indicator:query'), (req, res, next) => riskController.getRiskIndicatorDetail(req, res, next));
+router.post('/risk/indicator', requirePermission('risk:indicator:create'), (req, res, next) => riskController.createRiskIndicator(req, res, next));
+router.put('/risk/indicator/:id', requirePermission('risk:indicator:update'), (req, res, next) => riskController.updateRiskIndicator(req, res, next));
+router.delete('/risk/indicator/:id', requirePermission('risk:indicator:delete'), (req, res, next) => riskController.deleteRiskIndicator(req, res, next));
+
 router.get('/corporate/config', requireAuth, (req, res, next) => corporateOpeningController.getConfig(req, res));
 router.post('/corporate/precheck', requireAuth, (req, res, next) => corporateOpeningController.precheck(req, res));
 router.post('/corporate/trace', requireAuth, (req, res, next) => corporateOpeningController.traceCheck(req, res));

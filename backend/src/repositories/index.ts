@@ -37,3 +37,8 @@ export {
   CustomerPrivacyRuleRepository,
   CustomerPrivacyLogRepository
 } from './CustomerPrivacyRepository';
+export {
+  RiskAssessmentRepository,
+  RiskIndicatorRepository,
+  RiskAssessmentBatchRepository
+} from './RiskAssessmentRepository';

@@ -1,4 +1,4 @@
-import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog, StatusChangeLog, LoanApprovalFlow, LoanApprovalLog } from '../../models';
+import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog, StatusChangeLog, LoanApprovalFlow, LoanApprovalLog, RiskIndicator } from '../../models';
 import { hashPasswordSync } from '../../utils/password';
 import { sequelize, syncDatabase } from '../../config/database';
 import { v4 as uuidv4 } from 'uuid';
@@ -246,57 +246,57 @@ export async function seedPermissions(): Promise<void> {
     { id: 'perm048', parent_id: 'perm045', name: '日志删除', code: 'log:operation:delete', type: 3, sort: 3, visible: 1, status: 1, perms: 'log:operation:delete' },
 
     // ========== 存款业务权限 ==========
-    { id: 'perm049', parent_id: null, name: '存款业务', code: 'business:deposit', type: 1, path: '/deposit', component: 'Layout', icon: 'Money', sort: 5, visible: 1, status: 1 },
-    { id: 'perm050', parent_id: 'perm049', name: '存款办理', code: 'business:deposit:handle', type: 2, path: 'handle', component: 'deposit/index', icon: 'Wallet', sort: 1, visible: 1, status: 1, perms: '' },
-    { id: 'perm051', parent_id: 'perm050', name: '存款查询', code: 'business:deposit:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:deposit:query' },
-    { id: 'perm052', parent_id: 'perm050', name: '存款办理', code: 'business:deposit:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:deposit:create' },
-    { id: 'perm053', parent_id: 'perm050', name: '存款更新', code: 'business:deposit:update', type: 3, sort: 3, visible: 1, status: 1, perms: 'business:deposit:update' },
-    { id: 'perm054', parent_id: 'perm050', name: '存款入账', code: 'business:deposit:confirm', type: 3, sort: 4, visible: 1, status: 1, perms: 'business:deposit:confirm' },
-    { id: 'perm055', parent_id: 'perm049', name: '批量存款', code: 'business:deposit:batch', type: 2, path: 'batch', component: 'deposit/batch', icon: 'Files', sort: 2, visible: 1, status: 1, perms: '' },
-    { id: 'perm056', parent_id: 'perm055', name: '批量录入', code: 'business:deposit:batch', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:deposit:batch' },
-    { id: 'perm057', parent_id: 'perm055', name: '批量审核', code: 'business:deposit:review', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:deposit:review' },
-    { id: 'perm058', parent_id: 'perm049', name: '存款溯源', code: 'business:deposit:trace', type: 2, path: 'trace', component: 'deposit/trace', icon: 'Search', sort: 3, visible: 1, status: 1, perms: '' },
-    { id: 'perm059', parent_id: 'perm058', name: '溯源查询', code: 'business:deposit:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:deposit:trace' },
+    { id: 'perm150', parent_id: null, name: '存款业务', code: 'business:deposit', type: 1, path: '/deposit', component: 'Layout', icon: 'Money', sort: 5, visible: 1, status: 1 },
+    { id: 'perm151', parent_id: 'perm150', name: '存款办理', code: 'business:deposit:handle', type: 2, path: 'handle', component: 'deposit/index', icon: 'Wallet', sort: 1, visible: 1, status: 1, perms: '' },
+    { id: 'perm152', parent_id: 'perm151', name: '存款查询', code: 'business:deposit:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:deposit:query' },
+    { id: 'perm153', parent_id: 'perm151', name: '存款办理', code: 'business:deposit:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:deposit:create' },
+    { id: 'perm154', parent_id: 'perm151', name: '存款更新', code: 'business:deposit:update', type: 3, sort: 3, visible: 1, status: 1, perms: 'business:deposit:update' },
+    { id: 'perm155', parent_id: 'perm151', name: '存款入账', code: 'business:deposit:confirm', type: 3, sort: 4, visible: 1, status: 1, perms: 'business:deposit:confirm' },
+    { id: 'perm156', parent_id: 'perm150', name: '批量存款', code: 'business:deposit:batch', type: 2, path: 'batch', component: 'deposit/batch', icon: 'Files', sort: 2, visible: 1, status: 1, perms: '' },
+    { id: 'perm157', parent_id: 'perm156', name: '批量录入', code: 'business:deposit:batch', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:deposit:batch' },
+    { id: 'perm158', parent_id: 'perm156', name: '批量审核', code: 'business:deposit:review', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:deposit:review' },
+    { id: 'perm159', parent_id: 'perm150', name: '存款溯源', code: 'business:deposit:trace', type: 2, path: 'trace', component: 'deposit/trace', icon: 'Search', sort: 3, visible: 1, status: 1, perms: '' },
+    { id: 'perm160', parent_id: 'perm159', name: '溯源查询', code: 'business:deposit:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:deposit:trace' },
 
     // ========== 贷款业务权限 ==========
-    { id: 'perm060', parent_id: null, name: '贷款业务', code: 'business:loan', type: 1, path: '/loan', component: 'Layout', icon: 'CreditCard', sort: 6, visible: 1, status: 1 },
-    { id: 'perm061', parent_id: 'perm060', name: '贷款申请', code: 'business:loan:apply', type: 2, path: 'apply', component: 'loan/index', icon: 'EditPen', sort: 1, visible: 1, status: 1, perms: '' },
-    { id: 'perm062', parent_id: 'perm061', name: '贷款查询', code: 'business:loan:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:loan:query' },
-    { id: 'perm063', parent_id: 'perm061', name: '贷款申请', code: 'business:loan:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:loan:create' },
-    { id: 'perm064', parent_id: 'perm061', name: '贷款更新', code: 'business:loan:update', type: 3, sort: 3, visible: 1, status: 1, perms: 'business:loan:update' },
-    { id: 'perm065', parent_id: 'perm061', name: '贷款预审', code: 'business:loan:preapprove', type: 3, sort: 4, visible: 1, status: 1, perms: 'business:loan:preapprove' },
-    { id: 'perm066', parent_id: 'perm061', name: '贷款终审', code: 'business:loan:finalapprove', type: 3, sort: 5, visible: 1, status: 1, perms: 'business:loan:finalapprove' },
-    { id: 'perm067', parent_id: 'perm060', name: '批量贷款', code: 'business:loan:batch', type: 2, path: 'batch', component: 'loan/batch', icon: 'Files', sort: 2, visible: 1, status: 1, perms: '' },
-    { id: 'perm068', parent_id: 'perm067', name: '批量录入', code: 'business:loan:batch', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:loan:batch' },
-    { id: 'perm069', parent_id: 'perm067', name: '批量复核', code: 'business:loan:review', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:loan:review' },
-    { id: 'perm070', parent_id: 'perm060', name: '贷款溯源', code: 'business:loan:trace', type: 2, path: 'trace', component: 'loan/trace', icon: 'Search', sort: 3, visible: 1, status: 1, perms: '' },
-    { id: 'perm071', parent_id: 'perm070', name: '溯源查询', code: 'business:loan:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:loan:trace' },
+    { id: 'perm161', parent_id: null, name: '贷款业务', code: 'business:loan', type: 1, path: '/loan', component: 'Layout', icon: 'CreditCard', sort: 6, visible: 1, status: 1 },
+    { id: 'perm162', parent_id: 'perm161', name: '贷款申请', code: 'business:loan:apply', type: 2, path: 'apply', component: 'loan/index', icon: 'EditPen', sort: 1, visible: 1, status: 1, perms: '' },
+    { id: 'perm163', parent_id: 'perm162', name: '贷款查询', code: 'business:loan:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:loan:query' },
+    { id: 'perm164', parent_id: 'perm162', name: '贷款申请', code: 'business:loan:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:loan:create' },
+    { id: 'perm165', parent_id: 'perm162', name: '贷款更新', code: 'business:loan:update', type: 3, sort: 3, visible: 1, status: 1, perms: 'business:loan:update' },
+    { id: 'perm166', parent_id: 'perm162', name: '贷款预审', code: 'business:loan:preapprove', type: 3, sort: 4, visible: 1, status: 1, perms: 'business:loan:preapprove' },
+    { id: 'perm167', parent_id: 'perm162', name: '贷款终审', code: 'business:loan:finalapprove', type: 3, sort: 5, visible: 1, status: 1, perms: 'business:loan:finalapprove' },
+    { id: 'perm168', parent_id: 'perm161', name: '批量贷款', code: 'business:loan:batch', type: 2, path: 'batch', component: 'loan/batch', icon: 'Files', sort: 2, visible: 1, status: 1, perms: '' },
+    { id: 'perm169', parent_id: 'perm168', name: '批量录入', code: 'business:loan:batch', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:loan:batch' },
+    { id: 'perm170', parent_id: 'perm168', name: '批量复核', code: 'business:loan:review', type: 3, sort: 2, visible: 1, status: 1, perms: 'business:loan:review' },
+    { id: 'perm171', parent_id: 'perm161', name: '贷款溯源', code: 'business:loan:trace', type: 2, path: 'trace', component: 'loan/trace', icon: 'Search', sort: 3, visible: 1, status: 1, perms: '' },
+    { id: 'perm172', parent_id: 'perm171', name: '溯源查询', code: 'business:loan:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:loan:trace' },
 
     // ========== 贷款审批权限 ==========
-    { id: 'perm072', parent_id: 'perm060', name: '贷款审批', code: 'loan:approval', type: 2, path: 'approval', component: 'loan-approval/index', icon: 'Stamp', sort: 4, visible: 1, status: 1, perms: '' },
-    { id: 'perm073', parent_id: 'perm072', name: '审批查询', code: 'loan:approval:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'loan:approval:query' },
-    { id: 'perm074', parent_id: 'perm072', name: '审批前置校验', code: 'loan:approval:precheck', type: 3, sort: 2, visible: 1, status: 1, perms: 'loan:approval:precheck' },
-    { id: 'perm075', parent_id: 'perm072', name: '提交审批', code: 'loan:approval:submit', type: 3, sort: 3, visible: 1, status: 1, perms: 'loan:approval:submit' },
-    { id: 'perm076', parent_id: 'perm072', name: '一级审批', code: 'loan:approval:level1', type: 3, sort: 4, visible: 1, status: 1, perms: 'loan:approval:level1' },
-    { id: 'perm077', parent_id: 'perm072', name: '二级审批', code: 'loan:approval:level2', type: 3, sort: 5, visible: 1, status: 1, perms: 'loan:approval:level2' },
-    { id: 'perm078', parent_id: 'perm072', name: '三级审批', code: 'loan:approval:level3', type: 3, sort: 6, visible: 1, status: 1, perms: 'loan:approval:level3' },
-    { id: 'perm079', parent_id: 'perm072', name: '四级审批', code: 'loan:approval:level4', type: 3, sort: 7, visible: 1, status: 1, perms: 'loan:approval:level4' },
-    { id: 'perm080', parent_id: 'perm072', name: '五级审批', code: 'loan:approval:level5', type: 3, sort: 8, visible: 1, status: 1, perms: 'loan:approval:level5' },
-    { id: 'perm081', parent_id: 'perm072', name: '生成合同', code: 'loan:approval:contract', type: 3, sort: 9, visible: 1, status: 1, perms: 'loan:approval:contract' },
-    { id: 'perm082', parent_id: 'perm060', name: '批量审批', code: 'loan:approval:batch', type: 2, path: 'approval/batch', component: 'loan-approval/batch', icon: 'Files', sort: 5, visible: 1, status: 1, perms: '' },
-    { id: 'perm083', parent_id: 'perm082', name: '批量审批操作', code: 'loan:approval:batch', type: 3, sort: 1, visible: 1, status: 1, perms: 'loan:approval:batch' },
-    { id: 'perm084', parent_id: 'perm060', name: '审批溯源', code: 'loan:approval:trace', type: 2, path: 'approval/trace', component: 'loan-approval/trace', icon: 'Search', sort: 6, visible: 1, status: 1, perms: '' },
-    { id: 'perm085', parent_id: 'perm084', name: '审批溯源查询', code: 'loan:approval:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'loan:approval:trace' },
-    { id: 'perm086', parent_id: 'perm060', name: '贷后还款', code: 'loan:repayment', type: 2, path: 'repayment/index', component: 'loan-repayment/index', icon: 'Wallet', sort: 7, visible: 1, status: 1, perms: '' },
-    { id: 'perm087', parent_id: 'perm086', name: '还款查询', code: 'loan:repayment:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'loan:repayment:query' },
-    { id: 'perm088', parent_id: 'perm086', name: '还款前置校验', code: 'loan:repayment:precheck', type: 3, sort: 2, visible: 1, status: 1, perms: 'loan:repayment:precheck' },
-    { id: 'perm089', parent_id: 'perm086', name: '提交还款', code: 'loan:repayment:submit', type: 3, sort: 3, visible: 1, status: 1, perms: 'loan:repayment:submit' },
-    { id: 'perm090', parent_id: 'perm086', name: '代扣管理', code: 'loan:repayment:withhold', type: 3, sort: 4, visible: 1, status: 1, perms: 'loan:repayment:withhold' },
-    { id: 'perm091', parent_id: 'perm086', name: '还款管理', code: 'loan:repayment:manage', type: 3, sort: 5, visible: 1, status: 1, perms: 'loan:repayment:manage' },
-    { id: 'perm092', parent_id: 'perm060', name: '批量代扣', code: 'loan:repayment:batch', type: 2, path: 'repayment/batch', component: 'loan-repayment/batch', icon: 'Files', sort: 8, visible: 1, status: 1, perms: '' },
-    { id: 'perm093', parent_id: 'perm092', name: '批量代扣操作', code: 'loan:repayment:batch', type: 3, sort: 1, visible: 1, status: 1, perms: 'loan:repayment:batch' },
-    { id: 'perm094', parent_id: 'perm060', name: '还款溯源', code: 'loan:repayment:trace', type: 2, path: 'repayment/trace', component: 'loan-repayment/trace', icon: 'Search', sort: 9, visible: 1, status: 1, perms: '' },
-    { id: 'perm095', parent_id: 'perm094', name: '还款溯源查询', code: 'loan:repayment:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'loan:repayment:trace' },
+    { id: 'perm173', parent_id: 'perm161', name: '贷款审批', code: 'loan:approval', type: 2, path: 'approval', component: 'loan-approval/index', icon: 'Stamp', sort: 4, visible: 1, status: 1, perms: '' },
+    { id: 'perm174', parent_id: 'perm173', name: '审批查询', code: 'loan:approval:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'loan:approval:query' },
+    { id: 'perm175', parent_id: 'perm173', name: '审批前置校验', code: 'loan:approval:precheck', type: 3, sort: 2, visible: 1, status: 1, perms: 'loan:approval:precheck' },
+    { id: 'perm176', parent_id: 'perm173', name: '提交审批', code: 'loan:approval:submit', type: 3, sort: 3, visible: 1, status: 1, perms: 'loan:approval:submit' },
+    { id: 'perm177', parent_id: 'perm173', name: '一级审批', code: 'loan:approval:level1', type: 3, sort: 4, visible: 1, status: 1, perms: 'loan:approval:level1' },
+    { id: 'perm178', parent_id: 'perm173', name: '二级审批', code: 'loan:approval:level2', type: 3, sort: 5, visible: 1, status: 1, perms: 'loan:approval:level2' },
+    { id: 'perm179', parent_id: 'perm173', name: '三级审批', code: 'loan:approval:level3', type: 3, sort: 6, visible: 1, status: 1, perms: 'loan:approval:level3' },
+    { id: 'perm180', parent_id: 'perm173', name: '四级审批', code: 'loan:approval:level4', type: 3, sort: 7, visible: 1, status: 1, perms: 'loan:approval:level4' },
+    { id: 'perm181', parent_id: 'perm173', name: '五级审批', code: 'loan:approval:level5', type: 3, sort: 8, visible: 1, status: 1, perms: 'loan:approval:level5' },
+    { id: 'perm182', parent_id: 'perm173', name: '生成合同', code: 'loan:approval:contract', type: 3, sort: 9, visible: 1, status: 1, perms: 'loan:approval:contract' },
+    { id: 'perm183', parent_id: 'perm161', name: '批量审批', code: 'loan:approval:batch', type: 2, path: 'approval/batch', component: 'loan-approval/batch', icon: 'Files', sort: 5, visible: 1, status: 1, perms: '' },
+    { id: 'perm184', parent_id: 'perm183', name: '批量审批操作', code: 'loan:approval:batch', type: 3, sort: 1, visible: 1, status: 1, perms: 'loan:approval:batch' },
+    { id: 'perm185', parent_id: 'perm161', name: '审批溯源', code: 'loan:approval:trace', type: 2, path: 'approval/trace', component: 'loan-approval/trace', icon: 'Search', sort: 6, visible: 1, status: 1, perms: '' },
+    { id: 'perm186', parent_id: 'perm185', name: '审批溯源查询', code: 'loan:approval:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'loan:approval:trace' },
+    { id: 'perm187', parent_id: 'perm161', name: '贷后还款', code: 'loan:repayment', type: 2, path: 'repayment/index', component: 'loan-repayment/index', icon: 'Wallet', sort: 7, visible: 1, status: 1, perms: '' },
+    { id: 'perm188', parent_id: 'perm187', name: '还款查询', code: 'loan:repayment:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'loan:repayment:query' },
+    { id: 'perm189', parent_id: 'perm187', name: '还款前置校验', code: 'loan:repayment:precheck', type: 3, sort: 2, visible: 1, status: 1, perms: 'loan:repayment:precheck' },
+    { id: 'perm190', parent_id: 'perm187', name: '提交还款', code: 'loan:repayment:submit', type: 3, sort: 3, visible: 1, status: 1, perms: 'loan:repayment:submit' },
+    { id: 'perm191', parent_id: 'perm187', name: '代扣管理', code: 'loan:repayment:withhold', type: 3, sort: 4, visible: 1, status: 1, perms: 'loan:repayment:withhold' },
+    { id: 'perm192', parent_id: 'perm187', name: '还款管理', code: 'loan:repayment:manage', type: 3, sort: 5, visible: 1, status: 1, perms: 'loan:repayment:manage' },
+    { id: 'perm193', parent_id: 'perm161', name: '批量代扣', code: 'loan:repayment:batch', type: 2, path: 'repayment/batch', component: 'loan-repayment/batch', icon: 'Files', sort: 8, visible: 1, status: 1, perms: '' },
+    { id: 'perm194', parent_id: 'perm193', name: '批量代扣操作', code: 'loan:repayment:batch', type: 3, sort: 1, visible: 1, status: 1, perms: 'loan:repayment:batch' },
+    { id: 'perm195', parent_id: 'perm161', name: '还款溯源', code: 'loan:repayment:trace', type: 2, path: 'repayment/trace', component: 'loan-repayment/trace', icon: 'Search', sort: 9, visible: 1, status: 1, perms: '' },
+    { id: 'perm196', parent_id: 'perm195', name: '还款溯源查询', code: 'loan:repayment:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'loan:repayment:trace' },
 
     // ========== 支付结算管理权限 ==========
     { id: 'perm100', parent_id: 'perm023', name: '转账结算', code: 'business:settlement', type: 2, path: 'settlement/index', component: 'business/settlement/index', icon: 'Money', sort: 20, visible: 1, status: 1, perms: '' },
@@ -351,7 +351,27 @@ export async function seedPermissions(): Promise<void> {
     { id: 'perm140', parent_id: 'perm023', name: '隐私规则配置', code: 'business:customer:privacy:config', type: 2, path: 'customer-privacy/batch', component: 'business/customer-privacy/batch', icon: 'Setting', sort: 20, visible: 1, status: 1, perms: '' },
     { id: 'perm141', parent_id: 'perm140', name: '规则配置', code: 'customer:privacy:config', type: 3, sort: 1, visible: 1, status: 1, perms: 'customer:privacy:config' },
     { id: 'perm142', parent_id: 'perm023', name: '隐私操作溯源', code: 'business:customer:privacy:trace', type: 2, path: 'customer-privacy/trace', component: 'business/customer-privacy/trace', icon: 'DataAnalysis', sort: 21, visible: 1, status: 1, perms: '' },
-    { id: 'perm143', parent_id: 'perm142', name: '溯源查询', code: 'customer:privacy:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'customer:privacy:trace' }
+    { id: 'perm143', parent_id: 'perm142', name: '溯源查询', code: 'customer:privacy:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'customer:privacy:trace' },
+
+    // ========== 风险评定管理权限 ==========
+    { id: 'perm200', parent_id: null, name: '风控管理', code: 'risk', type: 1, path: '/risk', component: 'Layout', icon: 'Warning', sort: 7, visible: 1, status: 1 },
+    { id: 'perm201', parent_id: 'perm200', name: '风险等级评定', code: 'risk:assessment', type: 2, path: 'assessment', component: 'risk/assessment/index', icon: 'UserFilled', sort: 1, visible: 1, status: 1, perms: '' },
+    { id: 'perm202', parent_id: 'perm201', name: '评定查询', code: 'risk:assessment:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'risk:assessment:query' },
+    { id: 'perm203', parent_id: 'perm201', name: '创建评定', code: 'risk:assessment:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'risk:assessment:create' },
+    { id: 'perm204', parent_id: 'perm201', name: '评定复核', code: 'risk:assessment:review', type: 3, sort: 3, visible: 1, status: 1, perms: 'risk:assessment:review' },
+    { id: 'perm205', parent_id: 'perm201', name: '评定溯源', code: 'risk:assessment:trace', type: 3, sort: 4, visible: 1, status: 1, perms: 'risk:assessment:trace' },
+
+    { id: 'perm210', parent_id: 'perm200', name: '批量复评', code: 'risk:batch', type: 2, path: 'assessment/batch', component: 'risk/assessment/batch', icon: 'Files', sort: 2, visible: 1, status: 1, perms: '' },
+    { id: 'perm211', parent_id: 'perm210', name: '批次查询', code: 'risk:batch:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'risk:batch:query' },
+    { id: 'perm212', parent_id: 'perm210', name: '创建批次', code: 'risk:batch:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'risk:batch:create' },
+
+    { id: 'perm220', parent_id: 'perm200', name: '风险溯源', code: 'risk:trace', type: 2, path: 'assessment/trace', component: 'risk/assessment/trace', icon: 'Clock', sort: 3, visible: 1, status: 1, perms: '' },
+
+    { id: 'perm230', parent_id: 'perm200', name: '风险指标', code: 'risk:indicator', type: 2, path: 'indicator', component: 'risk/indicator/index', icon: 'SetUp', sort: 4, visible: 1, status: 1, perms: '' },
+    { id: 'perm231', parent_id: 'perm230', name: '指标查询', code: 'risk:indicator:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'risk:indicator:query' },
+    { id: 'perm232', parent_id: 'perm230', name: '新增指标', code: 'risk:indicator:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'risk:indicator:create' },
+    { id: 'perm233', parent_id: 'perm230', name: '修改指标', code: 'risk:indicator:update', type: 3, sort: 3, visible: 1, status: 1, perms: 'risk:indicator:update' },
+    { id: 'perm234', parent_id: 'perm230', name: '删除指标', code: 'risk:indicator:delete', type: 3, sort: 4, visible: 1, status: 1, perms: 'risk:indicator:delete' }
   ];
 
   await bulkCreateInBatches(Permission, permissions as any);
@@ -419,7 +439,10 @@ export async function seedRolePermissions(): Promise<void> {
       'corporate:profile:batch', 'corporate:profile:trace', 'corporate:profile:review',
       'customer:tag:query', 'customer:tag:create', 'customer:tag:update',
       'customer:tag:batch', 'customer:tag:trace',
-      'customer:privacy:query', 'customer:privacy:export', 'customer:privacy:config', 'customer:privacy:trace'
+      'customer:privacy:query', 'customer:privacy:export', 'customer:privacy:config', 'customer:privacy:trace',
+      'risk:assessment:query', 'risk:assessment:create', 'risk:assessment:review', 'risk:assessment:trace',
+      'risk:batch:query', 'risk:batch:create',
+      'risk:indicator:query', 'risk:indicator:create', 'risk:indicator:update', 'risk:indicator:delete'
     ];
     const perms = allPermissions.filter(p => managerCodes.includes(p.code) || p.type !== 3);
     const managerRPs = perms.map(p => ({
@@ -456,9 +479,11 @@ export async function seedRolePermissions(): Promise<void> {
       'corporate:profile:batch',
       'customer:tag:query', 'customer:tag:create', 'customer:tag:update',
       'customer:tag:batch',
-      'customer:privacy:query', 'customer:privacy:export'
+      'customer:privacy:query', 'customer:privacy:export',
+      'risk:assessment:query', 'risk:assessment:create',
+      'risk:batch:query'
     ];
-    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:batch' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:batch' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:batch' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:batch' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace' || p.code === 'business:customer:profile' || p.code === 'business:customer:profile:batch' || p.code === 'business:customer:profile:trace' || p.code === 'business:corporate:profile' || p.code === 'business:corporate:profile:batch' || p.code === 'business:corporate:profile:trace' || p.code === 'business:customer:tag' || p.code === 'business:customer:tag:batch' || p.code === 'business:customer:tag:trace' || p.code === 'business:customer:privacy' || p.code === 'business:customer:privacy:config' || p.code === 'business:customer:privacy:trace')));
+    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:batch' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:batch' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:batch' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:batch' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace' || p.code === 'business:customer:profile' || p.code === 'business:customer:profile:batch' || p.code === 'business:customer:profile:trace' || p.code === 'business:corporate:profile' || p.code === 'business:corporate:profile:batch' || p.code === 'business:corporate:profile:trace' || p.code === 'business:customer:tag' || p.code === 'business:customer:tag:batch' || p.code === 'business:customer:tag:trace' || p.code === 'business:customer:privacy' || p.code === 'business:customer:privacy:config' || p.code === 'business:customer:privacy:trace' || p.code === 'risk' || p.code === 'risk:assessment' || p.code === 'risk:batch' || p.code === 'risk:trace' || p.code === 'risk:indicator')));
     const operatorRPs = perms.map(p => ({
       id: `rp_${operatorRole.id}_${p.id}`,
       role_id: operatorRole.id,
@@ -485,9 +510,12 @@ export async function seedRolePermissions(): Promise<void> {
       'customer:profile:query', 'customer:profile:trace', 'customer:profile:review',
       'corporate:profile:query', 'corporate:profile:trace', 'corporate:profile:review',
       'customer:tag:query', 'customer:tag:trace',
-      'customer:privacy:query', 'customer:privacy:trace'
+      'customer:privacy:query', 'customer:privacy:trace',
+      'risk:assessment:query', 'risk:assessment:review', 'risk:assessment:trace',
+      'risk:batch:query',
+      'risk:indicator:query'
     ];
-    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace' || p.code === 'business:customer:profile' || p.code === 'business:customer:profile:batch' || p.code === 'business:customer:profile:trace' || p.code === 'business:corporate:profile' || p.code === 'business:corporate:profile:batch' || p.code === 'business:corporate:profile:trace' || p.code === 'business:customer:tag' || p.code === 'business:customer:tag:batch' || p.code === 'business:customer:tag:trace' || p.code === 'business:customer:privacy' || p.code === 'business:customer:privacy:config' || p.code === 'business:customer:privacy:trace')));
+    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace' || p.code === 'business:customer:profile' || p.code === 'business:customer:profile:batch' || p.code === 'business:customer:profile:trace' || p.code === 'business:corporate:profile' || p.code === 'business:corporate:profile:batch' || p.code === 'business:corporate:profile:trace' || p.code === 'business:customer:tag' || p.code === 'business:customer:tag:batch' || p.code === 'business:customer:tag:trace' || p.code === 'business:customer:privacy' || p.code === 'business:customer:privacy:config' || p.code === 'business:customer:privacy:trace' || p.code === 'risk' || p.code === 'risk:assessment' || p.code === 'risk:batch' || p.code === 'risk:trace' || p.code === 'risk:indicator')));
     const auditorRPs = perms.map(p => ({
       id: `rp_${auditorRole.id}_${p.id}`,
       role_id: auditorRole.id,
@@ -2160,6 +2188,185 @@ export async function seedStatusChangeLogs(): Promise<void> {
   console.log('[Seeder] Status change logs seeded successfully.');
 }
 
+export async function seedRiskIndicators(): Promise<void> {
+  console.log('[Seeder] Seeding risk indicators...');
+
+  const existing = await RiskIndicator.count();
+  if (existing > 0) {
+    console.log('[Seeder] Risk indicators already exist, skipping...');
+    return;
+  }
+
+  const indicators = [
+    {
+      id: 'ind0000000000000000000000000000001',
+      indicator_code: 'CREDIT_SCORE',
+      indicator_name: '征信分数',
+      category: 1,
+      weight: 20,
+      max_score: 100,
+      scoring_rule: JSON.stringify({
+        type: 'linear',
+        ranges: [
+          { min: 0, max: 500, score: 0 },
+          { min: 501, max: 600, score: 20 },
+          { min: 601, max: 700, score: 50 },
+          { min: 701, max: 800, score: 80 },
+          { min: 801, max: 900, score: 100 }
+        ]
+      }),
+      is_required: 1,
+      sort: 1,
+      status: 1
+    },
+    {
+      id: 'ind0000000000000000000000000000002',
+      indicator_code: 'DEBT_RATIO',
+      indicator_name: '负债率',
+      category: 3,
+      weight: 15,
+      max_score: 100,
+      scoring_rule: JSON.stringify({
+        type: 'reverse_linear',
+        ranges: [
+          { min: 0, max: 20, score: 100 },
+          { min: 21, max: 40, score: 80 },
+          { min: 41, max: 60, score: 50 },
+          { min: 61, max: 80, score: 20 },
+          { min: 81, max: 100, score: 0 }
+        ]
+      }),
+      is_required: 1,
+      sort: 2,
+      status: 1
+    },
+    {
+      id: 'ind0000000000000000000000000000003',
+      indicator_code: 'LAWSUIT_COUNT',
+      indicator_name: '涉诉次数',
+      category: 4,
+      weight: 20,
+      max_score: 100,
+      scoring_rule: JSON.stringify({
+        type: 'discrete',
+        values: [
+          { value: 0, score: 100 },
+          { value: 1, score: 60 },
+          { value: 2, score: 30 },
+          { value: 3, score: 0 }
+        ]
+      }),
+      is_required: 1,
+      sort: 3,
+      status: 1
+    },
+    {
+      id: 'ind0000000000000000000000000000004',
+      indicator_code: 'TRANSACTION_ACTIVITY',
+      indicator_name: '交易活跃度',
+      category: 2,
+      weight: 10,
+      max_score: 100,
+      scoring_rule: JSON.stringify({
+        type: 'linear',
+        ranges: [
+          { min: 0, max: 5, score: 30 },
+          { min: 6, max: 20, score: 60 },
+          { min: 21, max: 50, score: 80 },
+          { min: 51, max: 1000, score: 100 }
+        ]
+      }),
+      is_required: 1,
+      sort: 4,
+      status: 1
+    },
+    {
+      id: 'ind0000000000000000000000000000005',
+      indicator_code: 'TRANSACTION_AMOUNT',
+      indicator_name: '交易金额',
+      category: 2,
+      weight: 10,
+      max_score: 100,
+      scoring_rule: JSON.stringify({
+        type: 'linear',
+        ranges: [
+          { min: 0, max: 10000, score: 40 },
+          { min: 10001, max: 100000, score: 60 },
+          { min: 100001, max: 500000, score: 80 },
+          { min: 500001, max: 1000000000, score: 100 }
+        ]
+      }),
+      is_required: 1,
+      sort: 5,
+      status: 1
+    },
+    {
+      id: 'ind0000000000000000000000000000006',
+      indicator_code: 'ABNORMAL_TRANSACTION',
+      indicator_name: '异常交易次数',
+      category: 2,
+      weight: 15,
+      max_score: 100,
+      scoring_rule: JSON.stringify({
+        type: 'reverse_discrete',
+        values: [
+          { value: 0, score: 100 },
+          { value: 1, score: 70 },
+          { value: 2, score: 40 },
+          { value: 3, score: 0 }
+        ]
+      }),
+      is_required: 1,
+      sort: 6,
+      status: 1
+    },
+    {
+      id: 'ind0000000000000000000000000000007',
+      indicator_code: 'OVERDUE_COUNT',
+      indicator_name: '逾期次数',
+      category: 3,
+      weight: 5,
+      max_score: 100,
+      scoring_rule: JSON.stringify({
+        type: 'reverse_discrete',
+        values: [
+          { value: 0, score: 100 },
+          { value: 1, score: 60 },
+          { value: 2, score: 30 },
+          { value: 3, score: 0 }
+        ]
+      }),
+      is_required: 1,
+      sort: 7,
+      status: 1
+    },
+    {
+      id: 'ind0000000000000000000000000000008',
+      indicator_code: 'ACCOUNT_AGE',
+      indicator_name: '开户时长',
+      category: 5,
+      weight: 5,
+      max_score: 100,
+      scoring_rule: JSON.stringify({
+        type: 'linear',
+        unit: 'days',
+        ranges: [
+          { min: 0, max: 90, score: 30 },
+          { min: 91, max: 365, score: 50 },
+          { min: 366, max: 1095, score: 80 },
+          { min: 1096, max: 100000, score: 100 }
+        ]
+      }),
+      is_required: 1,
+      sort: 8,
+      status: 1
+    }
+  ];
+
+  await bulkCreateInBatches(RiskIndicator, indicators as any);
+  console.log('[Seeder] Risk indicators seeded successfully.');
+}
+
 export async function runAllSeeders(options?: { force?: boolean; closeOnFinish?: boolean }): Promise<void> {
   const force = options?.force ?? false;
   const closeOnFinish = options?.closeOnFinish ?? false;
@@ -2189,6 +2396,7 @@ export async function runAllSeeders(options?: { force?: boolean; closeOnFinish?:
     await seedStatusChangeLogs();
     await seedViolationRecords();
     await seedTransactions();
+    await seedRiskIndicators();
 
     console.log('========================================');
     console.log('[Seeder] All seeders completed successfully!');

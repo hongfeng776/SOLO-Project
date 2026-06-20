@@ -1,6 +1,6 @@
 import { Sequelize } from 'sequelize-typescript';
 import { config } from './index';
-import { User, Role, Permission, Organization, UserRole, RolePermission, Transaction, Product, AuditRecord, AuditRule, OperationLog, Customer, ViolationRecord, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog, StatusChangeLog, LoanApprovalFlow, LoanApprovalLog, LoanRepayment, LoanWithhold } from '../models';
+import { User, Role, Permission, Organization, UserRole, RolePermission, Transaction, Product, AuditRecord, AuditRule, OperationLog, Customer, ViolationRecord, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog, StatusChangeLog, Loan, LoanApprovalFlow, LoanApprovalLog, LoanRepayment, LoanWithhold, RiskAssessment, RiskIndicator, RiskAssessmentBatch } from '../models';
 import { StatusChangeLog as SCL } from '../models';
 
 const _tableCreateEnsure = SCL;
@@ -12,7 +12,7 @@ export const sequelize = new Sequelize({
   database: config.database.name,
   username: config.database.user,
   password: config.database.password,
-  models: [User, Role, Permission, Organization, UserRole, RolePermission, Transaction, Product, AuditRecord, AuditRule, OperationLog, Customer, ViolationRecord, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog, StatusChangeLog, LoanApprovalFlow, LoanApprovalLog, LoanRepayment, LoanWithhold],
+  models: [User, Role, Permission, Organization, UserRole, RolePermission, Transaction, Product, AuditRecord, AuditRule, OperationLog, Customer, ViolationRecord, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog, StatusChangeLog, Loan, LoanApprovalFlow, LoanApprovalLog, LoanRepayment, LoanWithhold, RiskAssessment, RiskIndicator, RiskAssessmentBatch],
   timezone: '+08:00',
   dialectOptions: {
     charset: 'utf8mb4',

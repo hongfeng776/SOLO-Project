@@ -696,6 +696,54 @@ const asyncRoutes: RouteRecordRaw[] = [
           keepAlive: true,
           roles: ['admin', 'manager', 'auditor']
         }
+      },
+      {
+        path: 'assessment',
+        name: 'RiskAssessment',
+        component: () => import('@views/risk/assessment/index.vue'),
+        meta: {
+          title: '风险评定',
+          icon: 'UserFilled',
+          componentName: 'RiskAssessment',
+          keepAlive: true,
+          roles: ['admin', 'manager', 'operator', 'auditor']
+        }
+      },
+      {
+        path: 'assessment/trace',
+        name: 'RiskAssessmentTrace',
+        component: () => import('@views/risk/assessment/trace.vue'),
+        meta: {
+          title: '风险溯源',
+          icon: 'Search',
+          componentName: 'RiskAssessmentTrace',
+          keepAlive: false,
+          roles: ['admin', 'manager', 'auditor']
+        }
+      },
+      {
+        path: 'assessment/batch',
+        name: 'RiskAssessmentBatch',
+        component: () => import('@views/risk/assessment/batch.vue'),
+        meta: {
+          title: '批量复评',
+          icon: 'Files',
+          componentName: 'RiskAssessmentBatch',
+          keepAlive: true,
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'indicator',
+        name: 'RiskIndicator',
+        component: () => import('@views/risk/indicator/index.vue'),
+        meta: {
+          title: '风险指标管理',
+          icon: 'DataAnalysis',
+          componentName: 'RiskIndicator',
+          keepAlive: true,
+          roles: ['admin', 'manager']
+        }
       }
     ]
   },
