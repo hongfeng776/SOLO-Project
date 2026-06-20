@@ -1,9 +1,36 @@
 import request from '@/utils/request'
-import type { CapacityType, CapacityMonitor } from '@/types/capacity'
+import type {
+  CapacityType,
+  CapacityMonitor,
+  CapacityMonitorData,
+  CapacityStatusDetail,
+  BatchDispatchResponse,
+  CapacityTrendData,
+  CapacityReport,
+  MonitorFilters,
+  BatchDispatchParams,
+  ReportParams
+} from '@/types/capacity'
 import type { PageResult } from '@/utils/request'
 
-export const getCapacityMonitorApi = () => {
-  return request.get<CapacityMonitor>('/capacity/monitor')
+export const getCapacityMonitorApi = (params?: MonitorFilters) => {
+  return request.get<CapacityMonitorData>('/capacity/monitor', params)
+}
+
+export const getCapacityStatusDetailApi = () => {
+  return request.get<CapacityStatusDetail>('/capacity/status-detail')
+}
+
+export const batchDispatchApi = (data: BatchDispatchParams) => {
+  return request.post<BatchDispatchResponse>('/capacity/batch-dispatch', data)
+}
+
+export const getCapacityTrendApi = (params?: { city?: string; timeRange?: string }) => {
+  return request.get<CapacityTrendData>('/capacity/trend', params)
+}
+
+export const generateReportApi = (data: ReportParams) => {
+  return request.post<CapacityReport>('/capacity/report', data)
 }
 
 export const getCapacityTypeListApi = (params?: any) => {

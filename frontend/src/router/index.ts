@@ -119,6 +119,12 @@ const routes: RouteRecordRaw[] = [
         name: 'CapacityType',
         component: () => import('@/views/capacity/type.vue'),
         meta: { title: '运力类型', icon: 'Menu' }
+      },
+      {
+        path: 'dispatch',
+        name: 'CapacityDispatch',
+        component: () => import('@/views/capacity/dispatch.vue'),
+        meta: { title: '运力调度', icon: 'Connection' }
       }
     ]
   },
