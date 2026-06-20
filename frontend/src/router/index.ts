@@ -154,6 +154,12 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/views/user-operation/segment/index.vue'),
             meta: { title: '用户分层运营', icon: 'TrendCharts', roles: ['userSegment:view'] },
           },
+          {
+            path: 'feedback',
+            name: 'UserFeedbackManagement',
+            component: () => import('@/views/user-operation/feedback/index.vue'),
+            meta: { title: '用户反馈处理', icon: 'ChatDotRound', roles: ['userFeedback:view'] },
+          },
         ],
       },
       {

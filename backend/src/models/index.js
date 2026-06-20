@@ -19,6 +19,10 @@ const { UserSegmentRule, UserSegmentTag, UserSegmentLog, SegmentStrategy,
   SEGMENT_DIMENSION, SEGMENT_LEVEL, SEGMENT_RULE_STATUS, SEGMENT_CHANGE_TYPE,
   STRATEGY_TRIGGER_MODE, STRATEGY_STATUS, STRATEGY_TYPE, BENEFIT_TYPE,
 } = require('./UserSegment');
+const { FeedbackRecord, FeedbackLog, FeedbackArchive,
+  FEEDBACK_TYPE, FEEDBACK_STATUS, FEEDBACK_PRIORITY, FEEDBACK_SOURCE,
+  FEEDBACK_BATCH_ACTION, FEEDBACK_TIMELINESS, PRIORITY_TIMEOUT_HOURS,
+} = require('./UserFeedback');
 
 Content.belongsTo(Copyright, { foreignKey: 'copyright_id', as: 'copyright' });
 Copyright.hasMany(Content, { foreignKey: 'copyright_id', as: 'contents' });
@@ -70,4 +74,14 @@ module.exports = {
   STRATEGY_STATUS,
   STRATEGY_TYPE,
   BENEFIT_TYPE,
+  FeedbackRecord,
+  FeedbackLog,
+  FeedbackArchive,
+  FEEDBACK_TYPE,
+  FEEDBACK_STATUS,
+  FEEDBACK_PRIORITY,
+  FEEDBACK_SOURCE,
+  FEEDBACK_BATCH_ACTION,
+  FEEDBACK_TIMELINESS,
+  PRIORITY_TIMEOUT_HOURS,
 };

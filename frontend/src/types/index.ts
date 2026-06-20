@@ -2263,5 +2263,113 @@ export interface ManualAdjustResult {
   message?: string
 }
 
+// ============ 用户反馈处理 ============
+export interface FeedbackRecordItem {
+  id: number
+  feedbackNo: string
+  userId: number
+  uid: string
+  feedbackType: string
+  title: string
+  content: string
+  attachments?: Array<{ name: string; url: string; size: number }>
+  source: string
+  status: number
+  priority: number
+  originalPriority?: number
+  handlerId?: number
+  handlerName?: string
+  handlerGroup?: string
+  assignedAt?: string
+  resolvedAt?: string
+  resolution?: string
+  result?: string
+  rejectReason?: string
+  pushMessageId?: number
+  timeliness: number
+  deadlineAt?: string
+  isArchived: number
+  archivedAt?: string
+  operationBatch?: string
+  category?: string
+  tags?: Record<string, any>
+  logs?: FeedbackLogItem[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FeedbackLogItem {
+  id: number
+  feedbackId: number
+  feedbackNo: string
+  action: string
+  fromStatus?: number
+  toStatus?: number
+  fromPriority?: number
+  toPriority?: number
+  operatorId?: number
+  operatorName?: string
+  remark?: string
+  operationBatch?: string
+  ipAddress?: string
+  createdAt: string
+}
+
+export interface FeedbackArchiveItem {
+  id: number
+  feedbackId: number
+  feedbackNo: string
+  userId: number
+  uid: string
+  feedbackType: string
+  title: string
+  content?: string
+  source: string
+  priority: number
+  originalPriority?: number
+  handlerId?: number
+  handlerName?: string
+  resolution?: string
+  result?: string
+  rejectReason?: string
+  assignedAt?: string
+  resolvedAt?: string
+  archivedAt: string
+  archiveBatch?: string
+  processingHours?: number
+  tags?: Record<string, any>
+}
+
+export interface FeedbackStats {
+  total: number
+  byStatus: Array<{ status: number; count: number }>
+  byType: Array<{ type: string; count: number }>
+  overdue: number
+  todayResolved: number
+}
+
+export interface FeedbackBatchResult {
+  batchNo: string
+  total: number
+  success: Array<{ id: number; feedbackNo: string }>
+  failed: Array<{ id: number; feedbackNo: string; reason: string }>
+}
+
+export interface FeedbackTraceResult {
+  record: FeedbackRecordItem
+  archive: FeedbackArchiveItem | null
+}
+
+export interface FeedbackValidateResult {
+  record: FeedbackRecordItem
+  issues: Array<{ type: string; message: string }>
+  isValid: boolean
+}
+
+export interface FeedbackDuplicateCheck {
+  isDuplicate: boolean
+  existingId: number | null
+}
+
 
 

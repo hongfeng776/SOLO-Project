@@ -837,5 +837,45 @@ export const STRATEGY_PRESET_TEMPLATES = [
     config: { benefitConfig: { type: 'CREDIT', value: 300 }, welfareConfig: { type: 'CREDIT', value: 500, conditions: '本周投稿≥3篇' } } },
 ] as const
 
+// ============ 用户反馈处理 ============
+export const FEEDBACK_TYPE = {
+  BUG: { value: 'BUG', label: 'Bug反馈', color: '#F56C6C', type: 'danger', icon: 'Warning' },
+  SUGGESTION: { value: 'SUGGESTION', label: '建议反馈', color: '#409EFF', type: 'primary', icon: 'EditPen' },
+  COMPLAINT: { value: 'COMPLAINT', label: '投诉反馈', color: '#E6A23C', type: 'warning', icon: 'ChatLineSquare' },
+} as const
+
+export const FEEDBACK_STATUS = {
+  PENDING: { value: 1, label: '待处理', color: '#909399', type: 'info' },
+  PROCESSING: { value: 2, label: '处理中', color: '#409EFF', type: 'primary' },
+  RESOLVED: { value: 3, label: '已解决', color: '#67C23A', type: 'success' },
+  REJECTED: { value: 4, label: '驳回关闭', color: '#F56C6C', type: 'danger' },
+} as const
+
+export const FEEDBACK_PRIORITY = {
+  LOW: { value: 1, label: '低', color: '#909399', type: 'info', hours: 168 },
+  MEDIUM: { value: 2, label: '中', color: '#409EFF', type: 'primary', hours: 72 },
+  HIGH: { value: 3, label: '高', color: '#E6A23C', type: 'warning', hours: 24 },
+  URGENT: { value: 4, label: '紧急', color: '#F56C6C', type: 'danger', hours: 4 },
+} as const
+
+export const FEEDBACK_SOURCE = {
+  APP: { value: 'APP', label: 'APP端', color: '#409EFF', type: 'primary' },
+  WEB: { value: 'WEB', label: '网页端', color: '#67C23A', type: 'success' },
+  EMAIL: { value: 'EMAIL', label: '邮件', color: '#E6A23C', type: 'warning' },
+  PHONE: { value: 'PHONE', label: '电话', color: '#909399', type: 'info' },
+} as const
+
+export const FEEDBACK_BATCH_ACTION = {
+  ARCHIVE: { value: 'ARCHIVE', label: '批量归档', color: '#67C23A', type: 'success', desc: '将已解决的反馈归档' },
+  URGENT: { value: 'URGENT', label: '批量加急', color: '#F56C6C', type: 'danger', desc: '将待处理/处理中反馈升级为紧急' },
+  CLOSE: { value: 'CLOSE', label: '批量关闭', color: '#909399', type: 'info', desc: '关闭无效的待处理反馈' },
+} as const
+
+export const FEEDBACK_TIMELINESS = {
+  NORMAL: { value: 1, label: '时效正常', color: '#67C23A', type: 'success' },
+  OVERDUE: { value: 2, label: '即将超时', color: '#E6A23C', type: 'warning' },
+  CRITICAL_OVERDUE: { value: 3, label: '已超时', color: '#F56C6C', type: 'danger' },
+} as const
+
 
 
