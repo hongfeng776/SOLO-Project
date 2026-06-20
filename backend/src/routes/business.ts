@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, CustomerProfileController, CorporateProfileController, CustomerTagController, CustomerPrivacyController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, CustomerProfileController, CorporateProfileController, CustomerTagController, CustomerPrivacyController, AbnormalMonitorController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -20,6 +20,7 @@ const customerProfileController = new CustomerProfileController();
 const corporateProfileController = new CorporateProfileController();
 const customerTagController = new CustomerTagController();
 const customerPrivacyController = new CustomerPrivacyController();
+const abnormalMonitorController = new AbnormalMonitorController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -323,5 +324,34 @@ router.post('/customer-privacy/batch-config', requirePermission('customer:privac
 router.get('/customer-privacy/log/list', requirePermission('customer:privacy:trace'), (req, res, next) => customerPrivacyController.logList(req, res, next));
 router.get('/customer-privacy/log/:id', requirePermission('customer:privacy:trace'), (req, res, next) => customerPrivacyController.logDetail(req, res, next));
 router.post('/customer-privacy/trace', requirePermission('customer:privacy:trace'), (req, res, next) => customerPrivacyController.trace(req, res, next));
+
+// ========== 异常交易智能监控 ==========
+// 功能点1：实时监控检测 + 前置校验
+router.post('/monitor/realtime', requirePermission('monitor:alert:create'), (req, res, next) => abnormalMonitorController.realTimeMonitor(req, res, next));
+router.post('/monitor/validate-rules', requireAuth, (req, res, next) => abnormalMonitorController.validateRules(req, res, next));
+router.post('/monitor/compliance/:id', requireAuth, (req, res, next) => abnormalMonitorController.checkCompliance(req, res, next));
+
+// 功能点2：异常交易处理（多分支）
+router.get('/monitor/alert/list', requirePermission('monitor:alert:query'), (req, res, next) => abnormalMonitorController.getAlertList(req, res, next));
+router.get('/monitor/alert/:id', requirePermission('monitor:alert:query'), (req, res, next) => abnormalMonitorController.getAlertDetail(req, res, next));
+router.post('/monitor/alert/:id/handle', requirePermission('monitor:alert:handle'), (req, res, next) => abnormalMonitorController.handleAlert(req, res, next));
+router.get('/monitor/statistics', requirePermission('monitor:alert:query'), (req, res, next) => abnormalMonitorController.getStatistics(req, res, next));
+router.get('/monitor/config', requireAuth, (req, res, next) => abnormalMonitorController.getMonitorConfig(req, res, next));
+
+// 功能点3：批量处理
+router.get('/monitor/batch/list', requirePermission('monitor:batch:query'), (req, res, next) => abnormalMonitorController.getBatchList(req, res, next));
+router.get('/monitor/batch/:id', requirePermission('monitor:batch:query'), (req, res, next) => abnormalMonitorController.getBatchDetail(req, res, next));
+router.post('/monitor/batch', requirePermission('monitor:batch:create'), (req, res, next) => abnormalMonitorController.createBatchHandle(req, res, next));
+
+// 功能点4：溯源查询
+router.get('/monitor/trace/list', requirePermission('monitor:alert:trace'), (req, res, next) => abnormalMonitorController.getTraceList(req, res, next));
+router.get('/monitor/trace/:alertId', requirePermission('monitor:alert:trace'), (req, res, next) => abnormalMonitorController.getAlertTrace(req, res, next));
+
+// 监控规则管理
+router.get('/monitor/rule/list', requirePermission('monitor:rule:query'), (req, res, next) => abnormalMonitorController.getRuleList(req, res, next));
+router.get('/monitor/rule/:id', requirePermission('monitor:rule:query'), (req, res, next) => abnormalMonitorController.getRuleDetail(req, res, next));
+router.post('/monitor/rule', requirePermission('monitor:rule:create'), (req, res, next) => abnormalMonitorController.createRule(req, res, next));
+router.put('/monitor/rule/:id', requirePermission('monitor:rule:update'), (req, res, next) => abnormalMonitorController.updateRule(req, res, next));
+router.delete('/monitor/rule/:id', requirePermission('monitor:rule:delete'), (req, res, next) => abnormalMonitorController.deleteRule(req, res, next));
 
 export default router;

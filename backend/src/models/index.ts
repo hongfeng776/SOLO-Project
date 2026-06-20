@@ -40,3 +40,7 @@ export { CustomerPrivacyLog } from './CustomerPrivacyLog';
 export { RiskAssessment } from './RiskAssessment';
 export { RiskIndicator } from './RiskIndicator';
 export { RiskAssessmentBatch } from './RiskAssessmentBatch';
+export { AbnormalTransaction } from './AbnormalTransaction';
+export { MonitorRule } from './MonitorRule';
+export { MonitorAlertBatch } from './MonitorAlertBatch';
+export { MonitorTraceLog } from './MonitorTraceLog';

@@ -744,6 +744,54 @@ const asyncRoutes: RouteRecordRaw[] = [
           keepAlive: true,
           roles: ['admin', 'manager']
         }
+      },
+      {
+        path: 'monitor',
+        name: 'AbnormalMonitor',
+        component: () => import('@views/risk/monitor/index.vue'),
+        meta: {
+          title: '异常交易监控',
+          icon: 'Monitor',
+          componentName: 'AbnormalMonitor',
+          keepAlive: true,
+          roles: ['admin', 'manager', 'operator', 'auditor']
+        }
+      },
+      {
+        path: 'monitor/batch',
+        name: 'MonitorBatch',
+        component: () => import('@views/risk/monitor/batch.vue'),
+        meta: {
+          title: '批量监控处理',
+          icon: 'Files',
+          componentName: 'MonitorBatch',
+          keepAlive: true,
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'monitor/trace',
+        name: 'MonitorTrace',
+        component: () => import('@views/risk/monitor/trace.vue'),
+        meta: {
+          title: '监控溯源',
+          icon: 'Search',
+          componentName: 'MonitorTrace',
+          keepAlive: false,
+          roles: ['admin', 'manager', 'auditor']
+        }
+      },
+      {
+        path: 'monitor/rule',
+        name: 'MonitorRule',
+        component: () => import('@views/risk/monitor/rule.vue'),
+        meta: {
+          title: '监控规则管理',
+          icon: 'SetUp',
+          componentName: 'MonitorRule',
+          keepAlive: true,
+          roles: ['admin', 'manager']
+        }
       }
     ]
   },

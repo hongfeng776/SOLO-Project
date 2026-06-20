@@ -1,4 +1,4 @@
-import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog, StatusChangeLog, LoanApprovalFlow, LoanApprovalLog, RiskIndicator } from '../../models';
+import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog, StatusChangeLog, LoanApprovalFlow, LoanApprovalLog, RiskIndicator, MonitorRule } from '../../models';
 import { hashPasswordSync } from '../../utils/password';
 import { sequelize, syncDatabase } from '../../config/database';
 import { v4 as uuidv4 } from 'uuid';
@@ -371,7 +371,23 @@ export async function seedPermissions(): Promise<void> {
     { id: 'perm231', parent_id: 'perm230', name: '指标查询', code: 'risk:indicator:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'risk:indicator:query' },
     { id: 'perm232', parent_id: 'perm230', name: '新增指标', code: 'risk:indicator:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'risk:indicator:create' },
     { id: 'perm233', parent_id: 'perm230', name: '修改指标', code: 'risk:indicator:update', type: 3, sort: 3, visible: 1, status: 1, perms: 'risk:indicator:update' },
-    { id: 'perm234', parent_id: 'perm230', name: '删除指标', code: 'risk:indicator:delete', type: 3, sort: 4, visible: 1, status: 1, perms: 'risk:indicator:delete' }
+    { id: 'perm234', parent_id: 'perm230', name: '删除指标', code: 'risk:indicator:delete', type: 3, sort: 4, visible: 1, status: 1, perms: 'risk:indicator:delete' },
+
+    // ========== 异常交易智能监控权限 ==========
+    { id: 'perm235', parent_id: null, name: '异常交易监控', code: 'monitor', type: 1, path: '/risk/monitor', component: 'Layout', icon: 'Monitor', sort: 8, visible: 1, status: 1 },
+    { id: 'perm236', parent_id: 'perm235', name: '异常交易列表', code: 'monitor:alert', type: 2, path: 'list', component: 'risk/monitor/index', icon: 'Warning', sort: 1, visible: 1, status: 1, perms: '' },
+    { id: 'perm237', parent_id: 'perm236', name: '查询告警', code: 'monitor:alert:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'monitor:alert:query' },
+    { id: 'perm238', parent_id: 'perm236', name: '创建告警', code: 'monitor:alert:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'monitor:alert:create' },
+    { id: 'perm239', parent_id: 'perm236', name: '处理告警', code: 'monitor:alert:handle', type: 3, sort: 3, visible: 1, status: 1, perms: 'monitor:alert:handle' },
+    { id: 'perm240', parent_id: 'perm236', name: '告警溯源', code: 'monitor:alert:trace', type: 3, sort: 4, visible: 1, status: 1, perms: 'monitor:alert:trace' },
+    { id: 'perm241', parent_id: 'perm235', name: '批量监控处理', code: 'monitor:batch', type: 2, path: 'batch', component: 'risk/monitor/batch', icon: 'Files', sort: 2, visible: 1, status: 1, perms: '' },
+    { id: 'perm242', parent_id: 'perm241', name: '查询批次', code: 'monitor:batch:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'monitor:batch:query' },
+    { id: 'perm243', parent_id: 'perm241', name: '创建批次', code: 'monitor:batch:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'monitor:batch:create' },
+    { id: 'perm244', parent_id: 'perm235', name: '监控规则管理', code: 'monitor:rule', type: 2, path: 'rule', component: 'risk/monitor/rule', icon: 'SetUp', sort: 3, visible: 1, status: 1, perms: '' },
+    { id: 'perm245', parent_id: 'perm244', name: '查询规则', code: 'monitor:rule:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'monitor:rule:query' },
+    { id: 'perm246', parent_id: 'perm244', name: '新增规则', code: 'monitor:rule:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'monitor:rule:create' },
+    { id: 'perm247', parent_id: 'perm244', name: '修改规则', code: 'monitor:rule:update', type: 3, sort: 3, visible: 1, status: 1, perms: 'monitor:rule:update' },
+    { id: 'perm248', parent_id: 'perm244', name: '删除规则', code: 'monitor:rule:delete', type: 3, sort: 4, visible: 1, status: 1, perms: 'monitor:rule:delete' }
   ];
 
   await bulkCreateInBatches(Permission, permissions as any);
@@ -442,7 +458,10 @@ export async function seedRolePermissions(): Promise<void> {
       'customer:privacy:query', 'customer:privacy:export', 'customer:privacy:config', 'customer:privacy:trace',
       'risk:assessment:query', 'risk:assessment:create', 'risk:assessment:review', 'risk:assessment:trace',
       'risk:batch:query', 'risk:batch:create',
-      'risk:indicator:query', 'risk:indicator:create', 'risk:indicator:update', 'risk:indicator:delete'
+      'risk:indicator:query', 'risk:indicator:create', 'risk:indicator:update', 'risk:indicator:delete',
+      'monitor:alert:query', 'monitor:alert:create', 'monitor:alert:handle', 'monitor:alert:trace',
+      'monitor:batch:query', 'monitor:batch:create',
+      'monitor:rule:query', 'monitor:rule:create', 'monitor:rule:update', 'monitor:rule:delete'
     ];
     const perms = allPermissions.filter(p => managerCodes.includes(p.code) || p.type !== 3);
     const managerRPs = perms.map(p => ({
@@ -481,7 +500,9 @@ export async function seedRolePermissions(): Promise<void> {
       'customer:tag:batch',
       'customer:privacy:query', 'customer:privacy:export',
       'risk:assessment:query', 'risk:assessment:create',
-      'risk:batch:query'
+      'risk:batch:query',
+      'monitor:alert:query', 'monitor:alert:create',
+      'monitor:batch:query'
     ];
     const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:batch' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:batch' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:batch' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:batch' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace' || p.code === 'business:customer:profile' || p.code === 'business:customer:profile:batch' || p.code === 'business:customer:profile:trace' || p.code === 'business:corporate:profile' || p.code === 'business:corporate:profile:batch' || p.code === 'business:corporate:profile:trace' || p.code === 'business:customer:tag' || p.code === 'business:customer:tag:batch' || p.code === 'business:customer:tag:trace' || p.code === 'business:customer:privacy' || p.code === 'business:customer:privacy:config' || p.code === 'business:customer:privacy:trace' || p.code === 'risk' || p.code === 'risk:assessment' || p.code === 'risk:batch' || p.code === 'risk:trace' || p.code === 'risk:indicator')));
     const operatorRPs = perms.map(p => ({
@@ -513,7 +534,10 @@ export async function seedRolePermissions(): Promise<void> {
       'customer:privacy:query', 'customer:privacy:trace',
       'risk:assessment:query', 'risk:assessment:review', 'risk:assessment:trace',
       'risk:batch:query',
-      'risk:indicator:query'
+      'risk:indicator:query',
+      'monitor:alert:query', 'monitor:alert:handle', 'monitor:alert:trace',
+      'monitor:batch:query',
+      'monitor:rule:query'
     ];
     const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace' || p.code === 'business:customer:profile' || p.code === 'business:customer:profile:batch' || p.code === 'business:customer:profile:trace' || p.code === 'business:corporate:profile' || p.code === 'business:corporate:profile:batch' || p.code === 'business:corporate:profile:trace' || p.code === 'business:customer:tag' || p.code === 'business:customer:tag:batch' || p.code === 'business:customer:tag:trace' || p.code === 'business:customer:privacy' || p.code === 'business:customer:privacy:config' || p.code === 'business:customer:privacy:trace' || p.code === 'risk' || p.code === 'risk:assessment' || p.code === 'risk:batch' || p.code === 'risk:trace' || p.code === 'risk:indicator')));
     const auditorRPs = perms.map(p => ({
@@ -2367,6 +2391,153 @@ export async function seedRiskIndicators(): Promise<void> {
   console.log('[Seeder] Risk indicators seeded successfully.');
 }
 
+export async function seedMonitorRules(): Promise<void> {
+  console.log('[Seeder] Seeding monitor rules...');
+  const existing = await MonitorRule.count();
+  if (existing > 0) {
+    console.log('[Seeder] Monitor rules already exist, skipping...');
+    return;
+  }
+
+  const rules = [
+    {
+      id: 'mnr0000000000000000000000000001',
+      rule_code: 'HIGH_FREQ_1H',
+      rule_name: '1小时高频交易监控',
+      rule_type: 1,
+      dimension: 1,
+      is_enabled: 1,
+      priority: 90,
+      threshold_config: JSON.stringify({ count_threshold_1h: 10, frequency_change_ratio: 3 }),
+      risk_level_mapping: JSON.stringify({
+        low_conditions: ['count < 15'],
+        medium_conditions: ['count >= 15 and count < 25'],
+        high_medium_conditions: ['count >= 25 and count < 40'],
+        high_conditions: ['count >= 40']
+      }),
+      alert_action: 2,
+      is_required: 1,
+      description: '监控客户1小时内交易次数，超过阈值触发预警并自动拦截',
+      sort_order: 1,
+      status: 1,
+      trigger_count: 0
+    },
+    {
+      id: 'mnr0000000000000000000000000002',
+      rule_code: 'HIGH_FREQ_24H',
+      rule_name: '24小时高频交易监控',
+      rule_type: 1,
+      dimension: 1,
+      is_enabled: 1,
+      priority: 80,
+      threshold_config: JSON.stringify({ count_threshold_24h: 30, frequency_change_ratio: 2.5 }),
+      risk_level_mapping: JSON.stringify({
+        low_conditions: ['count < 50'],
+        medium_conditions: ['count >= 50 and count < 80'],
+        high_medium_conditions: ['count >= 80 and count < 120'],
+        high_conditions: ['count >= 120']
+      }),
+      alert_action: 2,
+      is_required: 1,
+      description: '监控客户24小时内交易次数，超过阈值触发预警并自动拦截',
+      sort_order: 2,
+      status: 1,
+      trigger_count: 0
+    },
+    {
+      id: 'mnr0000000000000000000000000003',
+      rule_code: 'REMOTE_TRANSACTION',
+      rule_name: '异地交易监控',
+      rule_type: 2,
+      dimension: 3,
+      is_enabled: 1,
+      priority: 85,
+      threshold_config: JSON.stringify({ distance_threshold_km: 500, frequency_change_ratio: 1.5 }),
+      risk_level_mapping: JSON.stringify({
+        low_conditions: ['distance < 800'],
+        medium_conditions: ['distance >= 800 and distance < 1500'],
+        high_medium_conditions: ['distance >= 1500 and distance < 3000'],
+        high_conditions: ['distance >= 3000']
+      }),
+      alert_action: 2,
+      is_required: 1,
+      description: '监控客户异地交易行为，交易地点与常用地点距离超过阈值触发预警',
+      sort_order: 3,
+      status: 1,
+      trigger_count: 0
+    },
+    {
+      id: 'mnr0000000000000000000000000004',
+      rule_code: 'LARGE_AMOUNT_SINGLE',
+      rule_name: '单笔大额交易监控',
+      rule_type: 3,
+      dimension: 2,
+      is_enabled: 1,
+      priority: 95,
+      threshold_config: JSON.stringify({ amount_threshold_single: 50000, amount_change_ratio: 3 }),
+      risk_level_mapping: JSON.stringify({
+        low_conditions: ['amount < 100000'],
+        medium_conditions: ['amount >= 100000 and amount < 500000'],
+        high_medium_conditions: ['amount >= 500000 and amount < 1000000'],
+        high_conditions: ['amount >= 1000000']
+      }),
+      alert_action: 3,
+      is_required: 1,
+      description: '监控单笔大额交易，超过阈值触发预警、拦截并强制复核',
+      sort_order: 4,
+      status: 1,
+      trigger_count: 0
+    },
+    {
+      id: 'mnr0000000000000000000000000005',
+      rule_code: 'LARGE_AMOUNT_DAILY',
+      rule_name: '日累计大额交易监控',
+      rule_type: 3,
+      dimension: 2,
+      is_enabled: 1,
+      priority: 88,
+      threshold_config: JSON.stringify({ amount_threshold_daily: 200000, amount_change_ratio: 2 }),
+      risk_level_mapping: JSON.stringify({
+        low_conditions: ['amount < 500000'],
+        medium_conditions: ['amount >= 500000 and amount < 1000000'],
+        high_medium_conditions: ['amount >= 1000000 and amount < 5000000'],
+        high_conditions: ['amount >= 5000000']
+      }),
+      alert_action: 2,
+      is_required: 1,
+      description: '监控客户日累计交易金额，超过阈值触发预警并拦截',
+      sort_order: 5,
+      status: 1,
+      trigger_count: 0
+    },
+    {
+      id: 'mnr0000000000000000000000000006',
+      rule_code: 'NIGHT_TRANSACTION',
+      rule_name: '夜间异常交易监控',
+      rule_type: 4,
+      dimension: 4,
+      is_enabled: 1,
+      priority: 75,
+      threshold_config: JSON.stringify({ night_start_hour: 23, night_end_hour: 6, amount_threshold_single: 10000 }),
+      risk_level_mapping: JSON.stringify({
+        low_conditions: ['amount < 20000'],
+        medium_conditions: ['amount >= 20000 and amount < 50000'],
+        high_medium_conditions: ['amount >= 50000 and amount < 100000'],
+        high_conditions: ['amount >= 100000']
+      }),
+      alert_action: 2,
+      is_required: 1,
+      description: '监控夜间时段(23:00-06:00)的交易行为，触发预警并拦截',
+      sort_order: 6,
+      status: 1,
+      trigger_count: 0
+    }
+  ];
+
+  await bulkCreateInBatches(MonitorRule, rules as any);
+  console.log('[Seeder] Monitor rules seeded successfully.');
+}
+
 export async function runAllSeeders(options?: { force?: boolean; closeOnFinish?: boolean }): Promise<void> {
   const force = options?.force ?? false;
   const closeOnFinish = options?.closeOnFinish ?? false;
@@ -2397,6 +2568,7 @@ export async function runAllSeeders(options?: { force?: boolean; closeOnFinish?:
     await seedViolationRecords();
     await seedTransactions();
     await seedRiskIndicators();
+    await seedMonitorRules();
 
     console.log('========================================');
     console.log('[Seeder] All seeders completed successfully!');
