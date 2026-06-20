@@ -96,7 +96,7 @@ import { queryHistoryData } from '@/api/replay'
 import { formatMoney, formatVolume } from '@/utils/format'
 import { MARKET_SECTOR_LIST } from '@/constants/dictionaries'
 import ReplayConclusionPanel from './ReplayConclusionPanel.vue'
-import type { IHistoryRecord, IReplayQueryParams } from '@/types/api'
+import type { IHistoryRecord, IStockReplayQueryParams } from '@/types/api'
 
 const loading = ref(false)
 const tableData = ref<IHistoryRecord[]>([])
@@ -108,7 +108,7 @@ const pagination = reactive({
   total: 0,
 })
 
-const searchParams = reactive<Partial<IReplayQueryParams>>({})
+const searchParams = reactive<Partial<IStockReplayQueryParams>>({})
 
 const conclusionProps = reactive({
   stockCode: '',
@@ -151,7 +151,7 @@ function replayStatusLabel(status: string): string {
 async function fetchData() {
   loading.value = true
   try {
-    const params: IReplayQueryParams = {
+    const params: IStockReplayQueryParams = {
       startDate: searchParams.startDate || '',
       endDate: searchParams.endDate || '',
       page: pagination.page,

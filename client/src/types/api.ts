@@ -847,7 +847,7 @@ export interface ISectorComparison {
   rank: number
 }
 
-export interface IReplayQueryParams {
+export interface IStockReplayQueryParams {
   stockCode?: string
   sector?: string
   startDate: string
@@ -1530,3 +1530,317 @@ export interface IRiskLevelStandard {
   optimizationSuggestions: ILevelStandardOptimizationSuggestion[]
   updatedAt: string
 }
+
+import {
+  ReplayAnalysisDimension,
+  InterceptionEffectiveness,
+  ReplayExportFormat,
+  HandleChannel,
+  RuleValidityStatus,
+  VulnerabilitySeverity,
+  ReplayTimeRange,
+  AnomalyRecurrenceStatus,
+  RuleOptimizationCategory,
+} from '@/enums'
+
+export interface IReplayFilterNode {
+  id: string
+  dimension: ReplayAnalysisDimension
+  operator: 'in' | 'not_in' | 'between' | 'eq' | 'gt' | 'gte' | 'lt' | 'lte'
+  values: any[]
+  children?: IReplayFilterNode[]
+  logic?: 'AND' | 'OR'
+}
+
+export interface IReplayFilterGroup {
+  id: string
+  title: string
+  logic: 'AND' | 'OR'
+  children: Array<IReplayFilterNode | IReplayFilterGroup>
+  depth: number
+}
+
+export interface IReplayQueryParams {
+  page?: number
+  pageSize?: number
+  timeRange: ReplayTimeRange
+  customStart?: string
+  customEnd?: string
+  exceptionTypes?: InterceptionType[]
+  riskLevels?: CustomerRiskLevel[]
+  interceptionEffects?: InterceptionEffectiveness[]
+  ruleCategories?: RiskRuleType[]
+  customerLevels?: string[]
+  handleOutcomes?: string[]
+  reviewChannels?: HandleChannel[]
+  minInvolvedAmount?: number
+  maxInvolvedAmount?: number
+  recurrenceStatus?: AnomalyRecurrenceStatus[]
+  filterGroup?: IReplayFilterGroup
+  includeReplayValidation?: boolean
+  onlyHighImpact?: boolean
+  sortField?: string
+  sortOrder?: 'asc' | 'desc'
+}
+
+export interface IReplayFilterValidation {
+  valid: boolean
+  totalFilters: number
+  nestedDepth: number
+  warnings: Array<{ code: string; message: string; severity: 'info' | 'warning' | 'error' }>
+  timeSpanDays: number
+  estimatedRecords: number
+  estimatedResponseMs: number
+  complianceFlags: Array<{ flag: string; passed: boolean; suggestion?: string }>
+}
+
+export interface IReplayCoreMetrics {
+  totalEvents: number
+  screenedEvents: number
+  totalInterceptions: number
+  validInterceptions: number
+  validRiskEvents: number
+  recurrenceCount: number
+  resolvedEvents: number
+  manuallyReviewedEvents: number
+  complianceReviewed: number
+  compliancePassed: number
+  interceptionRate: number
+  recurrenceRate: number
+  resolutionRate: number
+  avgHandleTime: number
+  medianHandleTime: number
+  compliancePassRate: number
+  ruleEffectiveness: number
+  falsePositiveRate: number
+  falseNegativeRate: number
+  totalEffectiveness: number
+}
+
+export interface IReplayTrendPoint {
+  date: string
+  totalEvents: number
+  interceptions: number
+  validInterceptions: number
+  recurrences: number
+  resolved: number
+  manuallyHandled: number
+  avgHandleTime: number
+  complianceRate: number
+}
+
+export interface IReplayEvent {
+  id: number
+  eventId: string
+  customerId: number
+  customerName: string
+  customerAccount: string
+  customerLevel: string
+  customerRiskLevel: CustomerRiskLevel
+  occurredAt: string
+  occurredIp?: string
+  occurredBranch?: string
+  exceptionType: InterceptionType
+  exceptionTypeLabel: string
+  interceptionLevel: InterceptionLevel
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  triggeredRuleId: number
+  triggeredRuleName: string
+  triggeredRuleType: string
+  interceptionEffect: InterceptionEffectiveness
+  recurrenceStatus: AnomalyRecurrenceStatus
+  recurrenceCount: number
+  recurrenceFirstAt?: string
+  involvedAmount: number
+  involvedStocks?: Array<{ code: string; name: string; quantity: number; amount: number }>
+  freezeAmount?: number
+  frozenDays?: number
+  handleChannel: HandleChannel
+  handleOutcome: string
+  handledById?: number
+  handledByName?: string
+  handledAt?: string
+  appealSubmitted: boolean
+  appealSucceeded?: boolean
+  slaBreached: boolean
+  dataIntegrity: number
+  missingFields?: string[]
+  replayValidated: boolean
+  replayIssues: Array<{ type: string; description: string; severity: string }>
+  processingChainIds: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface IReplayProcessingNode {
+  chainId: string
+  nodeType: 'trigger' | 'precheck' | 'intercept' | 'first_review' | 'second_review' | 'compliance' | 'appeal' | 'close'
+  nodeTitle: string
+  handledBy: string
+  handledAt: string
+  handleDurationMs: number
+  actionsTaken: string[]
+  comments?: string
+  referenceDocs?: Array<{ id: string; name: string; type: string }>
+  validations: Array<{ rule: string; passed: boolean; details?: string }>
+  slaCompliant: boolean
+  previousNodeId?: string
+  nextNodeId?: string
+}
+
+export interface IReplayProcessingChain {
+  chainId: string
+  startedAt: string
+  closedAt?: string
+  totalDurationMs: number
+  slaBreached: boolean
+  totalNodes: number
+  completedNodes: number
+  nodes: IReplayProcessingNode[]
+  complianceChecks: Array<{ rule: string; passed: boolean; severity: 'low' | 'medium' | 'high' | 'critical' }>
+  duplicateWithChains: string[]
+}
+
+export interface IRuleValidityAnalysis {
+  ruleId: number
+  ruleName: string
+  ruleType: string
+  validityStatus: RuleValidityStatus
+  triggerCount: number
+  validTriggerCount: number
+  invalidTriggerCount: number
+  overTriggeredCount: number
+  effectiveness: number
+  avgResponseTimeMs: number
+  falsePositiveRate: number
+  falseNegativeRate: number
+  optimizedSuggestions: Array<{
+    category: RuleOptimizationCategory
+    description: string
+    estimatedImprovement: number
+    impactScope: string
+  }>
+  triggeredEventDistribution: Record<string, number>
+}
+
+export interface IRiskVulnerability {
+  id: string
+  code: string
+  title: string
+  description: string
+  severity: VulnerabilitySeverity
+  affectedScope: string
+  affectedEventsCount: number
+  estimatedFinancialImpact: number
+  detectionDate: string
+  reportedBy: string
+  rootCauseAnalysis: string
+  reproductionSteps?: string[]
+  evidenceChains: Array<{ eventId: string; occurredAt: string; description: string }>
+  exploitDifficulty: 'low' | 'medium' | 'high'
+  priorityScore: number
+  remediationMeasures: Array<{
+    type: string
+    description: string
+    responsibleTeam: string
+    deadline?: string
+  }>
+  mitigationTimeline: {
+    identifiedAt: string
+    triageAt?: string
+    remediationStarted?: string
+    fixedAt?: string
+    verifiedAt?: string
+  }
+  relatedRuleIds: number[]
+  optimizationSuggestions: IReplayOptimizationSuggestion[]
+  dataQualityIssues: Array<{ field: string; issue: string; affectedRecords: number }>
+}
+
+export interface IReplayOptimizationSuggestion {
+  id: string
+  category: RuleOptimizationCategory
+  targetRuleId?: number
+  currentSetting: string
+  suggestedSetting: string
+  rationale: string
+  expectedBenefits: {
+    interceptionImprovement?: number
+    falsePositiveReduction?: number
+    recurrenceReduction?: number
+    avgHandleTimeReduction?: number
+  }
+  historicalBacktest: {
+    period: string
+    totalEvents: number
+    estimatedChanges: number
+    riskDelta: number
+  }
+  implementationComplexity: 'low' | 'medium' | 'high'
+  priority: 'immediate' | 'short_term' | 'long_term' | 'no_priority'
+  references: string[]
+}
+
+export interface IReplayExportConfig {
+  format: ReplayExportFormat
+  fields: string[]
+  sortField: string
+  sortOrder: 'asc' | 'desc'
+  includeMeta: boolean
+  includeAggregatedSummary: boolean
+  splitBy: 'none' | 'exception_type' | 'risk_level' | 'handle_channel'
+  splitSize: number
+  fileName: string
+  watermark: string
+  compression: boolean
+}
+
+export interface IReplayExportProgress {
+  taskId: string
+  status: 'queued' | 'preparing' | 'exporting' | 'validating' | 'packaging' | 'completed' | 'failed' | 'cancelled'
+  totalRecords: number
+  processedRecords: number
+  validatedRecords: number
+  dataIntegrity: number
+  missingRecordCount: number
+  missingRecordsDetails: Array<{ eventId: string; reason: string }>
+  percent: number
+  currentPhase: string
+  estimatedRemaining: number
+  startedAt: string
+  updatedAt?: string
+  fileSizeBytes?: number
+  fileCount?: number
+  sha256Hash?: string
+  downloadUrl?: string
+}
+
+export interface IReplayDimensionStat {
+  dimension: ReplayAnalysisDimension
+  dimensionLabel: string
+  segments: Array<{
+    key: string
+    label: string
+    color: string
+    eventCount: number
+    ratio: number
+    interceptionRate: number
+    recurrenceRate: number
+    resolutionRate: number
+    avgHandleTime: number
+  }>
+}
+
+export interface IReplayDashboard {
+  coreMetrics: IReplayCoreMetrics
+  trendData: IReplayTrendPoint[]
+  dimensionStats: IReplayDimensionStat[]
+  eventSamples: IReplayEvent[]
+  ruleValidity: IRuleValidityAnalysis[]
+  vulnerabilities: IRiskVulnerability[]
+  optimizationSuggestions: IReplayOptimizationSuggestion[]
+  generatedAt: string
+  querySignature: string
+  recordCount: number
+}
+

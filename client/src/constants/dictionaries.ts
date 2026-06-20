@@ -810,3 +810,220 @@ export const LEVEL_SWITCH_TABS: Array<{
   { key: CustomerRiskLevel.HIGH, label: '较高风险', level: CustomerRiskLevel.HIGH },
   { key: CustomerRiskLevel.VERY_HIGH, label: '高风险', level: CustomerRiskLevel.VERY_HIGH },
 ]
+
+import {
+  ReplayAnalysisDimension,
+  InterceptionEffectiveness,
+  ReplayExportFormat,
+  HandleChannel,
+  RuleValidityStatus,
+  VulnerabilitySeverity,
+  ReplayTimeRange,
+  AnomalyRecurrenceStatus,
+  RuleOptimizationCategory,
+} from '@/enums'
+
+export const ASSESSMENT_SOURCE_LABELS: Record<AssessmentDataSource, string> = {
+  [AssessmentDataSource.TRADE_DATA]: '交易数据',
+  [AssessmentDataSource.ASSET_DATA]: '资产数据',
+  [AssessmentDataSource.BEHAVIOR_DATA]: '行为数据',
+  [AssessmentDataSource.MANUAL_INPUT]: '人工录入',
+  [AssessmentDataSource.ASSESSMENT_SURVEY]: '风险测评',
+  [AssessmentDataSource.EXTERNAL_DATA]: '外部数据',
+}
+
+export const BATCH_LEVEL_UPDATE_MODE_LABELS: Record<BatchLevelUpdateMode, string> = {
+  [BatchLevelUpdateMode.BY_FREQUENCY]: '按异常交易频次',
+  [BatchLevelUpdateMode.BY_ASSESSMENT]: '按周期测评结果',
+  [BatchLevelUpdateMode.BY_CUSTOM_LIST]: '按已勾选客户',
+  [BatchLevelUpdateMode.BY_LEVEL]: '按当前等级转换',
+}
+
+export const INTERCEPTION_EFFECT_LABELS: Record<InterceptionEffectiveness, string> = {
+  [InterceptionEffectiveness.FULLY_EFFECTIVE]: '完全有效',
+  [InterceptionEffectiveness.PARTIALLY_EFFECTIVE]: '部分有效',
+  [InterceptionEffectiveness.INEFFECTIVE]: '完全无效',
+  [InterceptionEffectiveness.OVER_INTERCEPTED]: '过度拦截',
+  [InterceptionEffectiveness.UNDER_INTERCEPTED]: '拦截不足',
+}
+
+export const INTERCEPTION_EFFECT_COLORS: Record<InterceptionEffectiveness, string> = {
+  [InterceptionEffectiveness.FULLY_EFFECTIVE]: '#27AE60',
+  [InterceptionEffectiveness.PARTIALLY_EFFECTIVE]: '#2980B9',
+  [InterceptionEffectiveness.INEFFECTIVE]: '#C0392B',
+  [InterceptionEffectiveness.OVER_INTERCEPTED]: '#E67E22',
+  [InterceptionEffectiveness.UNDER_INTERCEPTED]: '#F39C12',
+}
+
+export const INTERCEPTION_EFFECT_BG_COLORS: Record<InterceptionEffectiveness, string> = {
+  [InterceptionEffectiveness.FULLY_EFFECTIVE]: 'rgba(39,174,96,0.1)',
+  [InterceptionEffectiveness.PARTIALLY_EFFECTIVE]: 'rgba(41,128,185,0.1)',
+  [InterceptionEffectiveness.INEFFECTIVE]: 'rgba(192,57,43,0.1)',
+  [InterceptionEffectiveness.OVER_INTERCEPTED]: 'rgba(230,126,34,0.1)',
+  [InterceptionEffectiveness.UNDER_INTERCEPTED]: 'rgba(243,156,18,0.1)',
+}
+
+export const REPLAY_DIMENSION_LABELS: Record<ReplayAnalysisDimension, string> = {
+  [ReplayAnalysisDimension.EXCEPTION_TYPE]: '异常类型',
+  [ReplayAnalysisDimension.RISK_LEVEL]: '风险等级',
+  [ReplayAnalysisDimension.INTERCEPTION_EFFECT]: '拦截效果',
+  [ReplayAnalysisDimension.RULE_CATEGORY]: '规则类别',
+  [ReplayAnalysisDimension.CUSTOMER_SEGMENT]: '客户分层',
+  [ReplayAnalysisDimension.TIME_PERIOD]: '时间区间',
+  [ReplayAnalysisDimension.HANDLE_OUTCOME]: '处理结果',
+  [ReplayAnalysisDimension.REVIEW_CHANNEL]: '审核通道',
+}
+
+export const REPLAY_EXPORT_FORMAT_LABELS: Record<ReplayExportFormat, string> = {
+  [ReplayExportFormat.EXCEL]: 'Excel (.xlsx)',
+  [ReplayExportFormat.CSV]: 'CSV 文本',
+  [ReplayExportFormat.PDF]: 'PDF 报告',
+  [ReplayExportFormat.JSON]: 'JSON 原始数据',
+}
+
+export const HANDLE_CHANNEL_LABELS: Record<HandleChannel, string> = {
+  [HandleChannel.SYSTEM_AUTO]: '系统自动处理',
+  [HandleChannel.MANUAL_FIRST]: '一级人工审核',
+  [HandleChannel.MANUAL_SECOND]: '二级人工复核',
+  [HandleChannel.COMPLIANCE_REVIEW]: '合规审计审定',
+  [HandleChannel.APPEALS_CLEARED]: '申诉后解除',
+}
+
+export const HANDLE_CHANNEL_COLORS: Record<HandleChannel, string> = {
+  [HandleChannel.SYSTEM_AUTO]: '#2980B9',
+  [HandleChannel.MANUAL_FIRST]: '#8E44AD',
+  [HandleChannel.MANUAL_SECOND]: '#16A085',
+  [HandleChannel.COMPLIANCE_REVIEW]: '#C0392B',
+  [HandleChannel.APPEALS_CLEARED]: '#7F8C8D',
+}
+
+export const RULE_VALIDITY_LABELS: Record<RuleValidityStatus, string> = {
+  [RuleValidityStatus.FULLY_EFFECTIVE]: '完全有效',
+  [RuleValidityStatus.PARTIALLY_EFFECTIVE]: '部分有效',
+  [RuleValidityStatus.INVALID_REDUNDANT]: '无效冗余',
+  [RuleValidityStatus.OVERLY_AGGRESSIVE]: '过于激进',
+  [RuleValidityStatus.UNDER_ACTIVE]: '启用不足',
+  [RuleValidityStatus.REQUIRES_UPDATE]: '需更新',
+}
+
+export const RULE_VALIDITY_COLORS: Record<RuleValidityStatus, string> = {
+  [RuleValidityStatus.FULLY_EFFECTIVE]: '#27AE60',
+  [RuleValidityStatus.PARTIALLY_EFFECTIVE]: '#2980B9',
+  [RuleValidityStatus.INVALID_REDUNDANT]: '#95A5A6',
+  [RuleValidityStatus.OVERLY_AGGRESSIVE]: '#E67E22',
+  [RuleValidityStatus.UNDER_ACTIVE]: '#34495E',
+  [RuleValidityStatus.REQUIRES_UPDATE]: '#C0392B',
+}
+
+export const VULNERABILITY_SEVERITY_LABELS: Record<VulnerabilitySeverity, string> = {
+  [VulnerabilitySeverity.CRITICAL]: '严重',
+  [VulnerabilitySeverity.HIGH]: '高危',
+  [VulnerabilitySeverity.MEDIUM]: '中危',
+  [VulnerabilitySeverity.LOW]: '低危',
+  [VulnerabilitySeverity.INFO]: '提示',
+}
+
+export const VULNERABILITY_SEVERITY_COLORS: Record<VulnerabilitySeverity, string> = {
+  [VulnerabilitySeverity.CRITICAL]: '#C0392B',
+  [VulnerabilitySeverity.HIGH]: '#E74C3C',
+  [VulnerabilitySeverity.MEDIUM]: '#F39C12',
+  [VulnerabilitySeverity.LOW]: '#2980B9',
+  [VulnerabilitySeverity.INFO]: '#95A5A6',
+}
+
+export const VULNERABILITY_SEVERITY_GLOW: Record<VulnerabilitySeverity, string> = {
+  [VulnerabilitySeverity.CRITICAL]: '0 0 18px rgba(192,57,43,0.5)',
+  [VulnerabilitySeverity.HIGH]: '0 0 16px rgba(231,76,60,0.45)',
+  [VulnerabilitySeverity.MEDIUM]: '0 0 14px rgba(243,156,18,0.4)',
+  [VulnerabilitySeverity.LOW]: '0 0 12px rgba(41,128,185,0.35)',
+  [VulnerabilitySeverity.INFO]: '0 0 8px rgba(149,165,166,0.25)',
+}
+
+export const REPLAY_TIME_RANGE_OPTIONS: Array<{
+  value: ReplayTimeRange
+  label: string
+  days: number
+}> = [
+  { value: ReplayTimeRange.LAST_DAY, label: '近24小时', days: 1 },
+  { value: ReplayTimeRange.LAST_WEEK, label: '近7天', days: 7 },
+  { value: ReplayTimeRange.LAST_MONTH, label: '近30天', days: 30 },
+  { value: ReplayTimeRange.LAST_QUARTER, label: '近90天', days: 90 },
+  { value: ReplayTimeRange.LAST_HALF_YEAR, label: '近半年', days: 180 },
+  { value: ReplayTimeRange.CUSTOM, label: '自定义区间', days: 0 },
+]
+
+export const RECURRENCE_STATUS_LABELS: Record<AnomalyRecurrenceStatus, string> = {
+  [AnomalyRecurrenceStatus.NO_RECURRENCE]: '无复发',
+  [AnomalyRecurrenceStatus.MINOR_RECURRENCE]: '轻微复发',
+  [AnomalyRecurrenceStatus.MODERATE_RECURRENCE]: '中度复发',
+  [AnomalyRecurrenceStatus.SEVERE_RECURRENCE]: '严重复发',
+}
+
+export const RECURRENCE_STATUS_COLORS: Record<AnomalyRecurrenceStatus, string> = {
+  [AnomalyRecurrenceStatus.NO_RECURRENCE]: '#27AE60',
+  [AnomalyRecurrenceStatus.MINOR_RECURRENCE]: '#2980B9',
+  [AnomalyRecurrenceStatus.MODERATE_RECURRENCE]: '#E67E22',
+  [AnomalyRecurrenceStatus.SEVERE_RECURRENCE]: '#C0392B',
+}
+
+export const OPTIMIZATION_CATEGORY_LABELS: Record<RuleOptimizationCategory, string> = {
+  [RuleOptimizationCategory.THRESHOLD_ADJUST]: '阈值微调',
+  [RuleOptimizationCategory.RULE_COMBINATION]: '规则组合优化',
+  [RuleOptimizationCategory.TIME_WINDOW_TUNE]: '时间窗调整',
+  [RuleOptimizationCategory.PARAMETER_SENSITIVITY]: '参数灵敏度',
+  [RuleOptimizationCategory.CUSTOMER_SEGMENT_SPECIFIC]: '客户分层适配',
+}
+
+export const REPLAY_EXPORT_FIELD_OPTIONS: Array<{
+  key: string
+  label: string
+  group: string
+  selected: boolean
+  sortOrder?: number
+}> = [
+  { key: 'eventId', label: '事件编号', group: '基础字段', selected: true },
+  { key: 'occurredAt', label: '发生时间', group: '基础字段', selected: true, sortOrder: 1 },
+  { key: 'customerName', label: '客户姓名', group: '基础字段', selected: true },
+  { key: 'customerAccount', label: '资金账号', group: '基础字段', selected: true },
+  { key: 'exceptionType', label: '异常类型', group: '风控维度', selected: true },
+  { key: 'riskLevel', label: '风险等级', group: '风控维度', selected: true },
+  { key: 'triggeredRule', label: '触发规则', group: '风控维度', selected: true },
+  { key: 'interceptionEffect', label: '拦截效果', group: '风控维度', selected: true },
+  { key: 'handleChannel', label: '处理通道', group: '处理结果', selected: true },
+  { key: 'handleOutcome', label: '处理结论', group: '处理结果', selected: true },
+  { key: 'handledBy', label: '处理人', group: '处理结果', selected: false },
+  { key: 'handledAt', label: '处理时间', group: '处理结果', selected: true },
+  { key: 'involvedAmount', label: '涉及金额', group: '交易字段', selected: true },
+  { key: 'stockCode', label: '股票代码', group: '交易字段', selected: false },
+  { key: 'stockName', label: '股票名称', group: '交易字段', selected: false },
+  { key: 'tradeQuantity', label: '数量', group: '交易字段', selected: false },
+  { key: 'appealed', label: '是否申诉', group: '扩展字段', selected: false },
+  { key: 'appealResult', label: '申诉结果', group: '扩展字段', selected: false },
+  { key: 'recurCount', label: '复发次数', group: '扩展字段', selected: true },
+  { key: 'remark', label: '备注', group: '扩展字段', selected: false },
+]
+
+export const REPLAY_CORE_METRICS: Array<{
+  key: 'interceptionRate' | 'recurrenceRate' | 'resolutionRate' | 'avgHandleTime' | 'compliancePassRate' | 'ruleEffectiveness'
+  label: string
+  unit?: string
+  precision: number
+  color: string
+  icon: string
+}> = [
+  { key: 'interceptionRate', label: '风控拦截率', unit: '%', precision: 2, color: '#2980B9', icon: 'Shield' },
+  { key: 'recurrenceRate', label: '异常复发率', unit: '%', precision: 2, color: '#E67E22', icon: 'RefreshRight' },
+  { key: 'resolutionRate', label: '风险化解率', unit: '%', precision: 2, color: '#27AE60', icon: 'CircleCheckFilled' },
+  { key: 'avgHandleTime', label: '平均处理时长', unit: '小时', precision: 1, color: '#8E44AD', icon: 'Clock' },
+  { key: 'compliancePassRate', label: '合规通过率', unit: '%', precision: 2, color: '#16A085', icon: 'DocumentChecked' },
+  { key: 'ruleEffectiveness', label: '规则有效率', unit: '%', precision: 2, color: '#C0392B', icon: 'MagicStick' },
+]
+
+export const REPLAY_FILTER_HINTS: string[] = [
+  '单次复盘查询时间区间不建议超过180天，否则可能导致查询超时',
+  '建议按异常类型或风险等级进行分层筛选，以获得更精准的复盘结论',
+  '超过10万条数据建议使用导出功能，在Excel中进行深度分析',
+  '如包含客户敏感信息，需合规审批后方可导出PDF报表',
+  '可在【筛选条件】弹窗中配置多维度嵌套组合，支持最多4层AND/OR逻辑',
+]
+

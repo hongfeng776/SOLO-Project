@@ -196,3 +196,79 @@ export enum DataIntegrityStatus {
   PARTIAL = 'partial',
   MISSING = 'missing',
 }
+
+export enum ReplayAnalysisDimension {
+  EXCEPTION_TYPE = 'exception_type',
+  RISK_LEVEL = 'risk_level',
+  INTERCEPTION_EFFECT = 'interception_effect',
+  RULE_CATEGORY = 'rule_category',
+  CUSTOMER_SEGMENT = 'customer_segment',
+  TIME_PERIOD = 'time_period',
+  HANDLE_OUTCOME = 'handle_outcome',
+  REVIEW_CHANNEL = 'review_channel',
+}
+
+export enum InterceptionEffectiveness {
+  FULLY_EFFECTIVE = 'fully_effective',
+  PARTIALLY_EFFECTIVE = 'partially_effective',
+  INEFFECTIVE = 'ineffective',
+  OVER_INTERCEPTED = 'over_intercepted',
+  UNDER_INTERCEPTED = 'under_intercepted',
+}
+
+export enum ReplayExportFormat {
+  EXCEL = 'excel',
+  CSV = 'csv',
+  PDF = 'pdf',
+  JSON = 'json',
+}
+
+export enum HandleChannel {
+  SYSTEM_AUTO = 'system_auto',
+  MANUAL_FIRST = 'manual_first',
+  MANUAL_SECOND = 'manual_second',
+  COMPLIANCE_REVIEW = 'compliance_review',
+  APPEALS_CLEARED = 'appeals_cleared',
+}
+
+export enum RuleValidityStatus {
+  FULLY_EFFECTIVE = 'fully_effective',
+  PARTIALLY_EFFECTIVE = 'partially_effective',
+  INVALID_REDUNDANT = 'invalid_redundant',
+  OVERLY_AGGRESSIVE = 'overly_aggressive',
+  UNDER_ACTIVE = 'under_active',
+  REQUIRES_UPDATE = 'requires_update',
+}
+
+export enum VulnerabilitySeverity {
+  CRITICAL = 'critical',
+  HIGH = 'high',
+  MEDIUM = 'medium',
+  LOW = 'low',
+  INFO = 'info',
+}
+
+export enum ReplayTimeRange {
+  LAST_DAY = '1d',
+  LAST_WEEK = '7d',
+  LAST_MONTH = '30d',
+  LAST_QUARTER = '90d',
+  LAST_HALF_YEAR = '180d',
+  CUSTOM = 'custom',
+}
+
+export enum AnomalyRecurrenceStatus {
+  NO_RECURRENCE = 'no_recurrence',
+  MINOR_RECURRENCE = 'minor_recurrence',
+  MODERATE_RECURRENCE = 'moderate_recurrence',
+  SEVERE_RECURRENCE = 'severe_recurrence',
+}
+
+export enum RuleOptimizationCategory {
+  THRESHOLD_ADJUST = 'threshold_adjust',
+  RULE_COMBINATION = 'rule_combination',
+  TIME_WINDOW_TUNE = 'time_window_tune',
+  PARAMETER_SENSITIVITY = 'parameter_sensitivity',
+  CUSTOMER_SEGMENT_SPECIFIC = 'customer_segment_specific',
+}
+

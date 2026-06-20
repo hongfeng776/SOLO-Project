@@ -129,6 +129,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '风险等级', icon: 'DataLine', keepAlive: true, permission: 'riskLevel:view' }
       },
       {
+        path: 'risk-replay',
+        name: 'RiskReplay',
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/risk-replay/index.vue'),
+        meta: { title: '风控复盘', icon: 'DataBoard', keepAlive: false, permission: 'riskReplay:view' }
+      },
+      {
         path: 'compliance',
         name: 'Compliance',
         component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/compliance/index.vue'),

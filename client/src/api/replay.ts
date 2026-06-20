@@ -11,7 +11,7 @@ import type {
   IVolatilityPattern,
   IDataCompleteness,
   ISectorComparison,
-  IReplayQueryParams,
+  IStockReplayQueryParams,
   IReplayExportParams,
 } from '@/types/api'
 
@@ -39,7 +39,7 @@ export function generateConclusion(sessionId: number): Promise<IApiResponse<IRep
   return post(`/api/replay/sessions/${sessionId}/conclusion`, {})
 }
 
-export function queryHistoryData(params: IReplayQueryParams): Promise<IApiResponse<{ list: IHistoryRecord[]; total: number; periodSegments: IPeriodSegment[] }>> {
+export function queryHistoryData(params: IStockReplayQueryParams): Promise<IApiResponse<{ list: IHistoryRecord[]; total: number; periodSegments: IPeriodSegment[] }>> {
   return get('/api/replay/query', params as unknown as Record<string, unknown>)
 }
 
