@@ -253,6 +253,28 @@ export interface VehicleMaintenanceRecord {
   operatorName: string
   createTime: string
   updateTime: string
+  priority: number
+  faultCount: number
+  faultDescription: string
+  faultCategory: number
+  rectificationResult: string
+  ledgerNo: string
+  isAbnormal: number
+  abnormalDescription: string
+  verifiedBy: string
+  verifiedAt: string
+  isVerified: number
+  scheduledDate: string
+  partsReplaced: any[]
+  laborCost: number
+  partsCost: number
+  otherCost: number
+  mileageThreshold: number
+  lastMaintenanceTime: string
+  reviewerId: number
+  reviewerName: string
+  reviewTime: string
+  reviewRemark: string
 }
 
 export interface VehicleViolationRecord {
@@ -495,4 +517,40 @@ export interface FieldValidationResult {
   highlighted: boolean
   message: string
   abnormalItem?: string
+}
+
+export interface MaintenancePriorityResult {
+  priority: number
+  priorityName: string
+  score: number
+  breakdown: {
+    mileage: { score: number; weight: number; progress: number }
+    age: { score: number; weight: number; years: number }
+    faultFrequency: { score: number; weight: number; count: number }
+    warningLevel: { score: number; weight: number; level: number }
+  }
+}
+
+export interface MaintenanceValidationResult {
+  valid: boolean
+  checks: {
+    operationStatus: { passed: boolean; message: string }
+    lastMaintenanceTime: { passed: boolean; message: string }
+    mileageThreshold: { passed: boolean; message: string }
+  }
+  errors: string[]
+  warnings: string[]
+}
+
+export interface MaintenanceCostStatistics {
+  totalCost: number
+  avgCost: number
+  byType: {
+    routine: number
+    annual: number
+    major: number
+    accident: number
+    parts: number
+  }
+  byMonth: Array<{ month: string; cost: number; count: number }>
 }

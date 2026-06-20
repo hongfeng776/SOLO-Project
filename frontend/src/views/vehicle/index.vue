@@ -12,6 +12,12 @@
       @success="handleBatchSuccess"
     />
 
+    <VehicleBatchMaintenance
+      v-if="selectedRows.length > 0"
+      :selected-rows="selectedRows"
+      @success="handleBatchSuccess"
+    />
+
     <CommonTable
       ref="tableRef"
       :loading="loading"
@@ -262,7 +268,7 @@
             <el-icon><Document /></el-icon>
             运维
           </el-button>
-          <el-button type="info" link size="small" @click="handleViewMaintenance(row)">
+          <el-button type="info" link size="small" @click="handleViewMaintenanceTrace(row)">
             <el-icon><Van /></el-icon>
             检修
           </el-button>
@@ -330,6 +336,19 @@
       />
     </el-dialog>
 
+    <el-dialog
+      v-model="maintenanceTraceDialogVisible"
+      :title="`检修溯源 - ${currentVehicle?.plateNumber || ''}`"
+      width="1100px"
+      :close-on-click-modal="false"
+      v-if="maintenanceTraceDialogVisible && currentVehicle"
+    >
+      <VehicleMaintenanceTrace
+        :vehicle-id="currentVehicleId!"
+        :vehicle="currentVehicle"
+      />
+    </el-dialog>
+
     <VehicleComplianceCheckDialog
       v-model="complianceCheckDialogVisible"
       :vehicle="currentVehicle"
@@ -380,6 +399,8 @@ import VehicleStatusTrace from '@/components/VehicleStatusTrace/index.vue'
 import VehicleMaintenancePanel from '@/components/VehicleMaintenancePanel/index.vue'
 import VehicleComplianceCheckDialog from '@/components/VehicleComplianceCheckDialog/index.vue'
 import VehicleBatchCompliance from '@/components/VehicleBatchCompliance/index.vue'
+import VehicleBatchMaintenance from '@/components/VehicleBatchMaintenance/index.vue'
+import VehicleMaintenanceTrace from '@/components/VehicleMaintenanceTrace/index.vue'
 import VehicleComplianceTrace from '@/components/VehicleComplianceTrace/index.vue'
 import {
   getVehicleListApi,
@@ -427,6 +448,7 @@ const statusTraceDialogVisible = ref(false)
 const maintenanceDialogVisible = ref(false)
 const complianceCheckDialogVisible = ref(false)
 const complianceTraceDialogVisible = ref(false)
+const maintenanceTraceDialogVisible = ref(false)
 const capacityDashboard = ref<any>(null)
 
 const queryParams = reactive({
@@ -656,10 +678,10 @@ const handleViewStatusTrace = (row: Vehicle) => {
   statusTraceDialogVisible.value = true
 }
 
-const handleViewMaintenance = (row: Vehicle) => {
+const handleViewMaintenanceTrace = (row: Vehicle) => {
   currentVehicleId.value = row.id
   currentVehicle.value = row
-  maintenanceDialogVisible.value = true
+  maintenanceTraceDialogVisible.value = true
 }
 
 const handleComplianceCheck = (row: Vehicle) => {

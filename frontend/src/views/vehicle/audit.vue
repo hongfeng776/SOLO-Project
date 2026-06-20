@@ -464,6 +464,10 @@
                   <el-icon><Van /></el-icon>
                   检修管理
                 </el-button>
+                <el-button type="info" @click="handleViewMaintenanceTrace">
+                  <el-icon><DataAnalysis /></el-icon>
+                  检修溯源
+                </el-button>
               </div>
             </div>
           </el-tab-pane>
@@ -638,6 +642,19 @@
     </el-dialog>
 
     <el-dialog
+      v-model="maintenanceTraceDialogVisible"
+      :title="`检修溯源 - ${currentVehicle?.plateNumber || ''}`"
+      width="1100px"
+      :close-on-click-modal="false"
+      v-if="maintenanceTraceDialogVisible && currentVehicle"
+    >
+      <VehicleMaintenanceTrace
+        :vehicle-id="currentVehicleId!"
+        :vehicle="currentVehicle"
+      />
+    </el-dialog>
+
+    <el-dialog
       v-model="rejectDialogVisible"
       title="驳回申请"
       width="500px"
@@ -702,6 +719,7 @@ import VehicleStatusTrace from '@/components/VehicleStatusTrace/index.vue'
 import VehicleMaintenancePanel from '@/components/VehicleMaintenancePanel/index.vue'
 import VehicleComplianceCheckDialog from '@/components/VehicleComplianceCheckDialog/index.vue'
 import VehicleComplianceTrace from '@/components/VehicleComplianceTrace/index.vue'
+import VehicleMaintenanceTrace from '@/components/VehicleMaintenanceTrace/index.vue'
 import {
   getVehicleListApi,
   batchReviewApi,
@@ -741,6 +759,7 @@ const statusTraceDialogVisible = ref(false)
 const maintenanceDialogVisible = ref(false)
 const complianceCheckDialogVisible = ref(false)
 const complianceTraceDialogVisible = ref(false)
+const maintenanceTraceDialogVisible = ref(false)
 const detailTab = ref('basic')
 const currentVehicleId = ref<number | null>(null)
 const currentVehicle = ref<Vehicle | null>(null)
@@ -1073,6 +1092,10 @@ const handleChangeStatus = () => {
 
 const handleViewMaintenance = () => {
   maintenanceDialogVisible.value = true
+}
+
+const handleViewMaintenanceTrace = () => {
+  maintenanceTraceDialogVisible.value = true
 }
 
 const handleStatusChangeSuccess = () => {

@@ -724,3 +724,55 @@ export const DiscoverySourceMap: Record<number, string> = {
   [DiscoverySource.TRAFFIC_NOTICE]: '交管通报',
   [DiscoverySource.OTHER]: '其他'
 }
+
+export enum MaintenancePriority {
+  URGENT = 1,
+  NORMAL = 2,
+  LOW = 3
+}
+
+export const MaintenancePriorityMap: Record<number, string> = {
+  [MaintenancePriority.URGENT]: '紧急',
+  [MaintenancePriority.NORMAL]: '一般',
+  [MaintenancePriority.LOW]: '低优先'
+}
+
+export const MaintenancePriorityColorMap: Record<number, string> = {
+  [MaintenancePriority.URGENT]: '#f56c6c',
+  [MaintenancePriority.NORMAL]: '#e6a23c',
+  [MaintenancePriority.LOW]: '#67c23a'
+}
+
+export enum FaultCategory {
+  ENGINE = 1,
+  GEARBOX = 2,
+  BRAKE = 3,
+  ELECTRICAL = 4,
+  SUSPENSION = 5,
+  BODY = 6,
+  OTHER = 7
+}
+
+export const FaultCategoryMap: Record<number, string> = {
+  [FaultCategory.ENGINE]: '发动机',
+  [FaultCategory.GEARBOX]: '变速箱',
+  [FaultCategory.BRAKE]: '制动系统',
+  [FaultCategory.ELECTRICAL]: '电气系统',
+  [FaultCategory.SUSPENSION]: '悬挂系统',
+  [FaultCategory.BODY]: '车身',
+  [FaultCategory.OTHER]: '其他'
+}
+
+export enum MaintenanceAnomalyType {
+  NONE = 0,
+  FAKE_MAINTENANCE = 1,
+  MISSED_INSPECTION = 2,
+  WRONG_INSPECTION = 3
+}
+
+export const MaintenanceAnomalyTypeMap: Record<number, string> = {
+  [MaintenanceAnomalyType.NONE]: '无异常',
+  [MaintenanceAnomalyType.FAKE_MAINTENANCE]: '疑似虚假检修',
+  [MaintenanceAnomalyType.MISSED_INSPECTION]: '漏检',
+  [MaintenanceAnomalyType.WRONG_INSPECTION]: '错检'
+}

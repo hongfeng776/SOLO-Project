@@ -5,6 +5,7 @@ const { validateVehicle, checkPlateUniqueness, checkVINUniqueness, validatePlate
 const { calculateOperationLevel, syncDriverOrderPermission, getLevelPrivileges } = require('../services/vehicleLevelService')
 const { validateStatusChange, determineMaintenanceWarning, autoDetermineOperationStatus, checkAbnormalStatus, syncCapacityAndSchedule } = require('../services/vehicleStatusService')
 const { performComplianceCheck, detectFakeCompliance, detectMissedChecks, generateComplianceReport, getCityTier, getComplianceStandards, calculateComplianceLevel, batchComplianceCheck } = require('../services/vehicleComplianceService')
+const { validateMaintenanceCreation, calculateMaintenancePriority, generateLedgerNo, syncVehicleMaintenanceStatus, detectMaintenanceAnomaly, batchScheduleMaintenance, batchUpdateMaintenanceStatus, batchStatisticsMaintenanceCost } = require('../services/maintenanceService')
 const { VehicleMaintenance, VehicleViolation, VehicleStatusLog, VehicleComplianceCheck, VehicleRectification } = require('../models')
 
 const OPERATION_TYPE_NAMES = {
@@ -33,7 +34,14 @@ const OPERATION_TYPE_NAMES = {
   23: '合规整改',
   24: '合规报告导出',
   25: '虚假合规拦截',
-  26: '漏审检测'
+  26: '漏审检测',
+  27: '创建检修记录',
+  28: '检修状态变更',
+  29: '批量预约检修',
+  30: '批量更新检修状态',
+  31: '检修成本统计',
+  32: '检修异常拦截',
+  33: '检修核验'
 }
 
 const createAuditLog = async (vehicle, operationType, extraData = {}, operatorId = null, operatorName = null) => {
@@ -1004,36 +1012,65 @@ const createMaintenanceRecord = async (req, res, next) => {
     const vehicle = await Vehicle.findByPk(vehicleId)
     if (!vehicle) throw new AppError('车辆不存在', 404, 404)
 
+    const validation = await validateMaintenanceCreation(vehicle, req.body)
+    if (!validation.valid) {
+      throw new AppError(`检修创建校验不通过：${validation.errors.join('; ')}`, 400, 400)
+    }
+
+    const priority = await calculateMaintenancePriority(vehicle)
+    const ledgerNo = await generateLedgerNo(vehicle)
+
     const data = {
       ...req.body,
       vehicleId,
       plateNumber: vehicle.plateNumber,
       operatorId,
-      operatorName
+      operatorName,
+      priority: priority.priority,
+      ledgerNo,
+      mileageThreshold: vehicle.mileageThreshold || null,
+      lastMaintenanceTime: vehicle.lastMaintenanceDate || null
     }
 
     const record = await VehicleMaintenance.create(data)
 
-    if (data.maintenanceStatus === 0 || data.maintenanceStatus === 1) {
-      const oldOperationStatus = vehicle.operationStatus
-      await vehicle.update({ operationStatus: 2 })
+    await syncVehicleMaintenanceStatus(vehicle, 'create', record)
 
-      await VehicleStatusLog.create({
-        vehicleId: vehicle.id,
-        plateNumber: vehicle.plateNumber,
-        changeType: 2,
-        oldOperationStatus,
-        newOperationStatus: 2,
-        triggerType: 1,
-        triggerReason: `发起检修：${record.maintenanceType}`,
-        maintenanceCheck: { maintenanceId: record.id, maintenanceType: record.maintenanceType, maintenanceStatus: record.maintenanceStatus },
-        remark: '发起检修，车辆进入停运检修状态',
+    const anomalyResult = await detectMaintenanceAnomaly(record)
+    if (anomalyResult.isAnomaly) {
+      await record.update({
+        isAbnormal: 1,
+        abnormalDescription: anomalyResult.message
+      })
+
+      await createAuditLog(
+        vehicle,
+        32,
+        {
+          remark: `检修异常拦截：${anomalyResult.message}`,
+          validationResult: anomalyResult
+        },
         operatorId,
         operatorName
-      })
+      )
     }
 
-    res.json(success(record, '检修记录创建成功'))
+    await createAuditLog(
+      vehicle,
+      27,
+      {
+        remark: `创建检修记录：${ledgerNo}`,
+        validationResult: validation
+      },
+      operatorId,
+      operatorName
+    )
+
+    res.json(success({
+      ...record.toJSON(),
+      validation,
+      priority
+    }, '检修记录创建成功'))
   } catch (error) {
     next(error)
   }
@@ -1049,52 +1086,73 @@ const updateMaintenanceRecord = async (req, res, next) => {
     if (!record) throw new AppError('检修记录不存在', 404, 404)
 
     const oldStatus = record.maintenanceStatus
-    await record.update(req.body)
+    const newStatus = req.body.maintenanceStatus
 
-    if (req.body.maintenanceStatus === 2 && oldStatus !== 2) {
-      const vehicle = await Vehicle.findByPk(record.vehicleId)
-      if (vehicle) {
-        const updateData = {
-          lastMaintenanceMileage: record.mileageAtMaintenance || vehicle.mileage,
-          lastMaintenanceDate: record.endDate || new Date(),
-          nextMaintenanceDate: record.nextMaintenanceDate
-        }
-
-        const warningResult = determineMaintenanceWarning({ ...vehicle.toJSON(), ...updateData })
-        updateData.maintenanceWarningLevel = warningResult.level
-
-        await vehicle.update(updateData)
-
-        const otherPending = await VehicleMaintenance.count({
-          where: {
-            vehicleId: vehicle.id,
-            maintenanceStatus: { [Op.in]: [0, 1] },
-            id: { [Op.ne]: recordId }
-          }
-        })
-
-        if (otherPending === 0) {
-          const autoResult = await autoDetermineOperationStatus(vehicle)
-          if (autoResult.status !== vehicle.operationStatus) {
-            const oldOpStatus = vehicle.operationStatus
-            await vehicle.update({ operationStatus: autoResult.status })
-
-            await VehicleStatusLog.create({
-              vehicleId: vehicle.id,
-              plateNumber: vehicle.plateNumber,
-              changeType: 2,
-              oldOperationStatus: oldOpStatus,
-              newOperationStatus: autoResult.status,
-              triggerType: 2,
-              triggerReason: `检修完成，自动判定运营状态：${autoResult.reasons.join('; ')}`,
-              remark: '检修完成，系统自动判定运营状态',
-              operatorId,
-              operatorName
-            })
-          }
-        }
+    if (newStatus !== undefined && oldStatus !== newStatus) {
+      const invalidTransitions = { 2: [0, 1], 3: [0, 1] }
+      if (invalidTransitions[newStatus] && invalidTransitions[newStatus].includes(oldStatus)) {
+        throw new AppError(`检修状态不能从${oldStatus === 0 ? '待检修' : oldStatus === 1 ? '检修中' : '已完成'}变更为${newStatus === 2 ? '已完成' : '已取消'}`, 400, 400)
       }
     }
+
+    await record.update(req.body)
+
+    const vehicle = await Vehicle.findByPk(record.vehicleId)
+    if (!vehicle) throw new AppError('车辆不存在', 404, 404)
+
+    if (newStatus === 2 && oldStatus !== 2) {
+      const updateData = {
+        lastMaintenanceMileage: record.mileageAtMaintenance || vehicle.mileage,
+        lastMaintenanceDate: record.endDate || new Date(),
+        nextMaintenanceDate: record.nextMaintenanceDate
+      }
+
+      const warningResult = determineMaintenanceWarning({ ...vehicle.toJSON(), ...updateData })
+      updateData.maintenanceWarningLevel = warningResult.level
+
+      await vehicle.update(updateData)
+    }
+
+    if (newStatus !== undefined && oldStatus !== newStatus) {
+      const actionMap = { 1: 'start', 2: 'complete', 3: 'cancel' }
+      const action = actionMap[newStatus]
+      if (action) {
+        await syncVehicleMaintenanceStatus(vehicle, action, record)
+      }
+
+      await VehicleStatusLog.create({
+        vehicleId: vehicle.id,
+        plateNumber: vehicle.plateNumber,
+        changeType: 2,
+        oldOperationStatus: vehicle.operationStatus,
+        newOperationStatus: newStatus === 2 ? vehicle.operationStatus : 2,
+        triggerType: newStatus === 2 ? 2 : 1,
+        triggerReason: `检修状态变更：${oldStatus} → ${newStatus}`,
+        maintenanceCheck: { maintenanceId: record.id, oldStatus, newStatus },
+        remark: `检修记录状态从${oldStatus === 0 ? '待检修' : oldStatus === 1 ? '检修中' : oldStatus === 2 ? '已完成' : '已取消'}变更为${newStatus === 0 ? '待检修' : newStatus === 1 ? '检修中' : newStatus === 2 ? '已完成' : '已取消'}`,
+        operatorId,
+        operatorName
+      })
+    }
+
+    const anomalyResult = await detectMaintenanceAnomaly(record)
+    if (anomalyResult.isAnomaly && !record.isAbnormal) {
+      await record.update({
+        isAbnormal: 1,
+        abnormalDescription: anomalyResult.message
+      })
+    }
+
+    await createAuditLog(
+      vehicle,
+      28,
+      {
+        remark: `检修状态变更：记录${record.ledgerNo || recordId}，状态${oldStatus} → ${newStatus || oldStatus}`,
+        validationResult: anomalyResult
+      },
+      operatorId,
+      operatorName
+    )
 
     res.json(success(record, '检修记录更新成功'))
   } catch (error) {
@@ -1897,6 +1955,105 @@ const validateComplianceField = async (req, res, next) => {
   }
 }
 
+const getMaintenancePriority = async (req, res, next) => {
+  try {
+    const { id } = req.params
+
+    const vehicle = await Vehicle.findByPk(id)
+    if (!vehicle) throw new AppError('车辆不存在', 404, 404)
+
+    const priority = await calculateMaintenancePriority(vehicle)
+
+    res.json(success(priority))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchScheduleMaintenanceCtrl = async (req, res, next) => {
+  try {
+    const { vehicleIds, scheduleData } = req.body
+
+    const results = await batchScheduleMaintenance(vehicleIds, scheduleData)
+
+    res.json(success(results, `批量预约检修完成：成功${results.success.length}条，失败${results.failed.length}条`))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchUpdateMaintenanceStatusCtrl = async (req, res, next) => {
+  try {
+    const { maintenanceIds, newStatus, operatorInfo } = req.body
+
+    const results = await batchUpdateMaintenanceStatus(maintenanceIds, newStatus, operatorInfo)
+
+    res.json(success(results, `批量更新检修状态完成：成功${results.success.length}条，失败${results.failed.length}条`))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchMaintenanceCostStats = async (req, res, next) => {
+  try {
+    const { vehicleIds, dateRange } = req.body
+
+    const statistics = await batchStatisticsMaintenanceCost(vehicleIds, dateRange)
+
+    res.json(success(statistics))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const verifyMaintenanceRecord = async (req, res, next) => {
+  try {
+    const { id, recordId } = req.params
+    const { verifiedBy, reviewRemark } = req.body
+    const operatorId = req.user?.id
+    const operatorName = req.user?.name
+
+    const record = await VehicleMaintenance.findByPk(recordId)
+    if (!record) throw new AppError('检修记录不存在', 404, 404)
+
+    const vehicle = await Vehicle.findByPk(id)
+    if (!vehicle) throw new AppError('车辆不存在', 404, 404)
+
+    await record.update({
+      isVerified: 1,
+      verifiedBy,
+      verifiedAt: new Date(),
+      reviewerId: operatorId,
+      reviewerName: operatorName,
+      reviewTime: new Date(),
+      reviewRemark: reviewRemark || ''
+    })
+
+    const anomalyResult = await detectMaintenanceAnomaly(record)
+    if (anomalyResult.isAnomaly) {
+      await record.update({
+        isAbnormal: 1,
+        abnormalDescription: anomalyResult.message
+      })
+    }
+
+    await createAuditLog(
+      vehicle,
+      33,
+      {
+        remark: `检修核验：记录${record.ledgerNo || recordId}，核验人${verifiedBy}`,
+        validationResult: anomalyResult
+      },
+      operatorId,
+      operatorName
+    )
+
+    res.json(success(record, '检修核验完成'))
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   getList,
   getDetail,
@@ -1936,5 +2093,10 @@ module.exports = {
   batchRemindRectification,
   exportComplianceReport,
   getComplianceStandardsByCity,
-  validateComplianceField
+  validateComplianceField,
+  getMaintenancePriority,
+  batchScheduleMaintenanceCtrl,
+  batchUpdateMaintenanceStatusCtrl,
+  batchMaintenanceCostStats,
+  verifyMaintenanceRecord
 }

@@ -17,6 +17,9 @@ router.post('/batch/maintenance', vehicleController.batchInitiateMaintenance)
 router.post('/batch/remind-renewal', vehicleController.batchRemindRenewal)
 router.post('/batch/compliance-check', vehicleController.batchComplianceCheck)
 router.post('/batch/remind-rectification', vehicleController.batchRemindRectification)
+router.post('/maintenance/batch-schedule', vehicleController.batchScheduleMaintenanceCtrl)
+router.post('/maintenance/batch-update-status', vehicleController.batchUpdateMaintenanceStatusCtrl)
+router.post('/maintenance/cost-statistics', vehicleController.batchMaintenanceCostStats)
 router.get('/compliance/standards', vehicleController.getComplianceStandardsByCity)
 router.post('/compliance/validate-field', vehicleController.validateComplianceField)
 router.post('/auto-check', vehicleController.autoCheckStatus)
@@ -41,5 +44,7 @@ router.get('/:vehicleId/compliance-report', vehicleController.exportComplianceRe
 router.get('/:vehicleId/rectifications', vehicleController.getRectifications)
 router.post('/:vehicleId/rectification', vehicleController.createRectification)
 router.put('/:id/rectification/:rectId/review', vehicleController.reviewRectification)
+router.get('/:id/maintenance-priority', vehicleController.getMaintenancePriority)
+router.post('/:id/maintenance/:recordId/verify', vehicleController.verifyMaintenanceRecord)
 
 module.exports = router

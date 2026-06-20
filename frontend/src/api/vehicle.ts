@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { Vehicle, VehicleQueryParams, VehicleAuditLog, ValidationResult, BatchImportResult, BatchOperationResult, ImportTemplate, RecalculateLevelResult, VehicleMaintenanceRecord, VehicleViolationRecord, VehicleStatusLog, StatusChangeValidation, CapacityDashboard, VehicleComplianceCheck, VehicleRectification, ComplianceStandards, ComplianceReport, FieldValidationResult } from '@/types/vehicle'
+import type { Vehicle, VehicleQueryParams, VehicleAuditLog, ValidationResult, BatchImportResult, BatchOperationResult, ImportTemplate, RecalculateLevelResult, VehicleMaintenanceRecord, VehicleViolationRecord, VehicleStatusLog, StatusChangeValidation, CapacityDashboard, VehicleComplianceCheck, VehicleRectification, ComplianceStandards, ComplianceReport, FieldValidationResult, MaintenancePriorityResult, MaintenanceValidationResult, MaintenanceCostStatistics } from '@/types/vehicle'
 import type { PageResult } from '@/utils/request'
 
 export const getVehicleListApi = (params: VehicleQueryParams) => {
@@ -175,4 +175,24 @@ export const batchRemindRectificationApi = (ids: number[]) => {
 
 export const exportComplianceReportApi = (vehicleId: number) => {
   return request.get<ComplianceReport>(`/vehicle/${vehicleId}/compliance-report`)
+}
+
+export const getMaintenancePriorityApi = (id: number) => {
+  return request.get<MaintenancePriorityResult>(`/vehicle/${id}/maintenance-priority`)
+}
+
+export const verifyMaintenanceRecordApi = (id: number, recordId: number, data: { verifiedBy: string; reviewRemark?: string }) => {
+  return request.post<VehicleMaintenanceRecord>(`/vehicle/${id}/maintenance/${recordId}/verify`, data)
+}
+
+export const batchScheduleMaintenanceApi = (vehicleIds: number[], scheduleData: { scheduledDate: string; maintenanceType: number; maintenanceStation: string }) => {
+  return request.post<BatchOperationResult>('/vehicle/maintenance/batch-schedule', { vehicleIds, scheduleData })
+}
+
+export const batchUpdateMaintenanceStatusApi = (maintenanceIds: number[], newStatus: number) => {
+  return request.post<BatchOperationResult>('/vehicle/maintenance/batch-update-status', { maintenanceIds, newStatus })
+}
+
+export const batchMaintenanceCostStatsApi = (vehicleIds: number[], dateRange?: { startDate: string; endDate: string }) => {
+  return request.post<MaintenanceCostStatistics>('/vehicle/maintenance/cost-statistics', { vehicleIds, dateRange })
 }
