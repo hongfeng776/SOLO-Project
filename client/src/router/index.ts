@@ -141,6 +141,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '合规审计', icon: 'Document', keepAlive: false }
       },
       {
+        path: 'trade-compliance',
+        name: 'TradeCompliance',
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/trade-compliance/index.vue'),
+        meta: { title: '交易合规审核', icon: 'Checked', keepAlive: false, permission: 'compliance:view' }
+      },
+      {
         path: 'system/user',
         name: 'SystemUser',
         component: () => import(/* @vite-ignore *//* webpackChunkName: "system" */ '@views/system/user/index.vue'),

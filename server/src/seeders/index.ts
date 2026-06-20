@@ -3,7 +3,7 @@ import { db } from '@models/index';
 import bcrypt from 'bcryptjs';
 import { StockStatus } from '@enums/index';
 
-const { User, Role, Permission, UserRole, RolePermission, StockQuote, StockQuoteHistory, QuoteAuditTrail, AssetProduct, CustomerAsset, FundFlow, ComplianceAudit, Trade, CustomerHolding, RiskAlert, OperationLog } = db;
+const { User, Role, Permission, UserRole, RolePermission, StockQuote, StockQuoteHistory, QuoteAuditTrail, AssetProduct, CustomerAsset, FundFlow, ComplianceAudit, Trade, CustomerHolding, RiskAlert, OperationLog, TradeComplianceAudit, TradeComplianceAuditLog } = db;
 
 async function seedPermissions() {
   const modules = [
@@ -29,6 +29,9 @@ async function seedPermissions() {
     { name: '合规审计', code: 'compliance', path: '/compliance-audits', icon: 'AuditOutlined', sortOrder: 6, children: [
       { name: '审计查看', code: 'compliance:view', type: 'button', sortOrder: 1 },
       { name: '审计管理', code: 'compliance:manage', type: 'button', sortOrder: 2 },
+      { name: '审核通过', code: 'compliance:audit:approve', type: 'button', sortOrder: 3 },
+      { name: '审核驳回', code: 'compliance:audit:reject', type: 'button', sortOrder: 4 },
+      { name: '批量审核', code: 'compliance:audit:batch', type: 'button', sortOrder: 5 },
     ]},
     { name: '证券交易', code: 'trade', path: '/trades', icon: 'SwapOutlined', sortOrder: 7, children: [
       { name: '交易查看', code: 'trade:view', type: 'button', sortOrder: 1 },
@@ -131,7 +134,7 @@ async function seedRoles(allPermissions: InstanceType<typeof Permission>[]) {
     .map((p) => p.id);
   await RolePermission.bulkCreate(analystPermIds.map((perm_id) => ({ role_id: analyst.id, perm_id } as any)));
 
-  const auditorPermCodes = ['dashboard', 'dashboard:view', 'stock', 'stock:view', 'product', 'product:view', 'customer', 'customer:view', 'fund-flow', 'fund-flow:view', 'compliance', 'compliance:view', 'compliance:manage', 'trade', 'trade:view', 'holding', 'holding:view', 'alert', 'alert:view', 'alert:manage', 'log', 'log:view'];
+  const auditorPermCodes = ['dashboard', 'dashboard:view', 'stock', 'stock:view', 'product', 'product:view', 'customer', 'customer:view', 'fund-flow', 'fund-flow:view', 'compliance', 'compliance:view', 'compliance:manage', 'compliance:audit:approve', 'compliance:audit:reject', 'compliance:audit:batch', 'trade', 'trade:view', 'holding', 'holding:view', 'alert', 'alert:view', 'alert:manage', 'log', 'log:view'];
   const auditorPermIds = allPermissions
     .filter((p) => auditorPermCodes.includes(p.perm_code))
     .map((p) => p.id);
@@ -773,6 +776,121 @@ async function seedQuoteAuditTrails() {
   console.log(`Seeded ${auditTrails.length} quote audit trails`);
 }
 
+async function seedTradeComplianceAudits() {
+  const now = new Date();
+  const deadlineNormal = new Date(now.getTime() + 120 * 60000);
+  const deadlinePast = new Date(now.getTime() - 60 * 60000);
+
+  const audits = [
+    {
+      audit_no: 'TCA20260621001', trade_id: 1, trade_no: 'T20260615001',
+      customer_id: 1, customer_name: '王建国', stock_code: '600519', stock_name: '贵州茅台',
+      trade_type: 'buy', trade_amount: 168500.00, trade_quantity: 100, trade_price: 1685.00,
+      compliance_status: 'auto_approved', review_type: 'auto', risk_category: 'normal', risk_score: 12.50,
+      violation_types: [], violation_reasons: [],
+      reviewer_id: null, reviewer_name: null, review_opinion: '普通交易自动审核通过',
+      review_at: new Date('2026-06-15T09:35:05'), timeout_flag: false, timeout_reminded_at: null,
+      order_status: 'dealed', compliance_deadline: deadlineNormal,
+      synced_to_trade: true, synced_to_customer: true,
+    },
+    {
+      audit_no: 'TCA20260621002', trade_id: 4, trade_no: 'T20260615004',
+      customer_id: 5, customer_name: '鼎盛资产管理有限公司', stock_code: '300750', stock_name: '宁德时代',
+      trade_type: 'buy', trade_amount: 1090000.00, trade_quantity: 5000, trade_price: 218.00,
+      compliance_status: 'manual_pending', review_type: 'manual', risk_category: 'large_amount', risk_score: 55.80,
+      violation_types: ['over_limit'], violation_reasons: ['单笔交易金额超过50万限额'],
+      reviewer_id: null, reviewer_name: null, review_opinion: null,
+      review_at: null, timeout_flag: true, timeout_reminded_at: new Date(now.getTime() - 30 * 60000),
+      order_status: 'auditing', compliance_deadline: deadlinePast,
+      synced_to_trade: false, synced_to_customer: false,
+    },
+    {
+      audit_no: 'TCA20260621003', trade_id: 6, trade_no: 'T20260614006',
+      customer_id: 3, customer_name: '中科创新科技有限公司', stock_code: '600519', stock_name: '贵州茅台',
+      trade_type: 'buy', trade_amount: 839000.00, trade_quantity: 500, trade_price: 1678.00,
+      compliance_status: 'approved', review_type: 'manual', risk_category: 'large_amount', risk_score: 38.20,
+      violation_types: [], violation_reasons: [],
+      reviewer_id: 3, reviewer_name: 'auditor', review_opinion: '机构客户大额买入，已通过审核',
+      review_at: new Date('2026-06-14T14:30:00'), timeout_flag: false, timeout_reminded_at: null,
+      order_status: 'dealed', compliance_deadline: deadlineNormal,
+      synced_to_trade: true, synced_to_customer: true,
+    },
+    {
+      audit_no: 'TCA20260621004', trade_id: 9, trade_no: 'T20260612009',
+      customer_id: 5, customer_name: '鼎盛资产管理有限公司', stock_code: '000858', stock_name: '五粮液',
+      trade_type: 'sell', trade_amount: 1600000.00, trade_quantity: 10000, trade_price: 160.00,
+      compliance_status: 'returned', review_type: 'manual', risk_category: 'abnormal', risk_score: 82.50,
+      violation_types: ['price_manipulation', 'over_limit'], violation_reasons: ['卖出数量过大，可能涉及市场操纵', '超限交易'],
+      reviewer_id: 3, reviewer_name: 'auditor', review_opinion: '卖出数量过大，可能涉及市场操纵，拒绝交易，退回修正',
+      review_at: new Date('2026-06-12T11:20:00'), timeout_flag: false, timeout_reminded_at: null,
+      order_status: 'failed', compliance_deadline: deadlineNormal,
+      synced_to_trade: true, synced_to_customer: true,
+    },
+    {
+      audit_no: 'TCA20260621005', trade_id: 2, trade_no: 'T20260615002',
+      customer_id: 2, customer_name: '李明辉', stock_code: '601318', stock_name: '中国平安',
+      trade_type: 'buy', trade_amount: 48500.00, trade_quantity: 1000, trade_price: 48.50,
+      compliance_status: 'pending', review_type: 'auto', risk_category: 'normal', risk_score: 8.30,
+      violation_types: [], violation_reasons: [],
+      reviewer_id: null, reviewer_name: null, review_opinion: null,
+      review_at: null, timeout_flag: false, timeout_reminded_at: null,
+      order_status: 'pending', compliance_deadline: deadlineNormal,
+      synced_to_trade: false, synced_to_customer: false,
+    },
+    {
+      audit_no: 'TCA20260621006', trade_id: 5, trade_no: 'T20260614005',
+      customer_id: 2, customer_name: '李明辉', stock_code: '002594', stock_name: '比亚迪',
+      trade_type: 'buy', trade_amount: 144000.00, trade_quantity: 500, trade_price: 288.00,
+      compliance_status: 'auto_approved', review_type: 'auto', risk_category: 'normal', risk_score: 15.60,
+      violation_types: [], violation_reasons: [],
+      reviewer_id: null, reviewer_name: null, review_opinion: '普通交易自动审核通过',
+      review_at: new Date('2026-06-14T10:00:30'), timeout_flag: false, timeout_reminded_at: null,
+      order_status: 'dealed', compliance_deadline: deadlineNormal,
+      synced_to_trade: true, synced_to_customer: true,
+    },
+    {
+      audit_no: 'TCA20260621007', trade_id: 3, trade_no: 'T20260615003',
+      customer_id: 1, customer_name: '王建国', stock_code: '000858', stock_name: '五粮液',
+      trade_type: 'sell', trade_amount: 31400.00, trade_quantity: 200, trade_price: 157.00,
+      compliance_status: 'auto_approved', review_type: 'auto', risk_category: 'normal', risk_score: 5.20,
+      violation_types: [], violation_reasons: [],
+      reviewer_id: null, reviewer_name: null, review_opinion: '普通交易自动审核通过',
+      review_at: new Date('2026-06-15T11:05:40'), timeout_flag: false, timeout_reminded_at: null,
+      order_status: 'dealed', compliance_deadline: deadlineNormal,
+      synced_to_trade: true, synced_to_customer: true,
+    },
+    {
+      audit_no: 'TCA20260621008', trade_id: 8, trade_no: 'T20260613008',
+      customer_id: 1, customer_name: '王建国', stock_code: '600519', stock_name: '贵州茅台',
+      trade_type: 'sell', trade_amount: 84500.00, trade_quantity: 50, trade_price: 1690.00,
+      compliance_status: 'manual_pending', review_type: 'manual', risk_category: 'abnormal', risk_score: 72.30,
+      violation_types: ['suspicious_pattern'], violation_reasons: ['频繁小额卖出同一股票，疑似分仓操作'],
+      reviewer_id: null, reviewer_name: null, review_opinion: null,
+      review_at: null, timeout_flag: false, timeout_reminded_at: null,
+      order_status: 'pending', compliance_deadline: deadlineNormal,
+      synced_to_trade: false, synced_to_customer: false,
+    },
+  ];
+
+  await TradeComplianceAudit.bulkCreate(audits as any);
+  console.log(`Seeded ${audits.length} trade compliance audits`);
+
+  const auditLogs = [
+    { audit_id: 1, audit_no: 'TCA20260621001', action: 'auto_approve', operator_id: 0, operator_name: 'system', detail: { category: 'normal', reviewType: 'auto', autoDecision: true }, consistency_check: { passed: true, score: 100, issues: [], complianceRuleVersion: 'v2.1' }, created_at: new Date('2026-06-15T09:35:05') },
+    { audit_id: 2, audit_no: 'TCA20260621002', action: 'manual_review', operator_id: 0, operator_name: 'system', detail: { category: 'large_amount', reviewType: 'manual' }, created_at: new Date('2026-06-15T13:20:30') },
+    { audit_id: 2, audit_no: 'TCA20260621002', action: 'timeout_remind', operator_id: 0, operator_name: 'system', detail: { message: '超时未审核订单自动置顶提醒' }, created_at: new Date(now.getTime() - 30 * 60000) },
+    { audit_id: 3, audit_no: 'TCA20260621003', action: 'manual_review', operator_id: 0, operator_name: 'system', detail: { category: 'large_amount', reviewType: 'manual' }, created_at: new Date('2026-06-14T14:00:00') },
+    { audit_id: 3, audit_no: 'TCA20260621003', action: 'pre_check', operator_id: 3, operator_name: 'auditor', detail: { canReview: true, permissionValid: true, orderStatusValid: true, timelinessValid: true, requireManualReview: true, warnings: ['大额交易需人工审核'] }, created_at: new Date('2026-06-14T14:30:00') },
+    { audit_id: 3, audit_no: 'TCA20260621003', action: 'approve', operator_id: 3, operator_name: 'auditor', detail: { opinion: '机构客户大额买入，已通过审核', fromStatus: 'manual_pending' }, consistency_check: { passed: true, score: 95, issues: [{ field: 'risk_category', rule: 'LARGE_AMOUNT_APPROVE', message: '大额交易通过审核需额外确认', severity: 'medium', suggestion: '请确认已充分审核大额交易细节' }], complianceRuleVersion: 'v2.1' }, created_at: new Date('2026-06-14T14:30:05') },
+    { audit_id: 4, audit_no: 'TCA20260621004', action: 'manual_review', operator_id: 0, operator_name: 'system', detail: { category: 'abnormal', reviewType: 'manual' }, created_at: new Date('2026-06-12T11:00:30') },
+    { audit_id: 4, audit_no: 'TCA20260621004', action: 'reject', operator_id: 3, operator_name: 'auditor', detail: { opinion: '卖出数量过大，可能涉及市场操纵，拒绝交易，退回修正', violationTypes: ['price_manipulation', 'over_limit'], violationReasons: ['卖出数量过大，可能涉及市场操纵', '超限交易'] }, consistency_check: { passed: true, score: 100, issues: [], complianceRuleVersion: 'v2.1' }, created_at: new Date('2026-06-12T11:20:00') },
+    { audit_id: 8, audit_no: 'TCA20260621008', action: 'manual_review', operator_id: 0, operator_name: 'system', detail: { category: 'abnormal', reviewType: 'manual' }, created_at: new Date('2026-06-13T15:00:30') },
+  ];
+
+  await TradeComplianceAuditLog.bulkCreate(auditLogs as any);
+  console.log(`Seeded ${auditLogs.length} trade compliance audit logs`);
+}
+
 async function seed() {
   try {
     await sequelize.sync({ force: false, alter: true });
@@ -816,6 +934,8 @@ async function seed() {
     console.log('Seeded 10 operation logs');
 
     await seedQuoteAuditTrails();
+
+    await seedTradeComplianceAudits();
 
     console.log('All seed data inserted successfully');
     process.exit(0);

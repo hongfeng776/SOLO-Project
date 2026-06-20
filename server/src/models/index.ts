@@ -19,6 +19,8 @@ import QuoteThreshold from './QuoteThreshold';
 import QuoteThresholdHistory from './QuoteThresholdHistory';
 import ReplaySession from './ReplaySession';
 import ReplayConclusion from './ReplayConclusion';
+import TradeComplianceAudit from './TradeComplianceAudit';
+import TradeComplianceAuditLog from './TradeComplianceAuditLog';
 
 const db = {
   sequelize,
@@ -42,6 +44,8 @@ const db = {
   QuoteThresholdHistory,
   ReplaySession,
   ReplayConclusion,
+  TradeComplianceAudit,
+  TradeComplianceAuditLog,
 };
 
 const setupAssociations = () => {
@@ -53,6 +57,8 @@ const setupAssociations = () => {
   QuoteThresholdHistory.belongsTo(QuoteThreshold, { foreignKey: 'threshold_id', as: 'threshold' });
   ReplaySession.hasMany(ReplayConclusion, { as: 'conclusions', foreignKey: 'session_id' });
   ReplayConclusion.belongsTo(ReplaySession, { foreignKey: 'session_id', as: 'session' });
+  TradeComplianceAudit.hasMany(TradeComplianceAuditLog, { as: 'logs', foreignKey: 'audit_id' });
+  TradeComplianceAuditLog.belongsTo(TradeComplianceAudit, { foreignKey: 'audit_id', as: 'audit' });
 };
 
 setupAssociations();

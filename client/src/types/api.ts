@@ -1844,3 +1844,141 @@ export interface IReplayDashboard {
   recordCount: number
 }
 
+import {
+  TradeComplianceStatus,
+  TradeReviewType,
+  TradeRiskCategory,
+  ViolationType,
+  AuditLogAction,
+} from '@/enums'
+
+export interface ITradeComplianceAudit {
+  id: number
+  auditNo: string
+  tradeId: number
+  tradeNo: string
+  customerId: number
+  customerName: string
+  stockCode: string
+  stockName: string
+  tradeType: string
+  tradeAmount: number
+  tradeQuantity: number
+  tradePrice: number
+  complianceStatus: TradeComplianceStatus
+  complianceStatusLabel?: string
+  reviewType: TradeReviewType
+  reviewTypeLabel?: string
+  riskCategory: TradeRiskCategory
+  riskCategoryLabel?: string
+  riskScore: number
+  violationTypes: ViolationType[]
+  violationTypeLabels?: string[]
+  violationReasons: string[]
+  reviewerId: number | null
+  reviewerName: string | null
+  reviewOpinion: string
+  reviewAt: string | null
+  timeoutFlag: boolean
+  timeoutRemindedAt: string | null
+  orderStatus: string
+  complianceDeadline: string
+  archiveId: number | null
+  syncedToTrade: boolean
+  syncedToCustomer: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ITradeCompliancePreCheckResult {
+  canReview: boolean
+  permissionValid: boolean
+  orderStatusValid: boolean
+  timelinessValid: boolean
+  autoReviewable: boolean
+  requireManualReview: boolean
+  duplicateReviewBlocked: boolean
+  duplicateReason?: string
+  timeoutMinutes?: number
+  timeRemainingMinutes?: number
+  messages: string[]
+  warnings: string[]
+}
+
+export interface ITradeComplianceAuditLog {
+  id: number
+  auditId: number
+  auditNo: string
+  action: AuditLogAction
+  actionLabel?: string
+  operatorId: number
+  operatorName: string
+  detail: Record<string, any>
+  consistencyCheck?: ITradeConsistencyCheckResult
+  violationIntercepted?: boolean
+  violationMessage?: string
+  createdAt: string
+}
+
+export interface ITradeConsistencyCheckResult {
+  passed: boolean
+  score: number
+  issues: Array<{
+    field: string
+    rule: string
+    message: string
+    severity: 'high' | 'medium' | 'low'
+    suggestion?: string
+  }>
+  complianceRuleVersion: string
+  checkedAt: string
+}
+
+export interface ITradeComplianceBatchParams {
+  ids: number[]
+  auditStatus: 'approved' | 'rejected'
+  reviewOpinion: string
+  violationTypes?: ViolationType[]
+  violationReasons?: string[]
+}
+
+export interface ITradeComplianceBatchPreview {
+  totalSelected: number
+  byAmount: { range: string; count: number }
+  byTradeType: Record<string, number>
+  byRiskCategory: Record<TradeRiskCategory, number>
+  canBatchApprove: number
+  canBatchReject: number
+  blockedItems: Array<{ id: number; tradeNo: string; reason: string }>
+}
+
+export interface ITradeComplianceListParams {
+  page: number
+  pageSize: number
+  complianceStatus?: TradeComplianceStatus
+  riskCategory?: TradeRiskCategory
+  reviewType?: TradeReviewType
+  tradeType?: string
+  keyword?: string
+  timeoutOnly?: boolean
+  startDate?: string
+  endDate?: string
+  minAmount?: number
+  maxAmount?: number
+  violationType?: ViolationType
+}
+
+export interface ITradeComplianceStats {
+  totalPending: number
+  totalAutoApproved: number
+  totalManualPending: number
+  totalApproved: number
+  totalRejected: number
+  totalReturned: number
+  timeoutCount: number
+  avgReviewMinutes: number
+  complianceRate: number
+  byRiskCategory: Record<TradeRiskCategory, number>
+  byViolationType: Record<ViolationType, number>
+}
+

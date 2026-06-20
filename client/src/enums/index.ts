@@ -272,3 +272,48 @@ export enum RuleOptimizationCategory {
   CUSTOMER_SEGMENT_SPECIFIC = 'customer_segment_specific',
 }
 
+export enum TradeComplianceStatus {
+  PENDING = 'pending',
+  AUTO_APPROVED = 'auto_approved',
+  MANUAL_PENDING = 'manual_pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  RETURNED = 'returned',
+}
+
+export enum TradeReviewType {
+  AUTO = 'auto',
+  MANUAL = 'manual',
+}
+
+export enum TradeRiskCategory {
+  NORMAL = 'normal',
+  LARGE_AMOUNT = 'large_amount',
+  ABNORMAL = 'abnormal',
+}
+
+export enum ViolationType {
+  OVER_LIMIT = 'over_limit',
+  FREQUENT_TRADE = 'frequent_trade',
+  SUSPICIOUS_PATTERN = 'suspicious_pattern',
+  BLACKLIST_STOCK = 'blacklist_stock',
+  RISK_CUSTOMER = 'risk_customer',
+  PRICE_MANIPULATION = 'price_manipulation',
+  UNAUTHORIZED_TRADE = 'unauthorized_trade',
+  OTHER = 'other',
+}
+
+export enum AuditLogAction {
+  PRE_CHECK = 'pre_check',
+  AUTO_APPROVE = 'auto_approve',
+  MANUAL_REVIEW = 'manual_review',
+  APPROVE = 'approve',
+  REJECT = 'reject',
+  RETURN = 'return',
+  TIMEOUT_REMIND = 'timeout_remind',
+  BATCH_APPROVE = 'batch_approve',
+  BATCH_REJECT = 'batch_reject',
+  CONSISTENCY_CHECK = 'consistency_check',
+  VIOLATION_INTERCEPT = 'violation_intercept',
+}
+

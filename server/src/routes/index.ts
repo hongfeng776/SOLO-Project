@@ -15,6 +15,7 @@ import operationLogRoutes from './operationLog';
 import dashboardRoutes from './dashboard';
 import thresholdRoutes from './threshold';
 import replayRoutes from './replay';
+import tradeComplianceAuditRoutes from './tradeComplianceAudit';
 
 const router = Router();
 
@@ -34,5 +35,6 @@ router.use('/operation-logs', operationLogRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/thresholds', thresholdRoutes);
 router.use('/replay', replayRoutes);
+router.use('/trade-compliance-audits', tradeComplianceAuditRoutes);
 
 export default router;

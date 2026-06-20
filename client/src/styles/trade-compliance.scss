@@ -1,0 +1,251 @@
+@use '@/styles/variables' as *;
+
+.trade-compliance-page {
+  .timeout-row {
+    background-color: rgba(245, 108, 108, 0.06) !important;
+
+    td {
+      background-color: rgba(245, 108, 108, 0.06) !important;
+    }
+  }
+
+  .returned-row {
+    td {
+      color: #E67E22;
+    }
+  }
+
+  .el-table {
+    .el-table__row:nth-child(even) td {
+      background-color: #FAFBFD;
+    }
+  }
+
+  .status-cell {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    &.timeout-pulse {
+      animation: pulse-timeout 2s ease-in-out infinite;
+    }
+
+    .timeout-tag {
+      font-size: 10px;
+      animation: pulse-timeout 1.5s ease-in-out infinite;
+    }
+  }
+
+  @keyframes pulse-timeout {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  .risk-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .amount-cell {
+    &.amount-large {
+      color: #D93025;
+      font-weight: 600;
+    }
+  }
+
+  .review-auto {
+    color: #67C23A;
+    font-weight: 500;
+  }
+
+  .review-manual {
+    color: #409EFF;
+    font-weight: 500;
+  }
+
+  .action-btn {
+    transition: all 0.15s;
+
+    &--approve:active {
+      transform: translateY(1px);
+      color: #0F9B58 !important;
+    }
+
+    &--reject:active {
+      transform: translateY(1px);
+      color: #B52A1C !important;
+    }
+
+    &--trail:active {
+      transform: translateY(1px);
+    }
+  }
+
+  .focus-highlight-input {
+    :deep(.el-input__wrapper),
+    :deep(.el-textarea__inner) {
+      transition: border-color 0.2s, box-shadow 0.2s;
+
+      &:focus,
+      &.is-focus {
+        border-color: $fin-primary;
+        box-shadow: 0 0 0 2px rgba(26, 58, 92, 0.15);
+      }
+    }
+  }
+
+  .precheck-result {
+    margin-bottom: 16px;
+    padding: 12px;
+    border-radius: 4px;
+    background: #FDF6EC;
+
+    .precheck-warnings {
+      .warning-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+        font-size: 13px;
+        color: #E6A23C;
+      }
+    }
+
+    .time-remaining {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #409EFF;
+      margin-top: 8px;
+    }
+  }
+
+  .batch-preview {
+    margin-bottom: 16px;
+
+    .preview-desc {
+      margin-bottom: 16px;
+    }
+
+    .batch-distribution {
+      h4 {
+        font-size: 14px;
+        color: $fin-text-primary;
+        margin: 0 0 8px;
+      }
+
+      .dist-item {
+        padding: 8px 12px;
+        background: #F8FAFC;
+        border-radius: 4px;
+
+        .dist-label {
+          font-weight: 500;
+          font-size: 12px;
+          color: $fin-text-secondary;
+          display: block;
+          margin-bottom: 4px;
+        }
+
+        .dist-row {
+          display: flex;
+          justify-content: space-between;
+          font-size: 12px;
+          color: $fin-text-regular;
+          padding: 2px 0;
+        }
+      }
+    }
+
+    .blocked-list {
+      margin-top: 12px;
+
+      .blocked-item {
+        font-size: 12px;
+        padding: 2px 0;
+      }
+    }
+  }
+
+  .audit-trail {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 8px;
+
+    .empty-trail {
+      text-align: center;
+      color: $fin-text-secondary;
+      padding: 40px 0;
+    }
+
+    .log-card {
+      margin-bottom: 4px;
+
+      &.violation-card {
+        border-left: 3px solid #D93025;
+      }
+
+      .log-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+
+        .action-badge {
+          display: inline-block;
+          padding: 2px 10px;
+          border-radius: 10px;
+          font-size: 12px;
+          font-weight: 500;
+        }
+
+        .operator {
+          font-size: 12px;
+          color: $fin-text-secondary;
+        }
+
+        .violation-tag {
+          margin-left: auto;
+        }
+      }
+
+      .consistency-section {
+        margin-top: 8px;
+
+        .consistency-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 2px 10px;
+          border-radius: 10px;
+          font-size: 12px;
+          cursor: pointer;
+
+          &.passed {
+            background: rgba(39, 174, 96, 0.12);
+            color: #27AE60;
+          }
+
+          &.failed {
+            background: rgba(192, 57, 43, 0.12);
+            color: #C0392B;
+          }
+        }
+      }
+
+      .violation-message {
+        margin-top: 8px;
+      }
+    }
+  }
+}
+
+.consistency-tooltip {
+  max-width: 350px;
+  font-size: 12px;
+  line-height: 1.6;
+}

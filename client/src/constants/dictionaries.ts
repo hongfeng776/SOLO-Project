@@ -1027,3 +1027,115 @@ export const REPLAY_FILTER_HINTS: string[] = [
   '可在【筛选条件】弹窗中配置多维度嵌套组合，支持最多4层AND/OR逻辑',
 ]
 
+import {
+  TradeComplianceStatus,
+  TradeReviewType,
+  TradeRiskCategory,
+  ViolationType,
+  AuditLogAction,
+} from '@/enums'
+
+export const TRADE_COMPLIANCE_STATUS_LABELS: Record<TradeComplianceStatus, string> = {
+  [TradeComplianceStatus.PENDING]: '待审核',
+  [TradeComplianceStatus.AUTO_APPROVED]: '自动通过',
+  [TradeComplianceStatus.MANUAL_PENDING]: '待人工审核',
+  [TradeComplianceStatus.APPROVED]: '审核通过',
+  [TradeComplianceStatus.REJECTED]: '审核驳回',
+  [TradeComplianceStatus.RETURNED]: '退回修正',
+}
+
+export const TRADE_COMPLIANCE_STATUS_COLORS: Record<TradeComplianceStatus, string> = {
+  [TradeComplianceStatus.PENDING]: '#E6A23C',
+  [TradeComplianceStatus.AUTO_APPROVED]: '#67C23A',
+  [TradeComplianceStatus.MANUAL_PENDING]: '#409EFF',
+  [TradeComplianceStatus.APPROVED]: '#27AE60',
+  [TradeComplianceStatus.REJECTED]: '#D93025',
+  [TradeComplianceStatus.RETURNED]: '#E67E22',
+}
+
+export const TRADE_COMPLIANCE_STATUS_TAG_TYPES: Record<TradeComplianceStatus, string> = {
+  [TradeComplianceStatus.PENDING]: 'warning',
+  [TradeComplianceStatus.AUTO_APPROVED]: 'success',
+  [TradeComplianceStatus.MANUAL_PENDING]: 'primary',
+  [TradeComplianceStatus.APPROVED]: 'success',
+  [TradeComplianceStatus.REJECTED]: 'danger',
+  [TradeComplianceStatus.RETURNED]: 'warning',
+}
+
+export const TRADE_REVIEW_TYPE_LABELS: Record<TradeReviewType, string> = {
+  [TradeReviewType.AUTO]: '自动审核',
+  [TradeReviewType.MANUAL]: '人工审核',
+}
+
+export const TRADE_RISK_CATEGORY_LABELS: Record<TradeRiskCategory, string> = {
+  [TradeRiskCategory.NORMAL]: '普通交易',
+  [TradeRiskCategory.LARGE_AMOUNT]: '大额交易',
+  [TradeRiskCategory.ABNORMAL]: '异常交易',
+}
+
+export const TRADE_RISK_CATEGORY_COLORS: Record<TradeRiskCategory, string> = {
+  [TradeRiskCategory.NORMAL]: '#27AE60',
+  [TradeRiskCategory.LARGE_AMOUNT]: '#E67E22',
+  [TradeRiskCategory.ABNORMAL]: '#C0392B',
+}
+
+export const TRADE_RISK_CATEGORY_BG_COLORS: Record<TradeRiskCategory, string> = {
+  [TradeRiskCategory.NORMAL]: 'rgba(39,174,96,0.1)',
+  [TradeRiskCategory.LARGE_AMOUNT]: 'rgba(230,126,34,0.1)',
+  [TradeRiskCategory.ABNORMAL]: 'rgba(192,57,43,0.12)',
+}
+
+export const VIOLATION_TYPE_LABELS: Record<ViolationType, string> = {
+  [ViolationType.OVER_LIMIT]: '超限交易',
+  [ViolationType.FREQUENT_TRADE]: '频繁交易',
+  [ViolationType.SUSPICIOUS_PATTERN]: '可疑模式',
+  [ViolationType.BLACKLIST_STOCK]: '黑名单股票',
+  [ViolationType.RISK_CUSTOMER]: '风险客户',
+  [ViolationType.PRICE_MANIPULATION]: '价格操纵',
+  [ViolationType.UNAUTHORIZED_TRADE]: '未授权交易',
+  [ViolationType.OTHER]: '其他违规',
+}
+
+export const VIOLATION_TYPE_COLORS: Record<ViolationType, string> = {
+  [ViolationType.OVER_LIMIT]: '#E67E22',
+  [ViolationType.FREQUENT_TRADE]: '#2980B9',
+  [ViolationType.SUSPICIOUS_PATTERN]: '#8E44AD',
+  [ViolationType.BLACKLIST_STOCK]: '#606266',
+  [ViolationType.RISK_CUSTOMER]: '#C0392B',
+  [ViolationType.PRICE_MANIPULATION]: '#D93025',
+  [ViolationType.UNAUTHORIZED_TRADE]: '#C0392B',
+  [ViolationType.OTHER]: '#95A5A6',
+}
+
+export const AUDIT_LOG_ACTION_LABELS: Record<AuditLogAction, string> = {
+  [AuditLogAction.PRE_CHECK]: '前置校验',
+  [AuditLogAction.AUTO_APPROVE]: '自动通过',
+  [AuditLogAction.MANUAL_REVIEW]: '人工审核',
+  [AuditLogAction.APPROVE]: '审核通过',
+  [AuditLogAction.REJECT]: '审核驳回',
+  [AuditLogAction.RETURN]: '退回修正',
+  [AuditLogAction.TIMEOUT_REMIND]: '超时提醒',
+  [AuditLogAction.BATCH_APPROVE]: '批量通过',
+  [AuditLogAction.BATCH_REJECT]: '批量驳回',
+  [AuditLogAction.CONSISTENCY_CHECK]: '一致性校验',
+  [AuditLogAction.VIOLATION_INTERCEPT]: '违规拦截',
+}
+
+export const AUDIT_LOG_ACTION_COLORS: Record<AuditLogAction, string> = {
+  [AuditLogAction.PRE_CHECK]: '#2980B9',
+  [AuditLogAction.AUTO_APPROVE]: '#27AE60',
+  [AuditLogAction.MANUAL_REVIEW]: '#8E44AD',
+  [AuditLogAction.APPROVE]: '#27AE60',
+  [AuditLogAction.REJECT]: '#C0392B',
+  [AuditLogAction.RETURN]: '#E67E22',
+  [AuditLogAction.TIMEOUT_REMIND]: '#F39C12',
+  [AuditLogAction.BATCH_APPROVE]: '#27AE60',
+  [AuditLogAction.BATCH_REJECT]: '#C0392B',
+  [AuditLogAction.CONSISTENCY_CHECK]: '#16A085',
+  [AuditLogAction.VIOLATION_INTERCEPT]: '#D93025',
+}
+
+export const TRADE_COMPLIANCE_TIMEOUT_THRESHOLD_MINUTES = 120
+
+export const TRADE_COMPLIANCE_LARGE_AMOUNT_THRESHOLD = 500000
+
