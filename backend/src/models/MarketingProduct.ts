@@ -93,6 +93,51 @@ export class MarketingProduct extends Model<MarketingProduct> {
   })
   status?: number;
 
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '准入状态：0-报名审核中 1-准入通过 2-准入驳回 3-活动下架',
+  })
+  admission_status?: number;
+
+  @Column({
+    type: DataType.BIGINT.UNSIGNED,
+    comment: '审核人ID',
+  })
+  audit_user_id?: number;
+
+  @Column({
+    type: DataType.DATE,
+    comment: '审核时间',
+  })
+  audit_time?: Date;
+
+  @Column({
+    type: DataType.STRING(500),
+    comment: '审核备注',
+  })
+  audit_remark?: string;
+
+  @Column({
+    type: DataType.DATE,
+    comment: '报名时间',
+  })
+  apply_time?: Date;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 1,
+    comment: '商品合规评级快照：1-A 2-B 3-C 4-D',
+  })
+  compliance_rating?: number;
+
+  @Column({
+    type: DataType.INTEGER.UNSIGNED,
+    defaultValue: 100,
+    comment: '商家信用分快照',
+  })
+  merchant_credit_score?: number;
+
   @CreatedAt
   @Column({
     type: DataType.DATE,

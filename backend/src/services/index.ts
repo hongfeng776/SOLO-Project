@@ -62,6 +62,9 @@ import SettleTraceService, { settleTraceService } from './SettleTraceService';
 import MarketingValidateService, { marketingValidateService } from './MarketingValidateService';
 import MarketingBatchService, { marketingBatchService } from './MarketingBatchService';
 import MarketingTraceService, { marketingTraceService } from './MarketingTraceService';
+import MarketingProductAdmissionService, { marketingProductAdmissionService } from './MarketingProductAdmissionService';
+import MarketingProductBatchService, { marketingProductBatchService } from './MarketingProductBatchService';
+import MarketingProductTraceService, { marketingProductTraceService } from './MarketingProductTraceService';
 
 export {
   AfterSaleAuditService,
@@ -128,6 +131,9 @@ export {
   MarketingValidateService,
   MarketingBatchService,
   MarketingTraceService,
+  MarketingProductAdmissionService,
+  MarketingProductBatchService,
+  MarketingProductTraceService,
 };
 
 export const services: Record<string, any> = {
@@ -195,6 +201,9 @@ export const services: Record<string, any> = {
   marketingValidateService,
   marketingBatchService,
   marketingTraceService,
+  marketingProductAdmissionService,
+  marketingProductBatchService,
+  marketingProductTraceService,
 };
 
 export default services;

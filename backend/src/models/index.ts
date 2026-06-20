@@ -67,6 +67,8 @@ import { MarketingMutexRule } from './MarketingMutexRule';
 import { MarketingCategory } from './MarketingCategory';
 import { MarketingMerchantQualification } from './MarketingMerchantQualification';
 import { MarketingDiscountThreshold } from './MarketingDiscountThreshold';
+import { MarketingProductAdmissionLog } from './MarketingProductAdmissionLog';
+import { MarketingAdmissionRule } from './MarketingAdmissionRule';
 
 export {
   Admin,
@@ -138,6 +140,8 @@ export {
   MarketingCategory,
   MarketingMerchantQualification,
   MarketingDiscountThreshold,
+  MarketingProductAdmissionLog,
+  MarketingAdmissionRule,
 };
 
 export const models = {
@@ -210,6 +214,8 @@ export const models = {
   MarketingCategory,
   MarketingMerchantQualification,
   MarketingDiscountThreshold,
+  MarketingProductAdmissionLog,
+  MarketingAdmissionRule,
 };
 
 export default models;

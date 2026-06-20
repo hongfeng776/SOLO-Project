@@ -393,7 +393,16 @@ export interface MarketingProduct {
   stock?: number
   soldCount?: number
   status?: number
+  admissionStatus?: number
+  auditUserId?: number
+  auditTime?: string
+  auditRemark?: string
+  applyTime?: string
+  complianceRating?: number
+  merchantCreditScore?: number
+  sortOrder?: number
   createdAt: string
+  updatedAt?: string
 }
 
 export interface MarketingTraceData {
@@ -1038,5 +1047,126 @@ export interface AuditCondition {
   category: 'info_complete' | 'qualification' | 'category_compliance' | 'image_text_compliance'
   passed: boolean
   items: AuditCheckItem[]
+}
+
+export enum MarketingProductAdmissionStatus {
+  PENDING = 0,
+  APPROVED = 1,
+  REJECTED = 2,
+  OFFLINE = 3
+}
+
+export const MarketingProductAdmissionStatusMap: Record<number, { label: string; type: TagType }> = {
+  [MarketingProductAdmissionStatus.PENDING]: { label: '审核中', type: 'warning' },
+  [MarketingProductAdmissionStatus.APPROVED]: { label: '准入通过', type: 'success' },
+  [MarketingProductAdmissionStatus.REJECTED]: { label: '准入驳回', type: 'danger' },
+  [MarketingProductAdmissionStatus.OFFLINE]: { label: '活动下架', type: 'info' }
+}
+
+export interface AdmissionValidateError {
+  field: string
+  message: string
+  ruleType: string
+  level: 'error' | 'warning'
+}
+
+export interface AdmissionValidateResult {
+  passed: boolean
+  errors: AdmissionValidateError[]
+  warnings: AdmissionValidateError[]
+  matchedRules: number[]
+  ruleMatchDetails: AdmissionRuleMatchDetail[]
+}
+
+export interface AdmissionRuleMatchDetail {
+  ruleId: number
+  ruleName: string
+  ruleType: string
+  passed: boolean
+  message: string
+}
+
+export interface MarketingProductAdmissionLog {
+  id: number
+  marketingProductId: number
+  marketingId: number
+  goodsId: number
+  operatorId?: number
+  operatorType: number
+  operatorName?: string
+  action: string
+  oldStatus?: number
+  newStatus?: number
+  fieldName?: string
+  oldValue?: string
+  newValue?: string
+  remark?: string
+  ruleMatchDetail?: AdmissionRuleMatchDetail[]
+  createdAt: string
+}
+
+export interface AdmissionTraceData {
+  basicInfo: MarketingProduct | null
+  goodsInfo: any
+  marketingInfo: any
+  merchantInfo: any
+  admissionLogs: MarketingProductAdmissionLog[]
+  ruleMatchDetails: AdmissionRuleMatchDetail[]
+  applyInfo: {
+    applyTime?: string
+    applySource?: string
+    applyOperator?: string
+  }
+  auditInfo: {
+    auditUserId?: number
+    auditUserName?: string
+    auditTime?: string
+    auditRemark?: string
+    auditStatus?: number
+    auditLogs: MarketingProductAdmissionLog[]
+  }
+  activityRecords: any[]
+  duplicateCheck: DuplicateApplyCheckResult
+  crossCategoryCheck: CrossCategoryCheckResult
+}
+
+export interface AdmissionRule {
+  id: number
+  ruleName: string
+  ruleType: string
+  description: string
+  sortOrder: number
+}
+
+export interface DuplicateApplyCheckResult {
+  isDuplicate: boolean
+  duplicateGoods: { goodsId: number; goodsName: string; admissionStatus: number }[]
+  message: string
+}
+
+export interface CrossCategoryCheckResult {
+  isViolation: boolean
+  violationGoods: { goodsId: number; goodsName: string; categoryId?: number }[]
+  message: string
+  marketingCategoryIds?: string
+}
+
+export interface ApplyResult {
+  goodsId: number
+  passed: boolean
+  message: string
+}
+
+export interface BatchApplyResult {
+  success: number
+  failed: number
+  results: ApplyResult[]
+}
+
+export interface BatchImportResult {
+  total: number
+  success: number
+  failed: number
+  results: { goodsId: number; goodsName?: string; success: boolean; message: string }[]
 }
 

@@ -8,7 +8,15 @@ import type {
   MarketingProduct,
   MarketingTraceData,
   DuplicateCheckResult,
-  Marketing
+  Marketing,
+  AdmissionValidateResult,
+  AdmissionTraceData,
+  AdmissionRule,
+  DuplicateApplyCheckResult,
+  CrossCategoryCheckResult,
+  BatchApplyResult,
+  BatchImportResult,
+  MarketingProductAdmissionLog
 } from '@/types/business'
 
 export type { Marketing }
@@ -123,4 +131,132 @@ export function checkDuplicateConfig(data: {
   excludeId?: number
 }): Promise<ApiResponse<DuplicateCheckResult>> {
   return request.post<DuplicateCheckResult>('/marketing/trace/check-duplicate', data)
+}
+
+export interface MarketingProductQueryParams extends PageParams {
+  marketingId?: number
+  admissionStatus?: number
+  keyword?: string
+  categoryId?: number
+  merchantId?: number
+  minStock?: number
+  maxStock?: number
+  isAbnormal?: boolean
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
+}
+
+export function getMarketingProductList(params: MarketingProductQueryParams): Promise<ApiResponse<PageResult<MarketingProduct>>> {
+  return request.get<PageResult<MarketingProduct>>('/marketing/product/list', { params })
+}
+
+export function validateApplyProduct(marketingId: number, goodsId: number): Promise<ApiResponse<AdmissionValidateResult>> {
+  return request.post<AdmissionValidateResult>('/marketing/product/validate/apply', { marketingId, goodsId })
+}
+
+export function applyProducts(data: {
+  marketingId: number
+  goodsIds: number[]
+  activityPrice?: number
+  stock?: number
+  sortOrder?: number
+}): Promise<ApiResponse<BatchApplyResult>> {
+  return request.post<BatchApplyResult>('/marketing/product/apply', data)
+}
+
+export function auditPassProduct(id: number, remark?: string): Promise<ApiResponse<MarketingProduct>> {
+  return request.post<MarketingProduct>(`/marketing/product/audit-pass/${id}`, { remark })
+}
+
+export function auditRejectProduct(id: number, remark: string): Promise<ApiResponse<MarketingProduct>> {
+  return request.post<MarketingProduct>(`/marketing/product/audit-reject/${id}`, { remark })
+}
+
+export function offlineProduct(id: number, remark?: string): Promise<ApiResponse<MarketingProduct>> {
+  return request.post<MarketingProduct>(`/marketing/product/offline/${id}`, { remark })
+}
+
+export function onlineProduct(id: number, remark?: string): Promise<ApiResponse<MarketingProduct>> {
+  return request.post<MarketingProduct>(`/marketing/product/online/${id}`, { remark })
+}
+
+export function removeProduct(id: number, remark?: string): Promise<ApiResponse<null>> {
+  return request.delete<null>(`/marketing/product/remove/${id}`, { data: { remark } })
+}
+
+export function batchAuditPassProducts(ids: number[], remark?: string): Promise<ApiResponse<BatchOperationResult>> {
+  return request.post<BatchOperationResult>('/marketing/product/batch/audit-pass', { ids, remark })
+}
+
+export function batchAuditRejectProducts(ids: number[], remark: string): Promise<ApiResponse<BatchOperationResult>> {
+  return request.post<BatchOperationResult>('/marketing/product/batch/audit-reject', { ids, remark })
+}
+
+export function batchOfflineProducts(ids: number[], remark?: string): Promise<ApiResponse<BatchOperationResult>> {
+  return request.post<BatchOperationResult>('/marketing/product/batch/offline', { ids, remark })
+}
+
+export function batchOnlineProducts(ids: number[], remark?: string): Promise<ApiResponse<BatchOperationResult>> {
+  return request.post<BatchOperationResult>('/marketing/product/batch/online', { ids, remark })
+}
+
+export function batchRemoveProducts(ids: number[], remark?: string): Promise<ApiResponse<BatchOperationResult>> {
+  return request.post<BatchOperationResult>('/marketing/product/batch/remove', { ids, remark })
+}
+
+export function batchFilterOperateProducts(data: {
+  marketingId: number
+  operation: 'audit_pass' | 'audit_reject' | 'offline' | 'online' | 'remove'
+  remark?: string
+  admissionStatus?: number
+  keyword?: string
+  categoryId?: number
+  merchantId?: number
+  minStock?: number
+  maxStock?: number
+  isAbnormal?: boolean
+}): Promise<ApiResponse<BatchOperationResult>> {
+  return request.post<BatchOperationResult>('/marketing/product/batch/filter-operate', data)
+}
+
+export function batchImportApplyProducts(data: {
+  marketingId: number
+  goodsList: {
+    goodsId: number
+    goodsName?: string
+    activityPrice?: number
+    stock?: number
+    sortOrder?: number
+  }[]
+}): Promise<ApiResponse<BatchImportResult>> {
+  return request.post<BatchImportResult>('/marketing/product/batch/import-apply', data)
+}
+
+export function batchAddCompliantGoods(data: {
+  marketingId: number
+  categoryIds?: number[]
+  merchantIds?: number[]
+  limit?: number
+}): Promise<ApiResponse<BatchImportResult>> {
+  return request.post<BatchImportResult>('/marketing/product/batch/add-compliant', data)
+}
+
+export function getProductTraceData(id: number): Promise<ApiResponse<AdmissionTraceData>> {
+  return request.get<AdmissionTraceData>(`/marketing/product/trace/${id}`)
+}
+
+export function getProductAdmissionLogs(id: number, params?: PageParams): Promise<ApiResponse<PageResult<MarketingProductAdmissionLog>>> {
+  return request.get<PageResult<MarketingProductAdmissionLog>>(`/marketing/product/logs/${id}`, { params })
+}
+
+export function checkDuplicateApply(marketingId: number, goodsIds: number[]): Promise<ApiResponse<DuplicateApplyCheckResult>> {
+  return request.post<DuplicateApplyCheckResult>('/marketing/product/check-duplicate', { marketingId, goodsIds })
+}
+
+export function checkCrossCategoryViolation(marketingId: number, goodsIds: number[]): Promise<ApiResponse<CrossCategoryCheckResult>> {
+  return request.post<CrossCategoryCheckResult>('/marketing/product/trace/check-cross-category', { marketingId, goodsIds })
+}
+
+export function getAdmissionRules(marketingId?: number, marketingType?: number): Promise<ApiResponse<AdmissionRule[]>> {
+  return request.get<AdmissionRule[]>('/marketing/product/trace/rules', { params: { marketingId, marketingType } })
 }

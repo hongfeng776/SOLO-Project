@@ -69,6 +69,8 @@ import { MarketingMutexRuleDao } from './MarketingMutexRuleDao';
 import { MarketingCategoryDao } from './MarketingCategoryDao';
 import { MarketingMerchantQualificationDao } from './MarketingMerchantQualificationDao';
 import { MarketingDiscountThresholdDao } from './MarketingDiscountThresholdDao';
+import { MarketingProductAdmissionLogDao } from './MarketingProductAdmissionLogDao';
+import { MarketingAdmissionRuleDao } from './MarketingAdmissionRuleDao';
 
 export {
   BaseDao,
@@ -144,6 +146,8 @@ export {
   MarketingCategoryDao,
   MarketingMerchantQualificationDao,
   MarketingDiscountThresholdDao,
+  MarketingProductAdmissionLogDao,
+  MarketingAdmissionRuleDao,
 };
 
 export const daos = {
@@ -217,6 +221,8 @@ export const daos = {
   marketingCategoryDao: new MarketingCategoryDao(),
   marketingMerchantQualificationDao: new MarketingMerchantQualificationDao(),
   marketingDiscountThresholdDao: new MarketingDiscountThresholdDao(),
+  marketingProductAdmissionLogDao: new MarketingProductAdmissionLogDao(),
+  marketingAdmissionRuleDao: new MarketingAdmissionRuleDao(),
 };
 
 export default daos;

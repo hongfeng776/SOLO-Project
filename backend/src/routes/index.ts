@@ -67,6 +67,9 @@ import settleTraceRouter from './settleTrace';
 import marketingValidateRouter from './marketingValidate';
 import marketingBatchRouter from './marketingBatch';
 import marketingTraceRouter from './marketingTrace';
+import marketingProductAdmissionRouter from './marketingProductAdmission';
+import marketingProductBatchRouter from './marketingProductBatch';
+import marketingProductTraceRouter from './marketingProductTrace';
 
 const router = Router();
 
@@ -138,5 +141,8 @@ router.use('/settleTrace', settleTraceRouter);
 router.use('/marketing', marketingValidateRouter);
 router.use('/marketing', marketingBatchRouter);
 router.use('/marketing', marketingTraceRouter);
+router.use('/marketing/product', marketingProductAdmissionRouter);
+router.use('/marketing/product', marketingProductBatchRouter);
+router.use('/marketing/product', marketingProductTraceRouter);
 
 export default router;
