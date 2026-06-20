@@ -870,3 +870,28 @@ export const DISTRIBUTION_ORDER_COLUMN_DEFAULT_WIDTHS: Record<string, number> = 
   action: 150,
 }
 
+export const ORDER_STATUS_TRANSITIONS: Record<number, { label: string; value: number }[]> = {
+  0: [{ label: '已支付', value: 1 }, { label: '已取消', value: 4 }],
+  1: [{ label: '已发货', value: 2 }, { label: '已取消', value: 4 }, { label: '退款中', value: 5 }],
+  2: [{ label: '已完成', value: 3 }, { label: '退款中', value: 5 }],
+  3: [{ label: '退款中', value: 5 }],
+  4: [],
+  5: [{ label: '已退款', value: 6 }, { label: '已完成', value: 3 }],
+  6: [],
+}
+
+export const ORDER_STATUS_CHANGE_REASON_REQUIRED = [4, 5, 6]
+
+export const ORDER_STATUS_CHANGE_REASON_OPTIONS = [
+  { label: '买家申请退款', value: 'buyer_refund' },
+  { label: '商品质量问题', value: 'quality_issue' },
+  { label: '物流异常', value: 'logistics_issue' },
+  { label: '超时未支付', value: 'payment_timeout' },
+  { label: '库存不足', value: 'out_of_stock' },
+  { label: '买家取消', value: 'buyer_cancel' },
+  { label: '卖家取消', value: 'seller_cancel' },
+  { label: '协商退款', value: 'negotiated_refund' },
+  { label: '系统自动取消', value: 'system_auto_cancel' },
+  { label: '其他原因', value: 'other' },
+] as const
+

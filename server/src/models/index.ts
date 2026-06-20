@@ -36,6 +36,7 @@ import ProductListingLog from './ProductListingLog.model';
 import ProductRiskRule from './ProductRiskRule.model';
 import ProductRiskRecord from './ProductRiskRecord.model';
 import DistributionOrderQueryLog from './DistributionOrderQueryLog.model';
+import OrderStatusChangeLog from './OrderStatusChangeLog.model';
 
 const models = {
   User,
@@ -76,6 +77,7 @@ const models = {
   ProductRiskRule,
   ProductRiskRecord,
   DistributionOrderQueryLog,
+  OrderStatusChangeLog,
 };
 
 const associate = (): void => {
@@ -170,5 +172,5 @@ const associate = (): void => {
 };
 
 export { associate };
-export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification, Product, ProductAuditLog, ProductEditApproval, ProductScheduleRule, ProductListingLog, ProductRiskRule, ProductRiskRecord, DistributionOrderQueryLog };
+export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification, Product, ProductAuditLog, ProductEditApproval, ProductScheduleRule, ProductListingLog, ProductRiskRule, ProductRiskRecord, DistributionOrderQueryLog, OrderStatusChangeLog };
 export default models;

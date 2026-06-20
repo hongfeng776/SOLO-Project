@@ -318,6 +318,45 @@ class DistributionOrderDao {
     );
   }
 
+  public async findById(id: string): Promise<any | null> {
+    const row = await Order.findByPk(id, {
+      include: [
+        {
+          model: Channel,
+          as: 'channel',
+          attributes: ['id', 'name'],
+          required: false,
+        },
+        {
+          model: Promoter,
+          as: 'promoter',
+          attributes: ['id', 'name', 'code', 'phone'],
+          required: false,
+        },
+        {
+          model: Commission,
+          as: 'commission',
+          attributes: ['id', 'status', 'amount', 'settleTime'],
+          required: false,
+        },
+      ],
+    });
+    if (!row) return null;
+    const data = (row as any).toJSON();
+    data.isAbnormal = this.checkIsAbnormal(data);
+    data.isPendingReview = this.checkIsPendingReview(data);
+    data.isUnsettled = this.checkIsUnsettled(data);
+    data.channelName = data.channel?.name;
+    data.promoterName = data.promoter?.name;
+    data.promoterCode = data.promoter?.code;
+    data.commissionStatus = data.commission?.status;
+    return data;
+  }
+
+  public async updateStatus(id: string, updateData: any): Promise<[number, Order[]]> {
+    return Order.update(updateData, { where: { id } }) as unknown as Promise<[number, Order[]]>;
+  }
+
   public async bulkMark(
     ids: string[],
     data: Partial<OrderAttributes>

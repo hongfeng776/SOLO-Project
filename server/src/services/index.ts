@@ -20,6 +20,7 @@ import promoterRiskService from './PromoterRisk.service';
 import channelAuditService from './ChannelAudit.service';
 import productService from './Product.service';
 import distributionOrderService from './DistributionOrder.service';
+import orderStatusFlowService from './OrderStatusFlow.service';
 
 export {
   authService,
@@ -44,4 +45,5 @@ export {
   channelAuditService,
   productService,
   distributionOrderService,
+  orderStatusFlowService,
 };

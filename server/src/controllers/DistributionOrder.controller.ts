@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
-import { distributionOrderService } from '../services';
+import { distributionOrderService, orderStatusFlowService } from '../services';
 import ResponseUtils from '../utils/response';
 import { BusinessCode } from '../constants/statusCode';
 import { AppError } from '../middleware/error.middleware';
+import { OrderStatus } from '../constants/enum';
 
 class DistributionOrderController {
   public async validateParams(req: Request, res: Response): Promise<void> {
@@ -148,6 +149,121 @@ class DistributionOrderController {
         endTime
       );
       ResponseUtils.paginated(res, result.list, result.total, result.page, result.pageSize);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async validateStatusTransition(req: Request, res: Response): Promise<void> {
+    try {
+      const { orderId, fromStatus, toStatus } = req.body;
+      const result = orderStatusFlowService.validateTransition(
+        parseInt(fromStatus, 10) as OrderStatus,
+        parseInt(toStatus, 10) as OrderStatus
+      );
+      ResponseUtils.success(res, result);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async changeStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const { orderId, toStatus, reason } = req.body;
+      const user = (req as any).user;
+      if (!user) {
+        throw new AppError('用户未登录', BusinessCode.UNAUTHORIZED);
+      }
+
+      const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.ip || '';
+      const userAgent = req.headers['user-agent'] || '';
+
+      const result = await orderStatusFlowService.executeStatusChange(
+        orderId,
+        parseInt(toStatus, 10) as OrderStatus,
+        user.id,
+        user.name || user.username || user.id,
+        reason,
+        ip,
+        userAgent
+      );
+      ResponseUtils.success(res, result, result.message);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async batchVerifyStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const { ids } = req.body;
+      const result = await orderStatusFlowService.batchVerifyStatus(ids);
+      ResponseUtils.success(res, result);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async batchConfirmAbnormal(req: Request, res: Response): Promise<void> {
+    try {
+      const { ids, reason } = req.body;
+      const user = (req as any).user;
+      if (!user) {
+        throw new AppError('用户未登录', BusinessCode.UNAUTHORIZED);
+      }
+
+      const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.ip || '';
+
+      const results = await orderStatusFlowService.batchConfirmAbnormal(
+        ids,
+        user.id,
+        user.name || user.username || user.id,
+        reason,
+        ip
+      );
+
+      const successCount = results.filter((r) => r.success).length;
+      const failCount = results.filter((r) => !r.success).length;
+
+      ResponseUtils.success(res, {
+        results,
+        summary: {
+          total: results.length,
+          successCount,
+          failCount,
+        },
+      }, `批量确认完成：成功${successCount}条，失败${failCount}条`);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async getStatusChangeLog(req: Request, res: Response): Promise<void> {
+    try {
+      const orderId = req.query.orderId as string || '';
+      const page = parseInt(req.query.page as string || '1', 10);
+      const pageSize = parseInt(req.query.pageSize as string || '20', 10);
+      const result = await orderStatusFlowService.getStatusChangeLog(orderId, page, pageSize);
+      ResponseUtils.paginated(res, result.list, result.total, result.page, result.pageSize);
+    } catch (err: any) {
+      ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async validateChangeCompliance(req: Request, res: Response): Promise<void> {
+    try {
+      const { orderId, fromStatus, toStatus } = req.body;
+      const user = (req as any).user;
+      const operatorId = user?.id || '';
+      const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.ip || '';
+
+      const result = await orderStatusFlowService.validateChangeCompliance(
+        orderId,
+        parseInt(fromStatus, 10) as OrderStatus,
+        parseInt(toStatus, 10) as OrderStatus,
+        operatorId,
+        ip
+      );
+      ResponseUtils.success(res, result);
     } catch (err: any) {
       ResponseUtils.error(res, err.message, err.code);
     }

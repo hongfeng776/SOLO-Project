@@ -151,6 +151,24 @@
               统计明细
             </el-button>
             <el-button
+              type="info"
+              size="small"
+              :icon="Checked"
+              :disabled="selectedIds.length === 0"
+              @click="handleBatchVerify"
+            >
+              批量核对
+            </el-button>
+            <el-button
+              type="danger"
+              size="small"
+              :icon="Warning"
+              :disabled="selectedIds.length === 0"
+              @click="handleBatchConfirmAbnormal"
+            >
+              批量确认异常
+            </el-button>
+            <el-button
               type="success"
               size="small"
               :icon="Download"
@@ -371,6 +389,15 @@
                   <el-button type="primary" link :icon="View" @click="handleDetail(row as DistributionOrderItem)">
                     详情
                   </el-button>
+                  <el-button
+                    v-if="ORDER_STATUS_TRANSITIONS[row.status]?.length"
+                    type="warning"
+                    link
+                    :icon="Switch"
+                    @click="handleStatusChange(row as DistributionOrderItem)"
+                  >
+                    变更
+                  </el-button>
                 </template>
               </el-table-column>
 
@@ -576,7 +603,235 @@
           <el-tag v-if="detailData.isUnsettled" type="primary">未结算</el-tag>
           <span v-if="!detailData.isAbnormal && !detailData.isPendingReview && !detailData.isUnsettled">无</span>
         </el-descriptions-item>
+        <el-descriptions-item label="状态变更" :span="2">
+          <el-button type="primary" link size="small" @click="handleViewChangeLog(detailData)">
+            查看变更记录
+          </el-button>
+        </el-descriptions-item>
       </el-descriptions>
+    </BaseDialog>
+
+    <BaseDialog
+      v-model="statusChangeVisible"
+      title="变更订单状态"
+      width="560px"
+      @confirm="handleStatusChangeConfirm"
+    >
+      <el-form :model="statusChangeForm" label-width="100px" v-if="statusChangeForm.order">
+        <el-form-item label="当前状态">
+          <el-tag :type="ORDER_STATUS_MAP[statusChangeForm.order.status]?.type || 'info'">
+            {{ ORDER_STATUS_MAP[statusChangeForm.order.status]?.label || statusChangeForm.order.status }}
+          </el-tag>
+        </el-form-item>
+        <el-form-item label="目标状态" required>
+          <el-select v-model="statusChangeForm.toStatus" placeholder="请选择目标状态" style="width: 240px">
+            <el-option
+              v-for="opt in ORDER_STATUS_TRANSITIONS[statusChangeForm.order.status] || []"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="变更原因" :required="statusChangeRequiresReason">
+          <el-select
+            v-model="statusChangeForm.reasonType"
+            placeholder="请选择原因"
+            style="width: 240px; margin-bottom: 8px"
+          >
+            <el-option
+              v-for="opt in ORDER_STATUS_CHANGE_REASON_OPTIONS"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </el-select>
+          <el-input
+            v-model="statusChangeForm.reasonDetail"
+            type="textarea"
+            :rows="3"
+            placeholder="请详细说明变更原因"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+        <el-form-item v-if="transitionWarnings.length > 0">
+          <div class="transition-warnings">
+            <el-alert
+              v-for="(warning, index) in transitionWarnings"
+              :key="index"
+              type="warning"
+              :closable="false"
+              show-icon
+              :title="warning"
+              style="margin-bottom: 8px"
+            />
+          </div>
+        </el-form-item>
+        <el-form-item v-if="transitionCommissionImpact">
+          <el-alert
+            type="error"
+            :closable="false"
+            show-icon
+          >
+            <template #title>
+              <span>此操作将影响佣金结算数据，佣金金额：¥{{ formatMoney(statusChangeForm.order.commissionAmount || 0) }}</span>
+            </template>
+          </el-alert>
+        </el-form-item>
+      </el-form>
+    </BaseDialog>
+
+    <BaseDialog
+      v-model="statusResultVisible"
+      title="状态变更结果"
+      width="560px"
+      :show-footer="false"
+    >
+      <transition name="result-fade" appear>
+        <div v-if="statusChangeResult" class="status-result">
+          <el-result
+            :icon="statusChangeResult.success ? 'success' : 'error'"
+            :title="statusChangeResult.success ? '状态变更成功' : '状态变更失败'"
+            :sub-title="statusChangeResult.message"
+          >
+            <template #extra>
+              <div class="result-details" v-if="statusChangeResult.success">
+                <el-descriptions :column="1" border size="small">
+                  <el-descriptions-item label="原状态">
+                    <el-tag :type="ORDER_STATUS_MAP[statusChangeResult.fromStatus]?.type || 'info'" size="small">
+                      {{ ORDER_STATUS_MAP[statusChangeResult.fromStatus]?.label }}
+                    </el-tag>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="新状态">
+                    <el-tag :type="ORDER_STATUS_MAP[statusChangeResult.toStatus]?.type || 'info'" size="small">
+                      {{ ORDER_STATUS_MAP[statusChangeResult.toStatus]?.label }}
+                    </el-tag>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="佣金影响" v-if="statusChangeResult.commissionAffected">
+                    <span class="text-danger">已影响，变动金额：¥{{ formatMoney(statusChangeResult.commissionChangeAmount) }}</span>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="推客数据" v-if="statusChangeResult.promoterSynced">
+                    <span class="text-success">已同步更新</span>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="渠道数据" v-if="statusChangeResult.channelSynced">
+                    <span class="text-success">已同步更新</span>
+                  </el-descriptions-item>
+                </el-descriptions>
+              </div>
+              <el-button type="primary" @click="statusResultVisible = false" style="margin-top: 16px">确定</el-button>
+            </template>
+          </el-result>
+        </div>
+      </transition>
+    </BaseDialog>
+
+    <BaseDialog
+      v-model="batchVerifyVisible"
+      title="批量核对订单状态"
+      width="700px"
+      :show-footer="false"
+    >
+      <div v-if="batchVerifyResult" class="batch-verify">
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="选择总数">{{ batchVerifyResult.totalCount }}</el-descriptions-item>
+          <el-descriptions-item label="异常订单">
+            <span class="text-danger">{{ batchVerifyResult.abnormalCount }} 条</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="待复核订单">
+            <span class="text-warning">{{ batchVerifyResult.pendingReviewCount }} 条</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="正常履约订单">
+            <span class="text-success">{{ batchVerifyResult.normalFulfillmentCount }} 条</span>
+          </el-descriptions-item>
+        </el-descriptions>
+        <el-alert
+          v-if="batchVerifyResult.filterReason"
+          type="info"
+          :closable="false"
+          show-icon
+          :title="batchVerifyResult.filterReason"
+          style="margin-top: 16px"
+        />
+        <div style="margin-top: 16px; text-align: right">
+          <el-button @click="batchVerifyVisible = false">关闭</el-button>
+        </div>
+      </div>
+    </BaseDialog>
+
+    <BaseDialog
+      v-model="batchConfirmVisible"
+      title="批量确认异常订单"
+      width="500px"
+      @confirm="handleBatchConfirmSubmit"
+    >
+      <el-form :model="batchConfirmForm" label-width="100px">
+        <el-form-item label="确认原因" required>
+          <el-input
+            v-model="batchConfirmForm.reason"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入批量确认原因"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-alert
+            type="warning"
+            :closable="false"
+            show-icon
+            title="仅对异常和待复核订单生效，正常履约订单将被自动过滤"
+          />
+        </el-form-item>
+      </el-form>
+    </BaseDialog>
+
+    <BaseDialog
+      v-model="changeLogVisible"
+      title="状态变更记录"
+      width="800px"
+      :show-footer="false"
+    >
+      <el-table :data="changeLogList" border size="small" max-height="400">
+        <el-table-column prop="createdAt" label="变更时间" width="160">
+          <template #default="{ row }">{{ formatDateTime(row.createdAt) }}</template>
+        </el-table-column>
+        <el-table-column label="变更节点" width="180">
+          <template #default="{ row }">
+            <el-tag :type="ORDER_STATUS_MAP[row.fromStatus]?.type || 'info'" size="small">
+              {{ ORDER_STATUS_MAP[row.fromStatus]?.label }}
+            </el-tag>
+            <span style="margin: 0 4px">→</span>
+            <el-tag :type="ORDER_STATUS_MAP[row.toStatus]?.type || 'info'" size="small">
+              {{ ORDER_STATUS_MAP[row.toStatus]?.label }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="operatorName" label="操作人" width="100" />
+        <el-table-column prop="reason" label="变更原因" min-width="140" show-overflow-tooltip />
+        <el-table-column label="佣金影响" width="100" align="center">
+          <template #default="{ row }">
+            <span v-if="row.commissionAffected" class="text-danger">
+              -¥{{ formatMoney(row.commissionChangeAmount || 0) }}
+            </span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="关联变动" min-width="120">
+          <template #default="{ row }">
+            <template v-if="row.relatedDataChanges">
+              <el-tag v-if="row.relatedDataChanges.commission" type="danger" size="small" style="margin-right: 4px">佣金</el-tag>
+              <el-tag v-if="row.relatedDataChanges.promoter" type="success" size="small" style="margin-right: 4px">推客</el-tag>
+              <el-tag v-if="row.relatedDataChanges.channel" type="primary" size="small">渠道</el-tag>
+            </template>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div style="margin-top: 12px; text-align: right">
+        <el-button @click="changeLogVisible = false">关闭</el-button>
+      </div>
     </BaseDialog>
   </div>
 </template>
@@ -593,6 +848,9 @@ import {
   DocumentCopy,
   Refresh,
   DataAnalysis,
+  Switch,
+  Checked,
+  Warning,
 } from '@element-plus/icons-vue'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import BaseBatchOperation from '@/components/common/BaseBatchOperation.vue'
@@ -607,6 +865,9 @@ import {
   DISTRIBUTION_ORDER_ORDER_TYPE_OPTIONS,
   DISTRIBUTION_ORDER_TAB_OPTIONS,
   DISTRIBUTION_ORDER_COLUMN_DEFAULT_WIDTHS,
+  ORDER_STATUS_TRANSITIONS,
+  ORDER_STATUS_CHANGE_REASON_REQUIRED,
+  ORDER_STATUS_CHANGE_REASON_OPTIONS,
 } from '@/constants'
 import { formatDateTime } from '@/utils/date'
 import { formatMoney } from '@/utils/money'
@@ -621,10 +882,18 @@ import {
   exportDistributionOrders,
   batchMarkOrders,
   getBatchStatistics,
+  validateStatusTransition,
+  changeOrderStatus,
+  batchVerifyStatus,
+  batchConfirmAbnormal,
+  getStatusChangeLog,
   type DistributionOrderItem,
   type DistributionOrderQueryParams,
   type DistributionOrderStatistics,
   type BatchStatistics,
+  type StatusTransitionResult,
+  type BatchStatusCheckResult,
+  type StatusChangeLogItem,
 } from '@/api/distribution-order'
 
 const channelOptions = ref<Array<{ id: number | string; name: string }>>([])
@@ -1026,7 +1295,6 @@ async function handleExportConfirm() {
     const data = await exportDistributionOrders(params)
     ElMessage.success(`导出成功，共${data.length}条数据`)
     exportVisible.value = false
-    console.log('Export data:', data)
   } catch (error: any) {
     ElMessage.error(error.message || '导出失败')
   }
@@ -1086,6 +1354,150 @@ async function showBatchStatistics() {
   }
 }
 
+const statusChangeVisible = ref(false)
+const statusChangeForm = reactive<{
+  order: DistributionOrderItem | null
+  toStatus: number | undefined
+  reasonType: string
+  reasonDetail: string
+}>({
+  order: null,
+  toStatus: undefined,
+  reasonType: '',
+  reasonDetail: '',
+})
+const transitionWarnings = ref<string[]>([])
+const transitionCommissionImpact = ref(false)
+const statusChangeRequiresReason = computed(() => {
+  return statusChangeForm.toStatus !== undefined && ORDER_STATUS_CHANGE_REASON_REQUIRED.includes(statusChangeForm.toStatus)
+})
+
+async function handleStatusChange(row: DistributionOrderItem) {
+  statusChangeForm.order = row
+  statusChangeForm.toStatus = undefined
+  statusChangeForm.reasonType = ''
+  statusChangeForm.reasonDetail = ''
+  transitionWarnings.value = []
+  transitionCommissionImpact.value = false
+  statusChangeVisible.value = true
+}
+
+watch(() => statusChangeForm.toStatus, async (newVal) => {
+  if (newVal !== undefined && statusChangeForm.order) {
+    try {
+      const validation = await validateStatusTransition({
+        orderId: String(statusChangeForm.order.id),
+        fromStatus: statusChangeForm.order.status,
+        toStatus: newVal,
+      })
+      transitionWarnings.value = validation.warnings || []
+      transitionCommissionImpact.value = validation.commissionImpact
+      if (!validation.valid) {
+        ElMessage.warning(validation.message || '状态流转校验失败')
+      }
+    } catch (error) {
+      console.error('Validate transition error:', error)
+    }
+  } else {
+    transitionWarnings.value = []
+    transitionCommissionImpact.value = false
+  }
+})
+
+const statusResultVisible = ref(false)
+const statusChangeResult = ref<StatusTransitionResult | null>(null)
+
+async function handleStatusChangeConfirm() {
+  if (!statusChangeForm.order || statusChangeForm.toStatus === undefined) {
+    ElMessage.warning('请选择目标状态')
+    return false
+  }
+
+  if (statusChangeRequiresReason.value && !statusChangeForm.reasonType && !statusChangeForm.reasonDetail) {
+    ElMessage.warning('该状态变更必须填写原因')
+    return false
+  }
+
+  const reason = [statusChangeForm.reasonType, statusChangeForm.reasonDetail].filter(Boolean).join(' - ')
+
+  try {
+    statusChangeResult.value = await changeOrderStatus({
+      orderId: String(statusChangeForm.order.id),
+      toStatus: statusChangeForm.toStatus,
+      reason: reason || undefined,
+    })
+    statusChangeVisible.value = false
+    statusResultVisible.value = true
+    fetchData()
+    fetchStatistics()
+  } catch (error: any) {
+    ElMessage.error(error.message || '状态变更失败')
+  }
+  return true
+}
+
+const batchVerifyVisible = ref(false)
+const batchVerifyResult = ref<BatchStatusCheckResult | null>(null)
+
+async function handleBatchVerify() {
+  if (selectedIds.value.length === 0) return
+  try {
+    batchVerifyResult.value = await batchVerifyStatus(selectedIds.value as string[])
+    batchVerifyVisible.value = true
+  } catch (error: any) {
+    ElMessage.error(error.message || '批量核对失败')
+  }
+}
+
+const batchConfirmVisible = ref(false)
+const batchConfirmForm = reactive({ reason: '' })
+
+function handleBatchConfirmAbnormal() {
+  if (selectedIds.value.length === 0) return
+  batchConfirmForm.reason = ''
+  batchConfirmVisible.value = true
+}
+
+async function handleBatchConfirmSubmit() {
+  if (!batchConfirmForm.reason) {
+    ElMessage.warning('请输入确认原因')
+    return false
+  }
+
+  try {
+    const result = await batchConfirmAbnormal({
+      ids: selectedIds.value as string[],
+      reason: batchConfirmForm.reason,
+    })
+    const { summary } = result
+    ElMessage.success(`批量确认完成：成功${summary.successCount}条，失败${summary.failCount}条`)
+    batchConfirmVisible.value = false
+    selectedIds.value = []
+    fetchData()
+    fetchStatistics()
+  } catch (error: any) {
+    ElMessage.error(error.message || '批量确认失败')
+  }
+  return true
+}
+
+const changeLogVisible = ref(false)
+const changeLogList = ref<StatusChangeLogItem[]>([])
+
+async function handleViewChangeLog(order: DistributionOrderItem) {
+  try {
+    const res = await getStatusChangeLog({
+      orderId: String(order.id),
+      page: 1,
+      pageSize: 50,
+    })
+    changeLogList.value = res.list
+    changeLogVisible.value = true
+  } catch (error) {
+    console.error('Get status change log error:', error)
+  }
+}
+
 watch(
   () => queryParams,
   () => {
@@ -1139,12 +1551,6 @@ watch(
         font-size: 24px;
         font-weight: 600;
         line-height: 1.2;
-      }
-
-      &__sub {
-        font-size: 12px;
-        color: var(--el-text-color-placeholder);
-        margin-top: 4px;
       }
     }
   }
@@ -1343,6 +1749,18 @@ watch(
     }
   }
 
+  .transition-warnings {
+    width: 100%;
+  }
+
+  .status-result {
+    .result-details {
+      text-align: left;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+  }
+
   .text-success {
     color: var(--el-color-success);
     font-weight: 600;
@@ -1399,5 +1817,19 @@ watch(
 .fade-slide-leave-to {
   opacity: 0;
   transform: translateY(-10px);
+}
+
+.result-fade-enter-active {
+  transition: all 0.4s ease;
+}
+
+.result-fade-enter-from {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.result-fade-enter-to {
+  opacity: 1;
+  transform: scale(1);
 }
 </style>

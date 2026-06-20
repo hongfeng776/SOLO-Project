@@ -111,6 +111,70 @@ export interface BatchMarkParams {
   remark?: string
 }
 
+export interface StatusTransitionValidation {
+  valid: boolean
+  message?: string
+  fromStatus: DistributionOrderStatus
+  toStatus: DistributionOrderStatus
+  requiresReason: boolean
+  commissionImpact: boolean
+  warnings: string[]
+}
+
+export interface StatusTransitionResult {
+  success: boolean
+  orderId: string
+  fromStatus: DistributionOrderStatus
+  toStatus: DistributionOrderStatus
+  commissionAffected: boolean
+  commissionChangeAmount: number
+  promoterSynced: boolean
+  channelSynced: boolean
+  message: string
+}
+
+export interface BatchStatusCheckResult {
+  totalCount: number
+  abnormalCount: number
+  pendingReviewCount: number
+  normalFulfillmentCount: number
+  filteredIds: string[]
+  filterReason: string
+}
+
+export interface BatchConfirmAbnormalResult {
+  results: StatusTransitionResult[]
+  summary: {
+    total: number
+    successCount: number
+    failCount: number
+  }
+}
+
+export interface StatusChangeLogItem {
+  id: string
+  orderId: string
+  orderNo: string
+  fromStatus: DistributionOrderStatus
+  toStatus: DistributionOrderStatus
+  reason?: string
+  operatorId: string
+  operatorName: string
+  commissionAffected: boolean
+  commissionChangeAmount?: number
+  promoterId?: string
+  channelId?: string
+  relatedDataChanges?: any
+  ip?: string
+  userAgent?: string
+  createdAt: string
+}
+
+export interface ComplianceValidationResult {
+  compliant: boolean
+  issues: string[]
+}
+
 export function getDistributionOrderList(
   params: DistributionOrderQueryParams
 ): Promise<PageResult<DistributionOrderItem>> {
@@ -149,4 +213,47 @@ export function batchMarkOrders(params: BatchMarkParams): Promise<{ count: numbe
 
 export function getBatchStatistics(ids: (string | number)[]): Promise<BatchStatistics> {
   return post<BatchStatistics>('/distribution-orders/batch-statistics', { ids })
+}
+
+export function validateStatusTransition(params: {
+  orderId: string
+  fromStatus: number
+  toStatus: number
+}): Promise<StatusTransitionValidation> {
+  return post<StatusTransitionValidation>('/distribution-orders/validate-transition', params)
+}
+
+export function changeOrderStatus(params: {
+  orderId: string
+  toStatus: number
+  reason?: string
+}): Promise<StatusTransitionResult> {
+  return post<StatusTransitionResult>('/distribution-orders/change-status', params)
+}
+
+export function batchVerifyStatus(ids: string[]): Promise<BatchStatusCheckResult> {
+  return post<BatchStatusCheckResult>('/distribution-orders/batch-verify-status', { ids })
+}
+
+export function batchConfirmAbnormal(params: {
+  ids: string[]
+  reason?: string
+}): Promise<BatchConfirmAbnormalResult> {
+  return post<BatchConfirmAbnormalResult>('/distribution-orders/batch-confirm-abnormal', params)
+}
+
+export function getStatusChangeLog(params: {
+  orderId: string
+  page?: number
+  pageSize?: number
+}): Promise<PageResult<StatusChangeLogItem>> {
+  return get<PageResult<StatusChangeLogItem>>('/distribution-orders/status-change-logs', params)
+}
+
+export function validateChangeCompliance(params: {
+  orderId: string
+  fromStatus: number
+  toStatus: number
+}): Promise<ComplianceValidationResult> {
+  return post<ComplianceValidationResult>('/distribution-orders/validate-compliance', params)
 }
