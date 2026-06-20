@@ -1978,3 +1978,145 @@ export interface TrafficPoolLogAnalyzeResult {
     newDailyQuota?: number
   }
 }
+
+export interface ContentPushPermission {
+  canView: boolean
+  canCreate: boolean
+  canEdit: boolean
+  canPause: boolean
+  canTerminate: boolean
+  canBatch: boolean
+  canViewTrace: boolean
+  canAdjustStrength: boolean
+}
+
+export interface MatchScoreResult {
+  tagScore: number
+  interestScore: number
+  profileScore: number
+  totalScore: number
+  isPass: boolean
+  minScore: number
+}
+
+export interface PushCreateValidationResult {
+  valid: boolean
+  errors: string[]
+  warnings?: string[]
+  blockReason?: string
+  blockDetail?: string
+  matchScore?: MatchScoreResult
+  note?: { id: number; title: string; authorId: number; authorName: string }
+  pool?: { id: number; poolName: string; poolLevel: number; remainingQuota: number }
+  estimateTarget?: number
+  contentTags?: Array<{ id: number; name: string; isCore: number; weight: number }>
+}
+
+export interface ContentPushTask {
+  id: number
+  taskNo: string
+  noteId: number
+  noteTitle: string
+  noteCoverImage?: string
+  authorId: number
+  authorName: string
+  poolId: number
+  poolName: string
+  poolLevel: number
+  pushStatus: number
+  pushStrength: number
+  targetExposure: number
+  currentExposure: number
+  realExposure: number
+  clickCount: number
+  likeCount: number
+  commentCount: number
+  shareCount: number
+  interactCount: number
+  targetUserCount: number
+  reachedUserCount: number
+  matchScore: number
+  tagMatchScore: number
+  interestMatchScore: number
+  profileMatchScore: number
+  contentTags?: string | Array<any>
+  targetInterests?: string | Array<any>
+  blockReason?: string
+  blockDetail?: string
+  anomalyFlags?: string | Record<string, any>
+  anomalyCount: number
+  lastDataRefreshTime?: string | Date | null
+  freezeExposure?: number
+  freezeClick?: number
+  freezeInteract?: number
+  startTime?: string | Date | null
+  pauseTime?: string | Date | null
+  resumeTime?: string | Date | null
+  finishTime?: string | Date | null
+  expectedEndTime?: string | Date | null
+  operatorId?: number | null
+  operatorName?: string
+  createTime: string | Date
+  updateTime: string | Date
+}
+
+export interface ContentPushTrace {
+  id: number
+  traceId: string
+  taskId: number
+  noteId: number
+  userId?: number | null
+  userTag?: string
+  eventType: string
+  eventDetail?: string
+  deliveryChannel?: string
+  exposureAmount?: number
+  clickAmount?: number
+  interactAmount?: number
+  duration?: number
+  ipAddress?: string
+  deviceId?: string
+  anomalyType?: string
+  anomalyDetail?: string
+  anomalyScore?: number
+  isBlocked: number
+  operatorId?: number | null
+  operatorName?: string
+  remark?: string
+  traceData?: string | Record<string, any>
+  createTime: string | Date
+}
+
+export interface PushStatsResult {
+  total: number
+  todayCreated: number
+  statusMap: Record<number, number>
+  totalExposure: number
+  totalClick: number
+  clickRate: number
+}
+
+export interface PushBatchResult {
+  total: number
+  success: number
+  fail: number
+  results: Array<{ id: number; success: boolean; error?: string }>
+}
+
+export interface PushFullChainResult {
+  task: ContentPushTask
+  eventTimeline: ContentPushTrace[]
+  eventGroups: Record<string, number>
+  anomalyList: ContentPushTrace[]
+  coverage: {
+    delivered: number
+    valid: number
+    invalid: number
+    validRate: number
+  }
+  reachAccuracy: {
+    score: number
+    matchScore: number
+  }
+}
+

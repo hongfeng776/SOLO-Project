@@ -47,9 +47,18 @@ import HotComment from './hot-comment'
 import HotCommentLog from './hot-comment-log'
 import TrafficPool from './traffic-pool'
 import TrafficPoolLog from './traffic-pool-log'
+import ContentPushTask from './content-push-task'
+import ContentPushTrace from './content-push-trace'
 
 TrafficPool.hasMany(TrafficPoolLog, { as: 'logs', foreignKey: 'poolId' })
 TrafficPoolLog.belongsTo(TrafficPool, { as: 'pool', foreignKey: 'poolId' })
+
+TrafficPool.hasMany(ContentPushTask, { as: 'pushTasks', foreignKey: 'poolId' })
+ContentPushTask.belongsTo(TrafficPool, { as: 'pool', foreignKey: 'poolId' })
+Note.hasMany(ContentPushTask, { as: 'pushTasks', foreignKey: 'noteId' })
+ContentPushTask.belongsTo(Note, { as: 'note', foreignKey: 'noteId' })
+ContentPushTask.hasMany(ContentPushTrace, { as: 'traces', foreignKey: 'taskId' })
+ContentPushTrace.belongsTo(ContentPushTask, { as: 'task', foreignKey: 'taskId' })
 
 const UserRole = User.sequelize!.define('sys_user_role', {}, { tableName: 'sys_user_role', timestamps: false })
 const NoteTag = Note.sequelize!.define('biz_note_tag', {}, { tableName: 'biz_note_tag', timestamps: false })
@@ -138,4 +147,4 @@ HotCommentLog.belongsTo(HotComment, { as: 'hotComment', foreignKey: 'hotCommentI
 Comment.hasMany(HotCommentLog, { as: 'hotLogs', foreignKey: 'commentId' })
 HotCommentLog.belongsTo(Comment, { as: 'comment', foreignKey: 'commentId' })
 
-export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, CommentAuditLog, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, MerchantOnboardingApply, MerchantOnboardingLog, MerchantCreditArchive, DirectMessage, DmConversation, DmAuditLog, InteractionData, InteractionAnomalyLog, HotComment, HotCommentLog, TrafficPool, TrafficPoolLog, UserRole, NoteTag }
+export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, CommentAuditLog, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, MerchantOnboardingApply, MerchantOnboardingLog, MerchantCreditArchive, DirectMessage, DmConversation, DmAuditLog, InteractionData, InteractionAnomalyLog, HotComment, HotCommentLog, TrafficPool, TrafficPoolLog, ContentPushTask, ContentPushTrace, UserRole, NoteTag }

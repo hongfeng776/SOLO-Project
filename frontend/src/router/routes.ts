@@ -391,6 +391,26 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/content-push',
+    component: Layout,
+    redirect: '/content-push/control',
+    meta: { title: '内容推送管控', icon: 'Promotion', roles: ['admin', 'operation_admin', 'senior_operator', 'operator', 'auditor'] },
+    children: [
+      {
+        path: 'control',
+        name: 'ContentPushControl',
+        component: () => import(/* webpackChunkName: "content-push" */ '@views/content-push/control/index.vue'),
+        meta: { title: '推送管控', icon: 'SetUp', roles: ['admin', 'operation_admin', 'senior_operator', 'operator', 'auditor'] }
+      },
+      {
+        path: 'trace',
+        name: 'ContentPushTrace',
+        component: () => import(/* webpackChunkName: "content-push" */ '@views/content-push/trace/index.vue'),
+        meta: { title: '推送链路溯源', icon: 'Aim', roles: ['admin', 'operation_admin', 'senior_operator', 'auditor'] }
+      }
+    ]
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/404',
     meta: { hidden: true }

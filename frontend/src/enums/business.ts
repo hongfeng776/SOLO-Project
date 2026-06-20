@@ -1252,3 +1252,156 @@ export const TRAFFIC_POOL_LOG_STATUS_TAG_TYPES: Record<number, 'primary' | 'succ
 }
 
 export const PLATFORM_TOTAL_FLOW_QUOTA = 10000000
+
+export enum ContentPushStatus {
+  PENDING = 0,
+  PUSHING = 1,
+  PAUSED = 2,
+  FINISHED = 3,
+  TERMINATED = 4,
+  BLOCKED = 5
+}
+
+export const CONTENT_PUSH_STATUS_NAMES: Record<number, string> = {
+  [ContentPushStatus.PENDING]: '待推送',
+  [ContentPushStatus.PUSHING]: '推送中',
+  [ContentPushStatus.PAUSED]: '已暂停',
+  [ContentPushStatus.FINISHED]: '已完成',
+  [ContentPushStatus.TERMINATED]: '已终止',
+  [ContentPushStatus.BLOCKED]: '已拦截'
+}
+
+export const CONTENT_PUSH_STATUS_COLORS: Record<number, string> = {
+  [ContentPushStatus.PENDING]: '#909399',
+  [ContentPushStatus.PUSHING]: '#409eff',
+  [ContentPushStatus.PAUSED]: '#e6a23c',
+  [ContentPushStatus.FINISHED]: '#67c23a',
+  [ContentPushStatus.TERMINATED]: '#f56c6c',
+  [ContentPushStatus.BLOCKED]: '#9c27b0'
+}
+
+export const CONTENT_PUSH_STATUS_TAG_TYPES: Record<number, 'primary' | 'success' | 'warning' | 'danger' | 'info' | undefined> = {
+  [ContentPushStatus.PENDING]: 'info',
+  [ContentPushStatus.PUSHING]: 'primary',
+  [ContentPushStatus.PAUSED]: 'warning',
+  [ContentPushStatus.FINISHED]: 'success',
+  [ContentPushStatus.TERMINATED]: 'danger',
+  [ContentPushStatus.BLOCKED]: 'info'
+}
+
+export enum ContentPushStrength {
+  NORMAL = 1,
+  ENHANCED = 2,
+  AGGRESSIVE = 3
+}
+
+export const CONTENT_PUSH_STRENGTH_NAMES: Record<number, string> = {
+  [ContentPushStrength.NORMAL]: '标准',
+  [ContentPushStrength.ENHANCED]: '加强',
+  [ContentPushStrength.AGGRESSIVE]: '激进'
+}
+
+export const CONTENT_PUSH_STRENGTH_COLORS: Record<number, string> = {
+  [ContentPushStrength.NORMAL]: '#909399',
+  [ContentPushStrength.ENHANCED]: '#409eff',
+  [ContentPushStrength.AGGRESSIVE]: '#f56c6c'
+}
+
+export enum PushBlockReasonCode {
+  NOT_REVIEWED = 'not_reviewed',
+  STATUS_ABNORMAL = 'status_abnormal',
+  POOL_NOT_MATCH = 'pool_not_match',
+  MATCH_INSUFFICIENT = 'match_insufficient',
+  VIOLATION = 'violation',
+  FLOW_LIMITED = 'flow_limited',
+  QUOTA_EXCEEDED = 'quota_exceeded'
+}
+
+export const PUSH_BLOCK_REASON_NAMES: Record<string, string> = {
+  not_reviewed: '笔记未审核通过',
+  status_abnormal: '笔记状态异常',
+  pool_not_match: '流量池准入不匹配',
+  match_insufficient: '匹配度低于阈值',
+  violation: '存在违规记录',
+  flow_limited: '笔记被限流',
+  quota_exceeded: '流量池配额不足'
+}
+
+export enum PushTraceEventTypeCode {
+  MATCH_CHECK = 'match_check',
+  PUSH_READY = 'push_ready',
+  PUSH_START = 'push_start',
+  EXPOSURE_DELIVERED = 'exposure_delivered',
+  EXPOSURE_VALID = 'exposure_valid',
+  EXPOSURE_INVALID = 'exposure_invalid',
+  CLICK_TRACKED = 'click_tracked',
+  INTERACT_TRACKED = 'interact_tracked',
+  PUSH_PAUSE = 'push_pause',
+  PUSH_RESUME = 'push_resume',
+  PUSH_FINISH = 'push_finish',
+  PUSH_TERMINATE = 'push_terminate',
+  ANOMALY_DETECTED = 'anomaly_detected',
+  ANOMALY_BLOCKED = 'anomaly_blocked',
+  RULE_ADJUST = 'rule_adjust',
+  STRENGTH_CHANGE = 'strength_change'
+}
+
+export const PUSH_TRACE_EVENT_TYPE_NAMES: Record<string, string> = {
+  match_check: '匹配校验',
+  push_ready: '推送就绪',
+  push_start: '启动推送',
+  exposure_delivered: '曝光下发',
+  exposure_valid: '有效曝光',
+  exposure_invalid: '无效曝光',
+  click_tracked: '点击记录',
+  interact_tracked: '互动记录',
+  push_pause: '暂停推送',
+  push_resume: '恢复推送',
+  push_finish: '推送完成',
+  push_terminate: '终止推送',
+  anomaly_detected: '异常检测',
+  anomaly_blocked: '异常拦截',
+  rule_adjust: '规则调整',
+  strength_change: '力度调整'
+}
+
+export const PUSH_TRACE_EVENT_TYPE_COLORS: Record<string, string> = {
+  match_check: '#909399',
+  push_ready: '#909399',
+  push_start: '#409eff',
+  exposure_delivered: '#409eff',
+  exposure_valid: '#67c23a',
+  exposure_invalid: '#f56c6c',
+  click_tracked: '#67c23a',
+  interact_tracked: '#67c23a',
+  push_pause: '#e6a23c',
+  push_resume: '#409eff',
+  push_finish: '#67c23a',
+  push_terminate: '#f56c6c',
+  anomaly_detected: '#e6a23c',
+  anomaly_blocked: '#f56c6c',
+  rule_adjust: '#909399',
+  strength_change: '#409eff'
+}
+
+export enum PushTraceAnomalyTypeCode {
+  FAKE_EXPOSURE = 'fake_exposure',
+  INVALID_EXPOSURE = 'invalid_exposure',
+  CLICK_FRAUD = 'click_fraud',
+  BRUSH_TRAFFIC = 'brush_traffic',
+  IP_CLUSTER = 'ip_cluster',
+  DEVICE_ABNORMAL = 'device_abnormal',
+  TIMEOUT_DELIVERY = 'timeout_delivery',
+  DATA_MISMATCH = 'data_mismatch'
+}
+
+export const PUSH_TRACE_ANOMALY_TYPE_NAMES: Record<string, string> = {
+  fake_exposure: '虚假曝光',
+  invalid_exposure: '无效曝光',
+  click_fraud: '点击欺诈',
+  brush_traffic: '恶意刷量',
+  ip_cluster: 'IP聚集',
+  device_abnormal: '设备异常',
+  timeout_delivery: '投放超时',
+  data_mismatch: '数据不匹配'
+}
