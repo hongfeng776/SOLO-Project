@@ -16,6 +16,9 @@ const { AuditRule } = require('./AuditRule');
 const { AuditRuleModifyLog } = require('./AuditRuleModifyLog');
 const { EndUser, AccountStatusLog } = require('./EndUser');
 const { MemberLevel, MemberLevelLog, MemberLevelUpgradeRecord } = require('./MemberLevel');
+const { MemberPrivilege, MemberPrivilegeLog, MemberPrivilegeRedemption,
+  PRIVILEGE_TYPE_PERMISSION_MAP, generatePrivilegeCode,
+} = require('./MemberPrivilege');
 const { UserSegmentRule, UserSegmentTag, UserSegmentLog, SegmentStrategy,
   SEGMENT_DIMENSION, SEGMENT_LEVEL, SEGMENT_RULE_STATUS, SEGMENT_CHANGE_TYPE,
   STRATEGY_TRIGGER_MODE, STRATEGY_STATUS, STRATEGY_TYPE, BENEFIT_TYPE,
@@ -52,6 +55,11 @@ MemberLevelUpgradeRecord.belongsTo(MemberLevel, { foreignKey: 'to_level_tier', t
 MemberLevel.hasMany(EndUser, { foreignKey: 'member_level', sourceKey: 'levelTier', as: 'levelUsers' });
 EndUser.belongsTo(MemberLevel, { foreignKey: 'member_level', targetKey: 'levelTier', as: 'memberLevelInfo' });
 
+MemberPrivilege.hasMany(MemberPrivilegeLog, { foreignKey: 'privilege_id', as: 'privilegeLogs' });
+MemberPrivilegeLog.belongsTo(MemberPrivilege, { foreignKey: 'privilege_id', as: 'privilege' });
+MemberPrivilege.hasMany(MemberPrivilegeRedemption, { foreignKey: 'privilege_id', as: 'privilegeRedemptions' });
+MemberPrivilegeRedemption.belongsTo(MemberPrivilege, { foreignKey: 'privilege_id', as: 'privilege' });
+
 module.exports = {
   User,
   Role,
@@ -77,6 +85,11 @@ module.exports = {
   MemberLevel,
   MemberLevelLog,
   MemberLevelUpgradeRecord,
+  MemberPrivilege,
+  MemberPrivilegeLog,
+  MemberPrivilegeRedemption,
+  PRIVILEGE_TYPE_PERMISSION_MAP,
+  generatePrivilegeCode,
   UserSegmentRule,
   UserSegmentTag,
   UserSegmentLog,

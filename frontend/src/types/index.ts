@@ -2558,5 +2558,178 @@ export interface MemberLevelQueryParams extends PaginationParams {
   endTime?: string | null
 }
 
+// ============ 会员权益配置 ============
+export interface MemberPrivilegeItem {
+  id: number
+  privilegeCode: string
+  privilegeName: string
+  privilegeType: string
+  applicableLevels: number[]
+  effectiveStartTime: string
+  effectiveEndTime: string
+  usageLimit: number
+  dailyLimit: number
+  monthlyLimit: number
+  permissionSwitches: Record<string, boolean> | null
+  usageRules: Record<string, any> | null
+  status: number
+  scopeType: string
+  configBatch: string
+  sortOrder: number
+  description?: string
+  remark?: string
+  version: number
+  redemptionCount?: number
+  createdBy?: number
+  createdByName?: string
+  updatedBy?: number
+  updatedByName?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface MemberPrivilegeLogItem {
+  id: number
+  privilegeId: number
+  privilegeCode: string
+  modifyType: string
+  modifyTypeLabel?: string
+  configBatch: string
+  beforeSnapshot?: Partial<MemberPrivilegeItem>
+  afterSnapshot?: Partial<MemberPrivilegeItem>
+  changedFields: string[]
+  affectUserCount: number
+  operatorId?: number
+  operatorName?: string
+  operatorRemark?: string
+  ipAddress?: string
+  createdAt: string
+}
+
+export interface MemberPrivilegeRedemptionItem {
+  id: number
+  privilegeId: number
+  privilegeCode: string
+  privilegeName?: string
+  privilegeType?: string
+  userId: number
+  uid: string
+  memberLevelTier?: number
+  redemptionType: string
+  redemptionCount: number
+  redemptionBatch?: string
+  configBatch?: string
+  operatorId?: number
+  operatorName?: string
+  extraData?: Record<string, any>
+  createdAt: string
+}
+
+export interface MemberPrivilegeConflictCheckResult {
+  hasConflict: boolean
+  canSubmit: boolean
+  conflicts: Array<{
+    type: 'duplicate_name' | 'period_overlap' | 'privilege_duplicate' | 'permission_mismatch'
+    level: 'high' | 'medium' | 'low'
+    message: string
+    field?: string
+    relatedPrivilegeId?: number
+    relatedPrivilegeCode?: string
+    relatedPrivilegeName?: string
+    suggestion: string
+  }>
+}
+
+export interface MemberPrivilegeStatsResult {
+  totalCount: number
+  activeCount: number
+  pausedCount: number
+  offlineCount: number
+  expiringSoon: number
+  totalRedemptions: number
+  byType: Array<{ type: string; count: number }>
+}
+
+export interface MemberPrivilegeTraceResult {
+  traceType: string
+  traceValue: string
+  found: boolean
+  privilege?: MemberPrivilegeItem
+  relatedPrivileges?: MemberPrivilegeItem[]
+  recentLogs?: MemberPrivilegeLogItem[]
+  recentRedemptions?: MemberPrivilegeRedemptionItem[]
+  redemption?: MemberPrivilegeRedemptionItem
+  summary?: {
+    totalPrivileges?: number
+    totalChanges: number
+    totalRedemptions: number
+    affectedUsers?: number
+  }
+}
+
+export interface MemberPrivilegeBatchActionParams {
+  action: 'batch_online' | 'batch_pause' | 'batch_limit_change'
+  ids: number[]
+  usageLimit?: number
+  dailyLimit?: number
+  monthlyLimit?: number
+  scopeType?: string
+}
+
+export interface MemberPrivilegeBatchActionResult {
+  successCount: number
+  failCount: number
+  skippedCount: number
+  successIds: number[]
+  failItems: Array<{ id: number; reason: string }>
+  skippedItems: Array<{ id: number; reason: string }>
+  configBatch?: string
+}
+
+export interface MemberPrivilegeCreateForm {
+  privilegeName: string
+  privilegeType: string
+  applicableLevels: number[]
+  effectiveStartTime: string
+  effectiveEndTime: string
+  usageLimit?: number
+  dailyLimit?: number
+  monthlyLimit?: number
+  permissionSwitches?: Record<string, boolean> | null
+  usageRules?: Record<string, any> | null
+  scopeType?: string
+  sortOrder?: number
+  description?: string
+  remark?: string
+}
+
+export interface MemberPrivilegeEditForm extends Partial<MemberPrivilegeCreateForm> {
+  id: number
+}
+
+export interface MemberPrivilegeQueryParams extends PaginationParams {
+  privilegeType?: string | null
+  status?: number | null
+  scopeType?: string | null
+  applicableLevel?: string | null
+  configBatch?: string | null
+  keyword?: string | null
+  startTime?: string | null
+  endTime?: string | null
+}
+
+export interface MemberPrivilegeRedemptionQueryParams extends PaginationParams {
+  privilegeId?: number | null
+  privilegeCode?: string | null
+  userId?: number | null
+  uid?: string | null
+  redemptionType?: string | null
+  redemptionBatch?: string | null
+  configBatch?: string | null
+  privilegeType?: string | null
+  startTime?: string | null
+  endTime?: string | null
+}
+
 
 

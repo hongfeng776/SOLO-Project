@@ -932,5 +932,72 @@ export const MEMBER_LEVEL_DEFAULT_PRIVILEGES = [
   { privilegeCode: 'DOLBY', privilegeName: '杜比音效', privilegeValue: true, privilegeDesc: '享受杜比全景声效果' },
 ] as const
 
+// ============ 会员权益配置 ============
+export const MEMBER_PRIVILEGE_TYPE = {
+  WATCH_PRIVILEGE: { value: 'WATCH_PRIVILEGE', label: '观影特权', color: '#409EFF', icon: 'VideoPlay', desc: '高清/超清/抢先看等观影相关特权' },
+  AD_FREE: { value: 'AD_FREE', label: '免广告', color: '#67C23A', icon: 'Mute', desc: '跳过视频前贴片广告' },
+  EXCLUSIVE_CONTENT: { value: 'EXCLUSIVE_CONTENT', label: '专属内容', color: '#722ed1', icon: 'Lock', desc: '会员专属片库和内容' },
+  OFFLINE_DOWNLOAD: { value: 'OFFLINE_DOWNLOAD', label: '离线下载', color: '#E6A23C', icon: 'Download', desc: '视频离线缓存下载' },
+  COUPON: { value: 'COUPON', label: '优惠券', color: '#F56C6C', icon: 'Ticket', desc: '观影优惠券发放' },
+  BADGE: { value: 'BADGE', label: '专属徽章', color: '#13c2c2', icon: 'Medal', desc: '会员身份徽章展示' },
+  PRIORITY: { value: 'PRIORITY', label: '优先特权', color: '#9C27B0', icon: 'Odometer', desc: '客服/内容等优先特权' },
+  CUSTOMER_SERVICE: { value: 'CUSTOMER_SERVICE', label: '专属客服', color: '#3498db', icon: 'Service', desc: '优先接入人工客服' },
+  SCREEN_CAST: { value: 'SCREEN_CAST', label: '投屏特权', color: '#2ecc71', icon: 'Monitor', desc: '支持高清投屏' },
+  DOLBY: { value: 'DOLBY', label: '杜比音效', color: '#e67e22', icon: 'Headset', desc: '享受杜比全景声效果' },
+  CUSTOM: { value: 'CUSTOM', label: '自定义', color: '#909399', icon: 'Setting', desc: '自定义权益类型' },
+} as const
+
+export const MEMBER_PRIVILEGE_STATUS = {
+  ACTIVE: { value: 1, label: '生效', color: '#67C23A', type: 'success' },
+  PAUSED: { value: 2, label: '暂停', color: '#E6A23C', type: 'warning' },
+  OFFLINE: { value: 3, label: '下线', color: '#909399', type: 'info' },
+} as const
+
+export const MEMBER_PRIVILEGE_MODIFY_TYPE = {
+  CREATE: { value: 'CREATE', label: '创建权益', color: '#67C23A' },
+  EDIT: { value: 'EDIT', label: '编辑权益', color: '#409EFF' },
+  STATUS_ACTIVATE: { value: 'STATUS_ACTIVATE', label: '生效权益', color: '#67C23A' },
+  STATUS_PAUSE: { value: 'STATUS_PAUSE', label: '暂停权益', color: '#E6A23C' },
+  STATUS_OFFLINE: { value: 'STATUS_OFFLINE', label: '下线权益', color: '#909399' },
+  BATCH_ONLINE: { value: 'BATCH_ONLINE', label: '批量上线', color: '#13c2c2' },
+  BATCH_PAUSE: { value: 'BATCH_PAUSE', label: '批量暂停', color: '#E6A23C' },
+  BATCH_LIMIT_CHANGE: { value: 'BATCH_LIMIT_CHANGE', label: '批量修改上限', color: '#722ed1' },
+} as const
+
+export const MEMBER_PRIVILEGE_BATCH_ACTION = {
+  BATCH_ONLINE: { value: 'batch_online', label: '批量上线', icon: 'CircleCheck', type: 'success' },
+  BATCH_PAUSE: { value: 'batch_pause', label: '批量暂停', icon: 'VideoPause', type: 'warning' },
+  BATCH_LIMIT_CHANGE: { value: 'batch_limit_change', label: '批量修改上限', icon: 'EditPen', type: 'primary' },
+} as const
+
+export const MEMBER_PRIVILEGE_SCOPE_TYPE = {
+  ALL: { value: 'ALL', label: '全量用户', color: '#409EFF' },
+  NEW_USER: { value: 'NEW_USER', label: '仅新用户', color: '#E6A23C' },
+} as const
+
+export const MEMBER_PRIVILEGE_REDEMPTION_TYPE = {
+  USE: { value: 'USE', label: '使用', color: '#409EFF' },
+  GRANT: { value: 'GRANT', label: '授予', color: '#67C23A' },
+  REVOKE: { value: 'REVOKE', label: '撤销', color: '#F56C6C' },
+  EXPIRE: { value: 'EXPIRE', label: '过期', color: '#909399' },
+} as const
+
+export const MEMBER_PRIVILEGE_TRACE_TYPE = {
+  PRIVILEGE_CODE: { value: 'privilegeCode', label: '权益编码' },
+  CONFIG_BATCH: { value: 'configBatch', label: '配置批次' },
+  REDEMPTION_RECORD: { value: 'redemptionRecord', label: '核销记录ID' },
+} as const
+
+export const PRIVILEGE_PERMISSION_SWITCHES = {
+  canWatchHD: { label: '高清观看', desc: '1080P及以上清晰度' },
+  canWatchUHD: { label: '超清观看', desc: '4K超清画质' },
+  canWatchExclusive: { label: '专属内容', desc: '会员专属片库' },
+  canEarlyAccess: { label: '抢先看', desc: '提前观看新内容' },
+  canAdFree: { label: '免广告', desc: '跳过视频贴片广告' },
+  canOffline: { label: '离线下载', desc: '视频离线缓存' },
+  canScreenCast: { label: '投屏', desc: '支持高清投屏' },
+  canDolby: { label: '杜比音效', desc: '杜比全景声' },
+} as const
+
 
 

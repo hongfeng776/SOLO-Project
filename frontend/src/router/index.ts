@@ -202,6 +202,12 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/views/system/member-level/index.vue'),
             meta: { title: '会员等级配置', icon: 'Medal', roles: ['memberLevel:view'] },
           },
+          {
+            path: 'member-privileges',
+            name: 'MemberPrivileges',
+            component: () => import('@/views/system/member-privilege/index.vue'),
+            meta: { title: '会员权益配置', icon: 'Present', roles: ['memberPrivilege:view'] },
+          },
         ],
       },
       {
