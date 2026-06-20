@@ -1198,4 +1198,136 @@ export const WARNING_SORT_STRATEGIES = {
   INTERVIEW_TIME: 'interview_time',
 };
 
+export enum ProbationStatus {
+  IN_PROBATION = 'in_probation',
+  EXPIRING_SOON = 'expiring_soon',
+  PASSED = 'passed',
+  FAILED = 'failed',
+}
+
+export const ProbationStatusLabel: Record<ProbationStatus, string> = {
+  [ProbationStatus.IN_PROBATION]: '试用中',
+  [ProbationStatus.EXPIRING_SOON]: '即将到期',
+  [ProbationStatus.PASSED]: '已转正',
+  [ProbationStatus.FAILED]: '未通过',
+};
+
+export const ProbationStatusType: Record<ProbationStatus, string> = {
+  [ProbationStatus.IN_PROBATION]: 'primary',
+  [ProbationStatus.EXPIRING_SOON]: 'warning',
+  [ProbationStatus.PASSED]: 'success',
+  [ProbationStatus.FAILED]: 'danger',
+};
+
+export const PROBATION_STATUS_OPTIONS = Object.entries(ProbationStatusLabel).map(
+  ([value, label]) => ({ label, value })
+);
+
+export enum ProbationOperationAction {
+  CREATE = 'create',
+  UPDATE_DURATION = 'update_duration',
+  SET_ASSESSMENTS = 'set_assessments',
+  START_REVIEW = 'start_review',
+  PASS = 'pass',
+  FAIL = 'fail',
+  EXTEND = 'extend',
+  ARCHIVE = 'archive',
+  BATCH_SET_ASSESSMENTS = 'batch_set_assessments',
+  BATCH_UPDATE_STATUS = 'batch_update_status',
+  SYNC_STATUS = 'sync_status',
+}
+
+export const ProbationOperationActionLabel: Record<ProbationOperationAction, string> = {
+  [ProbationOperationAction.CREATE]: '创建试用期记录',
+  [ProbationOperationAction.UPDATE_DURATION]: '调整试用期时长',
+  [ProbationOperationAction.SET_ASSESSMENTS]: '设置考核指标',
+  [ProbationOperationAction.START_REVIEW]: '发起转正考核',
+  [ProbationOperationAction.PASS]: '通过转正',
+  [ProbationOperationAction.FAIL]: '未通过转正',
+  [ProbationOperationAction.EXTEND]: '延长试用期',
+  [ProbationOperationAction.ARCHIVE]: '归档',
+  [ProbationOperationAction.BATCH_SET_ASSESSMENTS]: '批量设置考核指标',
+  [ProbationOperationAction.BATCH_UPDATE_STATUS]: '批量更新状态',
+  [ProbationOperationAction.SYNC_STATUS]: '同步试用期状态',
+};
+
+export const PROBATION_DURATION_BY_CATEGORY: Record<string, number> = {
+  tech: 3,
+  product: 3,
+  design: 2,
+  operations: 2,
+  marketing: 2,
+  hr: 2,
+  finance: 3,
+  admin: 1,
+  sales: 3,
+  other: 2,
+};
+
+export const PROBATION_ADJUST_MIN = 1;
+export const PROBATION_ADJUST_MAX = 6;
+export const PROBATION_WARNING_DAYS = 7;
+
+export const PROBATION_LOCKED_STATUSES: ProbationStatus[] = [
+  ProbationStatus.PASSED,
+  ProbationStatus.FAILED,
+];
+
+export interface AssessmentIndicator {
+  indicatorName: string;
+  indicatorWeight: number;
+  indicatorDesc: string;
+  targetValue: string;
+}
+
+export const DEFAULT_ASSESSMENT_INDICATORS: AssessmentIndicator[] = [
+  {
+    indicatorName: '工作态度',
+    indicatorWeight: 15,
+    indicatorDesc: '出勤情况、工作积极性、责任心、主动性等',
+    targetValue: '遵守考勤制度，积极主动完成工作',
+  },
+  {
+    indicatorName: '任务完成',
+    indicatorWeight: 25,
+    indicatorDesc: '工作任务完成的质量、效率、及时性',
+    targetValue: '按时按质完成分配的各项工作任务',
+  },
+  {
+    indicatorName: '团队协作',
+    indicatorWeight: 15,
+    indicatorDesc: '与团队成员沟通配合、分享协作情况',
+    targetValue: '良好沟通，积极配合团队工作',
+  },
+  {
+    indicatorName: '学习能力',
+    indicatorWeight: 20,
+    indicatorDesc: '对新业务、新技能的学习掌握速度',
+    targetValue: '快速熟悉业务，掌握岗位所需技能',
+  },
+  {
+    indicatorName: '专业技能',
+    indicatorWeight: 25,
+    indicatorDesc: '岗位专业知识、技能的掌握和运用能力',
+    targetValue: '具备岗位要求的专业技能水平',
+  },
+];
+
+export interface AssessmentOption {
+  score: number;
+  label: string;
+  description: string;
+}
+
+export const PROBATION_ASSESSMENT_OPTIONS: AssessmentOption[] = [
+  { score: 1, label: '很差', description: '完全不符合岗位要求，存在严重问题' },
+  { score: 2, label: '较差', description: '未达到岗位基本要求，需要较大改进' },
+  { score: 3, label: '一般', description: '基本符合岗位要求，有提升空间' },
+  { score: 4, label: '良好', description: '较好地满足岗位要求，表现良好' },
+  { score: 5, label: '优秀', description: '远超岗位要求，表现突出优秀' },
+];
+
+export const PROBATION_ASSESSMENT_PASS_SCORE = 3.0;
+export const PROBATION_ASSESSMENT_EXCELLENT_SCORE = 4.5;
+
 export const REMARK_MAX_LENGTH = 50;

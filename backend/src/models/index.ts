@@ -22,6 +22,9 @@ import RecruitmentConfig from './recruitment-config.model';
 import RecruitmentConfigLog from './recruitment-config-log.model';
 import PermissionLog from './permission-log.model';
 import LoginLog from './login-log.model';
+import Probation from './probation.model';
+import ProbationOperationLog from './probation-operation-log.model';
+import ProbationAssessmentIndicator from './probation-assessment-indicator.model';
 
 Company.hasMany(Job, { foreignKey: 'companyId', as: 'jobs' });
 Job.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
@@ -85,6 +88,16 @@ OnboardLedger.belongsTo(User, { foreignKey: 'generatedBy', as: 'generator' });
 Onboard.belongsTo(User, { foreignKey: 'hrOperatorId', as: 'hrOperator' });
 Onboard.belongsTo(User, { foreignKey: 'auditUserId', as: 'auditUser' });
 
+Onboard.hasOne(Probation, { foreignKey: 'onboardId', as: 'probation' });
+Probation.belongsTo(Onboard, { foreignKey: 'onboardId', as: 'onboard' });
+Probation.belongsTo(Resume, { foreignKey: 'resumeId', as: 'resume' });
+Probation.belongsTo(Job, { foreignKey: 'jobId', as: 'job' });
+Probation.hasMany(ProbationOperationLog, { foreignKey: 'probationId', as: 'operationLogs' });
+ProbationOperationLog.belongsTo(Probation, { foreignKey: 'probationId', as: 'probation' });
+ProbationOperationLog.belongsTo(User, { foreignKey: 'operatorId', as: 'operator' });
+Probation.hasMany(ProbationAssessmentIndicator, { foreignKey: 'probationId', as: 'assessmentIndicators' });
+ProbationAssessmentIndicator.belongsTo(Probation, { foreignKey: 'probationId', as: 'probation' });
+
 Qualification.hasMany(QualificationAuditLog, { foreignKey: 'qualificationId', as: 'auditLogs' });
 QualificationAuditLog.belongsTo(Qualification, { foreignKey: 'qualificationId', as: 'qualification' });
 
@@ -107,5 +120,6 @@ export {
   Onboard, OnboardOperationLog, OnboardLedger,
   User, Qualification, QualificationAuditLog,
   CompanyChangeLog, RecruitmentConfig, RecruitmentConfigLog,
-  PermissionLog, LoginLog
+  PermissionLog, LoginLog,
+  Probation, ProbationOperationLog, ProbationAssessmentIndicator
 };

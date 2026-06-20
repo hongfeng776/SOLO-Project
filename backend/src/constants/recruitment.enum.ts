@@ -1094,3 +1094,91 @@ export const WARNING_SORT_STRATEGIES = {
   WARNING_LEVEL: 'warning_level',
   INTERVIEW_TIME: 'interview_time',
 };
+
+export enum ProbationStatus {
+  IN_PROBATION = 'in_probation',
+  EXPIRING_SOON = 'expiring_soon',
+  REVIEWING = 'reviewing',
+  PASSED = 'passed',
+  FAILED = 'failed',
+  EXTENDED = 'extended',
+}
+
+export const ProbationStatusLabel: Record<ProbationStatus, string> = {
+  [ProbationStatus.IN_PROBATION]: '试用期内',
+  [ProbationStatus.EXPIRING_SOON]: '即将到期',
+  [ProbationStatus.REVIEWING]: '考核中',
+  [ProbationStatus.PASSED]: '试用通过',
+  [ProbationStatus.FAILED]: '试用不通过',
+  [ProbationStatus.EXTENDED]: '已延长',
+};
+
+export const ProbationStatusType: Record<ProbationStatus, string> = {
+  [ProbationStatus.IN_PROBATION]: 'primary',
+  [ProbationStatus.EXPIRING_SOON]: 'warning',
+  [ProbationStatus.REVIEWING]: 'info',
+  [ProbationStatus.PASSED]: 'success',
+  [ProbationStatus.FAILED]: 'danger',
+  [ProbationStatus.EXTENDED]: 'warning',
+};
+
+export enum ProbationOperationAction {
+  CREATE = 'create',
+  UPDATE = 'update',
+  UPDATE_DURATION = 'update_duration',
+  EXTEND = 'extend',
+  PASS = 'pass',
+  FAIL = 'fail',
+  SET_ASSESSMENT = 'set_assessment',
+  SET_ASSESSMENTS = 'set_assessments',
+  BATCH_SET_ASSESSMENT = 'batch_set_assessment',
+  BATCH_UPDATE_STATUS = 'batch_update_status',
+  STATUS_SYNC = 'status_sync',
+  SYNC_EXPIRING = 'sync_expiring',
+  REFRESH_STATUS = 'refresh_status',
+}
+
+export const ProbationOperationActionLabel: Record<ProbationOperationAction, string> = {
+  [ProbationOperationAction.CREATE]: '创建试用期记录',
+  [ProbationOperationAction.UPDATE]: '修改试用期信息',
+  [ProbationOperationAction.UPDATE_DURATION]: '调整试用期时长',
+  [ProbationOperationAction.EXTEND]: '延长试用期',
+  [ProbationOperationAction.PASS]: '试用通过',
+  [ProbationOperationAction.FAIL]: '试用不通过',
+  [ProbationOperationAction.SET_ASSESSMENT]: '设置考核指标',
+  [ProbationOperationAction.SET_ASSESSMENTS]: '设置考核指标(批量)',
+  [ProbationOperationAction.BATCH_SET_ASSESSMENT]: '批量设置考核指标',
+  [ProbationOperationAction.BATCH_UPDATE_STATUS]: '批量更新状态',
+  [ProbationOperationAction.STATUS_SYNC]: '系统状态同步',
+  [ProbationOperationAction.SYNC_EXPIRING]: '同步即将到期状态',
+  [ProbationOperationAction.REFRESH_STATUS]: '自动刷新状态',
+};
+
+export const PROBATION_DURATION_BY_CATEGORY: Record<string, number> = {
+  full_time: 3,
+  internship: 2,
+  part_time: 0,
+  tech: 6,
+  management: 6,
+  support: 3,
+  tech_senior: 6,
+};
+
+export const PROBATION_ADJUST_MIN = 1;
+
+export const PROBATION_ADJUST_MAX = 6;
+
+export const PROBATION_WARNING_DAYS = 7;
+
+export const PROBATION_ASSESSMENT_REQUIRED_FIELDS: string[] = [
+  'workAttitude',
+  'taskCompletion',
+  'teamWork',
+  'learningAbility',
+  'professionalSkill',
+];
+
+export const PROBATION_LOCKED_STATUSES: ProbationStatus[] = [
+  ProbationStatus.PASSED,
+  ProbationStatus.FAILED,
+];
