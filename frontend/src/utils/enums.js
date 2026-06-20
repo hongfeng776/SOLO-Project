@@ -860,6 +860,114 @@ export const InventoryChangeDirectionEnum = {
   NONE: { value: 'none', label: '无变化', color: '#909399', icon: 'Minus' }
 }
 
+export const FulfillmentStageEnum = {
+  PENDING_TICKET: { value: 'pending_ticket', label: '待出票', color: '#1890ff', icon: 'Clock', desc: '订单已支付，等待出票' },
+  TICKETED: { value: 'ticketed', label: '已出票', color: '#52c41a', icon: 'Finished', desc: '出票完成，等待登机' },
+  FLIGHT_CHANGED: { value: 'flight_changed', label: '航班变动', color: '#faad14', icon: 'Warning', desc: '航班发生变动，需处理' },
+  TERMINATED: { value: 'terminated', label: '行程终止', color: '#ff4d4f', icon: 'Close', desc: '行程已终止，履约完成' }
+}
+
+export const FulfillmentStatusEnum = {
+  PENDING: { value: 0, label: '待处理', color: '#909399', type: 'info' },
+  PROCESSING: { value: 1, label: '处理中', color: '#1890ff', type: 'primary' },
+  COMPLETED: { value: 2, label: '已完成', color: '#52c41a', type: 'success' },
+  ABNORMAL: { value: 3, label: '已异常', color: '#ff4d4f', type: 'danger' },
+  TERMINATED: { value: 4, label: '已终止', color: '#ff4d4f', type: 'danger' }
+}
+
+export const FulfillmentCategoryEnum = {
+  NORMAL: { value: 'normal', label: '普通履约', color: '#1890ff' },
+  INTERNATIONAL: { value: 'international', label: '国际机票履约', color: '#52c41a', noBatch: true },
+  GROUP: { value: 'group', label: '团体履约', color: '#722ed1' },
+  VIP: { value: 'vip', label: 'VIP履约', color: '#faad14' }
+}
+
+export const FulfillmentAbnormalTypeEnum = {
+  FAKE_TICKET: { value: 'fake_ticket', label: '虚假出票', color: '#ff4d4f' },
+  DUPLICATE_TICKET: { value: 'duplicate_ticket', label: '重复出票', color: '#fa8c16' },
+  NON_COMPLIANCE: { value: 'non_compliance', label: '违规操作', color: '#f5222d' },
+  INFO_MISMATCH: { value: 'info_mismatch', label: '信息不一致', color: '#722ed1' },
+  TIMEOUT: { value: 'timeout', label: '履约超时', color: '#faad14' }
+}
+
+export const FulfillmentLogTypeEnum = {
+  CREATE: { value: 'create', category: 'audit', label: '创建履约', color: '#52c41a', icon: 'Plus', direction: 'forward' },
+  AUDIT_PASS: { value: 'audit_pass', category: 'audit', label: '审核通过', color: '#52c41a', icon: 'Check', direction: 'forward' },
+  AUDIT_REJECT: { value: 'audit_reject', category: 'audit', label: '审核拒绝', color: '#ff4d4f', icon: 'Close', direction: 'backward' },
+  ISSUE_TICKET: { value: 'issue_ticket', category: 'ticket', label: '出票', color: '#1890ff', icon: 'Tickets', direction: 'forward' },
+  CHANGE_TICKET: { value: 'change_ticket', category: 'ticket', label: '改签', color: '#faad14', icon: 'Refresh', direction: 'info' },
+  CANCEL_TICKET: { value: 'cancel_ticket', category: 'ticket', label: '退票', color: '#ff4d4f', icon: 'Delete', direction: 'backward' },
+  FLIGHT_CHANGE: { value: 'flight_change', category: 'flight', label: '航班变动处理', color: '#faad14', icon: 'Warning', direction: 'info' },
+  MARK_ABNORMAL: { value: 'mark_abnormal', category: 'abnormal', label: '标记异常', color: '#ff4d4f', icon: 'Warning', direction: 'info' },
+  HANDLE_ABNORMAL: { value: 'handle_abnormal', category: 'abnormal', label: '处理异常', color: '#52c41a', icon: 'Check', direction: 'forward' },
+  TERMINATE: { value: 'terminate', category: 'audit', label: '终止行程', color: '#ff4d4f', icon: 'Close', direction: 'backward' },
+  BATCH_ISSUE: { value: 'batch_issue', category: 'ticket', label: '批量出票', color: '#722ed1', icon: 'Tickets', direction: 'forward' },
+  BATCH_PROCESS: { value: 'batch_process', category: 'flight', label: '批量处理', color: '#13c2c2', icon: 'Files', direction: 'info' },
+  VOUCHER_GENERATE: { value: 'voucher_generate', category: 'voucher', label: '生成凭证', color: '#1890ff', icon: 'Document', direction: 'info' },
+  VOUCHER_SEND: { value: 'voucher_send', category: 'voucher', label: '发送凭证', color: '#52c41a', icon: 'Message', direction: 'info' },
+  UPDATE_LEDGER: { value: 'update_ledger', category: 'ledger', label: '更新台账', color: '#722ed1', icon: 'DataLine', direction: 'info' },
+  UPDATE_TRAVEL_RECORD: { value: 'update_travel_record', category: 'ledger', label: '更新出行记录', color: '#13c2c2', icon: 'Location', direction: 'info' }
+}
+
+export const FulfillmentLogCategoryEnum = {
+  AUDIT: { value: 'audit', label: '履约审核', color: '#1890ff', icon: 'Stamp' },
+  TICKET: { value: 'ticket', label: '票务处理', color: '#52c41a', icon: 'Tickets' },
+  FLIGHT: { value: 'flight', label: '航班变动', color: '#faad14', icon: 'Warning' },
+  ABNORMAL: { value: 'abnormal', label: '异常处理', color: '#ff4d4f', icon: 'WarningFilled' },
+  VOUCHER: { value: 'voucher', label: '凭证管理', color: '#722ed1', icon: 'Document' },
+  LEDGER: { value: 'ledger', label: '台账同步', color: '#13c2c2', icon: 'DataLine' }
+}
+
+export const FulfillmentBatchOperationEnum = {
+  ISSUE_TICKET: { value: 'issue_ticket', label: '批量出票', icon: 'Tickets', color: '#52c41a', desc: '批量完成合规订单出票' },
+  HANDLE_FLIGHT_CHANGE: { value: 'handle_flight_change', label: '批量处理航班变动', icon: 'Warning', color: '#faad14', desc: '批量处理航班变动订单' },
+  MARK_ABNORMAL: { value: 'mark_abnormal', label: '批量标记异常', icon: 'WarningFilled', color: '#ff4d4f', desc: '批量标记异常履约订单' }
+}
+
+export const FulfillmentValidateFieldEnum = {
+  ticketNumbers: '票号列表',
+  passengerInfo: '乘机人信息',
+  pnrCode: 'PNR编码',
+  idExpireDate: '证件有效期',
+  flightStatus: '航班状态',
+  ticketTiming: '出票时效'
+}
+
+export const FulfillmentChangeDirectionEnum = {
+  FORWARD: { value: 'forward', label: '正向推进', color: '#52c41a', icon: 'Right' },
+  BACKWARD: { value: 'backward', label: '回退操作', color: '#ff4d4f', icon: 'Left' },
+  INFO: { value: 'info', label: '信息变更', color: '#1890ff', icon: 'Edit' },
+  NONE: { value: 'none', label: '无变化', color: '#909399', icon: 'Minus' }
+}
+
+export const FlightChangeTypeEnum = {
+  DELAY: { value: 'delay', label: '延误', color: '#faad14' },
+  CANCEL: { value: 'cancel', label: '取消', color: '#ff4d4f' },
+  DIVERT: { value: 'divert', label: '备降', color: '#1890ff' },
+  RETURN: { value: 'return', label: '返航', color: '#722ed1' },
+  CHANGE_ROUTE: { value: 'change_route', label: '改航线', color: '#13c2c2' }
+}
+
+export const FlightChangeHandlePlanEnum = {
+  REBOOK: { value: 'rebook', label: '改签', color: '#1890ff' },
+  REFUND: { value: 'refund', label: '退票', color: '#ff4d4f' },
+  ENDORSE: { value: 'endorse', label: '签转', color: '#722ed1' },
+  WAIT: { value: 'wait', label: '等待', color: '#faad14' }
+}
+
+export const TicketVoucherStatusEnum = {
+  NOT_GENERATED: { value: 0, label: '未生成', color: '#909399', type: 'info' },
+  GENERATED: { value: 1, label: '已生成', color: '#1890ff', type: 'primary' },
+  SENT: { value: 2, label: '已发送', color: '#52c41a', type: 'success' },
+  CONFIRMED: { value: 3, label: '用户已确认', color: '#52c41a', type: 'success' }
+}
+
+export const IdValidStatusEnum = {
+  EXPIRED: { value: 0, label: '已过期', color: '#ff4d4f', type: 'danger' },
+  VALID: { value: 1, label: '有效', color: '#52c41a', type: 'success' },
+  EXPIRING_SOON: { value: 2, label: '即将过期(30天内)', color: '#faad14', type: 'warning' }
+}
+
 export default {
   OrderStatusEnum,
   OrderSourceEnum,
@@ -958,6 +1066,19 @@ export default {
   InventoryBatchOperationEnum,
   InventoryValidateFieldEnum,
   InventoryChangeDirectionEnum,
+  FulfillmentStageEnum,
+  FulfillmentStatusEnum,
+  FulfillmentCategoryEnum,
+  FulfillmentAbnormalTypeEnum,
+  FulfillmentLogTypeEnum,
+  FulfillmentLogCategoryEnum,
+  FulfillmentBatchOperationEnum,
+  FulfillmentValidateFieldEnum,
+  FulfillmentChangeDirectionEnum,
+  FlightChangeTypeEnum,
+  FlightChangeHandlePlanEnum,
+  TicketVoucherStatusEnum,
+  IdValidStatusEnum,
   getEnumLabel,
   getEnumType,
   getEnumOptions,

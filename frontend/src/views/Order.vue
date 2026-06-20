@@ -44,10 +44,11 @@
       <el-tab-pane label="作废订单" name="invalid" />
       <el-tab-pane label="已归档" name="archived" />
       <el-tab-pane label="售后管理" name="after_sale" />
+      <el-tab-pane label="履约管控" name="fulfillment" />
     </el-tabs>
 
     <OrderBatchToolbar
-      v-if="activeTab !== 'after_sale'"
+      v-if="activeTab !== 'after_sale' && activeTab !== 'fulfillment'"
       :selected-count="selectedRows.length"
       :selected-ids="selectedIds"
       @success="handleBatchSuccess"
@@ -55,7 +56,7 @@
     />
 
     <PaymentBatchToolbar
-      v-if="activeTab !== 'after_sale'"
+      v-if="activeTab !== 'after_sale' && activeTab !== 'fulfillment'"
       :selected-count="selectedRows.length"
       :selected-ids="selectedIds"
       :selected-rows="selectedRows"
@@ -69,6 +70,13 @@
         :visible="activeTab === 'after_sale'"
         @row-selection-change="handleAfterSaleSelectionChange"
         @open-audit-panel="handleOpenAuditPanel"
+      />
+    </div>
+
+    <div v-else-if="activeTab === 'fulfillment'" class="fulfillment-container">
+      <FlightFulfillmentPanel
+        ref="flightFulfillmentPanelRef"
+        :visible="activeTab === 'fulfillment'"
       />
     </div>
 
@@ -130,7 +138,7 @@
       </el-form>
     </div>
 
-    <div v-if="activeTab !== 'after_sale'" class="table-container">
+    <div v-if="activeTab !== 'after_sale' && activeTab !== 'fulfillment'" class="table-container">
       <el-table
         ref="tableRef"
         :data="pagedData"
@@ -499,6 +507,7 @@ import PaymentFlowTable from '@/components/Payment/PaymentFlowTable.vue'
 import AfterSaleTracePanel from '@/components/AfterSale/AfterSaleTracePanel.vue'
 import AfterSaleApplyDialog from '@/components/AfterSale/AfterSaleApplyDialog.vue'
 import AfterSaleAuditPanel from '@/components/AfterSale/AfterSaleAuditPanel.vue'
+import FlightFulfillmentPanel from '@/components/Flight/FlightFulfillmentPanel.vue'
 
 const loading = ref(false)
 const tableRef = ref(null)
@@ -527,6 +536,7 @@ const afterSaleAuditVisible = ref(false)
 const afterSaleApplyOrder = ref(null)
 const afterSaleAuditInfo = ref(null)
 const afterSaleSelectedRows = ref([])
+const flightFulfillmentPanelRef = ref(null)
 
 const selectedRows = ref([])
 const countdownMap = reactive({})
@@ -1085,6 +1095,13 @@ watch(() => [activeTab.value, searchForm], () => {
   }
 
   .after-sale-container {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  }
+
+  .fulfillment-container {
     padding: 20px;
     background-color: #fff;
     border-radius: 8px;

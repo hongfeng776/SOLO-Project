@@ -366,3 +366,138 @@ export function checkFlightLowStockWarning() {
     method: 'get'
   })
 }
+
+export function getFlightFulfillmentList(params) {
+  return request({
+    url: '/flight-fulfillments',
+    method: 'get',
+    params
+  })
+}
+
+export function getFlightFulfillment(id) {
+  return request({
+    url: `/flight-fulfillments/${id}`,
+    method: 'get'
+  })
+}
+
+export function validateFlightFulfillment(data) {
+  return request({
+    url: '/flight-fulfillments/validate',
+    method: 'post',
+    data
+  })
+}
+
+export function validateFlightFulfillmentField(fieldName, value, fulfillmentId) {
+  return request({
+    url: '/flight-fulfillments/validate/field',
+    method: 'get',
+    params: { fieldName, value, fulfillmentId }
+  })
+}
+
+export function createFlightFulfillment(orderId, data) {
+  return request({
+    url: `/flight-fulfillments/${orderId}`,
+    method: 'post',
+    data
+  })
+}
+
+export function auditFlightFulfillment(id, auditResult, remark) {
+  return request({
+    url: `/flight-fulfillments/${id}/audit`,
+    method: 'put',
+    data: { auditResult, remark }
+  })
+}
+
+export function issueFlightFulfillmentTicket(id, data) {
+  return request({
+    url: `/flight-fulfillments/${id}/issue-ticket`,
+    method: 'put',
+    data
+  })
+}
+
+export function handleFlightFulfillmentChange(id, data) {
+  return request({
+    url: `/flight-fulfillments/${id}/flight-change`,
+    method: 'put',
+    data
+  })
+}
+
+export function terminateFlightFulfillment(id, reason) {
+  return request({
+    url: `/flight-fulfillments/${id}/terminate`,
+    method: 'put',
+    data: { reason }
+  })
+}
+
+export function markFlightFulfillmentAbnormal(id, abnormalType, reason) {
+  return request({
+    url: `/flight-fulfillments/${id}/mark-abnormal`,
+    method: 'put',
+    data: { abnormalType, reason }
+  })
+}
+
+export function handleFlightFulfillmentAbnormal(id, handleRemark) {
+  return request({
+    url: `/flight-fulfillments/${id}/handle-abnormal`,
+    method: 'put',
+    data: { handleRemark }
+  })
+}
+
+export function batchIssueFlightFulfillmentTickets(ids, ticketDataList) {
+  return request({
+    url: '/flight-fulfillments/batch/issue',
+    method: 'post',
+    data: { ids, ticketDataList }
+  })
+}
+
+export function batchHandleFlightFulfillmentChanges(ids) {
+  return request({
+    url: '/flight-fulfillments/batch/flight-change',
+    method: 'post',
+    data: { ids }
+  })
+}
+
+export function batchMarkFlightFulfillmentAbnormal(ids, abnormalType, reason) {
+  return request({
+    url: '/flight-fulfillments/batch/mark-abnormal',
+    method: 'post',
+    data: { ids, abnormalType, reason }
+  })
+}
+
+export function getFlightFulfillmentLogs(fulfillmentId, params) {
+  const url = fulfillmentId ? `/flight-fulfillments/${fulfillmentId}/logs` : '/flight-fulfillments/logs/all'
+  return request({
+    url,
+    method: 'get',
+    params
+  })
+}
+
+export function getFlightFulfillmentStats(params) {
+  return request({
+    url: '/flight-fulfillments/stats/summary',
+    method: 'get',
+    params
+  })
+}
+
+export function checkFlightFulfillmentTicketTimeout() {
+  return request({
+    url: '/flight-fulfillments/check-timeout',
+    method: 'post'
+  })
+}

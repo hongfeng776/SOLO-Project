@@ -16,6 +16,7 @@ const benefitController = require('../controllers/BenefitController')
 const flightController = require('../controllers/FlightController')
 const flightPriceController = require('../controllers/FlightPriceController')
 const flightInventoryController = require('../controllers/FlightInventoryController')
+const flightFulfillmentController = require('../controllers/FlightFulfillmentController')
 const hotelController = require('../controllers/HotelController')
 const carController = require('../controllers/CarController')
 const ticketController = require('../controllers/TicketController')
@@ -143,6 +144,25 @@ router.get('/flight-inventories/logs/all', auth(), pagination, flightInventoryCo
 router.get('/flight-inventories/stats/summary', auth(), flightInventoryController.getInventoryStats.bind(flightInventoryController));
 router.post('/flight-inventories/release-expired', auth(['admin', 'inventory_manager']), flightInventoryController.releaseExpiredReservations.bind(flightInventoryController));
 router.get('/flight-inventories/warnings/low-stock', auth(), flightInventoryController.checkLowStockWarning.bind(flightInventoryController));
+
+router.get('/flight-fulfillments', auth(), pagination, flightFulfillmentController.getList.bind(flightFulfillmentController));
+router.get('/flight-fulfillments/:id', auth(), flightFulfillmentController.getById.bind(flightFulfillmentController));
+router.post('/flight-fulfillments/validate', auth(), flightFulfillmentController.validateFulfillment.bind(flightFulfillmentController));
+router.get('/flight-fulfillments/validate/field', auth(), flightFulfillmentController.validateField.bind(flightFulfillmentController));
+router.post('/flight-fulfillments/:orderId', auth(['admin', 'fulfillment_audit', 'fulfillment_operator']), flightFulfillmentController.createFulfillment.bind(flightFulfillmentController));
+router.put('/flight-fulfillments/:id/audit', auth(['admin', 'fulfillment_audit']), flightFulfillmentController.auditFulfillment.bind(flightFulfillmentController));
+router.put('/flight-fulfillments/:id/issue-ticket', auth(['admin', 'fulfillment_audit', 'fulfillment_operator']), flightFulfillmentController.issueTicket.bind(flightFulfillmentController));
+router.put('/flight-fulfillments/:id/flight-change', auth(['admin', 'fulfillment_audit', 'fulfillment_operator']), flightFulfillmentController.handleFlightChange.bind(flightFulfillmentController));
+router.put('/flight-fulfillments/:id/terminate', auth(['admin', 'fulfillment_audit']), flightFulfillmentController.terminateFulfillment.bind(flightFulfillmentController));
+router.put('/flight-fulfillments/:id/mark-abnormal', auth(['admin', 'fulfillment_audit', 'risk_operator']), flightFulfillmentController.markAbnormal.bind(flightFulfillmentController));
+router.put('/flight-fulfillments/:id/handle-abnormal', auth(['admin', 'fulfillment_audit', 'risk_operator']), flightFulfillmentController.handleAbnormal.bind(flightFulfillmentController));
+router.post('/flight-fulfillments/batch/issue', auth(['admin', 'fulfillment_audit']), flightFulfillmentController.batchIssueTickets.bind(flightFulfillmentController));
+router.post('/flight-fulfillments/batch/flight-change', auth(['admin', 'fulfillment_audit', 'fulfillment_operator']), flightFulfillmentController.batchHandleFlightChanges.bind(flightFulfillmentController));
+router.post('/flight-fulfillments/batch/mark-abnormal', auth(['admin', 'fulfillment_audit', 'risk_operator']), flightFulfillmentController.batchMarkAbnormal.bind(flightFulfillmentController));
+router.get('/flight-fulfillments/:fulfillmentId/logs', auth(), pagination, flightFulfillmentController.getLogs.bind(flightFulfillmentController));
+router.get('/flight-fulfillments/logs/all', auth(), pagination, flightFulfillmentController.getLogs.bind(flightFulfillmentController));
+router.get('/flight-fulfillments/stats/summary', auth(), flightFulfillmentController.getStats.bind(flightFulfillmentController));
+router.post('/flight-fulfillments/check-timeout', auth(['admin', 'fulfillment_audit']), flightFulfillmentController.checkTicketTimeout.bind(flightFulfillmentController));
 
 registerCrudRoutes('hotels', hotelController);
 registerCrudRoutes('cars', carController);
