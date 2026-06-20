@@ -1667,3 +1667,161 @@ export interface InteractionTraceResult {
     createTime: string
   }>
 }
+
+export interface HotCommentItem {
+  id: number
+  commentId: number
+  noteId: number
+  userId: number
+  nickname: string
+  avatar: string
+  content: string
+  likeCount: number
+  replyCount: number
+  contentLength: number
+  keywordDensity: number
+  qualityScore: number
+  hotScore: number
+  weightLike: number
+  weightReply: number
+  weightTime: number
+  weightQuality: number
+  isTop: number
+  topSource: string
+  topOrder: number
+  topTime: string
+  topHandlerId: number
+  topHandlerName: string
+  status: number
+  sourceType: string
+  rank: number
+  conflictReason: string
+  lastRefreshTime: string
+  expireTime: string
+  createTime: string
+  updateTime: string
+}
+
+export interface HotCommentLogItem {
+  id: number
+  hotCommentId: number
+  commentId: number
+  noteId: number
+  action: number
+  actionName: string
+  beforeStatus: number
+  afterStatus: number
+  beforeIsTop: number
+  afterIsTop: number
+  beforeTopOrder: number
+  afterTopOrder: number
+  beforeHotScore: number
+  afterHotScore: number
+  beforeRank: number
+  afterRank: number
+  qualityScore: number
+  conflictReason: string
+  anomalyReason: string
+  riskLevel: number
+  violationType: string
+  handlerId: number
+  handlerName: string
+  handleNote: string
+  sourceType: string
+  ip: string
+  deviceInfo: string
+  createTime: string
+}
+
+export interface HotCommentStats {
+  total: number
+  active: number
+  top: number
+  manualTop: number
+  autoTop: number
+  conflicted: number
+  offShelf: number
+  todayLogs: number
+  avgHot: string
+  notesCount: number
+}
+
+export interface HotCommentTraceResult {
+  comment: {
+    id: number
+    noteId: number
+    userId: number
+    nickname: string
+    content: string
+    likeCount: number
+    status: number
+    riskLevel: number
+    violationType: string
+    ip: string
+    createTime: string
+  }
+  note: { id: number; title: string; author: string } | null
+  user: {
+    id: number
+    username: string
+    nickname: string
+    status: number
+    riskLevel: number
+    violationCount: number
+  } | null
+  hot: {
+    id: number
+    hotScore: number
+    qualityScore: number
+    weightLike: number
+    weightReply: number
+    weightTime: number
+    weightQuality: number
+    isTop: number
+    topOrder: number
+    topHandler: string
+    topTime: string
+    rank: number
+    status: number
+    conflictReason: string
+    lastRefresh: string
+  } | null
+  operations: {
+    totalOps: number
+    topOps: number
+    cancelOps: number
+    offOps: number
+    refreshOps: number
+    conflictOps: number
+  }
+  logs: Array<{
+    id: number
+    action: number
+    actionName: string
+    beforeStatus: number
+    afterStatus: number
+    beforeIsTop: number
+    afterIsTop: number
+    beforeTopOrder: number
+    afterTopOrder: number
+    beforeHotScore: number
+    afterHotScore: number
+    beforeRank: number
+    afterRank: number
+    conflictReason: string
+    anomalyReason: string
+    qualityScore: number
+    riskLevel: number
+    violationType: string
+    handler: string
+    note: string
+    createTime: string
+  }>
+  risks: string[]
+}
+
+export interface HotCommentAnomalyResult {
+  suspicious: Array<{ handlerId: number; handlerName: string; count: number }>
+  noteSuspicious: Array<{ noteId: number; manualTopCount: number }>
+  rankHops: Array<{ commentId: number; hop: string; diff: number }>
+}

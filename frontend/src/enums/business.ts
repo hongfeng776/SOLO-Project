@@ -1064,3 +1064,80 @@ export const INTERACTION_OPS_ACTION_NAMES: Record<number, string> = {
   [InteractionOpsAction.WEIGHT_LINK]: '权重联动',
   [InteractionOpsAction.RESTORE]: '恢复'
 }
+
+export enum HotCommentIsTop {
+  NONE = 0,
+  AUTO = 1,
+  MANUAL = 2
+}
+
+export const HOT_COMMENT_IS_TOP_NAMES: Record<number, string> = {
+  [HotCommentIsTop.NONE]: '未置顶',
+  [HotCommentIsTop.AUTO]: '系统自动置顶',
+  [HotCommentIsTop.MANUAL]: '人工置顶'
+}
+
+export const HOT_COMMENT_IS_TOP_COLORS: Record<number, string> = {
+  [HotCommentIsTop.NONE]: '#909399',
+  [HotCommentIsTop.AUTO]: '#409eff',
+  [HotCommentIsTop.MANUAL]: '#e6a23c'
+}
+
+export enum HotCommentStatus {
+  OFF_SHELF = 0,
+  ACTIVE = 1,
+  PENDING = 2,
+  CONFLICT = 3
+}
+
+export const HOT_COMMENT_STATUS_NAMES: Record<number, string> = {
+  [HotCommentStatus.OFF_SHELF]: '已下架',
+  [HotCommentStatus.ACTIVE]: '正常上榜',
+  [HotCommentStatus.PENDING]: '待审核',
+  [HotCommentStatus.CONFLICT]: '冲突拦截'
+}
+
+export const HOT_COMMENT_STATUS_TAG_TYPES: Record<number, string> = {
+  [HotCommentStatus.OFF_SHELF]: 'info',
+  [HotCommentStatus.ACTIVE]: 'success',
+  [HotCommentStatus.PENDING]: 'warning',
+  [HotCommentStatus.CONFLICT]: 'danger'
+}
+
+export enum HotCommentSourceType {
+  AUTO = 'auto',
+  MANUAL = 'manual',
+  BATCH = 'batch'
+}
+
+export const HOT_COMMENT_SOURCE_NAMES: Record<string, string> = {
+  auto: '系统自动',
+  manual: '人工操作',
+  batch: '批量操作'
+}
+
+export enum HotCommentLogAction {
+  ON_BOARD = 0,
+  AUTO_TOP = 1,
+  MANUAL_TOP = 2,
+  CANCEL_TOP = 3,
+  OFF_SHELF = 4,
+  BATCH_TOP = 5,
+  BATCH_OFF = 6,
+  REFRESH_RANK = 7,
+  CONFLICT_BLOCK = 8,
+  ANOMALY_BLOCK = 9
+}
+
+export const HOT_COMMENT_LOG_ACTION_NAMES: Record<number, string> = {
+  [HotCommentLogAction.ON_BOARD]: '上榜',
+  [HotCommentLogAction.AUTO_TOP]: '自动置顶',
+  [HotCommentLogAction.MANUAL_TOP]: '人工置顶',
+  [HotCommentLogAction.CANCEL_TOP]: '取消置顶',
+  [HotCommentLogAction.OFF_SHELF]: '下架',
+  [HotCommentLogAction.BATCH_TOP]: '批量置顶',
+  [HotCommentLogAction.BATCH_OFF]: '批量下架',
+  [HotCommentLogAction.REFRESH_RANK]: '刷新排序',
+  [HotCommentLogAction.CONFLICT_BLOCK]: '冲突拦截',
+  [HotCommentLogAction.ANOMALY_BLOCK]: '异常拦截'
+}

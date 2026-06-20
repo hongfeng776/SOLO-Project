@@ -43,6 +43,8 @@ import DmConversation from './dm-conversation'
 import DmAuditLog from './dm-audit-log'
 import InteractionData from './interaction-data'
 import InteractionAnomalyLog from './interaction-anomaly-log'
+import HotComment from './hot-comment'
+import HotCommentLog from './hot-comment-log'
 
 const UserRole = User.sequelize!.define('sys_user_role', {}, { tableName: 'sys_user_role', timestamps: false })
 const NoteTag = Note.sequelize!.define('biz_note_tag', {}, { tableName: 'biz_note_tag', timestamps: false })
@@ -122,4 +124,13 @@ InteractionAnomalyLog.belongsTo(InteractionData, { as: 'interactionData', foreig
 Note.hasMany(InteractionAnomalyLog, { as: 'interactionAnomalyLogs', foreignKey: 'noteId' })
 InteractionAnomalyLog.belongsTo(Note, { as: 'note', foreignKey: 'noteId' })
 
-export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, CommentAuditLog, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, MerchantOnboardingApply, MerchantOnboardingLog, MerchantCreditArchive, DirectMessage, DmConversation, DmAuditLog, InteractionData, InteractionAnomalyLog, UserRole, NoteTag }
+Comment.hasOne(HotComment, { as: 'hotComment', foreignKey: 'commentId' })
+HotComment.belongsTo(Comment, { as: 'comment', foreignKey: 'commentId' })
+Note.hasMany(HotComment, { as: 'hotComments', foreignKey: 'noteId' })
+HotComment.belongsTo(Note, { as: 'note', foreignKey: 'noteId' })
+HotComment.hasMany(HotCommentLog, { as: 'logs', foreignKey: 'hotCommentId' })
+HotCommentLog.belongsTo(HotComment, { as: 'hotComment', foreignKey: 'hotCommentId' })
+Comment.hasMany(HotCommentLog, { as: 'hotLogs', foreignKey: 'commentId' })
+HotCommentLog.belongsTo(Comment, { as: 'comment', foreignKey: 'commentId' })
+
+export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, CommentAuditLog, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, MerchantOnboardingApply, MerchantOnboardingLog, MerchantCreditArchive, DirectMessage, DmConversation, DmAuditLog, InteractionData, InteractionAnomalyLog, HotComment, HotCommentLog, UserRole, NoteTag }

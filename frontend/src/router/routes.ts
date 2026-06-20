@@ -87,6 +87,12 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: 'InteractionOps',
         component: () => import(/* webpackChunkName: "content" */ '@views/content/interaction-ops/index.vue'),
         meta: { title: '互动数据运维', icon: 'DataAnalysis', roles: ['admin', 'risk_admin', 'editor'] }
+      },
+      {
+        path: 'hot-comment',
+        name: 'HotCommentManagement',
+        component: () => import(/* webpackChunkName: "content" */ '@views/content/hot-comment/index.vue'),
+        meta: { title: '热门评论运维', icon: 'Top', roles: ['admin', 'risk_admin', 'editor'] }
       }
     ]
   },
