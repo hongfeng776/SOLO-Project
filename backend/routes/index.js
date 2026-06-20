@@ -18,6 +18,7 @@ const flightPriceController = require('../controllers/FlightPriceController')
 const flightInventoryController = require('../controllers/FlightInventoryController')
 const flightFulfillmentController = require('../controllers/FlightFulfillmentController')
 const hotelController = require('../controllers/HotelController')
+const hotelRoomController = require('../controllers/HotelRoomController')
 const carController = require('../controllers/CarController')
 const ticketController = require('../controllers/TicketController')
 const orderController = require('../controllers/OrderController')
@@ -171,6 +172,18 @@ router.post('/hotels/ops/batch', auth(['admin', 'hotel_operator', 'senior_hotel_
 router.get('/hotels/:id/ops/logs', auth(), pagination, hotelController.getLogs.bind(hotelController));
 router.get('/hotels/ops/logs/all', auth(), pagination, hotelController.getAllLogs.bind(hotelController));
 router.post('/hotels/:id/ops/verify', auth(['admin', 'senior_hotel_operator', 'hotel_auditor']), hotelController.verifyHotel.bind(hotelController));
+
+router.get('/hotel-rooms', auth(), pagination, hotelRoomController.list.bind(hotelRoomController));
+router.get('/hotel-rooms/:id', auth(), hotelRoomController.get.bind(hotelRoomController));
+router.post('/hotel-rooms', auth(), hotelRoomController.create.bind(hotelRoomController));
+router.put('/hotel-rooms/:id', auth(), hotelRoomController.update.bind(hotelRoomController));
+router.get('/hotel-rooms/ops/permission', auth(), hotelRoomController.checkPermission.bind(hotelRoomController));
+router.post('/hotel-rooms/:id/ops/verify', auth(), hotelRoomController.verifyParams.bind(hotelRoomController));
+router.put('/hotel-rooms/:id/ops/maintain-status', auth(), hotelRoomController.changeMaintainStatus.bind(hotelRoomController));
+router.post('/hotel-rooms/ops/batch', auth(['admin', 'hotel_operator', 'senior_hotel_operator']), hotelRoomController.batchOperation.bind(hotelRoomController));
+router.get('/hotel-rooms/:id/ops/logs', auth(), pagination, hotelRoomController.getLogs.bind(hotelRoomController));
+router.get('/hotel-rooms/ops/logs/all', auth(), pagination, hotelRoomController.getAllLogs.bind(hotelRoomController));
+
 registerCrudRoutes('cars', carController);
 registerCrudRoutes('tickets', ticketController);
 

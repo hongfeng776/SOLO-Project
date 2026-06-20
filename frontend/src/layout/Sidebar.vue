@@ -71,7 +71,8 @@ import {
   Ticket,
   Stamp,
   DataAnalysis,
-  Document
+  Document,
+  Bed
 } from '@element-plus/icons-vue'
 
 const route = useRoute()

@@ -93,3 +93,81 @@ export function verifyHotel(id, verifyType) {
     data: { verifyType }
   })
 }
+
+export function getHotelRoomList(params) {
+  return request({
+    url: '/hotel-rooms',
+    method: 'get',
+    params
+  })
+}
+
+export function getHotelRoom(id) {
+  return request({
+    url: `/hotel-rooms/${id}`,
+    method: 'get'
+  })
+}
+
+export function createHotelRoom(data) {
+  return request({
+    url: '/hotel-rooms',
+    method: 'post',
+    data
+  })
+}
+
+export function updateHotelRoom(id, data) {
+  return request({
+    url: `/hotel-rooms/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+export function checkHotelRoomPermission() {
+  return request({
+    url: '/hotel-rooms/ops/permission',
+    method: 'get'
+  })
+}
+
+export function verifyHotelRoomParams(id, data) {
+  return request({
+    url: `/hotel-rooms/${id}/ops/verify`,
+    method: 'post',
+    data
+  })
+}
+
+export function changeHotelRoomMaintainStatus(id, maintainStatus, reason) {
+  return request({
+    url: `/hotel-rooms/${id}/ops/maintain-status`,
+    method: 'put',
+    data: { maintainStatus, reason }
+  })
+}
+
+export function batchHotelRoomOperation(params) {
+  return request({
+    url: '/hotel-rooms/ops/batch',
+    method: 'post',
+    data: params
+  })
+}
+
+export function getHotelRoomLogs(id, params) {
+  return request({
+    url: `/hotel-rooms/${id}/ops/logs`,
+    method: 'get',
+    params
+  })
+}
+
+export function getAllHotelRoomLogs(params) {
+  return request({
+    url: '/hotel-rooms/ops/logs/all',
+    method: 'get',
+    params
+  })
+}

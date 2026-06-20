@@ -1024,6 +1024,105 @@ export const HotelBatchOperationEnum = {
   rectification: { value: 'rectification', label: '批量标记整改', icon: 'WarningFilled', color: '#faad14' }
 }
 
+export const HotelRoomTypeEnum = {
+  standard: { value: 'standard', label: '标准客房', minArea: 15, maxArea: 40, priceRange: [100, 500], color: '#1890ff', tagClass: 'tag-room-standard', icon: 'Bed' },
+  deluxe: { value: 'deluxe', label: '豪华客房', minArea: 30, maxArea: 80, priceRange: [300, 1500], color: '#722ed1', tagClass: 'tag-room-deluxe', icon: 'MoonNight' },
+  suite: { value: 'suite', label: '套房', minArea: 50, maxArea: 200, priceRange: [800, 5000], color: '#fa8c16', tagClass: 'tag-room-suite', icon: 'Crown', noBatch: true },
+  featured: { value: 'featured', label: '特色房型', minArea: 20, maxArea: 300, priceRange: [200, 10000], color: '#13c2c2', tagClass: 'tag-room-featured', icon: 'MagicStick' }
+}
+
+export const HotelRoomStatusEnum = {
+  on_sale: { value: 'on_sale', label: '在售', tagClass: 'tag-room-onsale', color: '#52c41a' },
+  off_sale: { value: 'off_sale', label: '下架', tagClass: 'tag-room-offsale', color: '#909399' },
+  sold_out: { value: 'sold_out', label: '满房', tagClass: 'tag-room-soldout', color: '#ff4d4f' }
+}
+
+export const HotelRoomMaintainStatusEnum = {
+  normal: { value: 'normal', label: '正常', tagClass: 'tag-maint-normal', color: '#52c41a', lockBooking: false },
+  maintenance: { value: 'maintenance', label: '维护中', tagClass: 'tag-maint-maint', color: '#faad14', lockBooking: true },
+  closed: { value: 'closed', label: '停用', tagClass: 'tag-maint-closed', color: '#595959', lockBooking: true },
+  cleaning: { value: 'cleaning', label: '清洁中', tagClass: 'tag-maint-cleaning', color: '#1890ff', lockBooking: true }
+}
+
+export const HotelRoomBedTypeEnum = {
+  single: { value: 'single', label: '单人床' },
+  double: { value: 'double', label: '大床' },
+  twin: { value: 'twin', label: '双床' },
+  king: { value: 'king', label: '特大床' },
+  sofa: { value: 'sofa', label: '沙发床' }
+}
+
+export const HotelRoomBreakfastEnum = {
+  none: { value: 'none', label: '无早' },
+  single: { value: 'single', label: '单早' },
+  double: { value: 'double', label: '双早' },
+  extra: { value: 'extra', label: '额外加早' }
+}
+
+export const HotelRoomCancelPolicyEnum = {
+  non_refundable: { value: 'non_refundable', label: '不可取消', color: '#ff4d4f' },
+  free_before_24h: { value: 'free_before_24h', label: '入住前24h免费取消', color: '#52c41a' },
+  free_before_48h: { value: 'free_before_48h', label: '入住前48h免费取消', color: '#1890ff' },
+  flexible: { value: 'flexible', label: '灵活取消', color: '#13c2c2' }
+}
+
+export const HotelRoomFacilityOptions = [
+  { value: 'WiFi', label: '免费WiFi' },
+  { value: '空调', label: '独立空调' },
+  { value: '独立卫生间', label: '独立卫生间' },
+  { value: '独立客厅', label: '独立客厅' },
+  { value: '浴缸', label: '浴缸' },
+  { value: '淋浴', label: '独立淋浴' },
+  { value: '电视', label: '高清电视' },
+  { value: '迷你吧', label: '迷你吧' },
+  { value: '保险箱', label: '保险箱' },
+  { value: '大床', label: '大床' },
+  { value: '特大床', label: '特大床' },
+  { value: '双床', label: '双床' },
+  { value: '书桌', label: '商务书桌' },
+  { value: '沙发', label: '沙发' },
+  { value: '阳台', label: '观景阳台' },
+  { value: '海景', label: '海景' },
+  { value: '山景', label: '山景' },
+  { value: '无烟房', label: '无烟房' },
+  { value: '可加床', label: '可加床' },
+  { value: '儿童设施', label: '儿童设施' }
+]
+
+export const HotelRoomTargetGuestOptions = [
+  { value: '商务出行', label: '商务出行' },
+  { value: '家庭出游', label: '家庭出游' },
+  { value: '情侣度假', label: '情侣度假' },
+  { value: '朋友聚会', label: '朋友聚会' },
+  { value: '长住租客', label: '长住租客' },
+  { value: '亲子出行', label: '亲子出行' },
+  { value: '单人出行', label: '单人出行' }
+]
+
+export const HotelRoomLogTypeEnum = {
+  create: { value: 'create', label: '创建客房', color: '#52c41a', icon: 'Plus' },
+  update: { value: 'update', label: '信息修改', color: '#1890ff', icon: 'Edit' },
+  on_shelf: { value: 'on_shelf', label: '上架', color: '#52c41a', icon: 'Upload' },
+  off_shelf: { value: 'off_shelf', label: '下架', color: '#909399', icon: 'Download' },
+  maintenance: { value: 'maintenance', label: '维护/停用', color: '#faad14', icon: 'Tools' },
+  resume: { value: 'resume', label: '恢复可售', color: '#52c41a', icon: 'CircleCheck' },
+  sold_out: { value: 'sold_out', label: '满房', color: '#ff4d4f', icon: 'Close' },
+  restock: { value: 'restock', label: '恢复库存', color: '#13c2c2', icon: 'RefreshRight' },
+  batch_update: { value: 'batch_update', label: '批量更新', color: '#722ed1', icon: 'Files' },
+  facility_change: { value: 'facility_change', label: '设施变更', color: '#13c2c2', icon: 'Setting' },
+  price_adjust: { value: 'price_adjust', label: '价格调整', color: '#eb2f96', icon: 'Money' },
+  fake_flag: { value: 'fake_flag', label: '虚假房型标记', color: '#f5222d', icon: 'Warning' },
+  duplicate_flag: { value: 'duplicate_flag', label: '重复房型标记', color: '#fa8c16', icon: 'DocumentCopy' }
+}
+
+export const HotelRoomBatchOperationEnum = {
+  update_facilities: { value: 'update_facilities', label: '批量更新设施标签', icon: 'Setting', color: '#1890ff', allowSuite: false },
+  adjust_display_status: { value: 'adjust_display_status', label: '批量调整展示状态', icon: 'View', color: '#722ed1', allowSuite: false },
+  off_shelf_maintenance: { value: 'off_shelf_maintenance', label: '批量下架维护中客房', icon: 'Tools', color: '#ff4d4f', allowSuite: true },
+  on_shelf_batch: { value: 'on_shelf_batch', label: '批量恢复上架', icon: 'Upload', color: '#52c41a', allowSuite: false },
+  update_info: { value: 'update_info', label: '批量更新公示信息', icon: 'Edit', color: '#13c2c2', allowSuite: true }
+}
+
 export default {
   OrderStatusEnum,
   OrderSourceEnum,
@@ -1142,6 +1241,16 @@ export default {
   HotelLogTypeEnum,
   HotelVerifyResultEnum,
   HotelBatchOperationEnum,
+  HotelRoomTypeEnum,
+  HotelRoomStatusEnum,
+  HotelRoomMaintainStatusEnum,
+  HotelRoomBedTypeEnum,
+  HotelRoomBreakfastEnum,
+  HotelRoomCancelPolicyEnum,
+  HotelRoomFacilityOptions,
+  HotelRoomTargetGuestOptions,
+  HotelRoomLogTypeEnum,
+  HotelRoomBatchOperationEnum,
   getEnumLabel,
   getEnumType,
   getEnumOptions,
