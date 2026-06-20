@@ -196,6 +196,12 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/views/system/audit-rule/index.vue'),
             meta: { title: '审核规则', icon: 'Operation', roles: ['system:config', 'rule:manage'] },
           },
+          {
+            path: 'member-levels',
+            name: 'MemberLevels',
+            component: () => import('@/views/system/member-level/index.vue'),
+            meta: { title: '会员等级配置', icon: 'Medal', roles: ['memberLevel:view'] },
+          },
         ],
       },
       {

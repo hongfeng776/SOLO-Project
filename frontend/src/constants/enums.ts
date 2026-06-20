@@ -877,5 +877,60 @@ export const FEEDBACK_TIMELINESS = {
   CRITICAL_OVERDUE: { value: 3, label: '已超时', color: '#F56C6C', type: 'danger' },
 } as const
 
+export const MEMBER_LEVEL_MODIFY_TYPE = {
+  CREATE: { value: 'CREATE', label: '创建等级', color: '#67C23A' },
+  EDIT_BASIC: { value: 'EDIT_BASIC', label: '基础信息修改', color: '#409EFF' },
+  EDIT_PRIVILEGE: { value: 'EDIT_PRIVILEGE', label: '权益调整', color: '#722ed1' },
+  EDIT_SCORE: { value: 'EDIT_SCORE', label: '分值调整', color: '#E6A23C' },
+  ENABLE: { value: 'ENABLE', label: '启用等级', color: '#67C23A' },
+  DISABLE: { value: 'DISABLE', label: '停用等级', color: '#909399' },
+  BATCH_SYNC: { value: 'BATCH_SYNC', label: '批量同步权益', color: '#13c2c2' },
+} as const
+
+export const MEMBER_LEVEL_STATUS = {
+  DISABLED: { value: 0, label: '已停用', color: '#909399', type: 'info' },
+  ENABLED: { value: 1, label: '已启用', color: '#67C23A', type: 'success' },
+} as const
+
+export const MEMBER_LEVEL_UPGRADE_TYPE = {
+  AUTO: { value: 'AUTO', label: '自动升级', color: '#67C23A' },
+  MANUAL: { value: 'MANUAL', label: '手动调整', color: '#409EFF' },
+  BATCH: { value: 'BATCH', label: '批量操作', color: '#722ed1' },
+  SCORE_ADJUST: { value: 'SCORE_ADJUST', label: '分值调整触发', color: '#E6A23C' },
+} as const
+
+export const MEMBER_LEVEL_BATCH_ACTION = {
+  BATCH_ENABLE: { value: 'batch_enable', label: '批量启用', icon: 'CircleCheck', type: 'success' },
+  BATCH_DISABLE: { value: 'batch_disable', label: '批量停用', icon: 'SwitchButton', type: 'warning' },
+  BATCH_SYNC_PRIVILEGES: { value: 'batch_sync_privileges', label: '批量同步权益配置', icon: 'Refresh', type: 'primary' },
+} as const
+
+export const MEMBER_LEVEL_RECALC_STATUS = {
+  NONE: { value: 0, label: '无需重算', color: '#909399' },
+  PENDING: { value: 1, label: '待执行', color: '#E6A23C' },
+  RUNNING: { value: 2, label: '执行中', color: '#409EFF' },
+  COMPLETED: { value: 3, label: '已完成', color: '#67C23A' },
+  FAILED: { value: 4, label: '执行失败', color: '#F56C6C' },
+} as const
+
+export const MEMBER_LEVEL_TRACE_TYPE = {
+  LEVEL_CODE: { value: 'levelCode', label: '等级编码' },
+  CONFIG_BATCH: { value: 'configBatch', label: '配置批次' },
+  UPGRADE_RECORD: { value: 'upgradeRecord', label: '升级记录ID' },
+} as const
+
+export const MEMBER_LEVEL_DEFAULT_PRIVILEGES = [
+  { privilegeCode: 'HD_VIDEO', privilegeName: '高清视频观看', privilegeValue: true, privilegeDesc: '享受1080P及以上清晰度' },
+  { privilegeCode: 'AD_FREE', privilegeName: '免广告', privilegeValue: true, privilegeDesc: '跳过视频前贴片广告' },
+  { privilegeCode: 'EARLY_ACCESS', privilegeName: '抢先看', privilegeValue: 3, privilegeDesc: '提前N天观看新内容' },
+  { privilegeCode: 'OFFLINE_DL', privilegeName: '离线下载', privilegeValue: 10, privilegeDesc: '每月可下载N部视频' },
+  { privilegeCode: 'MULTI_DEVICE', privilegeName: '多设备登录', privilegeValue: 3, privilegeDesc: '同时登录N台设备' },
+  { privilegeCode: 'EXCLUSIVE_CONTENT', privilegeName: '专属内容', privilegeValue: true, privilegeDesc: '会员专属片库' },
+  { privilegeCode: 'COUPON', privilegeName: '观影优惠券', privilegeValue: 2, privilegeDesc: '每月赠送N张优惠券' },
+  { privilegeCode: 'CUSTOMER_SERVICE', privilegeName: '专属客服', privilegeValue: true, privilegeDesc: '优先接入人工客服' },
+  { privilegeCode: 'SCREEN_CAST', privilegeName: '投屏特权', privilegeValue: true, privilegeDesc: '支持高清投屏' },
+  { privilegeCode: 'DOLBY', privilegeName: '杜比音效', privilegeValue: true, privilegeDesc: '享受杜比全景声效果' },
+] as const
+
 
 

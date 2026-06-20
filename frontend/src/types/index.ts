@@ -2371,5 +2371,192 @@ export interface FeedbackDuplicateCheck {
   existingId: number | null
 }
 
+export interface MemberLevelPrivilege {
+  privilegeCode: string
+  privilegeName: string
+  privilegeValue: any
+  privilegeDesc?: string
+}
+
+export interface MemberLevelUpgradeCondition {
+  conditionCode?: string
+  conditionName?: string
+  conditionValue?: any
+  [key: string]: any
+}
+
+export interface MemberLevelItem {
+  id: number
+  levelCode: string
+  levelName: string
+  levelTier: number
+  minScore: number
+  maxScore: number
+  privileges: MemberLevelPrivilege[]
+  upgradeConditions?: MemberLevelUpgradeCondition
+  levelIcon?: string
+  levelColor?: string
+  configBatch: string
+  isEnabled: number
+  isCoreHighest: number
+  version: number
+  userCount?: number
+  remark?: string
+  createdBy?: number
+  createdByName?: string
+  updatedBy?: number
+  updatedByName?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface MemberLevelLogItem {
+  id: number
+  levelId: number
+  levelCode: string
+  configBatch: string
+  modifyType: string
+  modifyTypeLabel?: string
+  beforeSnapshot?: Partial<MemberLevelItem>
+  afterSnapshot?: Partial<MemberLevelItem>
+  changedFields: string[]
+  affectUserCount: number
+  needRecalc: number
+  recalcStatus: number
+  recalcStatusLabel?: string
+  recalcStartTime?: string
+  recalcEndTime?: string
+  operatorId?: number
+  operatorName?: string
+  remark?: string
+  createdAt: string
+}
+
+export interface MemberLevelUpgradeRecordItem {
+  id: number
+  endUserId: number
+  endUserUid?: string
+  endUserNickname?: string
+  fromLevelTier?: number
+  fromLevelCode?: string
+  fromLevelName?: string
+  toLevelTier: number
+  toLevelCode?: string
+  toLevelName?: string
+  triggerScore: number
+  upgradeType: string
+  upgradeTypeLabel?: string
+  configBatch?: string
+  operationBatch?: string
+  operatorId?: number
+  operatorName?: string
+  isReverted: number
+  revertedAt?: string
+  revertReason?: string
+  createdAt: string
+}
+
+export interface MemberLevelConflictCheckResult {
+  hasConflict: boolean
+  canSubmit: boolean
+  conflicts: Array<{
+    type: 'duplicate_code' | 'duplicate_name' | 'duplicate_tier' | 'score_overlap' | 'score_gap' | 'privilege_duplicate'
+    level: 'high' | 'medium' | 'low'
+    message: string
+    field?: string
+    relatedLevelId?: number
+    relatedLevelCode?: string
+    relatedLevelName?: string
+    gap?: { minScore: number; maxScore: number }
+    suggestion: string
+  }>
+  duplicate?: {
+    levelCode?: boolean
+    levelName?: boolean
+    levelTier?: boolean
+  }
+  scoreContinuity?: {
+    isContinuous: boolean
+    gaps?: Array<{ tier: number; minScore: number; maxScore: number }>
+    overlaps?: Array<{ levelId: number; levelName: string; levelCode: string }>
+  }
+  missingFields?: string[]
+}
+
+export interface MemberLevelStatsResult {
+  totalLevels: number
+  enabledCount: number
+  disabledCount: number
+  scoreRange: { minScore: number; maxScore: number }
+  byTier: Array<{ levelTier: number; levelCode: string; levelName: string; userCount: number; isEnabled: number }>
+  upgradeLogicCheck: {
+    isValid: boolean
+    issues: Array<{ type: string; message: string; level?: string }>
+    startScoreZero: boolean
+    continuous: boolean
+  }
+  todayChanges: number
+  pendingRecalcCount: number
+}
+
+export interface MemberLevelTraceResult {
+  traceType: string
+  traceValue: string
+  found: boolean
+  level?: MemberLevelItem
+  recentLogs?: MemberLevelLogItem[]
+  recentUpgrades?: MemberLevelUpgradeRecordItem[]
+  relatedLevels?: MemberLevelItem[]
+  summary?: {
+    totalChanges: number
+    totalUpgrades: number
+    affectedUsers: number
+  }
+}
+
+export interface MemberLevelBatchActionParams {
+  action: 'batch_enable' | 'batch_disable' | 'batch_sync_privileges'
+  ids: number[]
+  sourceLevelId?: number
+  confirmed?: boolean
+}
+
+export interface MemberLevelBatchActionResult {
+  successCount: number
+  failCount: number
+  skippedCount: number
+  successIds: number[]
+  failItems: Array<{ id: number; reason: string }>
+  skippedItems: Array<{ id: number; reason: string }>
+  configBatch?: string
+}
+
+export interface MemberLevelCreateForm {
+  levelName: string
+  levelTier: number
+  minScore: number
+  maxScore: number
+  privileges: MemberLevelPrivilege[]
+  upgradeConditions?: MemberLevelUpgradeCondition
+  levelIcon?: string
+  levelColor?: string
+  remark?: string
+}
+
+export interface MemberLevelEditForm extends MemberLevelCreateForm {
+  id: number
+  confirmed?: boolean
+}
+
+export interface MemberLevelQueryParams extends PaginationParams {
+  levelTier?: number | null
+  isEnabled?: number | null
+  isCoreHighest?: number | null
+  configBatch?: string | null
+  levelCode?: string | null
+  startTime?: string | null
+  endTime?: string | null
+}
+
 
 
