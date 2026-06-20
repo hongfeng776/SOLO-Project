@@ -61,6 +61,12 @@ import { SettleApplyOrder } from './SettleApplyOrder';
 import { SettleDeductDetail } from './SettleDeductDetail';
 import { SettleAuditLog } from './SettleAuditLog';
 import { SettleTransferVoucher } from './SettleTransferVoucher';
+import { MarketingLog } from './MarketingLog';
+import { MarketingProduct } from './MarketingProduct';
+import { MarketingMutexRule } from './MarketingMutexRule';
+import { MarketingCategory } from './MarketingCategory';
+import { MarketingMerchantQualification } from './MarketingMerchantQualification';
+import { MarketingDiscountThreshold } from './MarketingDiscountThreshold';
 
 export {
   Admin,
@@ -126,6 +132,12 @@ export {
   SettleDeductDetail,
   SettleAuditLog,
   SettleTransferVoucher,
+  MarketingLog,
+  MarketingProduct,
+  MarketingMutexRule,
+  MarketingCategory,
+  MarketingMerchantQualification,
+  MarketingDiscountThreshold,
 };
 
 export const models = {
@@ -192,6 +204,12 @@ export const models = {
   SettleDeductDetail,
   SettleAuditLog,
   SettleTransferVoucher,
+  MarketingLog,
+  MarketingProduct,
+  MarketingMutexRule,
+  MarketingCategory,
+  MarketingMerchantQualification,
+  MarketingDiscountThreshold,
 };
 
 export default models;

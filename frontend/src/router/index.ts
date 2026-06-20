@@ -63,8 +63,16 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'marketing',
         name: 'Marketing',
-        component: () => import('@/views/marketing/index.vue'),
-        meta: { title: '营销管理', icon: 'Promotion', requiresAuth: true }
+        redirect: '/marketing/activity',
+        meta: { title: '营销管理', icon: 'Promotion', requiresAuth: true },
+        children: [
+          {
+            path: 'activity',
+            name: 'MarketingActivity',
+            component: () => import('@/views/marketing/index.vue'),
+            meta: { title: '活动管理', icon: 'Present', requiresAuth: true }
+          }
+        ]
       },
       {
         path: 'aftersale',

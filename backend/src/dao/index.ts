@@ -63,6 +63,12 @@ import { SettleApplyOrderDao } from './SettleApplyOrderDao';
 import { SettleDeductDetailDao } from './SettleDeductDetailDao';
 import { SettleAuditLogDao } from './SettleAuditLogDao';
 import { SettleTransferVoucherDao } from './SettleTransferVoucherDao';
+import { MarketingLogDao } from './MarketingLogDao';
+import { MarketingProductDao } from './MarketingProductDao';
+import { MarketingMutexRuleDao } from './MarketingMutexRuleDao';
+import { MarketingCategoryDao } from './MarketingCategoryDao';
+import { MarketingMerchantQualificationDao } from './MarketingMerchantQualificationDao';
+import { MarketingDiscountThresholdDao } from './MarketingDiscountThresholdDao';
 
 export {
   BaseDao,
@@ -132,6 +138,12 @@ export {
   SettleDeductDetailDao,
   SettleAuditLogDao,
   SettleTransferVoucherDao,
+  MarketingLogDao,
+  MarketingProductDao,
+  MarketingMutexRuleDao,
+  MarketingCategoryDao,
+  MarketingMerchantQualificationDao,
+  MarketingDiscountThresholdDao,
 };
 
 export const daos = {
@@ -199,6 +211,12 @@ export const daos = {
   settleDeductDetailDao: new SettleDeductDetailDao(),
   settleAuditLogDao: new SettleAuditLogDao(),
   settleTransferVoucherDao: new SettleTransferVoucherDao(),
+  marketingLogDao: new MarketingLogDao(),
+  marketingProductDao: new MarketingProductDao(),
+  marketingMutexRuleDao: new MarketingMutexRuleDao(),
+  marketingCategoryDao: new MarketingCategoryDao(),
+  marketingMerchantQualificationDao: new MarketingMerchantQualificationDao(),
+  marketingDiscountThresholdDao: new MarketingDiscountThresholdDao(),
 };
 
 export default daos;

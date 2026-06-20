@@ -286,6 +286,141 @@ export const MarketingTypeMap: Record<number, string> = {
   [MarketingType.GROUPON]: '拼团活动'
 }
 
+export enum MarketingStatus {
+  PENDING = 0,
+  ONGOING = 1,
+  ENDED = 2,
+  OFFLINE = 3
+}
+
+export interface Marketing {
+  id: number
+  name: string
+  type: number
+  typeName?: string
+  status: number
+  startTime: string
+  endTime: string
+  discountType: number
+  discountValue: number
+  minAmount: number
+  maxDiscount: number
+  totalCount: number
+  usedCount: number
+  perUserLimit: number
+  description: string
+  categoryIds?: string
+  merchantIds?: string
+  isViolation?: number
+  violationRemark?: string
+  auditStatus?: number
+  createUserId?: number
+  createdAt: string
+  updatedAt: string
+}
+
+export const MarketingStatusMap: Record<number, { label: string; type: TagType }> = {
+  [MarketingStatus.PENDING]: { label: '未开始', type: 'info' },
+  [MarketingStatus.ONGOING]: { label: '进行中', type: 'success' },
+  [MarketingStatus.ENDED]: { label: '已结束', type: 'warning' },
+  [MarketingStatus.OFFLINE]: { label: '已下架', type: 'danger' }
+}
+
+export enum DiscountType {
+  FIXED = 1,
+  RATE = 2,
+  COUPON = 3
+}
+
+export const DiscountTypeMap: Record<number, string> = {
+  [DiscountType.FIXED]: '满减',
+  [DiscountType.RATE]: '折扣',
+  [DiscountType.COUPON]: '优惠券'
+}
+
+export interface MarketingValidateError {
+  field?: string
+  message: string
+  code: string
+}
+
+export interface MarketingValidateResult {
+  valid: boolean
+  errors: MarketingValidateError[]
+  warnings: MarketingValidateError[]
+}
+
+export interface EditPermissions {
+  canEditBasic: boolean
+  canEditTime: boolean
+  canEditDiscount: boolean
+  canEditProducts: boolean
+  canEditMerchants: boolean
+  canEditCategories: boolean
+  canEditStatus: boolean
+}
+
+export interface BatchOperationResult {
+  success: number
+  failed: number
+  total: number
+  errors: Array<{ id: number; message: string }>
+}
+
+export interface MarketingLog {
+  id: number
+  marketingId: number
+  operatorId?: number
+  operatorType: number
+  operatorName?: string
+  action: string
+  fieldName?: string
+  oldValue?: string
+  newValue?: string
+  remark?: string
+  createdAt: string
+}
+
+export interface MarketingProduct {
+  id: number
+  marketingId: number
+  goodsId: number
+  goodsName: string
+  categoryId?: number
+  merchantId?: number
+  originalPrice?: number
+  activityPrice?: number
+  stock?: number
+  soldCount?: number
+  status?: number
+  createdAt: string
+}
+
+export interface MarketingTraceData {
+  basicInfo: any
+  createLogs: MarketingLog[]
+  updateLogs: MarketingLog[]
+  auditLogs: MarketingLog[]
+  statusLogs: MarketingLog[]
+  products: MarketingProduct[]
+  merchantQualifications: any[]
+  allLogs: MarketingLog[]
+}
+
+export interface DuplicateActivity {
+  id: number
+  name: string
+  startTime: string
+  endTime: string
+  status: number
+  duplicateReason: string
+}
+
+export interface DuplicateCheckResult {
+  isDuplicate: boolean
+  duplicateActivities: DuplicateActivity[]
+}
+
 export enum MerchantStatus {
   PENDING = 0,
   APPROVED = 1,

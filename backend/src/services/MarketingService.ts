@@ -3,6 +3,7 @@ import { Marketing } from '../models/Marketing';
 import { MarketingDao } from '../dao/MarketingDao';
 import { AppError } from '../middlewares/errorHandler';
 import { PageResult } from '../types';
+import { marketingValidateService, type MarketingValidateParams } from './MarketingValidateService';
 
 export interface MarketingQueryParams {
   page?: number;
@@ -88,27 +89,70 @@ class MarketingService {
     return marketing;
   }
 
-  async create(payload: MarketingCreatePayload): Promise<Marketing> {
-    const { name, type, status = 0, start_time, end_time, discount } = payload;
+  async create(payload: MarketingCreatePayload & { create_user_id?: number; create_user_name?: string }): Promise<Marketing> {
+    const { name, type, status = 0, start_time, end_time, discount, create_user_id, create_user_name } = payload;
 
     if (!name) {
       throw new AppError('活动名称不能为空', 400);
     }
 
-    return this.marketingDao.create({
+    const validateParams: MarketingValidateParams = {
+      name,
+      type,
+      startTime: start_time,
+      endTime: end_time,
+      discountValue: discount,
+    };
+
+    const validateResult = await marketingValidateService.validateCreate(validateParams);
+    if (!validateResult.valid) {
+      throw new AppError(validateResult.errors[0]?.message || '参数校验失败', 400);
+    }
+
+    const marketing = await this.marketingDao.create({
       name,
       type,
       status,
       start_time: start_time ? new Date(start_time) : undefined,
       end_time: end_time ? new Date(end_time) : undefined,
       discount,
+      discount_value: discount,
+      create_user_id,
     });
+
+    if (create_user_id && create_user_name) {
+      marketingValidateService.logOperation(
+        marketing.id,
+        'create',
+        create_user_id,
+        1,
+        create_user_name,
+        [],
+        '创建营销活动'
+      );
+    }
+
+    return marketing;
   }
 
-  async update(id: number, payload: MarketingUpdatePayload): Promise<Marketing> {
+  async update(id: number, payload: MarketingUpdatePayload & { operator_id?: number; operator_name?: string }): Promise<Marketing> {
     const marketing = await this.marketingDao.findById(id);
     if (!marketing) {
       throw new AppError('营销活动不存在', 404);
+    }
+
+    const validateParams: MarketingValidateParams = {
+      id,
+      name: payload.name,
+      type: payload.type,
+      startTime: payload.start_time,
+      endTime: payload.end_time,
+      discountValue: payload.discount,
+    };
+
+    const validateResult = await marketingValidateService.validateEdit(id, validateParams);
+    if (!validateResult.valid) {
+      throw new AppError(validateResult.errors[0]?.message || '参数校验失败', 400);
     }
 
     const updateData: any = { ...payload };
@@ -119,8 +163,36 @@ class MarketingService {
     if (payload.end_time) {
       updateData.end_time = new Date(payload.end_time);
     }
+    if (payload.discount !== undefined) {
+      updateData.discount_value = payload.discount;
+    }
+
+    const changes: Array<{ field: string; oldValue?: string; newValue?: string }> = [];
+    const fields = ['name', 'type', 'start_time', 'end_time', 'discount', 'description', 'min_amount', 'max_discount', 'total_count', 'per_user_limit'];
+    for (const field of fields) {
+      const dbField = field;
+      if (updateData[field] !== undefined && updateData[field] !== (marketing as any)[dbField]) {
+        changes.push({
+          field,
+          oldValue: String((marketing as any)[dbField] ?? ''),
+          newValue: String(updateData[field] ?? ''),
+        });
+      }
+    }
 
     await this.marketingDao.update(id, updateData);
+
+    if (payload.operator_id && payload.operator_name && changes.length > 0) {
+      marketingValidateService.logOperation(
+        id,
+        'update',
+        payload.operator_id,
+        1,
+        payload.operator_name,
+        changes,
+        '编辑营销活动'
+      );
+    }
 
     const updatedMarketing = await this.marketingDao.findById(id);
     if (!updatedMarketing) {
@@ -147,17 +219,30 @@ class MarketingService {
     return this.marketingDao.batchDelete(ids);
   }
 
-  async updateStatus(id: number, status: number): Promise<Marketing> {
+  async updateStatus(id: number, status: number, operatorId?: number, operatorName?: string): Promise<Marketing> {
     const marketing = await this.marketingDao.findById(id);
     if (!marketing) {
       throw new AppError('营销活动不存在', 404);
     }
 
-    if (status < 0 || status > 2) {
+    if (status < 0 || status > 3) {
       throw new AppError('状态值无效', 400);
     }
 
+    const oldStatus = marketing.status ?? 0;
     await this.marketingDao.update(id, { status });
+
+    if (operatorId && operatorName) {
+      marketingValidateService.logOperation(
+        id,
+        'status_change',
+        operatorId,
+        1,
+        operatorName,
+        [{ field: 'status', oldValue: String(oldStatus), newValue: String(status) }],
+        '更新活动状态'
+      );
+    }
 
     const updatedMarketing = await this.marketingDao.findById(id);
     if (!updatedMarketing) {

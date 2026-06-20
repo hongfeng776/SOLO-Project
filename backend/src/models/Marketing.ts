@@ -23,14 +23,14 @@ export class Marketing extends Model<Marketing> {
 
   @Column({
     type: DataType.TINYINT.UNSIGNED,
-    comment: '活动类型：1-折扣 2-满减 3-优惠券',
+    comment: '活动类型：1-折扣 2-满减 3-优惠券 4-拼团',
   })
   type?: number;
 
   @Column({
     type: DataType.TINYINT.UNSIGNED,
     defaultValue: 0,
-    comment: '状态：0-未开始 1-进行中 2-已结束',
+    comment: '状态：0-未开始 1-进行中 2-已结束 3-已下架',
   })
   status?: number;
 
@@ -47,10 +47,119 @@ export class Marketing extends Model<Marketing> {
   end_time?: Date;
 
   @Column({
-    type: DataType.DECIMAL(5, 2),
+    type: DataType.DECIMAL(10, 2),
     comment: '折扣率/减免金额',
   })
   discount?: number;
+
+  @Column({
+    type: DataType.STRING(500),
+    comment: '适用类目ID，多个用逗号分隔',
+  })
+  category_ids?: string;
+
+  @Column({
+    type: DataType.STRING(500),
+    comment: '适用商家ID，多个用逗号分隔',
+  })
+  merchant_ids?: string;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 1,
+    comment: '优惠类型：1-满减 2-折扣 3-优惠券',
+  })
+  discount_type?: number;
+
+  @Column({
+    type: DataType.DECIMAL(10, 2),
+    defaultValue: 0.00,
+    comment: '最低消费金额',
+  })
+  min_amount?: number;
+
+  @Column({
+    type: DataType.DECIMAL(10, 2),
+    comment: '最大优惠金额',
+  })
+  max_discount?: number;
+
+  @Column({
+    type: DataType.DECIMAL(10, 2),
+    comment: '优惠值：金额或折扣率',
+  })
+  discount_value?: number;
+
+  @Column({
+    type: DataType.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '发放总数量',
+  })
+  total_count?: number;
+
+  @Column({
+    type: DataType.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '已使用数量',
+  })
+  used_count?: number;
+
+  @Column({
+    type: DataType.INTEGER.UNSIGNED,
+    defaultValue: 1,
+    comment: '每人限领数量',
+  })
+  per_user_limit?: number;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '审核状态：0-待审核 1-已通过 2-已拒绝',
+  })
+  audit_status?: number;
+
+  @Column({
+    type: DataType.BIGINT.UNSIGNED,
+    comment: '审核人ID',
+  })
+  audit_user_id?: number;
+
+  @Column({
+    type: DataType.DATE,
+    comment: '审核时间',
+  })
+  audit_time?: Date;
+
+  @Column({
+    type: DataType.STRING(500),
+    comment: '审核备注',
+  })
+  audit_remark?: string;
+
+  @Column({
+    type: DataType.BIGINT.UNSIGNED,
+    comment: '创建人ID',
+  })
+  create_user_id?: number;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '是否违规：0-否 1-是',
+  })
+  is_violation?: number;
+
+  @Column({
+    type: DataType.STRING(500),
+    comment: '违规说明',
+  })
+  violation_remark?: string;
+
+  @Column({
+    type: DataType.TEXT,
+    comment: '活动描述',
+  })
+  description?: string;
 
   @CreatedAt
   @Column({

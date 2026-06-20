@@ -59,6 +59,9 @@ import SettleValidateService, { settleValidateService } from './SettleValidateSe
 import SettleCalcService, { settleCalcService } from './SettleCalcService';
 import SettleBatchService, { settleBatchService } from './SettleBatchService';
 import SettleTraceService, { settleTraceService } from './SettleTraceService';
+import MarketingValidateService, { marketingValidateService } from './MarketingValidateService';
+import MarketingBatchService, { marketingBatchService } from './MarketingBatchService';
+import MarketingTraceService, { marketingTraceService } from './MarketingTraceService';
 
 export {
   AfterSaleAuditService,
@@ -122,6 +125,9 @@ export {
   SettleCalcService,
   SettleBatchService,
   SettleTraceService,
+  MarketingValidateService,
+  MarketingBatchService,
+  MarketingTraceService,
 };
 
 export const services: Record<string, any> = {
@@ -186,6 +192,9 @@ export const services: Record<string, any> = {
   settleCalcService,
   settleBatchService,
   settleTraceService,
+  marketingValidateService,
+  marketingBatchService,
+  marketingTraceService,
 };
 
 export default services;

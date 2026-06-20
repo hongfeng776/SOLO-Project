@@ -48,6 +48,17 @@
             end-placeholder="结束日期"
             value-format="YYYY-MM-DD"
           />
+          <el-input-number
+            v-else-if="item.type === 'number'"
+            v-model="searchForm[item.prop]"
+            :min="item.min ?? 0"
+            :max="item.max"
+            :step="item.step ?? 1"
+            :precision="item.precision"
+            :placeholder="`请输入${item.label}`"
+            controls-position="right"
+            style="width: 180px"
+          />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
@@ -203,12 +214,16 @@ interface TableColumn {
   fixed?: string | boolean
   showOverflowTooltip?: boolean
   slot?: string
-  type?: 'status' | 'amount' | 'datetime' | 'date' | 'image' | 'input' | 'select' | 'daterange'
+  type?: 'status' | 'amount' | 'datetime' | 'date' | 'image' | 'input' | 'select' | 'daterange' | 'number'
   statusMap?: Record<string | number, { label: string; type: TagType }>
 }
 
 interface SearchColumn extends TableColumn {
   options?: readonly ColumnOption[]
+  min?: number
+  max?: number
+  step?: number
+  precision?: number
 }
 
 interface Props {
@@ -296,7 +311,12 @@ const handleSearch = () => {
 
 const handleReset = () => {
   Object.keys(searchForm).forEach((key) => {
-    searchForm[key] = ''
+    const col = props.searchColumns.find((c) => c.prop === key)
+    if (col?.type === 'number') {
+      searchForm[key] = undefined
+    } else {
+      searchForm[key] = ''
+    }
   })
   pagination.currentPage = 1
   fetchData()
