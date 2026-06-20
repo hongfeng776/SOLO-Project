@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, CustomerProfileController, CorporateProfileController, CustomerTagController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, CustomerProfileController, CorporateProfileController, CustomerTagController, CustomerPrivacyController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -19,6 +19,7 @@ const settlementController = new SettlementController();
 const customerProfileController = new CustomerProfileController();
 const corporateProfileController = new CorporateProfileController();
 const customerTagController = new CustomerTagController();
+const customerPrivacyController = new CustomerPrivacyController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -274,5 +275,29 @@ router.post('/customer-tag/trace', requirePermission('customer:tag:trace'), (req
 router.post('/customer-tag/batch', requirePermission('customer:tag:batch'), (req, res, next) => customerTagController.batchUpdate(req, res, next));
 router.get('/customer-tag/batch/list', requirePermission('customer:tag:batch'), (req, res, next) => customerTagController.batchList(req, res, next));
 router.get('/customer-tag/batch/items', requirePermission('customer:tag:batch'), (req, res, next) => customerTagController.batchItemList(req, res, next));
+
+// ========== 客户信息隐私防护路由 ==========
+// 功能点1：前置校验
+router.post('/customer-privacy/precheck', requireAuth, (req, res, next) => customerPrivacyController.precheck(req, res, next));
+router.post('/customer-privacy/view', requirePermission('customer:privacy:query'), (req, res, next) => customerPrivacyController.viewCustomer(req, res, next));
+router.post('/customer-privacy/export', requirePermission('customer:privacy:export'), (req, res, next) => customerPrivacyController.exportCustomer(req, res, next));
+
+// 功能点2：场景适配
+router.post('/customer-privacy/adapt-scene', requireAuth, (req, res, next) => customerPrivacyController.adaptScene(req, res, next));
+
+// 功能点3：隐私规则管理
+router.get('/customer-privacy/rule/list', requirePermission('customer:privacy:config'), (req, res, next) => customerPrivacyController.ruleList(req, res, next));
+router.get('/customer-privacy/rule/:id', requirePermission('customer:privacy:config'), (req, res, next) => customerPrivacyController.ruleDetail(req, res, next));
+router.post('/customer-privacy/rule', requirePermission('customer:privacy:config'), (req, res, next) => customerPrivacyController.createRule(req, res, next));
+router.put('/customer-privacy/rule/:id', requirePermission('customer:privacy:config'), (req, res, next) => customerPrivacyController.updateRule(req, res, next));
+router.delete('/customer-privacy/rule/:id', requirePermission('customer:privacy:config'), (req, res, next) => customerPrivacyController.deleteRule(req, res, next));
+
+// 功能点3：批量配置
+router.post('/customer-privacy/batch-config', requirePermission('customer:privacy:config'), (req, res, next) => customerPrivacyController.batchConfig(req, res, next));
+
+// 功能点4：操作日志与溯源
+router.get('/customer-privacy/log/list', requirePermission('customer:privacy:trace'), (req, res, next) => customerPrivacyController.logList(req, res, next));
+router.get('/customer-privacy/log/:id', requirePermission('customer:privacy:trace'), (req, res, next) => customerPrivacyController.logDetail(req, res, next));
+router.post('/customer-privacy/trace', requirePermission('customer:privacy:trace'), (req, res, next) => customerPrivacyController.trace(req, res, next));
 
 export default router;

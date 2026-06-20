@@ -33,3 +33,7 @@ export {
   CustomerTagBatchRepository,
   CustomerTagBatchItemRepository
 } from './CustomerTagRepository';
+export {
+  CustomerPrivacyRuleRepository,
+  CustomerPrivacyLogRepository
+} from './CustomerPrivacyRepository';

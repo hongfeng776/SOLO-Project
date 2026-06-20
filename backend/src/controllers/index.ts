@@ -22,3 +22,4 @@ export { SettlementController } from './SettlementController';
 export { CustomerProfileController } from './CustomerProfileController';
 export { CorporateProfileController } from './CorporateProfileController';
 export { CustomerTagController } from './CustomerTagController';
+export { CustomerPrivacyController } from './CustomerPrivacyController';

@@ -238,6 +238,45 @@ const asyncRoutes: RouteRecordRaw[] = [
         }
       },
       {
+        path: 'customer-privacy',
+        name: 'BusinessCustomerPrivacy',
+        component: () => import('@views/business/customer-privacy/index.vue'),
+        meta: {
+          title: '隐私防护管理',
+          icon: 'Lock',
+          componentName: 'BusinessCustomerPrivacy',
+          keepAlive: true,
+          permissions: ['customer:privacy:query'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'customer-privacy/batch',
+        name: 'BusinessCustomerPrivacyBatch',
+        component: () => import('@views/business/customer-privacy/batch.vue'),
+        meta: {
+          title: '隐私规则配置',
+          icon: 'Setting',
+          componentName: 'BusinessCustomerPrivacyBatch',
+          keepAlive: true,
+          permissions: ['customer:privacy:config'],
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'customer-privacy/trace',
+        name: 'BusinessCustomerPrivacyTrace',
+        component: () => import('@views/business/customer-privacy/trace.vue'),
+        meta: {
+          title: '隐私操作溯源',
+          icon: 'DataAnalysis',
+          componentName: 'BusinessCustomerPrivacyTrace',
+          keepAlive: false,
+          permissions: ['customer:privacy:trace'],
+          roles: ['admin', 'manager', 'auditor']
+        }
+      },
+      {
         path: 'opening',
         name: 'BusinessOpening',
         component: () => import('@views/business/opening/index.vue'),

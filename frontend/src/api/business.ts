@@ -1564,3 +1564,383 @@ export function getCustomerTagBatchListApi(params: TagBatchQueryParams) {
 export function getCustomerTagBatchItemsApi(params: { batch_id: string; page?: number; pageSize?: number; process_result?: number; keyword?: string }) {
   return get<PageResult<TagBatchItemVO>>('/business/customer-tag/batch/items', params)
 }
+
+// ========== 客户信息隐私防护 ==========
+
+export interface PrivacyPreCheckFieldError {
+  field: string
+  message: string
+  code?: string
+}
+
+export interface PrivacyPreCheckResult {
+  passed: boolean
+  blocked: boolean
+  permission_valid: boolean
+  scene_valid: boolean
+  record_complete: boolean
+  customer_level: number
+  sensitivity_level: number
+  desensitization_level: number
+  time_limit: number
+  need_record: boolean
+  errors: PrivacyPreCheckFieldError[]
+  warnings: string[]
+  block_reason?: string
+}
+
+export interface DesensitizationRuleConfig {
+  field: string
+  field_name: string
+  method: number
+  method_text: string
+  mask_char?: string
+  keep_start?: number
+  keep_end?: number
+  replace_value?: string
+}
+
+export interface RetentionRuleConfig {
+  retention_days: number
+  need_operation_log: boolean
+  need_regular_cleanup: boolean
+}
+
+export interface PrivacySceneAdaptResult {
+  scene_type: number
+  scene_type_text?: string
+  desensitization_level: number
+  desensitization_level_text?: string
+  desensitization_rules: DesensitizationRuleConfig[]
+  retention_rules: RetentionRuleConfig
+  time_limit: number
+  need_record: boolean
+  sensitive_fields: string[]
+  adapt_rules: string[]
+}
+
+export interface CustomerPrivacyRule {
+  id: string
+  rule_code: string
+  rule_name: string
+  customer_level: number
+  customer_level_text?: string
+  sensitivity_level: number
+  sensitivity_level_text?: string
+  operator_position: number
+  operator_position_text?: string
+  scene_type: number
+  scene_type_text?: string
+  desensitization_rules: string
+  desensitization_rule_list?: DesensitizationRuleConfig[]
+  retention_rules: string
+  retention_rule_config?: RetentionRuleConfig
+  time_limit: number
+  sensitive_fields: string
+  sensitive_field_list?: string[]
+  need_record: number
+  need_operation_log: number
+  is_global: number
+  status: number
+  status_text?: string
+  org_id?: string
+  org_name?: string
+  creator_id?: string
+  creator_name?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface PrivacyRuleForm {
+  id?: string
+  rule_code: string
+  rule_name: string
+  customer_level?: number
+  sensitivity_level?: number
+  operator_position?: number
+  scene_type?: number
+  desensitization_rules?: string
+  retention_rules?: string
+  time_limit?: number
+  sensitive_fields?: string
+  need_record?: number
+  need_operation_log?: number
+  is_global?: number
+  status?: number
+  org_id?: string
+}
+
+export interface PrivacyRuleQueryParams extends PageParams {
+  keyword?: string
+  rule_code?: string
+  rule_name?: string
+  customer_level?: number
+  sensitivity_level?: number
+  operator_position?: number
+  scene_type?: number
+  is_global?: number
+  status?: number
+  org_id?: string
+  start_time?: string
+  end_time?: string
+}
+
+export interface CustomerPrivacyLog {
+  id: string
+  log_no: string
+  customer_id?: string
+  customer_no?: string
+  customer_name?: string
+  customer_type?: number
+  customer_type_text?: string
+  customer_level?: number
+  customer_level_text?: string
+  corporate_id?: string
+  operator_id: string
+  operator_name: string
+  operator_position?: number
+  operator_position_text?: string
+  operator_org_id?: string
+  operator_org_name?: string
+  scene_type: number
+  scene_type_text?: string
+  operation_type: number
+  operation_type_text?: string
+  record_id?: string
+  record_content?: string
+  desensitization_level?: number
+  is_blocked: number
+  block_type?: number
+  block_type_text?: string
+  block_reason?: string
+  is_unauthorized: number
+  is_violation: number
+  is_risk_alert: number
+  risk_alert_info?: string
+  operation_ip?: string
+  operation_device?: string
+  operation_time: string
+  operation_duration?: number
+  view_count?: number
+  rule_id?: string
+  rule_code?: string
+  export_count?: number
+  export_file?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface PrivacyLogQueryParams extends PageParams {
+  keyword?: string
+  log_no?: string
+  customer_id?: string
+  corporate_id?: string
+  customer_no?: string
+  customer_name?: string
+  customer_type?: number
+  customer_level?: number
+  operator_id?: string
+  operator_name?: string
+  operator_position?: number
+  scene_type?: number
+  operation_type?: number
+  is_blocked?: number
+  block_type?: number
+  is_unauthorized?: number
+  is_violation?: number
+  is_risk_alert?: number
+  rule_id?: string
+  rule_code?: string
+  start_time?: string
+  end_time?: string
+}
+
+export interface PrivacyTraceRequest {
+  customer_id?: string
+  customer_no?: string
+  customer_name?: string
+  id_card_no?: string
+  corporate_id?: string
+  operator_id?: string
+  operator_name?: string
+  start_time?: string
+  end_time?: string
+}
+
+export interface PrivacyTraceStatistics {
+  total_operations: number
+  view_count: number
+  export_count: number
+  blocked_count: number
+  unauthorized_count: number
+  violation_count: number
+  high_frequency_count: number
+  malicious_export_count: number
+  risk_alert_count: number
+}
+
+export interface PrivacyTraceRecord {
+  id: string
+  log_no: string
+  operation_time: string
+  operation_type: number
+  operation_type_text?: string
+  scene_type: number
+  scene_type_text?: string
+  operator_name: string
+  operator_position?: number
+  operator_position_text?: string
+  operator_org_name?: string
+  customer_name?: string
+  customer_level?: number
+  customer_level_text?: string
+  is_blocked: number
+  block_reason?: string
+  is_risk_alert: number
+  risk_alert_info?: string
+  view_count?: number
+}
+
+export interface PrivacyTraceResponse {
+  statistics: PrivacyTraceStatistics
+  has_unauthorized: boolean
+  has_violation: boolean
+  has_high_frequency: boolean
+  has_malicious_export: boolean
+  has_risk_alert: boolean
+  history_records: PrivacyTraceRecord[]
+  change_logs: CustomerPrivacyLog[]
+  risk_prompts: string[]
+}
+
+export interface PrivacyBatchConfigItem {
+  rule_code: string
+  rule_name: string
+  customer_level?: number
+  sensitivity_level?: number
+  operator_position?: number
+  scene_type?: number
+  desensitization_rules?: string
+  retention_rules?: string
+  time_limit?: number
+  sensitive_fields?: string
+  need_record?: number
+  need_operation_log?: number
+  is_global?: number
+}
+
+export interface PrivacyBatchConfigResult {
+  rule_code: string
+  process_result: number
+  process_result_text?: string
+  process_message?: string
+  rule_id?: string
+}
+
+export interface PrivacyBatchConfigRequest {
+  batch_name?: string
+  config_mode: number
+  items: PrivacyBatchConfigItem[]
+  overwrite_existing?: boolean
+}
+
+export interface PrivacyBatchConfigResponse {
+  total_count: number
+  success_count: number
+  fail_count: number
+  skip_count: number
+  items: PrivacyBatchConfigResult[]
+}
+
+export interface PrivacyViewRequest {
+  customer_id: string
+  scene_type: number
+  operation_purpose?: string
+  record_id?: string
+  need_original?: boolean
+}
+
+export interface PrivacyViewResponse {
+  allowed: boolean
+  blocked: boolean
+  block_reason?: string
+  block_type?: number
+  customer_info?: any
+  desensitization_level?: number
+  desensitization_fields?: string[]
+  time_limit?: number
+  need_record?: boolean
+  log_id?: string
+}
+
+export interface PrivacyExportRequest {
+  customer_ids: string[]
+  scene_type: number
+  operation_purpose?: string
+  export_format?: number
+  export_fields?: string[]
+  export_reason?: string
+  approver_id?: string
+}
+
+export interface PrivacyExportResponse {
+  allowed: boolean
+  blocked: boolean
+  block_reason?: string
+  block_type?: number
+  export_id?: string
+  file_url?: string
+  export_count?: number
+}
+
+export function preCheckPrivacyApi(data: PrivacyViewRequest) {
+  return post<PrivacyPreCheckResult>('/business/customer-privacy/precheck', data)
+}
+
+export function adaptPrivacySceneApi(data: { scene_type: number; customer_level?: number; operator_position?: number }) {
+  return post<PrivacySceneAdaptResult>('/business/customer-privacy/adapt-scene', data)
+}
+
+export function viewCustomerPrivacyApi(data: PrivacyViewRequest) {
+  return post<PrivacyViewResponse>('/business/customer-privacy/view', data)
+}
+
+export function exportCustomerPrivacyApi(data: PrivacyExportRequest) {
+  return post<PrivacyExportResponse>('/business/customer-privacy/export', data)
+}
+
+export function createPrivacyRuleApi(data: PrivacyRuleForm) {
+  return post<CustomerPrivacyRule>('/business/customer-privacy/rule', data)
+}
+
+export function updatePrivacyRuleApi(id: string, data: PrivacyRuleForm) {
+  return put<CustomerPrivacyRule>(`/business/customer-privacy/rule/${id}`, data)
+}
+
+export function deletePrivacyRuleApi(id: string) {
+  return del<void>(`/business/customer-privacy/rule/${id}`)
+}
+
+export function getPrivacyRuleListApi(params: PrivacyRuleQueryParams) {
+  return get<PageResult<CustomerPrivacyRule>>('/business/customer-privacy/rule/list', params)
+}
+
+export function getPrivacyRuleDetailApi(id: string) {
+  return get<CustomerPrivacyRule>(`/business/customer-privacy/rule/${id}`)
+}
+
+export function getPrivacyLogListApi(params: PrivacyLogQueryParams) {
+  return get<PageResult<CustomerPrivacyLog>>('/business/customer-privacy/log/list', params)
+}
+
+export function getPrivacyLogDetailApi(id: string) {
+  return get<CustomerPrivacyLog>(`/business/customer-privacy/log/${id}`)
+}
+
+export function tracePrivacyApi(data: PrivacyTraceRequest) {
+  return post<PrivacyTraceResponse>('/business/customer-privacy/trace', data)
+}
+
+export function batchConfigPrivacyApi(data: PrivacyBatchConfigRequest) {
+  return post<PrivacyBatchConfigResponse>('/business/customer-privacy/batch-config', data)
+}

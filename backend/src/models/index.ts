@@ -35,3 +35,5 @@ export { CustomerTag } from './CustomerTag';
 export { CustomerTagLog } from './CustomerTagLog';
 export { CustomerTagBatch } from './CustomerTagBatch';
 export { CustomerTagBatchItem } from './CustomerTagBatchItem';
+export { CustomerPrivacyRule } from './CustomerPrivacyRule';
+export { CustomerPrivacyLog } from './CustomerPrivacyLog';
