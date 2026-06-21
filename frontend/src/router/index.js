@@ -109,6 +109,12 @@ export const routes = [
         meta: { title: '酒店客房管控', icon: 'Bed', roles: ['admin', 'hotel_operator', 'senior_hotel_operator'] }
       },
       {
+        path: 'hotel-price-package',
+        name: 'HotelPricePackage',
+        component: () => import('@/views/hotel/HotelPricePackage.vue'),
+        meta: { title: '房价套餐管理', icon: 'Money', roles: ['admin', 'hotel_operator', 'senior_hotel_operator', 'price_manager'] }
+      },
+      {
         path: 'car',
         name: 'CarManage',
         component: () => import('@/views/product/Car.vue'),

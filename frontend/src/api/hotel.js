@@ -171,3 +171,89 @@ export function getAllHotelRoomLogs(params) {
     params
   })
 }
+
+export function getHotelRoomPriceList(params) {
+  return request({
+    url: '/hotel-room-prices',
+    method: 'get',
+    params
+  })
+}
+
+export function getHotelRoomPrice(id) {
+  return request({
+    url: `/hotel-room-prices/${id}`,
+    method: 'get'
+  })
+}
+
+export function createHotelRoomPrice(data) {
+  return request({
+    url: '/hotel-room-prices',
+    method: 'post',
+    data
+  })
+}
+
+export function updateHotelRoomPrice(id, data) {
+  return request({
+    url: `/hotel-room-prices/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+export function checkHotelRoomPricePermission() {
+  return request({
+    url: '/hotel-room-prices/ops/permission',
+    method: 'get'
+  })
+}
+
+export function verifyHotelRoomPriceParams(id, data) {
+  return request({
+    url: `/hotel-room-prices/${id}/ops/verify`,
+    method: 'post',
+    data
+  })
+}
+
+export function changeHotelRoomPriceStatus(id, status, reason) {
+  return request({
+    url: `/hotel-room-prices/${id}/ops/status`,
+    method: 'put',
+    data: { status, reason }
+  })
+}
+
+export function batchHotelRoomPriceOperation(params) {
+  return request({
+    url: '/hotel-room-prices/ops/batch',
+    method: 'post',
+    data: params
+  })
+}
+
+export function getHotelRoomPriceLogs(id, params) {
+  return request({
+    url: `/hotel-room-prices/${id}/ops/logs`,
+    method: 'get',
+    params
+  })
+}
+
+export function getAllHotelRoomPriceLogs(params) {
+  return request({
+    url: '/hotel-room-prices/ops/logs/all',
+    method: 'get',
+    params
+  })
+}
+
+export function getHotelRoomPricePurchases(id, params) {
+  return request({
+    url: `/hotel-room-prices/${id}/ops/purchases`,
+    method: 'get',
+    params
+  })
+}

@@ -1123,6 +1123,80 @@ export const HotelRoomBatchOperationEnum = {
   update_info: { value: 'update_info', label: '批量更新公示信息', icon: 'Edit', color: '#13c2c2', allowSuite: true }
 }
 
+export const HotelPriceTypeEnum = {
+  daily: { value: 'daily', label: '日常房价', color: '#1890ff', tagClass: 'tag-price-daily', icon: 'Sunny' },
+  weekend: { value: 'weekend', label: '周末房价', color: '#722ed1', tagClass: 'tag-price-weekend', icon: 'Moon' },
+  holiday: { value: 'holiday', label: '节假日房价', color: '#fa8c16', tagClass: 'tag-price-holiday', icon: 'Calendar' },
+  exclusive: { value: 'exclusive', label: '专属套餐房价', color: '#eb2f96', tagClass: 'tag-price-exclusive', icon: 'Present' }
+}
+
+export const HotelPriceStatusEnum = {
+  draft: { value: 'draft', label: '草稿', color: '#909399', tagClass: 'tag-price-draft' },
+  active: { value: 'active', label: '生效中', color: '#52c41a', tagClass: 'tag-price-active' },
+  inactive: { value: 'inactive', label: '已停用', color: '#faad14', tagClass: 'tag-price-inactive' },
+  expired: { value: 'expired', label: '已过期', color: '#f5222d', tagClass: 'tag-price-expired' }
+}
+
+export const HotelPriceAdjustTypeEnum = {
+  fixed: { value: 'fixed', label: '固定价格' },
+  increase: { value: 'increase', label: '上调（+¥）' },
+  decrease: { value: 'decrease', label: '下调（-¥）' },
+  percent: { value: 'percent', label: '按比例调整（%）' }
+}
+
+export const HotelPriceIncludedServiceOptions = [
+  { value: '双人早餐', label: '双人早餐' },
+  { value: '免费停车', label: '免费停车' },
+  { value: '免费WiFi', label: '免费WiFi' },
+  { value: '欢迎水果', label: '欢迎水果' },
+  { value: '迷你吧', label: '客房迷你吧' },
+  { value: '行政酒廊', label: '行政酒廊' },
+  { value: '延迟退房', label: '延迟退房至14:00' },
+  { value: '提前入住', label: '提前入住至12:00' },
+  { value: '健身中心', label: '免费健身中心' },
+  { value: '游泳池', label: '免费游泳池' },
+  { value: 'SPA优惠券', label: 'SPA优惠券' },
+  { value: '机场接送', label: '机场接送服务' },
+  { value: '景点门票', label: '景点门票' },
+  { value: '亲子设施', label: '亲子设施' },
+  { value: '会议室2小时', label: '会议室2小时' }
+]
+
+export const HotelPriceTargetGuestOptions = [
+  { value: '商务旅客', label: '商务旅客' },
+  { value: '休闲游客', label: '休闲游客' },
+  { value: '家庭出游', label: '家庭出游' },
+  { value: '情侣度假', label: '情侣度假' },
+  { value: '会展参会', label: '会展参会' },
+  { value: '协议企业', label: '协议企业' },
+  { value: '会员专享', label: '会员专享' },
+  { value: '新用户专享', label: '新用户专享' }
+]
+
+export const HotelPriceLogTypeEnum = {
+  create: { value: 'create', label: '创建套餐', color: '#52c41a', icon: 'Plus' },
+  update: { value: 'update', label: '修改套餐', color: '#1890ff', icon: 'Edit' },
+  on_shelf: { value: 'on_shelf', label: '上架', color: '#52c41a', icon: 'Upload' },
+  off_shelf: { value: 'off_shelf', label: '下架', color: '#faad14', icon: 'Download' },
+  adjust_price: { value: 'adjust_price', label: '调整价格', color: '#eb2f96', icon: 'Money' },
+  change_status: { value: 'change_status', label: '状态变更', color: '#722ed1', icon: 'Switch' },
+  batch_adjust: { value: 'batch_adjust', label: '批量调价', color: '#fa8c16', icon: 'Files' },
+  exclusive_lock: { value: 'exclusive_lock', label: '专属套餐锁定', color: '#eb2f96', icon: 'Lock' },
+  fake_flag: { value: 'fake_flag', label: '虚假套餐标记', color: '#f5222d', icon: 'Warning' },
+  over_discount: { value: 'over_discount', label: '超范围优惠标记', color: '#faad14', icon: 'Warning' }
+}
+
+export const HotelPriceBatchOperationEnum = {
+  adjust_price: { value: 'adjust_price', label: '批量统一调价', icon: 'Money', color: '#eb2f96' },
+  enable_holiday: { value: 'enable_holiday', label: '批量启用节假日套餐', icon: 'Calendar', color: '#fa8c16' },
+  off_shelf_expired: { value: 'off_shelf_expired', label: '批量下架过期套餐', icon: 'Download', color: '#ff4d4f' }
+}
+
+export const formatPriceThousandth = (value) => {
+  if (value === null || value === undefined || isNaN(value)) return '-';
+  return Number(value).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export default {
   OrderStatusEnum,
   OrderSourceEnum,
@@ -1251,6 +1325,14 @@ export default {
   HotelRoomTargetGuestOptions,
   HotelRoomLogTypeEnum,
   HotelRoomBatchOperationEnum,
+  HotelPriceTypeEnum,
+  HotelPriceStatusEnum,
+  HotelPriceAdjustTypeEnum,
+  HotelPriceIncludedServiceOptions,
+  HotelPriceTargetGuestOptions,
+  HotelPriceLogTypeEnum,
+  HotelPriceBatchOperationEnum,
+  formatPriceThousandth,
   getEnumLabel,
   getEnumType,
   getEnumOptions,

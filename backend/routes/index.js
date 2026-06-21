@@ -19,6 +19,7 @@ const flightInventoryController = require('../controllers/FlightInventoryControl
 const flightFulfillmentController = require('../controllers/FlightFulfillmentController')
 const hotelController = require('../controllers/HotelController')
 const hotelRoomController = require('../controllers/HotelRoomController')
+const hotelRoomPriceController = require('../controllers/HotelRoomPriceController')
 const carController = require('../controllers/CarController')
 const ticketController = require('../controllers/TicketController')
 const orderController = require('../controllers/OrderController')
@@ -183,6 +184,18 @@ router.put('/hotel-rooms/:id/ops/maintain-status', auth(), hotelRoomController.c
 router.post('/hotel-rooms/ops/batch', auth(['admin', 'hotel_operator', 'senior_hotel_operator']), hotelRoomController.batchOperation.bind(hotelRoomController));
 router.get('/hotel-rooms/:id/ops/logs', auth(), pagination, hotelRoomController.getLogs.bind(hotelRoomController));
 router.get('/hotel-rooms/ops/logs/all', auth(), pagination, hotelRoomController.getAllLogs.bind(hotelRoomController));
+
+router.get('/hotel-room-prices', auth(), pagination, hotelRoomPriceController.list.bind(hotelRoomPriceController));
+router.get('/hotel-room-prices/:id', auth(), hotelRoomPriceController.get.bind(hotelRoomPriceController));
+router.post('/hotel-room-prices', auth(), hotelRoomPriceController.create.bind(hotelRoomPriceController));
+router.put('/hotel-room-prices/:id', auth(), hotelRoomPriceController.update.bind(hotelRoomPriceController));
+router.get('/hotel-room-prices/ops/permission', auth(), hotelRoomPriceController.checkPermission.bind(hotelRoomPriceController));
+router.post('/hotel-room-prices/:id/ops/verify', auth(), hotelRoomPriceController.verifyParams.bind(hotelRoomPriceController));
+router.put('/hotel-room-prices/:id/ops/status', auth(), hotelRoomPriceController.changeStatus.bind(hotelRoomPriceController));
+router.post('/hotel-room-prices/ops/batch', auth(['admin','hotel_operator','senior_hotel_operator','price_manager']), hotelRoomPriceController.batchOperation.bind(hotelRoomPriceController));
+router.get('/hotel-room-prices/:id/ops/logs', auth(), pagination, hotelRoomPriceController.getLogs.bind(hotelRoomPriceController));
+router.get('/hotel-room-prices/ops/logs/all', auth(), pagination, hotelRoomPriceController.getAllLogs.bind(hotelRoomPriceController));
+router.get('/hotel-room-prices/:id/ops/purchases', auth(), pagination, hotelRoomPriceController.getPurchaseDetails.bind(hotelRoomPriceController));
 
 registerCrudRoutes('cars', carController);
 registerCrudRoutes('tickets', ticketController);

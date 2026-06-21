@@ -72,7 +72,8 @@ import {
   Stamp,
   DataAnalysis,
   Document,
-  Bed
+  Bed,
+  Money
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
