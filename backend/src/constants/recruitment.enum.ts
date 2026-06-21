@@ -1182,3 +1182,106 @@ export const PROBATION_LOCKED_STATUSES: ProbationStatus[] = [
   ProbationStatus.PASSED,
   ProbationStatus.FAILED,
 ];
+
+export enum RegularizationStatus {
+  PENDING_APPLY = 'pending_apply',
+  IN_APPROVAL = 'in_approval',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+}
+
+export const RegularizationStatusLabel: Record<RegularizationStatus, string> = {
+  [RegularizationStatus.PENDING_APPLY]: '待申请',
+  [RegularizationStatus.IN_APPROVAL]: '审批中',
+  [RegularizationStatus.APPROVED]: '转正通过',
+  [RegularizationStatus.REJECTED]: '转正驳回',
+};
+
+export const RegularizationStatusType: Record<RegularizationStatus, string> = {
+  [RegularizationStatus.PENDING_APPLY]: 'warning',
+  [RegularizationStatus.IN_APPROVAL]: 'primary',
+  [RegularizationStatus.APPROVED]: 'success',
+  [RegularizationStatus.REJECTED]: 'danger',
+};
+
+export enum RegularizationOperationAction {
+  CREATE_APPLY = 'create_apply',
+  SUBMIT_APPLY = 'submit_apply',
+  APPROVE_NODE = 'approve_node',
+  REJECT_NODE = 'reject_node',
+  RESUBMIT = 'resubmit',
+  APPROVE_FINAL = 'approve_final',
+  REJECT_FINAL = 'reject_final',
+  BATCH_APPLY = 'batch_apply',
+  BATCH_APPROVE = 'batch_approve',
+  STATUS_SYNC = 'status_sync',
+  MODIFY_DATA = 'modify_data',
+}
+
+export const RegularizationOperationActionLabel: Record<RegularizationOperationAction, string> = {
+  [RegularizationOperationAction.CREATE_APPLY]: '创建转正申请',
+  [RegularizationOperationAction.SUBMIT_APPLY]: '提交审批',
+  [RegularizationOperationAction.APPROVE_NODE]: '节点审批通过',
+  [RegularizationOperationAction.REJECT_NODE]: '节点审批驳回',
+  [RegularizationOperationAction.RESUBMIT]: '重新提交审批',
+  [RegularizationOperationAction.APPROVE_FINAL]: '终审通过',
+  [RegularizationOperationAction.REJECT_FINAL]: '终审驳回',
+  [RegularizationOperationAction.BATCH_APPLY]: '批量申请转正',
+  [RegularizationOperationAction.BATCH_APPROVE]: '批量审批通过',
+  [RegularizationOperationAction.STATUS_SYNC]: '系统状态同步',
+  [RegularizationOperationAction.MODIFY_DATA]: '修改申请数据',
+};
+
+export enum RegularizationApprovalNode {
+  DEPT_HEAD = 'dept_head',
+  HR = 'hr',
+  HR_SUPER = 'hr_super',
+  FINANCE = 'finance',
+  ADMIN = 'admin',
+}
+
+export const RegularizationApprovalNodeLabel: Record<RegularizationApprovalNode, string> = {
+  [RegularizationApprovalNode.DEPT_HEAD]: '部门负责人',
+  [RegularizationApprovalNode.HR]: 'HR专员',
+  [RegularizationApprovalNode.HR_SUPER]: 'HR主管',
+  [RegularizationApprovalNode.FINANCE]: '财务',
+  [RegularizationApprovalNode.ADMIN]: '超级管理员',
+};
+
+export const RegularizationApprovalNodeSortOrder: Record<RegularizationApprovalNode, number> = {
+  [RegularizationApprovalNode.DEPT_HEAD]: 1,
+  [RegularizationApprovalNode.HR]: 2,
+  [RegularizationApprovalNode.HR_SUPER]: 3,
+  [RegularizationApprovalNode.FINANCE]: 4,
+  [RegularizationApprovalNode.ADMIN]: 5,
+};
+
+export const DEFAULT_APPROVAL_FLOW: RegularizationApprovalNode[] = [
+  RegularizationApprovalNode.DEPT_HEAD,
+  RegularizationApprovalNode.HR,
+  RegularizationApprovalNode.HR_SUPER,
+  RegularizationApprovalNode.ADMIN,
+];
+
+export const REGULARIZATION_PREREQUISITE_DAYS = 7;
+
+export const REGULARIZATION_LOCKED_STATUSES: RegularizationStatus[] = [
+  RegularizationStatus.IN_APPROVAL,
+  RegularizationStatus.APPROVED,
+];
+
+export const REGULARIZATION_REQUIRED_ASSESSMENT_COUNT = 5;
+
+export enum RegularizationComplianceIssue {
+  EARLY_APPLY = 'early_apply',
+  NO_ASSESSMENT = 'no_assessment',
+  DUPLICATE_APPLY = 'duplicate_apply',
+  DATA_MISMATCH = 'data_mismatch',
+}
+
+export const RegularizationComplianceIssueLabel: Record<RegularizationComplianceIssue, string> = {
+  [RegularizationComplianceIssue.EARLY_APPLY]: '违规提前申请',
+  [RegularizationComplianceIssue.NO_ASSESSMENT]: '无考核记录',
+  [RegularizationComplianceIssue.DUPLICATE_APPLY]: '重复申请',
+  [RegularizationComplianceIssue.DATA_MISMATCH]: '数据不一致',
+};

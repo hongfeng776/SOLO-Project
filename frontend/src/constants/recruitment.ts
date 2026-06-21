@@ -1331,3 +1331,112 @@ export const PROBATION_ASSESSMENT_PASS_SCORE = 3.0;
 export const PROBATION_ASSESSMENT_EXCELLENT_SCORE = 4.5;
 
 export const REMARK_MAX_LENGTH = 50;
+
+export enum RegularizationStatus {
+  PENDING_APPLY = 'pending_apply',
+  IN_APPROVAL = 'in_approval',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+}
+
+export const RegularizationStatusLabel: Record<RegularizationStatus, string> = {
+  [RegularizationStatus.PENDING_APPLY]: '待申请',
+  [RegularizationStatus.IN_APPROVAL]: '审批中',
+  [RegularizationStatus.APPROVED]: '转正通过',
+  [RegularizationStatus.REJECTED]: '转正驳回',
+};
+
+export const RegularizationStatusType: Record<RegularizationStatus, string> = {
+  [RegularizationStatus.PENDING_APPLY]: 'warning',
+  [RegularizationStatus.IN_APPROVAL]: 'primary',
+  [RegularizationStatus.APPROVED]: 'success',
+  [RegularizationStatus.REJECTED]: 'danger',
+};
+
+export enum RegularizationOperationAction {
+  CREATE = 'create',
+  SUBMIT = 'submit',
+  APPROVE = 'approve',
+  REJECT = 'reject',
+  RESUBMIT = 'resubmit',
+  BATCH_APPLY = 'batch_apply',
+  BATCH_APPROVE = 'batch_approve',
+  BATCH_REJECT = 'batch_reject',
+  WITHDRAW = 'withdraw',
+  CANCEL = 'cancel',
+  SYNC = 'sync',
+}
+
+export const RegularizationOperationActionLabel: Record<RegularizationOperationAction, string> = {
+  [RegularizationOperationAction.CREATE]: '创建转正申请',
+  [RegularizationOperationAction.SUBMIT]: '提交转正申请',
+  [RegularizationOperationAction.APPROVE]: '审批通过',
+  [RegularizationOperationAction.REJECT]: '审批驳回',
+  [RegularizationOperationAction.RESUBMIT]: '重新提交',
+  [RegularizationOperationAction.BATCH_APPLY]: '批量申请',
+  [RegularizationOperationAction.BATCH_APPROVE]: '批量审批通过',
+  [RegularizationOperationAction.BATCH_REJECT]: '批量审批驳回',
+  [RegularizationOperationAction.WITHDRAW]: '撤回申请',
+  [RegularizationOperationAction.CANCEL]: '取消申请',
+  [RegularizationOperationAction.SYNC]: '同步待转正数据',
+};
+
+export enum RegularizationApprovalNode {
+  DEPT_HEAD = 'dept_head',
+  HR = 'hr',
+  HR_SUPER = 'hr_super',
+  FINANCE = 'finance',
+  ADMIN = 'admin',
+}
+
+export const RegularizationApprovalNodeLabel: Record<RegularizationApprovalNode, string> = {
+  [RegularizationApprovalNode.DEPT_HEAD]: '部门负责人',
+  [RegularizationApprovalNode.HR]: 'HR',
+  [RegularizationApprovalNode.HR_SUPER]: 'HR主管',
+  [RegularizationApprovalNode.FINANCE]: '财务',
+  [RegularizationApprovalNode.ADMIN]: '超级管理员',
+};
+
+export const RegularizationApprovalNodeSortOrder: Record<RegularizationApprovalNode, number> = {
+  [RegularizationApprovalNode.DEPT_HEAD]: 0,
+  [RegularizationApprovalNode.HR]: 1,
+  [RegularizationApprovalNode.HR_SUPER]: 2,
+  [RegularizationApprovalNode.FINANCE]: 3,
+  [RegularizationApprovalNode.ADMIN]: 4,
+};
+
+export const DEFAULT_APPROVAL_FLOW: RegularizationApprovalNode[] = [
+  RegularizationApprovalNode.DEPT_HEAD,
+  RegularizationApprovalNode.HR,
+  RegularizationApprovalNode.HR_SUPER,
+  RegularizationApprovalNode.FINANCE,
+  RegularizationApprovalNode.ADMIN,
+];
+
+export const REGULARIZATION_PREREQUISITE_DAYS = 7;
+
+export const REGULARIZATION_LOCKED_STATUSES: string[] = ['in_approval', 'approved'];
+
+export enum RegularizationComplianceIssue {
+  EARLY_APPLICATION = 'early_application',
+  NO_ASSESSMENT = 'no_assessment',
+  DUPLICATE_APPLICATION = 'duplicate_application',
+  DATA_INCONSISTENCY = 'data_inconsistency',
+  ASSESSMENT_SCORE_LOW = 'assessment_score_low',
+  PROBATION_NOT_COMPLETED = 'probation_not_completed',
+  MISSING_REQUIRED_DOCUMENTS = 'missing_required_documents',
+}
+
+export const RegularizationComplianceIssueLabel: Record<RegularizationComplianceIssue, string> = {
+  [RegularizationComplianceIssue.EARLY_APPLICATION]: '违规提前申请（未满足提前申请天数要求）',
+  [RegularizationComplianceIssue.NO_ASSESSMENT]: '无试用期考核记录',
+  [RegularizationComplianceIssue.DUPLICATE_APPLICATION]: '存在重复的转正申请',
+  [RegularizationComplianceIssue.DATA_INCONSISTENCY]: '员工数据不一致（与入职记录不匹配）',
+  [RegularizationComplianceIssue.ASSESSMENT_SCORE_LOW]: '考核综合分数未达到及格线',
+  [RegularizationComplianceIssue.PROBATION_NOT_COMPLETED]: '试用期尚未结束',
+  [RegularizationComplianceIssue.MISSING_REQUIRED_DOCUMENTS]: '缺少必要的申请材料',
+};
+
+export const REGULARIZATION_STATUS_OPTIONS = Object.entries(RegularizationStatusLabel).map(
+  ([value, label]) => ({ label, value })
+);

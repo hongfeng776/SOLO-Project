@@ -25,6 +25,9 @@ import LoginLog from './login-log.model';
 import Probation from './probation.model';
 import ProbationOperationLog from './probation-operation-log.model';
 import ProbationAssessmentIndicator from './probation-assessment-indicator.model';
+import Regularization from './regularization.model';
+import RegularizationApprovalNodeRecord from './regularization-approval-node.model';
+import RegularizationOperationLog from './regularization-operation-log.model';
 
 Company.hasMany(Job, { foreignKey: 'companyId', as: 'jobs' });
 Job.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
@@ -98,6 +101,20 @@ ProbationOperationLog.belongsTo(User, { foreignKey: 'operatorId', as: 'operator'
 Probation.hasMany(ProbationAssessmentIndicator, { foreignKey: 'probationId', as: 'assessmentIndicators' });
 ProbationAssessmentIndicator.belongsTo(Probation, { foreignKey: 'probationId', as: 'probation' });
 
+Probation.hasOne(Regularization, { foreignKey: 'probationId', as: 'regularization' });
+Regularization.belongsTo(Probation, { foreignKey: 'probationId', as: 'probation' });
+Regularization.belongsTo(Onboard, { foreignKey: 'onboardId', as: 'onboard' });
+Regularization.belongsTo(Resume, { foreignKey: 'resumeId', as: 'resume' });
+Regularization.belongsTo(Job, { foreignKey: 'jobId', as: 'job' });
+Regularization.belongsTo(OnboardLedger, { foreignKey: 'onboardId', targetKey: 'onboardId', as: 'ledger' });
+Regularization.hasMany(RegularizationApprovalNodeRecord, { foreignKey: 'regularizationId', as: 'approvalNodes' });
+RegularizationApprovalNodeRecord.belongsTo(Regularization, { foreignKey: 'regularizationId', as: 'regularization' });
+RegularizationApprovalNodeRecord.belongsTo(User, { foreignKey: 'approverId', as: 'approverUser' });
+Regularization.hasMany(RegularizationOperationLog, { foreignKey: 'regularizationId', as: 'operationLogs' });
+RegularizationOperationLog.belongsTo(Regularization, { foreignKey: 'regularizationId', as: 'regularization' });
+RegularizationOperationLog.belongsTo(User, { foreignKey: 'operatorId', as: 'operator' });
+Regularization.belongsTo(User, { foreignKey: 'hrOperatorId', as: 'hrOperator' });
+
 Qualification.hasMany(QualificationAuditLog, { foreignKey: 'qualificationId', as: 'auditLogs' });
 QualificationAuditLog.belongsTo(Qualification, { foreignKey: 'qualificationId', as: 'qualification' });
 
@@ -121,5 +138,6 @@ export {
   User, Qualification, QualificationAuditLog,
   CompanyChangeLog, RecruitmentConfig, RecruitmentConfigLog,
   PermissionLog, LoginLog,
-  Probation, ProbationOperationLog, ProbationAssessmentIndicator
+  Probation, ProbationOperationLog, ProbationAssessmentIndicator,
+  Regularization, RegularizationApprovalNodeRecord, RegularizationOperationLog
 };
