@@ -42,6 +42,7 @@ import DistributionOrderQueryLog from './DistributionOrderQueryLog.model';
 import OrderStatusChangeLog from './OrderStatusChangeLog.model';
 import OrderAbnormalRecord from './OrderAbnormalRecord.model';
 import OrderAbnormalEvidence from './OrderAbnormalEvidence.model';
+import MarketingStatusChangeLog from './MarketingStatusChangeLog.model';
 
 const models = {
   User,
@@ -88,6 +89,7 @@ const models = {
   OrderStatusChangeLog,
   OrderAbnormalRecord,
   OrderAbnormalEvidence,
+  MarketingStatusChangeLog,
 };
 
 const associate = (): void => {
@@ -200,8 +202,12 @@ const associate = (): void => {
   MarketingActivityLog.belongsTo(Marketing, { foreignKey: 'marketingId', as: 'marketing' });
   MarketingActivityLog.belongsTo(MarketingTemplate, { foreignKey: 'templateId', as: 'template' });
   MarketingActivityLog.belongsTo(User, { foreignKey: 'operatorId', as: 'operator' });
+
+  Marketing.hasMany(MarketingStatusChangeLog, { foreignKey: 'marketingId', as: 'statusChangeLogs' });
+  MarketingStatusChangeLog.belongsTo(Marketing, { foreignKey: 'marketingId', as: 'marketing' });
+  MarketingStatusChangeLog.belongsTo(User, { foreignKey: 'operatorId', as: 'operator' });
 };
 
 export { associate };
-export { User, Channel, Promoter, Order, Commission, Marketing, MarketingRewardRule, MarketingTemplate, MarketingActivityLog, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification, Product, ProductAuditLog, ProductEditApproval, ProductScheduleRule, ProductListingLog, ProductRiskRule, ProductRiskRecord, DistributionOrderQueryLog, OrderStatusChangeLog, OrderAbnormalRecord, OrderAbnormalEvidence };
+export { User, Channel, Promoter, Order, Commission, Marketing, MarketingRewardRule, MarketingTemplate, MarketingActivityLog, MarketingStatusChangeLog, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification, Product, ProductAuditLog, ProductEditApproval, ProductScheduleRule, ProductListingLog, ProductRiskRule, ProductRiskRecord, DistributionOrderQueryLog, OrderStatusChangeLog, OrderAbnormalRecord, OrderAbnormalEvidence };
 export default models;

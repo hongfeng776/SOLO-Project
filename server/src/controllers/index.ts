@@ -18,6 +18,7 @@ import channelAuditController from './ChannelAudit.controller';
 import productController from './Product.controller';
 import distributionOrderController from './DistributionOrder.controller';
 import distributionActivityController from './DistributionActivity.controller';
+import activityLifecycleController from './ActivityLifecycle.controller';
 
 export {
   authController,
@@ -40,4 +41,5 @@ export {
   productController,
   distributionOrderController,
   distributionActivityController,
+  activityLifecycleController,
 };

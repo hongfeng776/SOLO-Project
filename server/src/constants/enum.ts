@@ -115,7 +115,114 @@ export enum MarketingStatus {
   ONGOING = 1,
   ENDED = 2,
   CANCELLED = 3,
+  PAUSED = 4,
 }
+
+export const MARKETING_STATUS_LABELS: Record<MarketingStatus, { label: string; type: 'info' | 'success' | 'danger' | 'warning' }> = {
+  [MarketingStatus.DRAFT]: { label: '未开始', type: 'info' },
+  [MarketingStatus.ONGOING]: { label: '进行中', type: 'success' },
+  [MarketingStatus.ENDED]: { label: '已结束', type: 'danger' },
+  [MarketingStatus.CANCELLED]: { label: '已作废', type: 'danger' },
+  [MarketingStatus.PAUSED]: { label: '已暂停', type: 'warning' },
+};
+
+export interface StatusTransitionRule {
+  from: MarketingStatus;
+  to: MarketingStatus[];
+  requiredPermissions?: string[];
+  requireNoActiveParticipation?: boolean;
+  requireNoPendingReward?: boolean;
+}
+
+export const STATUS_TRANSITION_RULES: StatusTransitionRule[] = [
+  { from: MarketingStatus.DRAFT, to: [MarketingStatus.ONGOING, MarketingStatus.CANCELLED] },
+  { from: MarketingStatus.ONGOING, to: [MarketingStatus.PAUSED, MarketingStatus.ENDED] },
+  { from: MarketingStatus.PAUSED, to: [MarketingStatus.ONGOING, MarketingStatus.CANCELLED, MarketingStatus.ENDED] },
+  { from: MarketingStatus.ENDED, to: [] },
+  { from: MarketingStatus.CANCELLED, to: [] },
+];
+
+export enum EditPermissionLevel {
+  FULL = 'full',
+  PARTIAL = 'partial',
+  NONE = 'none',
+}
+
+export const STATUS_EDIT_PERMISSIONS: Record<MarketingStatus, { level: EditPermissionLevel; allowedFields: string[]; blockedFields: string[] }> = {
+  [MarketingStatus.DRAFT]: {
+    level: EditPermissionLevel.FULL,
+    allowedFields: ['*'],
+    blockedFields: [],
+  },
+  [MarketingStatus.ONGOING]: {
+    level: EditPermissionLevel.PARTIAL,
+    allowedFields: ['name', 'description', 'coverImage', 'sort', 'channels'],
+    blockedFields: ['type', 'startTime', 'endTime', 'rules', 'participationThresholds', 'productConfig', 'rewardRuleId'],
+  },
+  [MarketingStatus.PAUSED]: {
+    level: EditPermissionLevel.PARTIAL,
+    allowedFields: ['name', 'description', 'coverImage', 'sort', 'channels'],
+    blockedFields: ['type', 'startTime', 'endTime', 'rules', 'participationThresholds', 'productConfig', 'rewardRuleId'],
+  },
+  [MarketingStatus.ENDED]: {
+    level: EditPermissionLevel.NONE,
+    allowedFields: [],
+    blockedFields: ['*'],
+  },
+  [MarketingStatus.CANCELLED]: {
+    level: EditPermissionLevel.NONE,
+    allowedFields: [],
+    blockedFields: ['*'],
+  },
+};
+
+export enum ActivityStatusChangeType {
+  START = 'start',
+  PAUSE = 'pause',
+  RESUME = 'resume',
+  END = 'end',
+  CANCEL = 'cancel',
+  BATCH_PAUSE = 'batch_pause',
+  BATCH_RESUME = 'batch_resume',
+  BATCH_END = 'batch_end',
+  BATCH_CANCEL = 'batch_cancel',
+  AUTO_END = 'auto_end',
+  EXTEND = 'extend',
+}
+
+export const ACTIVITY_STATUS_CHANGE_TYPE_LABELS: Record<ActivityStatusChangeType, string> = {
+  [ActivityStatusChangeType.START]: '启动活动',
+  [ActivityStatusChangeType.PAUSE]: '暂停活动',
+  [ActivityStatusChangeType.RESUME]: '恢复活动',
+  [ActivityStatusChangeType.END]: '结束活动',
+  [ActivityStatusChangeType.CANCEL]: '作废活动',
+  [ActivityStatusChangeType.BATCH_PAUSE]: '批量暂停',
+  [ActivityStatusChangeType.BATCH_RESUME]: '批量恢复',
+  [ActivityStatusChangeType.BATCH_END]: '批量结束',
+  [ActivityStatusChangeType.BATCH_CANCEL]: '批量作废',
+  [ActivityStatusChangeType.AUTO_END]: '自动结束',
+  [ActivityStatusChangeType.EXTEND]: '延期活动',
+};
+
+export const ACTIVITY_CORE_FIELDS = [
+  'type',
+  'startTime',
+  'endTime',
+  'rules',
+  'participationThresholds',
+  'productConfig',
+  'rewardRuleId',
+  'budget',
+  'maxCommissionRate',
+];
+
+export const ACTIVITY_NON_CORE_FIELDS = [
+  'name',
+  'description',
+  'coverImage',
+  'sort',
+  'channels',
+];
 
 export enum MarketingType {
   COUPON = 'coupon',

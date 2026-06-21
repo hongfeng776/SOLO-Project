@@ -20,6 +20,7 @@ import channelAuditRoutes from './channel-audit.routes';
 import productRoutes from './product.routes';
 import distributionOrderRoutes from './distribution-order.routes';
 import distributionActivityRoutes from './distribution-activity.routes';
+import activityLifecycleRoutes from './activity-lifecycle.routes';
 import ResponseUtils from '../utils/response';
 
 const router = Router();
@@ -49,5 +50,6 @@ router.use('/commission-rules', commissionRuleRoutes);
 router.use('/permission-change-logs', permissionChangeLogRoutes);
 router.use('/distribution-orders', distributionOrderRoutes);
 router.use('/distribution-activities', distributionActivityRoutes);
+router.use('/activity-lifecycle', activityLifecycleRoutes);
 
 export default router;

@@ -39,12 +39,19 @@ interface MarketingAttributes {
   submitToken?: string;
   previewCount?: number;
   lastPreviewAt?: Date;
+  pausedAt?: Date;
+  pausedBy?: string;
+  pauseReason?: string;
+  participantCount?: number;
+  pendingRewardAmount?: number;
+  statusChangedAt?: Date;
+  statusChangedBy?: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
 }
 
-interface MarketingCreationAttributes extends Optional<MarketingAttributes, 'id' | 'type' | 'status' | 'budget' | 'usedAmount' | 'sort' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
+interface MarketingCreationAttributes extends Optional<MarketingAttributes, 'id' | 'type' | 'status' | 'budget' | 'usedAmount' | 'sort' | 'pausedAt' | 'pausedBy' | 'pauseReason' | 'participantCount' | 'pendingRewardAmount' | 'statusChangedAt' | 'statusChangedBy' | 'createdAt' | 'updatedAt' | 'deletedAt'> {}
 
 class Marketing extends Model<MarketingAttributes, MarketingCreationAttributes> implements MarketingAttributes {
   public id!: string;
@@ -62,6 +69,13 @@ class Marketing extends Model<MarketingAttributes, MarketingCreationAttributes> 
   public description?: string;
   public coverImage?: string;
   public sort?: number;
+  public pausedAt?: Date;
+  public pausedBy?: string;
+  public pauseReason?: string;
+  public participantCount?: number;
+  public pendingRewardAmount?: number;
+  public statusChangedAt?: Date;
+  public statusChangedBy?: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
   public readonly deletedAt?: Date;
@@ -189,6 +203,51 @@ Marketing.init(
       allowNull: true,
       field: 'last_preview_at',
     },
+    pausedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'paused_at',
+    },
+    pausedBy: {
+      type: DataTypes.STRING(36),
+      allowNull: true,
+      field: 'paused_by',
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+    },
+    pauseReason: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      field: 'pause_reason',
+    },
+    participantCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      field: 'participant_count',
+    },
+    pendingRewardAmount: {
+      type: DataTypes.DECIMAL(14, 2),
+      allowNull: false,
+      defaultValue: 0,
+      field: 'pending_reward_amount',
+    },
+    statusChangedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'status_changed_at',
+    },
+    statusChangedBy: {
+      type: DataTypes.STRING(36),
+      allowNull: true,
+      field: 'status_changed_by',
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -240,6 +299,14 @@ Marketing.init(
       {
         name: 'idx_submit_token',
         fields: ['submit_token'],
+      },
+      {
+        name: 'idx_paused_at',
+        fields: ['paused_at'],
+      },
+      {
+        name: 'idx_status_changed_at',
+        fields: ['status_changed_at'],
       },
     ],
   }

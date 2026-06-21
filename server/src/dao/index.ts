@@ -39,6 +39,7 @@ import distributionOrderQueryLogDao from './DistributionOrderQueryLog.dao';
 import orderStatusChangeLogDao from './OrderStatusChangeLog.dao';
 import orderAbnormalRecordDao from './OrderAbnormalRecord.dao';
 import orderAbnormalEvidenceDao from './OrderAbnormalEvidence.dao';
+import marketingStatusChangeLogDao from './MarketingStatusChangeLog.dao';
 
 export {
   userDao,
@@ -82,4 +83,5 @@ export {
   orderStatusChangeLogDao,
   orderAbnormalRecordDao,
   orderAbnormalEvidenceDao,
+  marketingStatusChangeLogDao,
 };

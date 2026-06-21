@@ -19,6 +19,8 @@ export enum CacheKey {
   MARKETING_SUBMIT_LOCK = 'marketing:submit:lock:',
   MARKETING_VALIDATION_RESULT = 'marketing:validation:',
   MARKETING_PREVIEW_SNAPSHOT = 'marketing:preview:',
+  MARKETING_STATUS_CHANGE_LOG = 'marketing:status:change:',
+  MARKETING_STATUS_LOCK = 'marketing:status:lock:',
   DASHBOARD_STATS = 'dashboard:stats',
   USER_INFO = 'user:info:',
   USER_LIST = 'user:list',

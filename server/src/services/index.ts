@@ -23,6 +23,7 @@ import distributionOrderService from './DistributionOrder.service';
 import orderStatusFlowService from './OrderStatusFlow.service';
 import orderAbnormalService from './OrderAbnormal.service';
 import distributionActivityService from './DistributionActivity.service';
+import activityLifecycleService from './ActivityLifecycle.service';
 
 export {
   authService,
@@ -50,4 +51,5 @@ export {
   orderStatusFlowService,
   orderAbnormalService,
   distributionActivityService,
+  activityLifecycleService,
 };
