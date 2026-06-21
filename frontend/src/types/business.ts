@@ -1462,3 +1462,373 @@ export interface FullProviderTrace extends ProviderTraceSummary {
   feeStandards: FeeStandard[]
 }
 
+// =====================================================
+// 物流链路监控相关类型定义
+// =====================================================
+
+export interface MatchStep {
+  step: string
+  name: string
+  status: string
+  progress: number
+  message: string
+  started_at?: string
+  completed_at?: string
+  data?: any
+}
+
+export interface MatchProgress {
+  steps: MatchStep[]
+  status: number
+}
+
+export interface AddressInfo {
+  province: string
+  city: string
+  district: string
+  address: string
+  longitude?: number
+  latitude?: number
+  is_remote?: boolean
+}
+
+export interface ProductInfo {
+  product_id: number
+  product_name: string
+  category_id: number
+  category_name: string
+  weight: number
+  volume: number
+  is_forbidden?: boolean
+  forbidden_reason?: string
+}
+
+export interface MatchedProvider {
+  provider_id: number
+  provider_name: string
+  provider_code: string
+  score: number
+  estimated_days: number
+  cost: number
+  coverage_area: string
+}
+
+export interface AlternativeSolution {
+  type: string
+  title: string
+  description: string
+  extra_cost?: number
+  extra_days?: number
+}
+
+export interface LinkMatchResult {
+  id: number
+  match_no: string
+  order_id: number
+  order_no: string
+  status: number
+  block_reason?: string
+  address_info: AddressInfo
+  product_info: ProductInfo[]
+  matched_providers: MatchedProvider[]
+  alternative_solutions: AlternativeSolution[]
+  selected_provider_id?: number
+  selected_provider_name?: string
+  cost_time_ms?: number
+  created_by?: number
+  created_by_name?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface AbnormalDetectionRule {
+  id: number
+  rule_code: string
+  rule_name: string
+  detection_type: string
+  scene: string
+  status: number
+  priority: number
+  alert_level: number
+  detection_params?: any
+  description?: string
+  auto_create_work_order: boolean
+  auto_notify_user: boolean
+  auto_sync_order_status: boolean
+  sla_response_minutes: number
+  created_by?: number
+  created_by_name?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface AbnormalDetectionResult {
+  abnormal_detected: boolean
+  abnormal_log?: any
+  work_order?: any
+}
+
+export interface ProcessAbnormalParams {
+  abnormal_log_id: number
+  process_type: string
+  process_remark: string
+}
+
+export interface BatchOperationPermission {
+  can_mark_abnormal: boolean
+  can_launch_verify: boolean
+  can_sync_status: boolean
+  can_update_track: boolean
+  can_resend_notification: boolean
+}
+
+export interface ShipmentQueryParams {
+  track_status?: number
+  provider_id?: number
+  sign_start_time?: string
+  sign_end_time?: string
+  logistics_no?: string
+  order_no?: string
+  is_abnormal?: number
+  page?: number
+  page_size?: number
+}
+
+export interface ShipmentListItem {
+  id: number
+  shipment_no: string
+  logistics_no: string
+  provider_id: number
+  order_id: number
+  ship_time?: string
+  sign_time?: string
+  is_abnormal: number
+  created_at: string
+  updated_at: string
+  latest_track?: {
+    id: number
+    track_status: number
+    track_content: string
+    track_time: string
+    is_abnormal: number
+  }
+  abnormal_count: number
+  work_order_count: number
+  order_info?: {
+    id: number
+    order_no: string
+    user_name: string
+    receiver_name: string
+    receiver_phone: string
+    receiver_address: string
+  }
+  provider_info?: {
+    id: number
+    provider_code: string
+    company_name: string
+    service_phone: string
+  }
+}
+
+export interface BatchOperationResult {
+  total: number
+  success: number
+  failed: number
+  results: Array<{
+    id: number
+    success: boolean
+    error?: string
+    data?: any
+  }>
+}
+
+export interface LinkNodeExtension {
+  id: number
+  track_id: number
+  shipment_id: number
+  logistics_no: string
+  node_hash: string
+  node_time: string
+  province?: string
+  city?: string
+  district?: string
+  address?: string
+  latitude?: number
+  longitude?: number
+  operator_name?: string
+  operator_phone?: string
+  operator_id?: number
+  operator_employee_id?: string
+  branch_name?: string
+  branch_code?: string
+  verification_status: number
+  verification_remark?: string
+  verified_by?: number
+  verified_by_name?: string
+  verified_at?: string
+  is_backfilled: boolean
+  is_abnormal: boolean
+  abnormal_type?: string
+  abnormal_desc?: string
+  extra?: any
+  remark?: string
+  source?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface TrackNodeDetail {
+  id: number
+  track_id: number
+  track_time: string
+  track_status: number
+  track_content: string
+  is_abnormal: boolean
+  abnormal_type?: string
+  abnormal_desc?: string
+  operator_name?: string
+  operator_phone?: string
+  operator_id?: number
+  province?: string
+  city?: string
+  district?: string
+  address?: string
+  latitude?: number
+  longitude?: number
+  branch_name?: string
+  branch_code?: string
+  verification_status?: number
+  created_at: string
+  created_by_name?: string
+  source?: string
+  is_backfilled?: boolean
+  hash?: string
+  time_gap_hours?: number
+  distance_from_last?: number
+  is_suspicious?: boolean
+  suspicious_reason?: string
+}
+
+export interface LinkIntegrityReport {
+  total_nodes: number
+  expected_nodes: number
+  missing_nodes: string[]
+  duplicate_nodes: number
+  fake_nodes: number
+  suspicious_nodes: number
+  integrity_score: number
+  is_complete: boolean
+  issues: string[]
+  recommendations: string[]
+}
+
+export interface FullLinkTrace {
+  shipment_info: any
+  order_info: any
+  provider_info: any
+  track_nodes: TrackNodeDetail[]
+  abnormal_records: any[]
+  work_orders: any[]
+  operation_logs: any[]
+  integrity_report: LinkIntegrityReport
+}
+
+export interface VerifyNodeParams {
+  node_extension_id: number
+  verification_status: number
+  verification_remark: string
+}
+
+export interface AddNodeExtensionParams {
+  track_id: number
+  province?: string
+  city?: string
+  district?: string
+  address?: string
+  latitude?: number
+  longitude?: number
+  operator_name?: string
+  operator_phone?: string
+  branch_name?: string
+  branch_code?: string
+  remark?: string
+}
+
+export interface WorkOrderItem {
+  id: number
+  work_order_no: string
+  shipment_id: number
+  shipment_no: string
+  order_id: number
+  order_no: string
+  abnormal_log_id?: number
+  type: number
+  title: string
+  description?: string
+  priority: number
+  status: number
+  resolution?: string
+  sla_expire_at?: string
+  assigned_to?: number
+  assigned_to_name?: string
+  assigned_at?: string
+  handled_by?: number
+  handled_by_name?: string
+  started_at?: string
+  resolved_at?: string
+  created_by?: number
+  created_by_name?: string
+  source?: string
+  remark?: string
+  created_at: string
+  updated_at: string
+}
+
+export enum WorkOrderType {
+  ABNORMAL = 1,
+  VERIFY = 2,
+  INTERCEPT = 3,
+  MANUAL_SYNC = 4,
+  COMPLAINT = 5,
+}
+
+export const WorkOrderTypeMap: Record<number, { label: string; type: string }> = {
+  [WorkOrderType.ABNORMAL]: { label: '异常处理', type: 'danger' },
+  [WorkOrderType.VERIFY]: { label: '物流核查', type: 'warning' },
+  [WorkOrderType.INTERCEPT]: { label: '订单拦截', type: 'warning' },
+  [WorkOrderType.MANUAL_SYNC]: { label: '手动同步', type: 'primary' },
+  [WorkOrderType.COMPLAINT]: { label: '用户投诉', type: 'danger' },
+}
+
+export enum WorkOrderPriority {
+  LOW = 1,
+  MEDIUM = 2,
+  HIGH = 3,
+  URGENT = 4,
+}
+
+export const WorkOrderPriorityMap: Record<number, { label: string; type: string }> = {
+  [WorkOrderPriority.LOW]: { label: '低', type: 'info' },
+  [WorkOrderPriority.MEDIUM]: { label: '中', type: 'warning' },
+  [WorkOrderPriority.HIGH]: { label: '高', type: 'danger' },
+  [WorkOrderPriority.URGENT]: { label: '紧急', type: 'danger' },
+}
+
+export enum WorkOrderStatus {
+  PENDING = 0,
+  PROCESSING = 1,
+  PENDING_USER_CONFIRM = 2,
+  RESOLVED = 3,
+  CLOSED = 4,
+  ESCALATED = 5,
+}
+
+export const WorkOrderStatusMap: Record<number, { label: string; type: string }> = {
+  [WorkOrderStatus.PENDING]: { label: '待处理', type: 'info' },
+  [WorkOrderStatus.PROCESSING]: { label: '处理中', type: 'primary' },
+  [WorkOrderStatus.PENDING_USER_CONFIRM]: { label: '待用户确认', type: 'warning' },
+  [WorkOrderStatus.RESOLVED]: { label: '已解决', type: 'success' },
+  [WorkOrderStatus.CLOSED]: { label: '已关闭', type: 'info' },
+  [WorkOrderStatus.ESCALATED]: { label: '已升级', type: 'danger' },
+}
+

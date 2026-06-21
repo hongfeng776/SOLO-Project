@@ -53,6 +53,10 @@ import logisticsProviderTraceRouter from './logisticsProviderTrace';
 import afterSaleValidateRouter from './afterSaleValidate';
 import afterSaleBatchRouter from './afterSaleBatch';
 import afterSaleTraceRouter from './afterSaleTrace';
+import logisticsLinkMatchRouter from './logisticsLinkMatch';
+import logisticsAbnormalMonitorRouter from './logisticsAbnormalMonitor';
+import logisticsLinkBatchRouter from './logisticsLinkBatch';
+import logisticsLinkTraceRouter from './logisticsLinkTrace';
 
 const router = Router();
 
@@ -110,5 +114,9 @@ router.use('/logisticsProviderTrace', logisticsProviderTraceRouter);
 router.use('/afterSaleValidate', afterSaleValidateRouter);
 router.use('/afterSaleBatch', afterSaleBatchRouter);
 router.use('/afterSaleTrace', afterSaleTraceRouter);
+router.use('/logisticsLinkMatch', logisticsLinkMatchRouter);
+router.use('/logisticsAbnormalMonitor', logisticsAbnormalMonitorRouter);
+router.use('/logisticsLinkBatch', logisticsLinkBatchRouter);
+router.use('/logisticsLinkTrace', logisticsLinkTraceRouter);
 
 export default router;

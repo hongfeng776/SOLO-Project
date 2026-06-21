@@ -61,6 +61,10 @@ import { SystemPermissionDao } from './SystemPermissionDao';
 import { UserPermissionDao } from './UserPermissionDao';
 import { UserPermissionLogDao } from './UserPermissionLogDao';
 import { AdminUserScopeDao } from './AdminUserScopeDao';
+import { LogisticsLinkWorkOrderDao } from './LogisticsLinkWorkOrderDao';
+import { LogisticsAbnormalDetectionRuleDao } from './LogisticsAbnormalDetectionRuleDao';
+import { LogisticsLinkNodeExtensionDao } from './LogisticsLinkNodeExtensionDao';
+import { LogisticsLinkMatchRecordDao } from './LogisticsLinkMatchRecordDao';
 
 export {
   BaseDao,
@@ -128,6 +132,10 @@ export {
   UserPermissionDao,
   UserPermissionLogDao,
   AdminUserScopeDao,
+  LogisticsLinkWorkOrderDao,
+  LogisticsAbnormalDetectionRuleDao,
+  LogisticsLinkNodeExtensionDao,
+  LogisticsLinkMatchRecordDao,
 };
 
 export const daos = {
@@ -193,6 +201,10 @@ export const daos = {
   userPermissionDao: new UserPermissionDao(),
   userPermissionLogDao: new UserPermissionLogDao(),
   adminUserScopeDao: new AdminUserScopeDao(),
+  logisticsLinkWorkOrderDao: new LogisticsLinkWorkOrderDao(),
+  logisticsAbnormalDetectionRuleDao: new LogisticsAbnormalDetectionRuleDao(),
+  logisticsLinkNodeExtensionDao: new LogisticsLinkNodeExtensionDao(),
+  logisticsLinkMatchRecordDao: new LogisticsLinkMatchRecordDao(),
 };
 
 export default daos;

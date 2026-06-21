@@ -55,6 +55,10 @@ import { LogisticsTrack } from './LogisticsTrack';
 import { AbnormalLogisticsLog } from './AbnormalLogisticsLog';
 import { AfterSaleLedger } from './AfterSaleLedger';
 import { AfterSaleOperationLog } from './AfterSaleOperationLog';
+import { LogisticsLinkWorkOrder } from './LogisticsLinkWorkOrder';
+import { LogisticsAbnormalDetectionRule } from './LogisticsAbnormalDetectionRule';
+import { LogisticsLinkNodeExtension } from './LogisticsLinkNodeExtension';
+import { LogisticsLinkMatchRecord } from './LogisticsLinkMatchRecord';
 
 export {
   Admin,
@@ -114,6 +118,10 @@ export {
   AbnormalLogisticsLog,
   AfterSaleLedger,
   AfterSaleOperationLog,
+  LogisticsLinkWorkOrder,
+  LogisticsAbnormalDetectionRule,
+  LogisticsLinkNodeExtension,
+  LogisticsLinkMatchRecord,
 };
 
 export const models = {
@@ -174,6 +182,10 @@ export const models = {
   AbnormalLogisticsLog,
   AfterSaleLedger,
   AfterSaleOperationLog,
+  LogisticsLinkWorkOrder,
+  LogisticsAbnormalDetectionRule,
+  LogisticsLinkNodeExtension,
+  LogisticsLinkMatchRecord,
 };
 
 export default models;

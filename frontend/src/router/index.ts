@@ -103,6 +103,12 @@ const routes: RouteRecordRaw[] = [
             name: 'LogisticsProvider',
             component: () => import('@/views/logistics/provider/index.vue'),
             meta: { title: '服务商管控', icon: 'OfficeBuilding', requiresAuth: true }
+          },
+          {
+            path: 'linkMonitor',
+            name: 'LogisticsLinkMonitor',
+            component: () => import('@/views/logistics/linkMonitor/index.vue'),
+            meta: { title: '链路监控', icon: 'Connection', requiresAuth: true }
           }
         ]
       },
