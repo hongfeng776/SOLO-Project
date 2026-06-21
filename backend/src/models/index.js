@@ -34,6 +34,7 @@ const PassengerOperationLog = require('./PassengerOperationLog')
 const PassengerTravelRisk = require('./PassengerTravelRisk')
 const PassengerExportTask = require('./PassengerExportTask')
 const PassengerBehaviorReport = require('./PassengerBehaviorReport')
+const MarketingAuditLog = require('./MarketingAuditLog')
 
 Driver.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
 Vehicle.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
@@ -100,6 +101,9 @@ SettlementItem.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
 SettlementItem.belongsTo(Order, { foreignKey: 'orderId', as: 'order' })
 SettlementAuditLog.belongsTo(SettlementRecord, { foreignKey: 'settlementRecordId', as: 'settlementRecord' })
 
+MarketingCampaign.hasMany(MarketingAuditLog, { foreignKey: 'campaignId', as: 'auditLogs' })
+MarketingAuditLog.belongsTo(MarketingCampaign, { foreignKey: 'campaignId', as: 'campaign' })
+
 module.exports = {
   User,
   Role,
@@ -136,5 +140,6 @@ module.exports = {
   PassengerOperationLog,
   PassengerTravelRisk,
   PassengerExportTask,
-  PassengerBehaviorReport
+  PassengerBehaviorReport,
+  MarketingAuditLog
 }
