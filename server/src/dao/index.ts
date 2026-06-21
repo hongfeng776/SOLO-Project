@@ -4,6 +4,9 @@ import promoterDao from './Promoter.dao';
 import orderDao from './Order.dao';
 import commissionDao from './Commission.dao';
 import marketingDao from './Marketing.dao';
+import marketingRewardRuleDao from './MarketingRewardRule.dao';
+import marketingTemplateDao from './MarketingTemplate.dao';
+import marketingActivityLogDao from './MarketingActivityLog.dao';
 import withdrawDao from './Withdraw.dao';
 import roleDao from './Role.dao';
 import permissionDao from './Permission.dao';
@@ -44,6 +47,9 @@ export {
   orderDao,
   commissionDao,
   marketingDao,
+  marketingRewardRuleDao,
+  marketingTemplateDao,
+  marketingActivityLogDao,
   withdrawDao,
   roleDao,
   permissionDao,

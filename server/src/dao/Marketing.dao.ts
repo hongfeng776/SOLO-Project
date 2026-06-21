@@ -89,6 +89,65 @@ class MarketingDao {
     const count = await this.count({ where: { code, id: { [Op.ne]: excludeId } } });
     return count > 0;
   }
+
+  public async checkTimeOverlap(
+    startTime: Date,
+    endTime: Date,
+    excludeId?: string,
+    type?: string
+  ): Promise<{ hasOverlap: boolean; overlappingActivities: any[] }> {
+    const where: any = {
+      [Op.and]: [
+        { startTime: { [Op.lt]: endTime } },
+        { endTime: { [Op.gt]: startTime } },
+        { status: { [Op.ne]: 3 } },
+      ],
+    };
+
+    if (excludeId) {
+      where.id = { [Op.ne]: excludeId };
+    }
+
+    if (type) {
+      where.type = type;
+    }
+
+    const overlappingActivities = await this.findAll({ where } as any);
+    return {
+      hasOverlap: overlappingActivities.length > 0,
+      overlappingActivities: overlappingActivities.map(a => ({
+        id: a.id,
+        name: a.name,
+        startTime: a.startTime,
+        endTime: a.endTime,
+        status: a.status,
+      })),
+    };
+  }
+
+  public async existsBySubmitToken(token: string): Promise<boolean> {
+    const count = await this.count({ where: { submitToken: token } });
+    return count > 0;
+  }
+
+  public async findByTemplateId(templateId: string): Promise<any[]> {
+    return this.findAll({ where: { templateId } } as any);
+  }
+
+  public async updateSort(id: string, sort: number): Promise<void> {
+    await this.update({ sort } as any, { where: { id } });
+  }
+
+  public async updateSorts(updates: { id: string; sort: number }[]): Promise<void> {
+    for (const update of updates) {
+      await this.updateSort(update.id, update.sort);
+    }
+  }
+
+  public async incrementPreviewCount(id: string): Promise<void> {
+    await Marketing.increment('previewCount', { by: 1, where: { id } });
+    await this.update({ lastPreviewAt: new Date() } as any, { where: { id } });
+  }
 }
 
 export default new MarketingDao();

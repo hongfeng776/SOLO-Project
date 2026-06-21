@@ -123,7 +123,138 @@ export enum MarketingType {
   CASHBACK = 'cashback',
   REBATE = 'rebate',
   BONUS = 'bonus',
+  DISTRIBUTION_LADDER = 'distribution_ladder',
+  DISTRIBUTION_RANKING = 'distribution_ranking',
+  DISTRIBUTION_FULL_AMOUNT = 'distribution_full_amount',
+  DISTRIBUTION_NEW_USER = 'distribution_new_user',
+  DISTRIBUTION_INVITE = 'distribution_invite',
 }
+
+export const MARKETING_TYPE_LABELS: Record<MarketingType, string> = {
+  [MarketingType.COUPON]: '优惠券',
+  [MarketingType.DISCOUNT]: '折扣',
+  [MarketingType.CASHBACK]: '返现',
+  [MarketingType.REBATE]: '返利',
+  [MarketingType.BONUS]: '奖金',
+  [MarketingType.DISTRIBUTION_LADDER]: '阶梯奖励',
+  [MarketingType.DISTRIBUTION_RANKING]: '排名奖励',
+  [MarketingType.DISTRIBUTION_FULL_AMOUNT]: '满额奖励',
+  [MarketingType.DISTRIBUTION_NEW_USER]: '新用户奖励',
+  [MarketingType.DISTRIBUTION_INVITE]: '邀请奖励',
+};
+
+export enum DistributionActivityType {
+  LADDER_REWARD = 'ladder_reward',
+  RANKING_REWARD = 'ranking_reward',
+  FULL_AMOUNT_REWARD = 'full_amount_reward',
+}
+
+export const DISTRIBUTION_ACTIVITY_TYPE_LABELS: Record<DistributionActivityType, string> = {
+  [DistributionActivityType.LADDER_REWARD]: '阶梯奖励',
+  [DistributionActivityType.RANKING_REWARD]: '排名奖励',
+  [DistributionActivityType.FULL_AMOUNT_REWARD]: '满额奖励',
+};
+
+export enum RewardRuleType {
+  LADDER = 'ladder',
+  RANKING = 'ranking',
+  FULL_AMOUNT = 'full_amount',
+}
+
+export const REWARD_RULE_TYPE_LABELS: Record<RewardRuleType, string> = {
+  [RewardRuleType.LADDER]: '阶梯奖励',
+  [RewardRuleType.RANKING]: '排名奖励',
+  [RewardRuleType.FULL_AMOUNT]: '满额奖励',
+};
+
+export const REWARD_RULE_MUTUAL_EXCLUSIONS: RewardRuleType[][] = [
+  [RewardRuleType.LADDER, RewardRuleType.RANKING],
+  [RewardRuleType.LADDER, RewardRuleType.FULL_AMOUNT],
+  [RewardRuleType.RANKING, RewardRuleType.FULL_AMOUNT],
+];
+
+export enum ParticipationThresholdType {
+  LEVEL = 'level',
+  TOTAL_ORDERS = 'total_orders',
+  TOTAL_AMOUNT = 'total_amount',
+  REGISTRATION_DAYS = 'registration_days',
+  QUALIFICATION_VERIFIED = 'qualification_verified',
+  SPECIFIC_PROMOTERS = 'specific_promoters',
+}
+
+export const PARTICIPATION_THRESHOLD_LABELS: Record<ParticipationThresholdType, string> = {
+  [ParticipationThresholdType.LEVEL]: '推客等级',
+  [ParticipationThresholdType.TOTAL_ORDERS]: '累计订单数',
+  [ParticipationThresholdType.TOTAL_AMOUNT]: '累计成交额',
+  [ParticipationThresholdType.REGISTRATION_DAYS]: '注册天数',
+  [ParticipationThresholdType.QUALIFICATION_VERIFIED]: '资质认证',
+  [ParticipationThresholdType.SPECIFIC_PROMOTERS]: '指定推客',
+};
+
+export enum ActivityTemplateCategory {
+  HOT_SALE = 'hot_sale',
+  NEW_PRODUCT = 'new_product',
+  FESTIVAL = 'festival',
+  MEMBER_DAY = 'member_day',
+  CLEARANCE = 'clearance',
+  CUSTOM = 'custom',
+}
+
+export const ACTIVITY_TEMPLATE_CATEGORY_LABELS: Record<ActivityTemplateCategory, string> = {
+  [ActivityTemplateCategory.HOT_SALE]: '热销爆款',
+  [ActivityTemplateCategory.NEW_PRODUCT]: '新品上市',
+  [ActivityTemplateCategory.FESTIVAL]: '节日促销',
+  [ActivityTemplateCategory.MEMBER_DAY]: '会员日',
+  [ActivityTemplateCategory.CLEARANCE]: '清仓特惠',
+  [ActivityTemplateCategory.CUSTOM]: '自定义',
+};
+
+export enum ActivityOperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  UPDATE_STATUS = 'update_status',
+  UPDATE_REWARD_RULES = 'update_reward_rules',
+  UPDATE_PARTICIPANTS = 'update_participants',
+  UPDATE_PRODUCTS = 'update_products',
+  PREVIEW = 'preview',
+  COPY_TEMPLATE = 'copy_template',
+  BATCH_CREATE = 'batch_create',
+  BATCH_UPDATE = 'batch_update',
+  UPDATE_SORT = 'update_sort',
+}
+
+export const ACTIVITY_OPERATION_TYPE_LABELS: Record<ActivityOperationType, string> = {
+  [ActivityOperationType.CREATE]: '创建活动',
+  [ActivityOperationType.UPDATE]: '更新活动',
+  [ActivityOperationType.DELETE]: '删除活动',
+  [ActivityOperationType.UPDATE_STATUS]: '更新状态',
+  [ActivityOperationType.UPDATE_REWARD_RULES]: '更新奖励规则',
+  [ActivityOperationType.UPDATE_PARTICIPANTS]: '更新参与对象',
+  [ActivityOperationType.UPDATE_PRODUCTS]: '更新适用商品',
+  [ActivityOperationType.PREVIEW]: '预览活动',
+  [ActivityOperationType.COPY_TEMPLATE]: '复制模板',
+  [ActivityOperationType.BATCH_CREATE]: '批量创建',
+  [ActivityOperationType.BATCH_UPDATE]: '批量更新',
+  [ActivityOperationType.UPDATE_SORT]: '更新排序',
+};
+
+export enum ValidationSeverity {
+  INFO = 'info',
+  WARNING = 'warning',
+  ERROR = 'error',
+}
+
+export const DISTRIBUTION_REWARD_MAX_RATE = 0.5;
+export const DISTRIBUTION_REWARD_MIN_AMOUNT = 0.01;
+export const DISTRIBUTION_REWARD_MAX_AMOUNT = 10000;
+
+export const ACTIVITY_NAME_MAX_LENGTH = 100;
+export const ACTIVITY_DESCRIPTION_MAX_LENGTH = 2000;
+
+export const LADDER_REWARD_MAX_LEVELS = 10;
+export const RANKING_REWARD_MAX_RANKS = 100;
+export const FULL_AMOUNT_REWARD_MAX_THRESHOLDS = 10;
 
 export enum WithdrawStatus {
   PENDING = 0,

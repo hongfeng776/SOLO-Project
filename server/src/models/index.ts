@@ -4,6 +4,9 @@ import Promoter from './Promoter.model';
 import Order from './Order.model';
 import Commission from './Commission.model';
 import Marketing from './Marketing.model';
+import MarketingRewardRule from './MarketingRewardRule.model';
+import MarketingTemplate from './MarketingTemplate.model';
+import MarketingActivityLog from './MarketingActivityLog.model';
 import Withdraw from './Withdraw.model';
 import Role from './Role.model';
 import Permission from './Permission.model';
@@ -47,6 +50,9 @@ const models = {
   Order,
   Commission,
   Marketing,
+  MarketingRewardRule,
+  MarketingTemplate,
+  MarketingActivityLog,
   Withdraw,
   Role,
   Permission,
@@ -179,8 +185,23 @@ const associate = (): void => {
   ProductRiskRecord.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
   ProductRiskRecord.belongsTo(User, { foreignKey: 'triggeredBy', as: 'triggeredByUser' });
   ProductRiskRecord.belongsTo(User, { foreignKey: 'resolvedBy', as: 'resolvedByUser' });
+
+  Marketing.belongsTo(MarketingRewardRule, { foreignKey: 'rewardRuleId', as: 'rewardRule' });
+  Marketing.belongsTo(MarketingTemplate, { foreignKey: 'templateId', as: 'template' });
+  Marketing.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
+  Marketing.hasMany(MarketingActivityLog, { foreignKey: 'marketingId', as: 'activityLogs' });
+
+  MarketingRewardRule.hasOne(Marketing, { foreignKey: 'rewardRuleId', as: 'marketing' });
+
+  MarketingTemplate.hasMany(Marketing, { foreignKey: 'templateId', as: 'marketings' });
+  MarketingTemplate.hasMany(MarketingActivityLog, { foreignKey: 'templateId', as: 'activityLogs' });
+  MarketingTemplate.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
+
+  MarketingActivityLog.belongsTo(Marketing, { foreignKey: 'marketingId', as: 'marketing' });
+  MarketingActivityLog.belongsTo(MarketingTemplate, { foreignKey: 'templateId', as: 'template' });
+  MarketingActivityLog.belongsTo(User, { foreignKey: 'operatorId', as: 'operator' });
 };
 
 export { associate };
-export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification, Product, ProductAuditLog, ProductEditApproval, ProductScheduleRule, ProductListingLog, ProductRiskRule, ProductRiskRecord, DistributionOrderQueryLog, OrderStatusChangeLog, OrderAbnormalRecord, OrderAbnormalEvidence };
+export { User, Channel, Promoter, Order, Commission, Marketing, MarketingRewardRule, MarketingTemplate, MarketingActivityLog, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification, Product, ProductAuditLog, ProductEditApproval, ProductScheduleRule, ProductListingLog, ProductRiskRule, ProductRiskRecord, DistributionOrderQueryLog, OrderStatusChangeLog, OrderAbnormalRecord, OrderAbnormalEvidence };
 export default models;

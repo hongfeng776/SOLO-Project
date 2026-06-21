@@ -1,7 +1,19 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
-import { MarketingStatus, MarketingType } from '../constants/enum';
+import { MarketingStatus, MarketingType, ParticipationThresholdType } from '../constants/enum';
 import { v4 as uuidv4 } from 'uuid';
+
+interface ParticipationThreshold {
+  thresholdType: ParticipationThresholdType;
+  thresholdValue: any;
+  description?: string;
+}
+
+interface ActivityProductConfig {
+  productIds?: string[];
+  categories?: string[];
+  excludeProductIds?: string[];
+}
 
 interface MarketingAttributes {
   id: string;
@@ -19,6 +31,14 @@ interface MarketingAttributes {
   description?: string;
   coverImage?: string;
   sort?: number;
+  participationThresholds?: ParticipationThreshold[];
+  productConfig?: ActivityProductConfig;
+  rewardRuleId?: string;
+  templateId?: string;
+  createdBy?: string;
+  submitToken?: string;
+  previewCount?: number;
+  lastPreviewAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
@@ -116,6 +136,59 @@ Marketing.init(
       allowNull: false,
       defaultValue: 0,
     },
+    participationThresholds: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      field: 'participation_thresholds',
+    },
+    productConfig: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      field: 'product_config',
+    },
+    rewardRuleId: {
+      type: DataTypes.STRING(36),
+      allowNull: true,
+      field: 'reward_rule_id',
+      references: {
+        model: 'marketing_reward_rules',
+        key: 'id',
+      },
+    },
+    templateId: {
+      type: DataTypes.STRING(36),
+      allowNull: true,
+      field: 'template_id',
+      references: {
+        model: 'marketing_templates',
+        key: 'id',
+      },
+    },
+    createdBy: {
+      type: DataTypes.STRING(36),
+      allowNull: true,
+      field: 'created_by',
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+    },
+    submitToken: {
+      type: DataTypes.STRING(64),
+      allowNull: true,
+      field: 'submit_token',
+    },
+    previewCount: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      field: 'preview_count',
+    },
+    lastPreviewAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'last_preview_at',
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -152,9 +225,25 @@ Marketing.init(
         name: 'idx_end_time',
         fields: ['end_time'],
       },
+      {
+        name: 'idx_template_id',
+        fields: ['template_id'],
+      },
+      {
+        name: 'idx_reward_rule_id',
+        fields: ['reward_rule_id'],
+      },
+      {
+        name: 'idx_created_by',
+        fields: ['created_by'],
+      },
+      {
+        name: 'idx_submit_token',
+        fields: ['submit_token'],
+      },
     ],
   }
 );
 
-export { Marketing, MarketingAttributes, MarketingCreationAttributes };
+export { Marketing, MarketingAttributes, MarketingCreationAttributes, ParticipationThreshold, ActivityProductConfig };
 export default Marketing;
