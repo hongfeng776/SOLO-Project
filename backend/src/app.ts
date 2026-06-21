@@ -46,6 +46,8 @@ import interactionOpsRoutes from '@routes/interaction-ops'
 import hotCommentRoutes from '@routes/hot-comment'
 import trafficPoolRoutes from '@routes/traffic-pool'
 import contentPushRoutes from '@routes/content-push'
+import trafficWeightRuleRoutes from '@routes/traffic-weight-rule'
+import trafficAnomalyControlRoutes from '@routes/traffic-anomaly-control'
 
 const app = express()
 
@@ -103,6 +105,8 @@ app.use('/api/interaction-ops', interactionOpsRoutes)
 app.use('/api/hot-comment', hotCommentRoutes)
 app.use('/api/traffic-pool', trafficPoolRoutes)
 app.use('/api/content-push', contentPushRoutes)
+app.use('/api/traffic-weight-rule', trafficWeightRuleRoutes)
+app.use('/api/traffic-anomaly-control', trafficAnomalyControlRoutes)
 
 app.use(celebrateErrors())
 app.use(errorHandler)

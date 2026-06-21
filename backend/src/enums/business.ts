@@ -523,3 +523,224 @@ export const ACTIVITY_BATCH_TYPE_NAMES: Record<string, string> = {
   [ActivityBatchType.MARK_FOCUS_LOW]: '批量标记低活跃重点运维',
   [ActivityBatchType.SEND_PUSH_NOTIFY]: '批量推送通知消息'
 }
+
+// ========== 营销活动（Campaign）状态枚举 ==========
+export enum CampaignStatus {
+  DRAFT = 0,
+  ONLINE = 1,
+  OFFLINE = 2,
+  CANCELLED = 3
+}
+
+export const CAMPAIGN_STATUS_NAMES: Record<number, string> = {
+  [CampaignStatus.DRAFT]: '草稿',
+  [CampaignStatus.ONLINE]: '上线',
+  [CampaignStatus.OFFLINE]: '下线',
+  [CampaignStatus.CANCELLED]: '已取消'
+}
+
+export const CAMPAIGN_STATUS_COLORS: Record<number, string> = {
+  [CampaignStatus.DRAFT]: '#909399',
+  [CampaignStatus.ONLINE]: '#67c23a',
+  [CampaignStatus.OFFLINE]: '#f56c6c',
+  [CampaignStatus.CANCELLED]: '#c0c4cc'
+}
+
+// ========== 营销活动（Campaign）类型枚举 ==========
+export enum CampaignType {
+  PROMOTION = 'promotion',
+  DELIVERY = 'delivery',
+  SIGN_IN = 'sign_in',
+  LUCKY_DRAW = 'lucky_draw',
+  REBATE = 'rebate',
+  CUSTOM = 'custom'
+}
+
+export const CAMPAIGN_TYPE_NAMES: Record<string, string> = {
+  [CampaignType.PROMOTION]: '促销活动',
+  [CampaignType.DELIVERY]: '投放活动',
+  [CampaignType.SIGN_IN]: '签到活动',
+  [CampaignType.LUCKY_DRAW]: '抽奖活动',
+  [CampaignType.REBATE]: '返利活动',
+  [CampaignType.CUSTOM]: '自定义'
+}
+
+// ========== 营销活动适配场景枚举 ==========
+export enum CampaignScene {
+  HOME_PAGE = 'home_page',
+  PRODUCT_DETAIL = 'product_detail',
+  USER_CENTER = 'user_center',
+  CHECKOUT = 'checkout',
+  PUSH_NOTIFICATION = 'push_notification',
+  POPUP = 'popup',
+  SHARE = 'share',
+  NEW_USER = 'new_user',
+  RETURNING_USER = 'returning_user'
+}
+
+export const CAMPAIGN_SCENE_NAMES: Record<string, string> = {
+  [CampaignScene.HOME_PAGE]: '首页',
+  [CampaignScene.PRODUCT_DETAIL]: '商品详情',
+  [CampaignScene.USER_CENTER]: '用户中心',
+  [CampaignScene.CHECKOUT]: '结算页',
+  [CampaignScene.PUSH_NOTIFICATION]: '推送通知',
+  [CampaignScene.POPUP]: '弹窗',
+  [CampaignScene.SHARE]: '分享',
+  [CampaignScene.NEW_USER]: '新用户',
+  [CampaignScene.RETURNING_USER]: '回流用户'
+}
+
+// ========== 参与范围类型 ==========
+export enum ParticipationScopeType {
+  ALL_USERS = 'all_users',
+  USER_LEVEL = 'user_level',
+  USER_TAG = 'user_tag',
+  USER_GROUP = 'user_group',
+  SPECIFIC_USERS = 'specific_users',
+  NEW_USERS = 'new_users',
+  REGION = 'region'
+}
+
+export const PARTICIPATION_SCOPE_NAMES: Record<string, string> = {
+  [ParticipationScopeType.ALL_USERS]: '全部用户',
+  [ParticipationScopeType.USER_LEVEL]: '按用户等级',
+  [ParticipationScopeType.USER_TAG]: '按用户标签',
+  [ParticipationScopeType.USER_GROUP]: '按用户分组',
+  [ParticipationScopeType.SPECIFIC_USERS]: '指定用户',
+  [ParticipationScopeType.NEW_USERS]: '新注册用户',
+  [ParticipationScopeType.REGION]: '按地域'
+}
+
+// ========== 奖励类型 ==========
+export enum RewardType {
+  COUPON = 'coupon',
+  CASH = 'cash',
+  POINTS = 'points',
+  DISCOUNT = 'discount',
+  FREE_SHIPPING = 'free_shipping',
+  GIFT = 'gift',
+  VOUCHER = 'voucher'
+}
+
+export const REWARD_TYPE_NAMES: Record<string, string> = {
+  [RewardType.COUPON]: '优惠券',
+  [RewardType.CASH]: '现金',
+  [RewardType.POINTS]: '积分',
+  [RewardType.DISCOUNT]: '折扣',
+  [RewardType.FREE_SHIPPING]: '免运费',
+  [RewardType.GIFT]: '赠品',
+  [RewardType.VOUCHER]: '代金券'
+}
+
+// ========== 校验维度（功能点4多维度校验） ==========
+export enum CampaignCheckDimension {
+  TIME_FIT = 'time_fit',
+  REWARD_COMPLIANCE = 'reward_compliance',
+  RULE_RATIONALITY = 'rule_rationality',
+  DUPLICATE = 'duplicate',
+  VIOLATION = 'violation',
+  CONFIG_COMPLETE = 'config_complete',
+  PARTICIPATION_THRESHOLD = 'participation_threshold'
+}
+
+export const CAMPAIGN_CHECK_DIMENSION_NAMES: Record<string, string> = {
+  [CampaignCheckDimension.TIME_FIT]: '时间适配性',
+  [CampaignCheckDimension.REWARD_COMPLIANCE]: '奖励合规性',
+  [CampaignCheckDimension.RULE_RATIONALITY]: '规则合理性',
+  [CampaignCheckDimension.DUPLICATE]: '重复性',
+  [CampaignCheckDimension.VIOLATION]: '违规营销',
+  [CampaignCheckDimension.CONFIG_COMPLETE]: '配置完整性',
+  [CampaignCheckDimension.PARTICIPATION_THRESHOLD]: '参与门槛'
+}
+
+// ========== 校验结果等级 ==========
+export enum CheckResultLevel {
+  PASS = 'pass',
+  WARNING = 'warning',
+  ERROR = 'error',
+  BLOCKER = 'blocker'
+}
+
+export const CHECK_RESULT_LEVEL_NAMES: Record<string, string> = {
+  [CheckResultLevel.PASS]: '通过',
+  [CheckResultLevel.WARNING]: '警告',
+  [CheckResultLevel.ERROR]: '错误',
+  [CheckResultLevel.BLOCKER]: '阻断'
+}
+
+// ========== 审计日志变更类型 ==========
+export enum CampaignAuditAction {
+  CREATED = 'created',
+  UPDATED = 'updated',
+  STATUS_CHANGED = 'status_changed',
+  CONFIG_CHANGED = 'config_changed',
+  REWARD_CHANGED = 'reward_changed',
+  PARTICIPATION_CHANGED = 'participation_changed',
+  BATCH_CREATED = 'batch_created',
+  BATCH_UPDATED = 'batch_updated',
+  BATCH_TOGGLED = 'batch_toggled',
+  LAUNCH_BLOCKED = 'launch_blocked',
+  FORCE_LAUNCHED = 'force_launched'
+}
+
+export const CAMPAIGN_AUDIT_ACTION_NAMES: Record<string, string> = {
+  [CampaignAuditAction.CREATED]: '活动创建',
+  [CampaignAuditAction.UPDATED]: '活动修改',
+  [CampaignAuditAction.STATUS_CHANGED]: '状态变更',
+  [CampaignAuditAction.CONFIG_CHANGED]: '配置变更',
+  [CampaignAuditAction.REWARD_CHANGED]: '奖励规则变更',
+  [CampaignAuditAction.PARTICIPATION_CHANGED]: '参与范围变更',
+  [CampaignAuditAction.BATCH_CREATED]: '批量创建',
+  [CampaignAuditAction.BATCH_UPDATED]: '批量修改',
+  [CampaignAuditAction.BATCH_TOGGLED]: '批量启停',
+  [CampaignAuditAction.LAUNCH_BLOCKED]: '上线拦截',
+  [CampaignAuditAction.FORCE_LAUNCHED]: '强制上线'
+}
+
+// ========== 批量操作类型（功能点3） ==========
+export enum CampaignBatchAction {
+  BATCH_CREATE = 'batch_create',
+  BATCH_UPDATE = 'batch_update',
+  BATCH_ONLINE = 'batch_online',
+  BATCH_OFFLINE = 'batch_offline',
+  BATCH_TOGGLE = 'batch_toggle',
+  BATCH_DELETE = 'batch_delete'
+}
+
+export const CAMPAIGN_BATCH_ACTION_NAMES: Record<string, string> = {
+  [CampaignBatchAction.BATCH_CREATE]: '批量创建',
+  [CampaignBatchAction.BATCH_UPDATE]: '批量修改',
+  [CampaignBatchAction.BATCH_ONLINE]: '批量上线',
+  [CampaignBatchAction.BATCH_OFFLINE]: '批量下线',
+  [CampaignBatchAction.BATCH_TOGGLE]: '批量启停',
+  [CampaignBatchAction.BATCH_DELETE]: '批量删除'
+}
+
+// ========== 营销违规关键词 ==========
+export const CAMPAIGN_VIOLATION_KEYWORDS = [
+  '最高奖',
+  '唯一',
+  '第一',
+  '100%中奖',
+  '零成本',
+  '无门槛中奖',
+  '国家认证',
+  '权威推荐',
+  '绝对',
+  '永久',
+  '保本',
+  '无风险',
+  '稳赚',
+  '国家级',
+  '世界级'
+]
+
+// ========== 奖励配比合理范围（按活动类型） ==========
+export const CAMPAIGN_REWARD_RATIO_LIMITS: Record<string, { minRatio: number; maxRatio: number; maxAmount: number }> = {
+  [CampaignType.PROMOTION]: { minRatio: 0.01, maxRatio: 0.5, maxAmount: 10000 },
+  [CampaignType.DELIVERY]: { minRatio: 0.005, maxRatio: 0.3, maxAmount: 5000 },
+  [CampaignType.LUCKY_DRAW]: { minRatio: 0.02, maxRatio: 0.8, maxAmount: 50000 },
+  [CampaignType.REBATE]: { minRatio: 0.01, maxRatio: 0.3, maxAmount: 2000 },
+  [CampaignType.SIGN_IN]: { minRatio: 0.001, maxRatio: 0.1, maxAmount: 500 },
+  [CampaignType.CUSTOM]: { minRatio: 0, maxRatio: 1, maxAmount: 100000 }
+}

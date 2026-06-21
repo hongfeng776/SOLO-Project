@@ -2120,3 +2120,251 @@ export interface PushFullChainResult {
   }
 }
 
+export interface TrafficWeightRulePermission {
+  canView: boolean
+  canCreate: boolean
+  canEdit: boolean
+  canToggle: boolean
+  canBatch: boolean
+  canAdjust: boolean
+  canViewTrace: boolean
+  canRecalc: boolean
+}
+
+export interface WeightsConfig {
+  contentQualityWeight: number
+  userActivityWeight: number
+  interactionWeight: number
+  complianceWeight: number
+}
+
+export interface WeightRuleValidationResult {
+  valid: boolean
+  errors: string[]
+  warnings: string[]
+  weights?: WeightsConfig
+  sum: number
+  fairnessScore: number
+  blockReason?: string
+  blockDetail?: string
+}
+
+export interface TrafficWeightRule {
+  id: number
+  ruleName: string
+  ruleCode: string
+  sceneType: string
+  contentQualityWeight: number
+  userActivityWeight: number
+  interactionWeight: number
+  complianceWeight: number
+  qualitySubRules?: string
+  activitySubRules?: string
+  interactionSubRules?: string
+  complianceSubRules?: string
+  applicablePoolLevel?: string
+  status: number
+  priority: number
+  effectiveTime?: string
+  expireTime?: string
+  affectedContentCount: number
+  avgWeightScore?: number
+  lastRecalcTime?: string
+  description?: string
+  operatorId?: number
+  operatorName?: string
+  createTime: string
+  updateTime: string
+}
+
+export interface TrafficWeightRuleLog {
+  id: number
+  ruleId: number
+  ruleName: string
+  logType: string
+  operatorId?: number
+  operatorName: string
+  operatorRole: string
+  oldWeights?: string
+  newWeights?: string
+  oldStatus?: number
+  newStatus?: number
+  oldScene?: string
+  newScene?: string
+  changedFields?: string
+  reason?: string
+  status: number
+  blockReason?: string
+  blockDetail?: string
+  fairnessScore?: number
+  validationResult?: string
+  affectedContentCount: number
+  estimatedImpact?: string
+  queueRefreshCost?: number
+  ip?: string
+  userAgent?: string
+  createTime: string
+}
+
+export interface WeightRuleStats {
+  total: number
+  enabled: number
+  disabled: number
+  daily: number
+  activity: number
+  blockedToday: number
+  recentLogs: TrafficWeightRuleLog[]
+}
+
+export interface WeightRuleBatchResult {
+  total: number
+  successCount: number
+  blockedCount: number
+  failedCount: number
+  results: Array<{
+    ruleId: number
+    ruleName: string
+    success: boolean
+    errors?: string[]
+    blockReason?: string
+    blockDetail?: string
+  }>
+}
+
+export interface WeightRuleImpactAnalysis {
+  rule: TrafficWeightRule
+  totalLogs: number
+  successCount: number
+  blockedCount: number
+  blockReasons: Record<string, number>
+  recentLogs: TrafficWeightRuleLog[]
+}
+
+export interface TrafficAnomalyPermission {
+  canView: boolean
+  canHandle: boolean
+  canBatch: boolean
+  canRelease: boolean
+  canBan: boolean
+  canViewTrace: boolean
+  canExportReport: boolean
+}
+
+export interface AnomalyDetectionResult {
+  type: string
+  riskLevel: number
+  confidence: number
+  details: Record<string, unknown>
+  warnings: string[]
+  shouldIntercept: boolean
+  blockReason?: string
+}
+
+export interface AnomalyValidationResult {
+  isValid: boolean
+  authenticityScore: number
+  complianceScore: number
+  errors: string[]
+  warnings: string[]
+  blockReason?: string
+  blockDetail?: Record<string, unknown>
+}
+
+export interface TrafficAnomalyRecord {
+  id: number
+  contentId?: number
+  contentTitle?: string
+  userId: number
+  userName: string
+  anomalyType: string
+  riskLevel: number
+  status: number
+  source: string
+  exposureCount?: number
+  exposureFrequency?: number
+  uniqueUserCount?: number
+  uniqueIpCount?: number
+  uniqueDeviceCount?: number
+  ipAddress?: string
+  ipLocation?: string
+  deviceInfo?: string
+  userSource?: string
+  frequencyData?: string
+  behaviorDetail?: string
+  traceData?: string
+  confidence?: number
+  affectedContentCount?: number
+  affectedUserCount?: number
+  estimatedLoss?: number
+  autoHandled?: number
+  handleResult?: string
+  handledAt?: string
+  operatorId?: number
+  operatorName?: string
+  detectTime: string
+  createTime?: string
+  updateTime?: string
+}
+
+export interface TrafficAnomalyHandleLog {
+  id: number
+  anomalyId: number
+  handleType: string
+  handleStatus: number
+  oldStatus?: number
+  newStatus?: number
+  handleReason?: string
+  handleDetail?: string
+  blockReason?: string
+  blockDetail?: string
+  affectedContentIds?: string
+  affectedUserIds?: string
+  cleanedExposureCount?: number
+  authenticityScore?: number
+  complianceScore?: number
+  handleCost?: number
+  handleResult?: string
+  operatorId?: number
+  operatorName?: string
+  operatorIp?: string
+  userAgent?: string
+  createTime?: string
+  anomaly?: TrafficAnomalyRecord
+}
+
+export interface TrafficAnomalyStats {
+  total: number
+  pending: number
+  intercepted: number
+  flowLimited: number
+  accountDowngraded: number
+  permanentBanned: number
+  released: number
+  todayDetected: number
+  todayHandled: number
+  highRisk: number
+  autoHandled: number
+  typeStats: Array<{ anomalyType: string; count: number }>
+  permission: TrafficAnomalyPermission
+}
+
+export interface TrafficAnomalyBatchResult {
+  success: number
+  failed: number
+  total: number
+  results: Array<{ id: number; success: boolean; error?: string }>
+}
+
+export interface TrafficAnomalyImpactAnalysis {
+  anomaly: TrafficAnomalyRecord
+  validation: AnomalyValidationResult
+  handleLogs: TrafficAnomalyHandleLog[]
+  blockReasonStats: Array<{ blockReason: string; count: number }>
+  recentLogs: TrafficAnomalyHandleLog[]
+  traceData: Record<string, unknown> | null
+  frequencyData: Record<string, number> | null
+  behaviorDetail: Record<string, unknown> | null
+  deviceInfo: Record<string, unknown> | null
+  permission: TrafficAnomalyPermission
+}
+

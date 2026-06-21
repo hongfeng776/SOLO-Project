@@ -1405,3 +1405,331 @@ export const PUSH_TRACE_ANOMALY_TYPE_NAMES: Record<string, string> = {
   timeout_delivery: '投放超时',
   data_mismatch: '数据不匹配'
 }
+
+export enum WeightRuleStatusCode {
+  DISABLED = 0,
+  ENABLED = 1
+}
+
+export enum WeightRuleSceneCode {
+  DAILY = 'daily',
+  ACTIVITY = 'activity'
+}
+
+export enum WeightDimensionCode {
+  CONTENT_QUALITY = 'content_quality',
+  USER_ACTIVITY = 'user_activity',
+  INTERACTION = 'interaction',
+  COMPLIANCE = 'compliance'
+}
+
+export enum WeightRuleLogTypeCode {
+  CREATE = 'create',
+  UPDATE = 'update',
+  WEIGHT_CHANGE = 'weight_change',
+  STATUS_CHANGE = 'status_change',
+  SCENE_CHANGE = 'scene_change',
+  BATCH_OPERATION = 'batch_operation',
+  RECALC_TRIGGER = 'recalc_trigger',
+  SYSTEM_ADJUST = 'system_adjust'
+}
+
+export enum WeightRuleLogStatusCode {
+  PENDING = 0,
+  SUCCESS = 1,
+  BLOCKED = 2,
+  FAILED = 3
+}
+
+export enum WeightRuleBlockReasonCode {
+  SUM_NOT_100 = 'sum_not_100',
+  FIELD_MISSING = 'field_missing',
+  DIMENSION_IMBALANCE = 'dimension_imbalance',
+  OVERSIZED_WEIGHT = 'oversized_weight',
+  UNDERWEIGHT = 'underweight',
+  UNFAIR_TILT = 'unfair_tilt',
+  MALICIOUS_MODIFICATION = 'malicious_modification',
+  SCENE_CONFLICT = 'scene_conflict'
+}
+
+export const WEIGHT_RULE_STATUS_NAMES: Record<number, string> = {
+  [WeightRuleStatusCode.DISABLED]: '已停用',
+  [WeightRuleStatusCode.ENABLED]: '已启用'
+}
+
+export const WEIGHT_RULE_STATUS_COLORS: Record<number, string> = {
+  [WeightRuleStatusCode.DISABLED]: '#909399',
+  [WeightRuleStatusCode.ENABLED]: '#67c23a'
+}
+
+export const WEIGHT_RULE_STATUS_TAG_TYPES: Record<number, 'info' | 'success'> = {
+  [WeightRuleStatusCode.DISABLED]: 'info',
+  [WeightRuleStatusCode.ENABLED]: 'success'
+}
+
+export const WEIGHT_RULE_SCENE_NAMES: Record<string, string> = {
+  [WeightRuleSceneCode.DAILY]: '日常时段',
+  [WeightRuleSceneCode.ACTIVITY]: '活动时段'
+}
+
+export const WEIGHT_RULE_SCENE_COLORS: Record<string, string> = {
+  [WeightRuleSceneCode.DAILY]: '#409eff',
+  [WeightRuleSceneCode.ACTIVITY]: '#e6a23c'
+}
+
+export const WEIGHT_DIMENSION_NAMES: Record<string, string> = {
+  [WeightDimensionCode.CONTENT_QUALITY]: '内容质量',
+  [WeightDimensionCode.USER_ACTIVITY]: '用户活跃度',
+  [WeightDimensionCode.INTERACTION]: '互动数据',
+  [WeightDimensionCode.COMPLIANCE]: '合规记录'
+}
+
+export const WEIGHT_DIMENSION_COLORS: Record<string, string> = {
+  [WeightDimensionCode.CONTENT_QUALITY]: '#409eff',
+  [WeightDimensionCode.USER_ACTIVITY]: '#67c23a',
+  [WeightDimensionCode.INTERACTION]: '#e6a23c',
+  [WeightDimensionCode.COMPLIANCE]: '#909399'
+}
+
+export const WEIGHT_DIMENSION_DEFAULT: Record<string, number> = {
+  [WeightDimensionCode.CONTENT_QUALITY]: 35,
+  [WeightDimensionCode.USER_ACTIVITY]: 25,
+  [WeightDimensionCode.INTERACTION]: 30,
+  [WeightDimensionCode.COMPLIANCE]: 10
+}
+
+export const WEIGHT_RULE_LOG_TYPE_NAMES: Record<string, string> = {
+  [WeightRuleLogTypeCode.CREATE]: '创建规则',
+  [WeightRuleLogTypeCode.UPDATE]: '更新规则',
+  [WeightRuleLogTypeCode.WEIGHT_CHANGE]: '权重变更',
+  [WeightRuleLogTypeCode.STATUS_CHANGE]: '状态变更',
+  [WeightRuleLogTypeCode.SCENE_CHANGE]: '场景变更',
+  [WeightRuleLogTypeCode.BATCH_OPERATION]: '批量操作',
+  [WeightRuleLogTypeCode.RECALC_TRIGGER]: '触发重算',
+  [WeightRuleLogTypeCode.SYSTEM_ADJUST]: '系统调整'
+}
+
+export const WEIGHT_RULE_LOG_STATUS_NAMES: Record<number, string> = {
+  [WeightRuleLogStatusCode.PENDING]: '待处理',
+  [WeightRuleLogStatusCode.SUCCESS]: '成功',
+  [WeightRuleLogStatusCode.BLOCKED]: '已拦截',
+  [WeightRuleLogStatusCode.FAILED]: '失败'
+}
+
+export const WEIGHT_RULE_LOG_STATUS_COLORS: Record<number, string> = {
+  [WeightRuleLogStatusCode.PENDING]: '#909399',
+  [WeightRuleLogStatusCode.SUCCESS]: '#67c23a',
+  [WeightRuleLogStatusCode.BLOCKED]: '#f56c6c',
+  [WeightRuleLogStatusCode.FAILED]: '#e6a23c'
+}
+
+export const WEIGHT_RULE_LOG_STATUS_TAG_TYPES: Record<number, 'info' | 'success' | 'danger' | 'warning'> = {
+  [WeightRuleLogStatusCode.PENDING]: 'info',
+  [WeightRuleLogStatusCode.SUCCESS]: 'success',
+  [WeightRuleLogStatusCode.BLOCKED]: 'danger',
+  [WeightRuleLogStatusCode.FAILED]: 'warning'
+}
+
+export const WEIGHT_RULE_BLOCK_REASON_NAMES: Record<string, string> = {
+  [WeightRuleBlockReasonCode.SUM_NOT_100]: '权重配比总和不为100%',
+  [WeightRuleBlockReasonCode.FIELD_MISSING]: '必填字段缺失',
+  [WeightRuleBlockReasonCode.DIMENSION_IMBALANCE]: '维度配比失衡',
+  [WeightRuleBlockReasonCode.OVERSIZED_WEIGHT]: '单维度权重超上限',
+  [WeightRuleBlockReasonCode.UNDERWEIGHT]: '单维度权重低于下限',
+  [WeightRuleBlockReasonCode.UNFAIR_TILT]: '权重倾斜不公平',
+  [WeightRuleBlockReasonCode.MALICIOUS_MODIFICATION]: '恶意规则修改',
+  [WeightRuleBlockReasonCode.SCENE_CONFLICT]: '生效场景冲突'
+}
+
+export const TOTAL_WEIGHT_SUM = 100
+export const WEIGHT_MIN_RATIO = 5
+export const WEIGHT_MAX_RATIO = 60
+
+export enum TrafficAnomalyTypeCode {
+  MACHINE_EXPOSURE = 'machine_exposure',
+  BATCH_DRAINAGE = 'batch_drainage',
+  ABNORMAL_POUR = 'abnormal_pour',
+  IP_CLUSTER = 'ip_cluster',
+  DEVICE_ABNORMAL = 'device_abnormal',
+  TRAFFIC_HIJACK = 'traffic_hijack',
+  FAKE_RETENTION = 'fake_retention'
+}
+
+export const TRAFFIC_ANOMALY_TYPE_NAMES: Record<string, string> = {
+  [TrafficAnomalyTypeCode.MACHINE_EXPOSURE]: '机器刷曝光',
+  [TrafficAnomalyTypeCode.BATCH_DRAINAGE]: '批量引流',
+  [TrafficAnomalyTypeCode.ABNORMAL_POUR]: '异常流量灌入',
+  [TrafficAnomalyTypeCode.IP_CLUSTER]: 'IP聚集',
+  [TrafficAnomalyTypeCode.DEVICE_ABNORMAL]: '设备异常',
+  [TrafficAnomalyTypeCode.TRAFFIC_HIJACK]: '流量劫持',
+  [TrafficAnomalyTypeCode.FAKE_RETENTION]: '虚假流量留存'
+}
+
+export const TRAFFIC_ANOMALY_TYPE_COLORS: Record<string, string> = {
+  [TrafficAnomalyTypeCode.MACHINE_EXPOSURE]: '#f56c6c',
+  [TrafficAnomalyTypeCode.BATCH_DRAINAGE]: '#e6a23c',
+  [TrafficAnomalyTypeCode.ABNORMAL_POUR]: '#c45656',
+  [TrafficAnomalyTypeCode.IP_CLUSTER]: '#f56c6c',
+  [TrafficAnomalyTypeCode.DEVICE_ABNORMAL]: '#e6a23c',
+  [TrafficAnomalyTypeCode.TRAFFIC_HIJACK]: '#c45656',
+  [TrafficAnomalyTypeCode.FAKE_RETENTION]: '#f56c6c'
+}
+
+export enum TrafficAnomalyRiskLevelCode {
+  NORMAL = 0,
+  LOW = 1,
+  MEDIUM = 2,
+  HIGH = 3
+}
+
+export const TRAFFIC_ANOMALY_RISK_LEVEL_NAMES: Record<number, string> = {
+  [TrafficAnomalyRiskLevelCode.NORMAL]: '正常',
+  [TrafficAnomalyRiskLevelCode.LOW]: '轻微异常',
+  [TrafficAnomalyRiskLevelCode.MEDIUM]: '中度异常',
+  [TrafficAnomalyRiskLevelCode.HIGH]: '重度异常'
+}
+
+export const TRAFFIC_ANOMALY_RISK_LEVEL_COLORS: Record<number, string> = {
+  [TrafficAnomalyRiskLevelCode.NORMAL]: '#67c23a',
+  [TrafficAnomalyRiskLevelCode.LOW]: '#e6a23c',
+  [TrafficAnomalyRiskLevelCode.MEDIUM]: '#f56c6c',
+  [TrafficAnomalyRiskLevelCode.HIGH]: '#c45656'
+}
+
+export const TRAFFIC_ANOMALY_RISK_LEVEL_TAG_TYPES: Record<number, 'success' | 'warning' | 'danger' | 'danger'> = {
+  [TrafficAnomalyRiskLevelCode.NORMAL]: 'success',
+  [TrafficAnomalyRiskLevelCode.LOW]: 'warning',
+  [TrafficAnomalyRiskLevelCode.MEDIUM]: 'danger',
+  [TrafficAnomalyRiskLevelCode.HIGH]: 'danger'
+}
+
+export enum TrafficAnomalyStatusCode {
+  PENDING = 0,
+  INTERCEPTED = 1,
+  FLOW_LIMITED = 2,
+  ACCOUNT_DOWNGRADED = 3,
+  RELEASED = 4,
+  PERMANENT_BANNED = 5
+}
+
+export const TRAFFIC_ANOMALY_STATUS_NAMES: Record<number, string> = {
+  [TrafficAnomalyStatusCode.PENDING]: '待处置',
+  [TrafficAnomalyStatusCode.INTERCEPTED]: '已拦截',
+  [TrafficAnomalyStatusCode.FLOW_LIMITED]: '已限流',
+  [TrafficAnomalyStatusCode.ACCOUNT_DOWNGRADED]: '账号降权',
+  [TrafficAnomalyStatusCode.RELEASED]: '已解封',
+  [TrafficAnomalyStatusCode.PERMANENT_BANNED]: '永久封禁'
+}
+
+export const TRAFFIC_ANOMALY_STATUS_COLORS: Record<number, string> = {
+  [TrafficAnomalyStatusCode.PENDING]: '#e6a23c',
+  [TrafficAnomalyStatusCode.INTERCEPTED]: '#f56c6c',
+  [TrafficAnomalyStatusCode.FLOW_LIMITED]: '#e6a23c',
+  [TrafficAnomalyStatusCode.ACCOUNT_DOWNGRADED]: '#f56c6c',
+  [TrafficAnomalyStatusCode.RELEASED]: '#67c23a',
+  [TrafficAnomalyStatusCode.PERMANENT_BANNED]: '#c45656'
+}
+
+export const TRAFFIC_ANOMALY_STATUS_TAG_TYPES: Record<number, 'warning' | 'danger' | 'warning' | 'danger' | 'success' | 'danger'> = {
+  [TrafficAnomalyStatusCode.PENDING]: 'warning',
+  [TrafficAnomalyStatusCode.INTERCEPTED]: 'danger',
+  [TrafficAnomalyStatusCode.FLOW_LIMITED]: 'warning',
+  [TrafficAnomalyStatusCode.ACCOUNT_DOWNGRADED]: 'danger',
+  [TrafficAnomalyStatusCode.RELEASED]: 'success',
+  [TrafficAnomalyStatusCode.PERMANENT_BANNED]: 'danger'
+}
+
+export enum TrafficAnomalySourceCode {
+  SYSTEM_DETECT = 'system_detect',
+  MANUAL_REPORT = 'manual_report',
+  EXTERNAL_FEEDBACK = 'external_feedback'
+}
+
+export const TRAFFIC_ANOMALY_SOURCE_NAMES: Record<string, string> = {
+  [TrafficAnomalySourceCode.SYSTEM_DETECT]: '系统识别',
+  [TrafficAnomalySourceCode.MANUAL_REPORT]: '人工上报',
+  [TrafficAnomalySourceCode.EXTERNAL_FEEDBACK]: '外部反馈'
+}
+
+export enum TrafficAnomalyHandleTypeCode {
+  INTERCEPT_FLOW = 'intercept_flow',
+  CONTENT_FLOW_LIMIT = 'content_flow_limit',
+  ACCOUNT_DOWNGRADE = 'account_downgrade',
+  PERMANENT_BAN = 'permanent_ban',
+  CLEAN_DATA = 'clean_data',
+  RELEASE_CONTROL = 'release_control',
+  BATCH_CLEAN = 'batch_clean',
+  BATCH_RELEASE = 'batch_release',
+  BATCH_BAN = 'batch_ban'
+}
+
+export const TRAFFIC_ANOMALY_HANDLE_TYPE_NAMES: Record<string, string> = {
+  [TrafficAnomalyHandleTypeCode.INTERCEPT_FLOW]: '拦截流量',
+  [TrafficAnomalyHandleTypeCode.CONTENT_FLOW_LIMIT]: '内容限流',
+  [TrafficAnomalyHandleTypeCode.ACCOUNT_DOWNGRADE]: '账号降权',
+  [TrafficAnomalyHandleTypeCode.PERMANENT_BAN]: '永久封禁',
+  [TrafficAnomalyHandleTypeCode.CLEAN_DATA]: '清理异常数据',
+  [TrafficAnomalyHandleTypeCode.RELEASE_CONTROL]: '解除风控',
+  [TrafficAnomalyHandleTypeCode.BATCH_CLEAN]: '批量清理',
+  [TrafficAnomalyHandleTypeCode.BATCH_RELEASE]: '批量解除',
+  [TrafficAnomalyHandleTypeCode.BATCH_BAN]: '批量封禁'
+}
+
+export const TRAFFIC_ANOMALY_HANDLE_TYPE_COLORS: Record<string, string> = {
+  [TrafficAnomalyHandleTypeCode.INTERCEPT_FLOW]: '#f56c6c',
+  [TrafficAnomalyHandleTypeCode.CONTENT_FLOW_LIMIT]: '#e6a23c',
+  [TrafficAnomalyHandleTypeCode.ACCOUNT_DOWNGRADE]: '#f56c6c',
+  [TrafficAnomalyHandleTypeCode.PERMANENT_BAN]: '#c45656',
+  [TrafficAnomalyHandleTypeCode.CLEAN_DATA]: '#67c23a',
+  [TrafficAnomalyHandleTypeCode.RELEASE_CONTROL]: '#67c23a',
+  [TrafficAnomalyHandleTypeCode.BATCH_CLEAN]: '#67c23a',
+  [TrafficAnomalyHandleTypeCode.BATCH_RELEASE]: '#67c23a',
+  [TrafficAnomalyHandleTypeCode.BATCH_BAN]: '#c45656'
+}
+
+export enum TrafficAnomalyHandleStatusCode {
+  PENDING = 0,
+  SUCCESS = 1,
+  FAILED = 2,
+  PARTIAL = 3
+}
+
+export const TRAFFIC_ANOMALY_HANDLE_STATUS_NAMES: Record<number, string> = {
+  [TrafficAnomalyHandleStatusCode.PENDING]: '待处理',
+  [TrafficAnomalyHandleStatusCode.SUCCESS]: '处理成功',
+  [TrafficAnomalyHandleStatusCode.FAILED]: '处理失败',
+  [TrafficAnomalyHandleStatusCode.PARTIAL]: '部分成功'
+}
+
+export const TRAFFIC_ANOMALY_HANDLE_STATUS_COLORS: Record<number, string> = {
+  [TrafficAnomalyHandleStatusCode.PENDING]: '#e6a23c',
+  [TrafficAnomalyHandleStatusCode.SUCCESS]: '#67c23a',
+  [TrafficAnomalyHandleStatusCode.FAILED]: '#f56c6c',
+  [TrafficAnomalyHandleStatusCode.PARTIAL]: '#e6a23c'
+}
+
+export enum TrafficAnomalyBlockReasonCode {
+  AUTO_INTERCEPT = 'auto_intercept',
+  HIGH_RISK = 'high_risk',
+  SUSPICIOUS_PATTERN = 'suspicious_pattern',
+  DUPLICATE_ANOMALY = 'duplicate_anomaly',
+  FAKE_DATA = 'fake_data',
+  MALICIOUS_OPERATION = 'malicious_operation',
+  DATA_INCONSISTENCY = 'data_inconsistency',
+  COMPLIANCE_VIOLATION = 'compliance_violation'
+}
+
+export const TRAFFIC_ANOMALY_BLOCK_REASON_NAMES: Record<string, string> = {
+  [TrafficAnomalyBlockReasonCode.AUTO_INTERCEPT]: '系统自动拦截',
+  [TrafficAnomalyBlockReasonCode.HIGH_RISK]: '高风险异常',
+  [TrafficAnomalyBlockReasonCode.SUSPICIOUS_PATTERN]: '可疑行为模式',
+  [TrafficAnomalyBlockReasonCode.DUPLICATE_ANOMALY]: '重复异常流量',
+  [TrafficAnomalyBlockReasonCode.FAKE_DATA]: '虚假流量数据',
+  [TrafficAnomalyBlockReasonCode.MALICIOUS_OPERATION]: '恶意操作',
+  [TrafficAnomalyBlockReasonCode.DATA_INCONSISTENCY]: '数据不一致',
+  [TrafficAnomalyBlockReasonCode.COMPLIANCE_VIOLATION]: '合规性违规'
+}
+
+export const ANOMALY_EXPOSURE_FREQUENCY_THRESHOLD = 1000
+export const ANOMALY_SAME_IP_THRESHOLD = 50
+export const ANOMALY_SAME_DEVICE_THRESHOLD = 20

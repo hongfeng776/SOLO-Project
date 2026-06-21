@@ -387,6 +387,50 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: 'TrafficPoolTrace',
         component: () => import(/* webpackChunkName: "traffic-pool" */ '@views/traffic-pool/trace/index.vue'),
         meta: { title: '溯源复盘', icon: 'View', roles: ['admin', 'operation_admin', 'senior_operator', 'operator'] }
+      },
+      {
+        path: 'weight-rules',
+        name: 'TrafficWeightRuleList',
+        component: () => import(/* webpackChunkName: "traffic-pool" */ '@views/traffic-pool/rules/index.vue'),
+        meta: { title: '权重规则配置', icon: 'Operation', roles: ['admin', 'operation_admin', 'senior_operator', 'operator', 'auditor'] }
+      },
+      {
+        path: 'weight-rules-trace',
+        name: 'TrafficWeightRuleTrace',
+        component: () => import(/* webpackChunkName: "traffic-pool" */ '@views/traffic-pool/rules-trace/index.vue'),
+        meta: { title: '规则溯源复盘', icon: 'DataLine', roles: ['admin', 'operation_admin', 'senior_operator', 'auditor'] }
+      }
+    ]
+  },
+  {
+    path: '/traffic-anomaly-control',
+    component: Layout,
+    redirect: '/traffic-anomaly-control/monitor',
+    meta: { title: '异常流量风控', icon: 'Warning', roles: ['admin', 'risk_admin', 'senior_operator', 'operator'] },
+    children: [
+      {
+        path: 'monitor',
+        name: 'TrafficAnomalyMonitor',
+        component: () => import(/* webpackChunkName: "traffic-anomaly" */ '@views/traffic-anomaly/monitor/index.vue'),
+        meta: { title: '异常监控', icon: 'Monitor', roles: ['admin', 'risk_admin', 'senior_operator', 'operator'] }
+      },
+      {
+        path: 'punishment',
+        name: 'TrafficAnomalyPunishment',
+        component: () => import(/* webpackChunkName: "traffic-anomaly" */ '@views/traffic-anomaly/punishment/index.vue'),
+        meta: { title: '处置管理', icon: 'CircleClose', roles: ['admin', 'risk_admin', 'senior_operator'] }
+      },
+      {
+        path: 'batch',
+        name: 'TrafficAnomalyBatch',
+        component: () => import(/* webpackChunkName: "traffic-anomaly" */ '@views/traffic-anomaly/batch/index.vue'),
+        meta: { title: '批量处置', icon: 'Operation', roles: ['admin', 'risk_admin'] }
+      },
+      {
+        path: 'trace',
+        name: 'TrafficAnomalyTrace',
+        component: () => import(/* webpackChunkName: "traffic-anomaly" */ '@views/traffic-anomaly/trace/index.vue'),
+        meta: { title: '溯源复盘', icon: 'View', roles: ['admin', 'risk_admin', 'senior_operator', 'operator'] }
       }
     ]
   },

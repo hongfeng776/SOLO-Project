@@ -49,6 +49,18 @@ import TrafficPool from './traffic-pool'
 import TrafficPoolLog from './traffic-pool-log'
 import ContentPushTask from './content-push-task'
 import ContentPushTrace from './content-push-trace'
+import TrafficWeightRule from './traffic-weight-rule'
+import TrafficWeightRuleLog from './traffic-weight-rule-log'
+import TrafficAnomalyRecord from './traffic-anomaly-record'
+import TrafficAnomalyHandleLog from './traffic-anomaly-handle-log'
+import ActivityAuditLog from './activity-audit-log'
+import ActivityTemplate from './activity-template'
+
+ActivityTemplate.hasMany(Activity, { as: 'activities', foreignKey: 'templateId' })
+Activity.belongsTo(ActivityTemplate, { as: 'template', foreignKey: 'templateId' })
+
+Activity.hasMany(ActivityAuditLog, { as: 'auditLogs', foreignKey: 'activityId' })
+ActivityAuditLog.belongsTo(Activity, { as: 'activity', foreignKey: 'activityId' })
 
 TrafficPool.hasMany(TrafficPoolLog, { as: 'logs', foreignKey: 'poolId' })
 TrafficPoolLog.belongsTo(TrafficPool, { as: 'pool', foreignKey: 'poolId' })
@@ -59,6 +71,12 @@ Note.hasMany(ContentPushTask, { as: 'pushTasks', foreignKey: 'noteId' })
 ContentPushTask.belongsTo(Note, { as: 'note', foreignKey: 'noteId' })
 ContentPushTask.hasMany(ContentPushTrace, { as: 'traces', foreignKey: 'taskId' })
 ContentPushTrace.belongsTo(ContentPushTask, { as: 'task', foreignKey: 'taskId' })
+
+TrafficWeightRule.hasMany(TrafficWeightRuleLog, { as: 'logs', foreignKey: 'ruleId' })
+TrafficWeightRuleLog.belongsTo(TrafficWeightRule, { as: 'rule', foreignKey: 'ruleId' })
+
+TrafficAnomalyRecord.hasMany(TrafficAnomalyHandleLog, { as: 'handleLogs', foreignKey: 'anomalyId' })
+TrafficAnomalyHandleLog.belongsTo(TrafficAnomalyRecord, { as: 'anomaly', foreignKey: 'anomalyId' })
 
 const UserRole = User.sequelize!.define('sys_user_role', {}, { tableName: 'sys_user_role', timestamps: false })
 const NoteTag = Note.sequelize!.define('biz_note_tag', {}, { tableName: 'biz_note_tag', timestamps: false })
@@ -147,4 +165,4 @@ HotCommentLog.belongsTo(HotComment, { as: 'hotComment', foreignKey: 'hotCommentI
 Comment.hasMany(HotCommentLog, { as: 'hotLogs', foreignKey: 'commentId' })
 HotCommentLog.belongsTo(Comment, { as: 'comment', foreignKey: 'commentId' })
 
-export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, CommentAuditLog, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, MerchantOnboardingApply, MerchantOnboardingLog, MerchantCreditArchive, DirectMessage, DmConversation, DmAuditLog, InteractionData, InteractionAnomalyLog, HotComment, HotCommentLog, TrafficPool, TrafficPoolLog, ContentPushTask, ContentPushTrace, UserRole, NoteTag }
+export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, CommentAuditLog, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, MerchantOnboardingApply, MerchantOnboardingLog, MerchantCreditArchive, DirectMessage, DmConversation, DmAuditLog, InteractionData, InteractionAnomalyLog, HotComment, HotCommentLog, TrafficPool, TrafficPoolLog, ContentPushTask, ContentPushTrace, TrafficWeightRule, TrafficWeightRuleLog, TrafficAnomalyRecord, TrafficAnomalyHandleLog, ActivityAuditLog, ActivityTemplate, UserRole, NoteTag }
