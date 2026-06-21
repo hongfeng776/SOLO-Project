@@ -127,6 +127,105 @@ export interface IStockHistory {
   }
 }
 
+export interface IStockProduct {
+  id: number
+  productCode: string
+  stockCode: string
+  stockName: string
+  productType: string
+  market: string
+  sector: string
+  board: string
+  productStatus: string
+  archiveStatus: string
+  filingStatus: string
+  exchangeCode: string
+  listingDate: string
+  delistingDate?: string
+  suspendDate?: string
+  resumeDate?: string
+  faceValue: number
+  totalShares: number
+  circulatingShares: number
+  tradingRule: string
+  feeStandard: string
+  settlementRule: string
+  minTradeUnit: number
+  priceLimit: number
+  tickSize: number
+  filingNo: string
+  filingDate?: string
+  filingInstitution: string
+  remark?: string
+  createdBy?: number
+  createdByName?: string
+  createdAt: string
+  updatedBy?: number
+  updatedByName?: string
+  updatedAt?: string
+}
+
+export interface IStockProductValidation {
+  valid: boolean
+  codeValid: boolean
+  codeMessage: string
+  filingValid: boolean
+  filingMessage: string
+  infoComplete: boolean
+  missingFields: string[]
+  duplicateCode: boolean
+}
+
+export interface IStockProductArchiveResult {
+  productCode: string
+  success: boolean
+  message: string
+}
+
+export interface IStockProductBatchImportResult {
+  total: number
+  success: number
+  failed: number
+  duplicate: number
+  successList: IStockProduct[]
+  errorList: Array<{ row: number; data: any; errors: IValidationError[]; type: string }>
+  duplicateList: any[]
+}
+
+export interface IStockProductAuditTrailData {
+  sourceInfo: {
+    createdBy: string
+    createdAt: string
+    updatedBy: string
+    updatedAt: string
+    filingNo: string
+    filingDate: string
+    filingInstitution: string
+    filingCredential?: string
+    originalData?: Partial<IStockProduct>
+  }
+  operationLogs: Array<{
+    id: number
+    operation: string
+    operationType: string
+    username: string
+    remark: string
+    ipAddress: string
+    createdAt: string
+  }>
+  consistencyCheck: {
+    passed: boolean
+    issues: Array<{ type: string; severity: string; message: string }>
+  }
+  filingVerification: {
+    codeMatch: boolean
+    nameMatch: boolean
+    statusMatch: boolean
+    paramsValid: boolean
+    details: Array<{ field: string; expected: string; actual: string; passed: boolean }>
+  }
+}
+
 export interface IAssetProduct {
   id: number
   productCode: string

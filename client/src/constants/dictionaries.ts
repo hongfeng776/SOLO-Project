@@ -1,4 +1,4 @@
-import { MarketType, RiskLevel, ProductType, ProductStatus, CustomerType, CustomerStatus, FlowType, FlowStatus, FlowChannel, AuditType, AuditStatus, TargetType, PermType, UserStatus, RoleStatus, PermissionStatus, TradeType, TradeStatus, AlertType, AlertLevel, AlertStatus, LogStatus, LogModule, LogAction, StockStatus, ArchiveStatus, FilingStatus, AccountStatus, Gender, Education, MaritalStatus, HoldingLockStatus } from '@/enums'
+import { MarketType, RiskLevel, ProductType, ProductStatus, CustomerType, CustomerStatus, FlowType, FlowStatus, FlowChannel, AuditType, AuditStatus, TargetType, PermType, UserStatus, RoleStatus, PermissionStatus, TradeType, TradeStatus, AlertType, AlertLevel, AlertStatus, LogStatus, LogModule, LogAction, StockStatus, ArchiveStatus, FilingStatus, AccountStatus, Gender, Education, MaritalStatus, HoldingLockStatus, StockProductType, StockProductStatus, StockProductArchiveStatus, StockProductFilingStatus } from '@/enums'
 import { BoardType, TradeStatus as QuoteTradeStatus } from '@/types/api'
 
 export const MARKET_LABELS: Record<MarketType, string> = {
@@ -444,4 +444,108 @@ export const TRADING_PERIOD_LABELS: Record<string, { label: string; class: strin
   '15:00': { label: '午盘', class: 'midday' },
   '15:01': { label: '盘后', class: 'after-close' },
   '23:59': { label: '盘后', class: 'after-close' },
+}
+
+export const STOCK_PRODUCT_TYPE_LABELS: Record<StockProductType, string> = {
+  [StockProductType.A_SHARE]: 'A股',
+  [StockProductType.B_SHARE]: 'B股',
+  [StockProductType.FUND]: '基金',
+  [StockProductType.ETF]: 'ETF',
+  [StockProductType.BOND]: '债券',
+  [StockProductType.INDEX]: '指数',
+  [StockProductType.WARRANT]: '权证',
+  [StockProductType.REPO]: '回购',
+}
+
+export const STOCK_PRODUCT_TYPE_COLORS: Record<StockProductType, string> = {
+  [StockProductType.A_SHARE]: '#409EFF',
+  [StockProductType.B_SHARE]: '#E6A23C',
+  [StockProductType.FUND]: '#67C23A',
+  [StockProductType.ETF]: '#F56C6C',
+  [StockProductType.BOND]: '#909399',
+  [StockProductType.INDEX]: '#8E44AD',
+  [StockProductType.WARRANT]: '#F39C12',
+  [StockProductType.REPO]: '#34495E',
+}
+
+export const STOCK_PRODUCT_STATUS_LABELS: Record<StockProductStatus, string> = {
+  [StockProductStatus.NORMAL]: '正常',
+  [StockProductStatus.SUSPENDED]: '停牌',
+  [StockProductStatus.DELISTED]: '退市',
+  [StockProductStatus.PAUSED]: '暂停交易',
+}
+
+export const STOCK_PRODUCT_STATUS_COLORS: Record<StockProductStatus, string> = {
+  [StockProductStatus.NORMAL]: '#67C23A',
+  [StockProductStatus.SUSPENDED]: '#E6A23C',
+  [StockProductStatus.DELISTED]: '#F56C6C',
+  [StockProductStatus.PAUSED]: '#909399',
+}
+
+export const STOCK_PRODUCT_STATUS_TAG_TYPES: Record<StockProductStatus, 'success' | 'warning' | 'danger' | 'info'> = {
+  [StockProductStatus.NORMAL]: 'success',
+  [StockProductStatus.SUSPENDED]: 'warning',
+  [StockProductStatus.DELISTED]: 'danger',
+  [StockProductStatus.PAUSED]: 'info',
+}
+
+export const STOCK_PRODUCT_ARCHIVE_STATUS_LABELS: Record<StockProductArchiveStatus, string> = {
+  [StockProductArchiveStatus.DRAFT]: '草稿',
+  [StockProductArchiveStatus.ARCHIVED]: '已建档',
+  [StockProductArchiveStatus.INVALID]: '已失效',
+}
+
+export const STOCK_PRODUCT_ARCHIVE_STATUS_COLORS: Record<StockProductArchiveStatus, string> = {
+  [StockProductArchiveStatus.DRAFT]: 'info',
+  [StockProductArchiveStatus.ARCHIVED]: 'success',
+  [StockProductArchiveStatus.INVALID]: 'danger',
+}
+
+export const STOCK_PRODUCT_FILING_STATUS_LABELS: Record<StockProductFilingStatus, string> = {
+  [StockProductFilingStatus.NOT_FILED]: '未备案',
+  [StockProductFilingStatus.FILING]: '备案中',
+  [StockProductFilingStatus.FILED]: '已备案',
+  [StockProductFilingStatus.REJECTED]: '备案驳回',
+}
+
+export const STOCK_PRODUCT_FILING_STATUS_COLORS: Record<StockProductFilingStatus, string> = {
+  [StockProductFilingStatus.NOT_FILED]: 'info',
+  [StockProductFilingStatus.FILING]: 'warning',
+  [StockProductFilingStatus.FILED]: 'success',
+  [StockProductFilingStatus.REJECTED]: 'danger',
+}
+
+export const STOCK_PRODUCT_BOARD_LIST: string[] = ['主板', '中小板', '创业板', '科创板', '北交所']
+
+export const STOCK_PRODUCT_TRADING_RULE_LIST: string[] = ['T+1', 'T+0', 'T+2']
+
+export const STOCK_PRODUCT_FIELD_LABELS: Record<string, string> = {
+  stockCode: '股票代码',
+  stockName: '股票名称',
+  productType: '产品类型',
+  market: '市场',
+  sector: '板块',
+  board: '板块类型',
+  productStatus: '产品状态',
+  archiveStatus: '建档状态',
+  filingStatus: '备案状态',
+  exchangeCode: '交易所代码',
+  listingDate: '上市日期',
+  delistingDate: '退市日期',
+  suspendDate: '停牌日期',
+  resumeDate: '复牌日期',
+  faceValue: '面值',
+  totalShares: '总股本',
+  circulatingShares: '流通股本',
+  tradingRule: '交易规则',
+  feeStandard: '费率标准',
+  settlementRule: '结算规则',
+  minTradeUnit: '最小交易单位',
+  priceLimit: '涨跌停限制(%)',
+  tickSize: '最小价格变动',
+  filingNo: '备案编号',
+  filingDate: '备案日期',
+  filingInstitution: '备案机构',
+  remark: '备注',
+  productCode: '产品编码',
 }

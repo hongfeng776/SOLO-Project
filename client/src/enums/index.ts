@@ -62,6 +62,14 @@ export enum LogAction { LOGIN = 'login', LOGOUT = 'logout', CREATE = 'create', U
 
 export enum StockStatus { TRADING = 'trading', HOLIDAY = 'holiday', SUSPENDED = 'suspended', DELISTED = 'delisted' }
 
+export enum StockProductType { A_SHARE = 'a_share', B_SHARE = 'b_share', FUND = 'fund', ETF = 'etf', BOND = 'bond', INDEX = 'index', WARRANT = 'warrant', REPO = 'repo' }
+
+export enum StockProductStatus { NORMAL = 'normal', SUSPENDED = 'suspended', DELISTED = 'delisted', PAUSED = 'paused' }
+
+export enum StockProductArchiveStatus { DRAFT = 'draft', ARCHIVED = 'archived', INVALID = 'invalid' }
+
+export enum StockProductFilingStatus { NOT_FILED = 'not_filed', FILING = 'filing', FILED = 'filed', REJECTED = 'rejected' }
+
 export const HOT_RISE_THRESHOLD = 7
 
 export const RISK_FALL_THRESHOLD = -7
