@@ -34,6 +34,8 @@ import productRiskRecordDao from './ProductRiskRecord.dao';
 import distributionOrderDao from './DistributionOrder.dao';
 import distributionOrderQueryLogDao from './DistributionOrderQueryLog.dao';
 import orderStatusChangeLogDao from './OrderStatusChangeLog.dao';
+import orderAbnormalRecordDao from './OrderAbnormalRecord.dao';
+import orderAbnormalEvidenceDao from './OrderAbnormalEvidence.dao';
 
 export {
   userDao,
@@ -72,4 +74,6 @@ export {
   distributionOrderDao,
   distributionOrderQueryLogDao,
   orderStatusChangeLogDao,
+  orderAbnormalRecordDao,
+  orderAbnormalEvidenceDao,
 };

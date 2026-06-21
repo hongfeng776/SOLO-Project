@@ -257,3 +257,194 @@ export function validateChangeCompliance(params: {
 }): Promise<ComplianceValidationResult> {
   return post<ComplianceValidationResult>('/distribution-orders/validate-compliance', params)
 }
+
+export type OrderAbnormalType =
+  | 'fake_order'
+  | 'brush_order'
+  | 'timeout_unpaid'
+  | 'refund_abnormal'
+  | 'data_mismatch'
+  | 'abnormal_device'
+  | 'abnormal_ip'
+  | 'repeat_purchase'
+  | 'other'
+
+export type OrderAbnormalSeverity = 'low' | 'medium' | 'high' | 'critical'
+
+export type OrderAbnormalStatus = 0 | 1 | 2 | 3
+
+export type OrderAbnormalSource =
+  | 'system_auto'
+  | 'rule_engine'
+  | 'manual_mark'
+  | 'batch_import'
+  | 'third_party'
+
+export type OrderAbnormalReviewAction = 'release' | 'reject' | 'observe'
+
+export interface AbnormalEvidenceItem {
+  fileName: string
+  fileUrl: string
+  fileSize: number
+  fileType: string
+  uploadedAt: string
+}
+
+export interface AbnormalRootCauseItem {
+  category: 'promoter' | 'channel' | 'system' | 'user' | 'product' | 'other'
+  description: string
+  relatedIds?: string[]
+  confidence: number
+  evidence?: string
+}
+
+export interface AbnormalRecordItem {
+  id: string
+  orderId: string
+  orderNo: string
+  abnormalTypes: OrderAbnormalType[]
+  severity: OrderAbnormalSeverity
+  status: OrderAbnormalStatus
+  source: OrderAbnormalSource
+  title: string
+  description?: string
+  evidence?: any
+  isLocked: boolean
+  autoSettleBlocked: boolean
+  promoterId?: string
+  channelId?: string
+  commissionAmount?: number
+  commissionBlocked?: boolean
+  detectedAt: string
+  detectedBy?: string
+  rootCauses?: AbnormalRootCauseItem[]
+  reviewAction?: OrderAbnormalReviewAction
+  reviewConclusion?: string
+  reviewerId?: string
+  reviewerName?: string
+  reviewedAt?: string
+  relatedDataChanges?: any
+  remark?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AbnormalDetectionResult {
+  detected: boolean
+  types: OrderAbnormalType[]
+  severity: OrderAbnormalSeverity
+  evidence: any
+  rootCauses: AbnormalRootCauseItem[]
+  record?: AbnormalRecordItem
+}
+
+export interface AbnormalReviewResult {
+  success: boolean
+  orderId: string
+  abnormalRecordId: string
+  action: OrderAbnormalReviewAction
+  orderStatusUpdated: boolean
+  commissionStatus: number | null
+  commissionChangeAmount: number
+  promoterSynced: boolean
+  channelSynced: boolean
+  message: string
+}
+
+export interface BatchAbnormalProcessResult {
+  total: number
+  successCount: number
+  failCount: number
+  results: Array<{
+    abnormalRecordId: string
+    orderId: string
+    success: boolean
+    reason?: string
+  }>
+  reportUrl?: string
+  generatedAt: string
+}
+
+export interface AbnormalRootCauseAnalysis {
+  orderId: string
+  abnormalTypes: OrderAbnormalType[]
+  rootCauses: AbnormalRootCauseItem[]
+  promoterRelatedAbnormals: number
+  channelRelatedAbnormals: number
+  suggestions: string[]
+  riskOptimizations: string[]
+}
+
+export interface AbnormalStatistics {
+  total: number
+  pending: number
+  reviewing: number
+  resolved: number
+  rejected: number
+  locked: number
+  bySeverity: Record<string, number>
+  byType: Record<string, number>
+}
+
+export function detectOrderAbnormal(orderId: string): Promise<AbnormalDetectionResult> {
+  return post<AbnormalDetectionResult>('/distribution-orders/detect-abnormal', { orderId })
+}
+
+export function createManualAbnormal(params: {
+  orderId: string
+  abnormalTypes: OrderAbnormalType[]
+  severity?: OrderAbnormalSeverity
+  title: string
+  description?: string
+}): Promise<AbnormalRecordItem> {
+  return post<AbnormalRecordItem>('/distribution-orders/manual-abnormal', params)
+}
+
+export function reviewOrderAbnormal(params: {
+  abnormalRecordId: string
+  action: OrderAbnormalReviewAction
+  conclusion: string
+  evidences?: AbnormalEvidenceItem[]
+}): Promise<AbnormalReviewResult> {
+  return post<AbnormalReviewResult>('/distribution-orders/review-abnormal', params)
+}
+
+export function batchProcessAbnormal(params: {
+  abnormalRecordIds: string[]
+  action: OrderAbnormalReviewAction
+  conclusion: string
+  evidences?: AbnormalEvidenceItem[]
+}): Promise<BatchAbnormalProcessResult> {
+  return post<BatchAbnormalProcessResult>('/distribution-orders/batch-process-abnormal', params)
+}
+
+export function getAbnormalRecords(params: {
+  page: number
+  pageSize: number
+  orderNo?: string
+  abnormalType?: OrderAbnormalType
+  severity?: OrderAbnormalSeverity
+  status?: OrderAbnormalStatus
+  promoterId?: string
+  channelId?: string
+  isLocked?: boolean
+  startTime?: string
+  endTime?: string
+}): Promise<PageResult<AbnormalRecordItem>> {
+  return get<PageResult<AbnormalRecordItem>>('/distribution-orders/abnormal-records', params)
+}
+
+export function getAbnormalStatistics(params?: {
+  startTime?: string
+  endTime?: string
+}): Promise<AbnormalStatistics> {
+  return get<AbnormalStatistics>('/distribution-orders/abnormal-statistics', params)
+}
+
+export function getAbnormalEvidences(abnormalRecordId: string): Promise<AbnormalEvidenceItem[]> {
+  return get<AbnormalEvidenceItem[]>(`/distribution-orders/abnormal-evidences/${abnormalRecordId}`)
+}
+
+export function getAbnormalRootCause(orderId: string): Promise<AbnormalRootCauseAnalysis> {
+  return get<AbnormalRootCauseAnalysis>(`/distribution-orders/abnormal-root-cause/${orderId}`)
+}

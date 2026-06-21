@@ -895,3 +895,118 @@ export const ORDER_STATUS_CHANGE_REASON_OPTIONS = [
   { label: '其他原因', value: 'other' },
 ] as const
 
+type ElTagType = 'primary' | 'success' | 'warning' | 'danger' | 'info'
+
+export const ORDER_ABNORMAL_TYPE_OPTIONS = [
+  { label: '虚假订单', value: 'fake_order', type: 'danger' as ElTagType },
+  { label: '刷单订单', value: 'brush_order', type: 'danger' as ElTagType },
+  { label: '超时未付款', value: 'timeout_unpaid', type: 'warning' as ElTagType },
+  { label: '退款异常', value: 'refund_abnormal', type: 'danger' as ElTagType },
+  { label: '数据不匹配', value: 'data_mismatch', type: 'warning' as ElTagType },
+  { label: '设备异常', value: 'abnormal_device', type: 'warning' as ElTagType },
+  { label: 'IP异常', value: 'abnormal_ip', type: 'warning' as ElTagType },
+  { label: '重复购买', value: 'repeat_purchase', type: 'info' as ElTagType },
+  { label: '其他异常', value: 'other', type: 'primary' as ElTagType },
+] as const
+
+export const ORDER_ABNORMAL_TYPE_MAP: Record<string, { label: string; type: ElTagType }> = {
+  fake_order: { label: '虚假订单', type: 'danger' },
+  brush_order: { label: '刷单订单', type: 'danger' },
+  timeout_unpaid: { label: '超时未付款', type: 'warning' },
+  refund_abnormal: { label: '退款异常', type: 'danger' },
+  data_mismatch: { label: '数据不匹配', type: 'warning' },
+  abnormal_device: { label: '设备异常', type: 'warning' },
+  abnormal_ip: { label: 'IP异常', type: 'warning' },
+  repeat_purchase: { label: '重复购买', type: 'info' },
+  other: { label: '其他异常', type: 'primary' },
+}
+
+export const ORDER_ABNORMAL_SEVERITY_OPTIONS = [
+  { label: '低风险', value: 'low', color: '#909399' },
+  { label: '中风险', value: 'medium', color: '#e6a23c' },
+  { label: '高风险', value: 'high', color: '#f56c6c' },
+  { label: '严重风险', value: 'critical', color: '#c0392b' },
+] as const
+
+export const ORDER_ABNORMAL_SEVERITY_MAP: Record<string, { label: string; color: string }> = {
+  low: { label: '低风险', color: '#909399' },
+  medium: { label: '中风险', color: '#e6a23c' },
+  high: { label: '高风险', color: '#f56c6c' },
+  critical: { label: '严重风险', color: '#c0392b' },
+}
+
+export const ORDER_ABNORMAL_STATUS_OPTIONS = [
+  { label: '待复核', value: 0, type: 'warning' as ElTagType },
+  { label: '复核中', value: 1, type: 'primary' as ElTagType },
+  { label: '已处理', value: 2, type: 'success' as ElTagType },
+  { label: '已驳回', value: 3, type: 'info' as ElTagType },
+] as const
+
+export const ORDER_ABNORMAL_STATUS_MAP: Record<number, { label: string; type: ElTagType }> = {
+  0: { label: '待复核', type: 'warning' },
+  1: { label: '复核中', type: 'primary' },
+  2: { label: '已处理', type: 'success' },
+  3: { label: '已驳回', type: 'info' },
+}
+
+export const ORDER_ABNORMAL_SOURCE_OPTIONS = [
+  { label: '系统自动识别', value: 'system_auto' },
+  { label: '规则引擎触发', value: 'rule_engine' },
+  { label: '人工手动标记', value: 'manual_mark' },
+  { label: '批量导入', value: 'batch_import' },
+  { label: '第三方数据源', value: 'third_party' },
+] as const
+
+export const ORDER_ABNORMAL_SOURCE_MAP: Record<string, { label: string; type: ElTagType }> = {
+  system_auto: { label: '系统自动识别', type: 'info' },
+  rule_engine: { label: '规则引擎触发', type: 'primary' },
+  manual_mark: { label: '人工手动标记', type: 'warning' },
+  batch_import: { label: '批量导入', type: 'success' },
+  third_party: { label: '第三方数据源', type: 'danger' },
+}
+
+export const ORDER_ABNORMAL_REVIEW_ACTION_OPTIONS = [
+  { label: '放行结算', value: 'release', type: 'success' as ElTagType },
+  { label: '驳回作废', value: 'reject', type: 'danger' as ElTagType },
+  { label: '暂停观测', value: 'observe', type: 'warning' as ElTagType },
+] as const
+
+export const ORDER_ABNORMAL_REVIEW_ACTION_MAP: Record<string, { label: string; type: ElTagType }> = {
+  release: { label: '放行结算', type: 'success' },
+  reject: { label: '驳回作废', type: 'danger' },
+  observe: { label: '暂停观测', type: 'warning' },
+}
+
+export const ORDER_ABNORMAL_REVIEW_REASON_OPTIONS = [
+  { label: '误报，数据正常', value: 'false_alarm' },
+  { label: '已核实合规', value: 'verified_compliant' },
+  { label: '用户真实交易', value: 'real_transaction' },
+  { label: '数据同步延迟', value: 'data_sync_delay' },
+  { label: '违规刷单', value: 'violation_brush' },
+  { label: '虚假交易', value: 'fake_transaction' },
+  { label: '信息不完整', value: 'incomplete_info' },
+  { label: '需进一步观察', value: 'need_observe' },
+  { label: '其他原因', value: 'other' },
+] as const
+
+export const ROOT_CAUSE_CATEGORY_MAP: Record<string, { label: string; type: ElTagType }> = {
+  promoter: { label: '推客操作', type: 'warning' },
+  channel: { label: '渠道推广', type: 'primary' },
+  system: { label: '系统数据', type: 'info' },
+  user: { label: '用户行为', type: 'danger' },
+  product: { label: '商品问题', type: 'warning' },
+  other: { label: '其他因素', type: 'info' },
+}
+
+export const ABNORMAL_DIFFERENTIAL_RULES: Record<string, any[]> = {
+  timeout_unpaid: ['release', 'reject'],
+  data_mismatch: ['release', 'reject'],
+  fake_order: ['reject', 'observe'],
+  brush_order: ['reject', 'observe'],
+  refund_abnormal: ['reject', 'observe'],
+  abnormal_device: ['release', 'reject', 'observe'],
+  abnormal_ip: ['release', 'reject', 'observe'],
+  repeat_purchase: ['release', 'reject', 'observe'],
+  other: ['release', 'reject', 'observe'],
+}
+

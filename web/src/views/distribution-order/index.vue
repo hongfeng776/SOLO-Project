@@ -169,6 +169,23 @@
               批量确认异常
             </el-button>
             <el-button
+              type="warning"
+              size="small"
+              :icon="Warning"
+              :disabled="selectedIds.length === 0"
+              @click="handleOpenBatchAbnormal"
+            >
+              批量处理异常
+            </el-button>
+            <el-button
+              type="primary"
+              size="small"
+              :icon="Document"
+              @click="handleViewAbnormalStatistics"
+            >
+              查看异常统计
+            </el-button>
+            <el-button
               type="success"
               size="small"
               :icon="Download"
@@ -311,6 +328,25 @@
                 </template>
               </el-table-column>
               <el-table-column
+                label="异常标签"
+                width="200"
+              >
+                <template #default="{ row }">
+                  <div v-if="abnormalRecordsMap[row.id as any] && abnormalRecordsMap[row.id as any].length > 0" class="abnormal-tags">
+                    <el-tag
+                      v-for="type in abnormalRecordsMap[row.id as any][0]?.abnormalTypes || []"
+                      :key="type"
+                      :type="ORDER_ABNORMAL_TYPE_MAP[type]?.type || 'info'"
+                      size="small"
+                      effect="light"
+                    >
+                      {{ ORDER_ABNORMAL_TYPE_MAP[type]?.label || type }}
+                    </el-tag>
+                  </div>
+                  <span v-else>-</span>
+                </template>
+              </el-table-column>
+              <el-table-column
                 label="标记"
                 :width="columnWidths.tags"
                 align="center"
@@ -381,7 +417,7 @@
               </el-table-column>
               <el-table-column
                 label="操作"
-                :width="columnWidths.action"
+                :width="220"
                 fixed="right"
                 align="center"
               >
@@ -398,6 +434,12 @@
                   >
                     变更
                   </el-button>
+                  <el-tooltip content="异常检测" placement="top">
+                    <el-button type="danger" link :icon="Warning" @click="handleDetectAbnormal(row as DistributionOrderItem)" />
+                  </el-tooltip>
+                  <el-tooltip content="查看异常" placement="top">
+                    <el-button type="info" link :icon="ZoomIn" @click="handleViewAbnormal(row as DistributionOrderItem)" />
+                  </el-tooltip>
                 </template>
               </el-table-column>
 
@@ -833,6 +875,515 @@
         <el-button @click="changeLogVisible = false">关闭</el-button>
       </div>
     </BaseDialog>
+
+    <BaseDialog
+      v-model="abnormalDetailVisible"
+      :title="`订单异常详情 - ${abnormalDetailOrder?.orderNo || ''}`"
+      width="900px"
+      :show-footer="false"
+    >
+      <div v-if="abnormalDetailOrder" class="abnormal-detail">
+        <div style="margin-bottom: 12px">
+          <el-descriptions :column="2" border size="small">
+            <el-descriptions-item label="订单号">{{ abnormalDetailOrder.orderNo }}</el-descriptions-item>
+            <el-descriptions-item label="订单状态">
+              <el-tag :type="ORDER_STATUS_MAP[abnormalDetailOrder.status]?.type || 'info'">
+                {{ ORDER_STATUS_MAP[abnormalDetailOrder.status]?.label }}
+              </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="推客">{{ abnormalDetailOrder.promoterName || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="渠道">{{ abnormalDetailOrder.channelName || '-' }}</el-descriptions-item>
+          </el-descriptions>
+          <div style="margin: 12px 0">
+            <el-button type="primary" size="small" :icon="DataAnalysis" @click="handleViewRootCause(abnormalDetailOrder)">
+              查看根因分析
+            </el-button>
+          </div>
+        </div>
+        <el-table :data="abnormalDetailRecords" border size="small">
+          <el-table-column label="异常类型" width="200">
+            <template #default="{ row }">
+              <div class="abnormal-tags">
+                <el-tag
+                  v-for="type in row.abnormalTypes"
+                  :key="type"
+                  :type="ORDER_ABNORMAL_TYPE_MAP[type]?.type || 'info'"
+                  size="small"
+                >
+                  {{ ORDER_ABNORMAL_TYPE_MAP[type]?.label || type }}
+                </el-tag>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="严重级别" width="100" align="center">
+            <template #default="{ row }">
+              <span>
+                <span
+                  class="abnormal-severity-dot"
+                  :style="{ backgroundColor: ORDER_ABNORMAL_SEVERITY_MAP[row.severity]?.color || '#909399' }"
+                />
+                {{ ORDER_ABNORMAL_SEVERITY_MAP[row.severity]?.label || row.severity }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="100" align="center">
+            <template #default="{ row }">
+              <el-tag :type="ORDER_ABNORMAL_STATUS_MAP[row.status]?.type || 'info'" size="small">
+                {{ ORDER_ABNORMAL_STATUS_MAP[row.status]?.label || row.status }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="来源" width="100">
+            <template #default="{ row }">
+              {{ ORDER_ABNORMAL_SOURCE_MAP[row.source]?.label || row.source }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="title" label="标题" min-width="120" show-overflow-tooltip />
+          <el-table-column prop="description" label="描述" min-width="160" show-overflow-tooltip />
+          <el-table-column label="检测时间" width="160">
+            <template #default="{ row }">{{ formatDateTime(row.detectedAt) }}</template>
+          </el-table-column>
+          <el-table-column label="操作" width="100" align="center" fixed="right">
+            <template #default="{ row }">
+              <el-button
+                type="primary"
+                link
+                size="small"
+                :disabled="row.status !== 0 && row.status !== 1"
+                @click="handleOpenReview(row as AbnormalRecordItem)"
+              >
+                处理
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </BaseDialog>
+
+    <BaseDialog
+      v-model="abnormalReviewVisible"
+      title="异常订单复核"
+      width="600px"
+      @confirm="handleReviewConfirm"
+    >
+      <div v-if="abnormalReviewCurrent" class="abnormal-review">
+        <div style="margin-bottom: 16px">
+          <el-alert type="info" :closable="false" show-icon>
+            <template #title>
+              <div>
+                <div style="margin-bottom: 4px">
+                  <strong>订单号：</strong>{{ abnormalReviewCurrent.orderNo }}
+                </div>
+                <div style="margin-bottom: 4px">
+                  <strong>异常类型：</strong>
+                  <span class="abnormal-tags" style="display: inline-flex; vertical-align: middle">
+                    <el-tag
+                      v-for="type in abnormalReviewCurrent.abnormalTypes"
+                      :key="type"
+                      :type="ORDER_ABNORMAL_TYPE_MAP[type]?.type || 'info'"
+                      size="small"
+                    >
+                      {{ ORDER_ABNORMAL_TYPE_MAP[type]?.label || type }}
+                    </el-tag>
+                  </span>
+                </div>
+                <div style="margin-bottom: 4px">
+                  <strong>严重级别：</strong>
+                  <span
+                    class="abnormal-severity-dot"
+                    :style="{ backgroundColor: ORDER_ABNORMAL_SEVERITY_MAP[abnormalReviewCurrent.severity]?.color || '#909399' }"
+                  />
+                  {{ ORDER_ABNORMAL_SEVERITY_MAP[abnormalReviewCurrent.severity]?.label }}
+                </div>
+                <div style="margin-bottom: 4px">
+                  <strong>来源：</strong>{{ ORDER_ABNORMAL_SOURCE_MAP[abnormalReviewCurrent.source]?.label }}
+                </div>
+                <div>
+                  <strong>标题：</strong>{{ abnormalReviewCurrent.title }}
+                </div>
+              </div>
+            </template>
+          </el-alert>
+        </div>
+        <el-form :model="abnormalReviewForm" label-width="100px">
+          <el-form-item label="处理方式" required>
+            <el-radio-group v-model="abnormalReviewForm.action">
+              <el-radio
+                v-for="opt in allowedActions"
+                :key="opt.value"
+                :label="opt.value"
+              >
+                {{ opt.label }}
+              </el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="复核原因">
+            <el-select
+              v-model="abnormalReviewForm.reasonType"
+              placeholder="请选择复核原因"
+              style="width: 100%"
+              clearable
+            >
+              <el-option
+                v-for="opt in ORDER_ABNORMAL_REVIEW_REASON_OPTIONS"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="处理结论" required>
+            <el-input
+              v-model="abnormalReviewForm.conclusion"
+              type="textarea"
+              :rows="4"
+              placeholder="请填写处理结论"
+              maxlength="500"
+              show-word-limit
+            />
+          </el-form-item>
+          <el-form-item label="上传凭证">
+            <el-upload
+              :auto-upload="false"
+              :show-file-list="false"
+              :http-request="handleEvidenceUpload"
+              multiple
+            >
+              <el-button type="primary" :icon="Upload" size="small">选择文件</el-button>
+            </el-upload>
+            <div v-if="abnormalReviewForm.evidences.length > 0" style="margin-top: 8px">
+              <div
+                v-for="(ev, idx) in abnormalReviewForm.evidences"
+                :key="idx"
+                style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee"
+              >
+                <span>{{ ev.fileName }} ({{ ev.fileSize ? formatFileSize(ev.fileSize) : '-' }})</span>
+                <el-button
+                  type="danger"
+                  link
+                  size="small"
+                  @click="abnormalReviewForm.evidences.splice(idx, 1)"
+                >
+                  删除
+                </el-button>
+              </div>
+            </div>
+          </el-form-item>
+        </el-form>
+      </div>
+    </BaseDialog>
+
+    <BaseDialog
+      v-model="abnormalBatchVisible"
+      title="批量处理异常订单"
+      width="800px"
+      @confirm="handleBatchProcessConfirm"
+    >
+      <div class="abnormal-batch">
+        <el-alert
+          type="warning"
+          :closable="false"
+          show-icon
+          :title="`共 ${abnormalBatchRecords.length} 笔待处理异常`"
+          style="margin-bottom: 16px"
+        />
+        <el-table :data="abnormalBatchRecords" border size="small" max-height="200" style="margin-bottom: 16px">
+          <el-table-column prop="orderNo" label="订单号" width="180" />
+          <el-table-column label="异常类型" min-width="160">
+            <template #default="{ row }">
+              <div class="abnormal-tags">
+                <el-tag
+                  v-for="type in row.abnormalTypes"
+                  :key="type"
+                  :type="ORDER_ABNORMAL_TYPE_MAP[type]?.type || 'info'"
+                  size="small"
+                >
+                  {{ ORDER_ABNORMAL_TYPE_MAP[type]?.label || type }}
+                </el-tag>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="严重级别" width="100" align="center">
+            <template #default="{ row }">
+              <span>
+                <span
+                  class="abnormal-severity-dot"
+                  :style="{ backgroundColor: ORDER_ABNORMAL_SEVERITY_MAP[row.severity]?.color || '#909399' }"
+                />
+                {{ ORDER_ABNORMAL_SEVERITY_MAP[row.severity]?.label }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="title" label="标题" min-width="140" show-overflow-tooltip />
+        </el-table>
+        <el-form :model="abnormalBatchForm" label-width="100px">
+          <el-form-item label="处理方式" required>
+            <el-radio-group v-model="abnormalBatchForm.action">
+              <el-radio
+                v-for="opt in ORDER_ABNORMAL_REVIEW_ACTION_OPTIONS"
+                :key="opt.value"
+                :label="opt.value"
+              >
+                {{ opt.label }}
+              </el-radio>
+            </el-radio-group>
+            <div style="color: #909399; font-size: 12px; margin-top: 4px">
+              将按差异化规则自动过滤不适用记录
+            </div>
+          </el-form-item>
+          <el-form-item label="复核原因">
+            <el-select
+              v-model="abnormalBatchForm.reasonType"
+              placeholder="请选择复核原因"
+              style="width: 100%"
+              clearable
+            >
+              <el-option
+                v-for="opt in ORDER_ABNORMAL_REVIEW_REASON_OPTIONS"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="处理结论" required>
+            <el-input
+              v-model="abnormalBatchForm.conclusion"
+              type="textarea"
+              :rows="3"
+              placeholder="请填写处理结论"
+              maxlength="500"
+              show-word-limit
+            />
+          </el-form-item>
+          <el-form-item label="上传凭证">
+            <el-upload
+              :auto-upload="false"
+              :show-file-list="false"
+              :http-request="handleBatchEvidenceUpload"
+              multiple
+            >
+              <el-button type="primary" :icon="Upload" size="small">选择文件</el-button>
+            </el-upload>
+            <div v-if="abnormalBatchForm.evidences.length > 0" style="margin-top: 8px">
+              <div
+                v-for="(ev, idx) in abnormalBatchForm.evidences"
+                :key="idx"
+                style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee"
+              >
+                <span>{{ ev.fileName }} ({{ ev.fileSize ? formatFileSize(ev.fileSize) : '-' }})</span>
+                <el-button
+                  type="danger"
+                  link
+                  size="small"
+                  @click="abnormalBatchForm.evidences.splice(idx, 1)"
+                >
+                  删除
+                </el-button>
+              </div>
+            </div>
+          </el-form-item>
+        </el-form>
+      </div>
+    </BaseDialog>
+
+    <BaseDialog
+      v-model="abnormalResultVisible"
+      title="处理结果"
+      width="560px"
+      :show-footer="false"
+    >
+      <transition name="result-fade" appear>
+        <div v-if="abnormalReviewResult" class="status-result">
+          <el-result
+            :icon="abnormalReviewResult.success ? 'success' : 'error'"
+            title="处理完成"
+          >
+            <template #extra>
+              <div class="result-details" style="text-align: left; max-width: 400px; margin: 0 auto">
+                <el-descriptions :column="1" border size="small">
+                  <el-descriptions-item label="订单号">{{ abnormalDetailOrder?.orderNo || '-' }}</el-descriptions-item>
+                  <el-descriptions-item label="处理方式">
+                    {{ ORDER_ABNORMAL_REVIEW_ACTION_MAP[abnormalReviewResult.action]?.label || abnormalReviewResult.action }}
+                  </el-descriptions-item>
+                  <el-descriptions-item label="订单状态更新">
+                    <el-tag :type="abnormalReviewResult.orderStatusUpdated ? 'success' : 'info'" size="small">
+                      {{ abnormalReviewResult.orderStatusUpdated ? '已更新' : '未更新' }}
+                    </el-tag>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="佣金状态" v-if="abnormalReviewResult.commissionStatus !== null && abnormalReviewResult.commissionStatus !== undefined">
+                    {{ abnormalReviewResult.commissionStatus }}
+                  </el-descriptions-item>
+                  <el-descriptions-item label="佣金变动金额" v-if="abnormalReviewResult.commissionChangeAmount">
+                    <span class="text-danger">¥{{ formatMoney(abnormalReviewResult.commissionChangeAmount) }}</span>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="推客同步">
+                    <el-tag :type="abnormalReviewResult.promoterSynced ? 'success' : 'warning'" size="small">
+                      {{ abnormalReviewResult.promoterSynced ? '已同步' : '未同步' }}
+                    </el-tag>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="渠道同步">
+                    <el-tag :type="abnormalReviewResult.channelSynced ? 'success' : 'warning'" size="small">
+                      {{ abnormalReviewResult.channelSynced ? '已同步' : '未同步' }}
+                    </el-tag>
+                  </el-descriptions-item>
+                </el-descriptions>
+              </div>
+              <el-button type="primary" @click="abnormalResultVisible = false" style="margin-top: 16px">确定</el-button>
+            </template>
+          </el-result>
+        </div>
+      </transition>
+    </BaseDialog>
+
+    <BaseDialog
+      v-model="abnormalStatisticsVisible"
+      title="订单异常统计"
+      width="800px"
+      :show-footer="false"
+    >
+      <div v-if="abnormalStatistics" class="abnormal-statistics">
+        <div class="abnormal-stat-cards">
+          <div class="abnormal-stat-card">
+            <div class="num">{{ abnormalStatistics.total || abnormalStatistics.totalCount || 0 }}</div>
+            <div class="label">异常总数</div>
+          </div>
+          <div class="abnormal-stat-card">
+            <div class="num" style="color: #e6a23c">{{ abnormalStatistics.pending || abnormalStatistics.pendingReviewCount || 0 }}</div>
+            <div class="label">待复核</div>
+          </div>
+          <div class="abnormal-stat-card">
+            <div class="num" style="color: #409eff">{{ abnormalStatistics.reviewing || abnormalStatistics.reviewingCount || 0 }}</div>
+            <div class="label">复核中</div>
+          </div>
+          <div class="abnormal-stat-card">
+            <div class="num" style="color: #67c23a">{{ abnormalStatistics.resolved || abnormalStatistics.processedCount || 0 }}</div>
+            <div class="label">已处理</div>
+          </div>
+          <div class="abnormal-stat-card">
+            <div class="num" style="color: #f56c6c">{{ abnormalStatistics.rejected || abnormalStatistics.rejectedCount || 0 }}</div>
+            <div class="label">已驳回</div>
+          </div>
+          <div class="abnormal-stat-card">
+            <div class="num" style="color: #909399">{{ abnormalStatistics.locked || abnormalStatistics.lockedCount || 0 }}</div>
+            <div class="label">已锁定</div>
+          </div>
+        </div>
+        <el-divider>按严重级别分布</el-divider>
+        <div v-if="abnormalStatistics.bySeverity || abnormalStatistics.severityDistribution">
+          <div
+            v-for="item in (abnormalStatistics.severityDistribution || Object.entries(abnormalStatistics.bySeverity || {}).map(([k, v]) => ({ severity: k, count: v })))"
+            :key="item.severity"
+            style="display: flex; align-items: center; padding: 6px 0"
+          >
+            <span
+              class="abnormal-severity-dot"
+              :style="{ backgroundColor: ORDER_ABNORMAL_SEVERITY_MAP[item.severity]?.color || '#909399' }"
+            />
+            <span style="width: 80px">{{ ORDER_ABNORMAL_SEVERITY_MAP[item.severity]?.label || item.severity }}</span>
+            <el-progress
+              :percentage="Math.round((item.count / (abnormalStatistics.total || abnormalStatistics.totalCount || 1)) * 100)"
+              :show-text="false"
+              style="flex: 1; margin: 0 12px"
+            />
+            <span style="width: 60px; text-align: right">{{ item.count }} 条</span>
+          </div>
+        </div>
+        <el-divider>按异常类型分布</el-divider>
+        <div v-if="abnormalStatistics.byType || abnormalStatistics.typeDistribution">
+          <div
+            v-for="item in (abnormalStatistics.typeDistribution || Object.entries(abnormalStatistics.byType || {}).map(([k, v]) => ({ type: k, count: v })))"
+            :key="item.type"
+            style="display: flex; align-items: center; padding: 6px 0"
+          >
+            <el-tag
+              :type="ORDER_ABNORMAL_TYPE_MAP[item.type]?.type || 'info'"
+              size="small"
+              style="width: 100px"
+            >
+              {{ ORDER_ABNORMAL_TYPE_MAP[item.type]?.label || item.type }}
+            </el-tag>
+            <el-progress
+              :percentage="Math.round((item.count / (abnormalStatistics.total || abnormalStatistics.totalCount || 1)) * 100)"
+              :show-text="false"
+              style="flex: 1; margin: 0 12px"
+            />
+            <span style="width: 60px; text-align: right">{{ item.count }} 条</span>
+          </div>
+        </div>
+        <div style="margin-top: 16px; text-align: right">
+          <el-button @click="abnormalStatisticsVisible = false">关闭</el-button>
+        </div>
+      </div>
+    </BaseDialog>
+
+    <BaseDialog
+      v-model="abnormalRootCauseVisible"
+      title="异常根因溯源分析"
+      width="800px"
+      :show-footer="false"
+    >
+      <div v-if="abnormalRootCause" class="abnormal-root-cause">
+        <el-descriptions :column="2" border size="small" style="margin-bottom: 16px">
+          <el-descriptions-item label="订单ID">{{ abnormalRootCause.orderId }}</el-descriptions-item>
+          <el-descriptions-item label="推客关联异常数">
+            <span class="text-danger">{{ abnormalRootCause.promoterRelatedAbnormals ?? 0 }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="渠道关联异常数">
+            <span class="text-warning">{{ abnormalRootCause.channelRelatedAbnormals ?? 0 }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="异常类型">
+            <div class="abnormal-tags" style="display: inline-flex">
+              <el-tag
+                v-for="type in (abnormalRootCause.abnormalTypes || [])"
+                :key="type"
+                :type="ORDER_ABNORMAL_TYPE_MAP[type]?.type || 'info'"
+                size="small"
+              >
+                {{ ORDER_ABNORMAL_TYPE_MAP[type]?.label || type }}
+              </el-tag>
+            </div>
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <h4 style="margin-bottom: 12px">根因分析</h4>
+        <el-table :data="abnormalRootCause.rootCauses" border size="small">
+          <el-table-column label="类别" width="120">
+            <template #default="{ row }">
+              <el-tag
+                :type="ROOT_CAUSE_CATEGORY_MAP[row.category]?.type || 'info'"
+                size="small"
+              >
+                {{ ROOT_CAUSE_CATEGORY_MAP[row.category]?.label || row.category }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
+          <el-table-column label="置信度" width="100" align="center">
+            <template #default="{ row }">
+              <span :style="{ color: row.confidence >= 0.8 ? '#f56c6c' : row.confidence >= 0.5 ? '#e6a23c' : '#909399' }">
+                {{ (row.confidence * 100).toFixed(0) }}%
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="evidence" label="证据" min-width="160" show-overflow-tooltip />
+        </el-table>
+
+        <h4 style="margin: 16px 0 12px">处理建议</h4>
+        <ul style="margin: 0; padding-left: 20px">
+          <li v-for="(s, idx) in abnormalRootCause.suggestions" :key="idx" style="margin-bottom: 4px">{{ s }}</li>
+        </ul>
+
+        <h4 style="margin: 16px 0 12px">风控优化建议</h4>
+        <ul style="margin: 0; padding-left: 20px">
+          <li v-for="(r, idx) in abnormalRootCause.riskOptimizations" :key="idx" style="margin-bottom: 4px">{{ r }}</li>
+        </ul>
+
+        <div style="margin-top: 16px; text-align: right">
+          <el-button @click="abnormalRootCauseVisible = false">关闭</el-button>
+        </div>
+      </div>
+    </BaseDialog>
   </div>
 </template>
 
@@ -851,6 +1402,9 @@ import {
   Switch,
   Checked,
   Warning,
+  ZoomIn,
+  Document,
+  Upload,
 } from '@element-plus/icons-vue'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import BaseBatchOperation from '@/components/common/BaseBatchOperation.vue'
@@ -868,6 +1422,15 @@ import {
   ORDER_STATUS_TRANSITIONS,
   ORDER_STATUS_CHANGE_REASON_REQUIRED,
   ORDER_STATUS_CHANGE_REASON_OPTIONS,
+  ORDER_ABNORMAL_TYPE_MAP,
+  ORDER_ABNORMAL_SEVERITY_MAP,
+  ORDER_ABNORMAL_STATUS_MAP,
+  ORDER_ABNORMAL_REVIEW_ACTION_MAP,
+  ORDER_ABNORMAL_REVIEW_ACTION_OPTIONS,
+  ORDER_ABNORMAL_REVIEW_REASON_OPTIONS,
+  ORDER_ABNORMAL_SOURCE_MAP,
+  ROOT_CAUSE_CATEGORY_MAP,
+  ABNORMAL_DIFFERENTIAL_RULES,
 } from '@/constants'
 import { formatDateTime } from '@/utils/date'
 import { formatMoney } from '@/utils/money'
@@ -887,6 +1450,12 @@ import {
   batchVerifyStatus,
   batchConfirmAbnormal,
   getStatusChangeLog,
+  detectOrderAbnormal,
+  reviewOrderAbnormal,
+  batchProcessAbnormal,
+  getAbnormalRecords,
+  getAbnormalStatistics,
+  getAbnormalRootCause,
   type DistributionOrderItem,
   type DistributionOrderQueryParams,
   type DistributionOrderStatistics,
@@ -894,6 +1463,12 @@ import {
   type StatusTransitionResult,
   type BatchStatusCheckResult,
   type StatusChangeLogItem,
+  type AbnormalRecordItem,
+  type AbnormalReviewResult,
+  type BatchAbnormalProcessResult,
+  type AbnormalEvidenceItem,
+  type AbnormalRootCauseAnalysis,
+  type OrderAbnormalReviewAction,
 } from '@/api/distribution-order'
 
 const channelOptions = ref<Array<{ id: number | string; name: string }>>([])
@@ -1498,6 +2073,233 @@ async function handleViewChangeLog(order: DistributionOrderItem) {
   }
 }
 
+const abnormalRecordsMap = ref<Record<string, AbnormalRecordItem[]>>({})
+const abnormalDetailVisible = ref(false)
+const abnormalDetailOrder = ref<DistributionOrderItem | null>(null)
+const abnormalDetailRecords = ref<AbnormalRecordItem[]>([])
+
+const abnormalReviewVisible = ref(false)
+const abnormalReviewForm = reactive<{
+  abnormalRecordId: string
+  action: OrderAbnormalReviewAction | ''
+  conclusion: string
+  evidences: AbnormalEvidenceItem[]
+  reasonType: string
+}>({
+  abnormalRecordId: '',
+  action: '',
+  conclusion: '',
+  evidences: [],
+  reasonType: '',
+})
+const abnormalReviewCurrent = ref<AbnormalRecordItem | null>(null)
+const allowedActions = computed(() => {
+  if (!abnormalReviewCurrent.value) return []
+  const types = abnormalReviewCurrent.value.abnormalTypes
+  const allowedSet = new Set<OrderAbnormalReviewAction>()
+  types.forEach(t => {
+    const actions = (ABNORMAL_DIFFERENTIAL_RULES as any)[t] || []
+    actions.forEach((a: OrderAbnormalReviewAction) => allowedSet.add(a))
+  })
+  return ORDER_ABNORMAL_REVIEW_ACTION_OPTIONS.filter(opt => allowedSet.has(opt.value as OrderAbnormalReviewAction))
+})
+
+const abnormalBatchVisible = ref(false)
+const abnormalBatchForm = reactive<{
+  action: OrderAbnormalReviewAction | ''
+  conclusion: string
+  evidences: AbnormalEvidenceItem[]
+  reasonType: string
+}>({
+  action: '',
+  conclusion: '',
+  evidences: [],
+  reasonType: '',
+})
+const abnormalBatchRecords = ref<AbnormalRecordItem[]>([])
+const abnormalBatchResult = ref<BatchAbnormalProcessResult | null>(null)
+
+const abnormalStatisticsVisible = ref(false)
+const abnormalStatistics = ref<any>(null)
+
+const abnormalRootCauseVisible = ref(false)
+const abnormalRootCause = ref<AbnormalRootCauseAnalysis | null>(null)
+
+const abnormalResultVisible = ref(false)
+const abnormalReviewResult = ref<AbnormalReviewResult | null>(null)
+
+async function handleDetectAbnormal(row: DistributionOrderItem) {
+  try {
+    const res = await detectOrderAbnormal(String(row.id))
+    if (res.detected) {
+      if (!abnormalRecordsMap.value[row.id as any]) abnormalRecordsMap.value[row.id as any] = []
+      if (res.record) {
+        abnormalRecordsMap.value[row.id as any] = [res.record, ...abnormalRecordsMap.value[row.id as any].filter(r => r.id !== res.record!.id)]
+      }
+      ElMessage.warning(`检测到 ${res.types.length} 个异常，已自动锁定`)
+    } else {
+      ElMessage.success('未检测到异常')
+    }
+    fetchData()
+  } catch (error) {
+    console.error('Detect abnormal error:', error)
+  }
+}
+
+async function handleViewAbnormal(row: DistributionOrderItem) {
+  abnormalDetailOrder.value = row
+  const cached = abnormalRecordsMap.value[row.id as any]
+  if (cached && cached.length > 0) {
+    abnormalDetailRecords.value = cached
+  } else {
+    try {
+      const res = await getAbnormalRecords({ page: 1, pageSize: 50, orderNo: row.orderNo })
+      abnormalDetailRecords.value = res.list
+      abnormalRecordsMap.value[row.id as any] = res.list
+    } catch (e) {
+      abnormalDetailRecords.value = []
+    }
+  }
+  abnormalDetailVisible.value = true
+}
+
+function handleOpenReview(record: AbnormalRecordItem) {
+  abnormalReviewCurrent.value = record
+  abnormalReviewForm.abnormalRecordId = record.id
+  abnormalReviewForm.action = ''
+  abnormalReviewForm.conclusion = ''
+  abnormalReviewForm.evidences = []
+  abnormalReviewForm.reasonType = ''
+  abnormalReviewVisible.value = true
+}
+
+async function handleReviewConfirm() {
+  if (!abnormalReviewForm.action) {
+    ElMessage.warning('请选择处理方式')
+    return
+  }
+  if (!abnormalReviewForm.conclusion.trim()) {
+    ElMessage.warning('请填写处理结论')
+    return
+  }
+  try {
+    const reason = [abnormalReviewForm.reasonType, abnormalReviewForm.conclusion].filter(Boolean).join(' - ')
+    abnormalReviewResult.value = await reviewOrderAbnormal({
+      abnormalRecordId: abnormalReviewForm.abnormalRecordId,
+      action: abnormalReviewForm.action as OrderAbnormalReviewAction,
+      conclusion: reason,
+      evidences: abnormalReviewForm.evidences.length > 0 ? abnormalReviewForm.evidences : undefined,
+    })
+    abnormalReviewVisible.value = false
+    abnormalResultVisible.value = true
+    fetchData()
+  } catch (error) {
+    console.error('Review abnormal error:', error)
+  }
+}
+
+async function handleOpenBatchAbnormal() {
+  if (selectedIds.value.length === 0) {
+    ElMessage.warning('请先选择订单')
+    return
+  }
+  try {
+    const allRecords: AbnormalRecordItem[] = []
+    for (const id of selectedIds.value) {
+      try {
+        const res = await getAbnormalRecords({ page: 1, pageSize: 20, orderNo: String(id) })
+        allRecords.push(...res.list)
+      } catch {}
+    }
+    abnormalBatchRecords.value = allRecords.filter(r => r.status === 0 || r.status === 1)
+    if (abnormalBatchRecords.value.length === 0) {
+      ElMessage.warning('所选订单没有待处理异常')
+      return
+    }
+    abnormalBatchForm.action = ''
+    abnormalBatchForm.conclusion = ''
+    abnormalBatchForm.evidences = []
+    abnormalBatchForm.reasonType = ''
+    abnormalBatchVisible.value = true
+  } catch (error) {
+    console.error('Batch abnormal error:', error)
+  }
+}
+
+async function handleBatchProcessConfirm() {
+  if (!abnormalBatchForm.action) {
+    ElMessage.warning('请选择处理方式')
+    return
+  }
+  if (!abnormalBatchForm.conclusion.trim()) {
+    ElMessage.warning('请填写处理结论')
+    return
+  }
+  try {
+    const reason = [abnormalBatchForm.reasonType, abnormalBatchForm.conclusion].filter(Boolean).join(' - ')
+    abnormalBatchResult.value = await batchProcessAbnormal({
+      abnormalRecordIds: abnormalBatchRecords.value.map(r => r.id),
+      action: abnormalBatchForm.action as OrderAbnormalReviewAction,
+      conclusion: reason,
+      evidences: abnormalBatchForm.evidences.length > 0 ? abnormalBatchForm.evidences : undefined,
+    })
+    ElMessage.success(`批量处理完成：成功 ${abnormalBatchResult.value.successCount}，失败 ${abnormalBatchResult.value.failCount}`)
+    abnormalBatchVisible.value = false
+    fetchData()
+  } catch (error) {
+    console.error('Batch process error:', error)
+  }
+}
+
+async function handleViewAbnormalStatistics() {
+  try {
+    abnormalStatistics.value = await getAbnormalStatistics()
+    abnormalStatisticsVisible.value = true
+  } catch (error) {
+    console.error('Statistics error:', error)
+  }
+}
+
+async function handleViewRootCause(order: DistributionOrderItem | null) {
+  if (!order) return
+  try {
+    abnormalRootCause.value = await getAbnormalRootCause(String(order.id))
+    abnormalRootCauseVisible.value = true
+  } catch (error) {
+    console.error('Root cause error:', error)
+  }
+}
+
+function handleEvidenceUpload(options: any) {
+  const file = options.file
+  abnormalReviewForm.evidences.push({
+    fileName: file.name,
+    fileUrl: URL.createObjectURL(file.raw),
+    fileSize: file.size,
+    fileType: file.type,
+    uploadedAt: new Date().toISOString(),
+  })
+  return Promise.resolve()
+}
+
+function handleBatchEvidenceUpload(options: any) {
+  const file = options.file
+  abnormalBatchForm.evidences.push({
+    fileName: file.name,
+    fileUrl: URL.createObjectURL(file.raw),
+    fileSize: file.size,
+    fileType: file.type,
+    uploadedAt: new Date().toISOString(),
+  })
+  return Promise.resolve()
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
+
 watch(
   () => queryParams,
   () => {
@@ -1831,5 +2633,44 @@ watch(
 .result-fade-enter-to {
   opacity: 1;
   transform: scale(1);
+}
+
+.abnormal-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.abnormal-severity-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.abnormal-stat-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.abnormal-stat-card {
+  padding: 16px;
+  border-radius: 8px;
+  background: #f5f7fa;
+}
+
+.abnormal-stat-card .num {
+  font-size: 24px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.abnormal-stat-card .label {
+  font-size: 13px;
+  color: #909399;
+  margin-top: 4px;
 }
 </style>

@@ -21,4 +21,13 @@ router.post('/validate-compliance', distributionOrderController.validateChangeCo
 router.post('/batch-mark', distributionOrderController.bulkMark);
 router.post('/batch-statistics', distributionOrderController.getBatchStatistics);
 
+router.post('/detect-abnormal', distributionOrderController.detectAbnormal);
+router.post('/manual-abnormal', distributionOrderController.createManualAbnormal);
+router.post('/review-abnormal', distributionOrderController.reviewAbnormal);
+router.post('/batch-process-abnormal', distributionOrderController.batchProcessAbnormal);
+router.get('/abnormal-records', distributionOrderController.getAbnormalRecords);
+router.get('/abnormal-statistics', distributionOrderController.getAbnormalStatistics);
+router.get('/abnormal-evidences/:abnormalRecordId', distributionOrderController.getAbnormalEvidences);
+router.get('/abnormal-root-cause/:orderId', distributionOrderController.getAbnormalRootCause);
+
 export default router;

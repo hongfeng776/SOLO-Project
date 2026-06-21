@@ -21,6 +21,7 @@ import channelAuditService from './ChannelAudit.service';
 import productService from './Product.service';
 import distributionOrderService from './DistributionOrder.service';
 import orderStatusFlowService from './OrderStatusFlow.service';
+import orderAbnormalService from './OrderAbnormal.service';
 
 export {
   authService,
@@ -46,4 +47,5 @@ export {
   productService,
   distributionOrderService,
   orderStatusFlowService,
+  orderAbnormalService,
 };

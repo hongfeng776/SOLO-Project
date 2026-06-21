@@ -1182,3 +1182,113 @@ export const DEFAULT_PRODUCT_RISK_RULES = {
 export const PRODUCT_RISK_RESET_HOUR = 0;
 export const PRODUCT_RISK_FALSE_ALARM_THRESHOLD = 3;
 export const PRODUCT_RISK_DUPLICATE_CHECK_WINDOW_MINUTES = 30;
+
+export enum OrderAbnormalType {
+  FAKE_ORDER = 'fake_order',
+  BRUSH_ORDER = 'brush_order',
+  TIMEOUT_UNPAID = 'timeout_unpaid',
+  REFUND_ABNORMAL = 'refund_abnormal',
+  DATA_MISMATCH = 'data_mismatch',
+  ABNORMAL_DEVICE = 'abnormal_device',
+  ABNORMAL_IP = 'abnormal_ip',
+  REPEAT_PURCHASE = 'repeat_purchase',
+  OTHER = 'other',
+}
+
+export const ORDER_ABNORMAL_TYPE_LABELS: Record<OrderAbnormalType, { label: string; type: 'warning' | 'danger' | 'info' | 'primary' }> = {
+  fake_order: { label: '虚假订单', type: 'danger' },
+  brush_order: { label: '刷单订单', type: 'danger' },
+  timeout_unpaid: { label: '超时未付款', type: 'warning' },
+  refund_abnormal: { label: '退款异常', type: 'danger' },
+  data_mismatch: { label: '数据不匹配', type: 'warning' },
+  abnormal_device: { label: '设备异常', type: 'warning' },
+  abnormal_ip: { label: 'IP异常', type: 'warning' },
+  repeat_purchase: { label: '重复购买', type: 'info' },
+  other: { label: '其他异常', type: 'primary' },
+};
+
+export enum OrderAbnormalSeverity {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical',
+}
+
+export const ORDER_ABNORMAL_SEVERITY_LABELS: Record<OrderAbnormalSeverity, { label: string; color: string }> = {
+  low: { label: '低风险', color: '#909399' },
+  medium: { label: '中风险', color: '#e6a23c' },
+  high: { label: '高风险', color: '#f56c6c' },
+  critical: { label: '严重风险', color: '#c0392b' },
+};
+
+export enum OrderAbnormalStatus {
+  PENDING_REVIEW = 0,
+  REVIEWING = 1,
+  RESOLVED = 2,
+  REJECTED = 3,
+}
+
+export const ORDER_ABNORMAL_STATUS_LABELS: Record<OrderAbnormalStatus, { label: string; type: 'warning' | 'primary' | 'success' | 'info' | 'danger' }> = {
+  [OrderAbnormalStatus.PENDING_REVIEW]: { label: '待复核', type: 'warning' },
+  [OrderAbnormalStatus.REVIEWING]: { label: '复核中', type: 'primary' },
+  [OrderAbnormalStatus.RESOLVED]: { label: '已处理', type: 'success' },
+  [OrderAbnormalStatus.REJECTED]: { label: '已驳回', type: 'info' },
+};
+
+export enum OrderAbnormalReviewAction {
+  RELEASE = 'release',
+  REJECT = 'reject',
+  OBSERVE = 'observe',
+}
+
+export const ORDER_ABNORMAL_REVIEW_ACTION_LABELS: Record<OrderAbnormalReviewAction, { label: string; type: 'success' | 'danger' | 'warning' }> = {
+  release: { label: '放行结算', type: 'success' },
+  reject: { label: '驳回作废', type: 'danger' },
+  observe: { label: '暂停观测', type: 'warning' },
+};
+
+export enum OrderAbnormalSource {
+  SYSTEM_AUTO = 'system_auto',
+  RULE_ENGINE = 'rule_engine',
+  MANUAL_MARK = 'manual_mark',
+  BATCH_IMPORT = 'batch_import',
+  THIRD_PARTY = 'third_party',
+}
+
+export const ORDER_ABNORMAL_SOURCE_LABELS: Record<OrderAbnormalSource, string> = {
+  system_auto: '系统自动识别',
+  rule_engine: '规则引擎触发',
+  manual_mark: '人工手动标记',
+  batch_import: '批量导入',
+  third_party: '第三方数据源',
+};
+
+export const ORDER_ABNORMAL_DETECTION_RULES = {
+  timeoutUnpaidMinutes: 30,
+  brushOrderSameIpCount: 5,
+  brushOrderSameDeviceCount: 5,
+  brushOrderSameUserWindowMinutes: 60,
+  brushOrderSameUserCount: 10,
+  refundAbnormalRateThreshold: 0.3,
+  refundAbnormalMinOrders: 5,
+  repeatPurchaseSameSkuHours: 24,
+  repeatPurchaseSameSkuCount: 3,
+  dataMismatchToleranceRate: 0.05,
+  abnormalIpBlacklistCheck: true,
+  abnormalDeviceFingerprintCheck: true,
+} as const;
+
+export interface AbnormalEvidenceItem {
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  fileType: string;
+  uploadedAt: Date;
+}
+
+export interface AbnormalRootCause {
+  category: 'promoter' | 'channel' | 'system' | 'user' | 'product' | 'other';
+  description: string;
+  relatedIds?: string[];
+  confidence: number;
+}

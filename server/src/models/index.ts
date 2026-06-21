@@ -37,6 +37,8 @@ import ProductRiskRule from './ProductRiskRule.model';
 import ProductRiskRecord from './ProductRiskRecord.model';
 import DistributionOrderQueryLog from './DistributionOrderQueryLog.model';
 import OrderStatusChangeLog from './OrderStatusChangeLog.model';
+import OrderAbnormalRecord from './OrderAbnormalRecord.model';
+import OrderAbnormalEvidence from './OrderAbnormalEvidence.model';
 
 const models = {
   User,
@@ -78,6 +80,8 @@ const models = {
   ProductRiskRecord,
   DistributionOrderQueryLog,
   OrderStatusChangeLog,
+  OrderAbnormalRecord,
+  OrderAbnormalEvidence,
 };
 
 const associate = (): void => {
@@ -114,6 +118,12 @@ const associate = (): void => {
   Order.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
   Order.belongsTo(User, { foreignKey: 'userId', as: 'user' });
   Order.hasOne(Commission, { foreignKey: 'orderId', as: 'commission' });
+  Order.hasMany(OrderStatusChangeLog, { foreignKey: 'orderId', as: 'statusChangeLogs' });
+  Order.hasMany(OrderAbnormalRecord, { foreignKey: 'orderId', as: 'abnormalRecords' });
+  OrderAbnormalRecord.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
+  OrderAbnormalRecord.hasMany(OrderAbnormalEvidence, { foreignKey: 'abnormalRecordId', as: 'evidences' });
+  OrderAbnormalEvidence.belongsTo(OrderAbnormalRecord, { foreignKey: 'abnormalRecordId', as: 'abnormalRecord' });
+  OrderAbnormalEvidence.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 
   Commission.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
   Commission.belongsTo(Promoter, { foreignKey: 'promoterId', as: 'promoter' });
@@ -172,5 +182,5 @@ const associate = (): void => {
 };
 
 export { associate };
-export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification, Product, ProductAuditLog, ProductEditApproval, ProductScheduleRule, ProductListingLog, ProductRiskRule, ProductRiskRecord, DistributionOrderQueryLog, OrderStatusChangeLog };
+export { User, Channel, Promoter, Order, Commission, Marketing, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification, Product, ProductAuditLog, ProductEditApproval, ProductScheduleRule, ProductListingLog, ProductRiskRule, ProductRiskRecord, DistributionOrderQueryLog, OrderStatusChangeLog, OrderAbnormalRecord, OrderAbnormalEvidence };
 export default models;

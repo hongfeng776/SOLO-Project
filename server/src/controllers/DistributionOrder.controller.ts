@@ -1,5 +1,5 @@
-import { Request, Response } from 'express';
-import { distributionOrderService, orderStatusFlowService } from '../services';
+import { Request, Response, NextFunction } from 'express';
+import { distributionOrderService, orderStatusFlowService, orderAbnormalService } from '../services';
 import ResponseUtils from '../utils/response';
 import { BusinessCode } from '../constants/statusCode';
 import { AppError } from '../middleware/error.middleware';
@@ -266,6 +266,115 @@ class DistributionOrderController {
       ResponseUtils.success(res, result);
     } catch (err: any) {
       ResponseUtils.error(res, err.message, err.code);
+    }
+  }
+
+  public async detectAbnormal(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { orderId } = req.body;
+      const result = await orderAbnormalService.detectAbnormal(orderId);
+      ResponseUtils.success(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async createManualAbnormal(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { orderId, abnormalTypes, severity, title, description } = req.body;
+      const user = (req as any).user;
+      const operatorId = user?.id || 'system';
+      const operatorName = user?.name || user?.username || '系统';
+      const result = await orderAbnormalService.createManualAbnormal(
+        orderId,
+        abnormalTypes,
+        severity,
+        title,
+        description,
+        operatorId,
+        operatorName
+      );
+      ResponseUtils.success(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async reviewAbnormal(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const params = req.body;
+      const user = (req as any).user;
+      const operatorId = user?.id || 'system';
+      const operatorName = user?.name || user?.username || '系统';
+      const result = await orderAbnormalService.reviewAbnormal(params, operatorId, operatorName);
+      ResponseUtils.success(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async batchProcessAbnormal(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const params = req.body;
+      const result = await orderAbnormalService.batchProcessAbnormal(params);
+      ResponseUtils.success(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async getAbnormalRecords(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const page = parseInt(req.query.page as string || '1', 10);
+      const pageSize = parseInt(req.query.pageSize as string || '20', 10);
+      const params = {
+        page,
+        pageSize,
+        orderNo: req.query.orderNo as string | undefined,
+        abnormalType: req.query.abnormalType as string | undefined,
+        severity: req.query.severity as string | undefined,
+        status: req.query.status !== undefined ? parseInt(req.query.status as string, 10) : undefined,
+        promoterId: req.query.promoterId as string | undefined,
+        channelId: req.query.channelId as string | undefined,
+        isLocked: req.query.isLocked === 'true',
+        startTime: req.query.startTime as string | undefined,
+        endTime: req.query.endTime as string | undefined,
+      };
+      const result = await orderAbnormalService.queryAbnormalRecords(params);
+      ResponseUtils.paginated(res, result.list, result.total, result.page, result.pageSize);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async getAbnormalStatistics(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const startTime = req.query.startTime as string | undefined;
+      const endTime = req.query.endTime as string | undefined;
+      const result = await orderAbnormalService.getAbnormalStatistics(startTime, endTime);
+      ResponseUtils.success(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async getAbnormalEvidences(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { abnormalRecordId } = req.params;
+      const result = await orderAbnormalService.getEvidencesByAbnormalId(abnormalRecordId);
+      ResponseUtils.success(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async getAbnormalRootCause(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { orderId } = req.params;
+      const result = await orderAbnormalService.getAbnormalRootCauseAnalysis(orderId);
+      ResponseUtils.success(res, result);
+    } catch (error) {
+      next(error);
     }
   }
 
