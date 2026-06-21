@@ -1,21 +1,21 @@
 import { Router } from 'express';
-import { authMiddleware } from '../middlewares/auth';
-import userPermissionController from '../controllers/UserPermissionController';
+import * as userPermissionController from '../controllers/UserPermissionController';
 
 const router = Router();
 
-router.use(authMiddleware);
-
-router.get('/configs', userPermissionController.getPermissionConfigs);
-router.get('/user/:userId', userPermissionController.getUserPermissions);
-router.get('/available/:userId', userPermissionController.getAvailablePermissions);
-router.post('/grant', userPermissionController.grantPermission);
-router.post('/revoke', userPermissionController.revokePermission);
-router.post('/reset', userPermissionController.resetPermissions);
-router.post('/batch-grant', userPermissionController.batchGrant);
-router.post('/batch-revoke', userPermissionController.batchRevoke);
-router.post('/batch-reset', userPermissionController.batchReset);
-router.get('/logs/:userId', userPermissionController.getPermissionLogs);
-router.post('/status-change', userPermissionController.updateUserStatusWithPermission);
+router.get('/system-permissions', userPermissionController.getSystemPermissions);
+router.get('/filtered-permissions', userPermissionController.getFilteredPermissions);
+router.post('/validate/:userId', userPermissionController.validatePermissionGrant);
+router.get('/:userId/permissions', userPermissionController.getUserPermissions);
+router.post('/:userId/grant', userPermissionController.grantPermissions);
+router.post('/:userId/revoke', userPermissionController.revokePermissions);
+router.post('/:userId/reset', userPermissionController.resetPermissions);
+router.put('/:userId/status', userPermissionController.changeUserStatus);
+router.post('/batch-grant', userPermissionController.batchGrantPermissions);
+router.post('/batch-revoke', userPermissionController.batchRevokePermissions);
+router.post('/batch-reset', userPermissionController.batchResetPermissions);
+router.get('/:userId/trace', userPermissionController.getPermissionTrace);
+router.get('/:userId/logs', userPermissionController.getPermissionLogs);
+router.get('/:userId/compliance', userPermissionController.checkPermissionCompliance);
 
 export default router;

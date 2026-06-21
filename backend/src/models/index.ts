@@ -6,6 +6,10 @@ import { UserConsumptionLedger } from './UserConsumptionLedger';
 import { UserRegisterLog } from './UserRegisterLog';
 import { UserStatistic } from './UserStatistic';
 import { RegisterChannel } from './RegisterChannel';
+import { SystemPermission } from './SystemPermission';
+import { UserPermission } from './UserPermission';
+import { UserPermissionLog } from './UserPermissionLog';
+import { AdminUserScope } from './AdminUserScope';
 import { Goods } from './Goods';
 import { Order } from './Order';
 import { Marketing } from './Marketing';
@@ -44,36 +48,6 @@ import { LogisticsTrack } from './LogisticsTrack';
 import { AbnormalLogisticsLog } from './AbnormalLogisticsLog';
 import { AfterSaleLedger } from './AfterSaleLedger';
 import { AfterSaleOperationLog } from './AfterSaleOperationLog';
-import { PermissionConfig } from './PermissionConfig';
-import { UserPermission } from './UserPermission';
-import { UserPermissionLog } from './UserPermissionLog';
-import { UserFreezeRecord } from './UserFreezeRecord';
-import { MerchantQualificationLedger } from './MerchantQualificationLedger';
-import { QualificationChangeLog } from './QualificationChangeLog';
-import { ShopStatusChangeLog } from './ShopStatusChangeLog';
-import { ShopInfoChangeLog } from './ShopInfoChangeLog';
-import { ShopOperationLedger } from './ShopOperationLedger';
-import { MerchantBusinessData } from './MerchantBusinessData';
-import { MerchantBusinessCorrectLog } from './MerchantBusinessCorrectLog';
-import { MerchantLevelAssessLog } from './MerchantLevelAssessLog';
-import { MerchantBusinessAbnormalLog } from './MerchantBusinessAbnormalLog';
-import { SettleApplyOrder } from './SettleApplyOrder';
-import { SettleDeductDetail } from './SettleDeductDetail';
-import { SettleAuditLog } from './SettleAuditLog';
-import { SettleTransferVoucher } from './SettleTransferVoucher';
-import { MarketingLog } from './MarketingLog';
-import { MarketingProduct } from './MarketingProduct';
-import { MarketingMutexRule } from './MarketingMutexRule';
-import { MarketingCategory } from './MarketingCategory';
-import { MarketingMerchantQualification } from './MarketingMerchantQualification';
-import { MarketingDiscountThreshold } from './MarketingDiscountThreshold';
-import { MarketingProductAdmissionLog } from './MarketingProductAdmissionLog';
-import { MarketingAdmissionRule } from './MarketingAdmissionRule';
-import { MarketingDiscountRule } from './MarketingDiscountRule';
-import { MarketingDiscountRuleLog } from './MarketingDiscountRuleLog';
-import { MarketingDiscountUsageRecord } from './MarketingDiscountUsageRecord';
-import { MarketingDiscountStackConflict } from './MarketingDiscountStackConflict';
-import { MarketingDiscountBudgetLedger } from './MarketingDiscountBudgetLedger';
 
 export {
   Admin,
@@ -84,6 +58,10 @@ export {
   UserRegisterLog,
   UserStatistic,
   RegisterChannel,
+  SystemPermission,
+  UserPermission,
+  UserPermissionLog,
+  AdminUserScope,
   Goods,
   Order,
   Marketing,
@@ -122,36 +100,6 @@ export {
   AbnormalLogisticsLog,
   AfterSaleLedger,
   AfterSaleOperationLog,
-  PermissionConfig,
-  UserPermission,
-  UserPermissionLog,
-  UserFreezeRecord,
-  MerchantQualificationLedger,
-  QualificationChangeLog,
-  ShopStatusChangeLog,
-  ShopInfoChangeLog,
-  ShopOperationLedger,
-  MerchantBusinessData,
-  MerchantBusinessCorrectLog,
-  MerchantLevelAssessLog,
-  MerchantBusinessAbnormalLog,
-  SettleApplyOrder,
-  SettleDeductDetail,
-  SettleAuditLog,
-  SettleTransferVoucher,
-  MarketingLog,
-  MarketingProduct,
-  MarketingMutexRule,
-  MarketingCategory,
-  MarketingMerchantQualification,
-  MarketingDiscountThreshold,
-  MarketingProductAdmissionLog,
-  MarketingAdmissionRule,
-  MarketingDiscountRule,
-  MarketingDiscountRuleLog,
-  MarketingDiscountUsageRecord,
-  MarketingDiscountStackConflict,
-  MarketingDiscountBudgetLedger,
 };
 
 export const models = {
@@ -163,6 +111,10 @@ export const models = {
   UserRegisterLog,
   UserStatistic,
   RegisterChannel,
+  SystemPermission,
+  UserPermission,
+  UserPermissionLog,
+  AdminUserScope,
   Goods,
   Order,
   Marketing,
@@ -201,36 +153,6 @@ export const models = {
   AbnormalLogisticsLog,
   AfterSaleLedger,
   AfterSaleOperationLog,
-  PermissionConfig,
-  UserPermission,
-  UserPermissionLog,
-  UserFreezeRecord,
-  MerchantQualificationLedger,
-  QualificationChangeLog,
-  ShopStatusChangeLog,
-  ShopInfoChangeLog,
-  ShopOperationLedger,
-  MerchantBusinessData,
-  MerchantBusinessCorrectLog,
-  MerchantLevelAssessLog,
-  MerchantBusinessAbnormalLog,
-  SettleApplyOrder,
-  SettleDeductDetail,
-  SettleAuditLog,
-  SettleTransferVoucher,
-  MarketingLog,
-  MarketingProduct,
-  MarketingMutexRule,
-  MarketingCategory,
-  MarketingMerchantQualification,
-  MarketingDiscountThreshold,
-  MarketingProductAdmissionLog,
-  MarketingAdmissionRule,
-  MarketingDiscountRule,
-  MarketingDiscountRuleLog,
-  MarketingDiscountUsageRecord,
-  MarketingDiscountStackConflict,
-  MarketingDiscountBudgetLedger,
 };
 
 export default models;

@@ -286,152 +286,6 @@ export const MarketingTypeMap: Record<number, string> = {
   [MarketingType.GROUPON]: '拼团活动'
 }
 
-export enum MarketingStatus {
-  PENDING = 0,
-  ONGOING = 1,
-  ENDED = 2,
-  OFFLINE = 3
-}
-
-export interface Marketing {
-  id: number
-  name: string
-  type: number
-  typeName?: string
-  status: number
-  startTime: string
-  endTime: string
-  discountType: number
-  discountValue: number
-  minAmount: number
-  maxDiscount: number
-  totalCount: number
-  usedCount: number
-  perUserLimit: number
-  description: string
-  categoryIds?: string
-  merchantIds?: string
-  isViolation?: number
-  violationRemark?: string
-  auditStatus?: number
-  createUserId?: number
-  createdAt: string
-  updatedAt: string
-}
-
-export const MarketingStatusMap: Record<number, { label: string; type: TagType }> = {
-  [MarketingStatus.PENDING]: { label: '未开始', type: 'info' },
-  [MarketingStatus.ONGOING]: { label: '进行中', type: 'success' },
-  [MarketingStatus.ENDED]: { label: '已结束', type: 'warning' },
-  [MarketingStatus.OFFLINE]: { label: '已下架', type: 'danger' }
-}
-
-export enum DiscountType {
-  FULL_REDUCTION = 1,
-  DISCOUNT = 2,
-  COUPON = 3,
-  FIXED = 1,
-  RATE = 2
-}
-
-export const DiscountTypeMap: Record<number, { label: string; type: TagType }> = {
-  [DiscountType.FULL_REDUCTION]: { label: '满减', type: 'danger' },
-  [DiscountType.DISCOUNT]: { label: '折扣', type: 'warning' },
-  [DiscountType.COUPON]: { label: '优惠券', type: 'success' }
-}
-
-export interface MarketingValidateError {
-  field?: string
-  message: string
-  code: string
-}
-
-export interface MarketingValidateResult {
-  valid: boolean
-  errors: MarketingValidateError[]
-  warnings: MarketingValidateError[]
-}
-
-export interface EditPermissions {
-  canEditBasic: boolean
-  canEditTime: boolean
-  canEditDiscount: boolean
-  canEditProducts: boolean
-  canEditMerchants: boolean
-  canEditCategories: boolean
-  canEditStatus: boolean
-}
-
-export interface BatchOperationResult {
-  success: number
-  failed: number
-  total: number
-  errors: Array<{ id: number; message: string }>
-}
-
-export interface MarketingLog {
-  id: number
-  marketingId: number
-  operatorId?: number
-  operatorType: number
-  operatorName?: string
-  action: string
-  fieldName?: string
-  oldValue?: string
-  newValue?: string
-  remark?: string
-  createdAt: string
-}
-
-export interface MarketingProduct {
-  id: number
-  marketingId: number
-  goodsId: number
-  goodsName: string
-  categoryId?: number
-  merchantId?: number
-  originalPrice?: number
-  activityPrice?: number
-  stock?: number
-  soldCount?: number
-  status?: number
-  admissionStatus?: number
-  auditUserId?: number
-  auditTime?: string
-  auditRemark?: string
-  applyTime?: string
-  complianceRating?: number
-  merchantCreditScore?: number
-  sortOrder?: number
-  createdAt: string
-  updatedAt?: string
-}
-
-export interface MarketingTraceData {
-  basicInfo: any
-  createLogs: MarketingLog[]
-  updateLogs: MarketingLog[]
-  auditLogs: MarketingLog[]
-  statusLogs: MarketingLog[]
-  products: MarketingProduct[]
-  merchantQualifications: any[]
-  allLogs: MarketingLog[]
-}
-
-export interface DuplicateActivity {
-  id: number
-  name: string
-  startTime: string
-  endTime: string
-  status: number
-  duplicateReason: string
-}
-
-export interface DuplicateCheckResult {
-  isDuplicate: boolean
-  duplicateActivities: DuplicateActivity[]
-}
-
 export enum MerchantStatus {
   PENDING = 0,
   APPROVED = 1,
@@ -1051,336 +905,221 @@ export interface AuditCondition {
   items: AuditCheckItem[]
 }
 
-export enum MarketingProductAdmissionStatus {
-  PENDING = 0,
-  APPROVED = 1,
-  REJECTED = 2,
-  OFFLINE = 3
+import type { User } from '@/api/user'
+
+export enum PermissionGroup {
+  BASIC = 'basic',
+  MARKETING = 'marketing',
+  ORDER = 'order',
+  REVIEW = 'review',
+  ACTIVITY = 'activity',
+  INFO = 'info'
 }
 
-export const MarketingProductAdmissionStatusMap: Record<number, { label: string; type: TagType }> = {
-  [MarketingProductAdmissionStatus.PENDING]: { label: '审核中', type: 'warning' },
-  [MarketingProductAdmissionStatus.APPROVED]: { label: '准入通过', type: 'success' },
-  [MarketingProductAdmissionStatus.REJECTED]: { label: '准入驳回', type: 'danger' },
-  [MarketingProductAdmissionStatus.OFFLINE]: { label: '活动下架', type: 'info' }
+export const PermissionGroupMap: Record<string, { label: string; icon: string; color: string }> = {
+  [PermissionGroup.BASIC]: { label: '基础权限', icon: 'Key', color: '#409eff' },
+  [PermissionGroup.MARKETING]: { label: '营销权限', icon: 'Present', color: '#67c23a' },
+  [PermissionGroup.ORDER]: { label: '订单权限', icon: 'ShoppingCart', color: '#e6a23c' },
+  [PermissionGroup.REVIEW]: { label: '评价权限', icon: 'ChatDotRound', color: '#f56c6c' },
+  [PermissionGroup.ACTIVITY]: { label: '活动权限', icon: 'Promotion', color: '#909399' },
+  [PermissionGroup.INFO]: { label: '信息管理', icon: 'Setting', color: '#8e44ad' }
 }
 
-export interface AdmissionValidateError {
-  field: string
-  message: string
-  ruleType: string
-  level: 'error' | 'warning'
+export enum GrantType {
+  DEFAULT = 1,
+  MANUAL = 2,
+  LEVEL_UP = 3,
+  ACTIVITY = 4
 }
 
-export interface AdmissionValidateResult {
-  passed: boolean
-  errors: AdmissionValidateError[]
-  warnings: AdmissionValidateError[]
-  matchedRules: number[]
-  ruleMatchDetails: AdmissionRuleMatchDetail[]
+export const GrantTypeMap: Record<number, { label: string; type: TagType }> = {
+  [GrantType.DEFAULT]: { label: '默认授予', type: 'info' },
+  [GrantType.MANUAL]: { label: '手动授予', type: 'primary' },
+  [GrantType.LEVEL_UP]: { label: '升级获得', type: 'success' },
+  [GrantType.ACTIVITY]: { label: '活动获得', type: 'warning' }
 }
 
-export interface AdmissionRuleMatchDetail {
-  ruleId: number
-  ruleName: string
-  ruleType: string
-  passed: boolean
-  message: string
+export enum PermissionLogType {
+  GRANT = 1,
+  REVOKE = 2,
+  RESET = 3,
+  STATUS_CHANGE = 4,
+  BATCH = 5
 }
 
-export interface MarketingProductAdmissionLog {
+export const PermissionLogTypeMap: Record<number, { label: string; type: TagType }> = {
+  [PermissionLogType.GRANT]: { label: '权限授予', type: 'success' },
+  [PermissionLogType.REVOKE]: { label: '权限回收', type: 'danger' },
+  [PermissionLogType.RESET]: { label: '权限重置', type: 'warning' },
+  [PermissionLogType.STATUS_CHANGE]: { label: '状态联动', type: 'info' },
+  [PermissionLogType.BATCH]: { label: '批量操作', type: 'primary' }
+}
+
+export enum FreezeType {
+  NONE = 0,
+  TEMPORARY = 1,
+  PERMANENT = 2
+}
+
+export const FreezeTypeMap: Record<number, { label: string; type: TagType }> = {
+  [FreezeType.NONE]: { label: '正常', type: 'success' },
+  [FreezeType.TEMPORARY]: { label: '临时冻结', type: 'warning' },
+  [FreezeType.PERMANENT]: { label: '永久冻结', type: 'danger' }
+}
+
+export enum CancelType {
+  NONE = 0,
+  VOLUNTARY = 1,
+  VIOLATION = 2
+}
+
+export const CancelTypeMap: Record<number, { label: string; type: TagType }> = {
+  [CancelType.NONE]: { label: '正常', type: 'success' },
+  [CancelType.VOLUNTARY]: { label: '主动注销', type: 'info' },
+  [CancelType.VIOLATION]: { label: '违规注销', type: 'danger' }
+}
+
+export interface SystemPermission {
   id: number
-  marketingProductId: number
-  marketingId: number
-  goodsId: number
-  operatorId?: number
-  operatorType: number
-  operatorName?: string
-  action: string
-  oldStatus?: number
-  newStatus?: number
-  fieldName?: string
-  oldValue?: string
-  newValue?: string
-  remark?: string
-  ruleMatchDetail?: AdmissionRuleMatchDetail[]
+  permissionCode: string
+  permissionName: string
+  permissionGroup: string
+  permissionDesc?: string
+  requiredLevel: number
+  allowedStatus: string
+  allowedRiskLevels: string
+  isDefault: number
+  isSystem: number
+  sortOrder: number
+  status: number
   createdAt: string
+  updatedAt: string
 }
 
-export interface AdmissionTraceData {
-  basicInfo: MarketingProduct | null
-  goodsInfo: any
-  marketingInfo: any
-  merchantInfo: any
-  admissionLogs: MarketingProductAdmissionLog[]
-  ruleMatchDetails: AdmissionRuleMatchDetail[]
-  applyInfo: {
-    applyTime?: string
-    applySource?: string
-    applyOperator?: string
-  }
-  auditInfo: {
-    auditUserId?: number
-    auditUserName?: string
-    auditTime?: string
-    auditRemark?: string
-    auditStatus?: number
-    auditLogs: MarketingProductAdmissionLog[]
-  }
-  activityRecords: any[]
-  duplicateCheck: DuplicateApplyCheckResult
-  crossCategoryCheck: CrossCategoryCheckResult
-}
-
-export interface AdmissionRule {
+export interface UserPermissionItem {
   id: number
-  ruleName: string
-  ruleType: string
-  description: string
-  sortOrder: number
-}
-
-export interface DuplicateApplyCheckResult {
-  isDuplicate: boolean
-  duplicateGoods: { goodsId: number; goodsName: string; admissionStatus: number }[]
-  message: string
-}
-
-export interface CrossCategoryCheckResult {
-  isViolation: boolean
-  violationGoods: { goodsId: number; goodsName: string; categoryId?: number }[]
-  message: string
-  marketingCategoryIds?: string
-}
-
-export interface ApplyResult {
-  goodsId: number
-  passed: boolean
-  message: string
-}
-
-export interface BatchApplyResult {
-  success: number
-  failed: number
-  results: ApplyResult[]
-}
-
-export interface BatchImportResult {
-  total: number
-  success: number
-  failed: number
-  results: { goodsId: number; goodsName?: string; success: boolean; message: string }[]
-}
-
-export enum DiscountEffectiveStatus {
-  NOT_ACTIVE = 0,
-  ACTIVE = 1,
-  EXPIRED = 2,
-  DISABLED = 3
-}
-
-export const DiscountEffectiveStatusMap: Record<number, { label: string; type: TagType }> = {
-  [DiscountEffectiveStatus.NOT_ACTIVE]: { label: '未生效', type: 'info' },
-  [DiscountEffectiveStatus.ACTIVE]: { label: '生效中', type: 'success' },
-  [DiscountEffectiveStatus.EXPIRED]: { label: '已失效', type: 'info' },
-  [DiscountEffectiveStatus.DISABLED]: { label: '已禁用', type: 'danger' }
-}
-
-export enum BudgetLedgerType {
-  ALLOCATE = 1,
-  CONSUME = 2,
-  REFUND = 3,
-  ADJUST = 4
-}
-
-export const BudgetLedgerTypeMap: Record<number, { label: string; type: TagType }> = {
-  [BudgetLedgerType.ALLOCATE]: { label: '预算划拨', type: 'primary' },
-  [BudgetLedgerType.CONSUME]: { label: '优惠消耗', type: 'danger' },
-  [BudgetLedgerType.REFUND]: { label: '预算退回', type: 'success' },
-  [BudgetLedgerType.ADJUST]: { label: '预算调整', type: 'warning' }
-}
-
-export enum StackConflictType {
-  MUTEX_RULE = 1,
-  OVER_LIMIT = 2,
-  CATEGORY_CONFLICT = 3,
-  BUDGET_CONFLICT = 4
-}
-
-export const StackConflictTypeMap: Record<number, { label: string; type: TagType }> = {
-  [StackConflictType.MUTEX_RULE]: { label: '互斥规则', type: 'danger' },
-  [StackConflictType.OVER_LIMIT]: { label: '超限叠加', type: 'warning' },
-  [StackConflictType.CATEGORY_CONFLICT]: { label: '类目冲突', type: 'danger' },
-  [StackConflictType.BUDGET_CONFLICT]: { label: '预算冲突', type: 'warning' }
-}
-
-export interface MarketingDiscountRule {
-  id: number
-  marketingId: number
-  ruleName: string
-  discountType: number
-  minAmount: number
-  discountValue: number
-  maxDiscountAmount?: number
-  stackable: number
-  stackLimit: number
-  excludeRuleIds?: string
-  userLevelMin: number
-  userLevelMax: number
-  applicableCategoryIds?: string
-  excludeCategoryIds?: string
-  applicableGoodsIds?: string
-  excludeGoodsIds?: string
-  budgetTotal: number
-  budgetUsed: number
-  quotaTotal: number
-  quotaUsed: number
-  quotaPerUser: number
-  effectiveStatus: number
-  startTime: string
-  endTime: string
-  sortOrder: number
-  operatorId?: number
-  operatorName?: string
-  remark?: string
-  createdTime: string
-  updatedTime: string
-}
-
-export interface DiscountRuleForm {
-  id?: number
-  marketingId: number
-  ruleName: string
-  discountType: number
-  minAmount: number
-  discountValue: number
-  maxDiscountAmount?: number
-  stackable: number
-  stackLimit: number
-  excludeRuleIds?: number[]
-  userLevelMin: number
-  userLevelMax: number
-  applicableCategoryIds?: number[]
-  excludeCategoryIds?: number[]
-  applicableGoodsIds?: number[]
-  excludeGoodsIds?: number[]
-  budgetTotal: number
-  quotaTotal: number
-  quotaPerUser: number
-  startTime: string
-  endTime: string
-  sortOrder: number
-  remark?: string
-}
-
-export interface DiscountValidateError {
-  field: string
-  message: string
-  level: 'error' | 'warning'
-}
-
-export interface DiscountRuleCombination {
-  ruleIds: number[]
-  ruleNames: string[]
-  totalDiscount: number
-  originalAmount: number
-  finalAmount: number
-  description: string
-}
-
-export interface DiscountValidateResult {
-  passed: boolean
-  errors: DiscountValidateError[]
-  warnings: DiscountValidateError[]
-  optimalCombination?: DiscountRuleCombination
-  budgetHint?: string
-}
-
-export interface MarketingDiscountRuleLog {
-  id: number
-  ruleId: number
-  operatorId: number
-  operatorName: string
-  operationType: number
-  beforeContent?: string
-  afterContent?: string
-  remark?: string
-  createdTime: string
-}
-
-export interface MarketingDiscountUsageRecord {
-  id: number
-  ruleId: number
   userId: number
-  userName?: string
-  orderId: number
-  orderNo: string
-  originalAmount: number
-  discountAmount: number
-  finalAmount: number
-  stackRuleIds?: string
-  createdTime: string
+  permissionId: number
+  permissionCode: string
+  permissionName?: string
+  permissionGroup?: string
+  grantType: number
+  grantedBy?: number
+  grantedByName?: string
+  grantedTime: string
+  expireTime?: string
+  status: number
+  revokeReason?: string
+  revokedBy?: number
+  revokedByName?: string
+  revokedTime?: string
 }
 
-export interface MarketingDiscountStackConflict {
-  id: number
-  ruleIdA: number
-  ruleIdB: number
-  conflictType: number
-  description: string
-  userId?: number
-  orderId?: number
-  resolved: number
-  createdTime: string
+export interface PermissionValidateResult {
+  valid: boolean
+  errors: string[]
+  allowedPermissions: SystemPermission[]
+  blockedPermissions: { code: string; name: string; reason: string }[]
+  duplicateBindings: string[]
+  overLimitPermissions: string[]
 }
 
-export interface MarketingDiscountBudgetLedger {
+export interface UserPermissionInfo {
+  allPermissions: SystemPermission[]
+  groupedPermissions: Record<string, SystemPermission[]>
+  grantedList: UserPermissionItem[]
+  revokedList: UserPermissionItem[]
+  grantedCodes: string[]
+  revokedCodes: string[]
+  grantedCount: number
+  totalCount: number
+  permissionVersion: number
+}
+
+export interface PermissionGrantResult {
+  userId: number
+  granted: string[]
+  skipped: { code: string; reason: string }[]
+  permissionVersion: number
+}
+
+export interface PermissionRevokeResult {
+  userId: number
+  revoked: string[]
+  skipped: { code: string; reason: string }[]
+  permissionVersion: number
+}
+
+export interface PermissionResetResult {
+  userId: number
+  resetCount: number
+  grantedCodes: string[]
+  revokedCodes: string[]
+  permissionVersion: number
+}
+
+export interface StatusChangeResult {
+  userId: number
+  oldStatus: number
+  newStatus: number
+  freezeType?: number
+  cancelType?: number
+  revokedPermissions: string[]
+  retainedPermissions: string[]
+  permissionVersion: number
+  user: User
+}
+
+export interface PermissionChangeLog {
   id: number
-  ruleId: number
-  marketingId: number
-  ledgerType: number
-  amount: number
-  beforeAmount: number
-  afterAmount: number
-  orderId?: number
-  orderNo?: string
+  userId: number
+  username?: string
+  logType: number
+  permissionCodes?: string
+  permissionDetails?: any
   operatorId?: number
   operatorName?: string
-  remark?: string
-  createdTime: string
+  operatorRole?: string
+  operateIp?: string
+  operateTime: string
+  operateScope?: string
+  reason?: string
+  beforeStatus?: number
+  afterStatus?: number
+  beforePermissions?: string
+  afterPermissions?: string
 }
 
-export interface DiscountRuleMatchDetail {
-  field: string
-  ruleValue: string
-  passed: boolean
-  description: string
-}
-
-export interface DiscountRuleTraceData {
-  basicInfo: MarketingDiscountRule
-  configLogs: MarketingDiscountRuleLog[]
-  usageRecords: MarketingDiscountUsageRecord[]
-  stackConflicts: MarketingDiscountStackConflict[]
-  budgetLedger: MarketingDiscountBudgetLedger[]
-  usageStats: {
-    totalUsed: number
-    totalDiscountAmount: number
-    budgetUsageRate: number
-    quotaUsageRate: number
+export interface PermissionTraceInfo {
+  permissionList: UserPermissionItem[]
+  grantRecords: PermissionChangeLog[]
+  revokeRecords: PermissionChangeLog[]
+  changeLogs: PermissionChangeLog[]
+  complianceCheck: PermissionComplianceResult
+  summary: {
+    totalPermissions: number
+    grantedCount: number
+    revokedCount: number
+    grantCount: number
+    changeCount: number
+    lastOperateTime?: string
+    lastOperator?: string
   }
-  ruleMatchDetails: DiscountRuleMatchDetail[]
 }
 
-export interface DiscountBatchResult {
-  success: number
-  failed: number
-  total: number
-  results: {
-    id: number
-    ruleName?: string
-    success: boolean
-    message: string
-  }[]
+export interface PermissionComplianceResult {
+  passed: boolean
+  score: number
+  issues: { type: string; level: 'low' | 'medium' | 'high'; message: string; permissionCode?: string }[]
+  duplicatePermissions: string[]
+  overLimitPermissions: { code: string; name: string; requiredLevel: number; userLevel: number }[]
+  mismatchedPermissions: { code: string; name: string; reason: string }[]
+}
+
+export interface PermissionBatchResult {
+  successCount: number
+  failCount: number
+  failDetails: { id: number; username?: string; message: string }[]
+  updatedUsers: User[]
 }
 

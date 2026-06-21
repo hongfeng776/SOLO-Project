@@ -1,4 +1,4 @@
-import { Table, Column, Model, DataType, PrimaryKey, AutoIncrement } from 'sequelize-typescript';
+import { Table, Column, Model, DataType, PrimaryKey, AutoIncrement, CreatedAt } from 'sequelize-typescript';
 
 @Table({
   tableName: 'user_permission_logs',
@@ -20,30 +20,29 @@ export class UserPermissionLog extends Model<UserPermissionLog> {
   user_id!: number;
 
   @Column({
-    type: DataType.BIGINT.UNSIGNED,
-    comment: '权限ID',
+    type: DataType.STRING(50),
+    comment: '用户名（冗余）',
   })
-  permission_id?: number;
+  username?: string;
 
   @Column({
-    type: DataType.STRING(100),
-    comment: '权限编码',
-  })
-  permission_code?: string;
-
-  @Column({
-    type: DataType.STRING(30),
+    type: DataType.TINYINT.UNSIGNED,
     allowNull: false,
-    comment: '操作类型：grant-授予 revoke-回收 batch_grant-批量授予 batch_revoke-批量回收 reset-重置 status_change-状态变更',
+    comment: '日志类型：1-权限授予 2-权限回收 3-权限重置 4-状态变更联动 5-批量操作',
   })
-  operation_type!: string;
+  log_type!: number;
 
   @Column({
-    type: DataType.STRING(30),
-    defaultValue: 'single',
-    comment: '操作范围：single-单用户 batch-批量 global-全局',
+    type: DataType.TEXT,
+    comment: '涉及权限编码，多个逗号分隔',
   })
-  operation_scope?: string;
+  permission_codes?: string;
+
+  @Column({
+    type: DataType.TEXT,
+    comment: '权限变更明细JSON',
+  })
+  permission_details?: string;
 
   @Column({
     type: DataType.BIGINT.UNSIGNED,
@@ -59,15 +58,9 @@ export class UserPermissionLog extends Model<UserPermissionLog> {
 
   @Column({
     type: DataType.STRING(50),
-    comment: '操作人角色',
+    comment: '操作人角色：super_admin-超级管理员 admin-普通管理员 system-系统',
   })
   operator_role?: string;
-
-  @Column({
-    type: DataType.DATE,
-    comment: '操作时间',
-  })
-  operate_time?: Date;
 
   @Column({
     type: DataType.STRING(45),
@@ -76,26 +69,52 @@ export class UserPermissionLog extends Model<UserPermissionLog> {
   operate_ip?: string;
 
   @Column({
+    type: DataType.DATE,
+    defaultValue: DataType.NOW,
+    comment: '操作时间',
+  })
+  operate_time?: Date;
+
+  @Column({
+    type: DataType.STRING(20),
+    defaultValue: 'single',
+    comment: '操作范围：single-单个 batch-批量 global-全局',
+  })
+  operate_scope?: string;
+
+  @Column({
     type: DataType.STRING(255),
-    comment: '操作原因',
+    comment: '操作原因/备注',
   })
   reason?: string;
 
   @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    comment: '操作前状态',
+  })
+  before_status?: number;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    comment: '操作后状态',
+  })
+  after_status?: number;
+
+  @Column({
     type: DataType.TEXT,
-    comment: '变更前权限列表JSON',
+    comment: '操作前权限快照JSON',
   })
   before_permissions?: string;
 
   @Column({
     type: DataType.TEXT,
-    comment: '变更后权限列表JSON',
+    comment: '操作后权限快照JSON',
   })
   after_permissions?: string;
 
+  @CreatedAt
   @Column({
-    type: DataType.STRING(500),
-    comment: '备注',
+    type: DataType.DATE,
   })
-  remark?: string;
+  created_at!: Date;
 }

@@ -22,62 +22,63 @@ export class UserPermission extends Model<UserPermission> {
   user_id!: number;
 
   @Column({
-    type: DataType.BIGINT.UNSIGNED,
+    type: DataType.INTEGER.UNSIGNED,
     allowNull: false,
     comment: '权限ID',
   })
   permission_id!: number;
 
   @Column({
-    type: DataType.STRING(100),
+    type: DataType.STRING(50),
     allowNull: false,
-    comment: '权限编码',
+    comment: '权限编码（冗余）',
   })
   permission_code!: string;
 
   @Column({
     type: DataType.TINYINT.UNSIGNED,
     defaultValue: 1,
-    comment: '授权类型：1-默认授权 2-手动授予 3-临时授权 4-批量授予',
+    comment: '授予方式：1-默认授予 2-手动授予 3-升级获得 4-活动获得',
   })
   grant_type?: number;
 
   @Column({
-    type: DataType.STRING(50),
-    comment: '授权来源：manual-手动 batch-批量 promotion-活动 upgrade-升级',
-  })
-  grant_source?: string;
-
-  @Column({
     type: DataType.BIGINT.UNSIGNED,
-    comment: '授权人ID',
+    comment: '授予人ID（手动授予时）',
   })
   granted_by?: number;
 
   @Column({
     type: DataType.STRING(50),
-    comment: '授权人姓名',
+    comment: '授予人姓名',
   })
   granted_by_name?: string;
 
   @Column({
     type: DataType.DATE,
-    comment: '授权时间',
+    defaultValue: DataType.NOW,
+    comment: '授予时间',
   })
-  granted_at?: Date;
+  granted_time?: Date;
 
   @Column({
     type: DataType.DATE,
-    comment: '过期时间（临时权限用）',
+    comment: '过期时间（NULL表示永久）',
   })
   expire_time?: Date;
 
   @Column({
     type: DataType.TINYINT.UNSIGNED,
-    defaultValue: 0,
-    comment: '是否已回收：0-否 1-是',
+    defaultValue: 1,
+    comment: '状态：0-已回收 1-生效 2-已过期',
   })
-  is_revoked?: number;
+  status?: number;
+
+  @Column({
+    type: DataType.STRING(255),
+    comment: '回收原因',
+  })
+  revoke_reason?: string;
 
   @Column({
     type: DataType.BIGINT.UNSIGNED,
@@ -95,13 +96,7 @@ export class UserPermission extends Model<UserPermission> {
     type: DataType.DATE,
     comment: '回收时间',
   })
-  revoked_at?: Date;
-
-  @Column({
-    type: DataType.STRING(255),
-    comment: '回收原因',
-  })
-  revoke_reason?: string;
+  revoked_time?: Date;
 
   @CreatedAt
   @Column({

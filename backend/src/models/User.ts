@@ -213,11 +213,38 @@ export class User extends Model<User> {
   risk_level?: number;
 
   @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '冻结类型：0-无 1-临时冻结 2-永久冻结',
+  })
+  freeze_type?: number;
+
+  @Column({
+    type: DataType.TEXT,
+    comment: '用户权限列表JSON存储',
+  })
+  permissions?: string;
+
+  @Column({
+    type: DataType.INTEGER.UNSIGNED,
+    defaultValue: 1,
+    comment: '权限配置版本号',
+  })
+  permission_version?: number;
+
+  @Column({
     type: DataType.INTEGER,
     defaultValue: 100,
     comment: '合规分数',
   })
   compliance_score?: number;
+
+  @Column({
+    type: DataType.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '注销类型：0-无 1-主动注销 2-违规注销',
+  })
+  cancel_type?: number;
 
   @CreatedAt
   @Column({

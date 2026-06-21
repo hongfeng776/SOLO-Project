@@ -43,28 +43,10 @@ import AfterSaleValidateService, { afterSaleValidateService } from './AfterSaleV
 import AfterSaleSyncService, { afterSaleSyncService } from './AfterSaleSyncService';
 import AfterSaleBatchService, { afterSaleBatchService } from './AfterSaleBatchService';
 import AfterSaleTraceService, { afterSaleTraceService } from './AfterSaleTraceService';
-import MerchantQualificationService, { merchantQualificationService } from './MerchantQualificationService';
-import MerchantQualificationAuditService, { merchantQualificationAuditService } from './MerchantQualificationAuditService';
-import MerchantQualificationBatchService, { merchantQualificationBatchService } from './MerchantQualificationBatchService';
-import MerchantQualificationTraceService, { merchantQualificationTraceService } from './MerchantQualificationTraceService';
-import ShopInfoService, { shopInfoService } from './ShopInfoService';
-import ShopStatusService, { shopStatusService } from './ShopStatusService';
-import ShopBatchService, { shopBatchService } from './ShopBatchService';
-import ShopTraceService, { shopTraceService } from './ShopTraceService';
-import MerchantBusinessService, { merchantBusinessService } from './MerchantBusinessService';
-import MerchantBusinessCorrectService, { merchantBusinessCorrectService } from './MerchantBusinessCorrectService';
-import MerchantBusinessBatchService, { merchantBusinessBatchService } from './MerchantBusinessBatchService';
-import MerchantBusinessTraceService, { merchantBusinessTraceService } from './MerchantBusinessTraceService';
-import SettleValidateService, { settleValidateService } from './SettleValidateService';
-import SettleCalcService, { settleCalcService } from './SettleCalcService';
-import SettleBatchService, { settleBatchService } from './SettleBatchService';
-import SettleTraceService, { settleTraceService } from './SettleTraceService';
-import MarketingValidateService, { marketingValidateService } from './MarketingValidateService';
-import MarketingBatchService, { marketingBatchService } from './MarketingBatchService';
-import MarketingTraceService, { marketingTraceService } from './MarketingTraceService';
-import MarketingProductAdmissionService, { marketingProductAdmissionService } from './MarketingProductAdmissionService';
-import MarketingProductBatchService, { marketingProductBatchService } from './MarketingProductBatchService';
-import MarketingProductTraceService, { marketingProductTraceService } from './MarketingProductTraceService';
+import UserPermissionValidateService, { userPermissionValidateService } from './UserPermissionValidateService';
+import UserPermissionService, { userPermissionService } from './UserPermissionService';
+import UserPermissionBatchService, { userPermissionBatchService } from './UserPermissionBatchService';
+import UserPermissionTraceService, { userPermissionTraceService } from './UserPermissionTraceService';
 
 export {
   AfterSaleAuditService,
@@ -112,28 +94,10 @@ export {
   AfterSaleSyncService,
   AfterSaleBatchService,
   AfterSaleTraceService,
-  MerchantQualificationService,
-  MerchantQualificationAuditService,
-  MerchantQualificationBatchService,
-  MerchantQualificationTraceService,
-  ShopInfoService,
-  ShopStatusService,
-  ShopBatchService,
-  ShopTraceService,
-  MerchantBusinessService,
-  MerchantBusinessCorrectService,
-  MerchantBusinessBatchService,
-  MerchantBusinessTraceService,
-  SettleValidateService,
-  SettleCalcService,
-  SettleBatchService,
-  SettleTraceService,
-  MarketingValidateService,
-  MarketingBatchService,
-  MarketingTraceService,
-  MarketingProductAdmissionService,
-  MarketingProductBatchService,
-  MarketingProductTraceService,
+  UserPermissionValidateService,
+  UserPermissionService,
+  UserPermissionBatchService,
+  UserPermissionTraceService,
 };
 
 export const services: Record<string, any> = {
@@ -182,28 +146,10 @@ export const services: Record<string, any> = {
   afterSaleSyncService,
   afterSaleBatchService,
   afterSaleTraceService,
-  merchantQualificationService,
-  merchantQualificationAuditService,
-  merchantQualificationBatchService,
-  merchantQualificationTraceService,
-  shopInfoService,
-  shopStatusService,
-  shopBatchService,
-  shopTraceService,
-  merchantBusinessService,
-  merchantBusinessCorrectService,
-  merchantBusinessBatchService,
-  merchantBusinessTraceService,
-  settleValidateService,
-  settleCalcService,
-  settleBatchService,
-  settleTraceService,
-  marketingValidateService,
-  marketingBatchService,
-  marketingTraceService,
-  marketingProductAdmissionService,
-  marketingProductBatchService,
-  marketingProductTraceService,
+  userPermissionValidateService,
+  userPermissionService,
+  userPermissionBatchService,
+  userPermissionTraceService,
 };
 
 export default services;

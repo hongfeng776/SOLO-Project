@@ -50,32 +50,10 @@ import { LogisticsTrackDao } from './LogisticsTrackDao';
 import { AbnormalLogisticsLogDao } from './AbnormalLogisticsLogDao';
 import { AfterSaleLedgerDao } from './AfterSaleLedgerDao';
 import { AfterSaleOperationLogDao } from './AfterSaleOperationLogDao';
-import { MerchantQualificationLedgerDao } from './MerchantQualificationLedgerDao';
-import { QualificationChangeLogDao } from './QualificationChangeLogDao';
-import { ShopStatusChangeLogDao } from './ShopStatusChangeLogDao';
-import { ShopInfoChangeLogDao } from './ShopInfoChangeLogDao';
-import { ShopOperationLedgerDao } from './ShopOperationLedgerDao';
-import { MerchantBusinessDataDao } from './MerchantBusinessDataDao';
-import { MerchantBusinessCorrectLogDao } from './MerchantBusinessCorrectLogDao';
-import { MerchantLevelAssessLogDao } from './MerchantLevelAssessLogDao';
-import { MerchantBusinessAbnormalLogDao } from './MerchantBusinessAbnormalLogDao';
-import { SettleApplyOrderDao } from './SettleApplyOrderDao';
-import { SettleDeductDetailDao } from './SettleDeductDetailDao';
-import { SettleAuditLogDao } from './SettleAuditLogDao';
-import { SettleTransferVoucherDao } from './SettleTransferVoucherDao';
-import { MarketingLogDao } from './MarketingLogDao';
-import { MarketingProductDao } from './MarketingProductDao';
-import { MarketingMutexRuleDao } from './MarketingMutexRuleDao';
-import { MarketingCategoryDao } from './MarketingCategoryDao';
-import { MarketingMerchantQualificationDao } from './MarketingMerchantQualificationDao';
-import { MarketingDiscountThresholdDao } from './MarketingDiscountThresholdDao';
-import { MarketingProductAdmissionLogDao } from './MarketingProductAdmissionLogDao';
-import { MarketingAdmissionRuleDao } from './MarketingAdmissionRuleDao';
-import { MarketingDiscountRuleDao } from './MarketingDiscountRuleDao';
-import { MarketingDiscountRuleLogDao } from './MarketingDiscountRuleLogDao';
-import { MarketingDiscountUsageRecordDao } from './MarketingDiscountUsageRecordDao';
-import { MarketingDiscountStackConflictDao } from './MarketingDiscountStackConflictDao';
-import { MarketingDiscountBudgetLedgerDao } from './MarketingDiscountBudgetLedgerDao';
+import { SystemPermissionDao } from './SystemPermissionDao';
+import { UserPermissionDao } from './UserPermissionDao';
+import { UserPermissionLogDao } from './UserPermissionLogDao';
+import { AdminUserScopeDao } from './AdminUserScopeDao';
 
 export {
   BaseDao,
@@ -132,32 +110,10 @@ export {
   AbnormalLogisticsLogDao,
   AfterSaleLedgerDao,
   AfterSaleOperationLogDao,
-  MerchantQualificationLedgerDao,
-  QualificationChangeLogDao,
-  ShopStatusChangeLogDao,
-  ShopInfoChangeLogDao,
-  ShopOperationLedgerDao,
-  MerchantBusinessDataDao,
-  MerchantBusinessCorrectLogDao,
-  MerchantLevelAssessLogDao,
-  MerchantBusinessAbnormalLogDao,
-  SettleApplyOrderDao,
-  SettleDeductDetailDao,
-  SettleAuditLogDao,
-  SettleTransferVoucherDao,
-  MarketingLogDao,
-  MarketingProductDao,
-  MarketingMutexRuleDao,
-  MarketingCategoryDao,
-  MarketingMerchantQualificationDao,
-  MarketingDiscountThresholdDao,
-  MarketingProductAdmissionLogDao,
-  MarketingAdmissionRuleDao,
-  MarketingDiscountRuleDao,
-  MarketingDiscountRuleLogDao,
-  MarketingDiscountUsageRecordDao,
-  MarketingDiscountStackConflictDao,
-  MarketingDiscountBudgetLedgerDao,
+  SystemPermissionDao,
+  UserPermissionDao,
+  UserPermissionLogDao,
+  AdminUserScopeDao,
 };
 
 export const daos = {
@@ -212,32 +168,10 @@ export const daos = {
   abnormalLogisticsLogDao: new AbnormalLogisticsLogDao(),
   afterSaleLedgerDao: new AfterSaleLedgerDao(),
   afterSaleOperationLogDao: new AfterSaleOperationLogDao(),
-  merchantQualificationLedgerDao: new MerchantQualificationLedgerDao(),
-  qualificationChangeLogDao: new QualificationChangeLogDao(),
-  shopStatusChangeLogDao: new ShopStatusChangeLogDao(),
-  shopInfoChangeLogDao: new ShopInfoChangeLogDao(),
-  shopOperationLedgerDao: new ShopOperationLedgerDao(),
-  merchantBusinessDataDao: new MerchantBusinessDataDao(),
-  merchantBusinessCorrectLogDao: new MerchantBusinessCorrectLogDao(),
-  merchantLevelAssessLogDao: new MerchantLevelAssessLogDao(),
-  merchantBusinessAbnormalLogDao: new MerchantBusinessAbnormalLogDao(),
-  settleApplyOrderDao: new SettleApplyOrderDao(),
-  settleDeductDetailDao: new SettleDeductDetailDao(),
-  settleAuditLogDao: new SettleAuditLogDao(),
-  settleTransferVoucherDao: new SettleTransferVoucherDao(),
-  marketingLogDao: new MarketingLogDao(),
-  marketingProductDao: new MarketingProductDao(),
-  marketingMutexRuleDao: new MarketingMutexRuleDao(),
-  marketingCategoryDao: new MarketingCategoryDao(),
-  marketingMerchantQualificationDao: new MarketingMerchantQualificationDao(),
-  marketingDiscountThresholdDao: new MarketingDiscountThresholdDao(),
-  marketingProductAdmissionLogDao: new MarketingProductAdmissionLogDao(),
-  marketingAdmissionRuleDao: new MarketingAdmissionRuleDao(),
-  marketingDiscountRuleDao: new MarketingDiscountRuleDao(),
-  marketingDiscountRuleLogDao: new MarketingDiscountRuleLogDao(),
-  marketingDiscountUsageRecordDao: new MarketingDiscountUsageRecordDao(),
-  marketingDiscountStackConflictDao: new MarketingDiscountStackConflictDao(),
-  marketingDiscountBudgetLedgerDao: new MarketingDiscountBudgetLedgerDao(),
+  systemPermissionDao: new SystemPermissionDao(),
+  userPermissionDao: new UserPermissionDao(),
+  userPermissionLogDao: new UserPermissionLogDao(),
+  adminUserScopeDao: new AdminUserScopeDao(),
 };
 
 export default daos;
