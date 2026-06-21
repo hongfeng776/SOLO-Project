@@ -12,10 +12,20 @@ const PassengerTravelRisk = sequelize.define('PassengerTravelRisk', {
     allowNull: false,
     comment: '乘客ID'
   },
+  orderId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: '关联订单ID'
+  },
+  orderNo: {
+    type: DataTypes.STRING(32),
+    allowNull: true,
+    comment: '关联订单号'
+  },
   riskType: {
-    type: DataTypes.STRING(50),
+    type: DataTypes.TINYINT,
     allowNull: false,
-    comment: '风险类型：fraud_brush-恶意刷单 frequent_cancel-频繁取消 fake_complaint-虚假投诉 late-频繁迟到 abnormal_route-异常路线'
+    comment: '风险类型：1恶意刷单 2频繁取消 3虚假投诉 4迟到爽约 5异常行为'
   },
   riskLevel: {
     type: DataTypes.TINYINT,
@@ -25,42 +35,32 @@ const PassengerTravelRisk = sequelize.define('PassengerTravelRisk', {
   riskScore: {
     type: DataTypes.DECIMAL(5, 2),
     defaultValue: 0,
-    comment: '风险分值'
+    comment: '风险扣分'
   },
-  relatedOrderIds: {
+  evidence: {
     type: DataTypes.JSON,
     allowNull: true,
-    comment: '关联订单ID列表'
+    comment: '风险证据数据'
   },
-  relatedOrderNos: {
-    type: DataTypes.JSON,
+  description: {
+    type: DataTypes.STRING(500),
     allowNull: true,
-    comment: '关联订单号列表'
+    comment: '风险描述'
   },
-  triggerCount: {
-    type: DataTypes.INTEGER,
-    defaultValue: 1,
-    comment: '触发次数'
+  isBlocked: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: '是否已拦截'
   },
-  detectionDetail: {
-    type: DataTypes.JSON,
+  blockReason: {
+    type: DataTypes.STRING(255),
     allowNull: true,
-    comment: '检测详情：包含检测规则、阈值、实际值等'
-  },
-  evidenceData: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    comment: '证据数据'
-  },
-  restrictionActions: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    comment: '限制措施：[{action, duration, startTime, endTime}]'
+    comment: '拦截原因'
   },
   status: {
     type: DataTypes.TINYINT,
     defaultValue: 0,
-    comment: '状态：0待处理 1处理中 2已处理 3已解除 4已忽略'
+    comment: '处理状态：0待处理 1已确认 2已忽略 3已申诉'
   },
   handlerId: {
     type: DataTypes.INTEGER,
@@ -72,45 +72,30 @@ const PassengerTravelRisk = sequelize.define('PassengerTravelRisk', {
     allowNull: true,
     comment: '处理人姓名'
   },
-  handleResult: {
-    type: DataTypes.TEXT,
+  handleRemark: {
+    type: DataTypes.STRING(500),
     allowNull: true,
-    comment: '处理结果'
+    comment: '处理备注'
   },
   handleTime: {
     type: DataTypes.DATE,
     allowNull: true,
     comment: '处理时间'
   },
-  reportPath: {
-    type: DataTypes.STRING(255),
+  triggeredRestrictions: {
+    type: DataTypes.JSON,
     allowNull: true,
-    comment: '风险报告文件路径'
-  },
-  firstDetectTime: {
-    type: DataTypes.DATE,
-    allowNull: true,
-    comment: '首次检测时间'
-  },
-  lastDetectTime: {
-    type: DataTypes.DATE,
-    allowNull: true,
-    comment: '最近检测时间'
-  },
-  expireTime: {
-    type: DataTypes.DATE,
-    allowNull: true,
-    comment: '风险过期时间'
+    comment: '触发的限制措施'
   }
 }, {
   tableName: 'biz_passenger_travel_risk',
   comment: '乘客出行风险记录表',
   indexes: [
     { fields: ['passengerId'] },
+    { fields: ['orderId'] },
     { fields: ['riskType'] },
     { fields: ['riskLevel'] },
     { fields: ['status'] },
-    { fields: ['firstDetectTime'] },
     { fields: ['createTime'] }
   ]
 })

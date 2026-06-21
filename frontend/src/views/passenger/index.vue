@@ -122,6 +122,42 @@
         </template>
       </el-table-column>
 
+      <el-table-column prop="travelRiskLevel" label="出行风险" width="100" align="center">
+        <template #default="{ row }">
+          <el-tag
+            :color="TravelRiskLevelColorMap[row.travelRiskLevel || 1]"
+            effect="dark"
+            size="small"
+          >
+            {{ TravelRiskLevelMap[row.travelRiskLevel || 1] }}
+          </el-tag>
+        </template>
+      </el-table-column>
+
+      <el-table-column prop="activityLevel" label="活跃度" width="90" align="center">
+        <template #default="{ row }">
+          <el-tag
+            :color="ActivityLevelColorMap[row.activityLevel || 2]"
+            effect="plain"
+            size="small"
+          >
+            {{ ActivityLevelMap[row.activityLevel || 2] }}
+          </el-tag>
+        </template>
+      </el-table-column>
+
+      <el-table-column prop="consumptionLevel" label="消费层级" width="100" align="center">
+        <template #default="{ row }">
+          <el-tag
+            :color="ConsumptionLevelColorMap[row.consumptionLevel || 2]"
+            effect="plain"
+            size="small"
+          >
+            {{ ConsumptionLevelMap[row.consumptionLevel || 2] }}
+          </el-tag>
+        </template>
+      </el-table-column>
+
       <el-table-column prop="orderFrequency" label="近30天订单" width="110" align="right">
         <template #default="{ row }">
           <span :class="{ 'text-high': row.orderFrequency >= 10, 'text-low': row.orderFrequency === 0 }">
@@ -203,6 +239,31 @@
             :passenger="currentPassenger"
           />
         </el-tab-pane>
+        <el-tab-pane label="出行记录" name="travel">
+          <PassengerTravelRecords
+            v-if="currentPassenger?.id"
+            :passenger-id="currentPassenger.id"
+            :passenger-info="currentPassenger"
+          />
+        </el-tab-pane>
+        <el-tab-pane label="出行风险" name="travel-risk">
+          <PassengerTravelRisk
+            v-if="currentPassenger?.id"
+            ref="travelRiskRef"
+            :passenger-id="currentPassenger.id"
+            :passenger-info="currentPassenger"
+            @refresh-passenger="handleRefreshPassenger"
+          />
+        </el-tab-pane>
+        <el-tab-pane label="行为溯源与报告" name="behavior-trace">
+          <PassengerBehaviorTrace
+            v-if="currentPassenger?.id"
+            ref="behaviorTraceRef"
+            :passenger-id="currentPassenger.id"
+            :passenger="currentPassenger"
+            @refresh-passenger="handleRefreshPassenger"
+          />
+        </el-tab-pane>
       </el-tabs>
       <template #footer>
         <el-button @click="detailDialogVisible = false">关闭</el-button>
@@ -225,6 +286,8 @@
         <el-button @click="traceDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <PassengerBatchExport v-model="exportDialogVisible" />
 
     <div
       ref="riskOverviewCard"
@@ -315,6 +378,10 @@ import PassengerEditDialog from '@/components/PassengerEditDialog/index.vue'
 import PassengerLevelTags from '@/components/PassengerLevelTags/index.vue'
 import PassengerBatchOperation from '@/components/PassengerBatchOperation/index.vue'
 import PassengerOperationTrace from '@/components/PassengerOperationTrace/index.vue'
+import PassengerTravelRecords from '@/components/PassengerTravelRecords/index.vue'
+import PassengerTravelRisk from '@/components/PassengerTravelRisk/index.vue'
+import PassengerBatchExport from '@/components/PassengerBatchExport/index.vue'
+import PassengerBehaviorTrace from '@/components/PassengerBehaviorTrace/index.vue'
 import {
   getPassengerListApi,
   getPassengerDetailApi,
@@ -331,7 +398,13 @@ import {
   SecurityLevelColorMap,
   PassengerTagTypeMap,
   PassengerTagTypeColorMap,
-  PassengerTagType
+  PassengerTagType,
+  TravelRiskLevelMap,
+  TravelRiskLevelColorMap,
+  ActivityLevelMap,
+  ActivityLevelColorMap,
+  ConsumptionLevelMap,
+  ConsumptionLevelColorMap
 } from '@/enums/passenger'
 import type { Passenger, PassengerQueryParams, RiskOverview } from '@/types/passenger'
 
@@ -357,7 +430,10 @@ const queryParams = reactive<PassengerQueryParams>({
   minOrderFrequency: undefined,
   maxOrderFrequency: undefined,
   minTotalOrders: undefined,
-  maxTotalOrders: undefined
+  maxTotalOrders: undefined,
+  travelRiskLevel: undefined,
+  activityLevel: undefined,
+  consumptionLevel: undefined
 })
 
 const searchFields = [
@@ -395,7 +471,27 @@ const searchFields = [
   { prop: 'minOrderFrequency', label: '最小下单频次', type: 'input' },
   { prop: 'maxOrderFrequency', label: '最大下单频次', type: 'input' },
   { prop: 'minReputationScore', label: '最小信誉分', type: 'input' },
-  { prop: 'maxReputationScore', label: '最大信誉分', type: 'input' }
+  { prop: 'maxReputationScore', label: '最大信誉分', type: 'input' },
+  { prop: 'travelRiskLevel', label: '出行风险等级', type: 'select', options: [
+    { value: 1, label: '正常' },
+    { value: 2, label: '关注' },
+    { value: 3, label: '警告' },
+    { value: 4, label: '限制' },
+    { value: 5, label: '封禁' }
+  ]},
+  { prop: 'activityLevel', label: '活跃度', type: 'select', options: [
+    { value: 1, label: '沉睡' },
+    { value: 2, label: '低' },
+    { value: 3, label: '中' },
+    { value: 4, label: '高' },
+    { value: 5, label: '非常活跃' }
+  ]},
+  { prop: 'consumptionLevel', label: '消费层级', type: 'select', options: [
+    { value: 1, label: '低消费' },
+    { value: 2, label: '中消费' },
+    { value: 3, label: '高消费' },
+    { value: 4, label: '超高消费' }
+  ]}
 ]
 
 const detailFields = [
@@ -418,13 +514,28 @@ const detailFields = [
   { prop: 'registerTime', label: '注册时间', type: 'date' },
   { prop: 'lastLoginTime', label: '最后登录时间', type: 'date' },
   { prop: 'lastLoginIp', label: '最后登录IP' },
+  { prop: 'cancelCount', label: '累计取消数' },
+  { prop: 'cancelRate', label: '取消率(%)' },
+  { prop: 'lateCount', label: '迟到次数' },
+  { prop: 'complaintCount', label: '投诉次数' },
+  { prop: 'maliciousComplaintCount', label: '恶意投诉次数' },
+  { prop: 'travelRiskLevel', label: '出行风险等级', type: 'status', statusMap: TravelRiskLevelMap, colorMap: TravelRiskLevelColorMap },
+  { prop: 'travelRiskScore', label: '出行风险评分' },
+  { prop: 'isOrderRestricted', label: '限制临时下单', type: 'boolean' },
+  { prop: 'isPremiumDiscountRestricted', label: '限制溢价减免', type: 'boolean' },
+  { prop: 'activityLevel', label: '活跃度', type: 'status', statusMap: ActivityLevelMap, colorMap: ActivityLevelColorMap },
+  { prop: 'consumptionLevel', label: '消费层级', type: 'status', statusMap: ConsumptionLevelMap, colorMap: ConsumptionLevelColorMap },
+  { prop: 'avgConsumptionPerOrder', label: '单均消费', type: 'money' },
   { prop: 'createTime', label: '创建时间', type: 'date' }
 ]
 
 const editDialogVisible = ref(false)
 const detailDialogVisible = ref(false)
 const traceDialogVisible = ref(false)
+const exportDialogVisible = ref(false)
 const detailLoading = ref(false)
+const travelRiskRef = ref<InstanceType<typeof PassengerTravelRisk> | null>(null)
+const behaviorTraceRef = ref<InstanceType<typeof PassengerBehaviorTrace> | null>(null)
 const detailActiveTab = ref('basic')
 const currentPassenger = ref<Passenger | null>(null)
 const riskOverviewLoading = ref(false)
@@ -475,6 +586,9 @@ const handleReset = () => {
   queryParams.maxOrderFrequency = undefined
   queryParams.minTotalOrders = undefined
   queryParams.maxTotalOrders = undefined
+  queryParams.travelRiskLevel = undefined
+  queryParams.activityLevel = undefined
+  queryParams.consumptionLevel = undefined
   getList()
 }
 
@@ -610,7 +724,14 @@ const handleToggleStatus = async (row: Passenger) => {
 }
 
 const handleExport = () => {
-  ElMessage.info('导出功能开发中')
+  exportDialogVisible.value = true
+}
+
+const handleRefreshPassenger = () => {
+  getList()
+  if (currentPassenger.value?.id) {
+    loadDetail(currentPassenger.value.id)
+  }
 }
 
 const handleRowMouseEnter = async (event: MouseEvent, row: Passenger) => {

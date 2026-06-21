@@ -34,6 +34,21 @@ export interface Passenger {
   orderFrequency: number
   auditLogs: PassengerAuditLog[]
   operationLogs: PassengerOperationLog[]
+  cancelCount: number
+  cancelRate: number
+  lateCount: number
+  complaintCount: number
+  maliciousComplaintCount: number
+  travelRiskLevel: number
+  travelRiskScore: number
+  isOrderRestricted: boolean
+  isPremiumDiscountRestricted: boolean
+  riskRestrictionStartTime: string
+  riskRestrictionEndTime: string
+  travelCity: string
+  activityLevel: number
+  consumptionLevel: number
+  avgConsumptionPerOrder: number
 }
 
 export interface PassengerAuditLog {
@@ -115,4 +130,153 @@ export interface PassengerQueryParams {
   maxOrderFrequency?: number
   minTotalOrders?: number
   maxTotalOrders?: number
+  travelRiskLevel?: number
+  activityLevel?: number
+  consumptionLevel?: number
+}
+
+export interface PassengerTravelRisk {
+  id: number
+  passengerId: number
+  orderId: number | null
+  orderNo: string | null
+  riskType: number
+  riskLevel: number
+  riskScore: number
+  evidence: any
+  description: string
+  isBlocked: boolean
+  blockReason: string | null
+  status: number
+  handlerId: number | null
+  handlerName: string | null
+  handleRemark: string | null
+  handleTime: string | null
+  triggeredRestrictions: string[] | null
+  order?: any
+  createTime: string
+}
+
+export interface PassengerExportTask {
+  id: number
+  taskNo: string
+  taskName: string
+  operatorId: number
+  operatorName: string
+  exportType: number
+  filterParams: any
+  sortRules: any[]
+  fieldList: string[]
+  isDesensitized: boolean
+  desensitizeRules: any
+  status: number
+  totalCount: number
+  exportedCount: number
+  failedCount: number
+  filePath: string | null
+  fileName: string | null
+  fileSize: number
+  errorMessage: string | null
+  expireTime: string
+  createTime: string
+}
+
+export interface PassengerBehaviorReport {
+  id: number
+  reportNo: string
+  passengerId: number
+  passengerName: string
+  reportType: number
+  triggerType: number | null
+  periodStart: string
+  periodEnd: string
+  statistics: {
+    totalOrders: number
+    cancelOrders: number
+    completeOrders: number
+    cancelRate: string
+    totalAmount: string
+    avgAmount: string
+    riskCount: number
+    highRiskCount: number
+  }
+  abnormalBehaviors: Array<{
+    type: number
+    name: string
+    level: number
+    description: string
+    time: string
+  }>
+  riskAssessment: {
+    cancelRisk: string
+    complaintRisk: string
+    overallScore: number
+  }
+  recommendations: string[]
+  overallRiskLevel: number
+  overallRiskScore: string
+  suggestedActions: string[]
+  status: number
+  reviewerId: number | null
+  reviewerName: string | null
+  reviewRemark: string | null
+  reviewTime: string | null
+  executedActions: string[] | null
+  createTime: string
+}
+
+export interface TravelRecordQueryParams {
+  page?: number
+  pageSize?: number
+  startTime?: string
+  endTime?: string
+  travelCity?: string
+  capacityType?: number
+  minAmount?: number
+  maxAmount?: number
+  status?: number
+}
+
+export interface TravelRiskCalcResult {
+  oldRiskLevel: number
+  newRiskLevel: number
+  riskScore: number
+  cancelRate: number
+  maliciousComplaints: number
+  restrictionsChanged: string[]
+  isOrderRestricted: boolean
+  isPremiumDiscountRestricted: boolean
+}
+
+export interface TravelPermissionResult {
+  canViewFull: boolean
+  currentRole: string
+  allowedRoles: string[]
+  allowedRoleNames: string[]
+  message: string
+}
+
+export interface TravelTraceDetail {
+  order: any
+  risks: PassengerTravelRisk[]
+  abnormalDetection: {
+    hasAbnormal: boolean
+    abnormalTypes: Array<{ type: string; name: string; level: string }>
+    sameTimeOrders: number
+    fakeComplaints: number
+  }
+}
+
+export interface SortRule {
+  field: string
+  order: 'asc' | 'desc'
+}
+
+export interface ExportTaskCreateParams {
+  taskName: string
+  exportType?: number
+  filterParams?: any
+  sortRules?: SortRule[]
+  fieldList?: string[]
+  isDesensitized?: boolean
 }

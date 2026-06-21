@@ -31,36 +31,12 @@ const SettlementItem = require('./SettlementItem')
 const SettlementAuditLog = require('./SettlementAuditLog')
 const PassengerAuditLog = require('./PassengerAuditLog')
 const PassengerOperationLog = require('./PassengerOperationLog')
-const VehicleAuditLog = require('./VehicleAuditLog')
-const VehicleMaintenance = require('./VehicleMaintenance')
-const VehicleViolation = require('./VehicleViolation')
-const VehicleStatusLog = require('./VehicleStatusLog')
-const VehicleComplianceCheck = require('./VehicleComplianceCheck')
-const VehicleRectification = require('./VehicleRectification')
+const PassengerTravelRisk = require('./PassengerTravelRisk')
+const PassengerExportTask = require('./PassengerExportTask')
+const PassengerBehaviorReport = require('./PassengerBehaviorReport')
 
 Driver.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
 Vehicle.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
-
-Vehicle.hasMany(VehicleAuditLog, { foreignKey: 'vehicleId', as: 'auditLogs' })
-VehicleAuditLog.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
-
-Vehicle.hasMany(VehicleMaintenance, { foreignKey: 'vehicleId', as: 'maintenanceRecords' })
-VehicleMaintenance.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
-
-Vehicle.hasMany(VehicleViolation, { foreignKey: 'vehicleId', as: 'violationRecords' })
-VehicleViolation.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
-
-Vehicle.hasMany(VehicleStatusLog, { foreignKey: 'vehicleId', as: 'statusLogs' })
-VehicleStatusLog.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
-
-Vehicle.hasMany(VehicleComplianceCheck, { foreignKey: 'vehicleId', as: 'complianceChecks' })
-VehicleComplianceCheck.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
-
-Vehicle.hasMany(VehicleRectification, { foreignKey: 'vehicleId', as: 'rectifications' })
-VehicleRectification.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
-
-VehicleComplianceCheck.hasMany(VehicleRectification, { foreignKey: 'checkId', as: 'rectifications' })
-VehicleRectification.belongsTo(VehicleComplianceCheck, { foreignKey: 'checkId', as: 'complianceCheck' })
 
 Order.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
 Order.belongsTo(Passenger, { foreignKey: 'passengerId', as: 'passenger' })
@@ -96,6 +72,13 @@ PassengerAuditLog.belongsTo(Passenger, { foreignKey: 'passengerId', as: 'passeng
 Passenger.hasMany(PassengerOperationLog, { foreignKey: 'passengerId', as: 'operationLogs' })
 PassengerOperationLog.belongsTo(Passenger, { foreignKey: 'passengerId', as: 'passenger' })
 
+Passenger.hasMany(PassengerTravelRisk, { foreignKey: 'passengerId', as: 'travelRisks' })
+PassengerTravelRisk.belongsTo(Passenger, { foreignKey: 'passengerId', as: 'passenger' })
+PassengerTravelRisk.belongsTo(Order, { foreignKey: 'orderId', as: 'order' })
+
+Passenger.hasMany(PassengerBehaviorReport, { foreignKey: 'passengerId', as: 'behaviorReports' })
+PassengerBehaviorReport.belongsTo(Passenger, { foreignKey: 'passengerId', as: 'passenger' })
+
 Driver.hasMany(DriverAuditLog, { foreignKey: 'driverId', as: 'auditLogs' })
 DriverAuditLog.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
 
@@ -124,12 +107,6 @@ module.exports = {
   Driver,
   Passenger,
   Vehicle,
-  VehicleAuditLog,
-  VehicleMaintenance,
-  VehicleViolation,
-  VehicleStatusLog,
-  VehicleComplianceCheck,
-  VehicleRectification,
   CapacityType,
   FinanceStatement,
   FinanceSettlement,
@@ -156,5 +133,8 @@ module.exports = {
   SettlementItem,
   SettlementAuditLog,
   PassengerAuditLog,
-  PassengerOperationLog
+  PassengerOperationLog,
+  PassengerTravelRisk,
+  PassengerExportTask,
+  PassengerBehaviorReport
 }

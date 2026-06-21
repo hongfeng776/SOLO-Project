@@ -171,22 +171,22 @@ const Passenger = sequelize.define('Passenger', {
   cancelCount: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
-    comment: '取消订单次数'
+    comment: '累计取消订单数'
   },
   cancelRate: {
     type: DataTypes.DECIMAL(5, 2),
     defaultValue: 0,
-    comment: '取消率：百分比'
+    comment: '取消率(%)'
   },
   lateCount: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
-    comment: '迟到次数'
+    comment: '累计迟到次数'
   },
   complaintCount: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
-    comment: '投诉次数'
+    comment: '累计投诉次数'
   },
   maliciousComplaintCount: {
     type: DataTypes.INTEGER,
@@ -196,47 +196,52 @@ const Passenger = sequelize.define('Passenger', {
   travelRiskLevel: {
     type: DataTypes.TINYINT,
     defaultValue: 1,
-    comment: '出行风险等级：1正常 2关注 3预警 4限制 5封禁'
+    comment: '出行风险等级：1正常 2关注 3警告 4限制 5封禁'
   },
   travelRiskScore: {
     type: DataTypes.DECIMAL(5, 2),
     defaultValue: 0,
-    comment: '出行风险评分：0-100，越高风险越大'
+    comment: '出行风险评分：0-100，分数越高风险越大'
   },
-  riskRestrictions: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    comment: '风险限制权益：{canOrder, canUseCoupon, canPriority, canDiscount}'
+  isOrderRestricted: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: '是否限制临时下单'
   },
-  lastRiskAssessTime: {
+  isPremiumDiscountRestricted: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: '是否限制溢价减免权益'
+  },
+  riskRestrictionStartTime: {
     type: DataTypes.DATE,
     allowNull: true,
-    comment: '最近风险评估时间'
+    comment: '风险限制开始时间'
+  },
+  riskRestrictionEndTime: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '风险限制结束时间'
+  },
+  travelCity: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    comment: '常用出行城市'
   },
   activityLevel: {
     type: DataTypes.TINYINT,
     defaultValue: 2,
-    comment: '活跃度等级：1沉睡 2低频 3中频 4高频 5活跃'
+    comment: '活跃度：1沉睡 2低 3中 4高 5非常活跃'
   },
-  spendLevel: {
+  consumptionLevel: {
     type: DataTypes.TINYINT,
-    defaultValue: 1,
-    comment: '消费层级：1低 2中 3高 4VIP'
+    defaultValue: 2,
+    comment: '消费层级：1低 2中 3高 4超高'
   },
-  avgOrderAmount: {
+  avgConsumptionPerOrder: {
     type: DataTypes.DECIMAL(10, 2),
     defaultValue: 0,
-    comment: '平均订单金额'
-  },
-  frequentCities: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    comment: '常出行城市列表'
-  },
-  preferredVehicleTypes: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    comment: '偏好车型列表'
+    comment: '单均消费金额'
   }
 }, {
   tableName: 'biz_passenger',
