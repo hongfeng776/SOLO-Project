@@ -1,5 +1,6 @@
 const { Op } = require('sequelize')
 const { MarketingCampaign } = require('../models')
+const { validateAudienceConfig } = require('./marketingAudienceService')
 
 const SCENE_CONFIG = {
   1: {
@@ -60,6 +61,8 @@ const validateCampaign = async (data, excludeId = null) => {
   checkBenefitRationality(data, errors, warnings)
 
   await checkDuplicateCampaign(data, excludeId, errors, warnings)
+
+  checkAudienceTargeting(data, errors, warnings, passed)
 
   const riskLevel = calculateRiskLevel(errors, warnings)
   const isBlocked = errors.some(e => e.blocking)
@@ -642,6 +645,21 @@ const getTargetUserLabel = (type) => {
 const getStatusLabel = (status) => {
   const labels = { 0: '草稿', 1: '待生效', 2: '进行中', 3: '已暂停', 4: '已结束', 5: '已下线' }
   return labels[status] || '未知'
+}
+
+const checkAudienceTargeting = (data, errors = [], warnings = [], passed = []) => {
+  const result = validateAudienceConfig(data, errors, warnings)
+  errors.push(...result.errors.map(e => ({
+    ...e,
+    type: 'audience',
+    severity: e.blocking ? 'high' : 'medium'
+  })))
+  warnings.push(...result.warnings.map(w => ({
+    ...w,
+    type: 'audience',
+    severity: w.blocking ? 'high' : 'low'
+  })))
+  if (result.passed) passed.push(...result.passed.map(p => ({ field: p.field || 'audience', message: p.message })))
 }
 
 module.exports = {

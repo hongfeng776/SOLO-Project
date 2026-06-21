@@ -1,6 +1,6 @@
 require('dotenv').config()
 const { sequelize } = require('../config/database')
-const { User, Role, CapacityType, Driver, Passenger, Vehicle, Order, FinanceStatement, FinanceSettlement, Coupon, RiskRule, MarketingCampaign, MarketingAuditLog, Notification, Ticket } = require('../models')
+const { User, Role, CapacityType, Driver, Passenger, Vehicle, Order, FinanceStatement, FinanceSettlement, Coupon, RiskRule, MarketingCampaign, MarketingAuditLog, MarketingAudienceLog, Notification, Ticket } = require('../models')
 const { hashPassword } = require('../utils/jwt')
 
 const initDB = async () => {
@@ -107,7 +107,11 @@ const initDB = async () => {
 
     const passengers = []
     const passengerNames = ['小红', '小明', '小丽', '小刚', '小美', '小强', '小雪', '小磊', '小芳', '小辉']
+    const userTagsPool = ['new_register', 'high_consumption', 'core_user', 'dormant_user', 'frequent_traveler', 'weekend_active', 'peak_commute', 'business_travel', 'family_trip', 'long_distance']
     for (let i = 0; i < 15; i++) {
+      const level = (i % 5) + 1
+      const isRisk = i === 12 || i === 13
+      const isBlocked = i === 14
       passengers.push({
         id: i + 1,
         nickname: `${passengerNames[i % passengerNames.length]}${i > 9 ? i : ''}`,
@@ -118,8 +122,18 @@ const initDB = async () => {
         totalSpend: (Math.random() * 10000 + 1000).toFixed(2),
         balance: (Math.random() * 500 + 50).toFixed(2),
         rating: (4.5 + Math.random() * 0.5).toFixed(1),
-        status: 1,
-        registerTime: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000)
+        level: level,
+        userTags: userTagsPool.slice(0, (i % 4) + 1),
+        activityLevel: (i % 5) + 1,
+        consumptionLevel: (i % 4) + 1,
+        city: ['北京', '上海', '广州', '深圳', '杭州', '成都'][i % 6],
+        province: ['北京市', '上海市', '广东省', '广东省', '浙江省', '四川省'][i % 6],
+        registerChannel: ['mini_program', 'app', 'h5', 'third_party'][i % 4],
+        isRisk: isRisk ? 1 : 0,
+        travelRiskLevel: isRisk ? 4 : (i % 3),
+        status: isBlocked ? 0 : 1,
+        lastLoginTime: new Date(Date.now() - (i % 120) * 24 * 3600 * 1000),
+        registerTime: new Date(Date.now() - (i % 365) * 24 * 60 * 60 * 1000)
       })
     }
     await Passenger.bulkCreate(passengers)
@@ -336,6 +350,18 @@ const initDB = async () => {
         code: 'NEW_USER_FIRST_2025',
         type: 1,
         scene: 1,
+        campaignPurpose: 1,
+        audiencePurpose: 1,
+        userTags: ['new_register'],
+        excludeUserTags: ['fraud', 'high_risk', 'low_value'],
+        activityLevels: null,
+        consumptionLevels: null,
+        userLevels: null,
+        excludeHighRisk: 1,
+        excludeBlocked: 1,
+        excludeInactive: 0,
+        audienceVersion: 3,
+        audienceCoverage: { valid: 15820, total: 16500, riskExcluded: 420, blockedExcluded: 260, byCity: [{ city: '北京', count: 4520 }, { city: '上海', count: 3890 }, { city: '广州', count: 2680 }, { city: '深圳', count: 2360 }, { city: '杭州', count: 1580 }] },
         couponId: 1,
         subsidyAmount: 10.00,
         maxSubsidyPerOrder: 10.00,
@@ -375,6 +401,18 @@ const initDB = async () => {
         code: 'NEWYEAR_GIFT_2025',
         type: 2,
         scene: 2,
+        campaignPurpose: 0,
+        audiencePurpose: 0,
+        userTags: ['weekend_active', 'peak_commute'],
+        excludeUserTags: ['fraud'],
+        activityLevels: [3, 4, 5],
+        consumptionLevels: [2, 3, 4],
+        userLevels: null,
+        excludeHighRisk: 1,
+        excludeBlocked: 1,
+        excludeInactive: 0,
+        audienceVersion: 2,
+        audienceCoverage: { valid: 58600, total: 60000, riskExcluded: 900, blockedExcluded: 500 },
         couponId: null,
         subsidyAmount: 5.00,
         maxSubsidyPerOrder: 8.00,
@@ -417,6 +455,18 @@ const initDB = async () => {
         code: 'DAILY_TRAVEL_2025Q1',
         type: 3,
         scene: 3,
+        campaignPurpose: 3,
+        audiencePurpose: 3,
+        userTags: ['frequent_traveler', 'core_user', 'high_consumption'],
+        excludeUserTags: ['fraud', 'high_risk'],
+        activityLevels: [4, 5],
+        consumptionLevels: [3, 4],
+        userLevels: [3, 4, 5],
+        excludeHighRisk: 1,
+        excludeBlocked: 1,
+        excludeInactive: 1,
+        audienceVersion: 5,
+        audienceCoverage: { valid: 32100, total: 35000, riskExcluded: 1800, blockedExcluded: 900, invalidExcluded: 200 },
         couponId: null,
         subsidyAmount: 3.00,
         maxSubsidyPerOrder: 5.00,
@@ -454,6 +504,18 @@ const initDB = async () => {
         code: 'RECALL_2025_JAN',
         type: 4,
         scene: 4,
+        campaignPurpose: 2,
+        audiencePurpose: 2,
+        userTags: ['dormant_user'],
+        excludeUserTags: ['fraud', 'low_value', 'malicious_complaint'],
+        activityLevels: [1, 2],
+        consumptionLevels: null,
+        userLevels: null,
+        excludeHighRisk: 1,
+        excludeBlocked: 1,
+        excludeInactive: 0,
+        audienceVersion: 2,
+        audienceCoverage: { valid: 8900, total: 10000, riskExcluded: 700, blockedExcluded: 400 },
         couponId: null,
         subsidyAmount: 20.00,
         maxSubsidyPerOrder: 25.00,
@@ -493,6 +555,18 @@ const initDB = async () => {
         code: 'SPRING_FESTIVAL_2025',
         type: 2,
         scene: 2,
+        campaignPurpose: 0,
+        audiencePurpose: 0,
+        userTags: null,
+        excludeUserTags: ['fraud', 'high_risk'],
+        activityLevels: null,
+        consumptionLevels: null,
+        userLevels: null,
+        excludeHighRisk: 1,
+        excludeBlocked: 1,
+        excludeInactive: 0,
+        audienceVersion: 1,
+        audienceCoverage: null,
         couponId: null,
         subsidyAmount: 8.00,
         maxSubsidyPerOrder: 12.00,
@@ -535,6 +609,19 @@ const initDB = async () => {
         code: 'VIP_BENEFIT_JAN',
         type: 3,
         scene: 3,
+        campaignPurpose: 3,
+        audiencePurpose: 3,
+        userTags: ['high_consumption', 'core_user', 'business_travel'],
+        excludeUserTags: ['fraud', 'high_cancel', 'malicious_complaint'],
+        activityLevels: [5],
+        consumptionLevels: [4],
+        userLevels: [4, 5],
+        excludeHighRisk: 1,
+        excludeBlocked: 1,
+        excludeInactive: 0,
+        audienceVersion: 2,
+        userWeights: { byLevel: { '3': 1.2, '4': 1.8, '5': 2.5 }, byTag: { 'high_consumption': 1.5 } },
+        audienceCoverage: { valid: 3200, total: 3500, riskExcluded: 200, blockedExcluded: 100 },
         couponId: null,
         subsidyAmount: 15.00,
         maxSubsidyPerOrder: 20.00,
@@ -568,6 +655,104 @@ const initDB = async () => {
       }
     ])
     console.log('营销活动数据初始化完成')
+
+    await MarketingAudienceLog.bulkCreate([
+      {
+        id: 1,
+        campaignId: 1,
+        action: 'purpose_update',
+        audiencePurpose: 1,
+        beforeRule: JSON.stringify({ audiencePurpose: 0 }),
+        afterRule: JSON.stringify({ audiencePurpose: 1, userTags: ['new_register'], registerDaysMax: 30, excludeHighRisk: 1, excludeBlocked: 1 }),
+        diffFields: JSON.stringify([
+          { field: 'audiencePurpose', before: 0, after: 1 },
+          { field: 'userTags', before: null, after: ['new_register'] },
+          { field: 'registerDaysMax', before: 0, after: 30 }
+        ]),
+        affectedCount: 16500,
+        validCount: 15820,
+        excludedRiskCount: 420,
+        excludedBlockedCount: 260,
+        coveragePreview: JSON.stringify({ valid: 15820, total: 16500, riskExcluded: 420, blockedExcluded: 260 }),
+        validateResult: JSON.stringify({ errors: [], warnings: [], passed: ['人群策略已适配：拉新活动', '已开启高风险用户自动排除', '已开启封禁用户自动排除'] }),
+        riskLevel: 0,
+        operatorId: 1,
+        operatorName: '超级管理员',
+        createdAt: new Date(Date.now() - 2 * 24 * 3600 * 1000)
+      },
+      {
+        id: 2,
+        campaignId: 1,
+        action: 'preview',
+        audiencePurpose: 1,
+        affectedCount: 16500,
+        validCount: 15820,
+        excludedRiskCount: 420,
+        excludedBlockedCount: 260,
+        coveragePreview: JSON.stringify({ valid: 15820, total: 16500, riskExcluded: 420, blockedExcluded: 260, byCity: [{ city: '北京', count: 4520 }, { city: '上海', count: 3890 }] }),
+        riskLevel: 0,
+        operatorId: 2,
+        operatorName: '运营管理员',
+        createdAt: new Date(Date.now() - 1 * 24 * 3600 * 1000)
+      },
+      {
+        id: 3,
+        campaignId: 3,
+        action: 'tag_update',
+        audiencePurpose: 3,
+        beforeRule: JSON.stringify({ userTags: ['frequent_traveler'] }),
+        afterRule: JSON.stringify({ userTags: ['frequent_traveler', 'core_user', 'high_consumption'] }),
+        diffFields: JSON.stringify([
+          { field: 'userTags', before: ['frequent_traveler'], after: ['frequent_traveler', 'core_user', 'high_consumption'] }
+        ]),
+        affectedCount: 32100,
+        validCount: 32100,
+        riskLevel: 0,
+        operatorId: 2,
+        operatorName: '运营管理员',
+        createdAt: new Date(Date.now() - 5 * 3600 * 1000)
+      },
+      {
+        id: 4,
+        campaignId: 4,
+        action: 'weight_update',
+        audiencePurpose: 2,
+        beforeRule: null,
+        afterRule: JSON.stringify({ userWeights: { byLevel: { '3': 1.2, '4': 1.5 }, byTag: { 'dormant_user': 1.3 } } }),
+        weightConfig: JSON.stringify({ byLevel: { '3': 1.2, '4': 1.5 }, byTag: { 'dormant_user': 1.3 } }),
+        affectedCount: 8900,
+        riskLevel: 0,
+        operatorId: 1,
+        operatorName: '超级管理员',
+        createdAt: new Date(Date.now() - 3 * 3600 * 1000)
+      },
+      {
+        id: 5,
+        campaignId: 3,
+        action: 'invalid_participation',
+        audiencePurpose: 3,
+        userPhone: '13800138999',
+        userLevel: 1,
+        tags: JSON.stringify(['new_register']),
+        interceptionReason: '用户不符合活动人群定向：需满足「高频出行」标签且等级≥3级',
+        riskLevel: 1,
+        excludedInvalidCount: 1,
+        createdAt: new Date(Date.now() - 1800 * 1000)
+      },
+      {
+        id: 6,
+        campaignId: 2,
+        action: 'fraud',
+        audiencePurpose: 0,
+        userPhone: '13800138777',
+        tags: JSON.stringify(['fraud']),
+        interceptionReason: '检测到异常行为：同一IP短时间内多账号聚集参与，疑似恶意刷活动',
+        riskLevel: 3,
+        excludedInvalidCount: 1,
+        createdAt: new Date(Date.now() - 900 * 1000)
+      }
+    ])
+    console.log('人群操作日志数据初始化完成')
 
     await MarketingAuditLog.bulkCreate([
       {

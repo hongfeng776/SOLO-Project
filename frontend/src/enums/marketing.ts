@@ -178,6 +178,79 @@ export const RiskLevelColorMap: Record<number, string> = {
   [RiskLevel.HIGH]: '#f56c6c'
 }
 
+export enum AudiencePurpose {
+  CUSTOM = 0,
+  ACQUISITION = 1,
+  ACTIVATION = 2,
+  RETENTION = 3
+}
+
+export const AudiencePurposeMap: Record<number, string> = {
+  [AudiencePurpose.CUSTOM]: '自定义',
+  [AudiencePurpose.ACQUISITION]: '拉新',
+  [AudiencePurpose.ACTIVATION]: '促活',
+  [AudiencePurpose.RETENTION]: '维稳'
+}
+
+export const AudiencePurposeColorMap: Record<number, string> = {
+  [AudiencePurpose.CUSTOM]: '#909399',
+  [AudiencePurpose.ACQUISITION]: '#67c23a',
+  [AudiencePurpose.ACTIVATION]: '#409eff',
+  [AudiencePurpose.RETENTION]: '#e6a23c'
+}
+
+export const AudiencePurposeGradientMap: Record<number, string> = {
+  [AudiencePurpose.CUSTOM]: 'linear-gradient(135deg, #909399 0%, #a6a9ad 100%)',
+  [AudiencePurpose.ACQUISITION]: 'linear-gradient(135deg, #67c23a 0%, #85ce61 100%)',
+  [AudiencePurpose.ACTIVATION]: 'linear-gradient(135deg, #409eff 0%, #66b1ff 100%)',
+  [AudiencePurpose.RETENTION]: 'linear-gradient(135deg, #e6a23c 0%, #f0c78a 100%)'
+}
+
+export enum AudienceAction {
+  PREVIEW = 'preview',
+  RULE_UPDATE = 'rule_update',
+  PURPOSE_UPDATE = 'purpose_update',
+  IMPORT = 'import',
+  EXCLUDE = 'exclude',
+  TAG_UPDATE = 'tag_update',
+  WEIGHT_UPDATE = 'weight_update',
+  CHECK = 'check',
+  PARTICIPATE = 'participate',
+  VERIFY = 'verify',
+  FRAUD = 'fraud',
+  INVALID_PARTICIPATION = 'invalid_participation'
+}
+
+export const AudienceActionMap: Record<string, string> = {
+  [AudienceAction.PREVIEW]: '人群预览',
+  [AudienceAction.RULE_UPDATE]: '规则变更',
+  [AudienceAction.PURPOSE_UPDATE]: '策略切换',
+  [AudienceAction.IMPORT]: '批量导入',
+  [AudienceAction.EXCLUDE]: '批量剔除',
+  [AudienceAction.TAG_UPDATE]: '标签更新',
+  [AudienceAction.WEIGHT_UPDATE]: '权重配置',
+  [AudienceAction.CHECK]: '规则校验',
+  [AudienceAction.PARTICIPATE]: '用户参与',
+  [AudienceAction.VERIFY]: '资格校验',
+  [AudienceAction.FRAUD]: '恶意拦截',
+  [AudienceAction.INVALID_PARTICIPATION]: '无效参与拦截'
+}
+
+export const AudienceActionColorMap: Record<string, string> = {
+  [AudienceAction.PREVIEW]: '#409eff',
+  [AudienceAction.RULE_UPDATE]: '#e6a23c',
+  [AudienceAction.PURPOSE_UPDATE]: '#909399',
+  [AudienceAction.IMPORT]: '#67c23a',
+  [AudienceAction.EXCLUDE]: '#f56c6c',
+  [AudienceAction.TAG_UPDATE]: '#8e44ad',
+  [AudienceAction.WEIGHT_UPDATE]: '#bb6bd9',
+  [AudienceAction.CHECK]: '#409eff',
+  [AudienceAction.PARTICIPATE]: '#67c23a',
+  [AudienceAction.VERIFY]: '#e6a23c',
+  [AudienceAction.FRAUD]: '#f56c6c',
+  [AudienceAction.INVALID_PARTICIPATION]: '#f56c6c'
+}
+
 export const SceneDefaultConfig: Record<number, Record<string, any>> = {
   [CampaignScene.NEW_USER_GIFT]: {
     targetUser: TargetUser.NEW_USER,

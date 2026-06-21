@@ -1,8 +1,26 @@
 const { Op } = require('sequelize')
-const { MarketingCampaign, MarketingAuditLog } = require('../models')
+const { MarketingCampaign, MarketingAuditLog, Passenger } = require('../models')
 const { success, pageResult, AppError } = require('../utils/response')
 const { validateCampaign, SCENE_CONFIG } = require('../services/marketingValidateService')
 const { logAction, getAuditLogs, getRiskInterceptStats, ACTION_MAP } = require('../services/marketingAuditService')
+const {
+  USER_TAG_OPTIONS,
+  EXCLUDE_TAG_OPTIONS,
+  ACTIVITY_LEVEL_OPTIONS,
+  CONSUMPTION_LEVEL_OPTIONS,
+  USER_LEVEL_OPTIONS,
+  AUDIENCE_PURPOSE_CONFIG,
+  getAudiencePreview,
+  applyPurposeStrategy,
+  buildAudienceQuery
+} = require('../services/marketingAudienceService')
+const {
+  AUDIENCE_ACTION_MAP,
+  logAudienceAction,
+  getAudienceLogs,
+  getAudienceInterceptStats,
+  calculateAudienceDiff
+} = require('../services/marketingAudienceAuditService')
 
 const getOperatorInfo = (req) => {
   return {
@@ -657,6 +675,450 @@ const generateCampaignCode = (scene) => {
   return `${prefix}_${timestamp}${random}`
 }
 
+const getAudienceConfig = async (req, res, next) => {
+  try {
+    res.json(success({
+      userTags: USER_TAG_OPTIONS,
+      excludeTags: EXCLUDE_TAG_OPTIONS,
+      activityLevels: ACTIVITY_LEVEL_OPTIONS,
+      consumptionLevels: CONSUMPTION_LEVEL_OPTIONS,
+      userLevels: USER_LEVEL_OPTIONS,
+      audiencePurposes: Object.keys(AUDIENCE_PURPOSE_CONFIG).map(key => ({
+        purpose: parseInt(key),
+        ...AUDIENCE_PURPOSE_CONFIG[key]
+      }))
+    }))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const applyAudienceStrategy = async (req, res, next) => {
+  try {
+    const { purpose } = req.params
+    const data = req.body || {}
+    const operator = getOperatorInfo(req)
+
+    const applied = applyPurposeStrategy({ ...data }, parseInt(purpose))
+
+    if (data.id) {
+      await logAudienceAction({
+        campaignId: data.id,
+        action: 'purpose_update',
+        audiencePurpose: parseInt(purpose),
+        operatorId: operator.id,
+        operatorName: operator.name,
+        ipAddress: operator.ip,
+        beforeRule: data,
+        afterRule: applied,
+        diffFields: calculateAudienceDiff(data, applied),
+        remark: `切换人群策略为「${AUDIENCE_PURPOSE_CONFIG[purpose]?.name || '自定义'}」`
+      })
+    }
+
+    res.json(success(applied, '人群策略已适配'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const previewAudience = async (req, res, next) => {
+  try {
+    const data = req.body
+    const operator = getOperatorInfo(req)
+
+    const preview = await getAudiencePreview(data)
+
+    if (data.id) {
+      await logAudienceAction({
+        campaignId: data.id,
+        action: 'preview',
+        audiencePurpose: data.audiencePurpose || 0,
+        operatorId: operator.id,
+        operatorName: operator.name,
+        ipAddress: operator.ip,
+        afterRule: data,
+        affectedCount: preview.total,
+        validCount: preview.valid,
+        excludedRiskCount: preview.riskExcluded,
+        excludedBlockedCount: preview.blockedExcluded,
+        coveragePreview: preview
+      })
+    }
+
+    res.json(success(preview, '人群预览计算完成'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchImportAudience = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { userIds = [], phones = [], tagSource = 'manual' } = req.body
+    const operator = getOperatorInfo(req)
+
+    const campaign = await MarketingCampaign.findByPk(id)
+    if (!campaign) throw new AppError('活动不存在', 404, 404)
+
+    const beforeData = campaign.toJSON()
+    let matchedUsers = []
+
+    if (userIds && userIds.length > 0) {
+      matchedUsers = await Passenger.findAll({
+        where: { id: { [Op.in]: userIds }, status: 1 },
+        attributes: ['id', 'phone', 'nickname', 'level', 'isRisk', 'travelRiskLevel']
+      })
+    } else if (phones && phones.length > 0) {
+      matchedUsers = await Passenger.findAll({
+        where: { phone: { [Op.in]: phones }, status: 1 },
+        attributes: ['id', 'phone', 'nickname', 'level', 'isRisk', 'travelRiskLevel']
+      })
+    }
+
+    const validUsers = matchedUsers.filter(u => !u.isRisk && u.travelRiskLevel < 4)
+    const riskCount = matchedUsers.length - validUsers.length
+    const validIds = validUsers.map(u => u.id)
+
+    const currentIds = Array.isArray(campaign.targetedUserIds) ? campaign.targetedUserIds : []
+    const mergedIds = [...new Set([...currentIds, ...validIds])]
+
+    await campaign.update({
+      targetedUserIds: mergedIds,
+      audienceVersion: (campaign.audienceVersion || 0) + 1
+    })
+
+    const afterData = campaign.toJSON()
+
+    await logAudienceAction({
+      campaignId: id,
+      action: 'import',
+      audiencePurpose: campaign.audiencePurpose || 0,
+      operatorId: operator.id,
+      operatorName: operator.name,
+      ipAddress: operator.ip,
+      beforeRule: beforeData,
+      afterRule: afterData,
+      diffFields: [{
+        field: 'targetedUserIds',
+        before: currentIds.length,
+        after: mergedIds.length,
+        type: 'modified',
+        added: validIds.length,
+        duplicates: validIds.filter(id => currentIds.includes(id)).length
+      }],
+      affectedCount: matchedUsers.length,
+      validCount: validUsers.length,
+      excludedRiskCount: riskCount,
+      remark: `从${tagSource}导入用户${matchedUsers.length}个，有效${validUsers.length}个，自动排除风险${riskCount}个`
+    })
+
+    res.json(success({
+      totalImported: matchedUsers.length,
+      validCount: validUsers.length,
+      excludedRisk: riskCount,
+      duplicates: validIds.filter(id => currentIds.includes(id)).length,
+      totalAfter: mergedIds.length,
+      sampleUsers: validUsers.slice(0, 10).map(u => ({
+        id: u.id,
+        phone: u.phone,
+        nickname: u.nickname,
+        level: u.level
+      }))
+    }, `批量导入完成，成功导入${validUsers.length}个有效用户`))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchExcludeAudience = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { userIds = [], phones = [], reason = '无效用户' } = req.body
+    const operator = getOperatorInfo(req)
+
+    const campaign = await MarketingCampaign.findByPk(id)
+    if (!campaign) throw new AppError('活动不存在', 404, 404)
+
+    const beforeData = campaign.toJSON()
+    let matchedUsers = []
+
+    if (userIds && userIds.length > 0) {
+      matchedUsers = await Passenger.findAll({
+        where: { id: { [Op.in]: userIds } },
+        attributes: ['id', 'phone', 'nickname']
+      })
+    } else if (phones && phones.length > 0) {
+      matchedUsers = await Passenger.findAll({
+        where: { phone: { [Op.in]: phones } },
+        attributes: ['id', 'phone', 'nickname']
+      })
+    }
+
+    const matchedIds = matchedUsers.map(u => u.id)
+
+    const currentExcluded = Array.isArray(campaign.excludedUserIds) ? campaign.excludedUserIds : []
+    const currentTargeted = Array.isArray(campaign.targetedUserIds) ? campaign.targetedUserIds : []
+    const mergedExcluded = [...new Set([...currentExcluded, ...matchedIds])]
+    const filteredTargeted = currentTargeted.filter(id => !matchedIds.includes(id))
+
+    await campaign.update({
+      excludedUserIds: mergedExcluded,
+      targetedUserIds: filteredTargeted,
+      audienceVersion: (campaign.audienceVersion || 0) + 1
+    })
+
+    await logAudienceAction({
+      campaignId: id,
+      action: 'exclude',
+      audiencePurpose: campaign.audiencePurpose || 0,
+      operatorId: operator.id,
+      operatorName: operator.name,
+      ipAddress: operator.ip,
+      beforeRule: beforeData,
+      afterRule: campaign.toJSON(),
+      affectedCount: matchedUsers.length,
+      excludedInvalidCount: matchedIds.length,
+      remark: `批量剔除无效用户：${reason}，共${matchedUsers.length}个`
+    })
+
+    res.json(success({
+      totalExcluded: matchedUsers.length,
+      removedFromTargeted: currentTargeted.filter(id => matchedIds.includes(id)).length,
+      totalExcludedAfter: mergedExcluded.length
+    }, `批量剔除完成，已排除${matchedUsers.length}个用户`))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchUpdateUserTags = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { addTags = [], removeTags = [], scope = 'targeted' } = req.body
+    const operator = getOperatorInfo(req)
+
+    const campaign = await MarketingCampaign.findByPk(id)
+    if (!campaign) throw new AppError('活动不存在', 404, 404)
+
+    const beforeData = campaign.toJSON()
+
+    let currentTags = Array.isArray(campaign.userTags) ? campaign.userTags : []
+    if (addTags && addTags.length > 0) {
+      currentTags = [...new Set([...currentTags, ...addTags])]
+    }
+    if (removeTags && removeTags.length > 0) {
+      currentTags = currentTags.filter(t => !removeTags.includes(t))
+    }
+
+    let affectedCount = 0
+    if (scope === 'targeted' && campaign.targetedUserIds) {
+      affectedCount = campaign.targetedUserIds.length
+    }
+
+    await campaign.update({
+      userTags: currentTags,
+      audienceVersion: (campaign.audienceVersion || 0) + 1
+    })
+
+    await logAudienceAction({
+      campaignId: id,
+      action: 'tag_update',
+      audiencePurpose: campaign.audiencePurpose || 0,
+      operatorId: operator.id,
+      operatorName: operator.name,
+      ipAddress: operator.ip,
+      beforeRule: beforeData,
+      afterRule: campaign.toJSON(),
+      diffFields: [
+        { field: 'userTags.added', value: addTags, type: 'added' },
+        { field: 'userTags.removed', value: removeTags, type: 'removed' }
+      ],
+      affectedCount,
+      remark: `批量更新用户标签：新增[${addTags.join(',')}]，移除[${removeTags.join(',')}]`
+    })
+
+    res.json(success({
+      currentTags,
+      addTags,
+      removeTags,
+      affectedCount
+    }, '用户标签批量更新完成'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const updateAudienceWeights = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { weightConfig } = req.body
+    const operator = getOperatorInfo(req)
+
+    const campaign = await MarketingCampaign.findByPk(id)
+    if (!campaign) throw new AppError('活动不存在', 404, 404)
+
+    const beforeData = campaign.toJSON()
+
+    await campaign.update({
+      userWeights: weightConfig,
+      audienceVersion: (campaign.audienceVersion || 0) + 1
+    })
+
+    await logAudienceAction({
+      campaignId: id,
+      action: 'weight_update',
+      audiencePurpose: campaign.audiencePurpose || 0,
+      operatorId: operator.id,
+      operatorName: operator.name,
+      ipAddress: operator.ip,
+      beforeRule: beforeData,
+      afterRule: campaign.toJSON(),
+      weightConfig,
+      remark: '更新用户参与权重配置'
+    })
+
+    res.json(success(campaign, '参与权重配置已更新'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getCampaignAudienceLogs = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const result = await getAudienceLogs(id, req.query)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getAudienceRiskStats = async (req, res, next) => {
+  try {
+    const result = await getAudienceInterceptStats(req.query)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const verifyUserEligibility = async (req, res, next) => {
+  try {
+    const { campaignId, userId, phone } = req.body
+    const operator = getOperatorInfo(req)
+
+    const campaign = await MarketingCampaign.findByPk(campaignId)
+    if (!campaign) throw new AppError('活动不存在', 404, 404)
+
+    const userWhere = { status: 1 }
+    if (userId) userWhere.id = userId
+    else if (phone) userWhere.phone = phone
+    else throw new AppError('缺少用户标识', 400, 400)
+
+    const user = await Passenger.findOne({ where: userWhere })
+    if (!user) {
+      await logAudienceAction({
+        campaignId,
+        action: 'invalid_participation',
+        operatorId: operator.id,
+        operatorName: operator.name,
+        userId: userId || 0,
+        userPhone: phone,
+        interceptionReason: '用户不存在或已被禁用',
+        remark: '非定向用户参与被拦截'
+      })
+      return res.json(success({
+        eligible: false,
+        reason: '用户不存在或已被禁用',
+        riskLevel: 3
+      }))
+    }
+
+    if (user.isRisk || user.travelRiskLevel >= 4) {
+      await logAudienceAction({
+        campaignId,
+        action: 'invalid_participation',
+        operatorId: operator.id,
+        operatorName: operator.name,
+        userId: user.id,
+        userPhone: user.phone,
+        userLevel: user.level,
+        tags: user.tags,
+        interceptionReason: `高风险账号（riskLevel=${user.travelRiskLevel}）`,
+        remark: '高风险用户参与被自动拦截'
+      })
+      return res.json(success({
+        eligible: false,
+        reason: '您的账号风控等级较高，暂无法参与本次活动',
+        riskLevel: 3
+      }))
+    }
+
+    if (campaign.excludedUserIds?.length && campaign.excludedUserIds.includes(user.id)) {
+      await logAudienceAction({
+        campaignId,
+        action: 'invalid_participation',
+        operatorId: operator.id,
+        operatorName: operator.name,
+        userId: user.id,
+        userPhone: user.phone,
+        interceptionReason: '用户在活动排除名单中',
+        remark: '排除名单用户参与被拦截'
+      })
+      return res.json(success({
+        eligible: false,
+        reason: '抱歉，您暂不符合本次活动参与条件',
+        riskLevel: 2
+      }))
+    }
+
+    const audienceWhere = buildAudienceQuery(campaign)
+    const matchUser = await Passenger.findOne({
+      where: { ...audienceWhere, id: user.id }
+    })
+
+    if (!matchUser) {
+      await logAudienceAction({
+        campaignId,
+        action: 'invalid_participation',
+        operatorId: operator.id,
+        operatorName: operator.name,
+        userId: user.id,
+        userPhone: user.phone,
+        interceptionReason: '用户不满足定向筛选条件',
+        remark: '非定向人群参与被拦截'
+      })
+      return res.json(success({
+        eligible: false,
+        reason: '抱歉，您暂不符合本次活动参与条件',
+        riskLevel: 2
+      }))
+    }
+
+    await logAudienceAction({
+      campaignId,
+      action: 'participate',
+      operatorId: operator.id,
+      operatorName: operator.name,
+      userId: user.id,
+      userPhone: user.phone,
+      userLevel: user.level,
+      tags: user.tags,
+      remark: '用户通过定向校验，参与活动'
+    })
+
+    return res.json(success({
+      eligible: true,
+      userId: user.id,
+      userLevel: user.level,
+      weight: 1
+    }))
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   getList,
   getDetail,
@@ -673,5 +1135,15 @@ module.exports = {
   getStatistics,
   getAuditList,
   getRiskStats,
-  getSceneConfig
+  getSceneConfig,
+  getAudienceConfig,
+  applyAudienceStrategy,
+  previewAudience,
+  batchImportAudience,
+  batchExcludeAudience,
+  batchUpdateUserTags,
+  updateAudienceWeights,
+  getCampaignAudienceLogs,
+  getAudienceRiskStats,
+  verifyUserEligibility
 }

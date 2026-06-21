@@ -233,6 +233,14 @@
             <CampaignSceneRules v-model="formData" @scene-change="handleSceneChange" />
           </el-tab-pane>
 
+          <el-tab-pane label="人群定向" name="audience" ref="audienceTabRef">
+            <AudienceTargetingConfig
+              v-model="formData"
+              :campaign-id="editData?.id as number"
+              @warnings="handleAudienceWarnings"
+            />
+          </el-tab-pane>
+
           <el-tab-pane label="活动描述" name="desc">
             <el-form label-width="110px" size="default">
               <el-form-item label="活动描述">
@@ -324,6 +332,7 @@ import {
 } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import CampaignSceneRules from '@/components/CampaignSceneRules/index.vue'
+import AudienceTargetingConfig from '@/components/AudienceTargetingConfig/index.vue'
 import {
   validateCampaignApi,
   createMarketingApi,
@@ -362,6 +371,8 @@ const isEdit = computed(() => !!props.editData?.id)
 const formRef = ref<FormInstance>()
 const formMainRef = ref<HTMLElement>()
 const timeSectionRef = ref<HTMLElement>()
+const audienceTabRef = ref<any>(null)
+const audienceWarnings = ref<string[]>([])
 
 const defaultFormData = (): Partial<MarketingCampaign> => ({
   name: '',
@@ -393,7 +404,28 @@ const defaultFormData = (): Partial<MarketingCampaign> => ({
   exclusiveScenes: null,
   rules: null,
   status: CampaignStatus.DRAFT,
-  description: ''
+  description: '',
+  campaignPurpose: 0,
+  audiencePurpose: 0,
+  audienceVersion: 0,
+  userTags: [],
+  excludeUserTags: [],
+  activityLevels: [],
+  consumptionLevels: [],
+  userLevels: [],
+  userLevelsMin: 0,
+  userLevelsMax: 0,
+  excludeHighRisk: 1,
+  excludeBlocked: 1,
+  excludeInactive: 0,
+  registerChannels: null,
+  provinces: null,
+  audienceCityTiers: null,
+  audienceRules: null,
+  userWeights: null,
+  targetedUserIds: null,
+  excludedUserIds: null,
+  audienceCoverage: null
 })
 
 const formData = reactive<Partial<MarketingCampaign>>(defaultFormData())
@@ -488,21 +520,49 @@ const getFieldLabel = (field: string) => {
     exclusiveScenes: '互斥场景',
     inactiveDays: '流失天数',
     duplicate: '活动重复性',
-    benefit: '权益合理性'
+    benefit: '权益合理性',
+    userTags: '用户标签',
+    excludeUserTags: '排除标签',
+    activityLevels: '活跃度分层',
+    consumptionLevels: '消费能力分层',
+    userLevels: '用户等级',
+    audiencePurpose: '人群策略',
+    excludeHighRisk: '排除高风险',
+    excludeBlocked: '排除封禁用户',
+    excludeInactive: '排除超90天未登录',
+    targetedUserIds: '定向用户名单',
+    excludedUserIds: '排除用户名单',
+    registerDaysMax: '新用户注册天数',
+    audience: '人群定向配置'
   }
   return map[field] || field
 }
 
 const scrollToField = (field: string) => {
-  activeTab.value = field === 'cities' || field === 'vehicleTypes' || field === 'mutuallyExclusive'
+  const audienceFields = [
+    'userTags', 'excludeUserTags', 'activityLevels', 'consumptionLevels',
+    'userLevels', 'audiencePurpose', 'excludeHighRisk', 'excludeBlocked',
+    'excludeInactive', 'targetedUserIds', 'excludedUserIds', 'registerDaysMax',
+    'audience'
+  ]
+  if (audienceFields.includes(field)) {
+    activeTab.value = 'audience'
+  } else if (field === 'cities' || field === 'vehicleTypes' || field === 'mutuallyExclusive'
     || field === 'exclusiveScenes' || field === 'inactiveDays' || field === 'targetUser'
-    || field === 'subsidyAmount' || field === 'discountRate' || field === 'perUserLimit'
-    ? 'rules' : 'basic'
+    || field === 'subsidyAmount' || field === 'discountRate' || field === 'perUserLimit') {
+    activeTab.value = 'rules'
+  } else {
+    activeTab.value = 'basic'
+  }
 
   nextTick(() => {
     shakingField.value = field
     setTimeout(() => { shakingField.value = '' }, 500)
   })
+}
+
+const handleAudienceWarnings = (w: string[]) => {
+  audienceWarnings.value = w
 }
 
 const generateCode = () => {

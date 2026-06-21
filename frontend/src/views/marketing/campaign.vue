@@ -119,15 +119,42 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="目标人群" width="100" align="center">
+      <el-table-column label="目标人群" width="110" align="center">
         <template #default="{ row }">
-          <el-tag
-            size="small"
-            :color="TargetUserColorMap[row.targetUser]"
-            effect="dark"
-          >
-            {{ getTargetUserName(row.targetUser) }}
-          </el-tag>
+          <div class="target-cell">
+            <el-tag
+              size="small"
+              :color="TargetUserColorMap[row.targetUser]"
+              effect="dark"
+              style="margin-bottom: 4px"
+            >
+              {{ getTargetUserName(row.targetUser) }}
+            </el-tag>
+            <el-tag
+              v-if="row.audiencePurpose && row.audiencePurpose !== 0"
+              size="small"
+              :color="AudiencePurposeColorMap[row.audiencePurpose as number]"
+              effect="plain"
+            >
+              {{ AudiencePurposeMap[row.audiencePurpose as number] }}
+            </el-tag>
+          </div>
+        </template>
+      </el-table-column>
+
+      <el-table-column label="人群覆盖" width="140" align="center">
+        <template #default="{ row }">
+          <div v-if="row.audienceCoverage" class="coverage-cell">
+            <div class="coverage-row">
+              <span>有效:</span>
+              <b class="valid">{{ (row.audienceCoverage as any).valid?.toLocaleString() || 0 }}</b>
+            </div>
+            <div class="coverage-row">
+              <span>风险排除:</span>
+              <b class="risk">{{ (row.audienceCoverage as any).riskExcluded?.toLocaleString() || 0 }}</b>
+            </div>
+          </div>
+          <span v-else class="empty-coverage">未配置</span>
         </template>
       </el-table-column>
 
@@ -191,7 +218,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="操作" width="240" fixed="right" align="center">
+      <el-table-column label="操作" width="320" fixed="right" align="center">
         <template #default="{ row }">
           <el-button type="primary" link size="small" @click="handleEdit(row)">编辑</el-button>
           <el-dropdown
@@ -224,8 +251,16 @@
               </el-dropdown-menu>
             </template>
           </el-dropdown>
+          <el-dropdown trigger="click" @command="(cmd) => handleAudienceCmd(row, cmd)">
+            <el-button type="warning" link size="small">人群<el-icon><ArrowDown /></el-icon></el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="batch">批量运维</el-dropdown-item>
+                <el-dropdown-item command="trace">定向溯源</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
           <el-button link size="small" @click="handleCopy(row)">复制</el-button>
-          <el-button type="warning" link size="small" @click="handleShowAudit(row)">溯源</el-button>
           <el-button type="info" link size="small" @click="handleEffect(row)">效果</el-button>
           <el-button
             type="danger"
@@ -410,6 +445,34 @@
         </div>
       </div>
     </el-dialog>
+
+    <el-dialog
+      v-model="audienceBatchVisible"
+      :title="`「${currentAudienceCampaign?.name || ''}」人群批量运维`"
+      width="820px"
+      custom-class="audience-batch-dialog"
+      destroy-on-close
+    >
+      <AudienceBatchOperation
+        v-if="currentAudienceCampaign?.id"
+        :campaign-id="currentAudienceCampaign.id as number"
+        @cancel="audienceBatchVisible = false"
+        @success="handleAudienceSuccess"
+      />
+    </el-dialog>
+
+    <el-dialog
+      v-model="audienceTraceVisible"
+      :title="`「${currentAudienceCampaign?.name || ''}」人群定向溯源`"
+      width="1200px"
+      custom-class="audience-trace-dialog"
+      destroy-on-close
+    >
+      <AudienceAuditTrace
+        v-if="currentAudienceCampaign?.id"
+        :campaign-id="currentAudienceCampaign.id as number"
+      />
+    </el-dialog>
   </div>
 </template>
 
@@ -426,13 +489,16 @@ import StatusTag from '@/components/StatusTag/index.vue'
 import MarketingCampaignDialog from '@/components/MarketingCampaignDialog/index.vue'
 import MarketingBatchOperation from '@/components/MarketingBatchOperation/index.vue'
 import MarketingAuditTrace from '@/components/MarketingAuditTrace/index.vue'
+import AudienceBatchOperation from '@/components/AudienceBatchOperation/index.vue'
+import AudienceAuditTrace from '@/components/AudienceAuditTrace/index.vue'
 import {
   getMarketingListApi,
   deleteMarketingApi,
   updateMarketingStatusApi,
   copyCampaignApi,
   getMarketingStatisticsApi,
-  getRiskStatsApi
+  getRiskStatsApi,
+  getAudienceRiskStatsApi
 } from '@/api/marketing'
 import {
   CampaignScene,
@@ -445,7 +511,10 @@ import {
   TargetUser,
   TargetUserMap,
   TargetUserColorMap,
-  SceneDefaultConfig
+  SceneDefaultConfig,
+  AudiencePurpose,
+  AudiencePurposeMap,
+  AudiencePurposeColorMap
 } from '@/enums/marketing'
 import { formatDate } from '@/utils/format'
 import type { MarketingCampaign, CampaignStatistics, RiskStats } from '@/types/marketing'
@@ -466,6 +535,9 @@ const effectData = ref<CampaignStatistics | null>(null)
 const riskVisible = ref(false)
 const riskLoading = ref(false)
 const riskStats = ref<RiskStats | null>(null)
+const audienceBatchVisible = ref(false)
+const audienceTraceVisible = ref(false)
+const currentAudienceCampaign = ref<MarketingCampaign | null>(null)
 
 const sceneList = [
   { value: CampaignScene.NEW_USER_GIFT, label: '新人礼', desc: '新用户注册专享首单优惠', icon: 'StarFilled', gradient: CampaignSceneGradientMap[CampaignScene.NEW_USER_GIFT], defaultTarget: '仅新用户' },
@@ -671,6 +743,20 @@ const handleDelete = async (row: MarketingCampaign) => {
 const handleShowAudit = (row: MarketingCampaign) => {
   currentAuditCampaign.value = row
   auditVisible.value = true
+}
+
+const handleAudienceCmd = (row: MarketingCampaign, cmd: string) => {
+  currentAudienceCampaign.value = row
+  if (cmd === 'batch') {
+    audienceBatchVisible.value = true
+  } else if (cmd === 'trace') {
+    audienceTraceVisible.value = true
+  }
+}
+
+const handleAudienceSuccess = () => {
+  audienceBatchVisible.value = false
+  getList()
 }
 
 const handleEffect = async (row: MarketingCampaign) => {
@@ -917,6 +1003,52 @@ onMounted(() => {
         color: #409eff;
         font-size: 12px;
       }
+    }
+  }
+
+  .target-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .coverage-cell {
+    text-align: left;
+
+    .coverage-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      line-height: 1.8;
+      font-size: 12px;
+
+      span { color: #909399; }
+      b { font-weight: 600; color: #303133; }
+      b.valid { color: #67c23a; }
+      b.risk { color: #f56c6c; }
+    }
+  }
+
+  .empty-coverage {
+    color: #c0c4cc;
+    font-size: 12px;
+  }
+
+  .audience-batch-dialog,
+  .audience-trace-dialog {
+    :deep(.el-dialog) {
+      border-radius: 16px;
+    }
+    :deep(.el-dialog__header) {
+      background: linear-gradient(135deg, #409eff, #66b1ff);
+      margin: 0;
+      .el-dialog__title { color: #fff; }
+      .el-dialog__close { color: #fff; }
+    }
+    :deep(.el-dialog__body) {
+      padding: 20px 24px;
+      max-height: 75vh;
+      overflow-y: auto;
     }
   }
 

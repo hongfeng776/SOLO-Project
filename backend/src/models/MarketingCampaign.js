@@ -180,6 +180,111 @@ const MarketingCampaign = sequelize.define('MarketingCampaign', {
     allowNull: true,
     comment: '复制来源活动ID'
   },
+  campaignPurpose: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '活动目的：0通用 1拉新 2促活 3维稳'
+  },
+  audiencePurpose: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '人群策略目的：1拉新(注册≤30天) 2促活(沉睡/低活) 3维稳(高频核心) 0自定义'
+  },
+  userTags: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '定向用户标签列表 ["new_register","high_consumption",...]'
+  },
+  excludeUserTags: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '排除用户标签列表 ["fraud","risk","low_value",...]'
+  },
+  activityLevels: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '定向活跃度：[1,2] 1沉睡 2低 3中 4高 5非常活跃'
+  },
+  consumptionLevels: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '定向消费层级：[1,2] 1低 2中 3高 4超高'
+  },
+  userLevels: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '定向用户等级：[3,4,5] 1普通-5钻石'
+  },
+  userLevelsMin: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '用户等级最小值'
+  },
+  userLevelsMax: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '用户等级最大值（0不限）'
+  },
+  excludeHighRisk: {
+    type: DataTypes.TINYINT,
+    defaultValue: 1,
+    comment: '是否排除高风险用户：0否 1是'
+  },
+  excludeBlocked: {
+    type: DataTypes.TINYINT,
+    defaultValue: 1,
+    comment: '是否排除封禁用户：0否 1是'
+  },
+  excludeInactive: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '是否排除超90天未登录用户：0否 1是'
+  },
+  registerChannels: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '注册渠道定向 ["app_store","wechat","baidu",...]'
+  },
+  provinces: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '省份定向（空表示全部）'
+  },
+  audienceCityTiers: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '城市圈层定向 [1,2] 1一线-4四线及以下'
+  },
+  audienceRules: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '人群定向规则JSON { filters:[{field,op,value}], relation:"AND"}'
+  },
+  userWeights: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '用户参与权重配置 { byLevel:{3:1.5,4:2}, byTag:{vip:2}, byCity:{} }'
+  },
+  targetedUserIds: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '手动定向用户ID列表'
+  },
+  excludedUserIds: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '手动排除用户ID列表'
+  },
+  audienceCoverage: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '人群覆盖数量快照 {total, valid, byLevel, byActivity, byCity}'
+  },
+  audienceVersion: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: '人群规则版本号，每次变更+1'
+  },
   creatorId: {
     type: DataTypes.INTEGER,
     allowNull: true,
