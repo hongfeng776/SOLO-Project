@@ -83,6 +83,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/login-logs/index.vue'),
         meta: { title: '登录日志', icon: 'Monitor' },
       },
+      {
+        path: 'message-template',
+        name: 'MessageTemplate',
+        component: () => import('@/views/message-template/index.vue'),
+        meta: { title: '消息模板', icon: 'Bell' },
+      },
     ],
   },
   {

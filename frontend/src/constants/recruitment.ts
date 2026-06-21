@@ -1440,3 +1440,147 @@ export const RegularizationComplianceIssueLabel: Record<RegularizationCompliance
 export const REGULARIZATION_STATUS_OPTIONS = Object.entries(RegularizationStatusLabel).map(
   ([value, label]) => ({ label, value })
 );
+
+export enum MessageTemplateScene {
+  INTERVIEW = 'interview',
+  ONBOARD = 'onboard',
+  APPROVAL = 'approval',
+  RISK_CONTROL = 'risk_control',
+}
+
+export const MessageTemplateSceneLabel: Record<MessageTemplateScene, string> = {
+  [MessageTemplateScene.INTERVIEW]: '面试通知',
+  [MessageTemplateScene.ONBOARD]: '入职通知',
+  [MessageTemplateScene.APPROVAL]: '审批通知',
+  [MessageTemplateScene.RISK_CONTROL]: '风控预警',
+};
+
+export const MessageTemplateSceneColor: Record<MessageTemplateScene, string> = {
+  [MessageTemplateScene.INTERVIEW]: '#409eff',
+  [MessageTemplateScene.ONBOARD]: '#67c23a',
+  [MessageTemplateScene.APPROVAL]: '#e6a23c',
+  [MessageTemplateScene.RISK_CONTROL]: '#f56c6c',
+};
+
+export enum MessageTemplateStatus {
+  ENABLED = 'enabled',
+  DISABLED = 'disabled',
+  TESTING = 'testing',
+}
+
+export const MessageTemplateStatusLabel: Record<MessageTemplateStatus, string> = {
+  [MessageTemplateStatus.ENABLED]: '已启用',
+  [MessageTemplateStatus.DISABLED]: '已停用',
+  [MessageTemplateStatus.TESTING]: '测试中',
+};
+
+export const MessageTemplateStatusType: Record<MessageTemplateStatus, string> = {
+  [MessageTemplateStatus.ENABLED]: 'success',
+  [MessageTemplateStatus.DISABLED]: 'info',
+  [MessageTemplateStatus.TESTING]: 'warning',
+};
+
+export enum MessageNotificationType {
+  INFO = 'info',
+  REMINDER = 'reminder',
+  WARNING = 'warning',
+  EMERGENCY = 'emergency',
+}
+
+export const MessageNotificationTypeLabel: Record<MessageNotificationType, string> = {
+  [MessageNotificationType.INFO]: '通知',
+  [MessageNotificationType.REMINDER]: '提醒',
+  [MessageNotificationType.WARNING]: '警告',
+  [MessageNotificationType.EMERGENCY]: '紧急',
+};
+
+export enum MessageRecipientType {
+  CANDIDATE = 'candidate',
+  INTERVIEWER = 'interviewer',
+  HR = 'hr',
+  ADMIN = 'admin',
+  DEPT_HEAD = 'dept_head',
+}
+
+export const MessageRecipientTypeLabel: Record<MessageRecipientType, string> = {
+  [MessageRecipientType.CANDIDATE]: '候选人',
+  [MessageRecipientType.INTERVIEWER]: '面试官',
+  [MessageRecipientType.HR]: 'HR专员',
+  [MessageRecipientType.ADMIN]: '管理员',
+  [MessageRecipientType.DEPT_HEAD]: '部门负责人',
+};
+
+export enum MessagePushChannel {
+  SMS = 'sms',
+  EMAIL = 'email',
+  IN_APP = 'in_app',
+  WECHAT = 'wechat',
+}
+
+export const MessagePushChannelLabel: Record<MessagePushChannel, string> = {
+  [MessagePushChannel.SMS]: '短信',
+  [MessagePushChannel.EMAIL]: '邮件',
+  [MessagePushChannel.IN_APP]: '站内信',
+  [MessagePushChannel.WECHAT]: '微信',
+};
+
+export const MESSAGE_TEMPLATE_SCENE_OPTIONS = Object.entries(MessageTemplateSceneLabel).map(
+  ([value, label]) => ({ label, value })
+);
+
+export const MESSAGE_TEMPLATE_STATUS_OPTIONS = Object.entries(MessageTemplateStatusLabel).map(
+  ([value, label]) => ({ label, value })
+);
+
+export enum MessageTemplateLogAction {
+  CREATE = 'create',
+  UPDATE = 'update',
+  ENABLE = 'enable',
+  DISABLE = 'disable',
+  TEST = 'test',
+  BATCH_ENABLE = 'batch_enable',
+  BATCH_DISABLE = 'batch_disable',
+  BATCH_STANDARDIZE = 'batch_standardize',
+  BATCH_ADJUST_WEIGHT = 'batch_adjust_weight',
+}
+
+export const MessageTemplateLogActionLabel: Record<MessageTemplateLogAction, string> = {
+  [MessageTemplateLogAction.CREATE]: '创建模板',
+  [MessageTemplateLogAction.UPDATE]: '修改模板',
+  [MessageTemplateLogAction.ENABLE]: '启用模板',
+  [MessageTemplateLogAction.DISABLE]: '停用模板',
+  [MessageTemplateLogAction.TEST]: '测试模板',
+  [MessageTemplateLogAction.BATCH_ENABLE]: '批量启用',
+  [MessageTemplateLogAction.BATCH_DISABLE]: '批量停用',
+  [MessageTemplateLogAction.BATCH_STANDARDIZE]: '批量标准化',
+  [MessageTemplateLogAction.BATCH_ADJUST_WEIGHT]: '批量调整权重',
+};
+
+export const MESSAGE_TEMPLATE_COMPLIANCE_KEYWORDS = [
+  '传销', '刷单', '网贷', '博彩', '色情', '暴力', '毒品',
+  '枪支', '诈骗', '非法集资', '高利', '担保贷款',
+  '日结高薪', '月入过万', '轻松过万', '包赚不赔',
+  '包分配', '包就业', '包过', '保过',
+  '无需经验', '零基础上岗', '人人都能做', '月薪3万',
+  '年薪百万', '不用干活', '躺着赚钱', '轻松赚钱',
+];
+
+export const MESSAGE_CONTENT_MAX_LENGTH = 500;
+export const MESSAGE_TITLE_MAX_LENGTH = 50;
+export const DEFAULT_TEMPLATE_WEIGHT = 50;
+
+export interface TemplateFieldConfig {
+  key: string;
+  label: string;
+  required: boolean;
+  description: string;
+}
+
+export interface SceneFieldConfig {
+  scene: string;
+  sceneLabel: string;
+  notificationTypes: { value: string; label: string }[];
+  recipientTypes: { value: string; label: string }[];
+  pushChannels: { value: string; label: string }[];
+  templateFields: TemplateFieldConfig[];
+}

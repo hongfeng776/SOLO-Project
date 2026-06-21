@@ -1285,3 +1285,202 @@ export const RegularizationComplianceIssueLabel: Record<RegularizationCompliance
   [RegularizationComplianceIssue.DUPLICATE_APPLY]: '重复申请',
   [RegularizationComplianceIssue.DATA_MISMATCH]: '数据不一致',
 };
+
+export enum MessageTemplateScene {
+  INTERVIEW = 'interview',
+  ONBOARD = 'onboard',
+  APPROVAL = 'approval',
+  RISK_CONTROL = 'risk_control',
+}
+
+export const MessageTemplateSceneLabel: Record<MessageTemplateScene, string> = {
+  [MessageTemplateScene.INTERVIEW]: '面试通知',
+  [MessageTemplateScene.ONBOARD]: '入职通知',
+  [MessageTemplateScene.APPROVAL]: '审批通知',
+  [MessageTemplateScene.RISK_CONTROL]: '风控预警',
+};
+
+export const MessageTemplateSceneColor: Record<MessageTemplateScene, string> = {
+  [MessageTemplateScene.INTERVIEW]: '#409eff',
+  [MessageTemplateScene.ONBOARD]: '#67c23a',
+  [MessageTemplateScene.APPROVAL]: '#e6a23c',
+  [MessageTemplateScene.RISK_CONTROL]: '#f56c6c',
+};
+
+export enum MessageTemplateStatus {
+  ENABLED = 'enabled',
+  DISABLED = 'disabled',
+  TESTING = 'testing',
+}
+
+export const MessageTemplateStatusLabel: Record<MessageTemplateStatus, string> = {
+  [MessageTemplateStatus.ENABLED]: '已启用',
+  [MessageTemplateStatus.DISABLED]: '已停用',
+  [MessageTemplateStatus.TESTING]: '测试中',
+};
+
+export const MessageTemplateStatusType: Record<MessageTemplateStatus, string> = {
+  [MessageTemplateStatus.ENABLED]: 'success',
+  [MessageTemplateStatus.DISABLED]: 'info',
+  [MessageTemplateStatus.TESTING]: 'warning',
+};
+
+export enum MessageNotificationType {
+  INFO = 'info',
+  REMINDER = 'reminder',
+  WARNING = 'warning',
+  EMERGENCY = 'emergency',
+}
+
+export const MessageNotificationTypeLabel: Record<MessageNotificationType, string> = {
+  [MessageNotificationType.INFO]: '通知',
+  [MessageNotificationType.REMINDER]: '提醒',
+  [MessageNotificationType.WARNING]: '警告',
+  [MessageNotificationType.EMERGENCY]: '紧急',
+};
+
+export const MessageNotificationTypeColor: Record<MessageNotificationType, string> = {
+  [MessageNotificationType.INFO]: '#909399',
+  [MessageNotificationType.REMINDER]: '#409eff',
+  [MessageNotificationType.WARNING]: '#e6a23c',
+  [MessageNotificationType.EMERGENCY]: '#f56c6c',
+};
+
+export enum MessageRecipientType {
+  CANDIDATE = 'candidate',
+  INTERVIEWER = 'interviewer',
+  HR = 'hr',
+  ADMIN = 'admin',
+  DEPT_HEAD = 'dept_head',
+}
+
+export const MessageRecipientTypeLabel: Record<MessageRecipientType, string> = {
+  [MessageRecipientType.CANDIDATE]: '候选人',
+  [MessageRecipientType.INTERVIEWER]: '面试官',
+  [MessageRecipientType.HR]: 'HR专员',
+  [MessageRecipientType.ADMIN]: '管理员',
+  [MessageRecipientType.DEPT_HEAD]: '部门负责人',
+};
+
+export enum MessagePushChannel {
+  SMS = 'sms',
+  EMAIL = 'email',
+  IN_APP = 'in_app',
+  WECHAT = 'wechat',
+}
+
+export const MessagePushChannelLabel: Record<MessagePushChannel, string> = {
+  [MessagePushChannel.SMS]: '短信',
+  [MessagePushChannel.EMAIL]: '邮件',
+  [MessagePushChannel.IN_APP]: '站内信',
+  [MessagePushChannel.WECHAT]: '微信',
+};
+
+export const MessagePushChannelIcon: Record<MessagePushChannel, string> = {
+  [MessagePushChannel.SMS]: 'Iphone',
+  [MessagePushChannel.EMAIL]: 'Message',
+  [MessagePushChannel.IN_APP]: 'Bell',
+  [MessagePushChannel.WECHAT]: 'ChatDotRound',
+};
+
+export interface TemplateFieldConfig {
+  key: string;
+  label: string;
+  required: boolean;
+  description: string;
+}
+
+export const SCENE_TEMPLATE_FIELDS: Record<MessageTemplateScene, TemplateFieldConfig[]> = {
+  [MessageTemplateScene.INTERVIEW]: [
+    { key: 'candidateName', label: '候选人姓名', required: true, description: '面试候选人的姓名' },
+    { key: 'jobName', label: '岗位名称', required: true, description: '面试的岗位名称' },
+    { key: 'interviewTime', label: '面试时间', required: true, description: '面试的具体时间' },
+    { key: 'interviewLocation', label: '面试地点', required: true, description: '面试的地点信息' },
+    { key: 'interviewerName', label: '面试官姓名', required: false, description: '面试官的姓名' },
+    { key: 'contactPhone', label: '联系电话', required: false, description: 'HR联系电话' },
+    { key: 'interviewRound', label: '面试轮次', required: false, description: '第几轮面试' },
+  ],
+  [MessageTemplateScene.ONBOARD]: [
+    { key: 'candidateName', label: '候选人姓名', required: true, description: '入职人员姓名' },
+    { key: 'jobName', label: '岗位名称', required: true, description: '入职岗位名称' },
+    { key: 'onboardDate', label: '入职日期', required: true, description: '入职报到日期' },
+    { key: 'onboardLocation', label: '入职地点', required: true, description: '入职报到地点' },
+    { key: 'hrName', label: 'HR姓名', required: false, description: '对接HR姓名' },
+    { key: 'contactPhone', label: '联系电话', required: false, description: 'HR联系电话' },
+    { key: 'materials', label: '所需材料', required: false, description: '入职所需材料清单' },
+  ],
+  [MessageTemplateScene.APPROVAL]: [
+    { key: 'applicantName', label: '申请人姓名', required: true, description: '提交审批的人员姓名' },
+    { key: 'approvalType', label: '审批类型', required: true, description: '审批事项类型' },
+    { key: 'approvalTitle', label: '审批标题', required: true, description: '审批事项标题' },
+    { key: 'submitTime', label: '提交时间', required: true, description: '审批提交时间' },
+    { key: 'approverName', label: '审批人姓名', required: false, description: '当前审批人姓名' },
+    { key: 'deadline', label: '截止时间', required: false, description: '审批截止时间' },
+  ],
+  [MessageTemplateScene.RISK_CONTROL]: [
+    { key: 'riskLevel', label: '风险等级', required: true, description: '风险级别：低/中/高/极高' },
+    { key: 'riskType', label: '风险类型', required: true, description: '风险类别描述' },
+    { key: 'riskSource', label: '风险来源', required: true, description: '风险产生的来源' },
+    { key: 'triggerTime', label: '触发时间', required: true, description: '风险触发时间' },
+    { key: 'handlerName', label: '处理人', required: false, description: '风险处理人员' },
+    { key: 'suggestion', label: '处理建议', required: false, description: '风险处理建议' },
+  ],
+};
+
+export const SCENE_NOTIFICATION_TYPES: Record<MessageTemplateScene, MessageNotificationType[]> = {
+  [MessageTemplateScene.INTERVIEW]: [MessageNotificationType.INFO, MessageNotificationType.REMINDER, MessageNotificationType.WARNING],
+  [MessageTemplateScene.ONBOARD]: [MessageNotificationType.INFO, MessageNotificationType.REMINDER],
+  [MessageTemplateScene.APPROVAL]: [MessageNotificationType.REMINDER, MessageNotificationType.WARNING, MessageNotificationType.EMERGENCY],
+  [MessageTemplateScene.RISK_CONTROL]: [MessageNotificationType.WARNING, MessageNotificationType.EMERGENCY],
+};
+
+export const SCENE_RECIPIENT_TYPES: Record<MessageTemplateScene, MessageRecipientType[]> = {
+  [MessageTemplateScene.INTERVIEW]: [MessageRecipientType.CANDIDATE, MessageRecipientType.INTERVIEWER, MessageRecipientType.HR],
+  [MessageTemplateScene.ONBOARD]: [MessageRecipientType.CANDIDATE, MessageRecipientType.HR, MessageRecipientType.DEPT_HEAD],
+  [MessageTemplateScene.APPROVAL]: [MessageRecipientType.HR, MessageRecipientType.ADMIN, MessageRecipientType.DEPT_HEAD],
+  [MessageTemplateScene.RISK_CONTROL]: [MessageRecipientType.ADMIN, MessageRecipientType.HR],
+};
+
+export const SCENE_PUSH_CHANNELS: Record<MessageTemplateScene, MessagePushChannel[]> = {
+  [MessageTemplateScene.INTERVIEW]: [MessagePushChannel.SMS, MessagePushChannel.EMAIL, MessagePushChannel.IN_APP],
+  [MessageTemplateScene.ONBOARD]: [MessagePushChannel.SMS, MessagePushChannel.EMAIL, MessagePushChannel.IN_APP, MessagePushChannel.WECHAT],
+  [MessageTemplateScene.APPROVAL]: [MessagePushChannel.IN_APP, MessagePushChannel.EMAIL, MessagePushChannel.WECHAT],
+  [MessageTemplateScene.RISK_CONTROL]: [MessagePushChannel.IN_APP, MessagePushChannel.SMS, MessagePushChannel.EMAIL, MessagePushChannel.WECHAT],
+};
+
+export enum MessageTemplateLogAction {
+  CREATE = 'create',
+  UPDATE = 'update',
+  ENABLE = 'enable',
+  DISABLE = 'disable',
+  TEST = 'test',
+  BATCH_ENABLE = 'batch_enable',
+  BATCH_DISABLE = 'batch_disable',
+  BATCH_STANDARDIZE = 'batch_standardize',
+  BATCH_ADJUST_WEIGHT = 'batch_adjust_weight',
+}
+
+export const MessageTemplateLogActionLabel: Record<MessageTemplateLogAction, string> = {
+  [MessageTemplateLogAction.CREATE]: '创建模板',
+  [MessageTemplateLogAction.UPDATE]: '修改模板',
+  [MessageTemplateLogAction.ENABLE]: '启用模板',
+  [MessageTemplateLogAction.DISABLE]: '停用模板',
+  [MessageTemplateLogAction.TEST]: '测试模板',
+  [MessageTemplateLogAction.BATCH_ENABLE]: '批量启用',
+  [MessageTemplateLogAction.BATCH_DISABLE]: '批量停用',
+  [MessageTemplateLogAction.BATCH_STANDARDIZE]: '批量标准化',
+  [MessageTemplateLogAction.BATCH_ADJUST_WEIGHT]: '批量调整权重',
+};
+
+export const MESSAGE_TEMPLATE_COMPLIANCE_KEYWORDS = [
+  '传销', '刷单', '网贷', '博彩', '色情', '暴力', '毒品',
+  '枪支', '诈骗', '非法集资', '高利', '担保贷款',
+  '日结高薪', '月入过万', '轻松过万', '包赚不赔',
+  '包分配', '包就业', '包过', '保过',
+  '无需经验', '零基础上岗', '人人都能做', '月薪3万',
+  '年薪百万', '不用干活', '躺着赚钱', '轻松赚钱',
+];
+
+export const MESSAGE_CONTENT_MAX_LENGTH = 500;
+export const MESSAGE_TITLE_MAX_LENGTH = 50;
+export const DEFAULT_TEMPLATE_WEIGHT = 50;

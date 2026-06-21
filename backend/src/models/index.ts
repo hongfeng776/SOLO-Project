@@ -20,6 +20,8 @@ import QualificationAuditLog from './qualification-audit-log.model';
 import CompanyChangeLog from './company-change-log.model';
 import RecruitmentConfig from './recruitment-config.model';
 import RecruitmentConfigLog from './recruitment-config-log.model';
+import MessageTemplate from './message-template.model';
+import MessageTemplateLog from './message-template-log.model';
 import PermissionLog from './permission-log.model';
 import LoginLog from './login-log.model';
 import Probation from './probation.model';
@@ -43,6 +45,9 @@ RecruitmentConfig.belongsTo(Company, { foreignKey: 'companyId', as: 'company' })
 
 RecruitmentConfig.hasMany(RecruitmentConfigLog, { foreignKey: 'configId', as: 'configLogs' });
 RecruitmentConfigLog.belongsTo(RecruitmentConfig, { foreignKey: 'configId', as: 'config' });
+
+MessageTemplate.hasMany(MessageTemplateLog, { foreignKey: 'templateId', as: 'templateLogs' });
+MessageTemplateLog.belongsTo(MessageTemplate, { foreignKey: 'templateId', as: 'template' });
 
 User.hasMany(PermissionLog, { foreignKey: 'userId', as: 'permissionLogs' });
 PermissionLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -137,6 +142,7 @@ export {
   Onboard, OnboardOperationLog, OnboardLedger,
   User, Qualification, QualificationAuditLog,
   CompanyChangeLog, RecruitmentConfig, RecruitmentConfigLog,
+  MessageTemplate, MessageTemplateLog,
   PermissionLog, LoginLog,
   Probation, ProbationOperationLog, ProbationAssessmentIndicator,
   Regularization, RegularizationApprovalNodeRecord, RegularizationOperationLog

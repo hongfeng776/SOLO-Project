@@ -43,6 +43,7 @@ const menuList = ref([
   { path: '/interview', title: '面试管理', icon: 'ChatDotRound' },
   { path: '/onboard', title: '入职管理', icon: 'UserFilled' },
   { path: '/qualification', title: '资质审核', icon: 'Stamp' },
+  { path: '/message-template', title: '消息模板', icon: 'Bell' },
   { path: '/system', title: '系统管理', icon: 'Setting' },
 ]);
 </script>
