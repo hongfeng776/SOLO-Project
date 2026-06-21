@@ -20,4 +20,4 @@ export { LoanService } from './LoanService';
 export { LoanApprovalService } from './LoanApprovalService';
 export { LoanRepaymentService } from './LoanRepaymentService';
 export { SettlementService } from './SettlementService';
-export { CustomerProfileService } from './CustomerProfileService';
+export { OnlinePaymentService } from './OnlinePaymentService';

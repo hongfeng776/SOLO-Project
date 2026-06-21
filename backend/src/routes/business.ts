@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, CustomerProfileController, CorporateProfileController, CustomerTagController, CustomerPrivacyController, AbnormalMonitorController, BlacklistController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, OnlinePaymentController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -16,12 +16,7 @@ const loanController = new LoanController();
 const loanApprovalController = new LoanApprovalController();
 const loanRepaymentController = new LoanRepaymentController();
 const settlementController = new SettlementController();
-const customerProfileController = new CustomerProfileController();
-const corporateProfileController = new CorporateProfileController();
-const customerTagController = new CustomerTagController();
-const customerPrivacyController = new CustomerPrivacyController();
-const abnormalMonitorController = new AbnormalMonitorController();
-const blacklistController = new BlacklistController();
+const onlinePaymentController = new OnlinePaymentController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -75,30 +70,6 @@ router.get('/risk/violation/:id', requirePermission('risk:violation:query'), (re
 router.post('/risk/violation', requirePermission('risk:violation:create'), (req, res, next) => riskController.violationCreate(req, res, next));
 router.post('/risk/violation/:id/handle', requirePermission('risk:violation:update'), (req, res, next) => riskController.violationHandle(req, res, next));
 router.get('/risk/statistics', requirePermission('risk:violation:query'), (req, res, next) => riskController.statistics(req, res, next));
-
-router.get('/risk/config', requireAuth, (req, res, next) => riskController.getRiskLevelConfig(req, res, next));
-
-router.get('/risk/assessment/data-sync/:customer_id', requireAuth, (req, res, next) => riskController.checkDataSync(req, res, next));
-router.get('/risk/assessment/multi-data/:customer_id', requireAuth, (req, res, next) => riskController.getMultiDimensionalData(req, res, next));
-router.get('/risk/assessment/validate-weights', requireAuth, (req, res, next) => riskController.validateWeights(req, res, next));
-router.post('/risk/assessment/check-illegal-downgrade/:customer_id', requireAuth, (req, res, next) => riskController.checkIllegalDowngrade(req, res, next));
-
-router.get('/risk/assessment/list', requirePermission('risk:assessment:query'), (req, res, next) => riskController.getRiskAssessmentList(req, res, next));
-router.get('/risk/assessment/:id', requirePermission('risk:assessment:query'), (req, res, next) => riskController.getRiskAssessmentDetail(req, res, next));
-router.post('/risk/assessment', requirePermission('risk:assessment:create'), (req, res, next) => riskController.createRiskAssessment(req, res, next));
-router.post('/risk/assessment/:id/review', requirePermission('risk:assessment:review'), (req, res, next) => riskController.reviewRiskAssessment(req, res, next));
-
-router.get('/risk/assessment/trace/:customer_id', requirePermission('risk:assessment:trace'), (req, res, next) => riskController.getCustomerRiskTrace(req, res, next));
-
-router.get('/risk/batch/list', requirePermission('risk:batch:query'), (req, res, next) => riskController.getBatchAssessmentList(req, res, next));
-router.get('/risk/batch/:id', requirePermission('risk:batch:query'), (req, res, next) => riskController.getBatchAssessmentDetail(req, res, next));
-router.post('/risk/batch', requirePermission('risk:batch:create'), (req, res, next) => riskController.createBatchAssessment(req, res, next));
-
-router.get('/risk/indicator/list', requirePermission('risk:indicator:query'), (req, res, next) => riskController.getRiskIndicatorList(req, res, next));
-router.get('/risk/indicator/:id', requirePermission('risk:indicator:query'), (req, res, next) => riskController.getRiskIndicatorDetail(req, res, next));
-router.post('/risk/indicator', requirePermission('risk:indicator:create'), (req, res, next) => riskController.createRiskIndicator(req, res, next));
-router.put('/risk/indicator/:id', requirePermission('risk:indicator:update'), (req, res, next) => riskController.updateRiskIndicator(req, res, next));
-router.delete('/risk/indicator/:id', requirePermission('risk:indicator:delete'), (req, res, next) => riskController.deleteRiskIndicator(req, res, next));
 
 router.get('/corporate/config', requireAuth, (req, res, next) => corporateOpeningController.getConfig(req, res));
 router.post('/corporate/precheck', requireAuth, (req, res, next) => corporateOpeningController.precheck(req, res));
@@ -248,139 +219,30 @@ router.get('/settlement/batch/:id/progress', requirePermission('business:settlem
 // 溯源查询
 router.post('/settlement/trace', requirePermission('business:settlement:trace'), (req, res, next) => settlementController.trace(req, res, next));
 
-// ========== 个人客户档案建档管控 ==========
-// 功能点1：前置校验（证件有效性、人脸核验、信息完整性、公安备案校验）
-router.post('/customer-profile/precheck', requireAuth, (req, res, next) => customerProfileController.precheck(req, res, next));
-// 档案列表查询
-router.get('/customer-profile/list', requirePermission('customer:profile:query'), (req, res, next) => customerProfileController.list(req, res, next));
-// 档案详情
-router.get('/customer-profile/:id', requirePermission('customer:profile:query'), (req, res, next) => customerProfileController.detail(req, res, next));
-// 功能点1和2：新建客户档案（含等级自动判定）
-router.post('/customer-profile', requirePermission('customer:profile:create'), (req, res, next) => customerProfileController.create(req, res, next));
-// 更新档案信息
-router.put('/customer-profile/:id', requirePermission('customer:profile:update'), (req, res, next) => customerProfileController.update(req, res, next));
-// 档案变更日志
-router.get('/customer-profile/:id/logs', requirePermission('customer:profile:query'), (req, res, next) => customerProfileController.logs(req, res, next));
-// 功能点4：依托证件号码溯源客户历史建档、变更、销户记录
-router.post('/customer-profile/trace', requirePermission('customer:profile:trace'), (req, res, next) => customerProfileController.trace(req, res, next));
-// 功能点4：异常档案复核
-router.post('/customer-profile/review-abnormal', requirePermission('customer:profile:review'), (req, res, next) => customerProfileController.reviewAbnormal(req, res, next));
-
-// 功能点3：批量导入个人客户基础信息建档
-router.post('/customer-profile/batch/import', requirePermission('customer:profile:batch'), (req, res, next) => customerProfileController.batchImport(req, res, next));
-// 批量导入批次列表
-router.get('/customer-profile/batch/list', requirePermission('customer:profile:batch'), (req, res, next) => customerProfileController.batchList(req, res, next));
-// 批量导入明细列表
-router.get('/customer-profile/batch/items', requirePermission('customer:profile:batch'), (req, res, next) => customerProfileController.batchItemList(req, res, next));
-
-// ========== 对公客户信息运维路由 ==========
-router.post('/corporate-profile/precheck', requireAuth, (req, res, next) => corporateProfileController.precheck(req, res, next));
-router.post('/corporate-profile/adapt-type', requireAuth, (req, res, next) => corporateProfileController.adaptType(req, res, next));
-router.get('/corporate-profile/list', requirePermission('corporate:profile:query'), (req, res, next) => corporateProfileController.list(req, res, next));
-router.get('/corporate-profile/:id', requirePermission('corporate:profile:query'), (req, res, next) => corporateProfileController.detail(req, res, next));
-router.post('/corporate-profile', requirePermission('corporate:profile:create'), (req, res, next) => corporateProfileController.create(req, res, next));
-router.put('/corporate-profile/:id', requirePermission('corporate:profile:update'), (req, res, next) => corporateProfileController.update(req, res, next));
-router.get('/corporate-profile/:id/logs', requirePermission('corporate:profile:query'), (req, res, next) => corporateProfileController.logs(req, res, next));
-router.post('/corporate-profile/trace', requirePermission('corporate:profile:trace'), (req, res, next) => corporateProfileController.trace(req, res, next));
-router.post('/corporate-profile/review-abnormal', requirePermission('corporate:profile:review'), (req, res, next) => corporateProfileController.reviewAbnormal(req, res, next));
-router.post('/corporate-profile/batch/update', requirePermission('corporate:profile:batch'), (req, res, next) => corporateProfileController.batchUpdate(req, res, next));
-router.get('/corporate-profile/batch/list', requirePermission('corporate:profile:batch'), (req, res, next) => corporateProfileController.batchList(req, res, next));
-router.get('/corporate-profile/batch/items', requirePermission('corporate:profile:batch'), (req, res, next) => corporateProfileController.batchItemList(req, res, next));
-
-// ========== 客户等级标签管理路由 ==========
-router.post('/customer-tag/precheck', requireAuth, (req, res, next) => customerTagController.precheck(req, res, next));
-router.post('/customer-tag/adapt', requireAuth, (req, res, next) => customerTagController.adaptTag(req, res, next));
-router.get('/customer-tag/list', requirePermission('customer:tag:query'), (req, res, next) => customerTagController.list(req, res, next));
-router.get('/customer-tag/:id', requirePermission('customer:tag:query'), (req, res, next) => customerTagController.detail(req, res, next));
-router.post('/customer-tag', requirePermission('customer:tag:create'), (req, res, next) => customerTagController.create(req, res, next));
-router.put('/customer-tag/:id', requirePermission('customer:tag:update'), (req, res, next) => customerTagController.update(req, res, next));
-router.post('/customer-tag/adjust', requirePermission('customer:tag:update'), (req, res, next) => customerTagController.adjust(req, res, next));
-router.delete('/customer-tag/:id', requirePermission('customer:tag:update'), (req, res, next) => customerTagController.remove(req, res, next));
-router.get('/customer-tag/:id/logs', requirePermission('customer:tag:query'), (req, res, next) => customerTagController.logs(req, res, next));
-router.post('/customer-tag/trace', requirePermission('customer:tag:trace'), (req, res, next) => customerTagController.trace(req, res, next));
-router.post('/customer-tag/batch', requirePermission('customer:tag:batch'), (req, res, next) => customerTagController.batchUpdate(req, res, next));
-router.get('/customer-tag/batch/list', requirePermission('customer:tag:batch'), (req, res, next) => customerTagController.batchList(req, res, next));
-router.get('/customer-tag/batch/items', requirePermission('customer:tag:batch'), (req, res, next) => customerTagController.batchItemList(req, res, next));
-
-// ========== 客户信息隐私防护路由 ==========
-// 功能点1：前置校验
-router.post('/customer-privacy/precheck', requireAuth, (req, res, next) => customerPrivacyController.precheck(req, res, next));
-router.post('/customer-privacy/view', requirePermission('customer:privacy:query'), (req, res, next) => customerPrivacyController.viewCustomer(req, res, next));
-router.post('/customer-privacy/export', requirePermission('customer:privacy:export'), (req, res, next) => customerPrivacyController.exportCustomer(req, res, next));
-
-// 功能点2：场景适配
-router.post('/customer-privacy/adapt-scene', requireAuth, (req, res, next) => customerPrivacyController.adaptScene(req, res, next));
-
-// 功能点3：隐私规则管理
-router.get('/customer-privacy/rule/list', requirePermission('customer:privacy:config'), (req, res, next) => customerPrivacyController.ruleList(req, res, next));
-router.get('/customer-privacy/rule/:id', requirePermission('customer:privacy:config'), (req, res, next) => customerPrivacyController.ruleDetail(req, res, next));
-router.post('/customer-privacy/rule', requirePermission('customer:privacy:config'), (req, res, next) => customerPrivacyController.createRule(req, res, next));
-router.put('/customer-privacy/rule/:id', requirePermission('customer:privacy:config'), (req, res, next) => customerPrivacyController.updateRule(req, res, next));
-router.delete('/customer-privacy/rule/:id', requirePermission('customer:privacy:config'), (req, res, next) => customerPrivacyController.deleteRule(req, res, next));
-
-// 功能点3：批量配置
-router.post('/customer-privacy/batch-config', requirePermission('customer:privacy:config'), (req, res, next) => customerPrivacyController.batchConfig(req, res, next));
-
-// 功能点4：操作日志与溯源
-router.get('/customer-privacy/log/list', requirePermission('customer:privacy:trace'), (req, res, next) => customerPrivacyController.logList(req, res, next));
-router.get('/customer-privacy/log/:id', requirePermission('customer:privacy:trace'), (req, res, next) => customerPrivacyController.logDetail(req, res, next));
-router.post('/customer-privacy/trace', requirePermission('customer:privacy:trace'), (req, res, next) => customerPrivacyController.trace(req, res, next));
-
-// ========== 异常交易智能监控 ==========
-// 功能点1：实时监控检测 + 前置校验
-router.post('/monitor/realtime', requirePermission('monitor:alert:create'), (req, res, next) => abnormalMonitorController.realTimeMonitor(req, res, next));
-router.post('/monitor/validate-rules', requireAuth, (req, res, next) => abnormalMonitorController.validateRules(req, res, next));
-router.post('/monitor/compliance/:id', requireAuth, (req, res, next) => abnormalMonitorController.checkCompliance(req, res, next));
-
-// 功能点2：异常交易处理（多分支）
-router.get('/monitor/alert/list', requirePermission('monitor:alert:query'), (req, res, next) => abnormalMonitorController.getAlertList(req, res, next));
-router.get('/monitor/alert/:id', requirePermission('monitor:alert:query'), (req, res, next) => abnormalMonitorController.getAlertDetail(req, res, next));
-router.post('/monitor/alert/:id/handle', requirePermission('monitor:alert:handle'), (req, res, next) => abnormalMonitorController.handleAlert(req, res, next));
-router.get('/monitor/statistics', requirePermission('monitor:alert:query'), (req, res, next) => abnormalMonitorController.getStatistics(req, res, next));
-router.get('/monitor/config', requireAuth, (req, res, next) => abnormalMonitorController.getMonitorConfig(req, res, next));
-
-// 功能点3：批量处理
-router.get('/monitor/batch/list', requirePermission('monitor:batch:query'), (req, res, next) => abnormalMonitorController.getBatchList(req, res, next));
-router.get('/monitor/batch/:id', requirePermission('monitor:batch:query'), (req, res, next) => abnormalMonitorController.getBatchDetail(req, res, next));
-router.post('/monitor/batch', requirePermission('monitor:batch:create'), (req, res, next) => abnormalMonitorController.createBatchHandle(req, res, next));
-
-// 功能点4：溯源查询
-router.get('/monitor/trace/list', requirePermission('monitor:alert:trace'), (req, res, next) => abnormalMonitorController.getTraceList(req, res, next));
-router.get('/monitor/trace/:alertId', requirePermission('monitor:alert:trace'), (req, res, next) => abnormalMonitorController.getAlertTrace(req, res, next));
-
-// 监控规则管理
-router.get('/monitor/rule/list', requirePermission('monitor:rule:query'), (req, res, next) => abnormalMonitorController.getRuleList(req, res, next));
-router.get('/monitor/rule/:id', requirePermission('monitor:rule:query'), (req, res, next) => abnormalMonitorController.getRuleDetail(req, res, next));
-router.post('/monitor/rule', requirePermission('monitor:rule:create'), (req, res, next) => abnormalMonitorController.createRule(req, res, next));
-router.put('/monitor/rule/:id', requirePermission('monitor:rule:update'), (req, res, next) => abnormalMonitorController.updateRule(req, res, next));
-router.delete('/monitor/rule/:id', requirePermission('monitor:rule:delete'), (req, res, next) => abnormalMonitorController.deleteRule(req, res, next));
-
-// ========== 黑名单客户管控 ==========
-// 功能点1：前置校验 + 黑名单管理
-router.get('/blacklist/precheck', requireAuth, (req, res, next) => blacklistController.preCheck(req, res, next));
-router.get('/blacklist/list', requirePermission('blacklist:record:query'), (req, res, next) => blacklistController.getBlacklistList(req, res, next));
-router.get('/blacklist/:id', requirePermission('blacklist:record:query'), (req, res, next) => blacklistController.getBlacklistDetail(req, res, next));
-router.post('/blacklist', requirePermission('blacklist:record:create'), (req, res, next) => blacklistController.createBlacklist(req, res, next));
-router.post('/blacklist/:id/review', requirePermission('blacklist:record:review'), (req, res, next) => blacklistController.reviewBlacklist(req, res, next));
-
-// 功能点2：多分级管控（移除/延期/等级变更）
-router.post('/blacklist/:id/remove', requirePermission('blacklist:record:remove'), (req, res, next) => blacklistController.removeBlacklist(req, res, next));
-router.post('/blacklist/:id/extend', requirePermission('blacklist:record:update'), (req, res, next) => blacklistController.extendBlacklist(req, res, next));
-router.post('/blacklist/:id/grade', requirePermission('blacklist:record:update'), (req, res, next) => blacklistController.changeGrade(req, res, next));
-
-// 功能点1和2：合规校验 + 统计 + 配置
-router.post('/blacklist/:id/compliance', requireAuth, (req, res, next) => blacklistController.checkCompliance(req, res, next));
-router.get('/blacklist/statistics', requirePermission('blacklist:record:query'), (req, res, next) => blacklistController.getStatistics(req, res, next));
-router.get('/blacklist/grade-configs', requireAuth, (req, res, next) => blacklistController.getGradeConfigs(req, res, next));
-router.get('/blacklist/config', requireAuth, (req, res, next) => blacklistController.getBlacklistConfig(req, res, next));
-
-// 功能点3：批量处理
-router.get('/blacklist/batch/list', requirePermission('blacklist:batch:query'), (req, res, next) => blacklistController.getBatchList(req, res, next));
-router.get('/blacklist/batch/:id', requirePermission('blacklist:batch:query'), (req, res, next) => blacklistController.getBatchDetail(req, res, next));
-router.post('/blacklist/batch', requirePermission('blacklist:batch:create'), (req, res, next) => blacklistController.createBatchHandle(req, res, next));
-
-// 功能点4：溯源查询
-router.get('/blacklist/trace/list', requirePermission('blacklist:record:trace'), (req, res, next) => blacklistController.getTraceList(req, res, next));
-router.get('/blacklist/trace/:id', requirePermission('blacklist:record:trace'), (req, res, next) => blacklistController.getBlacklistTraces(req, res, next));
+// ========== 线上支付模块 ==========
+// 配置枚举
+router.get('/online-payment/config', requireAuth, (req, res, next) => onlinePaymentController.config(req, res, next));
+// 前置校验
+router.post('/online-payment/precheck', requirePermission('business:onlinePayment:create'), (req, res, next) => onlinePaymentController.preCheck(req, res, next));
+// 列表查询
+router.get('/online-payment/list', requirePermission('business:onlinePayment:query'), (req, res, next) => onlinePaymentController.list(req, res, next));
+// 详情查询
+router.get('/online-payment/:id', requirePermission('business:onlinePayment:query'), (req, res, next) => onlinePaymentController.detail(req, res, next));
+// 创建支付
+router.post('/online-payment', requirePermission('business:onlinePayment:create'), (req, res, next) => onlinePaymentController.create(req, res, next));
+// 确认支付
+router.post('/online-payment/:id/confirm', requirePermission('business:onlinePayment:update'), (req, res, next) => onlinePaymentController.confirm(req, res, next));
+// 退款
+router.post('/online-payment/:id/refund', requirePermission('business:onlinePayment:update'), (req, res, next) => onlinePaymentController.refund(req, res, next));
+// 关闭订单
+router.post('/online-payment/:id/close', requirePermission('business:onlinePayment:update'), (req, res, next) => onlinePaymentController.close(req, res, next));
+// 批量处理
+router.post('/online-payment/batch', requirePermission('business:onlinePayment:batch'), (req, res, next) => onlinePaymentController.batch(req, res, next));
+// 支付溯源
+router.post('/online-payment/trace', requirePermission('business:onlinePayment:trace'), (req, res, next) => onlinePaymentController.trace(req, res, next));
+// 商户信息查询
+router.get('/online-payment/merchant/:no', requirePermission('business:onlinePayment:query'), (req, res, next) => onlinePaymentController.merchantDetail(req, res, next));
+// 设备绑定列表
+router.get('/online-payment/device/list', requirePermission('business:onlinePayment:query'), (req, res, next) => onlinePaymentController.deviceList(req, res, next));
 
 export default router;

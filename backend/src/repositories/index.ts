@@ -15,35 +15,6 @@ export { DepositRepository } from './DepositRepository';
 export { LoanRepository } from './LoanRepository';
 export { SettlementRepository } from './SettlementRepository';
 export { SettlementBatchRepository } from './SettlementBatchRepository';
-export {
-  CustomerProfileRepository,
-  CustomerProfileLogRepository,
-  CustomerProfileBatchRepository,
-  CustomerProfileBatchItemRepository
-} from './CustomerProfileRepository';
-export {
-  CorporateProfileRepository,
-  CorporateProfileLogRepository,
-  CorporateProfileBatchRepository,
-  CorporateProfileBatchItemRepository
-} from './CorporateProfileRepository';
-export {
-  CustomerTagRepository,
-  CustomerTagLogRepository,
-  CustomerTagBatchRepository,
-  CustomerTagBatchItemRepository
-} from './CustomerTagRepository';
-export {
-  CustomerPrivacyRuleRepository,
-  CustomerPrivacyLogRepository
-} from './CustomerPrivacyRepository';
-export {
-  RiskAssessmentRepository,
-  RiskIndicatorRepository,
-  RiskAssessmentBatchRepository
-} from './RiskAssessmentRepository';
-export {
-  BlacklistRecordRepository,
-  BlacklistBatchRepository,
-  BlacklistTraceLogRepository
-} from './BlacklistRepository';
+export { OnlinePaymentRepository } from './OnlinePaymentRepository';
+export { MerchantInfoRepository } from './MerchantInfoRepository';
+export { DeviceBindingRepository } from './DeviceBindingRepository';

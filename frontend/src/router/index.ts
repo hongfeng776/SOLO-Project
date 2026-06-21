@@ -121,162 +121,6 @@ const asyncRoutes: RouteRecordRaw[] = [
         }
       },
       {
-        path: 'customer-profile',
-        name: 'BusinessCustomerProfile',
-        component: () => import('@views/business/customer-profile/index.vue'),
-        meta: {
-          title: '个人客户建档',
-          icon: 'UserFilled',
-          componentName: 'BusinessCustomerProfile',
-          keepAlive: true,
-          permissions: ['customer:profile:query'],
-          roles: ['admin', 'manager', 'operator']
-        }
-      },
-      {
-        path: 'customer-profile/batch',
-        name: 'BusinessCustomerProfileBatch',
-        component: () => import('@views/business/customer-profile/batch.vue'),
-        meta: {
-          title: '批量建档导入',
-          icon: 'Files',
-          componentName: 'BusinessCustomerProfileBatch',
-          keepAlive: true,
-          permissions: ['customer:profile:batch'],
-          roles: ['admin', 'manager']
-        }
-      },
-      {
-        path: 'customer-profile/trace',
-        name: 'BusinessCustomerProfileTrace',
-        component: () => import('@views/business/customer-profile/trace.vue'),
-        meta: {
-          title: '客户档案溯源',
-          icon: 'Search',
-          componentName: 'BusinessCustomerProfileTrace',
-          keepAlive: false,
-          permissions: ['customer:profile:trace'],
-          roles: ['admin', 'manager', 'auditor']
-        }
-      },
-      {
-        path: 'corporate-profile',
-        name: 'BusinessCorporateProfile',
-        component: () => import('@views/business/corporate-profile/index.vue'),
-        meta: {
-          title: '对公客户运维',
-          icon: 'OfficeBuilding',
-          componentName: 'BusinessCorporateProfile',
-          keepAlive: true,
-          permissions: ['corporate:profile:query'],
-          roles: ['admin', 'manager', 'operator']
-        }
-      },
-      {
-        path: 'corporate-profile/batch',
-        name: 'BusinessCorporateProfileBatch',
-        component: () => import('@views/business/corporate-profile/batch.vue'),
-        meta: {
-          title: '批量信息更新',
-          icon: 'Files',
-          componentName: 'BusinessCorporateProfileBatch',
-          keepAlive: true,
-          permissions: ['corporate:profile:batch'],
-          roles: ['admin', 'manager']
-        }
-      },
-      {
-        path: 'corporate-profile/trace',
-        name: 'BusinessCorporateProfileTrace',
-        component: () => import('@views/business/corporate-profile/trace.vue'),
-        meta: {
-          title: '企业信息溯源',
-          icon: 'Search',
-          componentName: 'BusinessCorporateProfileTrace',
-          keepAlive: false,
-          permissions: ['corporate:profile:trace'],
-          roles: ['admin', 'manager', 'auditor']
-        }
-      },
-      {
-        path: 'customer-tag',
-        name: 'BusinessCustomerTag',
-        component: () => import('@views/business/customer-tag/index.vue'),
-        meta: {
-          title: '客户等级标签',
-          icon: 'PriceTag',
-          componentName: 'BusinessCustomerTag',
-          keepAlive: true,
-          permissions: ['customer:tag:query'],
-          roles: ['admin', 'manager', 'operator']
-        }
-      },
-      {
-        path: 'customer-tag/batch',
-        name: 'BusinessCustomerTagBatch',
-        component: () => import('@views/business/customer-tag/batch.vue'),
-        meta: {
-          title: '批量标签操作',
-          icon: 'Files',
-          componentName: 'BusinessCustomerTagBatch',
-          keepAlive: true,
-          permissions: ['customer:tag:batch'],
-          roles: ['admin', 'manager']
-        }
-      },
-      {
-        path: 'customer-tag/trace',
-        name: 'BusinessCustomerTagTrace',
-        component: () => import('@views/business/customer-tag/trace.vue'),
-        meta: {
-          title: '标签溯源',
-          icon: 'Search',
-          componentName: 'BusinessCustomerTagTrace',
-          keepAlive: false,
-          permissions: ['customer:tag:trace'],
-          roles: ['admin', 'manager', 'auditor']
-        }
-      },
-      {
-        path: 'customer-privacy',
-        name: 'BusinessCustomerPrivacy',
-        component: () => import('@views/business/customer-privacy/index.vue'),
-        meta: {
-          title: '隐私防护管理',
-          icon: 'Lock',
-          componentName: 'BusinessCustomerPrivacy',
-          keepAlive: true,
-          permissions: ['customer:privacy:query'],
-          roles: ['admin', 'manager', 'operator']
-        }
-      },
-      {
-        path: 'customer-privacy/batch',
-        name: 'BusinessCustomerPrivacyBatch',
-        component: () => import('@views/business/customer-privacy/batch.vue'),
-        meta: {
-          title: '隐私规则配置',
-          icon: 'Setting',
-          componentName: 'BusinessCustomerPrivacyBatch',
-          keepAlive: true,
-          permissions: ['customer:privacy:config'],
-          roles: ['admin', 'manager']
-        }
-      },
-      {
-        path: 'customer-privacy/trace',
-        name: 'BusinessCustomerPrivacyTrace',
-        component: () => import('@views/business/customer-privacy/trace.vue'),
-        meta: {
-          title: '隐私操作溯源',
-          icon: 'DataAnalysis',
-          componentName: 'BusinessCustomerPrivacyTrace',
-          keepAlive: false,
-          permissions: ['customer:privacy:trace'],
-          roles: ['admin', 'manager', 'auditor']
-        }
-      },
-      {
         path: 'opening',
         name: 'BusinessOpening',
         component: () => import('@views/business/opening/index.vue'),
@@ -620,6 +464,45 @@ const asyncRoutes: RouteRecordRaw[] = [
           permissions: ['business:settlement:trace'],
           roles: ['admin', 'manager', 'auditor']
         }
+      },
+      {
+        path: 'online-payment/index',
+        name: 'BusinessOnlinePaymentIndex',
+        component: () => import('@views/business/online-payment/index.vue'),
+        meta: {
+          title: '线上支付',
+          icon: 'Monitor',
+          componentName: 'BusinessOnlinePaymentIndex',
+          keepAlive: true,
+          permissions: ['business:onlinePayment:query'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'online-payment/batch',
+        name: 'BusinessOnlinePaymentBatch',
+        component: () => import('@views/business/online-payment/batch.vue'),
+        meta: {
+          title: '批量订单',
+          icon: 'Files',
+          componentName: 'BusinessOnlinePaymentBatch',
+          keepAlive: true,
+          permissions: ['business:onlinePayment:batch'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'online-payment/trace',
+        name: 'BusinessOnlinePaymentTrace',
+        component: () => import('@views/business/online-payment/trace.vue'),
+        meta: {
+          title: '支付溯源',
+          icon: 'Search',
+          componentName: 'BusinessOnlinePaymentTrace',
+          keepAlive: false,
+          permissions: ['business:onlinePayment:trace'],
+          roles: ['admin', 'manager', 'auditor']
+        }
       }
     ]
   },
@@ -695,150 +578,6 @@ const asyncRoutes: RouteRecordRaw[] = [
           componentName: 'RiskAnomaly',
           keepAlive: true,
           roles: ['admin', 'manager', 'auditor']
-        }
-      },
-      {
-        path: 'assessment',
-        name: 'RiskAssessment',
-        component: () => import('@views/risk/assessment/index.vue'),
-        meta: {
-          title: '风险评定',
-          icon: 'UserFilled',
-          componentName: 'RiskAssessment',
-          keepAlive: true,
-          roles: ['admin', 'manager', 'operator', 'auditor']
-        }
-      },
-      {
-        path: 'assessment/trace',
-        name: 'RiskAssessmentTrace',
-        component: () => import('@views/risk/assessment/trace.vue'),
-        meta: {
-          title: '风险溯源',
-          icon: 'Search',
-          componentName: 'RiskAssessmentTrace',
-          keepAlive: false,
-          roles: ['admin', 'manager', 'auditor']
-        }
-      },
-      {
-        path: 'assessment/batch',
-        name: 'RiskAssessmentBatch',
-        component: () => import('@views/risk/assessment/batch.vue'),
-        meta: {
-          title: '批量复评',
-          icon: 'Files',
-          componentName: 'RiskAssessmentBatch',
-          keepAlive: true,
-          roles: ['admin', 'manager']
-        }
-      },
-      {
-        path: 'indicator',
-        name: 'RiskIndicator',
-        component: () => import('@views/risk/indicator/index.vue'),
-        meta: {
-          title: '风险指标管理',
-          icon: 'DataAnalysis',
-          componentName: 'RiskIndicator',
-          keepAlive: true,
-          roles: ['admin', 'manager']
-        }
-      },
-      {
-        path: 'monitor',
-        name: 'AbnormalMonitor',
-        component: () => import('@views/risk/monitor/index.vue'),
-        meta: {
-          title: '异常交易监控',
-          icon: 'Monitor',
-          componentName: 'AbnormalMonitor',
-          keepAlive: true,
-          roles: ['admin', 'manager', 'operator', 'auditor']
-        }
-      },
-      {
-        path: 'monitor/batch',
-        name: 'MonitorBatch',
-        component: () => import('@views/risk/monitor/batch.vue'),
-        meta: {
-          title: '批量监控处理',
-          icon: 'Files',
-          componentName: 'MonitorBatch',
-          keepAlive: true,
-          roles: ['admin', 'manager']
-        }
-      },
-      {
-        path: 'monitor/trace',
-        name: 'MonitorTrace',
-        component: () => import('@views/risk/monitor/trace.vue'),
-        meta: {
-          title: '监控溯源',
-          icon: 'Search',
-          componentName: 'MonitorTrace',
-          keepAlive: false,
-          roles: ['admin', 'manager', 'auditor']
-        }
-      },
-      {
-        path: 'monitor/rule',
-        name: 'MonitorRule',
-        component: () => import('@views/risk/monitor/rule.vue'),
-        meta: {
-          title: '监控规则管理',
-          icon: 'SetUp',
-          componentName: 'MonitorRule',
-          keepAlive: true,
-          roles: ['admin', 'manager']
-        }
-      },
-      {
-        path: 'blacklist',
-        name: 'Blacklist',
-        component: () => import('@views/risk/blacklist/index.vue'),
-        meta: {
-          title: '黑名单管控',
-          icon: 'UserFilled',
-          componentName: 'Blacklist',
-          keepAlive: true,
-          roles: ['admin', 'manager', 'operator', 'auditor']
-        }
-      },
-      {
-        path: 'blacklist/batch',
-        name: 'BlacklistBatch',
-        component: () => import('@views/risk/blacklist/batch.vue'),
-        meta: {
-          title: '批量管控',
-          icon: 'Files',
-          componentName: 'BlacklistBatch',
-          keepAlive: true,
-          roles: ['admin', 'manager']
-        }
-      },
-      {
-        path: 'blacklist/trace',
-        name: 'BlacklistTrace',
-        component: () => import('@views/risk/blacklist/trace.vue'),
-        meta: {
-          title: '溯源查询',
-          icon: 'Search',
-          componentName: 'BlacklistTrace',
-          keepAlive: false,
-          roles: ['admin', 'manager', 'auditor']
-        }
-      },
-      {
-        path: 'blacklist/grade',
-        name: 'BlacklistGrade',
-        component: () => import('@views/risk/blacklist/grade.vue'),
-        meta: {
-          title: '等级配置',
-          icon: 'SetUp',
-          componentName: 'BlacklistGrade',
-          keepAlive: true,
-          roles: ['admin', 'manager']
         }
       }
     ]
