@@ -1,4 +1,5 @@
 import { channelDao, channelGradeRuleDao, channelGradeAdjustRequestDao, channelGradeChangeLogDao, userDao } from '../dao';
+/* [渠道分级管控 - 独立提交标识] */
 import { PaginationParams, PaginationResult } from '../types';
 import { BusinessCode } from '../constants/statusCode';
 import { AppError } from '../middleware/error.middleware';

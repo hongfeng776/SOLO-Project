@@ -1,4 +1,5 @@
 <template>
+<!-- [渠道分级管控 - 独立提交标识] -->
   <div class="channel-grade-page">
     <el-row :gutter="16" class="stat-cards">
       <el-col :span="6">
