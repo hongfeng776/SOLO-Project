@@ -30,5 +30,6 @@ router.use(`${config.apiPrefix}/user-segment`, require('./user-segment'));
 router.use(`${config.apiPrefix}/user-feedback`, require('./user-feedback'));
 router.use(`${config.apiPrefix}/member-levels`, require('./member-level'));
 router.use(`${config.apiPrefix}/member-privileges`, require('./member-privilege'));
+router.use(`${config.apiPrefix}/member-orders`, require('./member-order'));
 
 module.exports = router;

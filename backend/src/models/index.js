@@ -19,6 +19,8 @@ const { MemberLevel, MemberLevelLog, MemberLevelUpgradeRecord } = require('./Mem
 const { MemberPrivilege, MemberPrivilegeLog, MemberPrivilegeRedemption,
   PRIVILEGE_TYPE_PERMISSION_MAP, generatePrivilegeCode,
 } = require('./MemberPrivilege');
+const { MemberOrder, MemberOrderLog, MemberOrderRefund, generateOrderNo,
+} = require('./MemberOrder');
 const { UserSegmentRule, UserSegmentTag, UserSegmentLog, SegmentStrategy,
   SEGMENT_DIMENSION, SEGMENT_LEVEL, SEGMENT_RULE_STATUS, SEGMENT_CHANGE_TYPE,
   STRATEGY_TRIGGER_MODE, STRATEGY_STATUS, STRATEGY_TYPE, BENEFIT_TYPE,
@@ -60,6 +62,11 @@ MemberPrivilegeLog.belongsTo(MemberPrivilege, { foreignKey: 'privilege_id', as: 
 MemberPrivilege.hasMany(MemberPrivilegeRedemption, { foreignKey: 'privilege_id', as: 'privilegeRedemptions' });
 MemberPrivilegeRedemption.belongsTo(MemberPrivilege, { foreignKey: 'privilege_id', as: 'privilege' });
 
+MemberOrder.hasMany(MemberOrderLog, { foreignKey: 'order_id', as: 'orderLogs' });
+MemberOrderLog.belongsTo(MemberOrder, { foreignKey: 'order_id', as: 'order' });
+MemberOrder.hasMany(MemberOrderRefund, { foreignKey: 'order_id', as: 'orderRefunds' });
+MemberOrderRefund.belongsTo(MemberOrder, { foreignKey: 'order_id', as: 'order' });
+
 module.exports = {
   User,
   Role,
@@ -90,6 +97,10 @@ module.exports = {
   MemberPrivilegeRedemption,
   PRIVILEGE_TYPE_PERMISSION_MAP,
   generatePrivilegeCode,
+  MemberOrder,
+  MemberOrderLog,
+  MemberOrderRefund,
+  generateOrderNo,
   UserSegmentRule,
   UserSegmentTag,
   UserSegmentLog,

@@ -999,5 +999,59 @@ export const PRIVILEGE_PERMISSION_SWITCHES = {
   canDolby: { label: '杜比音效', desc: '杜比全景声' },
 } as const
 
+// ============ 会员订单管理 ============
+export const MEMBER_ORDER_STATUS = {
+  PENDING: { value: 0, label: '待支付', color: '#E6A23C', type: 'warning' },
+  PAID: { value: 1, label: '支付成功', color: '#67C23A', type: 'success' },
+  FAILED: { value: 2, label: '支付失败', color: '#F56C6C', type: 'danger' },
+  EXPIRED: { value: 3, label: '订单过期', color: '#909399', type: 'info' },
+  REFUNDED: { value: 4, label: '退款完成', color: '#722ed1', type: 'primary' },
+} as const
+
+export const MEMBER_ORDER_PACKAGE_TYPE = {
+  MONTH: { value: 'MONTH', label: '月度会员', color: '#409EFF', days: 30 },
+  QUARTER: { value: 'QUARTER', label: '季度会员', color: '#67C23A', days: 90 },
+  YEAR: { value: 'YEAR', label: '年度会员', color: '#E6A23C', days: 365 },
+  LIFETIME: { value: 'LIFETIME', label: '终身会员', color: '#722ed1', days: 99999 },
+} as const
+
+export const MEMBER_ORDER_PAY_CHANNEL = {
+  ALIPAY: { value: 'ALIPAY', label: '支付宝', color: '#1677ff', icon: 'AlipayCircle' },
+  WECHAT: { value: 'WECHAT', label: '微信支付', color: '#07c160', icon: 'ChatDotRound' },
+  APPLE: { value: 'APPLE', label: 'Apple Pay', color: '#333', icon: 'Apple' },
+  GOOGLE: { value: 'GOOGLE', label: 'Google Pay', color: '#4285f4', icon: 'ChromeFilled' },
+  OFFLINE: { value: 'OFFLINE', label: '线下支付', color: '#909399', icon: 'Wallet' },
+} as const
+
+export const MEMBER_ORDER_LOG_TYPE = {
+  CREATE: { value: 'CREATE', label: '创建订单', color: '#409EFF' },
+  CANCEL: { value: 'CANCEL', label: '取消订单', color: '#909399' },
+  PAY_SUCCESS: { value: 'PAY_SUCCESS', label: '支付成功', color: '#67C23A' },
+  PAY_FAIL: { value: 'PAY_FAIL', label: '支付失败', color: '#F56C6C' },
+  EXPIRE: { value: 'EXPIRE', label: '订单过期', color: '#909399' },
+  VERIFY: { value: 'VERIFY', label: '订单核验', color: '#13c2c2' },
+  REFUND: { value: 'REFUND', label: '发起退款', color: '#722ed1' },
+  APPEAL: { value: 'APPEAL', label: '异常申诉', color: '#E6A23C' },
+  BATCH_CLOSE: { value: 'BATCH_CLOSE', label: '批量关闭', color: '#909399' },
+  BATCH_VERIFY: { value: 'BATCH_VERIFY', label: '批量核验', color: '#13c2c2' },
+} as const
+
+export const MEMBER_ORDER_BATCH_ACTION = {
+  BATCH_CLOSE: { value: 'batch_close', label: '批量关闭过期待支付', icon: 'CircleClose', type: 'info' },
+  BATCH_VERIFY: { value: 'batch_verify', label: '批量核验订单', icon: 'CircleCheck', type: 'success' },
+} as const
+
+export const MEMBER_ORDER_TRACE_TYPE = {
+  ORDER_NO: { value: 'orderNo', label: '订单编号' },
+  UID: { value: 'uid', label: '用户UID' },
+  PAY_BATCH: { value: 'payBatch', label: '支付批次' },
+} as const
+
+export const MEMBER_ORDER_REFUND_STATUS = {
+  PROCESSING: { value: 0, label: '处理中', color: '#E6A23C', type: 'warning' },
+  SUCCESS: { value: 1, label: '退款成功', color: '#67C23A', type: 'success' },
+  FAILED: { value: 2, label: '退款失败', color: '#F56C6C', type: 'danger' },
+} as const
+
 
 

@@ -2731,5 +2731,142 @@ export interface MemberPrivilegeRedemptionQueryParams extends PaginationParams {
   endTime?: string | null
 }
 
+// ============ 会员订单管理 ============
+export interface MemberOrderItem {
+  id: number
+  orderNo: string
+  userId: number
+  uid: string
+  packageType: string
+  packageName: string
+  memberLevelTier: number
+  originalAmount: number
+  payAmount: number
+  discountAmount: number
+  orderStatus: number
+  payChannel?: string
+  payTime?: string
+  payTradeNo?: string
+  payBatch?: string
+  expireTime?: string
+  privilegeSnapshot?: Record<string, any>
+  durationDays: number
+  isVerified: number
+  verifyTime?: string
+  verifyBatch?: string
+  isAbnormal: number
+  abnormalReason?: string
+  abnormalResolved: number
+  operationBatch?: string
+  remark?: string
+  createdBy?: number
+  updatedBy?: number
+  createdAt: string
+  updatedAt: string
+  logs?: MemberOrderLogItem[]
+  refunds?: MemberOrderRefundItem[]
+}
+
+export interface MemberOrderLogItem {
+  id: number
+  orderId: number
+  orderNo: string
+  logType: string
+  logTypeLabel?: string
+  operationBatch?: string
+  beforeSnapshot?: Partial<MemberOrderItem>
+  afterSnapshot?: Partial<MemberOrderItem>
+  changedFields: string[]
+  operatorId?: number
+  operatorName?: string
+  operatorRemark?: string
+  ipAddress?: string
+  createdAt: string
+}
+
+export interface MemberOrderRefundItem {
+  id: number
+  orderId: number
+  orderNo: string
+  refundNo: string
+  refundAmount: number
+  refundReason: string
+  refundChannel?: string
+  refundTradeNo?: string
+  refundStatus: number
+  privilegeRevoked: number
+  operatorId?: number
+  operatorName?: string
+  extraData?: Record<string, any>
+  createdAt: string
+}
+
+export interface MemberOrderStatsResult {
+  totalCount: number
+  totalAmount: number
+  abnormalCount: number
+  unverifiedCount: number
+  todayCount: number
+  todayAmount: number
+  refundCount: number
+  refundAmount: number
+  byStatus: Array<{ status: number; count: number }>
+}
+
+export interface MemberOrderConsistencyResult {
+  orderId: number
+  orderNo: string
+  isConsistent: boolean
+  issues: Array<{
+    type: string
+    level: 'high' | 'medium' | 'low'
+    message: string
+  }>
+}
+
+export interface MemberOrderTraceResult {
+  traceType: string
+  traceValue: string
+  found: boolean
+  order?: MemberOrderItem
+  orders?: MemberOrderItem[]
+  logs?: MemberOrderLogItem[]
+  refunds?: MemberOrderRefundItem[]
+  summary?: {
+    totalOrders?: number
+    totalAmount: number
+    totalRefunds: number
+    totalLogs?: number
+    hasAbnormal?: boolean
+  }
+}
+
+export interface MemberOrderBatchActionParams {
+  action: 'batch_close' | 'batch_verify'
+  ids: number[]
+}
+
+export interface MemberOrderBatchActionResult {
+  successCount: number
+  failCount: number
+  skippedCount: number
+  successIds: number[]
+  failItems: Array<{ id: number; reason: string }>
+  skippedItems: Array<{ id: number; reason: string }>
+  operationBatch?: string
+}
+
+export interface MemberOrderQueryParams extends PaginationParams {
+  orderStatus?: number | null
+  packageType?: string | null
+  payChannel?: string | null
+  isAbnormal?: number | null
+  isVerified?: number | null
+  uid?: string | null
+  keyword?: string | null
+  startTime?: string | null
+  endTime?: string | null
+}
+
 
 
