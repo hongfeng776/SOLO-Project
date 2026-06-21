@@ -792,6 +792,54 @@ const asyncRoutes: RouteRecordRaw[] = [
           keepAlive: true,
           roles: ['admin', 'manager']
         }
+      },
+      {
+        path: 'blacklist',
+        name: 'Blacklist',
+        component: () => import('@views/risk/blacklist/index.vue'),
+        meta: {
+          title: '黑名单管控',
+          icon: 'UserFilled',
+          componentName: 'Blacklist',
+          keepAlive: true,
+          roles: ['admin', 'manager', 'operator', 'auditor']
+        }
+      },
+      {
+        path: 'blacklist/batch',
+        name: 'BlacklistBatch',
+        component: () => import('@views/risk/blacklist/batch.vue'),
+        meta: {
+          title: '批量管控',
+          icon: 'Files',
+          componentName: 'BlacklistBatch',
+          keepAlive: true,
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'blacklist/trace',
+        name: 'BlacklistTrace',
+        component: () => import('@views/risk/blacklist/trace.vue'),
+        meta: {
+          title: '溯源查询',
+          icon: 'Search',
+          componentName: 'BlacklistTrace',
+          keepAlive: false,
+          roles: ['admin', 'manager', 'auditor']
+        }
+      },
+      {
+        path: 'blacklist/grade',
+        name: 'BlacklistGrade',
+        component: () => import('@views/risk/blacklist/grade.vue'),
+        meta: {
+          title: '等级配置',
+          icon: 'SetUp',
+          componentName: 'BlacklistGrade',
+          keepAlive: true,
+          roles: ['admin', 'manager']
+        }
       }
     ]
   },

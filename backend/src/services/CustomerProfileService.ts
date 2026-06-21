@@ -13,7 +13,7 @@ import {
   PaginatedResult,
   CustomerProfileVO,
   CustomerProfileLogVO,
-  PreCheckResult,
+  CustomerProfilePreCheckResult,
   PreCheckFieldError,
   LevelJudgeResult,
   CustomerProfileTraceRequest,
@@ -106,7 +106,7 @@ export class CustomerProfileService {
     this.customerRepo = new CustomerRepository();
   }
 
-  async preCheckProfile(request: CreateCustomerProfileRequest): Promise<PreCheckResult> {
+  async preCheckProfile(request: CreateCustomerProfileRequest): Promise<CustomerProfilePreCheckResult> {
     const errors: PreCheckFieldError[] = [];
     const warnings: string[] = [];
     const missingFields: string[] = [];

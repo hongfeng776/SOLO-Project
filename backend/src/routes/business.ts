@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, CustomerProfileController, CorporateProfileController, CustomerTagController, CustomerPrivacyController, AbnormalMonitorController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, CustomerProfileController, CorporateProfileController, CustomerTagController, CustomerPrivacyController, AbnormalMonitorController, BlacklistController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -21,6 +21,7 @@ const corporateProfileController = new CorporateProfileController();
 const customerTagController = new CustomerTagController();
 const customerPrivacyController = new CustomerPrivacyController();
 const abnormalMonitorController = new AbnormalMonitorController();
+const blacklistController = new BlacklistController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -353,5 +354,33 @@ router.get('/monitor/rule/:id', requirePermission('monitor:rule:query'), (req, r
 router.post('/monitor/rule', requirePermission('monitor:rule:create'), (req, res, next) => abnormalMonitorController.createRule(req, res, next));
 router.put('/monitor/rule/:id', requirePermission('monitor:rule:update'), (req, res, next) => abnormalMonitorController.updateRule(req, res, next));
 router.delete('/monitor/rule/:id', requirePermission('monitor:rule:delete'), (req, res, next) => abnormalMonitorController.deleteRule(req, res, next));
+
+// ========== 黑名单客户管控 ==========
+// 功能点1：前置校验 + 黑名单管理
+router.get('/blacklist/precheck', requireAuth, (req, res, next) => blacklistController.preCheck(req, res, next));
+router.get('/blacklist/list', requirePermission('blacklist:record:query'), (req, res, next) => blacklistController.getBlacklistList(req, res, next));
+router.get('/blacklist/:id', requirePermission('blacklist:record:query'), (req, res, next) => blacklistController.getBlacklistDetail(req, res, next));
+router.post('/blacklist', requirePermission('blacklist:record:create'), (req, res, next) => blacklistController.createBlacklist(req, res, next));
+router.post('/blacklist/:id/review', requirePermission('blacklist:record:review'), (req, res, next) => blacklistController.reviewBlacklist(req, res, next));
+
+// 功能点2：多分级管控（移除/延期/等级变更）
+router.post('/blacklist/:id/remove', requirePermission('blacklist:record:remove'), (req, res, next) => blacklistController.removeBlacklist(req, res, next));
+router.post('/blacklist/:id/extend', requirePermission('blacklist:record:update'), (req, res, next) => blacklistController.extendBlacklist(req, res, next));
+router.post('/blacklist/:id/grade', requirePermission('blacklist:record:update'), (req, res, next) => blacklistController.changeGrade(req, res, next));
+
+// 功能点1和2：合规校验 + 统计 + 配置
+router.post('/blacklist/:id/compliance', requireAuth, (req, res, next) => blacklistController.checkCompliance(req, res, next));
+router.get('/blacklist/statistics', requirePermission('blacklist:record:query'), (req, res, next) => blacklistController.getStatistics(req, res, next));
+router.get('/blacklist/grade-configs', requireAuth, (req, res, next) => blacklistController.getGradeConfigs(req, res, next));
+router.get('/blacklist/config', requireAuth, (req, res, next) => blacklistController.getBlacklistConfig(req, res, next));
+
+// 功能点3：批量处理
+router.get('/blacklist/batch/list', requirePermission('blacklist:batch:query'), (req, res, next) => blacklistController.getBatchList(req, res, next));
+router.get('/blacklist/batch/:id', requirePermission('blacklist:batch:query'), (req, res, next) => blacklistController.getBatchDetail(req, res, next));
+router.post('/blacklist/batch', requirePermission('blacklist:batch:create'), (req, res, next) => blacklistController.createBatchHandle(req, res, next));
+
+// 功能点4：溯源查询
+router.get('/blacklist/trace/list', requirePermission('blacklist:record:trace'), (req, res, next) => blacklistController.getTraceList(req, res, next));
+router.get('/blacklist/trace/:id', requirePermission('blacklist:record:trace'), (req, res, next) => blacklistController.getBlacklistTraces(req, res, next));
 
 export default router;

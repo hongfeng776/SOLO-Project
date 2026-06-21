@@ -42,3 +42,8 @@ export {
   RiskIndicatorRepository,
   RiskAssessmentBatchRepository
 } from './RiskAssessmentRepository';
+export {
+  BlacklistRecordRepository,
+  BlacklistBatchRepository,
+  BlacklistTraceLogRepository
+} from './BlacklistRepository';

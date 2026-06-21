@@ -1,4 +1,4 @@
-import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog, StatusChangeLog, LoanApprovalFlow, LoanApprovalLog, RiskIndicator, MonitorRule } from '../../models';
+import { Organization, Role, Permission, User, UserRole, RolePermission, AuditRule, Product, Customer, ViolationRecord, Transaction, Account, AccountOpening, CorporateAccountOpening, OpeningReviewLog, StatusChangeLog, LoanApprovalFlow, LoanApprovalLog, RiskIndicator, MonitorRule, BlacklistRecord, BlacklistBatch, BlacklistTraceLog } from '../../models';
 import { hashPasswordSync } from '../../utils/password';
 import { sequelize, syncDatabase } from '../../config/database';
 import { v4 as uuidv4 } from 'uuid';
@@ -387,7 +387,22 @@ export async function seedPermissions(): Promise<void> {
     { id: 'perm245', parent_id: 'perm244', name: '查询规则', code: 'monitor:rule:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'monitor:rule:query' },
     { id: 'perm246', parent_id: 'perm244', name: '新增规则', code: 'monitor:rule:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'monitor:rule:create' },
     { id: 'perm247', parent_id: 'perm244', name: '修改规则', code: 'monitor:rule:update', type: 3, sort: 3, visible: 1, status: 1, perms: 'monitor:rule:update' },
-    { id: 'perm248', parent_id: 'perm244', name: '删除规则', code: 'monitor:rule:delete', type: 3, sort: 4, visible: 1, status: 1, perms: 'monitor:rule:delete' }
+    { id: 'perm248', parent_id: 'perm244', name: '删除规则', code: 'monitor:rule:delete', type: 3, sort: 4, visible: 1, status: 1, perms: 'monitor:rule:delete' },
+
+    // ========== 黑名单客户管控权限 ==========
+    { id: 'perm249', parent_id: null, name: '黑名单管控', code: 'blacklist', type: 1, path: '/risk/blacklist', component: 'Layout', icon: 'UserFilled', sort: 9, visible: 1, status: 1 },
+    { id: 'perm250', parent_id: 'perm249', name: '黑名单列表', code: 'blacklist:record', type: 2, path: 'list', component: 'risk/blacklist/index', icon: 'UserFilled', sort: 1, visible: 1, status: 1, perms: '' },
+    { id: 'perm251', parent_id: 'perm250', name: '查询黑名单', code: 'blacklist:record:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'blacklist:record:query' },
+    { id: 'perm252', parent_id: 'perm250', name: '录入黑名单', code: 'blacklist:record:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'blacklist:record:create' },
+    { id: 'perm253', parent_id: 'perm250', name: '审核黑名单', code: 'blacklist:record:review', type: 3, sort: 3, visible: 1, status: 1, perms: 'blacklist:record:review' },
+    { id: 'perm254', parent_id: 'perm250', name: '修改黑名单', code: 'blacklist:record:update', type: 3, sort: 4, visible: 1, status: 1, perms: 'blacklist:record:update' },
+    { id: 'perm255', parent_id: 'perm250', name: '移除黑名单', code: 'blacklist:record:remove', type: 3, sort: 5, visible: 1, status: 1, perms: 'blacklist:record:remove' },
+    { id: 'perm256', parent_id: 'perm250', name: '黑名单溯源', code: 'blacklist:record:trace', type: 3, sort: 6, visible: 1, status: 1, perms: 'blacklist:record:trace' },
+    { id: 'perm257', parent_id: 'perm249', name: '批量管控', code: 'blacklist:batch', type: 2, path: 'batch', component: 'risk/blacklist/batch', icon: 'Files', sort: 2, visible: 1, status: 1, perms: '' },
+    { id: 'perm258', parent_id: 'perm257', name: '查询批次', code: 'blacklist:batch:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'blacklist:batch:query' },
+    { id: 'perm259', parent_id: 'perm257', name: '创建批次', code: 'blacklist:batch:create', type: 3, sort: 2, visible: 1, status: 1, perms: 'blacklist:batch:create' },
+    { id: 'perm260', parent_id: 'perm249', name: '溯源查询', code: 'blacklist:trace', type: 2, path: 'trace', component: 'risk/blacklist/trace', icon: 'Search', sort: 3, visible: 1, status: 1, perms: '' },
+    { id: 'perm261', parent_id: 'perm249', name: '等级配置', code: 'blacklist:grade', type: 2, path: 'grade', component: 'risk/blacklist/grade', icon: 'SetUp', sort: 4, visible: 1, status: 1, perms: '' }
   ];
 
   await bulkCreateInBatches(Permission, permissions as any);
@@ -461,7 +476,9 @@ export async function seedRolePermissions(): Promise<void> {
       'risk:indicator:query', 'risk:indicator:create', 'risk:indicator:update', 'risk:indicator:delete',
       'monitor:alert:query', 'monitor:alert:create', 'monitor:alert:handle', 'monitor:alert:trace',
       'monitor:batch:query', 'monitor:batch:create',
-      'monitor:rule:query', 'monitor:rule:create', 'monitor:rule:update', 'monitor:rule:delete'
+      'monitor:rule:query', 'monitor:rule:create', 'monitor:rule:update', 'monitor:rule:delete',
+      'blacklist:record:query', 'blacklist:record:create', 'blacklist:record:review', 'blacklist:record:update', 'blacklist:record:remove', 'blacklist:record:trace',
+      'blacklist:batch:query', 'blacklist:batch:create'
     ];
     const perms = allPermissions.filter(p => managerCodes.includes(p.code) || p.type !== 3);
     const managerRPs = perms.map(p => ({
@@ -502,9 +519,11 @@ export async function seedRolePermissions(): Promise<void> {
       'risk:assessment:query', 'risk:assessment:create',
       'risk:batch:query',
       'monitor:alert:query', 'monitor:alert:create',
-      'monitor:batch:query'
+      'monitor:batch:query',
+      'blacklist:record:query', 'blacklist:record:create',
+      'blacklist:batch:query'
     ];
-    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:batch' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:batch' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:batch' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:batch' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace' || p.code === 'business:customer:profile' || p.code === 'business:customer:profile:batch' || p.code === 'business:customer:profile:trace' || p.code === 'business:corporate:profile' || p.code === 'business:corporate:profile:batch' || p.code === 'business:corporate:profile:trace' || p.code === 'business:customer:tag' || p.code === 'business:customer:tag:batch' || p.code === 'business:customer:tag:trace' || p.code === 'business:customer:privacy' || p.code === 'business:customer:privacy:config' || p.code === 'business:customer:privacy:trace' || p.code === 'risk' || p.code === 'risk:assessment' || p.code === 'risk:batch' || p.code === 'risk:trace' || p.code === 'risk:indicator')));
+    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:batch' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:batch' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:batch' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:batch' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace' || p.code === 'business:customer:profile' || p.code === 'business:customer:profile:batch' || p.code === 'business:customer:profile:trace' || p.code === 'business:corporate:profile' || p.code === 'business:corporate:profile:batch' || p.code === 'business:corporate:profile:trace' || p.code === 'business:customer:tag' || p.code === 'business:customer:tag:batch' || p.code === 'business:customer:tag:trace' || p.code === 'business:customer:privacy' || p.code === 'business:customer:privacy:config' || p.code === 'business:customer:privacy:trace' || p.code === 'risk' || p.code === 'risk:assessment' || p.code === 'risk:batch' || p.code === 'risk:trace' || p.code === 'risk:indicator' || p.code === 'monitor' || p.code === 'monitor:alert' || p.code === 'monitor:batch' || p.code === 'monitor:rule' || p.code === 'blacklist' || p.code === 'blacklist:record' || p.code === 'blacklist:batch' || p.code === 'blacklist:trace' || p.code === 'blacklist:grade')));
     const operatorRPs = perms.map(p => ({
       id: `rp_${operatorRole.id}_${p.id}`,
       role_id: operatorRole.id,
@@ -537,9 +556,11 @@ export async function seedRolePermissions(): Promise<void> {
       'risk:indicator:query',
       'monitor:alert:query', 'monitor:alert:handle', 'monitor:alert:trace',
       'monitor:batch:query',
-      'monitor:rule:query'
+      'monitor:rule:query',
+      'blacklist:record:query', 'blacklist:record:review', 'blacklist:record:trace',
+      'blacklist:batch:query'
     ];
-    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace' || p.code === 'business:customer:profile' || p.code === 'business:customer:profile:batch' || p.code === 'business:customer:profile:trace' || p.code === 'business:corporate:profile' || p.code === 'business:corporate:profile:batch' || p.code === 'business:corporate:profile:trace' || p.code === 'business:customer:tag' || p.code === 'business:customer:tag:batch' || p.code === 'business:customer:tag:trace' || p.code === 'business:customer:privacy' || p.code === 'business:customer:privacy:config' || p.code === 'business:customer:privacy:trace' || p.code === 'risk' || p.code === 'risk:assessment' || p.code === 'risk:batch' || p.code === 'risk:trace' || p.code === 'risk:indicator')));
+    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace' || p.code === 'business:customer:profile' || p.code === 'business:customer:profile:batch' || p.code === 'business:customer:profile:trace' || p.code === 'business:corporate:profile' || p.code === 'business:corporate:profile:batch' || p.code === 'business:corporate:profile:trace' || p.code === 'business:customer:tag' || p.code === 'business:customer:tag:batch' || p.code === 'business:customer:tag:trace' || p.code === 'business:customer:privacy' || p.code === 'business:customer:privacy:config' || p.code === 'business:customer:privacy:trace' || p.code === 'risk' || p.code === 'risk:assessment' || p.code === 'risk:batch' || p.code === 'risk:trace' || p.code === 'risk:indicator' || p.code === 'monitor' || p.code === 'monitor:alert' || p.code === 'monitor:batch' || p.code === 'monitor:rule' || p.code === 'blacklist' || p.code === 'blacklist:record' || p.code === 'blacklist:batch' || p.code === 'blacklist:trace' || p.code === 'blacklist:grade')));
     const auditorRPs = perms.map(p => ({
       id: `rp_${auditorRole.id}_${p.id}`,
       role_id: auditorRole.id,
@@ -2538,6 +2559,335 @@ export async function seedMonitorRules(): Promise<void> {
   console.log('[Seeder] Monitor rules seeded successfully.');
 }
 
+export async function seedBlacklistConfig(): Promise<void> {
+  console.log('[Seeder] Seeding blacklist records...');
+  const existing = await BlacklistRecord.count();
+  if (existing > 0) {
+    console.log('[Seeder] Blacklist records already exist, skipping...');
+    return;
+  }
+
+  const customers = await Customer.findAll();
+  const customerMap = customers.reduce((acc: Record<string, Customer>, c) => {
+    acc[c.customer_no] = c;
+    return acc;
+  }, {});
+
+  const adminId = 'user000000000000000000000000000001';
+  const managerId = 'user000000000000000000000000000002';
+  const auditorId = 'user000000000000000000000000000004';
+
+  const blacklistRecords = [
+    {
+      blacklist_no: 'BL202406160001',
+      customer_id: customerMap['CUST202400000004']?.id,
+      customer_no: 'CUST202400000004',
+      customer_name: '赵敏',
+      violation_type: 1,
+      violation_level: 2,
+      grade: 2,
+      status: 1,
+      description: '交易金额异常，单笔转账50万元超过客户日常交易水平，经核实存在可疑交易行为',
+      evidence_items: JSON.stringify([
+        { type: 'transaction', name: '异常交易凭证', url: '/evidence/tx_001.pdf', verified: true },
+        { type: 'violation', name: '违规记录确认书', url: '/evidence/vio_001.pdf', verified: true }
+      ]),
+      business_restrictions: JSON.stringify([1, 3, 5]),
+      effective_date: new Date('2024-06-10'),
+      expire_date: new Date('2024-12-10'),
+      auto_remind: 1,
+      review_count: 0,
+      next_review_date: new Date('2024-09-10'),
+      locked_accounts: JSON.stringify(['6222021000000004']),
+      locked_businesses: JSON.stringify(['loan_application', 'credit_card_application']),
+      creator_id: managerId,
+      reviewer_id: auditorId,
+      org_id: customerMap['CUST202400000004']?.org_id,
+      is_compliant: 1,
+      violation_details: JSON.stringify({
+        rule_violated: 'RULE_AMOUNT_001',
+        total_amount: 500000,
+        transaction_count: 12,
+        risk_assessment: 'medium_high'
+      })
+    },
+    {
+      blacklist_no: 'BL202406160002',
+      customer_id: customerMap['CUST202400000008']?.id,
+      customer_no: 'CUST202400000008',
+      customer_name: '北京华信金融投资集团',
+      violation_type: 5,
+      violation_level: 4,
+      grade: 4,
+      status: 1,
+      description: '涉嫌反洗钱可疑交易，短期内多笔跨境大额资金往来，已上报人行反洗钱监测中心',
+      evidence_items: JSON.stringify([
+        { type: 'transaction', name: '跨境交易明细', url: '/evidence/tx_002.pdf', verified: true },
+        { type: 'violation', name: '反洗钱调查报告', url: '/evidence/aml_001.pdf', verified: true },
+        { type: 'external', name: '人行可疑交易报告回执', url: '/evidence/pboc_001.pdf', verified: true }
+      ]),
+      business_restrictions: JSON.stringify([1, 2, 3, 4, 5, 6]),
+      effective_date: new Date('2024-06-12'),
+      expire_date: null,
+      auto_remind: 1,
+      review_count: 0,
+      next_review_date: new Date('2025-06-12'),
+      locked_accounts: JSON.stringify(['11001010500052500008']),
+      locked_businesses: JSON.stringify(['all_business']),
+      creator_id: adminId,
+      reviewer_id: adminId,
+      org_id: customerMap['CUST202400000008']?.org_id,
+      is_compliant: 1,
+      violation_details: JSON.stringify({
+        rule_violated: 'RULE_AML_005',
+        total_amount: 12500000,
+        transaction_count: 28,
+        countries_involved: ['USA', 'HK', 'SG'],
+        risk_assessment: 'extreme_high'
+      })
+    },
+    {
+      blacklist_no: 'BL202406160003',
+      customer_id: customerMap['CUST202400000003']?.id,
+      customer_no: 'CUST202400000003',
+      customer_name: '王强',
+      violation_type: 3,
+      violation_level: 1,
+      grade: 1,
+      status: 1,
+      description: '柜员操作违规，未按规定核验客户身份办理大额取款，客户配合整改后临时管控',
+      evidence_items: JSON.stringify([
+        { type: 'violation', name: '违规操作记录', url: '/evidence/opr_001.pdf', verified: true },
+        { type: 'other', name: '客户整改承诺书', url: '/evidence/commit_001.pdf', verified: true }
+      ]),
+      business_restrictions: JSON.stringify([5]),
+      effective_date: new Date('2024-06-14'),
+      expire_date: new Date('2024-07-14'),
+      auto_remind: 1,
+      review_count: 0,
+      next_review_date: new Date('2024-07-01'),
+      locked_accounts: JSON.stringify([]),
+      locked_businesses: JSON.stringify(['large_withdrawal']),
+      creator_id: managerId,
+      reviewer_id: auditorId,
+      org_id: customerMap['CUST202400000003']?.org_id,
+      is_compliant: 1,
+      violation_details: JSON.stringify({
+        rule_violated: 'RULE_OPR_003',
+        involved_amount: 80000,
+        correction_completed: true,
+        risk_assessment: 'low'
+      })
+    },
+    {
+      blacklist_no: 'BL202406160004',
+      customer_id: customerMap['CUST202400000007']?.id,
+      customer_no: 'CUST202400000007',
+      customer_name: '上海瑞通贸易有限公司',
+      violation_type: 2,
+      violation_level: 3,
+      grade: 3,
+      status: 0,
+      description: '频繁跨境交易，涉嫌逃避外汇管制，待审核确认',
+      evidence_items: JSON.stringify([
+        { type: 'transaction', name: '跨境交易流水', url: '/evidence/tx_003.pdf', verified: true }
+      ]),
+      business_restrictions: JSON.stringify([1, 5]),
+      effective_date: new Date('2024-06-15'),
+      expire_date: new Date('2026-06-15'),
+      auto_remind: 1,
+      review_count: 0,
+      next_review_date: new Date('2025-06-15'),
+      locked_accounts: JSON.stringify([]),
+      locked_businesses: JSON.stringify(['foreign_exchange']),
+      creator_id: managerId,
+      reviewer_id: null,
+      org_id: customerMap['CUST202400000007']?.org_id,
+      is_compliant: 0,
+      violation_details: JSON.stringify({
+        rule_violated: 'RULE_FX_002',
+        total_amount: 3800000,
+        transaction_count: 15,
+        risk_assessment: 'high'
+      })
+    },
+    {
+      blacklist_no: 'BL202406160005',
+      customer_id: customerMap['CUST202400000005']?.id,
+      customer_no: 'CUST202400000005',
+      customer_name: '陈建国',
+      violation_type: 7,
+      violation_level: 3,
+      grade: 3,
+      status: 2,
+      description: '贷款逾期超过90天，经多次催收无效，进入复核阶段',
+      evidence_items: JSON.stringify([
+        { type: 'loan', name: '贷款合同', url: '/evidence/loan_001.pdf', verified: true },
+        { type: 'other', name: '催收记录', url: '/evidence/collection_001.pdf', verified: true }
+      ]),
+      business_restrictions: JSON.stringify([1, 3, 4]),
+      effective_date: new Date('2024-05-01'),
+      expire_date: new Date('2026-05-01'),
+      auto_remind: 1,
+      review_count: 1,
+      next_review_date: new Date('2024-08-01'),
+      locked_accounts: JSON.stringify(['6222021000000005']),
+      locked_businesses: JSON.stringify(['loan_application', 'credit_card_application', 'new_account']),
+      creator_id: managerId,
+      reviewer_id: auditorId,
+      org_id: customerMap['CUST202400000005']?.org_id,
+      is_compliant: 1,
+      violation_details: JSON.stringify({
+        rule_violated: 'RULE_LOAN_008',
+        overdue_amount: 1250000,
+        overdue_days: 95,
+        risk_assessment: 'high'
+      })
+    },
+    {
+      blacklist_no: 'BL202406160006',
+      customer_id: customerMap['CUST202400000010']?.id,
+      customer_no: 'CUST202400000010',
+      customer_name: '上海浦东智能制造有限公司',
+      violation_type: 9,
+      violation_level: 1,
+      grade: 1,
+      status: 0,
+      description: '频繁交易触发监控预警，待核实是否为正常经营活动',
+      evidence_items: JSON.stringify([]),
+      business_restrictions: JSON.stringify([]),
+      effective_date: new Date('2024-06-16'),
+      expire_date: new Date('2024-07-16'),
+      auto_remind: 1,
+      review_count: 0,
+      next_review_date: new Date('2024-06-23'),
+      locked_accounts: JSON.stringify([]),
+      locked_businesses: JSON.stringify([]),
+      creator_id: managerId,
+      reviewer_id: null,
+      org_id: customerMap['CUST20240000010']?.org_id,
+      is_compliant: 0,
+      violation_details: JSON.stringify({
+        rule_violated: 'RULE_FREQ_001',
+        transaction_count: 156,
+        average_amount: 350000,
+        risk_assessment: 'low'
+      })
+    }
+  ];
+
+  const records = blacklistRecords.map(r => ({
+    id: uuidv4().replace(/-/g, ''),
+    ...r
+  }));
+
+  await bulkCreateInBatches(BlacklistRecord, records as any);
+
+  const traceLogs = [
+    {
+      blacklist_id: records[0].id,
+      blacklist_no: 'BL202406160001',
+      trace_type: 1,
+      operator_id: managerId,
+      operator_name: '机构管理员',
+      description: '录入黑名单，原因：交易金额异常',
+      details: JSON.stringify({
+        before_status: null,
+        after_status: 0,
+        grade: 2
+      })
+    },
+    {
+      blacklist_id: records[0].id,
+      blacklist_no: 'BL202406160001',
+      trace_type: 2,
+      operator_id: auditorId,
+      operator_name: '审核员',
+      description: '审核通过，生效日期2024-06-10',
+      details: JSON.stringify({
+        before_status: 0,
+        after_status: 1,
+        review_opinion: '证据充分，违规事实清楚，同意加入黑名单'
+      })
+    },
+    {
+      blacklist_id: records[1].id,
+      blacklist_no: 'BL202406160002',
+      trace_type: 1,
+      operator_id: adminId,
+      operator_name: '系统管理员',
+      description: '录入永久黑名单，涉嫌反洗钱',
+      details: JSON.stringify({
+        before_status: null,
+        after_status: 0,
+        grade: 4
+      })
+    },
+    {
+      blacklist_id: records[1].id,
+      blacklist_no: 'BL202406160002',
+      trace_type: 2,
+      operator_id: adminId,
+      operator_name: '系统管理员',
+      description: '审核通过，永久禁止全渠道业务',
+      details: JSON.stringify({
+        before_status: 0,
+        after_status: 1,
+        review_opinion: '已上报人行，同意永久加入黑名单'
+      })
+    },
+    {
+      blacklist_id: records[2].id,
+      blacklist_no: 'BL202406160003',
+      trace_type: 1,
+      operator_id: managerId,
+      operator_name: '机构管理员',
+      description: '录入临时黑名单，期限1个月',
+      details: JSON.stringify({
+        before_status: null,
+        after_status: 0,
+        grade: 1
+      })
+    },
+    {
+      blacklist_id: records[2].id,
+      blacklist_no: 'BL202406160003',
+      trace_type: 2,
+      operator_id: auditorId,
+      operator_name: '审核员',
+      description: '审核通过，限制大额取款',
+      details: JSON.stringify({
+        before_status: 0,
+        after_status: 1,
+        review_opinion: '客户已整改，同意临时管控'
+      })
+    },
+    {
+      blacklist_id: records[4].id,
+      blacklist_no: 'BL202406160005',
+      trace_type: 3,
+      operator_id: auditorId,
+      operator_name: '审核员',
+      description: '启动复核流程，评估是否解除黑名单',
+      details: JSON.stringify({
+        before_status: 1,
+        after_status: 2,
+        review_reason: '客户表示已筹集资金准备还款'
+      })
+    }
+  ];
+
+  const traceRecords = traceLogs.map((t, i) => ({
+    id: `bltrace${String(i + 1).padStart(5, '0')}`,
+    ...t,
+    operation_time: new Date(`2024-06-${10 + i} 10:${30 + i}:00`)
+  }));
+
+  await bulkCreateInBatches(BlacklistTraceLog, traceRecords as any);
+
+  console.log('[Seeder] Blacklist records seeded successfully.');
+}
+
 export async function runAllSeeders(options?: { force?: boolean; closeOnFinish?: boolean }): Promise<void> {
   const force = options?.force ?? false;
   const closeOnFinish = options?.closeOnFinish ?? false;
@@ -2569,6 +2919,7 @@ export async function runAllSeeders(options?: { force?: boolean; closeOnFinish?:
     await seedTransactions();
     await seedRiskIndicators();
     await seedMonitorRules();
+    await seedBlacklistConfig();
 
     console.log('========================================');
     console.log('[Seeder] All seeders completed successfully!');

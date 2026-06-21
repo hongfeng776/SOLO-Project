@@ -24,3 +24,4 @@ export { CorporateProfileController } from './CorporateProfileController';
 export { CustomerTagController } from './CustomerTagController';
 export { CustomerPrivacyController } from './CustomerPrivacyController';
 export { AbnormalMonitorController } from './AbnormalMonitorController';
+export { BlacklistController } from './BlacklistController';

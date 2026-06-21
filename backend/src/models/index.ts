@@ -44,3 +44,6 @@ export { AbnormalTransaction } from './AbnormalTransaction';
 export { MonitorRule } from './MonitorRule';
 export { MonitorAlertBatch } from './MonitorAlertBatch';
 export { MonitorTraceLog } from './MonitorTraceLog';
+export { BlacklistRecord } from './BlacklistRecord';
+export { BlacklistBatch } from './BlacklistBatch';
+export { BlacklistTraceLog } from './BlacklistTraceLog';
