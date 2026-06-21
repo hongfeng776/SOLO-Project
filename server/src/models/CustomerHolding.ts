@@ -1,6 +1,11 @@
 import { Model, InferAttributes, InferCreationAttributes, CreationOptional, DataTypes } from 'sequelize';
 import { sequelize } from '../config/database';
 
+export enum HoldingLockStatus {
+  NORMAL = 'normal',
+  LOCKED = 'locked',
+}
+
 class CustomerHolding extends Model<InferAttributes<CustomerHolding>, InferCreationAttributes<CustomerHolding>> {
   declare id: CreationOptional<number>;
   declare customer_id: number;
@@ -17,6 +22,17 @@ class CustomerHolding extends Model<InferAttributes<CustomerHolding>, InferCreat
   declare market_value: CreationOptional<number>;
   declare floating_profit: CreationOptional<number>;
   declare floating_profit_rate: CreationOptional<number>;
+  declare lock_status: CreationOptional<string>;
+  declare lock_reason: CreationOptional<string>;
+  declare locked_by: CreationOptional<number>;
+  declare locked_by_name: CreationOptional<string>;
+  declare locked_at: CreationOptional<Date>;
+  declare unlocked_by: CreationOptional<number>;
+  declare unlocked_by_name: CreationOptional<string>;
+  declare unlocked_at: CreationOptional<Date>;
+  declare last_adjust_by: CreationOptional<number>;
+  declare last_adjust_by_name: CreationOptional<string>;
+  declare last_adjust_at: CreationOptional<Date>;
   declare last_trade_date: CreationOptional<Date>;
   declare first_buy_date: CreationOptional<string>;
   declare readonly created_at: CreationOptional<Date>;
@@ -89,6 +105,51 @@ CustomerHolding.init(
     },
     floating_profit_rate: {
       type: DataTypes.DECIMAL(10, 4),
+      allowNull: true,
+    },
+    lock_status: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+      defaultValue: HoldingLockStatus.NORMAL,
+    },
+    lock_reason: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
+    locked_by: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    locked_by_name: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    locked_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    unlocked_by: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    unlocked_by_name: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    unlocked_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    last_adjust_by: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    last_adjust_by_name: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    last_adjust_at: {
+      type: DataTypes.DATE,
       allowNull: true,
     },
     last_trade_date: {

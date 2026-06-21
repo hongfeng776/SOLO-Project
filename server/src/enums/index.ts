@@ -34,3 +34,7 @@ export const FILING_STATUS_LABELS: Record<string, string> = { not_filed: '未备
 export const FILING_STATUS_COLORS: Record<string, string> = { not_filed: 'info', filing: 'warning', filed: 'success', rejected: 'danger' }
 export const ACCOUNT_STATUS_LABELS: Record<string, string> = { not_opened: '未开户', opening: '开户中', opened: '已开户', closed: '已销户' }
 export const ACCOUNT_STATUS_COLORS: Record<string, string> = { not_opened: 'info', opening: 'warning', opened: 'success', closed: 'danger' }
+
+export enum HoldingLockStatus { NORMAL = 'normal', LOCKED = 'locked' }
+export const HOLDING_LOCK_STATUS_LABELS: Record<string, string> = { normal: '正常', locked: '已锁定' }
+export const HOLDING_LOCK_STATUS_COLORS: Record<string, string> = { normal: 'success', locked: 'danger' }
