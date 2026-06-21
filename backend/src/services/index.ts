@@ -39,6 +39,10 @@ import ShippingValidateService, { shippingValidateService } from './ShippingVali
 import ShippingSyncService, { shippingSyncService } from './ShippingSyncService';
 import LogisticsBatchService, { logisticsBatchService } from './LogisticsBatchService';
 import LogisticsTraceService, { logisticsTraceService } from './LogisticsTraceService';
+import LogisticsProviderService, { logisticsProviderService } from './LogisticsProviderService';
+import LogisticsProviderValidateService, { logisticsProviderValidateService } from './LogisticsProviderValidateService';
+import LogisticsProviderBatchService, { logisticsProviderBatchService } from './LogisticsProviderBatchService';
+import LogisticsProviderTraceService, { logisticsProviderTraceService } from './LogisticsProviderTraceService';
 import AfterSaleValidateService, { afterSaleValidateService } from './AfterSaleValidateService';
 import AfterSaleSyncService, { afterSaleSyncService } from './AfterSaleSyncService';
 import AfterSaleBatchService, { afterSaleBatchService } from './AfterSaleBatchService';
@@ -90,6 +94,10 @@ export {
   ShippingSyncService,
   LogisticsBatchService,
   LogisticsTraceService,
+  LogisticsProviderService,
+  LogisticsProviderValidateService,
+  LogisticsProviderBatchService,
+  LogisticsProviderTraceService,
   AfterSaleValidateService,
   AfterSaleSyncService,
   AfterSaleBatchService,
@@ -142,6 +150,10 @@ export const services: Record<string, any> = {
   shippingSyncService,
   logisticsBatchService,
   logisticsTraceService,
+  logisticsProviderService,
+  logisticsProviderValidateService,
+  logisticsProviderBatchService,
+  logisticsProviderTraceService,
   afterSaleValidateService,
   afterSaleSyncService,
   afterSaleBatchService,

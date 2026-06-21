@@ -45,6 +45,13 @@ import { MerchantOrderRecordDao } from './MerchantOrderRecordDao';
 import { PaymentReconcileDao } from './PaymentReconcileDao';
 import { FundSettlementDao } from './FundSettlementDao';
 import { LogisticsProviderDao } from './LogisticsProviderDao';
+import { LogisticsProviderQualificationDao } from './LogisticsProviderQualificationDao';
+import { LogisticsBranchNetworkDao } from './LogisticsBranchNetworkDao';
+import { LogisticsFeeStandardDao } from './LogisticsFeeStandardDao';
+import { LogisticsSignContractDao } from './LogisticsSignContractDao';
+import { LogisticsFeeChangeLogDao } from './LogisticsFeeChangeLogDao';
+import { LogisticsServiceEvaluationDao } from './LogisticsServiceEvaluationDao';
+import { LogisticsProviderOperationLogDao } from './LogisticsProviderOperationLogDao';
 import { ShipmentRecordDao } from './ShipmentRecordDao';
 import { LogisticsTrackDao } from './LogisticsTrackDao';
 import { AbnormalLogisticsLogDao } from './AbnormalLogisticsLogDao';
@@ -105,6 +112,13 @@ export {
   PaymentReconcileDao,
   FundSettlementDao,
   LogisticsProviderDao,
+  LogisticsProviderQualificationDao,
+  LogisticsBranchNetworkDao,
+  LogisticsFeeStandardDao,
+  LogisticsSignContractDao,
+  LogisticsFeeChangeLogDao,
+  LogisticsServiceEvaluationDao,
+  LogisticsProviderOperationLogDao,
   ShipmentRecordDao,
   LogisticsTrackDao,
   AbnormalLogisticsLogDao,
@@ -163,6 +177,13 @@ export const daos = {
   paymentReconcileDao: new PaymentReconcileDao(),
   fundSettlementDao: new FundSettlementDao(),
   logisticsProviderDao: new LogisticsProviderDao(),
+  logisticsProviderQualificationDao: new LogisticsProviderQualificationDao(),
+  logisticsBranchNetworkDao: new LogisticsBranchNetworkDao(),
+  logisticsFeeStandardDao: new LogisticsFeeStandardDao(),
+  logisticsSignContractDao: new LogisticsSignContractDao(),
+  logisticsFeeChangeLogDao: new LogisticsFeeChangeLogDao(),
+  logisticsServiceEvaluationDao: new LogisticsServiceEvaluationDao(),
+  logisticsProviderOperationLogDao: new LogisticsProviderOperationLogDao(),
   shipmentRecordDao: new ShipmentRecordDao(),
   logisticsTrackDao: new LogisticsTrackDao(),
   abnormalLogisticsLogDao: new AbnormalLogisticsLogDao(),

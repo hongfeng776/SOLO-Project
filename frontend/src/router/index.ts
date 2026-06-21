@@ -93,6 +93,20 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '售后管理', icon: 'Service', requiresAuth: true }
       },
       {
+        path: 'logistics',
+        name: 'Logistics',
+        redirect: '/logistics/provider',
+        meta: { title: '物流供应链', icon: 'Van', requiresAuth: true },
+        children: [
+          {
+            path: 'provider',
+            name: 'LogisticsProvider',
+            component: () => import('@/views/logistics/provider/index.vue'),
+            meta: { title: '服务商管控', icon: 'OfficeBuilding', requiresAuth: true }
+          }
+        ]
+      },
+      {
         path: 'merchant',
         name: 'Merchant',
         redirect: '/merchant/list',

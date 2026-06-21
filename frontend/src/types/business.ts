@@ -1123,3 +1123,342 @@ export interface PermissionBatchResult {
   updatedUsers: User[]
 }
 
+// =====================================================
+// 物流服务商相关类型定义
+// =====================================================
+
+export interface LogisticsProvider {
+  id: number
+  providerCode: string
+  providerName: string
+  logo?: string
+  level: number
+  status: number
+  cooperationStatus: number
+  cooperationEffectiveDate?: string
+  cooperationTerminateDate?: string
+  contactPerson?: string
+  contactPhone?: string
+  contactEmail?: string
+  registeredAddress?: string
+  creditCode?: string
+  businessLicenseNo?: string
+  legalPerson?: string
+  legalIdCard?: string
+  businessLicenseUrl?: string
+  licenseValidFrom?: string
+  licenseValidTo?: string
+  roadTransportLicenseUrl?: string
+  roadTransportValidTo?: string
+  serviceProvince?: string
+  serviceCities?: string
+  branchCount: number
+  crossProvinceTimeliness?: number
+  intraProvinceTimeliness?: number
+  firstWeightFee: number
+  additionalWeightFee: number
+  baseServiceFee: number
+  dailyOrderLimit: number
+  supportCod: number
+  supportColdChain: number
+  supportOversized: number
+  supportPickup: number
+  matchPriority: number
+  apiUrl?: string
+  apiKey?: string
+  apiSecret?: string
+  serviceScore?: number
+  onTimeRate?: number
+  damageRate?: number
+  lossRate?: number
+  totalOrders: number
+  totalAmount: number
+  qualificationIntro?: string
+  remark?: string
+  createdBy?: number
+  createdByName?: string
+  updatedBy?: number
+  updatedByName?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface LogisticsProviderFullInfo extends LogisticsProvider {
+  qualifications: ProviderQualification[]
+  branchNetworks: BranchNetwork[]
+  feeStandards: FeeStandard[]
+  signContracts: SignContract[]
+  feeChangeLogs: FeeChangeLog[]
+  serviceEvaluations: ServiceEvaluation[]
+  operationLogs: ProviderOperationLog[]
+}
+
+export interface ValidationResult {
+  valid: boolean
+  errorCode?: string
+  errorMessage?: string
+  field?: string
+  suggestions?: string[]
+}
+
+export interface ProviderStatistics {
+  totalCount: number
+  enabledCount: number
+  disabledCount: number
+  pendingReviewCount: number
+  archivedCount: number
+  cooperatingCount: number
+  avgServiceScore: number
+  avgOnTimeRate: number
+  levelDistribution: Record<number, number>
+  cooperationDistribution: Record<number, number>
+  monthlyTrend: Array<{ month: string; newCount: number; activeCount: number }>
+}
+
+export interface ProviderEditPermission {
+  canEdit: boolean
+  lockedFields: string[]
+  lockedFieldsReason: Record<string, string>
+  coreFields: string[]
+  needSecondConfirm: boolean
+  cooperationStatus: number
+}
+
+export interface ProviderPreCheckReport {
+  passed: boolean
+  score: number
+  level: 'excellent' | 'good' | 'pass' | 'danger'
+  blockItems: Array<{ field: string; message: string; severity: 'error' | 'warning' }>
+  dimensions: {
+    qualification: { passed: boolean; score: number; detail: string }
+    coverage: { passed: boolean; score: number; detail: string }
+    timeliness: { passed: boolean; score: number; detail: string }
+    permission: { passed: boolean; score: number; detail: string }
+  }
+  blockEnabled: boolean
+  blockReason?: string
+}
+
+export interface ProviderQualification {
+  id: number
+  providerId: number
+  qualificationType: string
+  qualificationName?: string
+  certificateNo?: string
+  certificateHolder?: string
+  certificateFileUrl?: string
+  validFrom?: string
+  expireDate?: string
+  status: number
+  auditRemark?: string
+  auditedBy?: number
+  auditedByName?: string
+  auditedAt?: string
+  description?: string
+  createdBy?: number
+  createdByName?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface BranchNetwork {
+  id: number
+  branchCode?: string
+  providerId: number
+  branchName: string
+  branchType?: string
+  province?: string
+  city?: string
+  district?: string
+  address?: string
+  latitude?: number
+  longitude?: number
+  managerName?: string
+  contactPhone?: string
+  contactEmail?: string
+  businessHours?: string
+  dailyCapacity: number
+  coverageRadius: number
+  status: number
+  servicePriority: number
+  serviceScope?: string
+  remark?: string
+  createdBy?: number
+  createdByName?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FeeStandard {
+  id: number
+  providerId: number
+  feeType: string
+  feeName?: string
+  fromProvince?: string
+  fromCity?: string
+  toProvince?: string
+  toCity?: string
+  weightUnit: string
+  firstWeight: number
+  firstWeightFee: number
+  additionalWeightStep: number
+  additionalWeightFee: number
+  baseServiceFee: number
+  minFee: number
+  maxFee?: number
+  volumeWeightRatio?: number
+  standardTimeliness: number
+  effectiveDate?: string
+  expiryDate?: string
+  status: number
+  isDefault: number
+  ruleDescription?: string
+  remark?: string
+  createdBy?: number
+  createdByName?: string
+  updatedBy?: number
+  updatedByName?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SignContract {
+  id: number
+  contractNo?: string
+  providerId: number
+  contractName: string
+  contractType: string
+  contractFileUrl?: string
+  partyASignatory?: string
+  partyASignDate?: string
+  partyBSignatory?: string
+  partyBSignDate?: string
+  effectiveDate?: string
+  expiryDate?: string
+  contractAmount?: number
+  slaLevel?: number
+  compensationLimit?: number
+  status: number
+  contractSummary?: string
+  terminationReason?: string
+  actualTerminationDate?: string
+  createdBy?: number
+  createdByName?: string
+  approvedBy?: number
+  approvedByName?: string
+  approvedAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FeeChangeLog {
+  id: number
+  logNo?: string
+  providerId: number
+  feeStandardId?: number
+  changeType: string
+  feeName?: string
+  beforeData?: any
+  afterData?: any
+  changeReason?: string
+  isViolation: number
+  violationRemark?: string
+  operatorId?: number
+  operatorName?: string
+  confirmedBy?: number
+  confirmedByName?: string
+  confirmedAt?: string
+  createdAt: string
+}
+
+export interface ServiceEvaluation {
+  id: number
+  evaluationNo?: string
+  providerId: number
+  orderId?: number
+  orderNo?: string
+  shipmentId?: number
+  evaluationType?: string
+  rating: number
+  timelinessScore?: number
+  hasDamage: number
+  hasLoss: number
+  compensationAmount?: number
+  content?: string
+  imageUrls?: string
+  evaluatorId?: number
+  evaluatorName?: string
+  evaluatorType: number
+  isAppealed: number
+  appealResult?: string
+  appealHandledAt?: string
+  createdAt: string
+}
+
+export interface ProviderOperationLog {
+  id: number
+  providerId: number
+  changeType: string
+  changeTitle?: string
+  beforeData?: any
+  afterData?: any
+  changeDetail?: string
+  changeReason?: string
+  isCoreChange: number
+  confirmedBy?: number
+  confirmedByName?: string
+  confirmedAt?: string
+  operatorId?: number
+  operatorName?: string
+  operatorRole?: string
+  createdAt: string
+}
+
+export interface ProviderTraceSummary {
+  qualificationStats: {
+    total: number
+    valid: number
+    expired: number
+    pending: number
+    expiringSoon: number
+    invalid: number
+  }
+  contractStats: {
+    total: number
+    effective: number
+    pending: number
+    expired: number
+    terminated: number
+  }
+  feeStats: {
+    total: number
+    active: number
+    violations: number
+    changeCount: number
+  }
+  evaluationStats: {
+    total: number
+    avgRating: number
+    avgTimelinessScore: number
+    damageCount: number
+    lossCount: number
+    compensationTotal: number
+    qualityScore: number
+  }
+  complianceReport: {
+    totalScore: number
+    level: 'excellent' | 'good' | 'pass' | 'danger'
+    issues: Array<{ dimension: string; score: number; problem: string; suggestion: string }>
+  }
+}
+
+export interface FullProviderTrace extends ProviderTraceSummary {
+  basicInfo: LogisticsProvider | null
+  qualifications: ProviderQualification[]
+  contracts: SignContract[]
+  feeChangeLogs: FeeChangeLog[]
+  evaluations: ServiceEvaluation[]
+  operationLogs: ProviderOperationLog[]
+  feeStandards: FeeStandard[]
+}
+

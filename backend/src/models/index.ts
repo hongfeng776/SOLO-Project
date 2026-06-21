@@ -43,6 +43,13 @@ import { MerchantOrderRecord } from './MerchantOrderRecord';
 import { OrderException } from './OrderException';
 import { GoodsSnapshot } from './GoodsSnapshot';
 import { LogisticsProvider } from './LogisticsProvider';
+import { LogisticsProviderQualification } from './LogisticsProviderQualification';
+import { LogisticsBranchNetwork } from './LogisticsBranchNetwork';
+import { LogisticsFeeStandard } from './LogisticsFeeStandard';
+import { LogisticsSignContract } from './LogisticsSignContract';
+import { LogisticsFeeChangeLog } from './LogisticsFeeChangeLog';
+import { LogisticsServiceEvaluation } from './LogisticsServiceEvaluation';
+import { LogisticsProviderOperationLog } from './LogisticsProviderOperationLog';
 import { ShipmentRecord } from './ShipmentRecord';
 import { LogisticsTrack } from './LogisticsTrack';
 import { AbnormalLogisticsLog } from './AbnormalLogisticsLog';
@@ -95,6 +102,13 @@ export {
   MerchantOrderRecord,
   OrderException,
   LogisticsProvider,
+  LogisticsProviderQualification,
+  LogisticsBranchNetwork,
+  LogisticsFeeStandard,
+  LogisticsSignContract,
+  LogisticsFeeChangeLog,
+  LogisticsServiceEvaluation,
+  LogisticsProviderOperationLog,
   ShipmentRecord,
   LogisticsTrack,
   AbnormalLogisticsLog,
@@ -148,6 +162,13 @@ export const models = {
   MerchantOrderRecord,
   OrderException,
   LogisticsProvider,
+  LogisticsProviderQualification,
+  LogisticsBranchNetwork,
+  LogisticsFeeStandard,
+  LogisticsSignContract,
+  LogisticsFeeChangeLog,
+  LogisticsServiceEvaluation,
+  LogisticsProviderOperationLog,
   ShipmentRecord,
   LogisticsTrack,
   AbnormalLogisticsLog,
