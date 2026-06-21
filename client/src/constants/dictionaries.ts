@@ -1,4 +1,4 @@
-import { MarketType, RiskLevel, ProductType, ProductStatus, CustomerType, CustomerStatus, FlowType, FlowStatus, FlowChannel, AuditType, AuditStatus, TargetType, PermType, UserStatus, RoleStatus, PermissionStatus, TradeType, TradeStatus, AlertType, AlertLevel, AlertStatus, LogStatus, LogModule, LogAction, StockStatus, ArchiveStatus, FilingStatus, AccountStatus, Gender, Education, MaritalStatus, HoldingLockStatus, StockProductType, StockProductStatus, StockProductArchiveStatus, StockProductFilingStatus } from '@/enums'
+import { MarketType, RiskLevel, ProductType, ProductStatus, CustomerType, CustomerStatus, FlowType, FlowStatus, FlowChannel, AuditType, AuditStatus, TargetType, PermType, UserStatus, RoleStatus, PermissionStatus, TradeType, TradeStatus, AlertType, AlertLevel, AlertStatus, LogStatus, LogModule, LogAction, StockStatus, ArchiveStatus, FilingStatus, AccountStatus, Gender, Education, MaritalStatus, HoldingLockStatus, StockProductType, StockProductStatus, StockProductArchiveStatus, StockProductFilingStatus, StockClassLevel, StockClassStatus, StockClassOperationType } from '@/enums'
 import { BoardType, TradeStatus as QuoteTradeStatus } from '@/types/api'
 
 export const MARKET_LABELS: Record<MarketType, string> = {
@@ -548,4 +548,88 @@ export const STOCK_PRODUCT_FIELD_LABELS: Record<string, string> = {
   filingInstitution: '备案机构',
   remark: '备注',
   productCode: '产品编码',
+}
+
+export const STOCK_CLASS_LEVEL_LABELS: Record<StockClassLevel, string> = {
+  [StockClassLevel.BOARD]: '板块分类',
+  [StockClassLevel.INDUSTRY]: '行业分类',
+  [StockClassLevel.RISK_LEVEL]: '风险等级分类',
+  [StockClassLevel.MARKET_CAP]: '市值规模分类',
+}
+
+export const STOCK_CLASS_LEVEL_COLORS: Record<StockClassLevel, string> = {
+  [StockClassLevel.BOARD]: '#409EFF',
+  [StockClassLevel.INDUSTRY]: '#67C23A',
+  [StockClassLevel.RISK_LEVEL]: '#F56C6C',
+  [StockClassLevel.MARKET_CAP]: '#E6A23C',
+}
+
+export const STOCK_CLASS_LEVEL_ICONS: Record<StockClassLevel, string> = {
+  [StockClassLevel.BOARD]: 'Grid',
+  [StockClassLevel.INDUSTRY]: 'OfficeBuilding',
+  [StockClassLevel.RISK_LEVEL]: 'Warning',
+  [StockClassLevel.MARKET_CAP]: 'Coin',
+}
+
+export const STOCK_CLASS_STATUS_LABELS: Record<StockClassStatus, string> = {
+  [StockClassStatus.ACTIVE]: '生效',
+  [StockClassStatus.INACTIVE]: '未生效',
+  [StockClassStatus.MERGED]: '已合并',
+  [StockClassStatus.INVALID]: '已作废',
+}
+
+export const STOCK_CLASS_STATUS_COLORS: Record<StockClassStatus, string> = {
+  [StockClassStatus.ACTIVE]: '#67C23A',
+  [StockClassStatus.INACTIVE]: '#909399',
+  [StockClassStatus.MERGED]: '#409EFF',
+  [StockClassStatus.INVALID]: '#F56C6C',
+}
+
+export const STOCK_CLASS_STATUS_TAG_TYPES: Record<StockClassStatus, 'success' | 'info' | 'primary' | 'danger'> = {
+  [StockClassStatus.ACTIVE]: 'success',
+  [StockClassStatus.INACTIVE]: 'info',
+  [StockClassStatus.MERGED]: 'primary',
+  [StockClassStatus.INVALID]: 'danger',
+}
+
+export const STOCK_CLASS_OP_TYPE_LABELS: Record<StockClassOperationType, string> = {
+  [StockClassOperationType.CREATE]: '新建分类',
+  [StockClassOperationType.UPDATE]: '修改分类',
+  [StockClassOperationType.DELETE]: '删除分类',
+  [StockClassOperationType.MERGE]: '合并分类',
+  [StockClassOperationType.MIGRATE]: '迁移产品',
+  [StockClassOperationType.INVALIDATE]: '作废分类',
+}
+
+export const STOCK_CLASS_OP_TYPE_TAG_TYPES: Record<StockClassOperationType, 'primary' | 'success' | 'danger' | 'warning' | 'info'> = {
+  [StockClassOperationType.CREATE]: 'primary',
+  [StockClassOperationType.UPDATE]: 'success',
+  [StockClassOperationType.DELETE]: 'danger',
+  [StockClassOperationType.MERGE]: 'warning',
+  [StockClassOperationType.MIGRATE]: 'info',
+  [StockClassOperationType.INVALIDATE]: 'danger',
+}
+
+export const STOCK_CLASS_INDUSTRY_LIST: string[] = [
+  '银行', '证券', '保险', '房地产', '信息技术', '医药生物',
+  '食品饮料', '汽车', '电子', '机械设备', '化工', '钢铁',
+  '传媒', '通信', '电力设备', '建筑材料', '国防军工', '农林牧渔',
+]
+
+export const STOCK_CLASS_RISK_TAG_LIST: string[] = ['低风险', '中低风险', '中风险', '中高风险', '高风险']
+
+export const STOCK_CLASS_MARKET_CAP_LIST: string[] = ['超大盘(>2000亿)', '大盘(500-2000亿)', '中盘(100-500亿)', '小盘(30-100亿)', '微盘(<30亿)']
+
+export const STOCK_CLASS_FIELD_LABELS: Record<string, string> = {
+  classCode: '分类编码',
+  className: '分类名称',
+  classLevel: '分类层级',
+  parentId: '上级分类',
+  classStatus: '分类状态',
+  sortOrder: '排序号',
+  productCount: '关联产品数',
+  riskTag: '风险标签',
+  marketCapRange: '市值区间',
+  industryCode: '行业代码',
+  description: '描述',
 }

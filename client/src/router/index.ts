@@ -57,6 +57,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '股票产品档案', icon: 'Box', keepAlive: true }
       },
       {
+        path: 'stock-classification',
+        name: 'StockClassification',
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/stock-classification/index.vue'),
+        meta: { title: '股票分类管理', icon: 'Menu', keepAlive: true }
+      },
+      {
         path: 'product',
         name: 'Product',
         component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/product/index.vue'),

@@ -226,6 +226,85 @@ export interface IStockProductAuditTrailData {
   }
 }
 
+export interface IStockClassification {
+  id: number
+  classCode: string
+  className: string
+  classLevel: string
+  parentId: number | null
+  parentName?: string
+  classStatus: string
+  sortOrder: number
+  productCount: number
+  riskTag?: string
+  marketCapRange?: string
+  industryCode?: string
+  description?: string
+  createdBy?: number
+  createdByName?: string
+  createdAt: string
+  updatedBy?: number
+  updatedByName?: string
+  updatedAt?: string
+}
+
+export interface IStockClassValidation {
+  valid: boolean
+  permissionValid: boolean
+  permissionMessage: string
+  levelValid: boolean
+  levelMessage: string
+  nameUnique: boolean
+  nameMessage: string
+  levelExceeded: boolean
+}
+
+export interface IStockClassDeleteCheck {
+  canDelete: boolean
+  relatedProductCount: number
+  relatedProducts: Array<{ id: number; stockCode: string; stockName: string }>
+  message: string
+}
+
+export interface IStockClassBatchResult {
+  total: number
+  success: number
+  failed: number
+  successList: IStockClassification[]
+  errorList: Array<{ row: number; data: any; errors: IValidationError[]; type: string }>
+}
+
+export interface IStockClassTraceData {
+  sourceInfo: {
+    createdBy: string
+    createdAt: string
+    updatedBy: string
+    updatedAt: string
+    classCode: string
+    className: string
+    originalData?: Partial<IStockClassification>
+  }
+  operationLogs: Array<{
+    id: number
+    operation: string
+    operationType: string
+    username: string
+    remark: string
+    ipAddress: string
+    createdAt: string
+  }>
+  levelCheck: {
+    passed: boolean
+    issues: Array<{ type: string; severity: string; message: string }>
+  }
+  classificationCheck: {
+    accuracyValid: boolean
+    duplicateFound: boolean
+    invalidFound: boolean
+    details: Array<{ field: string; expected: string; actual: string; passed: boolean }>
+  }
+}
+
 export interface IAssetProduct {
   id: number
   productCode: string

@@ -70,6 +70,12 @@ export enum StockProductArchiveStatus { DRAFT = 'draft', ARCHIVED = 'archived', 
 
 export enum StockProductFilingStatus { NOT_FILED = 'not_filed', FILING = 'filing', FILED = 'filed', REJECTED = 'rejected' }
 
+export enum StockClassLevel { BOARD = 'board', INDUSTRY = 'industry', RISK_LEVEL = 'risk_level', MARKET_CAP = 'market_cap' }
+
+export enum StockClassStatus { ACTIVE = 'active', INACTIVE = 'inactive', MERGED = 'merged', INVALID = 'invalid' }
+
+export enum StockClassOperationType { CREATE = 'create', UPDATE = 'update', DELETE = 'delete', MERGE = 'merge', MIGRATE = 'migrate', INVALIDATE = 'invalidate' }
+
 export const HOT_RISE_THRESHOLD = 7
 
 export const RISK_FALL_THRESHOLD = -7
