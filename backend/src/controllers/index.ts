@@ -20,3 +20,4 @@ export { LoanApprovalController } from './LoanApprovalController';
 export { LoanRepaymentController } from './LoanRepaymentController';
 export { SettlementController } from './SettlementController';
 export { OnlinePaymentController } from './OnlinePaymentController';
+export { DeviceArchiveController } from './DeviceArchiveController';

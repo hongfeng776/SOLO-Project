@@ -243,3 +243,32 @@ export {
   type TamperProofCheck,
   type OnlinePaymentTraceResult
 } from './onlinePayment';
+
+export {
+  DeviceArchiveType,
+  DeviceArchiveStatus,
+  ControlLevel,
+  QualificationStatus,
+  DeviceArchiveTypeText,
+  DeviceArchiveStatusText,
+  ControlLevelText,
+  QualificationStatusText,
+  DEVICE_TYPE_CONFIG,
+  OLD_DEVICE_THRESHOLD_YEARS,
+  type DeviceTypeConfig,
+  type DevicePreCheckRequest,
+  type DevicePreCheckResult,
+  type CreateDeviceArchiveRequest,
+  type DeviceQualificationItem,
+  type DeviceArchiveQueryParams,
+  type DeviceArchive,
+  type DeviceArchiveVO,
+  type BatchDeviceArchiveItem,
+  type BatchDeviceArchiveRequest,
+  type BatchDeviceArchiveResultItem,
+  type DeviceTraceRequest,
+  type DeviceTraceDuplicateItem,
+  type DeviceTraceFakeDeviceItem,
+  type DeviceTraceExpiredQualItem,
+  type DeviceTraceResult
+} from './deviceArchive';

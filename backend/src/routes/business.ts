@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, OnlinePaymentController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, OnlinePaymentController, DeviceArchiveController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -17,6 +17,7 @@ const loanApprovalController = new LoanApprovalController();
 const loanRepaymentController = new LoanRepaymentController();
 const settlementController = new SettlementController();
 const onlinePaymentController = new OnlinePaymentController();
+const deviceArchiveController = new DeviceArchiveController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -244,5 +245,21 @@ router.post('/online-payment/trace', requirePermission('business:onlinePayment:t
 router.get('/online-payment/merchant/:no', requirePermission('business:onlinePayment:query'), (req, res, next) => onlinePaymentController.merchantDetail(req, res, next));
 // 设备绑定列表
 router.get('/online-payment/device/list', requirePermission('business:onlinePayment:query'), (req, res, next) => onlinePaymentController.deviceList(req, res, next));
+
+// ========== 设备终端档案管理 ==========
+// 配置枚举
+router.get('/device-archive/config', requireAuth, (req, res, next) => deviceArchiveController.config(req, res, next));
+// 前置校验
+router.post('/device-archive/precheck', requirePermission('business:deviceArchive:create'), (req, res, next) => deviceArchiveController.preCheck(req, res, next));
+// 列表查询
+router.get('/device-archive/list', requirePermission('business:deviceArchive:query'), (req, res, next) => deviceArchiveController.list(req, res, next));
+// 详情查询
+router.get('/device-archive/:id', requirePermission('business:deviceArchive:query'), (req, res, next) => deviceArchiveController.detail(req, res, next));
+// 新建设备建档
+router.post('/device-archive', requirePermission('business:deviceArchive:create'), (req, res, next) => deviceArchiveController.create(req, res, next));
+// 批量建档
+router.post('/device-archive/batch', requirePermission('business:deviceArchive:batch'), (req, res, next) => deviceArchiveController.batch(req, res, next));
+// 设备溯源
+router.post('/device-archive/trace', requirePermission('business:deviceArchive:trace'), (req, res, next) => deviceArchiveController.trace(req, res, next));
 
 export default router;

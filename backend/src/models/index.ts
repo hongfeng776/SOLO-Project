@@ -26,3 +26,6 @@ export { Settlement, SettlementBatch } from './Settlement';
 export { OnlinePayment } from './OnlinePayment';
 export { MerchantInfo } from './MerchantInfo';
 export { DeviceBinding } from './DeviceBinding';
+export { DeviceArchive } from './DeviceArchive';
+export { DeviceArchiveBatch } from './DeviceArchiveBatch';
+export { DeviceArchiveTraceLog } from './DeviceArchiveTraceLog';

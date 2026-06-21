@@ -503,6 +503,45 @@ const asyncRoutes: RouteRecordRaw[] = [
           permissions: ['business:onlinePayment:trace'],
           roles: ['admin', 'manager', 'auditor']
         }
+      },
+      {
+        path: 'device-archive/index',
+        name: 'BusinessDeviceArchiveIndex',
+        component: () => import('@views/business/device-archive/index.vue'),
+        meta: {
+          title: '设备档案',
+          icon: 'Monitor',
+          componentName: 'BusinessDeviceArchiveIndex',
+          keepAlive: true,
+          permissions: ['business:deviceArchive:query'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'device-archive/batch',
+        name: 'BusinessDeviceArchiveBatch',
+        component: () => import('@views/business/device-archive/batch.vue'),
+        meta: {
+          title: '批量建档',
+          icon: 'Files',
+          componentName: 'BusinessDeviceArchiveBatch',
+          keepAlive: true,
+          permissions: ['business:deviceArchive:batch'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'device-archive/trace',
+        name: 'BusinessDeviceArchiveTrace',
+        component: () => import('@views/business/device-archive/trace.vue'),
+        meta: {
+          title: '设备溯源',
+          icon: 'Search',
+          componentName: 'BusinessDeviceArchiveTrace',
+          keepAlive: false,
+          permissions: ['business:deviceArchive:trace'],
+          roles: ['admin', 'manager', 'auditor']
+        }
       }
     ]
   },

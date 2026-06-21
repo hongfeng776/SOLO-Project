@@ -18,3 +18,4 @@ export { SettlementBatchRepository } from './SettlementBatchRepository';
 export { OnlinePaymentRepository } from './OnlinePaymentRepository';
 export { MerchantInfoRepository } from './MerchantInfoRepository';
 export { DeviceBindingRepository } from './DeviceBindingRepository';
+export { DeviceArchiveRepository } from './DeviceArchiveRepository';
