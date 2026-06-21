@@ -33,6 +33,7 @@ const FilterCategoryAdapt = require('./FilterCategoryAdapt')
 const FilterWeightLog = require('./FilterWeightLog')
 const FeaturedWork = require('./FeaturedWork')
 const FeaturedWorkLog = require('./FeaturedWorkLog')
+const ResourceVisibilityLog = require('./ResourceVisibilityLog')
 
 User.hasMany(Resource, { foreignKey: 'authorId', as: 'resources' })
 Resource.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
@@ -143,6 +144,10 @@ FeaturedWork.hasMany(FeaturedWorkLog, { foreignKey: 'featuredId', as: 'operation
 FeaturedWorkLog.belongsTo(FeaturedWork, { foreignKey: 'featuredId', as: 'featuredWork' })
 FeaturedWorkLog.belongsTo(Resource, { foreignKey: 'resourceId', as: 'resource' })
 
+Resource.hasMany(ResourceVisibilityLog, { foreignKey: 'resourceId', as: 'visibilityLogs' })
+ResourceVisibilityLog.belongsTo(Resource, { foreignKey: 'resourceId', as: 'resource' })
+ResourceVisibilityLog.belongsTo(User, { foreignKey: 'operatorId', as: 'operator' })
+
 module.exports = {
   User,
   Category,
@@ -178,5 +183,6 @@ module.exports = {
   FilterCategoryAdapt,
   FilterWeightLog,
   FeaturedWork,
-  FeaturedWorkLog
+  FeaturedWorkLog,
+  ResourceVisibilityLog
 }

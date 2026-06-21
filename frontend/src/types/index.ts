@@ -2719,4 +2719,134 @@ export interface FeaturedLevelParams {
   operatorName?: string
 }
 
+export type VisibilityType = 'public' | 'private' | 'friends_only' | 'violation_hidden'
+
+export type VisibilityAuditStatus = 'none' | 'pending' | 'approved' | 'rejected'
+
+export type VisibilityChangeType = 'manual' | 'auto' | 'batch' | 'audit'
+
+export interface VisibilityCheckItem {
+  valid: boolean
+  reason?: string
+  issues?: string[]
+  currentCount?: number
+}
+
+export interface VisibilityPreValidateResult {
+  canChange: boolean
+  needsAudit: boolean
+  currentVisibility: VisibilityType
+  targetVisibility: VisibilityType
+  checks: {
+    transition: VisibilityCheckItem
+    permission: VisibilityCheckItem
+    account: VisibilityCheckItem
+    content: VisibilityCheckItem
+    highFrequency: VisibilityCheckItem
+  }
+  blockReasons: string[]
+}
+
+export interface VisibilityChangeResult {
+  resource: any
+  changed: boolean
+  pendingAudit: boolean
+  reason: string
+}
+
+export interface VisibilityBatchResult {
+  successIds: number[]
+  failedItems: { id: number; title: string; reason: string }[]
+  pendingAuditIds: number[]
+  filteredItems: { id: number; title: string; reason: string }[]
+  total: number
+  successCount: number
+  failedCount: number
+  pendingCount: number
+  filteredCount: number
+}
+
+export interface VisibilityLogItem {
+  id: number
+  resourceId: number
+  resourceTitle: string
+  oldVisibility: VisibilityType | null
+  newVisibility: VisibilityType
+  changeType: VisibilityChangeType
+  reason: string | null
+  operatorId: number | null
+  operatorName: string | null
+  operatorRole: string | null
+  auditStatus: VisibilityAuditStatus
+  auditorId: number | null
+  auditorName: string | null
+  auditOpinion: string | null
+  auditTime: string | null
+  beforeSnapshot: any
+  afterSnapshot: any
+  ip: string | null
+  userAgent: string | null
+  changeCount: number
+  isHighFrequency: boolean
+  remark: string | null
+  resource?: any
+  createdAt: string
+  updatedAt: string
+}
+
+export interface VisibilityStats {
+  visibilityDistribution: Record<VisibilityType, number>
+  pendingAudit: number
+  todayChanges: number
+  highFrequencyCount: number
+}
+
+export interface VisibilityListParams extends PageParams {
+  keyword?: string
+  visibility?: VisibilityType
+  visibilityAuditStatus?: VisibilityAuditStatus
+  categoryId?: number
+  fileType?: string
+  authorId?: number
+  sortBy?: string
+  sortOrder?: string
+  violationOnly?: boolean
+  abnormalOnly?: boolean
+}
+
+export interface VisibilityLogParams extends PageParams {
+  resourceId?: number
+  operatorId?: number
+  changeType?: VisibilityChangeType
+  newVisibility?: VisibilityType
+  auditStatus?: VisibilityAuditStatus
+  startTime?: string
+  endTime?: string
+  keyword?: string
+}
+
+export interface VisibilityChangeParams {
+  newVisibility: VisibilityType
+  reason?: string
+}
+
+export interface VisibilityAuditParams {
+  pass: boolean
+  auditOpinion?: string
+}
+
+export interface VisibilityBatchParams {
+  ids: number[]
+  newVisibility: VisibilityType
+  reason?: string
+}
+
+export interface VisibilityDetailResult {
+  resource: any
+  changeLogs: VisibilityLogItem[]
+  currentVisibility: VisibilityType
+  auditStatus: VisibilityAuditStatus
+  changeCount24h: number
+}
+
 

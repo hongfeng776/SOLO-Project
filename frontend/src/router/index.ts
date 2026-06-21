@@ -70,6 +70,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '作品精选', icon: 'Star', roles: ['super_admin', 'admin', 'operator'] }
       },
       {
+        path: 'resource-visibility',
+        name: 'ResourceVisibility',
+        component: () => import('@/views/resource-visibility/index.vue'),
+        meta: { title: '状态管控', icon: 'View', roles: ['super_admin', 'admin', 'operator', 'auditor'] }
+      },
+      {
         path: 'audit',
         name: 'Audit',
         component: () => import('@/views/audit/index.vue'),

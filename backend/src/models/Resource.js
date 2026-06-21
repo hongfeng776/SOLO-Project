@@ -181,6 +181,34 @@ const Resource = sequelize.define(
       type: DataTypes.STRING(20),
       allowNull: true,
       comment: '分辨率(如1920x1080)'
+    },
+    visibility: {
+      type: DataTypes.ENUM('public', 'private', 'friends_only', 'violation_hidden'),
+      defaultValue: 'public',
+      allowNull: false,
+      comment: '可见性：public公开/private私密/friends_only仅好友可见/violation_hidden违规隐藏'
+    },
+    visibilityChangedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '可见性状态变更时间'
+    },
+    visibilityChangeCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+      comment: '24小时内可见性变更次数'
+    },
+    lastVisibilityResetAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '可见性变更计数最后重置时间'
+    },
+    visibilityAuditStatus: {
+      type: DataTypes.ENUM('none', 'pending', 'approved', 'rejected'),
+      defaultValue: 'none',
+      allowNull: false,
+      comment: '可见性审核状态（违规隐藏转公开需审核）'
     }
   },
   {
