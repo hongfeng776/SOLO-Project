@@ -376,3 +376,61 @@ export enum QualificationLogAction {
   PERMISSION_UPDATE = 'permission_update',
 }
 
+export enum InspectionCycle {
+  DAILY = 'daily',
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+}
+
+export enum InspectionScope {
+  TRADE = 'trade',
+  ASSET = 'asset',
+  RISK = 'risk',
+}
+
+export enum InspectionStatus {
+  CONFIGURED = 'configured',
+  RUNNING = 'running',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+}
+
+export enum ViolationLevel {
+  MINOR = 'minor',
+  NORMAL = 'normal',
+  SEVERE = 'severe',
+}
+
+export enum IssueStatus {
+  PENDING = 'pending',
+  RECTIFIED = 'rectified',
+  IGNORED = 'ignored',
+  REPORTED = 'reported',
+}
+
+export enum IssueProcessAction {
+  RECTIFY = 'rectify',
+  IGNORE = 'ignore',
+  REPORT = 'report',
+}
+
+export enum InspectionLogAction {
+  CONFIGURE = 'configure',
+  PRE_CHECK = 'pre_check',
+  START = 'start',
+  SCAN_TRADE = 'scan_trade',
+  SCAN_ASSET = 'scan_asset',
+  SCAN_RISK = 'scan_risk',
+  COMPLETE = 'complete',
+  FAIL = 'fail',
+  BATCH_RECTIFY = 'batch_rectify',
+  BATCH_IGNORE = 'batch_ignore',
+  BATCH_REPORT = 'batch_report',
+  COVERAGE_CHECK = 'coverage_check',
+  ACCURACY_CHECK = 'accuracy_check',
+  MISS_INTERCEPT = 'miss_intercept',
+  FALSE_POSITIVE_INTERCEPT = 'false_positive_intercept',
+  FAKE_RECTIFY_INTERCEPT = 'fake_rectify_intercept',
+  RULE_OPTIMIZE = 'rule_optimize',
+}
+

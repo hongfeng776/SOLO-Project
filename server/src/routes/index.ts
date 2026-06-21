@@ -17,6 +17,7 @@ import thresholdRoutes from './threshold';
 import replayRoutes from './replay';
 import tradeComplianceAuditRoutes from './tradeComplianceAudit';
 import customerQualificationRoutes from './customerQualification';
+import businessInspectionRoutes from './businessInspection';
 
 const router = Router();
 
@@ -38,5 +39,6 @@ router.use('/thresholds', thresholdRoutes);
 router.use('/replay', replayRoutes);
 router.use('/trade-compliance-audits', tradeComplianceAuditRoutes);
 router.use('/customer-qualifications', customerQualificationRoutes);
+router.use('/business-inspections', businessInspectionRoutes);
 
 export default router;

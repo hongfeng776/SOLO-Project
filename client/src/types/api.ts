@@ -2143,3 +2143,150 @@ export interface IQualificationStats {
   byIssueType: Record<QualificationIssueType, number>
 }
 
+import {
+  InspectionCycle,
+  InspectionScope,
+  InspectionStatus,
+  ViolationLevel,
+  IssueStatus,
+  IssueProcessAction,
+  InspectionLogAction,
+} from '@/enums'
+
+export interface IBusinessInspection {
+  id: number
+  inspectionNo: string
+  inspectionCycle: InspectionCycle
+  inspectionScopes: InspectionScope[]
+  inspectionStatus: InspectionStatus
+  configParams: Record<string, any>
+  scheduledAt: string
+  startedAt?: string
+  completedAt?: string
+  totalScanned: number
+  totalIssues: number
+  minorCount: number
+  normalCount: number
+  severeCount: number
+  coverageScore: number
+  accuracyScore: number
+  reportId?: number
+  reportUrl?: string
+  operatorId?: number
+  operatorName?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface IBusinessInspectionIssue {
+  id: number
+  inspectionId: number
+  inspectionNo: string
+  issueNo: string
+  scope: InspectionScope
+  violationLevel: ViolationLevel
+  issueStatus: IssueStatus
+  businessType: string
+  businessId: number
+  businessNo: string
+  description: string
+  ruleCode: string
+  ruleName: string
+  actualValue: string
+  expectedValue: string
+  processedBy?: string
+  processedAt?: string
+  processNote?: string
+  rectifyEvidence?: string
+  archived: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface IInspectionPreCheckResult {
+  canStart: boolean
+  permissionValid: boolean
+  cycleValid: boolean
+  scopeValid: boolean
+  paramsValid: boolean
+  blocked: boolean
+  messages: string[]
+  warnings: string[]
+}
+
+export interface IInspectionConfigParams {
+  tradeAmountThreshold?: number
+  tradeFrequencyLimit?: number
+  assetConcentrationLimit?: number
+  riskScoreThreshold?: number
+  positionLimitPercent?: number
+  [key: string]: any
+}
+
+export interface IBusinessInspectionLog {
+  id: number
+  inspectionId: number
+  inspectionNo: string
+  action: InspectionLogAction
+  operatorId?: number
+  operatorName: string
+  detail: Record<string, any>
+  coverageCheck?: { passed: boolean; score: number; issues: string[] }
+  accuracyCheck?: { passed: boolean; score: number; issues: string[] }
+  interceptType?: string
+  interceptMessage?: string
+  createdAt: string
+}
+
+export interface IIssueBatchParams {
+  ids: number[]
+  action: IssueProcessAction
+  processNote?: string
+  rectifyEvidence?: string
+}
+
+export interface IIssueBatchPreview {
+  byViolationLevel: Record<ViolationLevel, number>
+  byScope: Record<InspectionScope, number>
+  byIssueStatus: Record<IssueStatus, number>
+  blockReasons: Array<{ id: number; issueNo: string; reason: string }>
+  totalCount: number
+}
+
+export interface IInspectionListParams {
+  page?: number
+  pageSize?: number
+  inspectionNo?: string
+  inspectionCycle?: InspectionCycle
+  inspectionStatus?: InspectionStatus
+  inspectionScope?: InspectionScope
+  startDate?: string
+  endDate?: string
+}
+
+export interface IIssueListParams {
+  page?: number
+  pageSize?: number
+  inspectionId?: number
+  violationLevel?: ViolationLevel
+  issueStatus?: IssueStatus
+  scope?: InspectionScope
+  businessType?: string
+  archived?: boolean
+}
+
+export interface IInspectionStats {
+  totalInspections: number
+  totalRunning: number
+  totalCompleted: number
+  totalIssues: number
+  pendingIssues: number
+  rectifiedIssues: number
+  severeIssues: number
+  avgCoverageScore: number
+  avgAccuracyScore: number
+  byCycle: Record<InspectionCycle, number>
+  byViolationLevel: Record<ViolationLevel, number>
+  byScope: Record<InspectionScope, number>
+}
+

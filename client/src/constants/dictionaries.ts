@@ -1274,3 +1274,123 @@ export const QUALIFICATION_REQUIRED_DOCS_INSTITUTION = [
   QualificationDocumentType.INVESTOR_PROFILE,
 ]
 
+import {
+  InspectionCycle,
+  InspectionScope,
+  InspectionStatus,
+  ViolationLevel,
+  IssueStatus,
+  IssueProcessAction,
+  InspectionLogAction,
+} from '@/enums'
+
+export const INSPECTION_CYCLE_LABELS: Record<InspectionCycle, string> = {
+  [InspectionCycle.DAILY]: '日检',
+  [InspectionCycle.WEEKLY]: '周检',
+  [InspectionCycle.MONTHLY]: '月检',
+}
+
+export const INSPECTION_SCOPE_LABELS: Record<InspectionScope, string> = {
+  [InspectionScope.TRADE]: '交易合规',
+  [InspectionScope.ASSET]: '资产合规',
+  [InspectionScope.RISK]: '风控合规',
+}
+
+export const INSPECTION_SCOPE_COLORS: Record<InspectionScope, string> = {
+  [InspectionScope.TRADE]: '#3498DB',
+  [InspectionScope.ASSET]: '#27AE60',
+  [InspectionScope.RISK]: '#E67E22',
+}
+
+export const INSPECTION_STATUS_LABELS: Record<InspectionStatus, string> = {
+  [InspectionStatus.CONFIGURED]: '已配置',
+  [InspectionStatus.RUNNING]: '巡检中',
+  [InspectionStatus.COMPLETED]: '已完成',
+  [InspectionStatus.FAILED]: '巡检失败',
+}
+
+export const INSPECTION_STATUS_TAG_TYPES: Record<InspectionStatus, string> = {
+  [InspectionStatus.CONFIGURED]: 'info',
+  [InspectionStatus.RUNNING]: 'warning',
+  [InspectionStatus.COMPLETED]: 'success',
+  [InspectionStatus.FAILED]: 'danger',
+}
+
+export const VIOLATION_LEVEL_LABELS: Record<ViolationLevel, string> = {
+  [ViolationLevel.MINOR]: '轻微',
+  [ViolationLevel.NORMAL]: '一般',
+  [ViolationLevel.SEVERE]: '严重',
+}
+
+export const VIOLATION_LEVEL_COLORS: Record<ViolationLevel, string> = {
+  [ViolationLevel.MINOR]: '#F39C12',
+  [ViolationLevel.NORMAL]: '#E67E22',
+  [ViolationLevel.SEVERE]: '#C0392B',
+}
+
+export const VIOLATION_LEVEL_BG_COLORS: Record<ViolationLevel, string> = {
+  [ViolationLevel.MINOR]: 'rgba(243,156,18,0.1)',
+  [ViolationLevel.NORMAL]: 'rgba(230,126,34,0.1)',
+  [ViolationLevel.SEVERE]: 'rgba(192,57,43,0.12)',
+}
+
+export const ISSUE_STATUS_LABELS: Record<IssueStatus, string> = {
+  [IssueStatus.PENDING]: '待处理',
+  [IssueStatus.RECTIFIED]: '已整改',
+  [IssueStatus.IGNORED]: '已忽略',
+  [IssueStatus.REPORTED]: '已上报',
+}
+
+export const ISSUE_STATUS_TAG_TYPES: Record<IssueStatus, string> = {
+  [IssueStatus.PENDING]: 'warning',
+  [IssueStatus.RECTIFIED]: 'success',
+  [IssueStatus.IGNORED]: 'info',
+  [IssueStatus.REPORTED]: 'danger',
+}
+
+export const ISSUE_PROCESS_ACTION_LABELS: Record<IssueProcessAction, string> = {
+  [IssueProcessAction.RECTIFY]: '整改',
+  [IssueProcessAction.IGNORE]: '忽略',
+  [IssueProcessAction.REPORT]: '上报',
+}
+
+export const INSPECTION_LOG_ACTION_LABELS: Record<InspectionLogAction, string> = {
+  [InspectionLogAction.CONFIGURE]: '配置巡检',
+  [InspectionLogAction.PRE_CHECK]: '前置校验',
+  [InspectionLogAction.START]: '启动巡检',
+  [InspectionLogAction.SCAN_TRADE]: '扫描交易',
+  [InspectionLogAction.SCAN_ASSET]: '扫描资产',
+  [InspectionLogAction.SCAN_RISK]: '扫描风控',
+  [InspectionLogAction.COMPLETE]: '巡检完成',
+  [InspectionLogAction.FAIL]: '巡检失败',
+  [InspectionLogAction.BATCH_RECTIFY]: '批量整改',
+  [InspectionLogAction.BATCH_IGNORE]: '批量忽略',
+  [InspectionLogAction.BATCH_REPORT]: '批量上报',
+  [InspectionLogAction.COVERAGE_CHECK]: '覆盖完整性校验',
+  [InspectionLogAction.ACCURACY_CHECK]: '判定准确性校验',
+  [InspectionLogAction.MISS_INTERCEPT]: '漏检拦截',
+  [InspectionLogAction.FALSE_POSITIVE_INTERCEPT]: '误检拦截',
+  [InspectionLogAction.FAKE_RECTIFY_INTERCEPT]: '虚假整改拦截',
+  [InspectionLogAction.RULE_OPTIMIZE]: '规则优化',
+}
+
+export const INSPECTION_LOG_ACTION_COLORS: Record<InspectionLogAction, string> = {
+  [InspectionLogAction.CONFIGURE]: '#3498DB',
+  [InspectionLogAction.PRE_CHECK]: '#2980B9',
+  [InspectionLogAction.START]: '#16A085',
+  [InspectionLogAction.SCAN_TRADE]: '#3498DB',
+  [InspectionLogAction.SCAN_ASSET]: '#27AE60',
+  [InspectionLogAction.SCAN_RISK]: '#E67E22',
+  [InspectionLogAction.COMPLETE]: '#27AE60',
+  [InspectionLogAction.FAIL]: '#C0392B',
+  [InspectionLogAction.BATCH_RECTIFY]: '#27AE60',
+  [InspectionLogAction.BATCH_IGNORE]: '#95A5A6',
+  [InspectionLogAction.BATCH_REPORT]: '#E67E22',
+  [InspectionLogAction.COVERAGE_CHECK]: '#16A085',
+  [InspectionLogAction.ACCURACY_CHECK]: '#16A085',
+  [InspectionLogAction.MISS_INTERCEPT]: '#D93025',
+  [InspectionLogAction.FALSE_POSITIVE_INTERCEPT]: '#D93025',
+  [InspectionLogAction.FAKE_RECTIFY_INTERCEPT]: '#D93025',
+  [InspectionLogAction.RULE_OPTIMIZE]: '#9B59B6',
+}
+

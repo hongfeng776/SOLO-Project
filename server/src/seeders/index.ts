@@ -3,7 +3,7 @@ import { db } from '@models/index';
 import bcrypt from 'bcryptjs';
 import { StockStatus } from '@enums/index';
 
-const { User, Role, Permission, UserRole, RolePermission, StockQuote, StockQuoteHistory, QuoteAuditTrail, AssetProduct, CustomerAsset, FundFlow, ComplianceAudit, Trade, CustomerHolding, RiskAlert, OperationLog, TradeComplianceAudit, TradeComplianceAuditLog, CustomerQualification, CustomerQualificationLog } = db;
+const { User, Role, Permission, UserRole, RolePermission, StockQuote, StockQuoteHistory, QuoteAuditTrail, AssetProduct, CustomerAsset, FundFlow, ComplianceAudit, Trade, CustomerHolding, RiskAlert, OperationLog, TradeComplianceAudit, TradeComplianceAuditLog, CustomerQualification, CustomerQualificationLog, BusinessInspection, BusinessInspectionIssue, BusinessInspectionLog } = db;
 
 async function seedPermissions() {
   const modules = [
@@ -35,6 +35,8 @@ async function seedPermissions() {
       { name: '资质审核通过', code: 'compliance:qualification:approve', type: 'button', sortOrder: 6 },
       { name: '资质审核驳回', code: 'compliance:qualification:reject', type: 'button', sortOrder: 7 },
       { name: '资质批量操作', code: 'compliance:qualification:batch', type: 'button', sortOrder: 8 },
+      { name: '巡检管理', code: 'compliance:inspection:manage', type: 'button', sortOrder: 9 },
+      { name: '巡检批量操作', code: 'compliance:inspection:batch', type: 'button', sortOrder: 10 },
     ]},
     { name: '证券交易', code: 'trade', path: '/trades', icon: 'SwapOutlined', sortOrder: 7, children: [
       { name: '交易查看', code: 'trade:view', type: 'button', sortOrder: 1 },
@@ -137,7 +139,7 @@ async function seedRoles(allPermissions: InstanceType<typeof Permission>[]) {
     .map((p) => p.id);
   await RolePermission.bulkCreate(analystPermIds.map((perm_id) => ({ role_id: analyst.id, perm_id } as any)));
 
-  const auditorPermCodes = ['dashboard', 'dashboard:view', 'stock', 'stock:view', 'product', 'product:view', 'customer', 'customer:view', 'fund-flow', 'fund-flow:view', 'compliance', 'compliance:view', 'compliance:manage', 'compliance:audit:approve', 'compliance:audit:reject', 'compliance:audit:batch', 'compliance:qualification:approve', 'compliance:qualification:reject', 'compliance:qualification:batch', 'trade', 'trade:view', 'holding', 'holding:view', 'alert', 'alert:view', 'alert:manage', 'log', 'log:view'];
+  const auditorPermCodes = ['dashboard', 'dashboard:view', 'stock', 'stock:view', 'product', 'product:view', 'customer', 'customer:view', 'fund-flow', 'fund-flow:view', 'compliance', 'compliance:view', 'compliance:manage', 'compliance:audit:approve', 'compliance:audit:reject', 'compliance:audit:batch', 'compliance:qualification:approve', 'compliance:qualification:reject', 'compliance:qualification:batch', 'compliance:inspection:manage', 'compliance:inspection:batch', 'trade', 'trade:view', 'holding', 'holding:view', 'alert', 'alert:view', 'alert:manage', 'log', 'log:view'];
   const auditorPermIds = allPermissions
     .filter((p) => auditorPermCodes.includes(p.perm_code))
     .map((p) => p.id);
@@ -1047,6 +1049,84 @@ async function seedCustomerQualifications() {
   console.log(`Seeded ${logs.length} customer qualification logs`);
 }
 
+async function seedBusinessInspections() {
+  const now = new Date();
+
+  const inspections = [
+    {
+      inspection_no: 'BI20260620001', inspection_cycle: 'daily', inspection_scopes: ['trade', 'asset', 'risk'],
+      inspection_status: 'completed', config_params: { tradeAmountThreshold: 500000, tradeFrequencyLimit: 10, assetConcentrationLimit: 30, riskScoreThreshold: 80 },
+      scheduled_at: '2026-06-20T00:00:00', started_at: '2026-06-20T00:01:00', completed_at: '2026-06-20T00:15:00',
+      total_scanned: 60, total_issues: 5, minor_count: 1, normal_count: 3, severe_count: 1,
+      coverage_score: 100.00, accuracy_score: 92.00,
+      operator_id: 3, operator_name: 'auditor',
+    },
+    {
+      inspection_no: 'BI20260618002', inspection_cycle: 'weekly', inspection_scopes: ['trade', 'risk'],
+      inspection_status: 'completed', config_params: { tradeAmountThreshold: 500000, riskScoreThreshold: 80 },
+      scheduled_at: '2026-06-15T00:00:00', started_at: '2026-06-15T00:01:00', completed_at: '2026-06-15T00:20:00',
+      total_scanned: 40, total_issues: 3, minor_count: 0, normal_count: 2, severe_count: 1,
+      coverage_score: 66.67, accuracy_score: 88.00,
+      operator_id: 3, operator_name: 'auditor',
+    },
+    {
+      inspection_no: 'BI20260601003', inspection_cycle: 'monthly', inspection_scopes: ['trade', 'asset', 'risk'],
+      inspection_status: 'completed', config_params: { tradeAmountThreshold: 500000, tradeFrequencyLimit: 10, assetConcentrationLimit: 30, positionLimitPercent: 25, riskScoreThreshold: 80 },
+      scheduled_at: '2026-06-01T00:00:00', started_at: '2026-06-01T00:01:00', completed_at: '2026-06-01T00:30:00',
+      total_scanned: 60, total_issues: 8, minor_count: 2, normal_count: 4, severe_count: 2,
+      coverage_score: 100.00, accuracy_score: 85.00,
+      operator_id: 3, operator_name: 'auditor',
+    },
+    {
+      inspection_no: 'BI20260621004', inspection_cycle: 'daily', inspection_scopes: ['trade'],
+      inspection_status: 'running', config_params: { tradeAmountThreshold: 500000, tradeFrequencyLimit: 10 },
+      scheduled_at: '2026-06-21T00:00:00', started_at: now,
+      total_scanned: 12, total_issues: 0, minor_count: 0, normal_count: 0, severe_count: 0,
+      coverage_score: 33.33, accuracy_score: 0,
+      operator_id: 3, operator_name: 'auditor',
+    },
+  ];
+
+  await BusinessInspection.bulkCreate(inspections as any);
+  console.log(`Seeded ${inspections.length} business inspections`);
+
+  const issues = [
+    { inspection_id: 1, inspection_no: 'BI20260620001', issue_no: 'BI20260620001-I001', scope: 'trade', violation_level: 'severe', issue_status: 'pending', business_type: 'trade', business_id: 2, business_no: 'T20260615004', description: '交易金额1,090,000超过阈值500,000', rule_code: 'TRADE_001', rule_name: '单笔交易金额超限', actual_value: '1090000', expected_value: '<500000', archived: false },
+    { inspection_id: 1, inspection_no: 'BI20260620001', issue_no: 'BI20260620001-I002', scope: 'trade', violation_level: 'normal', issue_status: 'rectified', business_type: 'trade', business_id: 3, business_no: 'T20260614006', description: '当日交易12次，超过频率限制', rule_code: 'TRADE_002', rule_name: '频繁交易异常', actual_value: '12次', expected_value: '<10次', processed_by: 'auditor', processed_at: '2026-06-20T10:00:00', process_note: '已确认为机构客户正常交易频率', rectify_evidence: '/evidence/trade_freq_001.pdf', archived: true },
+    { inspection_id: 1, inspection_no: 'BI20260620001', issue_no: 'BI20260620001-I003', scope: 'asset', violation_level: 'normal', issue_status: 'pending', business_type: 'asset', business_id: 1, business_no: 'A-0001', description: '资产集中度35%超过限制', rule_code: 'ASSET_001', rule_name: '资产集中度超标', actual_value: '35%', expected_value: '<30%', archived: false },
+    { inspection_id: 1, inspection_no: 'BI20260620001', issue_no: 'BI20260620001-I004', scope: 'risk', violation_level: 'normal', issue_status: 'reported', business_type: 'risk', business_id: 1, business_no: 'R-0001', description: '存在3条未处理风控告警', rule_code: 'RISK_002', rule_name: '风控告警未处理', actual_value: '3条', expected_value: '0条', processed_by: 'auditor', processed_at: '2026-06-20T14:00:00', process_note: '已上报风控部门处理', archived: false },
+    { inspection_id: 1, inspection_no: 'BI20260620001', issue_no: 'BI20260620001-I005', scope: 'risk', violation_level: 'minor', issue_status: 'ignored', business_type: 'risk', business_id: 2, business_no: 'R-0002', description: '风险评分65接近阈值', rule_code: 'RISK_001', rule_name: '风险评分超标', actual_value: '65', expected_value: '<80', processed_by: 'auditor', processed_at: '2026-06-20T10:30:00', process_note: '评分在合理范围内波动', archived: false },
+    { inspection_id: 2, inspection_no: 'BI20260618002', issue_no: 'BI20260618002-I001', scope: 'trade', violation_level: 'severe', issue_status: 'pending', business_type: 'trade', business_id: 4, business_no: 'T20260612009', description: '交易金额1,600,000超过阈值500,000', rule_code: 'TRADE_001', rule_name: '单笔交易金额超限', actual_value: '1600000', expected_value: '<500000', archived: false },
+    { inspection_id: 2, inspection_no: 'BI20260618002', issue_no: 'BI20260618002-I002', scope: 'trade', violation_level: 'normal', issue_status: 'pending', business_type: 'trade', business_id: 5, business_no: 'T20260615005', description: '当日交易11次，超过频率限制', rule_code: 'TRADE_002', rule_name: '频繁交易异常', actual_value: '11次', expected_value: '<10次', archived: false },
+    { inspection_id: 2, inspection_no: 'BI20260618002', issue_no: 'BI20260618002-I003', scope: 'risk', violation_level: 'normal', issue_status: 'rectified', business_type: 'risk', business_id: 3, business_no: 'R-0003', description: '存在2条未处理风控告警', rule_code: 'RISK_002', rule_name: '风控告警未处理', actual_value: '2条', expected_value: '0条', processed_by: 'auditor', processed_at: '2026-06-19T09:00:00', process_note: '告警已全部处理', rectify_evidence: '/evidence/risk_alert_003.pdf', archived: true },
+    { inspection_id: 3, inspection_no: 'BI20260601003', issue_no: 'BI20260601003-I001', scope: 'trade', violation_level: 'severe', issue_status: 'rectified', business_type: 'trade', business_id: 6, business_no: 'T20260515001', description: '未授权交易', rule_code: 'TRADE_003', rule_name: '未授权交易', actual_value: '未授权', expected_value: '已授权', processed_by: 'auditor', processed_at: '2026-06-02T10:00:00', process_note: '交易已补充授权流程', rectify_evidence: '/evidence/auth_trade_001.pdf', archived: true },
+    { inspection_id: 3, inspection_no: 'BI20260601003', issue_no: 'BI20260601003-I002', scope: 'asset', violation_level: 'severe', issue_status: 'pending', business_type: 'asset', business_id: 2, business_no: 'A-0002', description: '单只持仓占比32%', rule_code: 'ASSET_002', rule_name: '持仓比例超限', actual_value: '32%', expected_value: '<25%', archived: false },
+  ];
+
+  await BusinessInspectionIssue.bulkCreate(issues as any);
+  console.log(`Seeded ${issues.length} business inspection issues`);
+
+  const logs = [
+    { inspection_id: 1, inspection_no: 'BI20260620001', action: 'configure', operator_id: 3, operator_name: 'auditor', detail: { cycle: 'daily', scopes: ['trade', 'asset', 'risk'] }, created_at: '2026-06-20T00:00:00' },
+    { inspection_id: 1, inspection_no: 'BI20260620001', action: 'pre_check', operator_id: 3, operator_name: 'auditor', detail: { canStart: true, permissionValid: true, cycleValid: true, scopeValid: true, paramsValid: true }, created_at: '2026-06-20T00:00:30' },
+    { inspection_id: 1, inspection_no: 'BI20260620001', action: 'start', operator_id: 3, operator_name: 'auditor', detail: { fromStatus: 'configured' }, created_at: '2026-06-20T00:01:00' },
+    { inspection_id: 1, inspection_no: 'BI20260620001', action: 'scan_trade', operator_id: 0, operator_name: 'system', detail: { scannedCount: 20, issuesFound: 2, rulesApplied: 3 }, created_at: '2026-06-20T00:05:00' },
+    { inspection_id: 1, inspection_no: 'BI20260620001', action: 'scan_asset', operator_id: 0, operator_name: 'system', detail: { scannedCount: 20, issuesFound: 1, rulesApplied: 2 }, created_at: '2026-06-20T00:10:00' },
+    { inspection_id: 1, inspection_no: 'BI20260620001', action: 'scan_risk', operator_id: 0, operator_name: 'system', detail: { scannedCount: 20, issuesFound: 2, rulesApplied: 2 }, created_at: '2026-06-20T00:13:00' },
+    { inspection_id: 1, inspection_no: 'BI20260620001', action: 'complete', operator_id: 0, operator_name: 'system', detail: { totalScanned: 60, totalIssues: 5 }, coverage_check: { passed: true, score: 100, issues: [] }, accuracy_check: { passed: true, score: 92, issues: [] }, created_at: '2026-06-20T00:15:00' },
+    { inspection_id: 2, inspection_no: 'BI20260618002', action: 'configure', operator_id: 3, operator_name: 'auditor', detail: { cycle: 'weekly', scopes: ['trade', 'risk'] }, created_at: '2026-06-15T00:00:00' },
+    { inspection_id: 2, inspection_no: 'BI20260618002', action: 'start', operator_id: 3, operator_name: 'auditor', detail: {}, created_at: '2026-06-15T00:01:00' },
+    { inspection_id: 2, inspection_no: 'BI20260618002', action: 'scan_trade', operator_id: 0, operator_name: 'system', detail: { scannedCount: 20, issuesFound: 2 }, created_at: '2026-06-15T00:10:00' },
+    { inspection_id: 2, inspection_no: 'BI20260618002', action: 'scan_risk', operator_id: 0, operator_name: 'system', detail: { scannedCount: 20, issuesFound: 1 }, created_at: '2026-06-15T00:15:00' },
+    { inspection_id: 2, inspection_no: 'BI20260618002', action: 'complete', operator_id: 0, operator_name: 'system', detail: { totalScanned: 40, totalIssues: 3 }, coverage_check: { passed: false, score: 67, issues: ['巡检覆盖度仅67%，建议覆盖全部维度'] }, accuracy_check: { passed: true, score: 88, issues: [] }, created_at: '2026-06-15T00:20:00' },
+    { inspection_id: 3, inspection_no: 'BI20260601003', action: 'complete', operator_id: 0, operator_name: 'system', detail: { totalScanned: 60, totalIssues: 8 }, coverage_check: { passed: true, score: 100, issues: [] }, accuracy_check: { passed: true, score: 85, issues: [{ field: 'risk_score', rule: 'RISK_001', message: '风险评分阈值设置偏低，导致轻微违规判定过多', severity: 'medium', suggestion: '建议将风险评分阈值从80调整至85' }] }, created_at: '2026-06-01T00:30:00' },
+    { inspection_id: 3, inspection_no: 'BI20260601003', action: 'rule_optimize', operator_id: 3, operator_name: 'auditor', detail: { optimizedRules: ['RISK_001'], newThreshold: 85, reason: '适配最新监管要求' }, created_at: '2026-06-02T09:00:00' },
+  ];
+
+  await BusinessInspectionLog.bulkCreate(logs as any);
+  console.log(`Seeded ${logs.length} business inspection logs`);
+}
+
 async function seed() {
   try {
     await sequelize.sync({ force: false, alter: true });
@@ -1094,6 +1174,8 @@ async function seed() {
     await seedTradeComplianceAudits();
 
     await seedCustomerQualifications();
+
+    await seedBusinessInspections();
 
     console.log('All seed data inserted successfully');
     process.exit(0);

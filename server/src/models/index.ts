@@ -23,6 +23,9 @@ import TradeComplianceAudit from './TradeComplianceAudit';
 import TradeComplianceAuditLog from './TradeComplianceAuditLog';
 import CustomerQualification from './CustomerQualification';
 import CustomerQualificationLog from './CustomerQualificationLog';
+import BusinessInspection from './BusinessInspection';
+import BusinessInspectionIssue from './BusinessInspectionIssue';
+import BusinessInspectionLog from './BusinessInspectionLog';
 
 const db = {
   sequelize,
@@ -50,6 +53,9 @@ const db = {
   TradeComplianceAuditLog,
   CustomerQualification,
   CustomerQualificationLog,
+  BusinessInspection,
+  BusinessInspectionIssue,
+  BusinessInspectionLog,
 };
 
 const setupAssociations = () => {
@@ -65,6 +71,10 @@ const setupAssociations = () => {
   TradeComplianceAuditLog.belongsTo(TradeComplianceAudit, { foreignKey: 'audit_id', as: 'audit' });
   CustomerQualification.hasMany(CustomerQualificationLog, { as: 'logs', foreignKey: 'qualification_id' });
   CustomerQualificationLog.belongsTo(CustomerQualification, { foreignKey: 'qualification_id', as: 'qualification' });
+  BusinessInspection.hasMany(BusinessInspectionIssue, { as: 'issues', foreignKey: 'inspection_id' });
+  BusinessInspectionIssue.belongsTo(BusinessInspection, { foreignKey: 'inspection_id', as: 'inspection' });
+  BusinessInspection.hasMany(BusinessInspectionLog, { as: 'logs', foreignKey: 'inspection_id' });
+  BusinessInspectionLog.belongsTo(BusinessInspection, { foreignKey: 'inspection_id', as: 'inspection' });
 };
 
 setupAssociations();
