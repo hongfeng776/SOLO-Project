@@ -3008,5 +3008,143 @@ export interface CommentManageQueryParams extends PaginationParams {
   maxLikeCount?: number | null
 }
 
+export interface DanmakuItem {
+  id: number
+  contentId: number
+  userId: number
+  danmakuContent: string
+  playTime: number
+  danmakuType: number
+  fontSize: number
+  danmakuColor: string
+  danmakuStatus: number
+  isHighRisk: number
+  violationLevel: number
+  violationType?: string
+  isArchived: number
+  reportCount: number
+  likeCount: number
+  isRealTime: number
+  ipAddress?: string
+  source: string
+  remark?: string
+  createdAt?: string
+  content?: { id: number; contentTitle: string; contentCategory: number; isHot?: number }
+  user?: { id: number; uid: string; username: string; nickname?: string; avatar?: string; userLevel: number; danmakuViolationCount?: number }
+  lastOperation?: { operationType: string; operationDesc?: string; operatorName?: string; createdAt: string }
+}
+
+export interface DanmakuOperateParams {
+  operationType: 'APPROVE' | 'TEMP_BLOCK' | 'PERMA_BAN' | 'UNBLOCK' | 'DELETE'
+  remark?: string
+}
+
+export interface DanmakuBatchOperateParams {
+  ids: number[]
+  operationType: 'BATCH_APPROVE' | 'BATCH_BLOCK' | 'BATCH_CLEAN' | 'BATCH_ARCHIVE'
+  remark?: string
+}
+
+export interface DanmakuBatchOperateResult {
+  batchId: string
+  total: number
+  successCount: number
+  failedCount: number
+  skippedCount: number
+  successIds: number[]
+  skippedIds: number[]
+}
+
+export interface DanmakuManageLogItem {
+  id: number
+  danmakuId: number
+  contentId?: number
+  userId?: number
+  operationType: string
+  operationDesc?: string
+  beforeData?: Record<string, any>
+  afterData?: Record<string, any>
+  operatorId?: number
+  operatorName?: string
+  operationBatch?: string
+  isHotVideo: number
+  ipAddress?: string
+  remark?: string
+  createdAt: string
+}
+
+export interface DanmakuTraceDanmaku {
+  id: number
+  contentId: number
+  userId: number
+  danmakuContent: string
+  danmakuStatus: number
+  isHighRisk: number
+  violationLevel: number
+  violationType?: string
+  isArchived: number
+  playTime: number
+  createdAt: string
+  content?: { id: number; contentTitle: string; contentCategory: number; isHot?: number }
+  user?: { id: number; uid: string; username: string; userLevel: number; danmakuViolationCount?: number }
+  manageLogs: DanmakuManageLogItem[]
+}
+
+export interface DanmakuDuplicateOperation {
+  id: number
+  operationType: string
+  operatorName?: string
+  createdAt: string
+}
+
+export interface DanmakuAbnormalOperation {
+  danmakuId: number
+  operationType: string
+  reason: string
+  severity: 'low' | 'medium' | 'high'
+}
+
+export interface DanmakuMisjudgedItem {
+  danmakuId: number
+  danmakuContent: string
+  violationLevel: number
+  expectedAction: string
+  actualAction: string
+  reason: string
+}
+
+export interface DanmakuTraceResult {
+  danmakus: DanmakuTraceDanmaku[]
+  duplicateOperations: DanmakuDuplicateOperation[]
+  abnormalOperations: DanmakuAbnormalOperation[]
+  misjudgedDanmakus: DanmakuMisjudgedItem[]
+}
+
+export interface DanmakuDuplicateCheckResult {
+  isDuplicate: boolean
+  lastOperation?: DanmakuDuplicateOperation
+}
+
+export interface DanmakuValidateResult {
+  valid: boolean
+  reasons: string[]
+}
+
+export interface DanmakuManageQueryParams extends PaginationParams {
+  contentId?: number | null
+  startDate?: string | null
+  endDate?: string | null
+  userId?: number | null
+  violationLevel?: number | null
+  isHighRisk?: number | null
+  danmakuStatus?: number | null
+  playTimeStart?: number | null
+  playTimeEnd?: number | null
+  isRealTime?: number | null
+  isArchived?: number | null
+  isHotVideo?: number | null
+  violationType?: string | null
+}
+
 
 

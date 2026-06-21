@@ -8,6 +8,8 @@ const { Advertisement } = require('./Advertisement');
 const { Activity } = require('./Activity');
 const { Comment } = require('./Comment');
 const { CommentManageLog } = require('./CommentManageLog');
+const { Danmaku } = require('./Danmaku');
+const { DanmakuManageLog } = require('./DanmakuManageLog');
 const { Member } = require('./Member');
 const { Message } = require('./Message');
 const { OperationLog } = require('./OperationLog');
@@ -37,6 +39,9 @@ Copyright.hasMany(Content, { foreignKey: 'copyright_id', as: 'contents' });
 Content.hasMany(Comment, { foreignKey: 'content_id', as: 'comments' });
 
 CommentManageLog.belongsTo(Comment, { foreignKey: 'comment_id', as: 'comment' });
+
+Danmaku.hasMany(DanmakuManageLog, { foreignKey: 'danmaku_id', as: 'manageLogs' });
+DanmakuManageLog.belongsTo(Danmaku, { foreignKey: 'danmaku_id', as: 'danmaku' });
 
 Advertisement.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 Activity.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
@@ -84,6 +89,8 @@ module.exports = {
   Activity,
   Comment,
   CommentManageLog,
+  Danmaku,
+  DanmakuManageLog,
   Member,
   Message,
   OperationLog,

@@ -1084,5 +1084,52 @@ export const COMMENT_SORT_FIELD = {
   VIOLATION_LEVEL: { value: 'violation_level', label: '违规标签' },
 } as const
 
+export const DANMAKU_STATUS = {
+  PENDING: { value: 0, label: '待审核', color: '#E6A23C', type: 'warning' },
+  NORMAL: { value: 1, label: '正常展示', color: '#67C23A', type: 'success' },
+  TEMP_BLOCK: { value: 2, label: '临时屏蔽', color: '#909399', type: 'info' },
+  PERMA_BAN: { value: 3, label: '永久封禁', color: '#F56C6C', type: 'danger' },
+  ARCHIVED: { value: 4, label: '已归档', color: '#606266', type: 'info' },
+} as const
+
+export const DANMAKU_OPERATE_TYPE = {
+  APPROVE: { value: 'APPROVE', label: '审核通过', icon: 'Check', type: 'success', nextStatus: 1 },
+  TEMP_BLOCK: { value: 'TEMP_BLOCK', label: '临时屏蔽', icon: 'Hide', type: 'warning', nextStatus: 2 },
+  PERMA_BAN: { value: 'PERMA_BAN', label: '永久封禁', icon: 'CircleClose', type: 'danger', nextStatus: 3 },
+  UNBLOCK: { value: 'UNBLOCK', label: '恢复展示', icon: 'View', type: 'primary', nextStatus: 1 },
+  DELETE: { value: 'DELETE', label: '删除', icon: 'Delete', type: 'danger', nextStatus: 4 },
+} as const
+
+export const DANMAKU_BATCH_OPERATE_TYPE = {
+  BATCH_APPROVE: { value: 'BATCH_APPROVE', label: '批量放行', icon: 'Check', type: 'success', desc: '批量放行合规待审核弹幕' },
+  BATCH_BLOCK: { value: 'BATCH_BLOCK', label: '批量屏蔽', icon: 'Hide', type: 'warning', desc: '批量屏蔽高频违规弹幕' },
+  BATCH_CLEAN: { value: 'BATCH_CLEAN', label: '批量清理', icon: 'Delete', type: 'danger', desc: '批量清理历史违规弹幕' },
+  BATCH_ARCHIVE: { value: 'BATCH_ARCHIVE', label: '批量归档', icon: 'FolderOpened', type: 'info', desc: '批量归档历史弹幕' },
+} as const
+
+export const DANMAKU_TYPE = {
+  SCROLL: { value: 1, label: '滚动弹幕', color: '#409EFF' },
+  TOP: { value: 2, label: '顶部弹幕', color: '#67C23A' },
+  BOTTOM: { value: 3, label: '底部弹幕', color: '#E6A23C' },
+} as const
+
+export const DANMAKU_SORT_FIELD = {
+  LIKE_COUNT: { value: 'like_count', label: '点赞量' },
+  REPORT_COUNT: { value: 'report_count', label: '举报量' },
+  CREATED_AT: { value: 'created_at', label: '发送时间' },
+  PLAY_TIME: { value: 'play_time', label: '播放时间' },
+  VIOLATION_LEVEL: { value: 'violation_level', label: '违规等级' },
+} as const
+
+export const DANMAKU_VIOLATION_TYPE = {
+  SPAM: { value: 'spam', label: '垃圾广告' },
+  PORNOGRAPHY: { value: 'pornography', label: '色情低俗' },
+  VIOLENCE: { value: 'violence', label: '暴力恐怖' },
+  POLITICS: { value: 'politics', label: '政治敏感' },
+  INSULT: { value: 'insult', label: '辱骂攻击' },
+  INFRINGE: { value: 'infringe', label: '侵权盗版' },
+  OTHER: { value: 'other', label: '其他违规' },
+} as const
+
 
 

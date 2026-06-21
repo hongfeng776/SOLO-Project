@@ -151,6 +151,30 @@ const routes: RouteRecordRaw[] = [
         ],
       },
       {
+        path: 'danmaku-manage',
+        meta: { title: '弹幕互动管理', icon: 'ChatDotRound' },
+        children: [
+          {
+            path: '',
+            name: 'DanmakuManage',
+            component: () => import('@/views/danmaku/manage/index.vue'),
+            meta: { title: '弹幕查询管控', icon: 'Search', roles: ['danmaku:view'] },
+          },
+          {
+            path: 'batch',
+            name: 'DanmakuManageBatch',
+            component: () => import('@/views/danmaku/manage/batch.vue'),
+            meta: { title: '批量管控', icon: 'FolderOpened', roles: ['danmaku:edit'] },
+          },
+          {
+            path: 'trace',
+            name: 'DanmakuManageTrace',
+            component: () => import('@/views/danmaku/manage/trace.vue'),
+            meta: { title: '操作溯源', icon: 'Aim', roles: ['danmaku:view'] },
+          },
+        ],
+      },
+      {
         path: 'comment-audit',
         name: 'CommentAudit',
         component: () => import('@/views/comment/audit.vue'),
