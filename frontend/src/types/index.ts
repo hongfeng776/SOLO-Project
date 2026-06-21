@@ -2112,7 +2112,7 @@ export interface ServerMonitorAlertRecord {
 
 export type FilterFileFormat = 'glsl' | 'json' | 'lut_3d' | 'lut_1d' | 'custom'
 export type FilterStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'published' | 'offline' | 'violation'
-export type FilterEditChangeType = 'create' | 'edit' | 'edit_limited' | 'status_change' | 'status_blocked' | 'batch_submit' | 'trace_verify' | 'batch_status' | 'status_hf_blocked'
+export type FilterEditChangeType = 'create' | 'edit' | 'edit_limited' | 'status_change' | 'status_blocked' | 'batch_submit' | 'trace_verify' | 'batch_status' | 'status_hf_blocked' | 'category_bind' | 'category_adjust' | 'category_migrate' | 'category_unbind' | 'category_auto_correct'
 
 export interface FilterEffect {
   id: number
@@ -2267,5 +2267,87 @@ export interface BatchStatusResult {
   failed: { id: number; reason: string; filterCode?: string; name?: string }[]
   filtered: { id: number; filterCode: string; name: string; reason: string; status: FilterStatus }[]
   batchId: string
+}
+
+// ================ 滤镜分类适配管理 ================
+
+export type FilterCategoryBindType = 'primary' | 'auto' | 'manual' | 'migration'
+export type FilterCategoryChangeType = 'bind' | 'adjust' | 'migrate' | 'unbind' | 'auto_correct'
+
+export interface FilterCategoryAdapt {
+  id: number
+  filterId: number
+  filterCode: string
+  filterName: string
+  categoryId: number
+  categoryName: string
+  adaptScore: number
+  adaptIssues: string[]
+  isMatched: boolean
+  isPrimary: boolean
+  filterScenes: string[]
+  categorySceneRule: string[]
+  useCount: number
+  useHeat: number
+  bindType: FilterCategoryBindType
+  changeType: FilterCategoryChangeType
+  operatorId: number
+  operatorName: string
+  reason: string
+  batchId: string
+  beforeCategoryId: number
+  beforeCategoryName: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CategoryValidateResult {
+  valid: boolean
+  errors: string[]
+  adaptScore: number
+  isMatched: boolean
+  filterScenes: string[]
+  categoryRuleScenes: string[]
+  categoryId: number
+  categoryName: string
+  filterId: number
+  filterName: string
+}
+
+export interface CategoryAdjustResult {
+  updated: boolean
+  filter: FilterEffect
+  adaptScore: number
+}
+
+export interface BatchCategoryMigrateResult {
+  total: number
+  success: { id: number; filterCode: string; name: string; adaptScore: number }[]
+  failed: { id: number; reason: string }[]
+  filtered: { id: number; filterCode: string; name: string; reason: string; adaptScore?: number }[]
+  batchId: string
+  targetCategoryId: number
+  targetCategoryName: string
+}
+
+export interface CategoryTraceIssue {
+  type: string
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  message: string
+  filterId: number
+}
+
+export interface CategoryTraceResult {
+  category: { id: number; name: string }
+  filterCount: number
+  filters: (FilterEffect & {
+    adaptRecords: FilterCategoryAdapt[]
+    otherCategoryBinds: { categoryId: number; categoryName: string; bindType: string }[]
+  })[]
+  adaptRecords: FilterCategoryAdapt[]
+  issues: CategoryTraceIssue[]
+  duplicateBindCount: number
+  mismatchCount: number
+  overallValid: boolean
 }
 

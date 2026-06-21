@@ -898,7 +898,12 @@ export const FILTER_CHANGE_TYPE_LABEL: Record<string, string> = {
   batch_submit: '批量录入',
   trace_verify: '溯源校验',
   batch_status: '批量状态',
-  status_hf_blocked: '高频拦截'
+  status_hf_blocked: '高频拦截',
+  category_bind: '分类绑定',
+  category_adjust: '分类调整',
+  category_migrate: '分类迁移',
+  category_unbind: '分类解绑',
+  category_auto_correct: '自动纠正'
 }
 
 export const FILTER_CHANGE_TYPE_TAG_TYPE: Record<string, string> = {
@@ -910,7 +915,12 @@ export const FILTER_CHANGE_TYPE_TAG_TYPE: Record<string, string> = {
   batch_submit: 'warning',
   trace_verify: 'primary',
   batch_status: 'warning',
-  status_hf_blocked: 'danger'
+  status_hf_blocked: 'danger',
+  category_bind: 'success',
+  category_adjust: 'primary',
+  category_migrate: 'warning',
+  category_unbind: 'info',
+  category_auto_correct: 'success'
 }
 
 export const FILTER_TRACE_SEVERITY_TAG_TYPE: Record<string, string> = {
@@ -948,4 +958,48 @@ export const FILTER_STATUS_TRANSITIONS: Record<string, string[]> = {
   published: ['offline', 'violation'],
   offline: ['draft', 'published', 'violation'],
   violation: []
+}
+
+// ================ 滤镜分类适配管理 ================
+
+export const FILTER_MUTEX_CATEGORIES = ['portrait', 'landscape', 'vintage', 'food', 'night', 'scenery']
+
+export const FILTER_MUTEX_CATEGORY_LABELS: Record<string, string> = {
+  portrait: '人像',
+  landscape: '风景',
+  vintage: '复古',
+  food: '美食',
+  night: '夜景',
+  scenery: '风光'
+}
+
+export const FILTER_CATEGORY_SCENE_RULES: Record<string, string[]> = {
+  portrait: ['portrait', 'photo', 'live'],
+  landscape: ['landscape', 'scenery', 'photo'],
+  vintage: ['vintage', 'photo', 'short_video'],
+  food: ['food', 'photo', 'short_video'],
+  night: ['night', 'video', 'photo'],
+  scenery: ['scenery', 'landscape', 'photo']
+}
+
+export const FILTER_CATEGORY_BIND_TYPE_LABEL: Record<string, string> = {
+  primary: '核心绑定',
+  auto: '自动绑定',
+  manual: '手动绑定',
+  migration: '迁移绑定'
+}
+
+export const FILTER_CATEGORY_CHANGE_TYPE_LABEL: Record<string, string> = {
+  bind: '绑定',
+  adjust: '调整',
+  migrate: '迁移',
+  unbind: '解绑',
+  auto_correct: '自动纠正'
+}
+
+export const FILTER_ADAPT_SCORE_LEVEL = (score: number): { label: string; type: string } => {
+  if (score >= 80) return { label: '优秀', type: 'success' }
+  if (score >= 60) return { label: '良好', type: 'primary' }
+  if (score >= 40) return { label: '一般', type: 'warning' }
+  return { label: '不匹配', type: 'danger' }
 }

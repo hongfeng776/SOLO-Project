@@ -649,6 +649,256 @@
           </div>
         </div>
       </el-tab-pane>
+
+      <el-tab-pane label="分类适配" name="category">
+        <div class="filter-card card-wrapper">
+          <div class="card-title">滤镜分类适配管理</div>
+
+          <div class="category-mutex-hint">
+            <el-alert
+              title="互斥分类规则：人像、风景、复古、美食、夜景、风光分类互斥，单一滤镜仅可绑定一个核心分类"
+              type="info"
+              :closable="false"
+              show-icon
+            />
+          </div>
+
+          <el-form :inline="true" :model="catFilterForm" class="filter-form">
+            <el-form-item label="分类">
+              <el-select
+                v-model="catFilterForm.categoryId"
+                placeholder="选择分类"
+                clearable
+                style="width: 160px"
+                :class="{ 'select-focused-error': catSelectError }"
+                @focus="catSelectError = false"
+              >
+                <el-option
+                  v-for="cat in categoryList"
+                  :key="cat.id"
+                  :label="cat.name"
+                  :value="cat.id"
+                >
+                  <span>{{ cat.name }}</span>
+                  <el-tag
+                    v-if="FILTER_MUTEX_CATEGORIES.includes(cat.name)"
+                    type="danger"
+                    size="small"
+                    class="ml-8"
+                  >互斥</el-tag>
+                </el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="适配状态">
+              <el-select v-model="catFilterForm.isMatched" placeholder="全部" clearable style="width: 120px">
+                <el-option label="已适配" :value="true" />
+                <el-option label="未适配" :value="false" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" :icon="Search" @click="fetchCategoryList">搜索</el-button>
+              <el-button :icon="Refresh" @click="handleResetCatFilter">重置</el-button>
+            </el-form-item>
+          </el-form>
+
+          <div class="cat-batch-toolbar">
+            <el-select
+              v-model="catMigrateTargetId"
+              placeholder="选择迁移目标分类"
+              style="width: 180px; margin-right: 10px"
+              :disabled="catSelectedIds.length === 0"
+            >
+              <el-option v-for="cat in categoryList" :key="cat.id" :label="cat.name" :value="cat.id" />
+            </el-select>
+            <el-button
+              type="warning"
+              :disabled="!catMigrateTargetId || catSelectedIds.length === 0"
+              @click="handleBatchMigrate"
+              :loading="catMigrateLoading"
+            >
+              批量迁移({{ catSelectedIds.length }})
+            </el-button>
+          </div>
+
+          <el-table
+            ref="catTableRef"
+            :data="catList"
+            :loading="catLoading"
+            border
+            stripe
+            @selection-change="handleCatSelectionChange"
+          >
+            <el-table-column type="selection" width="45" align="center" />
+            <el-table-column prop="filterCode" label="滤镜编码" width="150" show-overflow-tooltip />
+            <el-table-column prop="name" label="名称" min-width="140" show-overflow-tooltip />
+            <el-table-column label="当前分类" width="110" align="center">
+              <template #default="{ row }">
+                <el-tag size="small">{{ row.categoryName || '未分类' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="适配场景" width="130" align="center">
+              <template #default="{ row }">
+                <el-tooltip :content="(row.adaptScene || []).join('、')" placement="top" :show-after="300">
+                  <span class="text-ellipsis">{{ (row.adaptScene || []).join('、') || '-' }}</span>
+                </el-tooltip>
+              </template>
+            </el-table-column>
+            <el-table-column label="适配度" width="100" align="center">
+              <template #default="{ row }">
+                <el-tag
+                  :type="FILTER_ADAPT_SCORE_LEVEL(computeAdaptScore(row)).type"
+                  size="small"
+                >
+                  {{ FILTER_ADAPT_SCORE_LEVEL(computeAdaptScore(row)).label }} {{ computeAdaptScore(row) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="使用热度" width="80" align="center">
+              <template #default="{ row }">{{ row.useHeat || 0 }}</template>
+            </el-table-column>
+            <el-table-column label="操作" width="200" align="center" fixed="right">
+              <template #default="{ row }">
+                <el-button
+                  size="small"
+                  type="primary"
+                  link
+                  @click="handleOpenCatAdjust(row)"
+                >
+                  调整分类
+                </el-button>
+                <el-button
+                  size="small"
+                  type="info"
+                  link
+                  @click="handleValidateCatBind(row)"
+                >
+                  校验
+                </el-button>
+                <el-button
+                  size="small"
+                  type="success"
+                  link
+                  @click="handleTraceOneCat(row)"
+                >
+                  溯源
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <div class="status-pagination-row">
+            <el-pagination
+              v-model:current-page="catPage"
+              v-model:page-size="catPageSize"
+              :page-sizes="[10, 20, 50]"
+              :total="catTotal"
+              layout="total, sizes, prev, pager, next"
+              @size-change="fetchCategoryList"
+              @current-change="fetchCategoryList"
+            />
+          </div>
+        </div>
+
+        <div class="filter-card card-wrapper mt-15">
+          <div class="card-title">分类溯源校验</div>
+          <el-form :inline="true" class="filter-form">
+            <el-form-item label="选择分类">
+              <el-select v-model="catTraceId" placeholder="选择分类溯源" style="width: 180px">
+                <el-option v-for="cat in categoryList" :key="cat.id" :label="cat.name" :value="cat.id" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleTraceCategory" :loading="catTraceLoading">溯源查询</el-button>
+            </el-form-item>
+          </el-form>
+
+          <div v-if="catTraceLoading" class="skeleton-container">
+            <div v-for="i in 3" :key="i" class="skeleton-item">
+              <div class="skeleton-line long" />
+              <div class="skeleton-line medium" />
+              <div class="skeleton-line short" />
+            </div>
+          </div>
+
+          <div v-else-if="catTraceResult" class="cat-trace-result sticky-header-wrapper">
+            <div class="trace-summary-row">
+              <el-descriptions :column="4" border size="small">
+                <el-descriptions-item label="分类">{{ catTraceResult.category.name }}</el-descriptions-item>
+                <el-descriptions-item label="滤镜数">{{ catTraceResult.filterCount }}</el-descriptions-item>
+                <el-descriptions-item label="重复绑定">
+                  <el-tag :type="catTraceResult.duplicateBindCount > 0 ? 'danger' : 'success'" size="small">
+                    {{ catTraceResult.duplicateBindCount }}
+                  </el-tag>
+                </el-descriptions-item>
+                <el-descriptions-item label="适配不匹配">
+                  <el-tag :type="catTraceResult.mismatchCount > 0 ? 'danger' : 'success'" size="small">
+                    {{ catTraceResult.mismatchCount }}
+                  </el-tag>
+                </el-descriptions-item>
+              </el-descriptions>
+              <div class="overall-badge">
+                <el-tag :type="catTraceResult.overallValid ? 'success' : 'danger'" size="large" effect="dark">
+                  {{ catTraceResult.overallValid ? '分类体系合理' : '存在异常需处理' }}
+                </el-tag>
+              </div>
+            </div>
+
+            <div v-if="catTraceResult.issues.length" class="trace-issues">
+              <div class="issues-title">检出问题：</div>
+              <div v-for="(issue, i) in catTraceResult.issues" :key="i" class="issue-item">
+                <el-tag :type="FILTER_TRACE_SEVERITY_TAG_TYPE[issue.severity]" size="small">{{ issue.severity }}</el-tag>
+                <span class="issue-message">{{ issue.message }}</span>
+              </div>
+            </div>
+
+            <el-table
+              :data="catTraceResult.filters"
+              size="small"
+              border
+              class="sticky-table"
+              max-height="420"
+            >
+              <el-table-column prop="filterCode" label="滤镜编码" width="140" show-overflow-tooltip fixed />
+              <el-table-column prop="name" label="名称" min-width="120" show-overflow-tooltip />
+              <el-table-column label="适配度" width="90" align="center">
+                <template #default="{ row }">
+                  <el-tag :type="FILTER_ADAPT_SCORE_LEVEL(computeAdaptScore(row)).type" size="small">
+                    {{ computeAdaptScore(row) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="热度" width="65" align="center">
+                <template #default="{ row }">{{ row.useHeat || 0 }}</template>
+              </el-table-column>
+              <el-table-column label="在用" width="60" align="center">
+                <template #default="{ row }">{{ row.inUseCount || 0 }}</template>
+              </el-table-column>
+              <el-table-column label="其他绑定" min-width="140">
+                <template #default="{ row }">
+                  <el-tooltip
+                    v-if="row.otherCategoryBinds && row.otherCategoryBinds.length"
+                    :content="row.otherCategoryBinds.map((b: any) => b.categoryName).join('、')"
+                    placement="top"
+                    :show-after="300"
+                  >
+                    <span class="text-ellipsis">{{ row.otherCategoryBinds.map((b: any) => b.categoryName).join('、') }}</span>
+                  </el-tooltip>
+                  <span v-else>-</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="适配记录" width="90" align="center">
+                <template #default="{ row }">
+                  <el-button size="small" type="info" link @click="handleViewAdaptRecords(row)">
+                    {{ row.adaptRecords?.length || 0 }}条
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+
+          <EmptyState v-else-if="catTraceSearched && !catTraceLoading" description="请选择分类进行溯源" />
+        </div>
+      </el-tab-pane>
     </el-tabs>
 
     <el-dialog
@@ -876,6 +1126,118 @@
         <el-button @click="batchResultVisible = false; fetchStatusList()">关闭</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="catAdjustVisible"
+      title="调整滤镜分类"
+      width="520px"
+      :close-on-click-modal="false"
+      custom-class="status-dialog-zoom"
+    >
+      <el-form label-width="100px">
+        <el-form-item label="滤镜">
+          <span>{{ catAdjustFilter.filterCode }} - {{ catAdjustFilter.name }}</span>
+        </el-form-item>
+        <el-form-item label="当前分类">
+          <el-tag size="small">{{ catAdjustFilter.categoryName || '未分类' }}</el-tag>
+        </el-form-item>
+        <el-form-item label="新分类" required>
+          <el-select
+            v-model="catAdjustTargetId"
+            placeholder="选择新分类"
+            style="width: 100%"
+            :class="{ 'select-focused-error': catSelectError }"
+            @focus="catSelectError = false"
+            @change="handleCatAdjustPreview"
+          >
+            <el-option v-for="cat in categoryList" :key="cat.id" :label="cat.name" :value="cat.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="catAdjustPreview" label="适配预览">
+          <div class="cat-preview">
+            <el-tag :type="FILTER_ADAPT_SCORE_LEVEL(catAdjustPreview.adaptScore).type" size="small">
+              适配度: {{ FILTER_ADAPT_SCORE_LEVEL(catAdjustPreview.adaptScore).label }} ({{ catAdjustPreview.adaptScore }}分)
+            </el-tag>
+            <div v-if="!catAdjustPreview.isMatched" class="adapt-warn">
+              <el-tag type="danger" size="small">不匹配</el-tag>
+              <span v-for="(err, i) in catAdjustPreview.errors" :key="i" class="adapt-err-text">{{ err }}</span>
+            </div>
+            <div v-else class="adapt-ok">
+              <el-tag type="success" size="small">适配通过</el-tag>
+            </div>
+          </div>
+        </el-form-item>
+        <el-form-item label="调整原因">
+          <el-input v-model="catAdjustReason" placeholder="可选" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="catAdjustVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          @click="handleConfirmCatAdjust"
+          :loading="catAdjustSaving"
+          :disabled="!catAdjustTargetId || (catAdjustPreview && !catAdjustPreview.isMatched)"
+        >
+          确认调整
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="catMigrateResultVisible"
+      title="批量分类迁移结果"
+      width="700px"
+    >
+      <el-descriptions :column="3" border size="small" v-if="catMigrateResult">
+        <el-descriptions-item label="总数">{{ catMigrateResult.total }}</el-descriptions-item>
+        <el-descriptions-item label="成功"><el-tag type="success">{{ catMigrateResult.success.length }}</el-tag></el-descriptions-item>
+        <el-descriptions-item label="过滤"><el-tag type="info">{{ catMigrateResult.filtered.length }}</el-tag></el-descriptions-item>
+      </el-descriptions>
+      <div class="batch-progress" v-if="catMigrateProgress.active">
+        <el-progress :percentage="catMigrateProgress.percentage" :status="catMigrateProgress.status" :stroke-width="18" :text-inside="true" />
+        <p class="progress-text">{{ catMigrateProgress.message }}</p>
+      </div>
+      <el-table v-if="catMigrateResult" :data="catMigrateResult.success" size="small" border class="mt-15">
+        <el-table-column prop="filterCode" label="编码" width="150" />
+        <el-table-column prop="name" label="名称" min-width="160" />
+        <el-table-column label="适配度" width="90" align="center">
+          <template #default="{ row }">
+            <el-tag :type="FILTER_ADAPT_SCORE_LEVEL(row.adaptScore).type" size="small">{{ row.adaptScore }}</el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <el-button @click="catMigrateResultVisible = false; fetchCategoryList()">关闭</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="adaptRecordVisible" title="适配记录" width="700px">
+      <el-table :data="adaptRecordList" size="small" border max-height="400">
+        <el-table-column label="类型" width="90" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.changeType === 'adjust' ? 'primary' : row.changeType === 'migrate' ? 'warning' : 'info'" size="small">
+              {{ FILTER_CATEGORY_CHANGE_TYPE_LABEL[row.changeType] || row.changeType }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="categoryName" label="分类" width="100" />
+        <el-table-column label="适配度" width="80" align="center">
+          <template #default="{ row }">
+            <el-tag :type="FILTER_ADAPT_SCORE_LEVEL(row.adaptScore).type" size="small">{{ row.adaptScore }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="bindType" label="绑定方式" width="80" align="center">
+          <template #default="{ row }">
+            {{ FILTER_CATEGORY_BIND_TYPE_LABEL[row.bindType] || row.bindType }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="reason" label="原因" min-width="160" show-overflow-tooltip />
+        <el-table-column label="时间" width="150">
+          <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -898,7 +1260,13 @@ import {
   FILTER_FOUR_MUTEX_STATUSES,
   FILTER_STATUS_GLOW_CLASS,
   FILTER_BATCH_STATUS_OPTIONS,
-  FILTER_STATUS_TRANSITIONS
+  FILTER_STATUS_TRANSITIONS,
+  FILTER_MUTEX_CATEGORIES,
+  FILTER_MUTEX_CATEGORY_LABELS,
+  FILTER_CATEGORY_SCENE_RULES,
+  FILTER_CATEGORY_BIND_TYPE_LABEL,
+  FILTER_CATEGORY_CHANGE_TYPE_LABEL,
+  FILTER_ADAPT_SCORE_LEVEL
 } from '@/constants'
 import {
   getFilterList,
@@ -912,6 +1280,11 @@ import {
   updateFilterStatus,
   batchUpdateFilterStatus,
   getFilterStatusOverview,
+  validateCategoryBind,
+  adjustCategoryStep,
+  batchCategoryMigrate,
+  traceCategoryAdapt,
+  getCategoryAdaptList,
   deleteFilter
 } from '@/api/filter'
 import type {
@@ -920,7 +1293,12 @@ import type {
   FilterTraceResultItem,
   FilterStatusOverview,
   FilterStatusUpdateResult,
-  BatchStatusResult
+  BatchStatusResult,
+  CategoryValidateResult,
+  CategoryAdjustResult,
+  BatchCategoryMigrateResult,
+  CategoryTraceResult,
+  FilterCategoryAdapt
 } from '@/types'
 
 const activeTab = ref('entry')
@@ -1570,12 +1948,237 @@ const handleBatchStatus = async () => {
   }
 }
 
+// ================ 功能点6：滤镜分类适配管理 ================
+
+const catTableRef = ref<any>(null)
+const catLoading = ref(false)
+const catList = ref<FilterEffect[]>([])
+const catTotal = ref(0)
+const catPage = ref(1)
+const catPageSize = ref(20)
+const catSelectError = ref(false)
+
+const catFilterForm = reactive({
+  categoryId: undefined as number | undefined,
+  isMatched: undefined as boolean | undefined
+})
+
+const catSelectedIds = ref<number[]>([])
+const catMigrateTargetId = ref<number | undefined>(undefined)
+const catMigrateLoading = ref(false)
+const catMigrateResult = ref<BatchCategoryMigrateResult | null>(null)
+const catMigrateResultVisible = ref(false)
+const catMigrateProgress = reactive({
+  active: false,
+  percentage: 0,
+  status: '' as '' | 'success' | 'exception',
+  message: ''
+})
+
+const catAdjustVisible = ref(false)
+const catAdjustSaving = ref(false)
+const catAdjustFilter = reactive<Partial<FilterEffect>>({ filterCode: '', name: '', categoryName: '' })
+const catAdjustTargetId = ref<number | undefined>(undefined)
+const catAdjustReason = ref('')
+const catAdjustPreview = ref<CategoryValidateResult | null>(null)
+
+const catTraceId = ref<number | undefined>(undefined)
+const catTraceLoading = ref(false)
+const catTraceSearched = ref(false)
+const catTraceResult = ref<CategoryTraceResult | null>(null)
+
+const adaptRecordVisible = ref(false)
+const adaptRecordList = ref<FilterCategoryAdapt[]>([])
+
+const computeAdaptScore = (row: FilterEffect): number => {
+  const scenes = row.adaptScene || []
+  const catName = row.categoryName || ''
+  const rules = FILTER_CATEGORY_SCENE_RULES[catName] || []
+  if (scenes.length === 0) return rules.length > 0 ? 20 : 50
+  const matchCount = scenes.filter(s => rules.includes(s)).length
+  return Math.round((matchCount / scenes.length) * 100)
+}
+
+const fetchCategoryList = async () => {
+  catLoading.value = true
+  try {
+    const res = await getFilterList({
+      page: catPage.value,
+      pageSize: catPageSize.value,
+      categoryId: catFilterForm.categoryId || undefined
+    })
+    catList.value = res.data.list
+    catTotal.value = res.data.total
+  } catch {
+    ElMessage.error('获取分类列表失败')
+  } finally {
+    catLoading.value = false
+  }
+}
+
+const handleResetCatFilter = () => {
+  catFilterForm.categoryId = undefined
+  catFilterForm.isMatched = undefined
+  catPage.value = 1
+  fetchCategoryList()
+}
+
+const handleCatSelectionChange = (rows: FilterEffect[]) => {
+  catSelectedIds.value = rows.map(r => r.id)
+}
+
+const handleOpenCatAdjust = (row: FilterEffect) => {
+  catAdjustFilter.filterCode = row.filterCode
+  catAdjustFilter.name = row.name
+  catAdjustFilter.categoryName = row.categoryName
+  catAdjustFilter.id = row.id
+  catAdjustTargetId.value = undefined
+  catAdjustReason.value = ''
+  catAdjustPreview.value = null
+  catAdjustVisible.value = true
+}
+
+const handleCatAdjustPreview = async (val: number) => {
+  if (!val || !catAdjustFilter.id) return
+  catSelectError.value = false
+  try {
+    const res = await validateCategoryBind(catAdjustFilter.id, val)
+    catAdjustPreview.value = res.data
+    if (!res.data.isMatched) {
+      catSelectError.value = true
+    }
+  } catch (err: any) {
+    catAdjustPreview.value = {
+      valid: false,
+      errors: [err?.message || '校验失败'],
+      adaptScore: 0,
+      isMatched: false,
+      filterScenes: [],
+      categoryRuleScenes: [],
+      categoryId: val,
+      categoryName: '',
+      filterId: catAdjustFilter.id || 0,
+      filterName: catAdjustFilter.name || ''
+    }
+    catSelectError.value = true
+  }
+}
+
+const handleConfirmCatAdjust = async () => {
+  if (!catAdjustTargetId.value || !catAdjustFilter.id) return
+  catAdjustSaving.value = true
+  try {
+    const res = await adjustCategoryStep(
+      catAdjustFilter.id,
+      catAdjustTargetId.value,
+      undefined,
+      catAdjustReason.value || undefined
+    )
+    ElMessage.success(`分类调整成功，适配度${res.data.adaptScore}分，已同步前端展示`)
+    catAdjustVisible.value = false
+    fetchCategoryList()
+  } catch (err: any) {
+    ElMessage.error(err?.message || '分类调整失败')
+  } finally {
+    catAdjustSaving.value = false
+  }
+}
+
+const handleValidateCatBind = async (row: FilterEffect) => {
+  if (!row.categoryId) {
+    ElMessage.warning('该滤镜未绑定分类')
+    return
+  }
+  try {
+    const res = await validateCategoryBind(row.id, row.categoryId)
+    if (res.data.valid) {
+      ElMessage.success(`校验通过，适配度${res.data.adaptScore}分`)
+    } else {
+      catSelectError.value = true
+      ElMessage.error(res.data.errors.join('；'))
+    }
+  } catch (err: any) {
+    ElMessage.error(err?.message || '校验失败')
+  }
+}
+
+const handleBatchMigrate = async () => {
+  if (catSelectedIds.value.length === 0 || !catMigrateTargetId.value) {
+    ElMessage.warning('请选择滤镜和目标分类')
+    return
+  }
+
+  catMigrateLoading.value = true
+  catMigrateProgress.active = true
+  catMigrateProgress.percentage = 10
+  catMigrateProgress.status = ''
+  catMigrateProgress.message = '正在校验迁移适配性...'
+
+  try {
+    catMigrateProgress.percentage = 40
+    catMigrateProgress.message = '正在执行批量迁移...'
+
+    const res = await batchCategoryMigrate(catSelectedIds.value, catMigrateTargetId.value)
+    catMigrateProgress.percentage = 100
+    catMigrateProgress.status = 'success'
+    catMigrateProgress.message = `迁移完成：${res.data.success.length}个成功`
+
+    catMigrateResult.value = res.data
+    catMigrateResultVisible.value = true
+    catTableRef.value?.clearSelection()
+    catMigrateTargetId.value = undefined
+  } catch (err: any) {
+    catMigrateProgress.status = 'exception'
+    catMigrateProgress.message = '批量迁移失败'
+    ElMessage.error(err?.message || '批量迁移失败')
+  } finally {
+    catMigrateLoading.value = false
+    setTimeout(() => { catMigrateProgress.active = false }, 3000)
+  }
+}
+
+const handleTraceOneCat = (row: FilterEffect) => {
+  if (!row.categoryId) {
+    ElMessage.warning('该滤镜未绑定分类')
+    return
+  }
+  catTraceId.value = row.categoryId
+  activeTab.value = 'category'
+  handleTraceCategory()
+}
+
+const handleTraceCategory = async () => {
+  if (!catTraceId.value) {
+    ElMessage.warning('请选择分类')
+    return
+  }
+  catTraceLoading.value = true
+  catTraceSearched.value = true
+  catTraceResult.value = null
+  try {
+    const res = await traceCategoryAdapt(catTraceId.value)
+    catTraceResult.value = res.data
+  } catch (err: any) {
+    ElMessage.error(err?.message || '溯源查询失败')
+  } finally {
+    catTraceLoading.value = false
+  }
+}
+
+const handleViewAdaptRecords = (row: any) => {
+  adaptRecordList.value = row.adaptRecords || []
+  adaptRecordVisible.value = true
+}
+
 watch(activeTab, (tab) => {
   if (tab === 'status') {
     fetchStatusOverview()
     if (!statusList.value.length) {
       fetchStatusList()
     }
+  }
+  if (tab === 'category') {
+    fetchCategoryList()
   }
 })
 
@@ -2075,5 +2678,69 @@ onMounted(() => {
 
   :deep(.status-dialog-shake) {
     animation: dialog-zoom-in 0.25s ease-out, tag-shake 0.4s ease 0.2s;
+  }
+
+  .category-mutex-hint {
+    margin-bottom: 16px;
+  }
+
+  .cat-batch-toolbar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .ml-8 {
+    margin-left: 8px;
+  }
+
+  .select-focused-error {
+    :deep(.el-input__wrapper) {
+      border-color: $danger-color !important;
+      box-shadow: 0 0 0 1px $danger-color !important;
+      animation: shake 0.3s ease-in-out;
+    }
+  }
+
+  .cat-preview {
+    .adapt-warn {
+      margin-top: 8px;
+
+      .adapt-err-text {
+        display: block;
+        font-size: $font-size-extra-small;
+        color: $danger-color;
+        line-height: 1.6;
+      }
+    }
+
+    .adapt-ok {
+      margin-top: 6px;
+    }
+  }
+
+  .cat-trace-result {
+    .trace-summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 16px;
+
+      .overall-badge {
+        flex-shrink: 0;
+      }
+    }
+  }
+
+  .sticky-header-wrapper {
+    .sticky-table {
+      :deep(.el-table__header-wrapper) {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: $bg-color-ffffff;
+      }
+    }
   }
 </style>

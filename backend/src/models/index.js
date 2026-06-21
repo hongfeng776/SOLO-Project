@@ -29,6 +29,7 @@ const CronLog = require('./CronLog')
 const ServerMonitor = require('./ServerMonitor')
 const FilterEffect = require('./FilterEffect')
 const FilterEditLog = require('./FilterEditLog')
+const FilterCategoryAdapt = require('./FilterCategoryAdapt')
 
 User.hasMany(Resource, { foreignKey: 'authorId', as: 'resources' })
 Resource.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
@@ -124,6 +125,10 @@ Category.hasMany(FilterEffect, { foreignKey: 'categoryId', as: 'filterEffects' }
 FilterEffect.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' })
 FilterEffect.hasMany(FilterEditLog, { foreignKey: 'filterId', as: 'editLogs' })
 FilterEditLog.belongsTo(FilterEffect, { foreignKey: 'filterId', as: 'filter' })
+FilterEffect.hasMany(FilterCategoryAdapt, { foreignKey: 'filterId', as: 'categoryAdapts' })
+FilterCategoryAdapt.belongsTo(FilterEffect, { foreignKey: 'filterId', as: 'filter' })
+Category.hasMany(FilterCategoryAdapt, { foreignKey: 'categoryId', as: 'filterAdapts' })
+FilterCategoryAdapt.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' })
 
 module.exports = {
   User,
@@ -156,5 +161,6 @@ module.exports = {
   CronLog,
   ServerMonitor,
   FilterEffect,
-  FilterEditLog
+  FilterEditLog,
+  FilterCategoryAdapt
 }

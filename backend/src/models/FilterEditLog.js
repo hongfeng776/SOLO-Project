@@ -32,9 +32,9 @@ const FilterEditLog = sequelize.define(
       comment: '编辑步骤'
     },
     changeType: {
-      type: DataTypes.ENUM('create', 'edit', 'edit_limited', 'status_change', 'status_blocked', 'batch_submit', 'trace_verify', 'batch_status', 'status_hf_blocked'),
+      type: DataTypes.ENUM('create', 'edit', 'edit_limited', 'status_change', 'status_blocked', 'batch_submit', 'trace_verify', 'batch_status', 'status_hf_blocked', 'category_bind', 'category_adjust', 'category_migrate', 'category_unbind', 'category_auto_correct'),
       allowNull: false,
-      comment: '变更类型(status_blocked=前置拦截,status_hf_blocked=高频拦截)'
+      comment: '变更类型'
     },
     changedFields: {
       type: DataTypes.TEXT,

@@ -1,4 +1,4 @@
-const { FilterEffect, FilterEditLog, Category, OperationLog } = require('../models')
+const { FilterEffect, FilterEditLog, FilterCategoryAdapt, Category, OperationLog } = require('../models')
 const { Op } = require('sequelize')
 const { getPagination, buildFuzzyWhere, generateMaterialCode } = require('../utils/common')
 const ApiError = require('../utils/apiError')
@@ -27,6 +27,17 @@ const STATUS_FOUR_MUTEX = ['pending', 'published', 'offline', 'violation']
 const HIGH_FREQUENCY_WINDOW_MS = 60 * 1000
 const HIGH_FREQUENCY_THRESHOLD = 5
 const HEAT_MATCH_TOLERANCE = 500
+
+const MUTEX_CATEGORY_KEYS = ['portrait', 'landscape', 'vintage', 'food', 'night', 'scenery']
+const CATEGORY_SCENE_RULES = {
+  portrait: ['portrait', 'photo', 'live'],
+  landscape: ['landscape', 'scenery', 'photo'],
+  vintage: ['vintage', 'photo', 'short_video'],
+  food: ['food', 'photo', 'short_video'],
+  night: ['night', 'video', 'photo'],
+  scenery: ['scenery', 'landscape', 'photo']
+}
+const ADAPT_SCORE_THRESHOLD = 40
 
 class FilterService {
   async getList(params = {}) {
@@ -794,6 +805,388 @@ class FilterService {
       statusCounts: counts,
       publishRate: total ? Math.round((publishedCount / total) * 1000) / 10 : 0
     }
+  }
+
+  async validateCategoryBind(filterId, categoryId, userId) {
+    const filter = await FilterEffect.findByPk(filterId)
+    if (!filter) throw ApiError.notFound('滤镜不存在')
+
+    const category = await Category.findByPk(categoryId)
+    if (!category) throw ApiError.notFound('分类不存在')
+
+    const errors = []
+
+    const existingBind = await FilterCategoryAdapt.findOne({
+      where: { filterId, isPrimary: true }
+    })
+    if (existingBind && existingBind.categoryId !== categoryId) {
+      errors.push(`滤镜已绑定核心分类「${existingBind.categoryName}」，单一滤镜仅可绑定一个核心分类`)
+    }
+
+    const duplicateBind = await FilterCategoryAdapt.findOne({
+      where: { filterId, categoryId, isPrimary: false }
+    })
+    if (duplicateBind) {
+      errors.push('该滤镜已绑定此分类，重复绑定已拦截')
+    }
+
+    const mutexExisting = await FilterCategoryAdapt.findOne({
+      where: {
+        filterId,
+        isPrimary: true,
+        categoryName: { [Op.in]: MUTEX_CATEGORY_KEYS.map(k => k) }
+      }
+    })
+    if (mutexExisting && MUTEX_CATEGORY_KEYS.includes(category.name)) {
+      const currentKey = mutexExisting.categoryName
+      if (MUTEX_CATEGORY_KEYS.includes(currentKey) && currentKey !== category.name) {
+        errors.push(`分类互斥：滤镜已绑定「${currentKey}」分类，不可同时绑定「${category.name}」`)
+      }
+    }
+
+    const filterScenes = filter.adaptScene || []
+    const categoryRuleScenes = CATEGORY_SCENE_RULES[category.name] || []
+    const matchCount = filterScenes.filter(s => categoryRuleScenes.includes(s)).length
+    const adaptScore = filterScenes.length > 0
+      ? Math.round((matchCount / filterScenes.length) * 100)
+      : (categoryRuleScenes.length > 0 ? 20 : 50)
+
+    if (adaptScore < ADAPT_SCORE_THRESHOLD) {
+      errors.push(`适配度过低(${adaptScore}分)，滤镜场景${JSON.stringify(filterScenes)}与分类「${category.name}」规则${JSON.stringify(categoryRuleScenes)}不匹配`)
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      adaptScore,
+      isMatched: adaptScore >= ADAPT_SCORE_THRESHOLD,
+      filterScenes,
+      categoryRuleScenes,
+      categoryId: category.id,
+      categoryName: category.name,
+      filterId: filter.id,
+      filterName: filter.name
+    }
+  }
+
+  async adjustCategoryStep(filterId, newCategoryId, userId, options = {}) {
+    const { operatorName = '', reason = '' } = options
+
+    const validation = await this.validateCategoryBind(filterId, newCategoryId, userId)
+    if (!validation.valid) {
+      throw ApiError.badRequest(validation.errors.join('；'))
+    }
+
+    const filter = await FilterEffect.findByPk(filterId)
+    if (!filter) throw ApiError.notFound('滤镜不存在')
+
+    const newCategory = await Category.findByPk(newCategoryId)
+    if (!newCategory) throw ApiError.notFound('目标分类不存在')
+
+    const beforeData = filter.toJSON()
+    const oldCategoryId = filter.categoryId
+    const oldCategoryName = filter.categoryName
+
+    const existingPrimary = await FilterCategoryAdapt.findOne({
+      where: { filterId, isPrimary: true }
+    })
+
+    if (existingPrimary) {
+      await existingPrimary.update({ isPrimary: false, changeType: 'unbind' })
+    }
+
+    await FilterCategoryAdapt.create({
+      filterId,
+      filterCode: filter.filterCode,
+      filterName: filter.name,
+      categoryId: newCategoryId,
+      categoryName: newCategory.name,
+      adaptScore: validation.adaptScore,
+      isMatched: validation.isMatched,
+      isPrimary: true,
+      filterScenes: filter.adaptScene || [],
+      categorySceneRule: CATEGORY_SCENE_RULES[newCategory.name] || [],
+      bindType: 'manual',
+      changeType: 'adjust',
+      operatorId: userId,
+      operatorName,
+      reason: reason || `分类调整：${oldCategoryName || '无'}→${newCategory.name}`,
+      beforeCategoryId: oldCategoryId,
+      beforeCategoryName: oldCategoryName
+    })
+
+    await filter.update({
+      categoryId: newCategoryId,
+      categoryName: newCategory.name
+    })
+
+    await FilterEditLog.create({
+      filterId,
+      filterCode: filter.filterCode,
+      filterName: filter.name,
+      editStep: 1,
+      changeType: 'category_adjust',
+      changedFields: ['categoryId', 'categoryName'],
+      beforeData,
+      afterData: filter.toJSON(),
+      operatorId: userId,
+      operatorName,
+      reason: reason || `分类调整：${oldCategoryName || '无'}→${newCategory.name}`
+    })
+
+    await this._refreshCategoryStats(oldCategoryId)
+    await this._refreshCategoryStats(newCategoryId)
+
+    return {
+      updated: true,
+      filter: filter.toJSON(),
+      adaptScore: validation.adaptScore
+    }
+  }
+
+  async batchCategoryMigrate(filterIds, targetCategoryId, userId, options = {}) {
+    const { operatorName = '' } = options
+    const targetCategory = await Category.findByPk(targetCategoryId)
+    if (!targetCategory) throw ApiError.notFound('目标分类不存在')
+
+    const batchId = 'BATCH_CAT_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)
+    const results = {
+      total: filterIds.length,
+      success: [],
+      failed: [],
+      filtered: [],
+      batchId,
+      targetCategoryId,
+      targetCategoryName: targetCategory.name
+    }
+
+    for (const filterId of filterIds) {
+      try {
+        const filter = await FilterEffect.findByPk(filterId)
+        if (!filter) {
+          results.failed.push({ id: filterId, reason: '滤镜不存在' })
+          continue
+        }
+
+        if (filter.categoryId === targetCategoryId) {
+          results.filtered.push({
+            id: filterId,
+            filterCode: filter.filterCode,
+            name: filter.name,
+            reason: '已在目标分类中'
+          })
+          continue
+        }
+
+        const validation = await this.validateCategoryBind(filterId, targetCategoryId, userId)
+        if (!validation.valid) {
+          results.filtered.push({
+            id: filterId,
+            filterCode: filter.filterCode,
+            name: filter.name,
+            reason: validation.errors.join('；'),
+            adaptScore: validation.adaptScore
+          })
+          continue
+        }
+
+        const oldCategoryId = filter.categoryId
+        const oldCategoryName = filter.categoryName
+        const beforeData = filter.toJSON()
+
+        const existingPrimary = await FilterCategoryAdapt.findOne({
+          where: { filterId, isPrimary: true }
+        })
+        if (existingPrimary) {
+          await existingPrimary.update({ isPrimary: false, changeType: 'unbind' })
+        }
+
+        await FilterCategoryAdapt.create({
+          filterId,
+          filterCode: filter.filterCode,
+          filterName: filter.name,
+          categoryId: targetCategoryId,
+          categoryName: targetCategory.name,
+          adaptScore: validation.adaptScore,
+          isMatched: validation.isMatched,
+          isPrimary: true,
+          filterScenes: filter.adaptScene || [],
+          categorySceneRule: CATEGORY_SCENE_RULES[targetCategory.name] || [],
+          bindType: 'migration',
+          changeType: 'migrate',
+          operatorId: userId,
+          operatorName,
+          reason: `批量分类迁移：${oldCategoryName || '无'}→${targetCategory.name}`,
+          beforeCategoryId: oldCategoryId,
+          beforeCategoryName: oldCategoryName,
+          batchId
+        })
+
+        await filter.update({
+          categoryId: targetCategoryId,
+          categoryName: targetCategory.name
+        })
+
+        await FilterEditLog.create({
+          filterId,
+          filterCode: filter.filterCode,
+          filterName: filter.name,
+          editStep: 1,
+          changeType: 'category_migrate',
+          changedFields: ['categoryId', 'categoryName'],
+          beforeData,
+          afterData: filter.toJSON(),
+          operatorId: userId,
+          operatorName,
+          batchId,
+          reason: `批量分类迁移：${oldCategoryName || '无'}→${targetCategory.name}`
+        })
+
+        results.success.push({
+          id: filterId,
+          filterCode: filter.filterCode,
+          name: filter.name,
+          adaptScore: validation.adaptScore
+        })
+      } catch (err) {
+        results.failed.push({ id: filterId, reason: err.message || '未知错误' })
+      }
+    }
+
+    await this._refreshCategoryStats(targetCategoryId)
+    return results
+  }
+
+  async traceCategoryAdapt(categoryId) {
+    const category = await Category.findByPk(categoryId)
+    if (!category) throw ApiError.notFound('分类不存在')
+
+    const filters = await FilterEffect.findAll({
+      where: { categoryId },
+      include: [
+        { model: Category, as: 'category', attributes: ['id', 'name'] }
+      ]
+    })
+
+    const adapts = await FilterCategoryAdapt.findAll({
+      where: { categoryId },
+      order: [['createdAt', 'DESC']]
+    })
+
+    const issues = []
+    const duplicateBindFilterIds = new Set()
+    const adaptsByFilter = {}
+    for (const a of adapts) {
+      if (!adaptsByFilter[a.filterId]) adaptsByFilter[a.filterId] = []
+      adaptsByFilter[a.filterId].push(a)
+    }
+
+    for (const [fId, aList] of Object.entries(adaptsByFilter)) {
+      const primaryBinds = aList.filter(a => a.isPrimary)
+      if (primaryBinds.length > 1) {
+        duplicateBindFilterIds.add(Number(fId))
+        issues.push({
+          type: 'duplicate_primary',
+          severity: 'high',
+          message: `滤镜ID=${fId}存在多个核心分类绑定`,
+          filterId: Number(fId)
+        })
+      }
+    }
+
+    for (const filter of filters) {
+      const filterAdapts = adaptsByFilter[filter.id] || []
+      const primaryAdapt = filterAdapts.find(a => a.isPrimary)
+
+      if (primaryAdapt && !primaryAdapt.isMatched) {
+        issues.push({
+          type: 'mismatch',
+          severity: 'high',
+          message: `滤镜「${filter.name}」与分类「${category.name}」适配不匹配(评分${primaryAdapt.adaptScore})`,
+          filterId: filter.id
+        })
+      }
+
+      const filterScenes = filter.adaptScene || []
+      const catRuleScenes = CATEGORY_SCENE_RULES[category.name] || []
+      const matchCount = filterScenes.filter(s => catRuleScenes.includes(s)).length
+      const adaptScore = filterScenes.length > 0
+        ? Math.round((matchCount / filterScenes.length) * 100)
+        : (catRuleScenes.length > 0 ? 20 : 50)
+
+      if (adaptScore < ADAPT_SCORE_THRESHOLD && !issues.some(i => i.filterId === filter.id && i.type === 'mismatch')) {
+        issues.push({
+          type: 'low_adapt',
+          severity: 'medium',
+          message: `滤镜「${filter.name}」当前适配度仅${adaptScore}分，建议重新分类`,
+          filterId: filter.id
+        })
+      }
+    }
+
+    const otherCatFilters = await FilterCategoryAdapt.findAll({
+      where: {
+        filterId: { [Op.in]: filters.map(f => f.id) },
+        categoryId: { [Op.ne]: categoryId },
+        isPrimary: false
+      }
+    })
+
+    const filterDetails = filters.map(f => {
+      const fAdapts = (adaptsByFilter[f.id] || []).map(a => a.toJSON())
+      const otherBinds = otherCatFilters
+        .filter(o => o.filterId === f.id)
+        .map(o => ({ categoryId: o.categoryId, categoryName: o.categoryName, bindType: o.bindType }))
+
+      return {
+        ...f.toJSON(),
+        adaptRecords: fAdapts,
+        otherCategoryBinds: otherBinds,
+        useHeat: f.useHeat || 0,
+        inUseCount: f.inUseCount || 0
+      }
+    })
+
+    return {
+      category: { id: category.id, name: category.name },
+      filterCount: filters.length,
+      filters: filterDetails,
+      adaptRecords: adapts.map(a => a.toJSON()),
+      issues,
+      duplicateBindCount: duplicateBindFilterIds.size,
+      mismatchCount: issues.filter(i => i.type === 'mismatch').length,
+      overallValid: issues.filter(i => i.severity === 'high' || i.severity === 'critical').length === 0
+    }
+  }
+
+  async getCategoryAdaptList(params = {}) {
+    const { page, pageSize, offset, limit } = getPagination(params.page, params.pageSize)
+    const where = {}
+
+    if (params.categoryId) where.categoryId = params.categoryId
+    if (params.isMatched !== undefined) where.isMatched = params.isMatched
+    if (params.bindType) where.bindType = params.bindType
+    if (params.changeType) where.changeType = params.changeType
+
+    const { count, rows } = await FilterCategoryAdapt.findAndCountAll({
+      where,
+      offset,
+      limit,
+      order: [['createdAt', 'DESC']],
+      include: [
+        { model: Category, as: 'category', attributes: ['id', 'name'] }
+      ]
+    })
+
+    return { list: rows, total: count, page, pageSize }
+  }
+
+  async _refreshCategoryStats(categoryId) {
+    if (!categoryId) return
+    try {
+      const count = await FilterEffect.count({ where: { categoryId } })
+      cache.del('filter_list_*')
+    } catch {}
   }
 
   async delete(id) {

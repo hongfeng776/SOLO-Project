@@ -124,6 +124,57 @@ class FilterController {
     }
   }
 
+  async validateCategoryBind(req, res, next) {
+    try {
+      const userId = req.user?.id
+      const result = await filterService.validateCategoryBind(req.body.filterId, req.body.categoryId, userId)
+      res.json(ApiResponse.success(result))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async adjustCategoryStep(req, res, next) {
+    try {
+      const { filterId, categoryId, operatorName, reason } = req.body
+      const userId = req.user?.id
+      const result = await filterService.adjustCategoryStep(filterId, categoryId, userId, { operatorName, reason })
+      res.json(ApiResponse.success(result, '分类调整成功'))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async batchCategoryMigrate(req, res, next) {
+    try {
+      const { filterIds, categoryId, operatorName } = req.body
+      const userId = req.user?.id
+      const result = await filterService.batchCategoryMigrate(filterIds, categoryId, userId, { operatorName })
+      res.json(ApiResponse.success(result, '批量分类迁移完成'))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async traceCategoryAdapt(req, res, next) {
+    try {
+      const categoryId = req.query.categoryId
+      const result = await filterService.traceCategoryAdapt(parseInt(String(categoryId)))
+      res.json(ApiResponse.success(result))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async getCategoryAdaptList(req, res, next) {
+    try {
+      const result = await filterService.getCategoryAdaptList(req.query)
+      res.json(ApiResponse.page(result.list, result.total, result.page, result.pageSize))
+    } catch (error) {
+      next(error)
+    }
+  }
+
   async delete(req, res, next) {
     try {
       const { id } = req.params

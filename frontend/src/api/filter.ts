@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { PageResult, PageParams, FilterEffect, FilterValidationResult, FilterEditLog, FilterBatchResult, FilterTraceResultItem, FilterListParams, FilterStatusOverview, FilterStatusUpdateResult, BatchStatusResult } from '@/types'
+import type { PageResult, PageParams, FilterEffect, FilterValidationResult, FilterEditLog, FilterBatchResult, FilterTraceResultItem, FilterListParams, FilterStatusOverview, FilterStatusUpdateResult, BatchStatusResult, CategoryValidateResult, CategoryAdjustResult, BatchCategoryMigrateResult, CategoryTraceResult, FilterCategoryAdapt } from '@/types'
 
 export const getFilterList = (params: FilterListParams) => {
   return request.get<PageResult<FilterEffect>>('/filters', params)
@@ -49,7 +49,26 @@ export const getFilterStatusOverview = () => {
   return request.get<FilterStatusOverview>('/filters/status/overview')
 }
 
+export const validateCategoryBind = (filterId: number, categoryId: number) => {
+  return request.post<CategoryValidateResult>('/filters/category/validate', { filterId, categoryId })
+}
+
+export const adjustCategoryStep = (filterId: number, categoryId: number, operatorName?: string, reason?: string) => {
+  return request.post<CategoryAdjustResult>('/filters/category/adjust', { filterId, categoryId, operatorName, reason })
+}
+
+export const batchCategoryMigrate = (filterIds: number[], categoryId: number, operatorName?: string) => {
+  return request.post<BatchCategoryMigrateResult>('/filters/category/batch-migrate', { filterIds, categoryId, operatorName })
+}
+
+export const traceCategoryAdapt = (categoryId: number) => {
+  return request.get<CategoryTraceResult>('/filters/category/trace', { categoryId })
+}
+
+export const getCategoryAdaptList = (params?: PageParams & { categoryId?: number; isMatched?: boolean; bindType?: string; changeType?: string }) => {
+  return request.get<PageResult<FilterCategoryAdapt>>('/filters/category/adapts', params)
+}
+
 export const deleteFilter = (id: number) => {
   return request.delete(`/filters/${id}`)
 }
-
