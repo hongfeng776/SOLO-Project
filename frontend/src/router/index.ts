@@ -89,6 +89,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/message-template/index.vue'),
         meta: { title: '消息模板', icon: 'Bell' },
       },
+      {
+        path: 'message-center',
+        name: 'MessageCenter',
+        component: () => import('@/views/message-center/index.vue'),
+        meta: { title: '消息中心', icon: 'Message' },
+      },
     ],
   },
   {

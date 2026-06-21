@@ -44,6 +44,7 @@ const menuList = ref([
   { path: '/onboard', title: '入职管理', icon: 'UserFilled' },
   { path: '/qualification', title: '资质审核', icon: 'Stamp' },
   { path: '/message-template', title: '消息模板', icon: 'Bell' },
+  { path: '/message-center', title: '消息中心', icon: 'Message' },
   { path: '/system', title: '系统管理', icon: 'Setting' },
 ]);
 </script>

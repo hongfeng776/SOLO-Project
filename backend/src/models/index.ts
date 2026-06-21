@@ -22,6 +22,8 @@ import RecruitmentConfig from './recruitment-config.model';
 import RecruitmentConfigLog from './recruitment-config-log.model';
 import MessageTemplate from './message-template.model';
 import MessageTemplateLog from './message-template-log.model';
+import MessageDelivery from './message-delivery.model';
+import MessageDeliveryLog from './message-delivery-log.model';
 import PermissionLog from './permission-log.model';
 import LoginLog from './login-log.model';
 import Probation from './probation.model';
@@ -48,6 +50,9 @@ RecruitmentConfigLog.belongsTo(RecruitmentConfig, { foreignKey: 'configId', as: 
 
 MessageTemplate.hasMany(MessageTemplateLog, { foreignKey: 'templateId', as: 'templateLogs' });
 MessageTemplateLog.belongsTo(MessageTemplate, { foreignKey: 'templateId', as: 'template' });
+
+MessageDelivery.hasMany(MessageDeliveryLog, { foreignKey: 'messageId', as: 'deliveryLogs' });
+MessageDeliveryLog.belongsTo(MessageDelivery, { foreignKey: 'messageId', as: 'message' });
 
 User.hasMany(PermissionLog, { foreignKey: 'userId', as: 'permissionLogs' });
 PermissionLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -143,6 +148,7 @@ export {
   User, Qualification, QualificationAuditLog,
   CompanyChangeLog, RecruitmentConfig, RecruitmentConfigLog,
   MessageTemplate, MessageTemplateLog,
+  MessageDelivery, MessageDeliveryLog,
   PermissionLog, LoginLog,
   Probation, ProbationOperationLog, ProbationAssessmentIndicator,
   Regularization, RegularizationApprovalNodeRecord, RegularizationOperationLog

@@ -1484,3 +1484,177 @@ export const MESSAGE_TEMPLATE_COMPLIANCE_KEYWORDS = [
 export const MESSAGE_CONTENT_MAX_LENGTH = 500;
 export const MESSAGE_TITLE_MAX_LENGTH = 50;
 export const DEFAULT_TEMPLATE_WEIGHT = 50;
+
+export enum MessageDeliveryStatus {
+  PENDING = 'pending',
+  SENT_SUCCESS = 'sent_success',
+  SENT_FAILED = 'sent_failed',
+  READ = 'read',
+  UNREAD = 'unread',
+}
+
+export const MessageDeliveryStatusLabel: Record<MessageDeliveryStatus, string> = {
+  [MessageDeliveryStatus.PENDING]: '待推送',
+  [MessageDeliveryStatus.SENT_SUCCESS]: '推送成功',
+  [MessageDeliveryStatus.SENT_FAILED]: '推送失败',
+  [MessageDeliveryStatus.READ]: '已读',
+  [MessageDeliveryStatus.UNREAD]: '未读',
+};
+
+export const MessageDeliveryStatusType: Record<MessageDeliveryStatus, string> = {
+  [MessageDeliveryStatus.PENDING]: 'warning',
+  [MessageDeliveryStatus.SENT_SUCCESS]: 'success',
+  [MessageDeliveryStatus.SENT_FAILED]: 'danger',
+  [MessageDeliveryStatus.READ]: 'info',
+  [MessageDeliveryStatus.UNREAD]: 'primary',
+};
+
+export const MessageDeliveryStatusColor: Record<MessageDeliveryStatus, string> = {
+  [MessageDeliveryStatus.PENDING]: '#e6a23c',
+  [MessageDeliveryStatus.SENT_SUCCESS]: '#67c23a',
+  [MessageDeliveryStatus.SENT_FAILED]: '#f56c6c',
+  [MessageDeliveryStatus.READ]: '#909399',
+  [MessageDeliveryStatus.UNREAD]: '#409eff',
+};
+
+export enum MessageBusinessType {
+  INTERVIEW_APPOINT = 'interview_appoint',
+  INTERVIEW_CANCEL = 'interview_cancel',
+  INTERVIEW_REMIND = 'interview_remind',
+  INTERVIEW_RESULT = 'interview_result',
+  INTERVIEW_STATUS_CHANGE = 'interview_status_change',
+  ONBOARD_CREATE = 'onboard_create',
+  ONBOARD_AUDIT = 'onboard_audit',
+  ONBOARD_STATUS_CHANGE = 'onboard_status_change',
+  APPROVAL_SUBMIT = 'approval_submit',
+  APPROVAL_PASS = 'approval_pass',
+  APPROVAL_REJECT = 'approval_reject',
+  PROBATION_START = 'probation_start',
+  PROBATION_END = 'probation_end',
+  REGULARIZATION_SUBMIT = 'regularization_submit',
+  REGULARIZATION_APPROVAL = 'regularization_approval',
+  RISK_WARNING = 'risk_warning',
+  SYSTEM_NOTICE = 'system_notice',
+}
+
+export const MessageBusinessTypeLabel: Record<MessageBusinessType, string> = {
+  [MessageBusinessType.INTERVIEW_APPOINT]: '面试预约',
+  [MessageBusinessType.INTERVIEW_CANCEL]: '面试取消',
+  [MessageBusinessType.INTERVIEW_REMIND]: '面试提醒',
+  [MessageBusinessType.INTERVIEW_RESULT]: '面试结果',
+  [MessageBusinessType.INTERVIEW_STATUS_CHANGE]: '面试状态变更',
+  [MessageBusinessType.ONBOARD_CREATE]: '入职创建',
+  [MessageBusinessType.ONBOARD_AUDIT]: '入职审核',
+  [MessageBusinessType.ONBOARD_STATUS_CHANGE]: '入职状态变更',
+  [MessageBusinessType.APPROVAL_SUBMIT]: '审批提交',
+  [MessageBusinessType.APPROVAL_PASS]: '审批通过',
+  [MessageBusinessType.APPROVAL_REJECT]: '审批驳回',
+  [MessageBusinessType.PROBATION_START]: '试用期开始',
+  [MessageBusinessType.PROBATION_END]: '试用期结束',
+  [MessageBusinessType.REGULARIZATION_SUBMIT]: '转正申请提交',
+  [MessageBusinessType.REGULARIZATION_APPROVAL]: '转正审批',
+  [MessageBusinessType.RISK_WARNING]: '风险预警',
+  [MessageBusinessType.SYSTEM_NOTICE]: '系统通知',
+};
+
+export enum MessageJumpType {
+  INTERVIEW_DETAIL = 'interview_detail',
+  ONBOARD_DETAIL = 'onboard_detail',
+  APPROVAL_DETAIL = 'approval_detail',
+  PROBATION_DETAIL = 'probation_detail',
+  REGULARIZATION_DETAIL = 'regularization_detail',
+  RESUME_DETAIL = 'resume_detail',
+  JOB_DETAIL = 'job_detail',
+  SYSTEM_PAGE = 'system_page',
+  EXTERNAL_LINK = 'external_link',
+  NONE = 'none',
+}
+
+export const MessageJumpTypeLabel: Record<MessageJumpType, string> = {
+  [MessageJumpType.INTERVIEW_DETAIL]: '面试详情',
+  [MessageJumpType.ONBOARD_DETAIL]: '入职详情',
+  [MessageJumpType.APPROVAL_DETAIL]: '审批详情',
+  [MessageJumpType.PROBATION_DETAIL]: '试用期详情',
+  [MessageJumpType.REGULARIZATION_DETAIL]: '转正详情',
+  [MessageJumpType.RESUME_DETAIL]: '简历详情',
+  [MessageJumpType.JOB_DETAIL]: '岗位详情',
+  [MessageJumpType.SYSTEM_PAGE]: '系统页面',
+  [MessageJumpType.EXTERNAL_LINK]: '外部链接',
+  [MessageJumpType.NONE]: '无跳转',
+};
+
+export enum MessageDeliveryLogAction {
+  TRIGGER = 'trigger',
+  PUSH_ATTEMPT = 'push_attempt',
+  PUSH_SUCCESS = 'push_success',
+  PUSH_FAILED = 'push_failed',
+  RETRY = 'retry',
+  READ = 'read',
+  MARK_READ = 'mark_read',
+  MARK_UNREAD = 'mark_unread',
+  DELETE = 'delete',
+  BATCH_RETRY = 'batch_retry',
+  BATCH_MARK_READ = 'batch_mark_read',
+  BATCH_DELETE = 'batch_delete',
+}
+
+export const MessageDeliveryLogActionLabel: Record<MessageDeliveryLogAction, string> = {
+  [MessageDeliveryLogAction.TRIGGER]: '触发消息',
+  [MessageDeliveryLogAction.PUSH_ATTEMPT]: '推送尝试',
+  [MessageDeliveryLogAction.PUSH_SUCCESS]: '推送成功',
+  [MessageDeliveryLogAction.PUSH_FAILED]: '推送失败',
+  [MessageDeliveryLogAction.RETRY]: '重试推送',
+  [MessageDeliveryLogAction.READ]: '用户已读',
+  [MessageDeliveryLogAction.MARK_READ]: '标记已读',
+  [MessageDeliveryLogAction.MARK_UNREAD]: '标记未读',
+  [MessageDeliveryLogAction.DELETE]: '删除消息',
+  [MessageDeliveryLogAction.BATCH_RETRY]: '批量重发',
+  [MessageDeliveryLogAction.BATCH_MARK_READ]: '批量标记已读',
+  [MessageDeliveryLogAction.BATCH_DELETE]: '批量删除',
+};
+
+export const MESSAGE_MAX_RETRY_COUNT = 2;
+export const MESSAGE_RETRY_INTERVAL_MS = 60000;
+export const MESSAGE_UNREAD_OVERDUE_DAYS = 7;
+export const MESSAGE_BATCH_OPERATION_LIMIT = 100;
+export const MESSAGE_PUSH_STATS_DAYS = 30;
+
+export const MESSAGE_BUSINESS_TYPE_SCENE_MAP: Record<MessageBusinessType, MessageTemplateScene> = {
+  [MessageBusinessType.INTERVIEW_APPOINT]: MessageTemplateScene.INTERVIEW,
+  [MessageBusinessType.INTERVIEW_CANCEL]: MessageTemplateScene.INTERVIEW,
+  [MessageBusinessType.INTERVIEW_REMIND]: MessageTemplateScene.INTERVIEW,
+  [MessageBusinessType.INTERVIEW_RESULT]: MessageTemplateScene.INTERVIEW,
+  [MessageBusinessType.INTERVIEW_STATUS_CHANGE]: MessageTemplateScene.INTERVIEW,
+  [MessageBusinessType.ONBOARD_CREATE]: MessageTemplateScene.ONBOARD,
+  [MessageBusinessType.ONBOARD_AUDIT]: MessageTemplateScene.ONBOARD,
+  [MessageBusinessType.ONBOARD_STATUS_CHANGE]: MessageTemplateScene.ONBOARD,
+  [MessageBusinessType.APPROVAL_SUBMIT]: MessageTemplateScene.APPROVAL,
+  [MessageBusinessType.APPROVAL_PASS]: MessageTemplateScene.APPROVAL,
+  [MessageBusinessType.APPROVAL_REJECT]: MessageTemplateScene.APPROVAL,
+  [MessageBusinessType.PROBATION_START]: MessageTemplateScene.ONBOARD,
+  [MessageBusinessType.PROBATION_END]: MessageTemplateScene.ONBOARD,
+  [MessageBusinessType.REGULARIZATION_SUBMIT]: MessageTemplateScene.APPROVAL,
+  [MessageBusinessType.REGULARIZATION_APPROVAL]: MessageTemplateScene.APPROVAL,
+  [MessageBusinessType.RISK_WARNING]: MessageTemplateScene.RISK_CONTROL,
+  [MessageBusinessType.SYSTEM_NOTICE]: MessageTemplateScene.RISK_CONTROL,
+};
+
+export const MESSAGE_BUSINESS_TYPE_JUMP_MAP: Record<MessageBusinessType, MessageJumpType> = {
+  [MessageBusinessType.INTERVIEW_APPOINT]: MessageJumpType.INTERVIEW_DETAIL,
+  [MessageBusinessType.INTERVIEW_CANCEL]: MessageJumpType.INTERVIEW_DETAIL,
+  [MessageBusinessType.INTERVIEW_REMIND]: MessageJumpType.INTERVIEW_DETAIL,
+  [MessageBusinessType.INTERVIEW_RESULT]: MessageJumpType.INTERVIEW_DETAIL,
+  [MessageBusinessType.INTERVIEW_STATUS_CHANGE]: MessageJumpType.INTERVIEW_DETAIL,
+  [MessageBusinessType.ONBOARD_CREATE]: MessageJumpType.ONBOARD_DETAIL,
+  [MessageBusinessType.ONBOARD_AUDIT]: MessageJumpType.ONBOARD_DETAIL,
+  [MessageBusinessType.ONBOARD_STATUS_CHANGE]: MessageJumpType.ONBOARD_DETAIL,
+  [MessageBusinessType.APPROVAL_SUBMIT]: MessageJumpType.APPROVAL_DETAIL,
+  [MessageBusinessType.APPROVAL_PASS]: MessageJumpType.APPROVAL_DETAIL,
+  [MessageBusinessType.APPROVAL_REJECT]: MessageJumpType.APPROVAL_DETAIL,
+  [MessageBusinessType.PROBATION_START]: MessageJumpType.PROBATION_DETAIL,
+  [MessageBusinessType.PROBATION_END]: MessageJumpType.PROBATION_DETAIL,
+  [MessageBusinessType.REGULARIZATION_SUBMIT]: MessageJumpType.REGULARIZATION_DETAIL,
+  [MessageBusinessType.REGULARIZATION_APPROVAL]: MessageJumpType.REGULARIZATION_DETAIL,
+  [MessageBusinessType.RISK_WARNING]: MessageJumpType.NONE,
+  [MessageBusinessType.SYSTEM_NOTICE]: MessageJumpType.SYSTEM_PAGE,
+};
