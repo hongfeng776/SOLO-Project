@@ -744,3 +744,194 @@ export const CAMPAIGN_REWARD_RATIO_LIMITS: Record<string, { minRatio: number; ma
   [CampaignType.SIGN_IN]: { minRatio: 0.001, maxRatio: 0.1, maxAmount: 500 },
   [CampaignType.CUSTOM]: { minRatio: 0, maxRatio: 1, maxAmount: 100000 }
 }
+
+// ============================================================
+// ========== 营销活动 - 用户参与管控模块枚举 ==================
+// ============================================================
+
+// ========== 参与状态机（功能点2核心） ==========
+export enum ParticipationStatus {
+  PENDING_PARTICIPATE = 0,
+  TASK_COMPLETED = 1,
+  PENDING_REWARD = 2,
+  REWARDED = 3,
+  INVALID = 4,
+  CANCELLED = 5,
+  UNDER_REVIEW = 6
+}
+
+export const PARTICIPATION_STATUS_NAMES: Record<number, string> = {
+  [ParticipationStatus.PENDING_PARTICIPATE]: '待参与',
+  [ParticipationStatus.TASK_COMPLETED]: '任务完成',
+  [ParticipationStatus.PENDING_REWARD]: '待领奖',
+  [ParticipationStatus.REWARDED]: '已领奖',
+  [ParticipationStatus.INVALID]: '无效资格',
+  [ParticipationStatus.CANCELLED]: '已取消',
+  [ParticipationStatus.UNDER_REVIEW]: '审核中'
+}
+
+export const PARTICIPATION_STATUS_COLORS: Record<number, string> = {
+  [ParticipationStatus.PENDING_PARTICIPATE]: '#909399',
+  [ParticipationStatus.TASK_COMPLETED]: '#409eff',
+  [ParticipationStatus.PENDING_REWARD]: '#e6a23c',
+  [ParticipationStatus.REWARDED]: '#67c23a',
+  [ParticipationStatus.INVALID]: '#f56c6c',
+  [ParticipationStatus.CANCELLED]: '#c0c4cc',
+  [ParticipationStatus.UNDER_REVIEW]: '#909399'
+}
+
+// ========== 参与资格校验维度（功能点1 + 功能点4多维度） ==========
+export enum ParticipationCheckDimension {
+  ACCOUNT_STATUS = 'account_status',
+  PUNISHMENT_ACTIVE = 'punishment_active',
+  FLOW_LIMIT = 'flow_limit',
+  ACTIVITY_TIME = 'activity_time',
+  USER_LEVEL = 'user_level',
+  ACTIVITY_LEVEL = 'activity_level',
+  RISK_LEVEL = 'risk_level',
+  REAL_NAME = 'real_name',
+  PHONE_VERIFIED = 'phone_verified',
+  PARTICIPATION_COUNT = 'participation_count',
+  GLOBAL_FREQUENCY = 'global_frequency',
+  SAME_DEVICE = 'same_device',
+  SAME_IP = 'same_ip',
+  TASK_VALIDITY = 'task_validity',
+  DATA_CONSISTENCY = 'data_consistency',
+  SUSPICIOUS_PATTERN = 'suspicious_pattern'
+}
+
+export const PARTICIPATION_CHECK_DIMENSION_NAMES: Record<string, string> = {
+  [ParticipationCheckDimension.ACCOUNT_STATUS]: '账号状态',
+  [ParticipationCheckDimension.PUNISHMENT_ACTIVE]: '处罚生效中',
+  [ParticipationCheckDimension.FLOW_LIMIT]: '账号限流',
+  [ParticipationCheckDimension.ACTIVITY_TIME]: '活动时段',
+  [ParticipationCheckDimension.USER_LEVEL]: '用户等级门槛',
+  [ParticipationCheckDimension.ACTIVITY_LEVEL]: '活跃度门槛',
+  [ParticipationCheckDimension.RISK_LEVEL]: '风险等级',
+  [ParticipationCheckDimension.REAL_NAME]: '实名认证',
+  [ParticipationCheckDimension.PHONE_VERIFIED]: '手机号绑定',
+  [ParticipationCheckDimension.PARTICIPATION_COUNT]: '单活动参与次数',
+  [ParticipationCheckDimension.GLOBAL_FREQUENCY]: '全局参与频率',
+  [ParticipationCheckDimension.SAME_DEVICE]: '同设备参与',
+  [ParticipationCheckDimension.SAME_IP]: '同IP参与',
+  [ParticipationCheckDimension.TASK_VALIDITY]: '任务完成有效性',
+  [ParticipationCheckDimension.DATA_CONSISTENCY]: '数据一致性',
+  [ParticipationCheckDimension.SUSPICIOUS_PATTERN]: '可疑参与模式'
+}
+
+// ========== 参与违规类型（功能点4自动拦截） ==========
+export enum ParticipationViolationType {
+  BRUSH_PARTICIPATION = 'brush_participation',
+  FAKE_PARTICIPATION = 'fake_participation',
+  PROXY_PARTICIPATION = 'proxy_participation',
+  MULTI_ACCOUNT = 'multi_account',
+  SAME_DEVICE_MULTI = 'same_device_multi',
+  SAME_IP_MULTI = 'same_ip_multi',
+  FRAUD_TASK = 'fraud_task',
+  INVALID_DATA = 'invalid_data',
+  ABNORMAL_FREQUENCY = 'abnormal_frequency',
+  VIOLATION_USER = 'violation_user'
+}
+
+export const PARTICIPATION_VIOLATION_TYPE_NAMES: Record<string, string> = {
+  [ParticipationViolationType.BRUSH_PARTICIPATION]: '刷参与量',
+  [ParticipationViolationType.FAKE_PARTICIPATION]: '虚假参与',
+  [ParticipationViolationType.PROXY_PARTICIPATION]: '违规代参与',
+  [ParticipationViolationType.MULTI_ACCOUNT]: '多账号串通',
+  [ParticipationViolationType.SAME_DEVICE_MULTI]: '同设备多账号',
+  [ParticipationViolationType.SAME_IP_MULTI]: '同IP多账号',
+  [ParticipationViolationType.FRAUD_TASK]: '任务造假',
+  [ParticipationViolationType.INVALID_DATA]: '数据无效',
+  [ParticipationViolationType.ABNORMAL_FREQUENCY]: '异常频率',
+  [ParticipationViolationType.VIOLATION_USER]: '违规用户参与'
+}
+
+// ========== 参与批量操作类型（功能点3） ==========
+export enum ParticipationBatchAction {
+  BATCH_APPROVE = 'batch_approve',
+  BATCH_REJECT = 'batch_reject',
+  BATCH_REMOVE = 'batch_remove',
+  BATCH_RESET = 'batch_reset',
+  BATCH_INVALID = 'batch_invalid',
+  BATCH_RESTORE = 'batch_restore'
+}
+
+export const PARTICIPATION_BATCH_ACTION_NAMES: Record<string, string> = {
+  [ParticipationBatchAction.BATCH_APPROVE]: '批量审核通过',
+  [ParticipationBatchAction.BATCH_REJECT]: '批量审核拒绝',
+  [ParticipationBatchAction.BATCH_REMOVE]: '批量剔除违规',
+  [ParticipationBatchAction.BATCH_RESET]: '批量重置资格',
+  [ParticipationBatchAction.BATCH_INVALID]: '批量标记无效',
+  [ParticipationBatchAction.BATCH_RESTORE]: '批量恢复资格'
+}
+
+// ========== 参与审计动作类型（功能点4溯源） ==========
+export enum ParticipationAuditAction {
+  SIGNED_UP = 'signed_up',
+  SIGNUP_BLOCKED = 'signup_blocked',
+  STATUS_CHANGED = 'status_changed',
+  TASK_COMPLETED = 'task_completed',
+  TASK_REJECTED = 'task_rejected',
+  REWARD_GRANTED = 'reward_granted',
+  REWARD_BLOCKED = 'reward_blocked',
+  MANUAL_APPROVED = 'manual_approved',
+  MANUAL_REJECTED = 'manual_rejected',
+  MANUAL_REMOVED = 'manual_removed',
+  MANUAL_RESET = 'manual_reset',
+  BATCH_APPROVED = 'batch_approved',
+  BATCH_REJECTED = 'batch_rejected',
+  BATCH_REMOVED = 'batch_removed',
+  BATCH_RESET = 'batch_reset',
+  AUTO_INVALID = 'auto_invalid',
+  ANOMALY_DETECTED = 'anomaly_detected',
+  INVALID_CLEARED = 'invalid_cleared'
+}
+
+export const PARTICIPATION_AUDIT_ACTION_NAMES: Record<string, string> = {
+  [ParticipationAuditAction.SIGNED_UP]: '用户报名',
+  [ParticipationAuditAction.SIGNUP_BLOCKED]: '报名被拦截',
+  [ParticipationAuditAction.STATUS_CHANGED]: '参与状态变更',
+  [ParticipationAuditAction.TASK_COMPLETED]: '任务完成',
+  [ParticipationAuditAction.TASK_REJECTED]: '任务审核驳回',
+  [ParticipationAuditAction.REWARD_GRANTED]: '奖励发放',
+  [ParticipationAuditAction.REWARD_BLOCKED]: '奖励发放拦截',
+  [ParticipationAuditAction.MANUAL_APPROVED]: '人工审核通过',
+  [ParticipationAuditAction.MANUAL_REJECTED]: '人工审核拒绝',
+  [ParticipationAuditAction.MANUAL_REMOVED]: '人工剔除',
+  [ParticipationAuditAction.MANUAL_RESET]: '人工重置资格',
+  [ParticipationAuditAction.BATCH_APPROVED]: '批量审核通过',
+  [ParticipationAuditAction.BATCH_REJECTED]: '批量审核拒绝',
+  [ParticipationAuditAction.BATCH_REMOVED]: '批量剔除违规',
+  [ParticipationAuditAction.BATCH_RESET]: '批量重置资格',
+  [ParticipationAuditAction.AUTO_INVALID]: '系统自动标记无效',
+  [ParticipationAuditAction.ANOMALY_DETECTED]: '异常检测触发',
+  [ParticipationAuditAction.INVALID_CLEARED]: '无效数据清理'
+}
+
+// ========== 任务完成状态 ==========
+export enum TaskCompletionStatus {
+  NOT_STARTED = 0,
+  IN_PROGRESS = 1,
+  SUBMITTED = 2,
+  VERIFIED = 3,
+  REJECTED = 4
+}
+
+export const TASK_COMPLETION_STATUS_NAMES: Record<number, string> = {
+  [TaskCompletionStatus.NOT_STARTED]: '未开始',
+  [TaskCompletionStatus.IN_PROGRESS]: '进行中',
+  [TaskCompletionStatus.SUBMITTED]: '已提交',
+  [TaskCompletionStatus.VERIFIED]: '已验证',
+  [TaskCompletionStatus.REJECTED]: '已驳回'
+}
+
+// ========== 参与反作弊 - 频率限制常量 ==========
+export const PARTICIPATION_ANTI_FRAUD_RULES = {
+  SINGLE_ACTIVITY_MAX_PER_USER: 1,
+  GLOBAL_PARTICIPATIONS_PER_HOUR: 20,
+  SAME_DEVICE_MAX_PARTICIPATIONS: 3,
+  SAME_IP_MAX_PARTICIPATIONS: 10,
+  MIN_TASK_DURATION_SECONDS: 5,
+  BRUSH_PATTERN_WINDOW_MINUTES: 10,
+  BRUSH_PATTERN_THRESHOLD: 5
+}
