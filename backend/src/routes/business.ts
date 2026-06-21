@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, OnlinePaymentController, DeviceArchiveController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, OnlinePaymentController, DeviceArchiveController, DeviceMonitorController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -18,6 +18,7 @@ const loanRepaymentController = new LoanRepaymentController();
 const settlementController = new SettlementController();
 const onlinePaymentController = new OnlinePaymentController();
 const deviceArchiveController = new DeviceArchiveController();
+const deviceMonitorController = new DeviceMonitorController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -261,5 +262,31 @@ router.post('/device-archive', requirePermission('business:deviceArchive:create'
 router.post('/device-archive/batch', requirePermission('business:deviceArchive:batch'), (req, res, next) => deviceArchiveController.batch(req, res, next));
 // 设备溯源
 router.post('/device-archive/trace', requirePermission('business:deviceArchive:trace'), (req, res, next) => deviceArchiveController.trace(req, res, next));
+
+// ========== 设备监控模块 ==========
+// 配置枚举
+router.get('/device-monitor/config', requireAuth, (req, res, next) => deviceMonitorController.config(req, res, next));
+// 数据校验
+router.post('/device-monitor/check', requirePermission('business:deviceMonitor:query'), (req, res, next) => deviceMonitorController.checkData(req, res, next));
+// 列表查询
+router.get('/device-monitor/list', requirePermission('business:deviceMonitor:query'), (req, res, next) => deviceMonitorController.list(req, res, next));
+// 统计信息
+router.get('/device-monitor/statistics', requirePermission('business:deviceMonitor:query'), (req, res, next) => deviceMonitorController.statistics(req, res, next));
+// 详情查询
+router.get('/device-monitor/:id', requirePermission('business:deviceMonitor:query'), (req, res, next) => deviceMonitorController.detail(req, res, next));
+// 状态更新
+router.post('/device-monitor/update', requirePermission('business:deviceMonitor:update'), (req, res, next) => deviceMonitorController.updateStatus(req, res, next));
+// 批量更新
+router.post('/device-monitor/batch-update', requirePermission('business:deviceMonitor:batch'), (req, res, next) => deviceMonitorController.batchUpdate(req, res, next));
+// 故障列表
+router.get('/device-monitor/fault/list', requirePermission('business:deviceMonitor:query'), (req, res, next) => deviceMonitorController.faultList(req, res, next));
+// 故障详情
+router.get('/device-monitor/fault/:id', requirePermission('business:deviceMonitor:query'), (req, res, next) => deviceMonitorController.faultDetail(req, res, next));
+// 故障处理
+router.post('/device-monitor/fault/:id/handle', requirePermission('business:deviceMonitor:handle'), (req, res, next) => deviceMonitorController.handleFault(req, res, next));
+// 监控日志列表
+router.get('/device-monitor/log/list', requirePermission('business:deviceMonitor:query'), (req, res, next) => deviceMonitorController.logList(req, res, next));
+// 运行溯源
+router.post('/device-monitor/trace', requirePermission('business:deviceMonitor:trace'), (req, res, next) => deviceMonitorController.trace(req, res, next));
 
 export default router;

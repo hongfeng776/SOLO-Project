@@ -29,3 +29,6 @@ export { DeviceBinding } from './DeviceBinding';
 export { DeviceArchive } from './DeviceArchive';
 export { DeviceArchiveBatch } from './DeviceArchiveBatch';
 export { DeviceArchiveTraceLog } from './DeviceArchiveTraceLog';
+export { DeviceMonitor } from './DeviceMonitor';
+export { DeviceFaultRecord } from './DeviceFaultRecord';
+export { DeviceMonitorLog } from './DeviceMonitorLog';

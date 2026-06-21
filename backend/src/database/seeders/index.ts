@@ -327,7 +327,15 @@ export async function seedPermissions(): Promise<void> {
     { id: 'perm121', parent_id: 'perm023', name: '批量建档', code: 'business:deviceArchive:batch', type: 2, path: 'device-archive/batch', component: 'business/device-archive/batch', icon: 'Files', sort: 27, visible: 1, status: 1, perms: '' },
     { id: 'perm122', parent_id: 'perm121', name: '批量录入', code: 'business:deviceArchive:batch', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:deviceArchive:batch' },
     { id: 'perm123', parent_id: 'perm023', name: '设备溯源', code: 'business:deviceArchive:trace', type: 2, path: 'device-archive/trace', component: 'business/device-archive/trace', icon: 'Search', sort: 28, visible: 1, status: 1, perms: '' },
-    { id: 'perm124', parent_id: 'perm123', name: '溯源查询', code: 'business:deviceArchive:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:deviceArchive:trace' }
+    { id: 'perm124', parent_id: 'perm123', name: '溯源查询', code: 'business:deviceArchive:trace', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:deviceArchive:trace' },
+
+    // ========== 设备监控模块权限 ==========
+    { id: 'perm125', parent_id: 'perm023', name: '设备监控', code: 'business:deviceMonitor', type: 2, path: 'device-monitor/index', component: 'business/device-monitor/index', icon: 'Monitor', sort: 29, visible: 1, status: 1, perms: '' },
+    { id: 'perm126', parent_id: 'perm125', name: '监控查询', code: 'business:deviceMonitor:query', type: 3, sort: 1, visible: 1, status: 1, perms: 'business:deviceMonitor:query' },
+    { id: 'perm127', parent_id: 'perm125', name: '状态更新', code: 'business:deviceMonitor:update', type: 3, sort: 2, visible: 0, status: 1, perms: 'business:deviceMonitor:update' },
+    { id: 'perm128', parent_id: 'perm125', name: '批量操作', code: 'business:deviceMonitor:batch', type: 3, sort: 3, visible: 0, status: 1, perms: 'business:deviceMonitor:batch' },
+    { id: 'perm129', parent_id: 'perm125', name: '故障处理', code: 'business:deviceMonitor:handle', type: 3, sort: 4, visible: 0, status: 1, perms: 'business:deviceMonitor:handle' },
+    { id: 'perm130', parent_id: 'perm125', name: '运行溯源', code: 'business:deviceMonitor:trace', type: 3, sort: 5, visible: 0, status: 1, perms: 'business:deviceMonitor:trace' }
   ];
 
   await bulkCreateInBatches(Permission, permissions as any);
@@ -392,7 +400,9 @@ export async function seedRolePermissions(): Promise<void> {
       'business:onlinePayment:query', 'business:onlinePayment:create', 'business:onlinePayment:update',
       'business:onlinePayment:batch', 'business:onlinePayment:trace',
       'business:deviceArchive:query', 'business:deviceArchive:create', 'business:deviceArchive:update',
-      'business:deviceArchive:batch', 'business:deviceArchive:trace'
+      'business:deviceArchive:batch', 'business:deviceArchive:trace',
+      'business:deviceMonitor:query', 'business:deviceMonitor:update', 'business:deviceMonitor:batch',
+      'business:deviceMonitor:handle', 'business:deviceMonitor:trace'
     ];
     const perms = allPermissions.filter(p => managerCodes.includes(p.code) || p.type !== 3);
     const managerRPs = perms.map(p => ({
@@ -426,9 +436,10 @@ export async function seedRolePermissions(): Promise<void> {
       'business:onlinePayment:query', 'business:onlinePayment:create', 'business:onlinePayment:update',
       'business:onlinePayment:batch',
       'business:deviceArchive:query', 'business:deviceArchive:create', 'business:deviceArchive:update',
-      'business:deviceArchive:batch'
+      'business:deviceArchive:batch',
+      'business:deviceMonitor:query', 'business:deviceMonitor:update', 'business:deviceMonitor:handle'
     ];
-    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:batch' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:batch' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:batch' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:batch' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace' || p.code === 'business:onlinePayment' || p.code === 'business:onlinePayment:batch' || p.code === 'business:onlinePayment:trace' || p.code === 'business:deviceArchive' || p.code === 'business:deviceArchive:batch' || p.code === 'business:deviceArchive:trace')));
+    const perms = allPermissions.filter(p => operatorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:batch' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:batch' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:batch' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:batch' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace' || p.code === 'business:onlinePayment' || p.code === 'business:onlinePayment:batch' || p.code === 'business:onlinePayment:trace' || p.code === 'business:deviceArchive' || p.code === 'business:deviceArchive:batch' || p.code === 'business:deviceArchive:trace' || p.code === 'business:deviceMonitor')));
     const operatorRPs = perms.map(p => ({
       id: `rp_${operatorRole.id}_${p.id}`,
       role_id: operatorRole.id,
@@ -453,9 +464,10 @@ export async function seedRolePermissions(): Promise<void> {
       'loan:repayment:query', 'loan:repayment:trace',
       'business:settlement:query', 'business:settlement:review', 'business:settlement:trace',
       'business:onlinePayment:query', 'business:onlinePayment:trace',
-      'business:deviceArchive:query', 'business:deviceArchive:trace'
+      'business:deviceArchive:query', 'business:deviceArchive:trace',
+      'business:deviceMonitor:query', 'business:deviceMonitor:trace'
     ];
-    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace' || p.code === 'business:onlinePayment' || p.code === 'business:onlinePayment:batch' || p.code === 'business:onlinePayment:trace' || p.code === 'business:deviceArchive' || p.code === 'business:deviceArchive:trace')));
+    const perms = allPermissions.filter(p => auditorCodes.includes(p.code) || (p.type !== 3 && (p.code === 'business' || p.code === 'audit' || p.code === 'log' || p.code === 'business:transaction' || p.code === 'business:opening' || p.code === 'business:corporate' || p.code === 'business:account' || p.code === 'audit:record' || p.code === 'audit:pending' || p.code === 'log:operation' || p.code === 'business:deposit' || p.code === 'business:deposit:handle' || p.code === 'business:deposit:trace' || p.code === 'business:loan' || p.code === 'business:loan:apply' || p.code === 'business:loan:trace' || p.code === 'loan:approval' || p.code === 'loan:approval:apply' || p.code === 'loan:approval:trace' || p.code === 'loan:repayment' || p.code === 'loan:repayment:trace' || p.code === 'business:settlement' || p.code === 'business:settlement:batch' || p.code === 'business:settlement:trace' || p.code === 'business:onlinePayment' || p.code === 'business:onlinePayment:batch' || p.code === 'business:onlinePayment:trace' || p.code === 'business:deviceArchive' || p.code === 'business:deviceArchive:trace' || p.code === 'business:deviceMonitor')));
     const auditorRPs = perms.map(p => ({
       id: `rp_${auditorRole.id}_${p.id}`,
       role_id: auditorRole.id,

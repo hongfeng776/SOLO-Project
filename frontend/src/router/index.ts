@@ -542,6 +542,45 @@ const asyncRoutes: RouteRecordRaw[] = [
           permissions: ['business:deviceArchive:trace'],
           roles: ['admin', 'manager', 'auditor']
         }
+      },
+      {
+        path: 'device-monitor/index',
+        name: 'BusinessDeviceMonitorIndex',
+        component: () => import('@views/business/device-monitor/index.vue'),
+        meta: {
+          title: '设备监控',
+          icon: 'Monitor',
+          componentName: 'BusinessDeviceMonitorIndex',
+          keepAlive: true,
+          permissions: ['business:deviceMonitor:query'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'device-monitor/fault',
+        name: 'BusinessDeviceMonitorFault',
+        component: () => import('@views/business/device-monitor/fault.vue'),
+        meta: {
+          title: '故障管理',
+          icon: 'Tools',
+          componentName: 'BusinessDeviceMonitorFault',
+          keepAlive: true,
+          permissions: ['business:deviceMonitor:handle'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'device-monitor/trace',
+        name: 'BusinessDeviceMonitorTrace',
+        component: () => import('@views/business/device-monitor/trace.vue'),
+        meta: {
+          title: '运行溯源',
+          icon: 'Search',
+          componentName: 'BusinessDeviceMonitorTrace',
+          keepAlive: false,
+          permissions: ['business:deviceMonitor:trace'],
+          roles: ['admin', 'manager', 'auditor']
+        }
       }
     ]
   },

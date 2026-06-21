@@ -21,3 +21,4 @@ export { LoanRepaymentController } from './LoanRepaymentController';
 export { SettlementController } from './SettlementController';
 export { OnlinePaymentController } from './OnlinePaymentController';
 export { DeviceArchiveController } from './DeviceArchiveController';
+export { DeviceMonitorController } from './DeviceMonitorController';

@@ -272,3 +272,37 @@ export {
   type DeviceTraceExpiredQualItem,
   type DeviceTraceResult
 } from './deviceArchive';
+
+export {
+  DeviceMonitorStatusText,
+  FaultLevelText,
+  MonitorStrategyText,
+  DataConnectStatusText,
+  FaultStatusText,
+  MonitorLogTypeText,
+  MONITOR_STATUS_CONFIG,
+  DEVICE_MONITOR_STRATEGY,
+  FAULT_CODE_PATTERNS,
+  type DeviceMonitorStatus,
+  type FaultLevel,
+  type MonitorStrategy,
+  type DataConnectStatus,
+  type FaultStatus,
+  type MonitorLogType,
+  type MonitorStatusConfig,
+  type DeviceMonitorStrategyConfig,
+  type DeviceDataCheckRequest,
+  type DeviceDataCheckResult,
+  type DeviceMonitorQueryParams,
+  type DeviceMonitorVO,
+  type DeviceMonitorUpdateRequest,
+  type DeviceFaultRecordVO,
+  type DeviceFaultQueryParams,
+  type DeviceMonitorLogVO,
+  type DeviceMonitorLogQueryParams,
+  type DeviceMonitorTraceRequest,
+  type DeviceMonitorTraceResult,
+  type DeviceMonitorStatistics,
+  type BatchMonitorUpdateRequest,
+  type BatchMonitorUpdateResult
+} from './deviceMonitor';
