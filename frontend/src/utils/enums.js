@@ -1301,6 +1301,59 @@ export const ScenicSpotBatchOperationEnum = {
   update_performance: { value: 'update_performance', label: '批量配置展演场次', icon: 'Tickets', color: '#fa8c16', performanceOnly: true }
 }
 
+export const TicketCategoryEnum = {
+  adult: { value: 'adult', label: '成人票', icon: 'User', color: '#1890ff', tagClass: 'tag-tt-adult', gradient: 'linear-gradient(135deg, #1890ff, #69c0ff)' },
+  child: { value: 'child', label: '儿童票', icon: 'User', color: '#52c41a', tagClass: 'tag-tt-child', gradient: 'linear-gradient(135deg, #52c41a, #95de64)' },
+  student: { value: 'student', label: '学生票', icon: 'Reading', color: '#722ed1', tagClass: 'tag-tt-student', gradient: 'linear-gradient(135deg, #722ed1, #b37feb)' },
+  package: { value: 'package', label: '特惠套票', icon: 'Present', color: '#eb2f96', tagClass: 'tag-tt-package', gradient: 'linear-gradient(135deg, #eb2f96, #ff85c0)' }
+}
+
+export const TicketStatusEnum = {
+  on: { value: 1, label: '已上架', color: '#52c41a', tagClass: 'tag-tt-on' },
+  off: { value: 0, label: '已下架', color: '#595959', tagClass: 'tag-tt-off' }
+}
+
+export const TicketEnabledEnum = {
+  yes: { value: 1, label: '启用', color: '#52c41a', tagClass: 'tag-tt-enabled' },
+  no: { value: 0, label: '停用', color: '#bfbfbf', tagClass: 'tag-tt-disabled' }
+}
+
+export const TicketReservationEnum = {
+  yes: { value: 1, label: '需预约', color: '#fa8c16' },
+  no: { value: 0, label: '免预约', color: '#52c41a' }
+}
+
+export const TicketLogTypeEnum = {
+  create: { value: 'create', label: '票种创建', color: '#52c41a', icon: 'Plus' },
+  create_attempt: { value: 'create_attempt', label: '创建校验拦截', color: '#ff4d4f', icon: 'CircleClose' },
+  update: { value: 'update', label: '规则修改', color: '#1890ff', icon: 'Edit' },
+  update_attempt: { value: 'update_attempt', label: '修改校验拦截', color: '#ff4d4f', icon: 'Warning' },
+  on_shelf: { value: 'on_shelf', label: '票种上架', color: '#52c41a', icon: 'Upload' },
+  off_shelf: { value: 'off_shelf', label: '票种下架', color: '#909399', icon: 'Download' },
+  enable: { value: 'enable', label: '票种启用', color: '#13c2c2', icon: 'CircleCheck' },
+  disable: { value: 'disable', label: '票种停用', color: '#faad14', icon: 'CircleClose' },
+  batch_update: { value: 'batch_update', label: '批量更新', color: '#722ed1', icon: 'Files' },
+  verify_pass: { value: 'verify_pass', label: '合规审核通过', color: '#52c41a', icon: 'CircleCheckFilled' },
+  verify_warning: { value: 'verify_warning', label: '存疑标记', color: '#faad14', icon: 'Warning' },
+  verify_block: { value: 'verify_block', label: '违规拦截', color: '#ff4d4f', icon: 'CircleCloseFilled' }
+}
+
+export const TicketVerifyResultEnum = {
+  pass: { value: 'pass', label: '通过', class: 'verify-pass', icon: 'CircleCheckFilled' },
+  warning: { value: 'warning', label: '存疑', class: 'verify-warning', icon: 'Warning' },
+  block: { value: 'block', label: '已拦截', class: 'verify-block', icon: 'CircleCloseFilled' }
+}
+
+export const TicketBatchOperationEnum = {
+  enable: { value: 'enable', label: '批量启用', icon: 'CircleCheck', color: '#52c41a' },
+  disable: { value: 'disable', label: '批量停用', icon: 'CircleClose', color: '#bfbfbf' },
+  on_shelf: { value: 'on_shelf', label: '批量上架', icon: 'Upload', color: '#13c2c2' },
+  off_shelf: { value: 'off_shelf', label: '批量下架', icon: 'Download', color: '#ff4d4f' },
+  adjust_refund: { value: 'adjust_refund', label: '批量更新退改规则', icon: 'RefreshLeft', color: '#1890ff' },
+  adjust_audience: { value: 'adjust_audience', label: '批量调整适用人群', icon: 'UserFilled', color: '#722ed1' },
+  adjust_time: { value: 'adjust_time', label: '批量调整使用时段', icon: 'Clock', color: '#fa8c16' }
+}
+
 export default {
   OrderStatusEnum,
   OrderSourceEnum,

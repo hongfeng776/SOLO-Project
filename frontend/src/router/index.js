@@ -139,6 +139,12 @@ export const routes = [
         meta: { title: '景区资源管控', icon: 'Mountain', roles: ['admin', 'scenic_operator', 'senior_scenic_operator', 'scenic_auditor', 'performance_auditor'] }
       },
       {
+        path: 'ticket-type-ops',
+        name: 'TicketTypeOps',
+        component: () => import('@/views/ticket-type/TicketTypeOps.vue'),
+        meta: { title: '票种规则配置', icon: 'Tickets', roles: ['admin', 'ticket_operator', 'senior_ticket_operator', 'ticket_auditor', 'package_auditor'] }
+      },
+      {
         path: 'business-travel',
         name: 'BusinessTravelManage',
         component: () => import('@/views/product/BusinessTravel.vue'),

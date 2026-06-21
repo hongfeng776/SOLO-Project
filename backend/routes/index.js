@@ -24,6 +24,7 @@ const hotelFulfillmentController = require('../controllers/HotelFulfillmentContr
 const carController = require('../controllers/CarController')
 const ticketController = require('../controllers/TicketController')
 const scenicSpotController = require('../controllers/ScenicSpotController')
+const ticketTypeController = require('../controllers/TicketTypeController')
 const orderController = require('../controllers/OrderController')
 const merchantController = require('../controllers/MerchantController')
 const businessTravelController = require('../controllers/BusinessTravelController')
@@ -220,6 +221,15 @@ router.post('/scenic-spots/ops/batch', auth(['admin', 'scenic_operator', 'senior
 router.get('/scenic-spots/:id/ops/logs', auth(), pagination, scenicSpotController.getLogs.bind(scenicSpotController));
 router.get('/scenic-spots/ops/logs/all', auth(), pagination, scenicSpotController.getAllLogs.bind(scenicSpotController));
 router.post('/scenic-spots/:id/ops/verify', auth(['admin', 'senior_scenic_operator', 'scenic_auditor']), scenicSpotController.verifySpot.bind(scenicSpotController));
+
+registerCrudRoutes('ticket-types', ticketTypeController);
+router.get('/ticket-types/ops/permission', auth(), ticketTypeController.checkPermission.bind(ticketTypeController));
+router.put('/ticket-types/:id/ops/status', auth(), ticketTypeController.changeStatus.bind(ticketTypeController));
+router.put('/ticket-types/:id/ops/enabled', auth(), ticketTypeController.setEnabled.bind(ticketTypeController));
+router.post('/ticket-types/ops/batch', auth(['admin', 'senior_ticket_operator']), ticketTypeController.batchOperation.bind(ticketTypeController));
+router.post('/ticket-types/:id/ops/verify', auth(['admin', 'senior_ticket_operator', 'ticket_auditor']), ticketTypeController.verifyTicket.bind(ticketTypeController));
+router.get('/ticket-types/:id/ops/logs', auth(), pagination, ticketTypeController.getLogs.bind(ticketTypeController));
+router.get('/ticket-types/ops/logs/all', auth(), pagination, ticketTypeController.getAllLogs.bind(ticketTypeController));
 
 router.get('/orders', auth(), pagination, orderController.list.bind(orderController));
 router.get('/orders/:id', auth(), orderController.get.bind(orderController));
