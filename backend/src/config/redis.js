@@ -1,4 +1,4 @@
-﻿const { createClient } = require('redis');
+﻿﻿const { createClient } = require('redis');
 const config = require('./index');
 
 let redisClient = null;

@@ -7,6 +7,7 @@ const { CopyrightValidity, CopyrightValidityLog, CopyrightValidityTask } = requi
 const { Advertisement } = require('./Advertisement');
 const { Activity } = require('./Activity');
 const { Comment } = require('./Comment');
+const { CommentManageLog } = require('./CommentManageLog');
 const { Member } = require('./Member');
 const { Message } = require('./Message');
 const { OperationLog } = require('./OperationLog');
@@ -34,6 +35,8 @@ Content.belongsTo(Copyright, { foreignKey: 'copyright_id', as: 'copyright' });
 Copyright.hasMany(Content, { foreignKey: 'copyright_id', as: 'contents' });
 
 Content.hasMany(Comment, { foreignKey: 'content_id', as: 'comments' });
+
+CommentManageLog.belongsTo(Comment, { foreignKey: 'comment_id', as: 'comment' });
 
 Advertisement.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 Activity.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
@@ -80,6 +83,7 @@ module.exports = {
   Advertisement,
   Activity,
   Comment,
+  CommentManageLog,
   Member,
   Message,
   OperationLog,

@@ -1,4 +1,4 @@
-﻿const { verifyToken, getStoredToken } = require('../utils/auth');
+﻿﻿const { verifyToken, getStoredToken } = require('../utils/auth');
 const { UnauthorizedError, ForbiddenError } = require('../utils/errors');
 
 const authenticate = async (req, res, next) => {

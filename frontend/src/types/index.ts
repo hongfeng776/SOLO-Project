@@ -2868,5 +2868,145 @@ export interface MemberOrderQueryParams extends PaginationParams {
   endTime?: string | null
 }
 
+export interface CommentManageItem {
+  id: number
+  contentId: number
+  userId: number
+  parentId?: number
+  commentContent: string
+  commentImages: string[]
+  likeCount: number
+  replyCount: number
+  reportCount: number
+  isTop: number
+  isEssence: number
+  isHot: number
+  topTime?: string
+  essenceTime?: string
+  commentStatus: number
+  violationLevel: number
+  violationType?: string
+  auditStatus: number
+  ipAddress?: string
+  source: string
+  createdAt?: string
+  contentInfo?: { id: number; title: string; category: number }
+  userInfo?: { id: number; uid: string; username: string; nickname?: string; avatar?: string; userLevel: number; memberLevel: number }
+  lastOperation?: { operationType: string; operationDesc?: string; operatorName?: string; createdAt: string }
+}
+
+export interface CommentOperateParams {
+  operationType: 'PIN' | 'CANCEL_PIN' | 'ESSENCE' | 'CANCEL_ESSENCE' | 'BLOCK' | 'DELETE'
+  remark?: string
+}
+
+export interface CommentBatchOperateParams {
+  ids: number[]
+  operationType: 'BATCH_PIN' | 'BATCH_BLOCK' | 'BATCH_DELETE' | 'BATCH_CLEAN'
+  remark?: string
+}
+
+export interface CommentBatchOperateResult {
+  batchId: string
+  total: number
+  successCount: number
+  failedCount: number
+  skippedCount: number
+  successIds: number[]
+  skippedIds: number[]
+}
+
+export interface CommentManageLogItem {
+  id: number
+  commentId: number
+  contentId?: number
+  userId?: number
+  operationType: string
+  operationDesc?: string
+  beforeData?: Record<string, any>
+  afterData?: Record<string, any>
+  operatorId?: number
+  operatorName?: string
+  operationBatch?: string
+  isHotComment: number
+  ipAddress?: string
+  remark?: string
+  createdAt: string
+}
+
+export interface CommentTraceComment {
+  id: number
+  contentId: number
+  userId: number
+  commentContent: string
+  commentStatus: number
+  isTop: number
+  isEssence: number
+  isHot: number
+  violationLevel: number
+  violationType?: string
+  createdAt: string
+  contentInfo?: { id: number; title: string; category: number }
+  userInfo?: { id: number; uid: string; username: string; userLevel: number }
+  manageLogs: CommentManageLogItem[]
+}
+
+export interface CommentDuplicateOperation {
+  id: number
+  operationType: string
+  operatorName?: string
+  createdAt: string
+}
+
+export interface CommentAbnormalOperation {
+  commentId: number
+  operationType: string
+  reason: string
+  severity: 'low' | 'medium' | 'high'
+}
+
+export interface CommentMisjudgedItem {
+  commentId: number
+  commentContent: string
+  violationLevel: number
+  expectedAction: string
+  actualAction: string
+  reason: string
+}
+
+export interface CommentTraceResult {
+  comments: CommentTraceComment[]
+  duplicateOperations: CommentDuplicateOperation[]
+  abnormalOperations: CommentAbnormalOperation[]
+  misjudgedComments: CommentMisjudgedItem[]
+}
+
+export interface CommentDuplicateCheckResult {
+  isDuplicate: boolean
+  lastOperation?: CommentDuplicateOperation
+}
+
+export interface CommentValidateResult {
+  valid: boolean
+  reasons: string[]
+}
+
+export interface CommentManageQueryParams extends PaginationParams {
+  contentCategory?: number | null
+  startDate?: string | null
+  endDate?: string | null
+  userLevel?: number | null
+  violationStatus?: number | null
+  auditStatus?: number | null
+  commentStatus?: number | null
+  isTop?: number | null
+  isEssence?: number | null
+  isHot?: number | null
+  minReportCount?: number | null
+  maxReportCount?: number | null
+  minLikeCount?: number | null
+  maxLikeCount?: number | null
+}
+
 
 

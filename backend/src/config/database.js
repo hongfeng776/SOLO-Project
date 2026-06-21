@@ -1,4 +1,4 @@
-﻿const { Sequelize, DataTypes, Op } = require('sequelize');
+﻿﻿const { Sequelize, DataTypes, Op } = require('sequelize');
 const config = require('./index');
 
 const sequelize = new Sequelize(

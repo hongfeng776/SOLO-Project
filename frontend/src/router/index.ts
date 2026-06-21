@@ -127,6 +127,30 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '评论管理', icon: 'ChatDotRound', roles: ['comment:view'] },
       },
       {
+        path: 'comment-manage',
+        meta: { title: '评论互动管理', icon: 'ChatDotRound' },
+        children: [
+          {
+            path: '',
+            name: 'CommentManage',
+            component: () => import('@/views/comment/manage/index.vue'),
+            meta: { title: '评论查询管控', icon: 'Search', roles: ['comment:view'] },
+          },
+          {
+            path: 'batch',
+            name: 'CommentManageBatch',
+            component: () => import('@/views/comment/manage/batch.vue'),
+            meta: { title: '批量管控', icon: 'FolderOpened', roles: ['comment:edit'] },
+          },
+          {
+            path: 'trace',
+            name: 'CommentManageTrace',
+            component: () => import('@/views/comment/manage/trace.vue'),
+            meta: { title: '操作溯源', icon: 'Aim', roles: ['comment:view'] },
+          },
+        ],
+      },
+      {
         path: 'comment-audit',
         name: 'CommentAudit',
         component: () => import('@/views/comment/audit.vue'),

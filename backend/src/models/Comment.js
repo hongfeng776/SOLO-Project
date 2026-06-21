@@ -1,6 +1,8 @@
 const { sequelize, DataTypes } = require('../config/database');
 const { User } = require('./User');
 const { Content } = require('./Content');
+const { EndUser } = require('./EndUser');
+const { CommentManageLog } = require('./CommentManageLog');
 
 const Comment = sequelize.define('comment', {
   id: {
@@ -55,6 +57,26 @@ const Comment = sequelize.define('comment', {
     type: DataTypes.INTEGER.UNSIGNED,
     defaultValue: 0,
     comment: '回复数',
+  },
+  is_essence: {
+    type: DataTypes.TINYINT.UNSIGNED,
+    defaultValue: 0,
+    comment: '是否精华 1:是 0:否',
+  },
+  report_count: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    defaultValue: 0,
+    comment: '举报数',
+  },
+  top_time: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '置顶时间',
+  },
+  essence_time: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '精华标记时间',
   },
   is_top: {
     type: DataTypes.TINYINT.UNSIGNED,
@@ -133,12 +155,17 @@ const Comment = sequelize.define('comment', {
     { fields: ['comment_status'] },
     { fields: ['violation_level'] },
     { fields: ['created_at'] },
+    { fields: ['is_essence'] },
+    { fields: ['is_top'] },
+    { fields: ['audit_status'] },
   ],
 });
 
 Comment.belongsTo(Content, { foreignKey: 'content_id', as: 'content' });
 Comment.belongsTo(User, { foreignKey: 'user_id', as: 'commentUser' });
 Comment.belongsTo(User, { foreignKey: 'auditor_id', as: 'auditor' });
+Comment.belongsTo(EndUser, { foreignKey: 'user_id', as: 'endUser' });
+Comment.hasMany(CommentManageLog, { foreignKey: 'comment_id', as: 'manageLogs' });
 Comment.hasMany(Comment, { foreignKey: 'parent_id', as: 'replies' });
 Comment.belongsTo(Comment, { foreignKey: 'parent_id', as: 'parent' });
 

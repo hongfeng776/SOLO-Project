@@ -1053,5 +1053,36 @@ export const MEMBER_ORDER_REFUND_STATUS = {
   FAILED: { value: 2, label: '退款失败', color: '#F56C6C', type: 'danger' },
 } as const
 
+export const COMMENT_OPERATE_TYPE = {
+  PIN: { value: 'PIN', label: '置顶', icon: 'Top', type: 'primary', nextTop: 1 },
+  CANCEL_PIN: { value: 'CANCEL_PIN', label: '取消置顶', icon: 'Bottom', type: 'info', nextTop: 0 },
+  ESSENCE: { value: 'ESSENCE', label: '精华', icon: 'Star', type: 'warning', nextEssence: 1 },
+  CANCEL_ESSENCE: { value: 'CANCEL_ESSENCE', label: '取消精华', icon: 'StarFilled', type: 'info', nextEssence: 0 },
+  BLOCK: { value: 'BLOCK', label: '屏蔽', icon: 'Hide', type: 'danger', nextStatus: 2 },
+  DELETE: { value: 'DELETE', label: '删除', icon: 'Delete', type: 'danger', nextStatus: 3 },
+} as const
+
+export const COMMENT_BATCH_OPERATE_TYPE = {
+  BATCH_PIN: { value: 'BATCH_PIN', label: '批量置顶', icon: 'Top', type: 'primary', desc: '批量置顶优质评论' },
+  BATCH_BLOCK: { value: 'BATCH_BLOCK', label: '批量屏蔽', icon: 'Hide', type: 'warning', desc: '批量屏蔽违规评论' },
+  BATCH_DELETE: { value: 'BATCH_DELETE', label: '批量删除', icon: 'Delete', type: 'danger', desc: '批量删除违规评论' },
+  BATCH_CLEAN: { value: 'BATCH_CLEAN', label: '批量清理灌水', icon: 'Brush', type: 'danger', desc: '批量清理低质灌水评论' },
+} as const
+
+export const COMMENT_USER_LEVEL = {
+  NORMAL: { value: 0, label: '普通用户', color: '#909399', type: 'info' },
+  CREATOR_JUNIOR: { value: 1, label: '初级创作者', color: '#67C23A', type: 'success' },
+  CREATOR_MID: { value: 2, label: '中级创作者', color: '#409EFF', type: 'primary' },
+  CREATOR_SENIOR: { value: 3, label: '高级创作者', color: '#E6A23C', type: 'warning' },
+  CREATOR_HEAD: { value: 4, label: '头部创作者', color: '#F56C6C', type: 'danger' },
+} as const
+
+export const COMMENT_SORT_FIELD = {
+  LIKE_COUNT: { value: 'like_count', label: '点赞量' },
+  REPORT_COUNT: { value: 'report_count', label: '举报量' },
+  CREATED_AT: { value: 'created_at', label: '发布时间' },
+  VIOLATION_LEVEL: { value: 'violation_level', label: '违规标签' },
+} as const
+
 
 
