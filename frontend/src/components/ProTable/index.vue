@@ -390,7 +390,8 @@ onMounted(() => {
 
 defineExpose({
   fetchData,
-  handleClearSelection
+  handleClearSelection,
+  getSelectedRows: () => selectedRows.value
 })
 </script>
 

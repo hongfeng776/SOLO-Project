@@ -47,7 +47,9 @@
       </template>
 
       <template #discountType="{ row }">
-        {{ DiscountTypeMap[row.discountType] }}
+        <el-tag :type="DiscountTypeMap[row.discountType]?.type">
+          {{ DiscountTypeMap[row.discountType]?.label }}
+        </el-tag>
       </template>
 
       <template #discountValue="{ row }">

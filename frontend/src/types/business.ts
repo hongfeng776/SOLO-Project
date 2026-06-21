@@ -327,15 +327,17 @@ export const MarketingStatusMap: Record<number, { label: string; type: TagType }
 }
 
 export enum DiscountType {
+  FULL_REDUCTION = 1,
+  DISCOUNT = 2,
+  COUPON = 3,
   FIXED = 1,
-  RATE = 2,
-  COUPON = 3
+  RATE = 2
 }
 
-export const DiscountTypeMap: Record<number, string> = {
-  [DiscountType.FIXED]: '满减',
-  [DiscountType.RATE]: '折扣',
-  [DiscountType.COUPON]: '优惠券'
+export const DiscountTypeMap: Record<number, { label: string; type: TagType }> = {
+  [DiscountType.FULL_REDUCTION]: { label: '满减', type: 'danger' },
+  [DiscountType.DISCOUNT]: { label: '折扣', type: 'warning' },
+  [DiscountType.COUPON]: { label: '优惠券', type: 'success' }
 }
 
 export interface MarketingValidateError {
@@ -1168,5 +1170,217 @@ export interface BatchImportResult {
   success: number
   failed: number
   results: { goodsId: number; goodsName?: string; success: boolean; message: string }[]
+}
+
+export enum DiscountEffectiveStatus {
+  NOT_ACTIVE = 0,
+  ACTIVE = 1,
+  EXPIRED = 2,
+  DISABLED = 3
+}
+
+export const DiscountEffectiveStatusMap: Record<number, { label: string; type: TagType }> = {
+  [DiscountEffectiveStatus.NOT_ACTIVE]: { label: '未生效', type: 'info' },
+  [DiscountEffectiveStatus.ACTIVE]: { label: '生效中', type: 'success' },
+  [DiscountEffectiveStatus.EXPIRED]: { label: '已失效', type: 'info' },
+  [DiscountEffectiveStatus.DISABLED]: { label: '已禁用', type: 'danger' }
+}
+
+export enum BudgetLedgerType {
+  ALLOCATE = 1,
+  CONSUME = 2,
+  REFUND = 3,
+  ADJUST = 4
+}
+
+export const BudgetLedgerTypeMap: Record<number, { label: string; type: TagType }> = {
+  [BudgetLedgerType.ALLOCATE]: { label: '预算划拨', type: 'primary' },
+  [BudgetLedgerType.CONSUME]: { label: '优惠消耗', type: 'danger' },
+  [BudgetLedgerType.REFUND]: { label: '预算退回', type: 'success' },
+  [BudgetLedgerType.ADJUST]: { label: '预算调整', type: 'warning' }
+}
+
+export enum StackConflictType {
+  MUTEX_RULE = 1,
+  OVER_LIMIT = 2,
+  CATEGORY_CONFLICT = 3,
+  BUDGET_CONFLICT = 4
+}
+
+export const StackConflictTypeMap: Record<number, { label: string; type: TagType }> = {
+  [StackConflictType.MUTEX_RULE]: { label: '互斥规则', type: 'danger' },
+  [StackConflictType.OVER_LIMIT]: { label: '超限叠加', type: 'warning' },
+  [StackConflictType.CATEGORY_CONFLICT]: { label: '类目冲突', type: 'danger' },
+  [StackConflictType.BUDGET_CONFLICT]: { label: '预算冲突', type: 'warning' }
+}
+
+export interface MarketingDiscountRule {
+  id: number
+  marketingId: number
+  ruleName: string
+  discountType: number
+  minAmount: number
+  discountValue: number
+  maxDiscountAmount?: number
+  stackable: number
+  stackLimit: number
+  excludeRuleIds?: string
+  userLevelMin: number
+  userLevelMax: number
+  applicableCategoryIds?: string
+  excludeCategoryIds?: string
+  applicableGoodsIds?: string
+  excludeGoodsIds?: string
+  budgetTotal: number
+  budgetUsed: number
+  quotaTotal: number
+  quotaUsed: number
+  quotaPerUser: number
+  effectiveStatus: number
+  startTime: string
+  endTime: string
+  sortOrder: number
+  operatorId?: number
+  operatorName?: string
+  remark?: string
+  createdTime: string
+  updatedTime: string
+}
+
+export interface DiscountRuleForm {
+  id?: number
+  marketingId: number
+  ruleName: string
+  discountType: number
+  minAmount: number
+  discountValue: number
+  maxDiscountAmount?: number
+  stackable: number
+  stackLimit: number
+  excludeRuleIds?: number[]
+  userLevelMin: number
+  userLevelMax: number
+  applicableCategoryIds?: number[]
+  excludeCategoryIds?: number[]
+  applicableGoodsIds?: number[]
+  excludeGoodsIds?: number[]
+  budgetTotal: number
+  quotaTotal: number
+  quotaPerUser: number
+  startTime: string
+  endTime: string
+  sortOrder: number
+  remark?: string
+}
+
+export interface DiscountValidateError {
+  field: string
+  message: string
+  level: 'error' | 'warning'
+}
+
+export interface DiscountRuleCombination {
+  ruleIds: number[]
+  ruleNames: string[]
+  totalDiscount: number
+  originalAmount: number
+  finalAmount: number
+  description: string
+}
+
+export interface DiscountValidateResult {
+  passed: boolean
+  errors: DiscountValidateError[]
+  warnings: DiscountValidateError[]
+  optimalCombination?: DiscountRuleCombination
+  budgetHint?: string
+}
+
+export interface MarketingDiscountRuleLog {
+  id: number
+  ruleId: number
+  operatorId: number
+  operatorName: string
+  operationType: number
+  beforeContent?: string
+  afterContent?: string
+  remark?: string
+  createdTime: string
+}
+
+export interface MarketingDiscountUsageRecord {
+  id: number
+  ruleId: number
+  userId: number
+  userName?: string
+  orderId: number
+  orderNo: string
+  originalAmount: number
+  discountAmount: number
+  finalAmount: number
+  stackRuleIds?: string
+  createdTime: string
+}
+
+export interface MarketingDiscountStackConflict {
+  id: number
+  ruleIdA: number
+  ruleIdB: number
+  conflictType: number
+  description: string
+  userId?: number
+  orderId?: number
+  resolved: number
+  createdTime: string
+}
+
+export interface MarketingDiscountBudgetLedger {
+  id: number
+  ruleId: number
+  marketingId: number
+  ledgerType: number
+  amount: number
+  beforeAmount: number
+  afterAmount: number
+  orderId?: number
+  orderNo?: string
+  operatorId?: number
+  operatorName?: string
+  remark?: string
+  createdTime: string
+}
+
+export interface DiscountRuleMatchDetail {
+  field: string
+  ruleValue: string
+  passed: boolean
+  description: string
+}
+
+export interface DiscountRuleTraceData {
+  basicInfo: MarketingDiscountRule
+  configLogs: MarketingDiscountRuleLog[]
+  usageRecords: MarketingDiscountUsageRecord[]
+  stackConflicts: MarketingDiscountStackConflict[]
+  budgetLedger: MarketingDiscountBudgetLedger[]
+  usageStats: {
+    totalUsed: number
+    totalDiscountAmount: number
+    budgetUsageRate: number
+    quotaUsageRate: number
+  }
+  ruleMatchDetails: DiscountRuleMatchDetail[]
+}
+
+export interface DiscountBatchResult {
+  success: number
+  failed: number
+  total: number
+  results: {
+    id: number
+    ruleName?: string
+    success: boolean
+    message: string
+  }[]
 }
 

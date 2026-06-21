@@ -77,6 +77,12 @@ const routes: RouteRecordRaw[] = [
             name: 'MarketingProductAdmission',
             component: () => import('@/views/marketing/productAdmission.vue'),
             meta: { title: '商品准入管控', icon: 'Goods', requiresAuth: true }
+          },
+          {
+            path: 'discount-rule',
+            name: 'MarketingDiscountRule',
+            component: () => import('@/views/marketing/discountRule.vue'),
+            meta: { title: '优惠规则管控', icon: 'Sale', requiresAuth: true }
           }
         ]
       },

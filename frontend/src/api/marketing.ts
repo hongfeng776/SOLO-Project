@@ -16,7 +16,17 @@ import type {
   CrossCategoryCheckResult,
   BatchApplyResult,
   BatchImportResult,
-  MarketingProductAdmissionLog
+  MarketingProductAdmissionLog,
+  MarketingDiscountRule,
+  DiscountRuleForm,
+  DiscountValidateResult,
+  DiscountRuleTraceData,
+  DiscountRuleCombination,
+  DiscountBatchResult,
+  MarketingDiscountRuleLog,
+  MarketingDiscountUsageRecord,
+  MarketingDiscountStackConflict,
+  MarketingDiscountBudgetLedger
 } from '@/types/business'
 
 export type { Marketing }
@@ -259,4 +269,109 @@ export function checkCrossCategoryViolation(marketingId: number, goodsIds: numbe
 
 export function getAdmissionRules(marketingId?: number, marketingType?: number): Promise<ApiResponse<AdmissionRule[]>> {
   return request.get<AdmissionRule[]>('/marketing/product/trace/rules', { params: { marketingId, marketingType } })
+}
+
+export interface DiscountRuleQueryParams extends PageParams {
+  marketingId?: number
+  discountType?: number
+  effectiveStatus?: number
+  keyword?: string
+  minAmountMin?: number
+  minAmountMax?: number
+}
+
+export function getDiscountRuleList(params: DiscountRuleQueryParams): Promise<ApiResponse<PageResult<MarketingDiscountRule>>> {
+  return request.get<PageResult<MarketingDiscountRule>>('/marketing/discount-rule/list', { params })
+}
+
+export function getDiscountRuleDetail(id: number): Promise<ApiResponse<MarketingDiscountRule>> {
+  return request.get<MarketingDiscountRule>(`/marketing/discount-rule/${id}`)
+}
+
+export function validateCreateDiscountRule(data: DiscountRuleForm & { originalAmount?: number }): Promise<ApiResponse<DiscountValidateResult>> {
+  return request.post<DiscountValidateResult>('/marketing/discount-rule/validate/create', data)
+}
+
+export function createDiscountRule(data: DiscountRuleForm): Promise<ApiResponse<MarketingDiscountRule>> {
+  return request.post<MarketingDiscountRule>('/marketing/discount-rule/create', data)
+}
+
+export function updateDiscountRule(id: number, data: DiscountRuleForm): Promise<ApiResponse<MarketingDiscountRule>> {
+  return request.put<MarketingDiscountRule>(`/marketing/discount-rule/${id}`, data)
+}
+
+export function enableDiscountRule(id: number): Promise<ApiResponse<MarketingDiscountRule>> {
+  return request.post<MarketingDiscountRule>(`/marketing/discount-rule/enable/${id}`)
+}
+
+export function disableDiscountRule(id: number): Promise<ApiResponse<MarketingDiscountRule>> {
+  return request.post<MarketingDiscountRule>(`/marketing/discount-rule/disable/${id}`)
+}
+
+export function adjustDiscountThreshold(id: number, field: string, value: number): Promise<ApiResponse<MarketingDiscountRule>> {
+  return request.post<MarketingDiscountRule>(`/marketing/discount-rule/adjust/${id}`, { field, value })
+}
+
+export function checkDiscountStacking(ruleIds: number[]): Promise<ApiResponse<{ illegal: boolean; conflicts: MarketingDiscountStackConflict[] }>> {
+  return request.post('/marketing/discount-rule/check-stacking', { ruleIds })
+}
+
+export function calculateOptimalCombination(marketingId: number, originalAmount: number): Promise<ApiResponse<DiscountRuleCombination>> {
+  return request.post('/marketing/discount-rule/calculate-optimal', { marketingId, originalAmount })
+}
+
+export function batchEnableDiscountRules(ids: number[]): Promise<ApiResponse<DiscountBatchResult>> {
+  return request.post('/marketing/discount-rule/enable', { ids })
+}
+
+export function batchDisableDiscountRules(ids: number[]): Promise<ApiResponse<DiscountBatchResult>> {
+  return request.post('/marketing/discount-rule/disable', { ids })
+}
+
+export function batchAdjustDiscountThreshold(ids: number[], field: string, value: number): Promise<ApiResponse<DiscountBatchResult>> {
+  return request.post('/marketing/discount-rule/adjust-threshold', { ids, field, value })
+}
+
+export function batchClearExpiredDiscountQuota(marketingId: number): Promise<ApiResponse<DiscountBatchResult>> {
+  return request.post('/marketing/discount-rule/clear-quota', { marketingId })
+}
+
+export function batchFilterOperateDiscount(data: {
+  operation: string
+  marketingId?: number
+  discountType?: number
+  effectiveStatus?: number
+  keyword?: string
+  minAmountMin?: number
+  minAmountMax?: number
+}): Promise<ApiResponse<DiscountBatchResult>> {
+  return request.post('/marketing/discount-rule/filter-operate', data)
+}
+
+export function getDiscountRuleTrace(id: number): Promise<ApiResponse<DiscountRuleTraceData>> {
+  return request.get<DiscountRuleTraceData>(`/marketing/discount-rule/trace/${id}`)
+}
+
+export function getDiscountRuleLogs(id: number, params?: PageParams): Promise<ApiResponse<PageResult<MarketingDiscountRuleLog>>> {
+  return request.get<PageResult<MarketingDiscountRuleLog>>(`/marketing/discount-rule/trace/logs/${id}`, { params })
+}
+
+export function getDiscountRuleUsage(id: number, params?: PageParams): Promise<ApiResponse<PageResult<MarketingDiscountUsageRecord>>> {
+  return request.get<PageResult<MarketingDiscountUsageRecord>>(`/marketing/discount-rule/trace/usage/${id}`, { params })
+}
+
+export function getDiscountRuleConflicts(id: number): Promise<ApiResponse<MarketingDiscountStackConflict[]>> {
+  return request.get<MarketingDiscountStackConflict[]>(`/marketing/discount-rule/trace/conflicts/${id}`)
+}
+
+export function getDiscountRuleBudget(id: number, params?: PageParams): Promise<ApiResponse<PageResult<MarketingDiscountBudgetLedger>>> {
+  return request.get<PageResult<MarketingDiscountBudgetLedger>>(`/marketing/discount-rule/trace/budget/${id}`, { params })
+}
+
+export function checkDiscountOverLimit(marketingId: number): Promise<ApiResponse<{ overLimit: boolean; overLimitRules: MarketingDiscountRule[]; message: string }>> {
+  return request.get('/marketing/discount-rule/trace/check-overlimit', { params: { marketingId } })
+}
+
+export function getMarketingBudgetLedger(marketingId: number, params?: PageParams): Promise<ApiResponse<PageResult<MarketingDiscountBudgetLedger>>> {
+  return request.get<PageResult<MarketingDiscountBudgetLedger>>(`/marketing/discount-rule/trace/marketing-budget/${marketingId}`, { params })
 }

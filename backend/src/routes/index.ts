@@ -70,6 +70,9 @@ import marketingTraceRouter from './marketingTrace';
 import marketingProductAdmissionRouter from './marketingProductAdmission';
 import marketingProductBatchRouter from './marketingProductBatch';
 import marketingProductTraceRouter from './marketingProductTrace';
+import marketingDiscountRuleRouter from './marketingDiscountRule';
+import marketingDiscountRuleBatchRouter from './marketingDiscountRuleBatch';
+import marketingDiscountRuleTraceRouter from './marketingDiscountRuleTrace';
 
 const router = Router();
 
@@ -144,5 +147,8 @@ router.use('/marketing', marketingTraceRouter);
 router.use('/marketing/product', marketingProductAdmissionRouter);
 router.use('/marketing/product', marketingProductBatchRouter);
 router.use('/marketing/product', marketingProductTraceRouter);
+router.use('/marketing/discount-rule', marketingDiscountRuleRouter);
+router.use('/marketing/discount-rule', marketingDiscountRuleBatchRouter);
+router.use('/marketing/discount-rule', marketingDiscountRuleTraceRouter);
 
 export default router;

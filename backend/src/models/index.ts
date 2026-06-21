@@ -69,6 +69,11 @@ import { MarketingMerchantQualification } from './MarketingMerchantQualification
 import { MarketingDiscountThreshold } from './MarketingDiscountThreshold';
 import { MarketingProductAdmissionLog } from './MarketingProductAdmissionLog';
 import { MarketingAdmissionRule } from './MarketingAdmissionRule';
+import { MarketingDiscountRule } from './MarketingDiscountRule';
+import { MarketingDiscountRuleLog } from './MarketingDiscountRuleLog';
+import { MarketingDiscountUsageRecord } from './MarketingDiscountUsageRecord';
+import { MarketingDiscountStackConflict } from './MarketingDiscountStackConflict';
+import { MarketingDiscountBudgetLedger } from './MarketingDiscountBudgetLedger';
 
 export {
   Admin,
@@ -142,6 +147,11 @@ export {
   MarketingDiscountThreshold,
   MarketingProductAdmissionLog,
   MarketingAdmissionRule,
+  MarketingDiscountRule,
+  MarketingDiscountRuleLog,
+  MarketingDiscountUsageRecord,
+  MarketingDiscountStackConflict,
+  MarketingDiscountBudgetLedger,
 };
 
 export const models = {
@@ -216,6 +226,11 @@ export const models = {
   MarketingDiscountThreshold,
   MarketingProductAdmissionLog,
   MarketingAdmissionRule,
+  MarketingDiscountRule,
+  MarketingDiscountRuleLog,
+  MarketingDiscountUsageRecord,
+  MarketingDiscountStackConflict,
+  MarketingDiscountBudgetLedger,
 };
 
 export default models;

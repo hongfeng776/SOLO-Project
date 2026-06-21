@@ -71,6 +71,11 @@ import { MarketingMerchantQualificationDao } from './MarketingMerchantQualificat
 import { MarketingDiscountThresholdDao } from './MarketingDiscountThresholdDao';
 import { MarketingProductAdmissionLogDao } from './MarketingProductAdmissionLogDao';
 import { MarketingAdmissionRuleDao } from './MarketingAdmissionRuleDao';
+import { MarketingDiscountRuleDao } from './MarketingDiscountRuleDao';
+import { MarketingDiscountRuleLogDao } from './MarketingDiscountRuleLogDao';
+import { MarketingDiscountUsageRecordDao } from './MarketingDiscountUsageRecordDao';
+import { MarketingDiscountStackConflictDao } from './MarketingDiscountStackConflictDao';
+import { MarketingDiscountBudgetLedgerDao } from './MarketingDiscountBudgetLedgerDao';
 
 export {
   BaseDao,
@@ -148,6 +153,11 @@ export {
   MarketingDiscountThresholdDao,
   MarketingProductAdmissionLogDao,
   MarketingAdmissionRuleDao,
+  MarketingDiscountRuleDao,
+  MarketingDiscountRuleLogDao,
+  MarketingDiscountUsageRecordDao,
+  MarketingDiscountStackConflictDao,
+  MarketingDiscountBudgetLedgerDao,
 };
 
 export const daos = {
@@ -223,6 +233,11 @@ export const daos = {
   marketingDiscountThresholdDao: new MarketingDiscountThresholdDao(),
   marketingProductAdmissionLogDao: new MarketingProductAdmissionLogDao(),
   marketingAdmissionRuleDao: new MarketingAdmissionRuleDao(),
+  marketingDiscountRuleDao: new MarketingDiscountRuleDao(),
+  marketingDiscountRuleLogDao: new MarketingDiscountRuleLogDao(),
+  marketingDiscountUsageRecordDao: new MarketingDiscountUsageRecordDao(),
+  marketingDiscountStackConflictDao: new MarketingDiscountStackConflictDao(),
+  marketingDiscountBudgetLedgerDao: new MarketingDiscountBudgetLedgerDao(),
 };
 
 export default daos;

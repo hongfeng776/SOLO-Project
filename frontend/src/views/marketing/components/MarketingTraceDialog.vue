@@ -22,7 +22,10 @@
             </el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="优惠类型">
-            {{ DiscountTypeMap[traceData.basicInfo?.discountType] || '-' }}
+            <el-tag v-if="DiscountTypeMap[traceData.basicInfo?.discountType]" :type="DiscountTypeMap[traceData.basicInfo?.discountType]?.type">
+              {{ DiscountTypeMap[traceData.basicInfo?.discountType]?.label }}
+            </el-tag>
+            <span v-else>-</span>
           </el-descriptions-item>
           <el-descriptions-item label="使用门槛">
             ¥{{ traceData.basicInfo?.minAmount || 0 }}
