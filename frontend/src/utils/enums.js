@@ -1192,9 +1192,113 @@ export const HotelPriceBatchOperationEnum = {
   off_shelf_expired: { value: 'off_shelf_expired', label: '批量下架过期套餐', icon: 'Download', color: '#ff4d4f' }
 }
 
+export const HotelFulfillmentTypeEnum = {
+  pending: { value: 'pending', label: '待入住', color: '#1890ff', tagClass: 'tag-ff-pending', icon: 'Clock' },
+  normal: { value: 'normal', label: '正常入住', color: '#52c41a', tagClass: 'tag-ff-normal', icon: 'CircleCheck' },
+  delayed: { value: 'delayed', label: '延迟入住', color: '#faad14', tagClass: 'tag-ff-delayed', icon: 'Warning' },
+  cancelled: { value: 'cancelled', label: '取消入住', color: '#ff4d4f', tagClass: 'tag-ff-cancelled', icon: 'CircleClose' }
+}
+
+export const HotelFulfillmentStatusEnum = {
+  pending_checkin: { value: 'pending_checkin', label: '待入住', color: '#1890ff', tagClass: 'tag-ff-pending' },
+  checked_in: { value: 'checked_in', label: '已入住', color: '#52c41a', tagClass: 'tag-ff-checkedin' },
+  checked_out: { value: 'checked_out', label: '已退房', color: '#909399', tagClass: 'tag-ff-checkedout' },
+  delayed: { value: 'delayed', label: '延迟入住', color: '#faad14', tagClass: 'tag-ff-delayed' },
+  early_checkout: { value: 'early_checkout', label: '提前退房', color: '#722ed1', tagClass: 'tag-ff-earlyco' },
+  no_show: { value: 'no_show', label: '未到', color: '#ff4d4f', tagClass: 'tag-ff-noshow' },
+  cancelled: { value: 'cancelled', label: '已取消', color: '#595959', tagClass: 'tag-ff-cancelled' }
+}
+
+export const HotelFulfillmentVerifyStatusEnum = {
+  unverified: { value: 'unverified', label: '未核验', color: '#909399', tagClass: 'tag-verify-unverified' },
+  verified: { value: 'verified', label: '已核验', color: '#52c41a', tagClass: 'tag-verify-verified' },
+  rejected: { value: 'rejected', label: '核验不通过', color: '#ff4d4f', tagClass: 'tag-verify-rejected' },
+  fake: { value: 'fake', label: '虚假入住', color: '#f5222d', tagClass: 'tag-verify-fake' }
+}
+
+export const HotelFulfillmentLogTypeEnum = {
+  verify: { value: 'verify', label: '入住核验', color: '#1890ff', icon: 'CircleCheck' },
+  checkin: { value: 'checkin', label: '确认入住', color: '#52c41a', icon: 'Check' },
+  checkout: { value: 'checkout', label: '正常退房', color: '#909399', icon: 'SwitchButton' },
+  delay: { value: 'delay', label: '延迟入住', color: '#faad14', icon: 'Warning' },
+  early_checkout: { value: 'early_checkout', label: '提前退房', color: '#722ed1', icon: 'SwitchButton' },
+  extend: { value: 'extend', label: '续住', color: '#13c2c2', icon: 'Timer' },
+  cancel: { value: 'cancel', label: '取消', color: '#595959', icon: 'CircleClose' },
+  no_show: { value: 'no_show', label: '标记未到', color: '#ff4d4f', icon: 'Close' },
+  batch_verify: { value: 'batch_verify', label: '批量核验', color: '#1890ff', icon: 'Files' },
+  batch_noshow: { value: 'batch_noshow', label: '批量标记未到', color: '#ff4d4f', icon: 'Files' },
+  batch_delay: { value: 'batch_delay', label: '批量延迟', color: '#faad14', icon: 'Files' },
+  fake_flag: { value: 'fake_flag', label: '虚假入住标记', color: '#f5222d', icon: 'Warning' },
+  duplicate_flag: { value: 'duplicate_flag', label: '重复核验标记', color: '#fa8c16', icon: 'DocumentCopy' },
+  illegal_checkout: { value: 'illegal_checkout', label: '违规退房标记', color: '#f5222d', icon: 'Warning' }
+}
+
+export const HotelFulfillmentBatchOperationEnum = {
+  batch_verify: { value: 'batch_verify', label: '批量确认合规入住', icon: 'CircleCheck', color: '#52c41a' },
+  batch_noshow: { value: 'batch_noshow', label: '批量标记未到异常', icon: 'Warning', color: '#ff4d4f' },
+  batch_delay: { value: 'batch_delay', label: '批量更新延迟入住', icon: 'Clock', color: '#faad14' }
+}
+
 export const formatPriceThousandth = (value) => {
   if (value === null || value === undefined || isNaN(value)) return '-';
   return Number(value).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+export const ScenicSpotTypeEnum = {
+  natural: { value: 'natural', label: '自然景区', icon: 'Mountain', color: '#52c41a', tagClass: 'tag-spot-natural', gradient: 'linear-gradient(135deg, #52c41a, #95de64)' },
+  cultural: { value: 'cultural', label: '人文景点', icon: 'OfficeBuilding', color: '#722ed1', tagClass: 'tag-spot-cultural', gradient: 'linear-gradient(135deg, #722ed1, #b37feb)' },
+  theme: { value: 'theme', label: '主题乐园', icon: 'MagicStick', color: '#eb2f96', tagClass: 'tag-spot-theme', gradient: 'linear-gradient(135deg, #eb2f96, #ff85c0)' },
+  performance: { value: 'performance', label: '特色展演', icon: 'Tickets', color: '#fa8c16', tagClass: 'tag-spot-performance', gradient: 'linear-gradient(135deg, #fa8c16, #ffc069)' }
+}
+
+export const ScenicSpotBusinessStatusEnum = {
+  operating: { value: 'operating', label: '营业中', tagClass: 'tag-spot-operating', color: '#52c41a', freezeTicket: false, gradient: 'linear-gradient(135deg, #52c41a, #95de64)' },
+  closed: { value: 'closed', label: '闭园', tagClass: 'tag-spot-closed', color: '#595959', freezeTicket: true, gradient: 'linear-gradient(135deg, #595959, #8c8c8c)' },
+  suspended: { value: 'suspended', label: '暂停营业', tagClass: 'tag-spot-suspended', color: '#faad14', freezeTicket: true, gradient: 'linear-gradient(135deg, #faad14, #ffd666)' },
+  rectification: { value: 'rectification', label: '整改中', tagClass: 'tag-spot-rectification', color: '#ff4d4f', freezeTicket: true, gradient: 'linear-gradient(135deg, #ff4d4f, #ff7875)' },
+  maintenance: { value: 'maintenance', label: '维护中', tagClass: 'tag-spot-maintenance', color: '#1890ff', freezeTicket: true, gradient: 'linear-gradient(135deg, #1890ff, #69c0ff)' }
+}
+
+export const ScenicSpotQualificationStatusEnum = {
+  compliant: { value: 'compliant', label: '资质合规', tagClass: 'tag-spot-qual-compliant', color: '#52c41a' },
+  expired: { value: 'expired', label: '资质即将过期', tagClass: 'tag-spot-qual-expired', color: '#faad14' },
+  pending: { value: 'pending', label: '待审核', tagClass: 'tag-spot-qual-pending', color: '#1890ff' },
+  invalid: { value: 'invalid', label: '资质无效', tagClass: 'tag-spot-qual-invalid', color: '#ff4d4f' }
+}
+
+export const ScenicSpotLevelEnum = {
+  A: { value: 'A', label: 'A级' },
+  AA: { value: 'AA', label: 'AA级' },
+  AAA: { value: 'AAA', label: 'AAA级' },
+  AAAA: { value: 'AAAA', label: 'AAAA级' },
+  AAAAA: { value: 'AAAAA', label: 'AAAAA级' }
+}
+
+export const ScenicSpotLogTypeEnum = {
+  create: { value: 'create', label: '景点入驻', color: '#52c41a', icon: 'Plus' },
+  update: { value: 'update', label: '信息变更', color: '#1890ff', icon: 'Edit' },
+  on_shelf: { value: 'on_shelf', label: '景点上架', color: '#52c41a', icon: 'Upload' },
+  off_shelf: { value: 'off_shelf', label: '景点下架', color: '#909399', icon: 'Download' },
+  status_change: { value: 'status_change', label: '状态变更', color: '#faad14', icon: 'Refresh' },
+  batch: { value: 'batch', label: '批量操作', color: '#722ed1', icon: 'Files' },
+  qualification_audit: { value: 'qualification_audit', label: '资质审核', color: '#eb2f96', icon: 'Stamp' },
+  weight_adjust: { value: 'weight_adjust', label: '权重调整', color: '#13c2c2', icon: 'TrendCharts' },
+  verify_pass: { value: 'verify_pass', label: '合规校验通过', color: '#52c41a', icon: 'CircleCheckFilled' },
+  verify_block: { value: 'verify_block', label: '违规拦截', color: '#f5222d', icon: 'CircleCloseFilled' }
+}
+
+export const ScenicSpotVerifyResultEnum = {
+  pass: { value: 'pass', label: '通过', class: 'verify-pass', icon: 'CircleCheckFilled' },
+  warning: { value: 'warning', label: '存在警告', class: 'verify-warning', icon: 'Warning' },
+  block: { value: 'block', label: '已拦截', class: 'verify-block', icon: 'CircleCloseFilled' }
+}
+
+export const ScenicSpotBatchOperationEnum = {
+  update_opening: { value: 'update_opening', label: '批量更新开放信息', icon: 'Clock', color: '#1890ff' },
+  adjust_weight: { value: 'adjust_weight', label: '批量调整展示权重', icon: 'TrendCharts', color: '#722ed1' },
+  off_shelf: { value: 'off_shelf', label: '批量下架闭园景点', icon: 'Download', color: '#ff4d4f' },
+  on_shelf: { value: 'on_shelf', label: '批量恢复开放', icon: 'Upload', color: '#52c41a' },
+  update_performance: { value: 'update_performance', label: '批量配置展演场次', icon: 'Tickets', color: '#fa8c16', performanceOnly: true }
 }
 
 export default {
@@ -1332,6 +1436,11 @@ export default {
   HotelPriceTargetGuestOptions,
   HotelPriceLogTypeEnum,
   HotelPriceBatchOperationEnum,
+  HotelFulfillmentTypeEnum,
+  HotelFulfillmentStatusEnum,
+  HotelFulfillmentVerifyStatusEnum,
+  HotelFulfillmentLogTypeEnum,
+  HotelFulfillmentBatchOperationEnum,
   formatPriceThousandth,
   getEnumLabel,
   getEnumType,

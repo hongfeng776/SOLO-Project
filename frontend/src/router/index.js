@@ -115,6 +115,12 @@ export const routes = [
         meta: { title: '房价套餐管理', icon: 'Money', roles: ['admin', 'hotel_operator', 'senior_hotel_operator', 'price_manager'] }
       },
       {
+        path: 'hotel-fulfillment',
+        name: 'HotelFulfillment',
+        component: () => import('@/views/hotel/HotelFulfillment.vue'),
+        meta: { title: '入住履约管控', icon: 'Stamp', roles: ['admin', 'hotel_operator', 'senior_hotel_operator', 'fulfillment_auditor'] }
+      },
+      {
         path: 'car',
         name: 'CarManage',
         component: () => import('@/views/product/Car.vue'),
@@ -125,6 +131,12 @@ export const routes = [
         name: 'TicketManage',
         component: () => import('@/views/product/Ticket.vue'),
         meta: { title: '文旅票务', icon: 'Tickets', roles: ['admin', 'user'] }
+      },
+      {
+        path: 'scenic-spot-ops',
+        name: 'ScenicSpotOPS',
+        component: () => import('@/views/scenic-spot/ScenicSpotOPS.vue'),
+        meta: { title: '景区资源管控', icon: 'Mountain', roles: ['admin', 'scenic_operator', 'senior_scenic_operator', 'scenic_auditor', 'performance_auditor'] }
       },
       {
         path: 'business-travel',

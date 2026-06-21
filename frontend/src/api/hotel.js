@@ -257,3 +257,34 @@ export function getHotelRoomPricePurchases(id, params) {
     params
   })
 }
+
+export function getHotelFulfillmentList(params) {
+  return request({ url: '/hotel-fulfillments', method: 'get', params })
+}
+export function getHotelFulfillment(id) {
+  return request({ url: `/hotel-fulfillments/${id}`, method: 'get' })
+}
+export function checkHotelFulfillmentPermission() {
+  return request({ url: '/hotel-fulfillments/ops/permission', method: 'get' })
+}
+export function verifyHotelFulfillment(id, data) {
+  return request({ url: `/hotel-fulfillments/${id}/ops/verify`, method: 'post', data })
+}
+export function checkoutHotelFulfillment(id, data) {
+  return request({ url: `/hotel-fulfillments/${id}/ops/checkout`, method: 'put', data })
+}
+export function extendHotelFulfillment(id, data) {
+  return request({ url: `/hotel-fulfillments/${id}/ops/extend`, method: 'put', data })
+}
+export function markNoShowHotelFulfillment(id, reason) {
+  return request({ url: `/hotel-fulfillments/${id}/ops/noshow`, method: 'put', data: { reason } })
+}
+export function batchHotelFulfillmentOperation(params) {
+  return request({ url: '/hotel-fulfillments/ops/batch', method: 'post', data: params })
+}
+export function getHotelFulfillmentLogs(id, params) {
+  return request({ url: `/hotel-fulfillments/${id}/ops/logs`, method: 'get', params })
+}
+export function getAllHotelFulfillmentLogs(params) {
+  return request({ url: '/hotel-fulfillments/ops/logs/all', method: 'get', params })
+}

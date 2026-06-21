@@ -1,0 +1,62 @@
+@use '@/styles/variables' as *;
+
+.hotel-fulfill-trace-panel {
+  .trace-filter {
+    background: #fff;
+    border-bottom: 1px solid $border-color-lighter;
+  }
+
+  .trace-timeline {
+    .timeline-item-wrap {
+      .el-timeline-item__tail {
+        border-left: 2px dashed $border-color;
+      }
+    }
+
+    .trace-card {
+      transition: $transition-base;
+
+      &:hover {
+        box-shadow: $box-shadow-light;
+        border-color: $primary-color;
+      }
+
+      .trace-header {
+        .op-type-tag {
+          transition: $transition-base;
+        }
+      }
+
+      .trace-changes {
+        .change-row {
+          .change-old {
+            transition: color 0.2s;
+          }
+
+          .change-new {
+            transition: color 0.2s;
+          }
+        }
+      }
+
+      .trace-footer {
+        .el-tag {
+          transition: $transition-base;
+
+          &:hover {
+            transform: translateY(-1px);
+          }
+        }
+      }
+    }
+  }
+
+  .log-detail-dialog {
+    .detail-descriptions {
+      :deep(.el-descriptions__label) {
+        width: 100px;
+        font-weight: 500;
+      }
+    }
+  }
+}

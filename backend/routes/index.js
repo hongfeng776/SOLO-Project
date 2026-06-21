@@ -20,8 +20,10 @@ const flightFulfillmentController = require('../controllers/FlightFulfillmentCon
 const hotelController = require('../controllers/HotelController')
 const hotelRoomController = require('../controllers/HotelRoomController')
 const hotelRoomPriceController = require('../controllers/HotelRoomPriceController')
+const hotelFulfillmentController = require('../controllers/HotelFulfillmentController')
 const carController = require('../controllers/CarController')
 const ticketController = require('../controllers/TicketController')
+const scenicSpotController = require('../controllers/ScenicSpotController')
 const orderController = require('../controllers/OrderController')
 const merchantController = require('../controllers/MerchantController')
 const businessTravelController = require('../controllers/BusinessTravelController')
@@ -197,8 +199,27 @@ router.get('/hotel-room-prices/:id/ops/logs', auth(), pagination, hotelRoomPrice
 router.get('/hotel-room-prices/ops/logs/all', auth(), pagination, hotelRoomPriceController.getAllLogs.bind(hotelRoomPriceController));
 router.get('/hotel-room-prices/:id/ops/purchases', auth(), pagination, hotelRoomPriceController.getPurchaseDetails.bind(hotelRoomPriceController));
 
+router.get('/hotel-fulfillments', auth(), pagination, hotelFulfillmentController.list.bind(hotelFulfillmentController));
+router.get('/hotel-fulfillments/:id', auth(), hotelFulfillmentController.get.bind(hotelFulfillmentController));
+router.get('/hotel-fulfillments/ops/permission', auth(), hotelFulfillmentController.checkPermission.bind(hotelFulfillmentController));
+router.post('/hotel-fulfillments/:id/ops/verify', auth(), hotelFulfillmentController.verifyCheckIn.bind(hotelFulfillmentController));
+router.put('/hotel-fulfillments/:id/ops/checkout', auth(), hotelFulfillmentController.checkout.bind(hotelFulfillmentController));
+router.put('/hotel-fulfillments/:id/ops/extend', auth(), hotelFulfillmentController.extendStay.bind(hotelFulfillmentController));
+router.put('/hotel-fulfillments/:id/ops/noshow', auth(), hotelFulfillmentController.markNoShow.bind(hotelFulfillmentController));
+router.post('/hotel-fulfillments/ops/batch', auth(['admin','hotel_operator','senior_hotel_operator','fulfillment_auditor']), hotelFulfillmentController.batchOperation.bind(hotelFulfillmentController));
+router.get('/hotel-fulfillments/:id/ops/logs', auth(), pagination, hotelFulfillmentController.getLogs.bind(hotelFulfillmentController));
+router.get('/hotel-fulfillments/ops/logs/all', auth(), pagination, hotelFulfillmentController.getAllLogs.bind(hotelFulfillmentController));
+
 registerCrudRoutes('cars', carController);
 registerCrudRoutes('tickets', ticketController);
+
+registerCrudRoutes('scenic-spots', scenicSpotController);
+router.get('/scenic-spots/ops/permission', auth(), scenicSpotController.checkPermission.bind(scenicSpotController));
+router.put('/scenic-spots/:id/ops/status', auth(), scenicSpotController.changeStatus.bind(scenicSpotController));
+router.post('/scenic-spots/ops/batch', auth(['admin', 'scenic_operator', 'senior_scenic_operator']), scenicSpotController.batchOperation.bind(scenicSpotController));
+router.get('/scenic-spots/:id/ops/logs', auth(), pagination, scenicSpotController.getLogs.bind(scenicSpotController));
+router.get('/scenic-spots/ops/logs/all', auth(), pagination, scenicSpotController.getAllLogs.bind(scenicSpotController));
+router.post('/scenic-spots/:id/ops/verify', auth(['admin', 'senior_scenic_operator', 'scenic_auditor']), scenicSpotController.verifySpot.bind(scenicSpotController));
 
 router.get('/orders', auth(), pagination, orderController.list.bind(orderController));
 router.get('/orders/:id', auth(), orderController.get.bind(orderController));
