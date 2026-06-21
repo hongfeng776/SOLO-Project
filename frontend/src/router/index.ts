@@ -131,6 +131,12 @@ const routes: RouteRecordRaw[] = [
         name: 'SmartDispatch',
         component: () => import('@/views/capacity/smart-dispatch.vue'),
         meta: { title: '智能调度', icon: 'Promotion' }
+      },
+      {
+        path: 'period-config',
+        name: 'PeriodConfig',
+        component: () => import('@/views/capacity/period-config.vue'),
+        meta: { title: '时段配置', icon: 'Timer' }
       }
     ]
   },

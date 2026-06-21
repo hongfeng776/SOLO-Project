@@ -1,3 +1,5 @@
+import type { PeriodThreshold } from '../types/capacity'
+
 export enum CapacityTypeEnum {
   EXPRESS = 1,
   PREMIUM = 2,
@@ -225,3 +227,91 @@ export const DISPATCH_PARAM_LIMITS = {
   maxDispatchCount: { min: 1, max: 500, unit: '人' },
   dispatchTimeout: { min: 30, max: 600, unit: '秒' }
 }
+
+export enum PeriodType {
+  PEAK = 'peak',
+  FLAT = 'flat',
+  VALLEY = 'valley',
+  MORNING_PEAK = 'morning_peak',
+  EVENING_PEAK = 'evening_peak',
+  DAYTIME = 'daytime',
+  NIGHT = 'night',
+  LATE_NIGHT = 'late_night'
+}
+
+export const PeriodTypeMap: Record<string, string> = {
+  [PeriodType.PEAK]: '高峰时段',
+  [PeriodType.FLAT]: '平峰时段',
+  [PeriodType.VALLEY]: '低谷时段',
+  [PeriodType.MORNING_PEAK]: '早高峰',
+  [PeriodType.EVENING_PEAK]: '晚高峰',
+  [PeriodType.DAYTIME]: '日间',
+  [PeriodType.NIGHT]: '夜间',
+  [PeriodType.LATE_NIGHT]: '凌晨'
+}
+
+export enum SceneType {
+  HOLIDAY = 'holiday',
+  WEATHER = 'weather',
+  LARGE_EVENT = 'large_event',
+  NORMAL = 'normal'
+}
+
+export const SceneTypeMap: Record<string, string> = {
+  [SceneType.HOLIDAY]: '节假日',
+  [SceneType.WEATHER]: '天气影响',
+  [SceneType.LARGE_EVENT]: '大型活动',
+  [SceneType.NORMAL]: '日常场景'
+}
+
+export const SceneTypeColorMap: Record<string, string> = {
+  [SceneType.HOLIDAY]: '#e6a23c',
+  [SceneType.WEATHER]: '#409eff',
+  [SceneType.LARGE_EVENT]: '#f56c6c',
+  [SceneType.NORMAL]: '#67c23a'
+}
+
+export enum BatchPeriodOperation {
+  MODIFY = 'modify',
+  COPY = 'copy',
+  RESTORE_DEFAULTS = 'restore_defaults',
+  CITY_ADAPT = 'city_adapt'
+}
+
+export const BatchPeriodOperationMap: Record<string, string> = {
+  [BatchPeriodOperation.MODIFY]: '批量修改参数',
+  [BatchPeriodOperation.COPY]: '批量复制配置',
+  [BatchPeriodOperation.RESTORE_DEFAULTS]: '批量恢复默认',
+  [BatchPeriodOperation.CITY_ADAPT]: '城市差异化适配'
+}
+
+export enum ConfigChangeType {
+  MANUAL = 'manual',
+  SCENE_ADAPT = 'scene_adapt',
+  BATCH = 'batch',
+  RESTORE_DEFAULTS = 'restore_defaults'
+}
+
+export const ConfigChangeTypeMap: Record<string, string> = {
+  [ConfigChangeType.MANUAL]: '手动修改',
+  [ConfigChangeType.SCENE_ADAPT]: '场景适配',
+  [ConfigChangeType.BATCH]: '批量操作',
+  [ConfigChangeType.RESTORE_DEFAULTS]: '恢复默认'
+}
+
+export const PERIOD_THRESHOLD_RANGES = {
+  peakThreshold: { min: 10, max: 200, unit: '单/小时', industryAvg: 80, label: '高峰订单阈值' },
+  flatThreshold: { min: 5, max: 100, unit: '单/小时', industryAvg: 40, label: '平峰订单阈值' },
+  valleyThreshold: { min: 1, max: 50, unit: '单/小时', industryAvg: 15, label: '低谷订单阈值' },
+  idleRateThreshold: { min: 0.05, max: 0.8, unit: '%', industryAvg: 0.3, label: '空闲率阈值' },
+  shortageThreshold: { min: 2, max: 10, unit: '倍', industryAvg: 4, label: '紧缺判定阈值' },
+  surplusThreshold: { min: 0.1, max: 2, unit: '倍', industryAvg: 0.5, label: '过剩判定阈值' }
+}
+
+export const DEFAULT_PERIOD_CONFIGS: PeriodThreshold[] = [
+  { period: '早高峰(7:00-9:00)', peakThreshold: 120, flatThreshold: 0, valleyThreshold: 0, idleRateThreshold: 0.15, shortageThreshold: 5, surplusThreshold: 0.3 },
+  { period: '日间(9:00-17:00)', peakThreshold: 0, flatThreshold: 60, valleyThreshold: 0, idleRateThreshold: 0.30, shortageThreshold: 3.5, surplusThreshold: 0.5 },
+  { period: '晚高峰(17:00-19:00)', peakThreshold: 150, flatThreshold: 0, valleyThreshold: 0, idleRateThreshold: 0.10, shortageThreshold: 6, surplusThreshold: 0.2 },
+  { period: '夜间(19:00-23:00)', peakThreshold: 0, flatThreshold: 50, valleyThreshold: 0, idleRateThreshold: 0.35, shortageThreshold: 3, surplusThreshold: 0.6 },
+  { period: '凌晨(23:00-7:00)', peakThreshold: 0, flatThreshold: 0, valleyThreshold: 20, idleRateThreshold: 0.50, shortageThreshold: 2.5, surplusThreshold: 0.8 }
+]

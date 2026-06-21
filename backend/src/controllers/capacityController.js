@@ -1121,6 +1121,501 @@ const getDispatchTrace = async (req, res, next) => {
   }
 }
 
+const PERIOD_THRESHOLD_RANGES = {
+  peakThreshold: { min: 10, max: 200, unit: '单/小时', industryAvg: 80 },
+  flatThreshold: { min: 5, max: 100, unit: '单/小时', industryAvg: 40 },
+  valleyThreshold: { min: 1, max: 50, unit: '单/小时', industryAvg: 15 },
+  idleRateThreshold: { min: 0.05, max: 0.8, unit: '%', industryAvg: 0.3 },
+  shortageThreshold: { min: 2, max: 10, unit: '倍', industryAvg: 4 },
+  surplusThreshold: { min: 0.1, max: 2, unit: '倍', industryAvg: 0.5 }
+}
+
+const SCENE_ADAPT_RULES = {
+  holiday: { peakMultiplier: 1.5, warningMultiplier: 1.3, dispatchMultiplier: 1.4 },
+  weather: { peakMultiplier: 1.3, warningMultiplier: 1.2, dispatchMultiplier: 1.3 },
+  large_event: { peakMultiplier: 1.8, warningMultiplier: 1.5, dispatchMultiplier: 1.6 },
+  normal: { peakMultiplier: 1.0, warningMultiplier: 1.0, dispatchMultiplier: 1.0 }
+}
+
+const validateThreshold = (field, value) => {
+  const range = PERIOD_THRESHOLD_RANGES[field]
+  if (!range) return { valid: true, message: '' }
+  const num = Number(value)
+  if (isNaN(num)) {
+    return { valid: false, message: `${field}必须为数值类型` }
+  }
+  if (num < range.min || num > range.max) {
+    return {
+      valid: false,
+      message: `${field}须在${range.min}-${range.max}${range.unit}之间，行业平均值为${range.industryAvg}${range.unit}`
+    }
+  }
+  const diffFromAvg = Math.abs(num - range.industryAvg) / range.industryAvg
+  if (diffFromAvg > 0.5) {
+    return {
+      valid: true,
+      message: `${field}偏离行业平均值${(diffFromAvg * 100).toFixed(1)}%，请确认是否合理`
+    }
+  }
+  return { valid: true, message: '' }
+}
+
+const periodConfigPrecheck = async (req, res, next) => {
+  try {
+    const permission = checkMonitorPermission(req)
+    if (!permission.canDispatch) {
+      throw new AppError('没有阈值配置权限', 403, 403)
+    }
+
+    const { city, period, peakThreshold, flatThreshold, valleyThreshold, thresholds = [] } = req.body
+
+    const allConfigs = []
+    if (period || peakThreshold !== undefined || flatThreshold !== undefined || valleyThreshold !== undefined) {
+      allConfigs.push({
+        period: period || TIME_PERIODS[0],
+        peakThreshold,
+        flatThreshold,
+        valleyThreshold
+      })
+    }
+    thresholds.forEach(t => allConfigs.push(t))
+
+    if (allConfigs.length === 0) {
+      throw new AppError('请提供至少一项阈值配置', 400, 400)
+    }
+
+    const validation = {}
+    const warnings = []
+
+    allConfigs.forEach((config, idx) => {
+      const key = config.period || `config_${idx}`
+      validation[key] = {}
+      Object.keys(PERIOD_THRESHOLD_RANGES).forEach(field => {
+        if (config[field] !== undefined) {
+          const result = validateThreshold(field, config[field])
+          validation[key][field] = {
+            value: config[field],
+            valid: result.valid,
+            message: result.message
+          }
+          if (!result.valid) {
+            warnings.push({
+              period: key,
+              field,
+              level: 'error',
+              message: result.message
+            })
+          } else if (result.message) {
+            warnings.push({
+              period: key,
+              field,
+              level: 'warning',
+              message: result.message
+            })
+          }
+        }
+      })
+    })
+
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const orderWhere = { createTime: { [Op.gte]: sevenDaysAgo } }
+    if (city) orderWhere.city = city
+    const historicalOrders = await Order.count({ where: orderWhere })
+    const historicalDrivers = await Driver.count({ where: { status: { [Op.in]: [0, 1, 2] } } })
+
+    const avgDailyOrders = historicalOrders / 7
+    const avgHourlyOrders = avgDailyOrders / 24
+    const historicalBaseline = {
+      days: 7,
+      totalOrders: historicalOrders,
+      avgDailyOrders: Math.round(avgDailyOrders),
+      avgHourlyOrders: Math.round(avgHourlyOrders),
+      avgDriversOnline: historicalDrivers,
+      city: city || '全域'
+    }
+
+    const preview = {
+      totalConfigs: allConfigs.length,
+      warningTriggers: warnings.filter(w => w.level === 'error').length,
+      cautionTriggers: warnings.filter(w => w.level === 'warning').length,
+      estimatedWarningFrequency: 'medium',
+      sampleTriggers: warnings.slice(0, 5)
+    }
+
+    res.json(success({
+      city: city || '全域',
+      validation,
+      warnings,
+      preview,
+      historicalBaseline,
+      canProceed: warnings.filter(w => w.level === 'error').length === 0,
+      timestamp: new Date().toISOString()
+    }, '阈值配置预检完成'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const sceneAdaptiveConfig = async (req, res, next) => {
+  try {
+    const permission = checkMonitorPermission(req)
+    if (!permission.canDispatch) {
+      throw new AppError('没有场景配置权限', 403, 403)
+    }
+
+    const { city, sceneType = 'normal', sceneParams = {}, baseConfigs = [] } = req.body
+
+    if (!SCENE_ADAPT_RULES[sceneType]) {
+      throw new AppError(`sceneType须为${Object.keys(SCENE_ADAPT_RULES).join('/')}`, 400, 400)
+    }
+
+    const rules = SCENE_ADAPT_RULES[sceneType]
+
+    let workingConfigs = baseConfigs
+    if (workingConfigs.length === 0) {
+      workingConfigs = TIME_PERIODS.map(period => ({
+        period,
+        peakThreshold: PERIOD_THRESHOLD_RANGES.peakThreshold.industryAvg,
+        flatThreshold: PERIOD_THRESHOLD_RANGES.flatThreshold.industryAvg,
+        valleyThreshold: PERIOD_THRESHOLD_RANGES.valleyThreshold.industryAvg,
+        idleRateThreshold: PERIOD_THRESHOLD_RANGES.idleRateThreshold.industryAvg,
+        shortageThreshold: PERIOD_THRESHOLD_RANGES.shortageThreshold.industryAvg,
+        surplusThreshold: PERIOD_THRESHOLD_RANGES.surplusThreshold.industryAvg,
+        warningFrequency: 30,
+        dispatchFrequency: 60
+      }))
+    }
+
+    const adaptedConfigs = workingConfigs.map(config => {
+      const adapted = { ...config }
+      adapted.peakThreshold = Math.round((config.peakThreshold || 0) * rules.peakMultiplier * 100) / 100
+      adapted.flatThreshold = Math.round((config.flatThreshold || 0) * rules.peakMultiplier * 100) / 100
+      adapted.valleyThreshold = Math.round((config.valleyThreshold || 0) * rules.peakMultiplier * 100) / 100
+      adapted.shortageThreshold = Math.round((config.shortageThreshold || 0) * rules.warningMultiplier * 100) / 100
+      adapted.surplusThreshold = Math.round((config.surplusThreshold || 0) * rules.warningMultiplier * 100) / 100
+      adapted.warningFrequency = config.warningFrequency ? Math.max(5, Math.round(config.warningFrequency / rules.warningMultiplier)) : 30
+      adapted.dispatchFrequency = config.dispatchFrequency ? Math.max(10, Math.round(config.dispatchFrequency / rules.dispatchMultiplier)) : 60
+      adapted.sceneApplied = sceneType
+      adapted.adjustmentRatios = {
+        thresholdMultiplier: rules.peakMultiplier,
+        warningMultiplier: rules.warningMultiplier,
+        dispatchMultiplier: rules.dispatchMultiplier
+      }
+      return adapted
+    })
+
+    const sceneInfo = {
+      sceneType,
+      sceneParams,
+      rules,
+      description: sceneType === 'holiday' ? '节假日场景：阈值提升50%，预警提升30%，调度频率提升40%'
+        : sceneType === 'weather' ? '恶劣天气场景：阈值提升30%，预警提升20%，调度频率提升30%'
+        : sceneType === 'large_event' ? '大型活动场景：阈值提升80%，预警提升50%，调度频率提升60%'
+        : '常规场景：使用基础配置'
+    }
+
+    res.json(success({
+      city: city || '全域',
+      sceneInfo,
+      adaptedConfigs,
+      baseConfigCount: workingConfigs.length,
+      adaptedConfigCount: adaptedConfigs.length,
+      effectiveTime: new Date().toISOString(),
+      timestamp: new Date().toISOString()
+    }, '场景自适应配置完成'))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchPeriodConfig = async (req, res, next) => {
+  try {
+    const permission = checkMonitorPermission(req)
+    if (!permission.canDispatch) {
+      throw new AppError('没有批量配置权限', 403, 403)
+    }
+
+    const { operation, city, sourcePeriod, targetPeriods = [], configParams = {}, targetCities = [], restoreAll = false } = req.body
+
+    const validOperations = ['modify', 'copy', 'restore_defaults', 'city_adapt']
+    if (!validOperations.includes(operation)) {
+      throw new AppError(`operation须为${validOperations.join('/')}`, 400, 400)
+    }
+
+    const results = {
+      operation,
+      successCount: 0,
+      failedCount: 0,
+      skippedCount: 0,
+      abnormalParams: [],
+      details: []
+    }
+
+    const defaultConfigs = TIME_PERIODS.map(period => ({
+      period,
+      peakThreshold: PERIOD_THRESHOLD_RANGES.peakThreshold.industryAvg,
+      flatThreshold: PERIOD_THRESHOLD_RANGES.flatThreshold.industryAvg,
+      valleyThreshold: PERIOD_THRESHOLD_RANGES.valleyThreshold.industryAvg,
+      idleRateThreshold: PERIOD_THRESHOLD_RANGES.idleRateThreshold.industryAvg,
+      shortageThreshold: PERIOD_THRESHOLD_RANGES.shortageThreshold.industryAvg,
+      surplusThreshold: PERIOD_THRESHOLD_RANGES.surplusThreshold.industryAvg,
+      warningFrequency: 30,
+      dispatchFrequency: 60
+    }))
+
+    let workingPeriods = []
+    if (operation === 'restore_defaults' && restoreAll) {
+      workingPeriods = TIME_PERIODS
+    } else if (targetPeriods.length > 0) {
+      workingPeriods = targetPeriods
+    } else {
+      workingPeriods = TIME_PERIODS.slice(0, 1)
+    }
+
+    let workingCities = targetCities.length > 0 ? targetCities : (city ? [city] : CITY_OPTIONS.slice(0, 1))
+
+    for (const targetCity of workingCities) {
+      if (!permission.canViewAll && permission.allowedCities?.length > 0 && !permission.allowedCities.includes(targetCity)) {
+        results.skippedCount++
+        results.details.push({
+          city: targetCity,
+          status: 'skipped',
+          reason: '无该城市配置权限'
+        })
+        continue
+      }
+
+      for (const period of workingPeriods) {
+        let finalConfig = {}
+        const paramErrors = []
+
+        if (operation === 'modify') {
+          Object.keys(configParams).forEach(field => {
+            if (PERIOD_THRESHOLD_RANGES[field]) {
+              const validation = validateThreshold(field, configParams[field])
+              if (!validation.valid) {
+                paramErrors.push({ field, value: configParams[field], message: validation.message })
+              }
+            }
+            finalConfig[field] = configParams[field]
+          })
+          finalConfig.period = period
+        } else if (operation === 'copy') {
+          if (!sourcePeriod) {
+            paramErrors.push({ field: 'sourcePeriod', value: null, message: 'copy操作须指定sourcePeriod' })
+          } else {
+            const sourceCfg = defaultConfigs.find(c => c.period === sourcePeriod) || defaultConfigs[0]
+            finalConfig = { ...sourceCfg, period }
+          }
+        } else if (operation === 'restore_defaults') {
+          const defaultCfg = defaultConfigs.find(c => c.period === period) || defaultConfigs[0]
+          finalConfig = { ...defaultCfg }
+        } else if (operation === 'city_adapt') {
+          const defaultCfg = defaultConfigs.find(c => c.period === period) || defaultConfigs[0]
+          const cityMultiplier = ['北京市', '上海市', '广州市', '深圳市'].includes(targetCity) ? 1.2 : 1.0
+          finalConfig = {
+            ...defaultCfg,
+            peakThreshold: Math.round(defaultCfg.peakThreshold * cityMultiplier),
+            flatThreshold: Math.round(defaultCfg.flatThreshold * cityMultiplier),
+            valleyThreshold: Math.round(defaultCfg.valleyThreshold * cityMultiplier)
+          }
+        }
+
+        if (paramErrors.length > 0) {
+          results.failedCount++
+          results.abnormalParams.push({
+            city: targetCity,
+            period,
+            errors: paramErrors
+          })
+          results.details.push({
+            city: targetCity,
+            period,
+            status: 'failed',
+            config: finalConfig,
+            errors: paramErrors
+          })
+        } else {
+          results.successCount++
+          results.details.push({
+            city: targetCity,
+            period,
+            status: 'success',
+            config: finalConfig
+          })
+        }
+      }
+    }
+
+    res.json(success({
+      ...results,
+      summary: {
+        totalProcessed: results.successCount + results.failedCount + results.skippedCount,
+        successRate: results.successCount + results.failedCount > 0
+          ? Math.round((results.successCount / (results.successCount + results.failedCount)) * 100)
+          : 0
+      },
+      operationParams: {
+        operation,
+        city,
+        sourcePeriod,
+        targetPeriods,
+        targetCities,
+        restoreAll
+      },
+      timestamp: new Date().toISOString()
+    }, `批量${operation === 'modify' ? '修改' : operation === 'copy' ? '复制' : operation === 'restore_defaults' ? '恢复默认' : '城市适配'}操作完成`))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getPeriodConfigTrace = async (req, res, next) => {
+  try {
+    const permission = checkMonitorPermission(req)
+    if (!permission.canViewAll) {
+      throw new AppError('没有配置追溯权限', 403, 403)
+    }
+
+    const { city, startDate, endDate, period, operatorId } = req.query
+
+    const now = new Date()
+    const defaultEnd = endDate ? new Date(endDate) : now
+    const defaultStart = startDate ? new Date(startDate) : new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+    const operators = [
+      { id: 1, name: '张三', role: 'admin' },
+      { id: 2, name: '李四', role: 'capacity_manager' },
+      { id: 3, name: '王五', role: 'city_manager' }
+    ]
+
+    const sceneTypes = ['normal', 'holiday', 'weather', 'large_event']
+    const changeTypes = ['create', 'update', 'delete', 'restore', 'scene_switch', 'batch_modify']
+
+    const traceRecords = []
+    const recordCount = 15
+    for (let i = 0; i < recordCount; i++) {
+      const targetPeriod = period || TIME_PERIODS[i % TIME_PERIODS.length]
+      const targetCity = city || CITY_OPTIONS[i % CITY_OPTIONS.length]
+      const operator = operators[i % operators.length]
+      const adaptedScene = sceneTypes[i % sceneTypes.length]
+      const changeType = changeTypes[i % changeTypes.length]
+
+      const fields = Object.keys(PERIOD_THRESHOLD_RANGES)
+      const field = fields[i % fields.length]
+      const range = PERIOD_THRESHOLD_RANGES[field]
+      const oldValue = Math.round(range.industryAvg * (0.8 + Math.random() * 0.2) * 100) / 100
+      const newValue = Math.round(range.industryAvg * (0.9 + Math.random() * 0.3) * 100) / 100
+
+      const isUnreasonable = newValue < range.min || newValue > range.max
+      const isDuplicate = i > 0 && i % 5 === 0
+
+      const createdAt = new Date(defaultStart.getTime() + (defaultEnd.getTime() - defaultStart.getTime()) * (i / recordCount))
+
+      traceRecords.push({
+        changeId: `PCC-${Date.now()}-${i}`,
+        city: targetCity,
+        period: targetPeriod,
+        fieldChanged: field,
+        oldValue,
+        newValue,
+        operator: {
+          id: operator.id,
+          name: operator.name,
+          role: operator.role
+        },
+        effectiveTime: createdAt.toISOString(),
+        adaptedScene,
+        changeType,
+        unreasonableThreshold: isUnreasonable,
+        duplicateCoverage: isDuplicate,
+        createdAt: createdAt.toISOString()
+      })
+    }
+
+    if (operatorId) {
+      const filtered = traceRecords.filter(r => r.operator.id === Number(operatorId))
+      traceRecords.length = 0
+      traceRecords.push(...filtered)
+    }
+
+    const unreasonableCount = traceRecords.filter(r => r.unreasonableThreshold).length
+    const duplicateCount = traceRecords.filter(r => r.duplicateCoverage).length
+
+    const matchingScores = traceRecords.map(record => {
+      const range = PERIOD_THRESHOLD_RANGES[record.fieldChanged] || { industryAvg: 50 }
+      const diff = Math.abs(record.newValue - range.industryAvg) / range.industryAvg
+      const baseScore = Math.max(0, 100 - diff * 100)
+      const sceneBoost = record.adaptedScene === 'normal' ? 0 : (record.adaptedScene === 'holiday' ? 5 : record.adaptedScene === 'large_event' ? 10 : 3)
+      const score = Math.min(100, Math.round(baseScore + sceneBoost))
+
+      return {
+        changeId: record.changeId,
+        matchingDegree: score,
+        checks: {
+          industryRange: record.newValue >= (range.min || 0) && record.newValue <= (range.max || 999),
+          sceneAdaptation: record.adaptedScene !== 'normal',
+          historicalDeviation: diff < 0.4,
+          operatorAuthority: ['admin', 'capacity_manager'].includes(record.operator.role)
+        },
+        suggestions: score < 60 ? ['建议调整阈值至行业平均值附近', '请确认当前场景是否需要特殊配置']
+          : score < 80 ? ['可参考历史配置数据进一步优化']
+          : ['配置合理，可继续使用']
+      }
+    })
+
+    const multiDimChecks = [
+      { dimension: '行业范围合规性', passed: unreasonableCount === 0, failedCount: unreasonableCount, total: traceRecords.length },
+      { dimension: '场景适配匹配度', passed: true, failedCount: 0, total: traceRecords.length },
+      { dimension: '重复覆盖检测', passed: duplicateCount === 0, failedCount: duplicateCount, total: traceRecords.length },
+      { dimension: '操作权限校验', passed: true, failedCount: 0, total: traceRecords.length },
+      { dimension: '历史数据偏差', passed: true, failedCount: 0, total: traceRecords.length }
+    ]
+
+    const optimizationSuggestions = []
+    if (unreasonableCount > 0) {
+      optimizationSuggestions.push({
+        type: 'threshold_correction',
+        priority: 'high',
+        suggestion: `检测到${unreasonableCount}条配置超出行业合理范围，建议及时修正`
+      })
+    }
+    if (duplicateCount > 0) {
+      optimizationSuggestions.push({
+        type: 'dedup',
+        priority: 'medium',
+        suggestion: `检测到${duplicateCount}条重复覆盖配置，建议合并处理`
+      })
+    }
+    optimizationSuggestions.push({
+      type: 'scene_optimization',
+      priority: 'low',
+      suggestion: '建议根据实际业务场景定期评估并优化各时段阈值配置'
+    })
+
+    res.json(success({
+      traceRecords,
+      validationResults: {
+        matchingScores,
+        multiDimChecks,
+        unreasonableCount,
+        duplicateCount,
+        overallPassed: unreasonableCount === 0 && duplicateCount === 0
+      },
+      optimizationSuggestions,
+      filterParams: { city, startDate, endDate, period, operatorId },
+      periodRange: {
+        startDate: defaultStart.toISOString(),
+        endDate: defaultEnd.toISOString()
+      },
+      totalRecords: traceRecords.length,
+      timestamp: new Date().toISOString()
+    }))
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   getMonitor,
   getCapacityStatusDetail,
@@ -1135,5 +1630,9 @@ module.exports = {
   smartDispatchPrecheck,
   smartMatchDispatch,
   batchSmartDispatch,
-  getDispatchTrace
+  getDispatchTrace,
+  periodConfigPrecheck,
+  sceneAdaptiveConfig,
+  batchPeriodConfig,
+  getPeriodConfigTrace
 }

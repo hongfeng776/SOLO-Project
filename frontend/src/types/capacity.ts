@@ -462,3 +462,171 @@ export interface DispatchTraceResult {
   }
   timestamp: string
 }
+
+export interface PeriodThreshold {
+  period: string
+  peakThreshold: number
+  flatThreshold: number
+  valleyThreshold: number
+  idleRateThreshold: number
+  shortageThreshold: number
+  surplusThreshold: number
+}
+
+export interface PeriodConfigPrecheckParams {
+  city?: string
+  period?: string
+  thresholds: PeriodThreshold[]
+}
+
+export interface ThresholdValidation {
+  field: string
+  value: number
+  valid: boolean
+  range: { min: number; max: number; unit: string; industryAvg: number }
+  message?: string
+}
+
+export interface WarningPreviewItem {
+  period: string
+  warningType: 'shortage' | 'surplus' | 'saturated'
+  estimatedCount: number
+  severity: 'high' | 'medium' | 'low'
+}
+
+export interface PeriodConfigPrecheckResult {
+  validations: ThresholdValidation[]
+  warnings: string[]
+  previews: WarningPreviewItem[]
+  historicalBaseline: {
+    avgOrdersPerHour: number
+    avgOnlineDrivers: number
+    avgIdleRate: number
+    peakOrdersPerHour: number
+    valleyOrdersPerHour: number
+  }
+  canSave: boolean
+  abnormalParams: Array<{
+    period: string
+    field: string
+    value: number
+    message: string
+  }>
+}
+
+export interface SceneParams {
+  holidayType?: string
+  weatherLevel?: string
+  eventScale?: string
+}
+
+export interface SceneAdaptiveParams {
+  city?: string
+  sceneType: 'holiday' | 'weather' | 'large_event' | 'normal'
+  sceneParams: SceneParams
+  baseConfigs: PeriodThreshold[]
+}
+
+export interface AdaptedConfig extends PeriodThreshold {
+  originalPeakThreshold: number
+  originalShortageThreshold: number
+  dispatchFrequency: number
+  adjustmentRatio: number
+}
+
+export interface SceneAdaptiveResult {
+  sceneType: string
+  sceneInfo: SceneParams
+  adaptRules: {
+    peakMultiplier: number
+    warningMultiplier: number
+    dispatchMultiplier: number
+  }
+  adaptedConfigs: AdaptedConfig[]
+  allPeriodsUpdated: boolean
+  effectiveTime: string
+}
+
+export interface BatchPeriodConfigParams {
+  operation: 'modify' | 'copy' | 'restore_defaults' | 'city_adapt'
+  city?: string
+  sourcePeriod?: string
+  targetPeriods: string[]
+  configParams?: Partial<PeriodThreshold>
+  targetCities?: string[]
+  restoreAll?: boolean
+  configs?: PeriodThreshold[]
+}
+
+export interface BatchPeriodResultItem {
+  period: string
+  city?: string
+  status: 'success' | 'failed' | 'skipped'
+  reason?: string
+  fieldErrors?: Array<{ field: string; value: number; message: string }>
+}
+
+export interface BatchPeriodConfigResult {
+  operation: string
+  totalTargets: number
+  successCount: number
+  failedCount: number
+  skippedCount: number
+  results: BatchPeriodResultItem[]
+  abnormalParams: BatchPeriodResultItem[]
+  savedConfigs: PeriodThreshold[]
+  timestamp: string
+}
+
+export interface ConfigChangeRecord {
+  changeId: string
+  period: string
+  city: string
+  field: string
+  oldValue: number
+  newValue: number
+  operator: string
+  operatorId: number
+  effectiveTime: string
+  adaptedScene: string
+  changeType: 'manual' | 'scene_adapt' | 'batch' | 'restore_defaults'
+  isUnreasonable: boolean
+  isDuplicateCoverage: boolean
+  unreasonableReason?: string
+}
+
+export interface PeriodConfigMatch {
+  period: string
+  city: string
+  matchingDegree: number
+  checks: Array<{
+    name: string
+    passed: boolean
+    detail: string
+    score: number
+  }>
+  overallPassed: boolean
+}
+
+export interface PeriodConfigTraceResult {
+  changeRecords: ConfigChangeRecord[]
+  unreasonableCount: number
+  duplicateCoverageCount: number
+  matches: PeriodConfigMatch[]
+  overallMatchingDegree: number
+  optimizationSuggestions: Array<{
+    field: string
+    period: string
+    currentValue: number
+    suggestedValue: number
+    reason: string
+    impact: 'high' | 'medium' | 'low'
+  }>
+  summary: {
+    totalChanges: number
+    recentChanges: number
+    topModifiedPeriods: string[]
+    topInterceptReasons: string[]
+  }
+  timestamp: string
+}

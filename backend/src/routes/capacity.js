@@ -20,4 +20,9 @@ router.post('/smart-dispatch/match', authenticate, requireRole('admin', 'capacit
 router.post('/smart-dispatch/batch', authenticate, requireRole('admin', 'capacity_manager', 'city_manager'), capacityController.batchSmartDispatch)
 router.get('/smart-dispatch/trace', authenticate, capacityController.getDispatchTrace)
 
+router.post('/period-config/precheck', authenticate, requireRole('admin', 'capacity_manager'), capacityController.periodConfigPrecheck)
+router.post('/period-config/scene-adapt', authenticate, requireRole('admin', 'capacity_manager'), capacityController.sceneAdaptiveConfig)
+router.post('/period-config/batch', authenticate, requireRole('admin', 'capacity_manager'), capacityController.batchPeriodConfig)
+router.get('/period-config/trace', authenticate, capacityController.getPeriodConfigTrace)
+
 module.exports = router
