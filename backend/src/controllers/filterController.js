@@ -175,6 +175,58 @@ class FilterController {
     }
   }
 
+  async validateWeightAdjust(req, res, next) {
+    try {
+      const { filterId, targetWeight } = req.body
+      const userId = req.user?.id
+      const result = await filterService.validateWeightAdjust(filterId, targetWeight, userId)
+      res.json(ApiResponse.success(result))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async adjustWeightStep(req, res, next) {
+    try {
+      const { filterId, newWeight, operatorName, reason } = req.body
+      const userId = req.user?.id
+      const result = await filterService.adjustWeightStep(filterId, newWeight, userId, { operatorName, reason })
+      res.json(ApiResponse.success(result, '权重调整成功'))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async batchWeightConfig(req, res, next) {
+    try {
+      const { filterIds, mode, operatorName } = req.body
+      const userId = req.user?.id
+      const result = await filterService.batchWeightConfig(filterIds, mode, userId, { operatorName })
+      res.json(ApiResponse.success(result, '批量权重配置完成'))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async traceWeightHistory(req, res, next) {
+    try {
+      const { filterId } = req.query
+      const result = await filterService.traceWeightHistory(parseInt(String(filterId)))
+      res.json(ApiResponse.success(result))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async getWeightLogList(req, res, next) {
+    try {
+      const result = await filterService.getWeightLogList(req.query)
+      res.json(ApiResponse.page(result.list, result.total, result.page, result.pageSize))
+    } catch (error) {
+      next(error)
+    }
+  }
+
   async delete(req, res, next) {
     try {
       const { id } = req.params

@@ -2112,7 +2112,7 @@ export interface ServerMonitorAlertRecord {
 
 export type FilterFileFormat = 'glsl' | 'json' | 'lut_3d' | 'lut_1d' | 'custom'
 export type FilterStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'published' | 'offline' | 'violation'
-export type FilterEditChangeType = 'create' | 'edit' | 'edit_limited' | 'status_change' | 'status_blocked' | 'batch_submit' | 'trace_verify' | 'batch_status' | 'status_hf_blocked' | 'category_bind' | 'category_adjust' | 'category_migrate' | 'category_unbind' | 'category_auto_correct'
+export type FilterEditChangeType = 'create' | 'edit' | 'edit_limited' | 'status_change' | 'status_blocked' | 'batch_submit' | 'trace_verify' | 'batch_status' | 'status_hf_blocked' | 'category_bind' | 'category_adjust' | 'category_migrate' | 'category_unbind' | 'category_auto_correct' | 'weight_adjust' | 'weight_batch' | 'weight_auto_correct'
 
 export interface FilterEffect {
   id: number
@@ -2153,6 +2153,12 @@ export interface FilterEffect {
   recommendWeight: number
   canUserUse: boolean
   lastStatusChangeOperator: string
+  userRating: number
+  qualityLevel: 'poor' | 'normal' | 'good' | 'excellent'
+  weightChangeCount: number
+  lastWeightChangeAt: string
+  weightRangeMin: number
+  weightRangeMax: number
   publishedAt: string
   offlineAt: string
   createdAt: string
@@ -2219,7 +2225,7 @@ export interface FilterTraceResultItem {
 
 export interface FilterListParams extends PageParams {
   keyword?: string
-  status?: FilterStatus
+  status?: FilterStatus | string
   categoryId?: number
   fileFormat?: FilterFileFormat
   adaptScene?: string
@@ -2337,7 +2343,7 @@ export interface CategoryTraceIssue {
   filterId: number
 }
 
-export interface CategoryTraceResult {
+export interface FilterCategoryTraceResult {
   category: { id: number; name: string }
   filterCount: number
   filters: (FilterEffect & {
@@ -2350,4 +2356,367 @@ export interface CategoryTraceResult {
   mismatchCount: number
   overallValid: boolean
 }
+
+// ================ 滤镜热度权重管理 ================
+
+export type FilterWeightChangeType = 'manual' | 'batch' | 'auto' | 'auto_correct'
+
+export interface FilterWeightLog {
+  id: number
+  filterId: number
+  filterCode: string
+  filterName: string
+  beforeWeight: number
+  afterWeight: number
+  beforeRecommendWeight: number
+  afterRecommendWeight: number
+  useHeatAtAdjust: number
+  userRatingAtAdjust: number
+  qualityLevelAtAdjust: 'poor' | 'normal' | 'good' | 'excellent'
+  changeType: FilterWeightChangeType
+  weightMatchScore: number
+  matchIssues: string[]
+  operatorId: number
+  operatorName: string
+  reason: string
+  batchId: string
+  sortRankBefore: number
+  sortRankAfter: number
+  displayPriorityBefore: string
+  displayPriorityAfter: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface WeightValidateResult {
+  valid: boolean
+  errors: string[]
+  matchPercent: number
+  heatRange: { min: number; max: number }
+  qualityRange: { min: number; max: number; default: number }
+  qualityLevel: string
+  useHeat: number
+  userRating: number
+  suggestedWeight: number
+}
+
+export interface WeightAdjustResult {
+  updated: boolean
+  filter: FilterEffect
+  beforeWeight: number
+  afterWeight: number
+  rankChange: number
+  matchScore: number
+  suggestedWeight: number
+}
+
+export interface BatchWeightResult {
+  total: number
+  success: { id: number; filterCode: string; name: string; beforeWeight: number; afterWeight: number; qualityLevel: string; useHeat: number; matchScore: number }[]
+  failed: { id: number; reason: string }[]
+  filtered: { id: number; filterCode: string; name: string; reason: string; qualityLevel: string; useHeat: number; suggestedWeight: number }[]
+  batchId: string
+  excellentCount: number
+  goodCount: number
+  normalCount: number
+  poorCount: number
+}
+
+export interface WeightTraceResult {
+  filter: FilterEffect
+  weightLogs: FilterWeightLog[]
+  totalAdjustments: number
+  avgMatchScore: number
+  virtualHighCount: number
+  mismatchCount: number
+  overallValid: boolean
+  issues: CategoryTraceIssue[]
+  currentWeight: number
+  currentRecommend: number
+  weightChangeCount: number
+}
+
+// ================ 作品精选收录管理 ================
+
+export type FeaturedStatus = 'pending_verify' | 'verified' | 'featured' | 'removed' | 'rejected'
+export type FeaturedLevel = 'normal' | 'silver' | 'gold' | 'platinum' | 'diamond'
+export type DisplayPosition = 'home_banner' | 'home_recommend' | 'category_top' | 'special_zone' | 'editor_pick' | 'hot_list'
+
+export type FeaturedOperationType =
+  | 'pre_validate'
+  | 'verify_pass'
+  | 'verify_reject'
+  | 'featured'
+  | 'adjust_weight'
+  | 'adjust_position'
+  | 'adjust_level'
+  | 'cancel_featured'
+  | 'batch_featured'
+  | 'batch_cancel'
+  | 'trace_verify'
+  | 'auto_expire'
+  | 'compliance_recheck'
+  | 'quality_recheck'
+
+export type FeaturedLogResult = 'success' | 'fail' | 'warning' | 'blocked' | 'filtered'
+
+export interface FeaturedWork {
+  id: number
+  featuredCode: string
+  resourceId: number
+  resourceTitle: string
+  resourceType: 'image' | 'video' | 'audio' | 'template'
+  coverUrl: string
+  authorId: number
+  authorName: string
+  categoryId: number
+  categoryName: string
+  status: FeaturedStatus
+  featuredLevel: FeaturedLevel
+  displayWeight: number
+  displayPosition: DisplayPosition | null
+  featuredTags: string[]
+  qualityScore: number
+  originalScore: number
+  resolutionScore: number
+  complianceScore: number
+  overallScore: number
+  verifyReason: string
+  verifyOperatorId: number
+  verifyOperatorName: string
+  verifyTime: string
+  featuredOperatorId: number
+  featuredOperatorName: string
+  featuredTime: string
+  removeReason: string
+  removeOperatorId: number
+  removeOperatorName: string
+  removeTime: string
+  viewCount: number
+  clickCount: number
+  likeCountInZone: number
+  shareCount: number
+  collectionCount: number
+  isOriginal: boolean
+  originalProof: string
+  hasViolation: boolean
+  violationDetails: any
+  accountStatusNormal: boolean
+  accountStatusReason: string
+  heatAtFeatured: number
+  likeAtFeatured: number
+  viewAtFeatured: number
+  expireAt: string
+  remark: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FeaturedResourceItem extends ImageResource {
+  isFeatured: boolean
+  featuredStatus: FeaturedStatus | null
+  featuredLevel: FeaturedLevel | null
+  featuredWeight: number | null
+}
+
+export interface FeaturedPreValidateChecks {
+  status: { valid: boolean; status: string }
+  violation: { hasViolation: boolean; violationCount: number; details: any }
+  quality: { resolutionScore: number; qualityScore: number }
+  original: { score: number }
+  compliance: { score: number }
+  account: { normal: boolean; status: string; reason: string | null }
+  overall: { score: number; threshold: number }
+}
+
+export interface FeaturedPreValidateResult {
+  valid: boolean
+  blocked: boolean
+  errors: string[]
+  warnings: string[]
+  checkResults: FeaturedPreValidateChecks
+  resource: ImageResource
+  suggestedLevel: FeaturedLevel
+  suggestedWeight: number
+}
+
+export interface FeaturedWorkLog {
+  id: number
+  featuredId: number
+  featuredCode: string
+  resourceId: number
+  resourceTitle: string
+  resourceType: 'image' | 'video' | 'audio' | 'template'
+  operationType: FeaturedOperationType
+  beforeStatus: string
+  afterStatus: string
+  beforeWeight: number
+  afterWeight: number
+  beforeLevel: string
+  afterLevel: string
+  beforePosition: string
+  afterPosition: string
+  changeFields: string[]
+  beforeData: any
+  afterData: any
+  reason: string
+  verifyBasis: any
+  validationResult: any
+  operatorId: number
+  operatorName: string
+  operatorRole: string
+  ip: string
+  batchId: string
+  step: number
+  duration: number
+  result: FeaturedLogResult
+  failReason: string
+  warnings: string[]
+  traceId: string
+  riskLevel: 'none' | 'low' | 'medium' | 'high' | 'critical'
+  recheckIssues: any
+  createdAt: string
+  updatedAt: string
+}
+
+export interface BatchFeatureResult {
+  batchId: string
+  total: number
+  success: {
+    id: number
+    featuredId: number
+    featuredCode: string
+    title: string
+    featuredLevel: FeaturedLevel
+    overallScore: number
+  }[]
+  filtered: { id: number; title: string; reason: string }[]
+  failed: { id: number; reason: string }[]
+  warnings: { id: number; warnings: string[] }[]
+}
+
+export interface BatchCancelResult {
+  batchId: string
+  total: number
+  success: { id: number; title: string }[]
+  failed: { id: number; reason: string }[]
+  filtered: { id: number; title: string; reason: string }[]
+}
+
+export interface FeaturedRecheckIssue {
+  type: string
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  message: string
+  details?: any
+  threshold?: number
+  currentScore?: number
+}
+
+export interface FeaturedTraceResult {
+  featured: FeaturedWork
+  operationLogs: FeaturedWorkLog[]
+  traceInfo: {
+    traceTime: string
+    featuredCode: string
+    featuredAt: string
+    featuredBy: string
+    verifiedAt: string
+    verifiedBy: string
+    verifyBasis: string
+  }
+  recheckResult: {
+    totalIssues: number
+    criticalCount: number
+    highCount: number
+    mediumCount: number
+    violationIssueCount: number
+    accountIssueCount: number
+    qualityIssueCount: number
+    overallPass: boolean
+    needReview: boolean
+    issues: FeaturedRecheckIssue[]
+  }
+}
+
+export interface FeaturedStatusOverview {
+  total: number
+  statusCounts: Record<FeaturedStatus, number>
+  featuredCount: number
+  verifiedCount: number
+  pendingCount: number
+  removedCount: number
+  rejectedCount: number
+  levelCounts: Record<FeaturedLevel, number>
+  positionCounts: Record<string, number>
+  avgOverallScore: number
+  featuredRate: number
+}
+
+export interface FeaturedResourceListParams extends PageParams {
+  keyword?: string
+  fileType?: string
+  categoryId?: number
+  authorId?: number
+  originalOnly?: boolean
+  minLikeCount?: number
+  minViewCount?: number
+  noViolation?: boolean
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
+}
+
+export interface FeaturedListParams extends PageParams {
+  keyword?: string
+  status?: FeaturedStatus
+  featuredLevel?: FeaturedLevel
+  displayPosition?: DisplayPosition
+  resourceType?: string
+  categoryId?: number
+  authorId?: number
+  minOverallScore?: number
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
+}
+
+export interface FeaturedLogListParams extends PageParams {
+  featuredId?: number
+  resourceId?: number
+  operationType?: FeaturedOperationType
+  operatorId?: number
+  batchId?: string
+  result?: FeaturedLogResult
+  riskLevel?: string
+}
+
+export interface FeaturedVerifyParams {
+  pass: boolean
+  reason?: string
+  verifyBasis?: Record<string, any>
+  operatorName?: string
+}
+
+export interface FeaturedCancelParams {
+  reason?: string
+  operatorName?: string
+}
+
+export interface FeaturedWeightParams {
+  newWeight: number
+  reason?: string
+  operatorName?: string
+}
+
+export interface FeaturedPositionParams {
+  newPosition: DisplayPosition | null
+  reason?: string
+  operatorName?: string
+}
+
+export interface FeaturedLevelParams {
+  newLevel: FeaturedLevel
+  displayWeight?: number
+  reason?: string
+  operatorName?: string
+}
+
 

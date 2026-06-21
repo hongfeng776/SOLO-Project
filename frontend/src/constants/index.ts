@@ -903,7 +903,10 @@ export const FILTER_CHANGE_TYPE_LABEL: Record<string, string> = {
   category_adjust: '分类调整',
   category_migrate: '分类迁移',
   category_unbind: '分类解绑',
-  category_auto_correct: '自动纠正'
+  category_auto_correct: '自动纠正',
+  weight_adjust: '权重微调',
+  weight_batch: '批量权重',
+  weight_auto_correct: '权重自动纠正'
 }
 
 export const FILTER_CHANGE_TYPE_TAG_TYPE: Record<string, string> = {
@@ -920,7 +923,10 @@ export const FILTER_CHANGE_TYPE_TAG_TYPE: Record<string, string> = {
   category_adjust: 'primary',
   category_migrate: 'warning',
   category_unbind: 'info',
-  category_auto_correct: 'success'
+  category_auto_correct: 'success',
+  weight_adjust: 'primary',
+  weight_batch: 'warning',
+  weight_auto_correct: 'success'
 }
 
 export const FILTER_TRACE_SEVERITY_TAG_TYPE: Record<string, string> = {
@@ -1002,4 +1008,49 @@ export const FILTER_ADAPT_SCORE_LEVEL = (score: number): { label: string; type: 
   if (score >= 60) return { label: '良好', type: 'primary' }
   if (score >= 40) return { label: '一般', type: 'warning' }
   return { label: '不匹配', type: 'danger' }
+}
+
+// ================ 滤镜热度权重管理 ================
+
+export const FILTER_QUALITY_LEVEL_LABEL: Record<string, string> = {
+  poor: '低效',
+  normal: '普通',
+  good: '优质',
+  excellent: '优秀'
+}
+
+export const FILTER_QUALITY_LEVEL_TAG_TYPE: Record<string, string> = {
+  poor: 'info',
+  normal: 'primary',
+  good: 'success',
+  excellent: 'danger'
+}
+
+export const FILTER_QUALITY_RANGES: Record<string, { min: number; max: number; default: number }> = {
+  poor: { min: 0, max: 100, default: 30 },
+  normal: { min: 100, max: 500, default: 200 },
+  good: { min: 500, max: 1500, default: 800 },
+  excellent: { min: 1500, max: 9999, default: 3000 }
+}
+
+export const FILTER_WEIGHT_CHANGE_TYPE_LABEL: Record<string, string> = {
+  manual: '手动调整',
+  batch: '批量配置',
+  auto: '自动计算',
+  auto_correct: '自动纠正'
+}
+
+export const FILTER_BATCH_WEIGHT_MODES = [
+  { value: 'by_heat', label: '按热度匹配' },
+  { value: 'by_quality', label: '按质量等级' },
+  { value: 'by_newest', label: '优先新滤镜' },
+  { value: 'auto', label: '智能综合配置' }
+]
+
+export const WEIGHT_GLOBAL_MIN = 0
+export const WEIGHT_GLOBAL_MAX = 9999
+
+export const formatWeightThousands = (n: number): string => {
+  if (n === undefined || n === null) return '0'
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }

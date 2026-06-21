@@ -64,6 +64,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '特效滤镜', icon: 'Brush' }
       },
       {
+        path: 'featured-work',
+        name: 'FeaturedWork',
+        component: () => import('@/views/featured-work/index.vue'),
+        meta: { title: '作品精选', icon: 'Star', roles: ['super_admin', 'admin', 'operator'] }
+      },
+      {
         path: 'audit',
         name: 'Audit',
         component: () => import('@/views/audit/index.vue'),

@@ -1,0 +1,22 @@
+const express = require('express')
+const router = express.Router()
+const featuredWorkController = require('../controllers/featuredWorkController')
+const { authMiddleware, roleMiddleware } = require('../middlewares/auth')
+
+router.get('/resources', authMiddleware(), featuredWorkController.getResourceListForFeatured)
+router.get('/overview', authMiddleware(), featuredWorkController.getStatusOverview)
+router.post('/validate', authMiddleware(), featuredWorkController.preValidate)
+router.post('/feature', authMiddleware(), roleMiddleware('super_admin', 'admin', 'operator'), featuredWorkController.createWithValidation)
+router.post('/batch-feature', authMiddleware(), roleMiddleware('super_admin', 'admin', 'operator'), featuredWorkController.batchFeature)
+router.post('/batch-cancel', authMiddleware(), roleMiddleware('super_admin', 'admin', 'operator'), featuredWorkController.batchCancel)
+router.get('/logs', authMiddleware(), featuredWorkController.getLogs)
+router.get('/', authMiddleware(), featuredWorkController.getFeaturedList)
+router.get('/:id', authMiddleware(), featuredWorkController.getDetail)
+router.get('/:id/trace', authMiddleware(), featuredWorkController.traceFeatured)
+router.put('/:id/verify', authMiddleware(), roleMiddleware('super_admin', 'admin', 'operator'), featuredWorkController.verify)
+router.put('/:id/cancel', authMiddleware(), roleMiddleware('super_admin', 'admin', 'operator'), featuredWorkController.cancelFeatured)
+router.put('/:id/weight', authMiddleware(), roleMiddleware('super_admin', 'admin', 'operator'), featuredWorkController.adjustWeight)
+router.put('/:id/position', authMiddleware(), roleMiddleware('super_admin', 'admin', 'operator'), featuredWorkController.adjustPosition)
+router.put('/:id/level', authMiddleware(), roleMiddleware('super_admin', 'admin', 'operator'), featuredWorkController.adjustLevel)
+
+module.exports = router

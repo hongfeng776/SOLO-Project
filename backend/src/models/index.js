@@ -30,6 +30,9 @@ const ServerMonitor = require('./ServerMonitor')
 const FilterEffect = require('./FilterEffect')
 const FilterEditLog = require('./FilterEditLog')
 const FilterCategoryAdapt = require('./FilterCategoryAdapt')
+const FilterWeightLog = require('./FilterWeightLog')
+const FeaturedWork = require('./FeaturedWork')
+const FeaturedWorkLog = require('./FeaturedWorkLog')
 
 User.hasMany(Resource, { foreignKey: 'authorId', as: 'resources' })
 Resource.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
@@ -129,6 +132,16 @@ FilterEffect.hasMany(FilterCategoryAdapt, { foreignKey: 'filterId', as: 'categor
 FilterCategoryAdapt.belongsTo(FilterEffect, { foreignKey: 'filterId', as: 'filter' })
 Category.hasMany(FilterCategoryAdapt, { foreignKey: 'categoryId', as: 'filterAdapts' })
 FilterCategoryAdapt.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' })
+FilterEffect.hasMany(FilterWeightLog, { foreignKey: 'filterId', as: 'weightLogs' })
+FilterWeightLog.belongsTo(FilterEffect, { foreignKey: 'filterId', as: 'filter' })
+
+Resource.hasOne(FeaturedWork, { foreignKey: 'resourceId', as: 'featuredWork' })
+FeaturedWork.belongsTo(Resource, { foreignKey: 'resourceId', as: 'resource' })
+FeaturedWork.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
+FeaturedWork.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' })
+FeaturedWork.hasMany(FeaturedWorkLog, { foreignKey: 'featuredId', as: 'operationLogs' })
+FeaturedWorkLog.belongsTo(FeaturedWork, { foreignKey: 'featuredId', as: 'featuredWork' })
+FeaturedWorkLog.belongsTo(Resource, { foreignKey: 'resourceId', as: 'resource' })
 
 module.exports = {
   User,
@@ -162,5 +175,8 @@ module.exports = {
   ServerMonitor,
   FilterEffect,
   FilterEditLog,
-  FilterCategoryAdapt
+  FilterCategoryAdapt,
+  FilterWeightLog,
+  FeaturedWork,
+  FeaturedWorkLog
 }

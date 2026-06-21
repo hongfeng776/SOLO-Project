@@ -615,7 +615,7 @@
             </el-table-column>
             <el-table-column label="操作" width="220" align="center" fixed="right">
               <template #default="{ row }">
-                <el-dropdown trigger="click" @command="(cmd) => handleChangeStatus(row, cmd)">
+                <el-dropdown trigger="click" @command="(cmd: string) => handleChangeStatus(row, cmd as FilterStatus)">
                   <el-button size="small" type="primary" link :disabled="row.status === 'violation'">
                     变更状态<el-icon class="el-icon--right"><Refresh /></el-icon>
                   </el-button>
@@ -897,6 +897,275 @@
           </div>
 
           <EmptyState v-else-if="catTraceSearched && !catTraceLoading" description="请选择分类进行溯源" />
+        </div>
+      </el-tab-pane>
+
+      <el-tab-pane label="权重管理" name="weight">
+        <div class="filter-card card-wrapper">
+          <div class="card-title">滤镜热度权重管理</div>
+
+          <div class="weight-toolbar">
+            <el-form :inline="true" :model="weightFilterForm" class="filter-form">
+              <el-form-item label="关键词">
+                <el-input v-model="weightFilterForm.keyword" placeholder="名称/编码" clearable style="width: 180px" />
+              </el-form-item>
+              <el-form-item label="质量等级">
+                <el-select v-model="weightFilterForm.qualityLevel" placeholder="全部" clearable style="width: 120px">
+                  <el-option v-for="(label, key) in FILTER_QUALITY_LEVEL_LABEL" :key="key" :label="label" :value="key" />
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" :icon="Search" @click="fetchWeightList">搜索</el-button>
+                <el-button :icon="Refresh" @click="handleResetWeightFilter">重置</el-button>
+              </el-form-item>
+            </el-form>
+            <div class="batch-toolbar-right">
+              <el-select
+                v-model="weightBatchMode"
+                placeholder="批量配置模式"
+                style="width: 150px; margin-right: 10px"
+                :disabled="weightSelectedIds.length === 0"
+              >
+                <el-option v-for="item in FILTER_BATCH_WEIGHT_MODES" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
+              <el-button
+                type="warning"
+                class="weight-batch-btn"
+                :disabled="!weightBatchMode || weightSelectedIds.length === 0"
+                @click="handleBatchWeightConfig"
+                :loading="weightBatchLoading"
+              >
+                批量配置({{ weightSelectedIds.length }})
+              </el-button>
+            </div>
+          </div>
+
+          <div class="weight-batch-progress" v-if="weightBatchProgress.active">
+            <el-progress :percentage="weightBatchProgress.percentage" :status="weightBatchProgress.status" :stroke-width="18" :text-inside="true" />
+            <p class="progress-text">{{ weightBatchProgress.message }}</p>
+          </div>
+
+          <el-table
+            ref="weightTableRef"
+            :data="weightList"
+            :loading="weightLoading"
+            border
+            stripe
+            highlight-current-row
+            class="weight-table weight-slide-table"
+            @selection-change="handleWeightSelectionChange"
+            @row-dblclick="handleWeightRowDblClick"
+            :row-class-name="handleWeightRowClass"
+          >
+            <el-table-column type="selection" width="45" align="center" />
+            <el-table-column prop="filterCode" label="滤镜编码" width="150" show-overflow-tooltip />
+            <el-table-column prop="name" label="名称" min-width="140" show-overflow-tooltip />
+            <el-table-column label="质量" width="80" align="center">
+              <template #default="{ row }">
+                <el-tag :type="FILTER_QUALITY_LEVEL_TAG_TYPE[row.qualityLevel]" size="small">
+                  {{ FILTER_QUALITY_LEVEL_LABEL[row.qualityLevel] }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="热度" width="80" align="center">
+              <template #default="{ row }">{{ formatWeightThousands(row.useHeat || 0) }}</template>
+            </el-table-column>
+            <el-table-column label="好评率" width="85" align="center">
+              <template #default="{ row }">{{ ((row.userRating || 0) * 100).toFixed(0) }}%</template>
+            </el-table-column>
+            <el-table-column label="当前权重" width="130" align="center" class-name="weight-col">
+              <template #default="{ row }">
+                <span v-if="editingWeightId !== row.id" class="weight-text">
+                  <strong>{{ formatWeightThousands(row.sortWeight || 0) }}</strong>
+                  <span class="weight-sub">/推荐{{ row.recommendWeight || 0 }}</span>
+                </span>
+                <el-input-number
+                  v-else
+                  v-model="editingWeightValue"
+                  :min="WEIGHT_GLOBAL_MIN"
+                  :max="WEIGHT_GLOBAL_MAX"
+                  size="small"
+                  :class="{ 'weight-input-error': weightInputError }"
+                  @focus="weightInputError = false"
+                  @blur="handleWeightInputBlur(row)"
+                  @keyup.enter="handleWeightInputBlur(row)"
+                  class="weight-input-focus"
+                  ref="weightInputRef"
+                />
+              </template>
+            </el-table-column>
+            <el-table-column label="允许区间" width="120" align="center">
+              <template #default="{ row }">
+                <span class="interval-text">
+                  {{ FILTER_QUALITY_RANGES[row.qualityLevel]?.min || 0 }}
+                  -
+                  {{ FILTER_QUALITY_RANGES[row.qualityLevel]?.max || 9999 }}
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column label="调整次数" width="80" align="center">
+              <template #default="{ row }">{{ row.weightChangeCount || 0 }}</template>
+            </el-table-column>
+            <el-table-column label="最近调整" width="150" align="center">
+              <template #default="{ row }">{{ row.lastWeightChangeAt ? formatDate(row.lastWeightChangeAt) : '-' }}</template>
+            </el-table-column>
+            <el-table-column label="操作" width="180" align="center" fixed="right">
+              <template #default="{ row }">
+                <el-button
+                  v-if="editingWeightId !== row.id"
+                  size="small"
+                  type="primary"
+                  link
+                  @click="handleOpenWeightDialog(row)"
+                >
+                  编辑权重
+                </el-button>
+                <el-button
+                  v-else
+                  size="small"
+                  type="success"
+                  link
+                  @click="handleSaveWeight(row)"
+                >
+                  保存
+                </el-button>
+                <el-button
+                  size="small"
+                  type="info"
+                  link
+                  @click="handleWeightTrace(row)"
+                >
+                  溯源
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <div class="status-pagination-row">
+            <el-pagination
+              v-model:current-page="weightPage"
+              v-model:page-size="weightPageSize"
+              :page-sizes="[10, 20, 50]"
+              :total="weightTotal"
+              layout="total, sizes, prev, pager, next"
+              @size-change="fetchWeightList"
+              @current-change="fetchWeightList"
+            />
+          </div>
+        </div>
+
+        <div class="filter-card card-wrapper mt-15">
+          <div class="card-title">权重调整溯源校验</div>
+          <el-form :inline="true" class="filter-form">
+            <el-form-item label="选择滤镜">
+              <el-select v-model="weightTraceFilterId" filterable placeholder="选择滤镜溯源" style="width: 240px">
+                <el-option
+                  v-for="f in weightList"
+                  :key="f.id"
+                  :label="`${f.filterCode} - ${f.name}`"
+                  :value="f.id"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleWeightTraceById" :loading="weightTraceLoading">溯源查询</el-button>
+            </el-form-item>
+          </el-form>
+
+          <div v-if="weightTraceLoading" class="skeleton-container">
+            <div v-for="i in 3" :key="i" class="skeleton-item">
+              <div class="skeleton-line long" />
+              <div class="skeleton-line medium" />
+              <div class="skeleton-line short" />
+            </div>
+          </div>
+
+          <div v-else-if="weightTraceResult" class="weight-trace-result">
+            <div class="trace-summary-row">
+              <el-descriptions :column="5" border size="small">
+                <el-descriptions-item label="滤镜">{{ weightTraceResult.filter.name }}</el-descriptions-item>
+                <el-descriptions-item label="当前权重">
+                  <strong class="weight-highlight">{{ formatWeightThousands(weightTraceResult.currentWeight) }}</strong>
+                </el-descriptions-item>
+                <el-descriptions-item label="调整次数">{{ weightTraceResult.weightChangeCount }}</el-descriptions-item>
+                <el-descriptions-item label="平均匹配度">
+                  <el-tag
+                    :type="weightTraceResult.avgMatchScore >= 80 ? 'success' : weightTraceResult.avgMatchScore >= 60 ? 'primary' : 'danger'"
+                    size="small"
+                  >
+                    {{ weightTraceResult.avgMatchScore }}%
+                  </el-tag>
+                </el-descriptions-item>
+                <el-descriptions-item label="整体">
+                  <el-tag :type="weightTraceResult.overallValid ? 'success' : 'danger'" size="small" effect="dark">
+                    {{ weightTraceResult.overallValid ? '合理' : '存在异常' }}
+                  </el-tag>
+                </el-descriptions-item>
+              </el-descriptions>
+            </div>
+
+            <div v-if="weightTraceResult.issues.length" class="trace-issues">
+              <div class="issues-title">检出问题：</div>
+              <div v-for="(issue, i) in weightTraceResult.issues" :key="i" class="issue-item">
+                <el-tag :type="FILTER_TRACE_SEVERITY_TAG_TYPE[issue.severity]" size="small">{{ issue.severity }}</el-tag>
+                <span class="issue-message">{{ issue.message }}</span>
+              </div>
+            </div>
+
+            <el-table :data="weightTraceResult.weightLogs" size="small" border max-height="380">
+              <el-table-column label="类型" width="90" align="center">
+                <template #default="{ row }">
+                  <el-tag size="small">{{ FILTER_WEIGHT_CHANGE_TYPE_LABEL[row.changeType] }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="权重变化" width="150" align="center">
+                <template #default="{ row }">
+                  <span class="weight-change-text">
+                    {{ formatWeightThousands(row.beforeWeight) }}
+                    <el-icon class="arrow-icon"><Right /></el-icon>
+                    <strong>{{ formatWeightThousands(row.afterWeight) }}</strong>
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column label="排序变化" width="120" align="center">
+                <template #default="{ row }">
+                  <span class="rank-change-text">
+                    #{{ row.sortRankBefore }}
+                    <el-icon class="arrow-icon"><Right /></el-icon>
+                    #{{ row.sortRankAfter }}
+                    <el-tag
+                      v-if="row.sortRankBefore !== row.sortRankAfter"
+                      size="small"
+                      :type="row.sortRankAfter < row.sortRankBefore ? 'success' : 'warning'"
+                      effect="plain"
+                    >
+                      {{ row.sortRankAfter < row.sortRankBefore ? '↑' : '↓' }}{{ Math.abs(row.sortRankBefore - row.sortRankAfter) }}
+                    </el-tag>
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column label="热度" width="65" align="center">
+                <template #default="{ row }">{{ row.useHeatAtAdjust }}</template>
+              </el-table-column>
+              <el-table-column label="匹配度" width="80" align="center">
+                <template #default="{ row }">
+                  <el-tag
+                    :type="row.weightMatchScore >= 80 ? 'success' : row.weightMatchScore >= 60 ? 'primary' : row.weightMatchScore >= 40 ? 'warning' : 'danger'"
+                    size="small"
+                  >
+                    {{ row.weightMatchScore }}%
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="operatorName" label="操作人" width="90" align="center" />
+              <el-table-column prop="reason" label="原因" min-width="140" show-overflow-tooltip />
+              <el-table-column label="时间" width="150">
+                <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+              </el-table-column>
+            </el-table>
+          </div>
+
+          <EmptyState v-else-if="weightTraceSearched && !weightTraceLoading" description="请选择滤镜进行溯源" />
         </div>
       </el-tab-pane>
     </el-tabs>
@@ -1212,6 +1481,154 @@
       </template>
     </el-dialog>
 
+    <el-dialog
+      v-model="weightAdjustDialogVisible"
+      title="滤镜权重微调"
+      width="520px"
+      class="dialog-weight"
+    >
+      <el-form
+        ref="weightAdjustFormRef"
+        :model="weightAdjustForm"
+        :rules="weightAdjustRules"
+        label-width="100px"
+      >
+        <el-descriptions :column="2" border size="small" class="mb-15">
+          <el-descriptions-item label="滤镜">{{ weightAdjustForm.filterName }}</el-descriptions-item>
+          <el-descriptions-item label="质量">
+            <el-tag :type="FILTER_QUALITY_LEVEL_TAG_TYPE[weightAdjustForm.qualityLevel]" size="small">
+              {{ FILTER_QUALITY_LEVEL_LABEL[weightAdjustForm.qualityLevel] }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="热度">{{ formatWeightThousands(weightAdjustForm.useHeat || 0) }}</el-descriptions-item>
+          <el-descriptions-item label="好评率">{{ ((weightAdjustForm.userRating || 0) * 100).toFixed(0) }}%</el-descriptions-item>
+          <el-descriptions-item label="当前权重">
+            <strong class="weight-highlight">{{ formatWeightThousands(weightAdjustForm.currentWeight || 0) }}</strong>
+          </el-descriptions-item>
+          <el-descriptions-item label="允许区间">
+            <span class="interval-text">
+              {{ weightValidateResult?.qualityRange?.min || 0 }}
+              -
+              {{ weightValidateResult?.qualityRange?.max || 9999 }}
+            </span>
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <el-form-item label="新权重" prop="newWeight">
+          <el-input-number
+            v-model="weightAdjustForm.newWeight"
+            :min="WEIGHT_GLOBAL_MIN"
+            :max="WEIGHT_GLOBAL_MAX"
+            size="large"
+            class="weight-input-focus"
+            @focus="handleWeightAdjustFocus"
+            @change="handleWeightAdjustChange"
+            :class="{ 'weight-input-error': weightValidateResult && !weightValidateResult.valid }"
+          />
+          <div v-if="weightValidateResult" class="weight-validate-hint" :class="{ error: !weightValidateResult.valid }">
+            <template v-if="weightValidateResult.valid">
+              ✅ 热度匹配度 <strong>{{ weightValidateResult.matchPercent }}%</strong>，
+              建议权重：<strong>{{ weightValidateResult.suggestedWeight }}</strong>
+            </template>
+            <template v-else>
+              <div v-for="(msg, i) in weightValidateResult.errors" :key="i" class="validate-error-item">❌ {{ msg }}</div>
+            </template>
+          </div>
+        </el-form-item>
+
+        <el-form-item label="调整原因" prop="reason">
+          <el-input v-model="weightAdjustForm.reason" type="textarea" :rows="2" placeholder="请输入调整原因" />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="weightAdjustDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :disabled="!weightValidateResult?.valid || weightAdjustSubmitting"
+          :loading="weightAdjustSubmitting"
+          @click="submitWeightAdjust"
+        >
+          确认调整
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="weightBatchResultVisible"
+      title="批量权重配置结果"
+      width="700px"
+      class="dialog-weight-batch"
+    >
+      <el-descriptions :column="4" border size="small" v-if="weightBatchResult">
+        <el-descriptions-item label="总数">{{ weightBatchResult.total }}</el-descriptions-item>
+        <el-descriptions-item label="成功"><el-tag type="success">{{ weightBatchResult.success.length }}</el-tag></el-descriptions-item>
+        <el-descriptions-item label="失败"><el-tag type="danger">{{ weightBatchResult.failed.length }}</el-tag></el-descriptions-item>
+        <el-descriptions-item label="过滤"><el-tag type="info">{{ weightBatchResult.filtered.length }}</el-tag></el-descriptions-item>
+        <el-descriptions-item label="优秀"><el-tag type="danger">{{ weightBatchResult.excellentCount }}</el-tag></el-descriptions-item>
+        <el-descriptions-item label="优质"><el-tag type="success">{{ weightBatchResult.goodCount }}</el-tag></el-descriptions-item>
+        <el-descriptions-item label="普通"><el-tag type="primary">{{ weightBatchResult.normalCount }}</el-tag></el-descriptions-item>
+        <el-descriptions-item label="低效"><el-tag type="info">{{ weightBatchResult.poorCount }}</el-tag></el-descriptions-item>
+      </el-descriptions>
+
+      <el-tabs v-if="weightBatchResult">
+        <el-tab-pane label="成功" name="success">
+          <el-table :data="weightBatchResult.success" size="small" border class="mt-10" max-height="260">
+            <el-table-column prop="filterCode" label="编码" width="140" />
+            <el-table-column prop="name" label="名称" min-width="120" show-overflow-tooltip />
+            <el-table-column label="质量" width="70" align="center">
+              <template #default="{ row }">
+                <el-tag :type="FILTER_QUALITY_LEVEL_TAG_TYPE[row.qualityLevel]" size="small">
+                  {{ FILTER_QUALITY_LEVEL_LABEL[row.qualityLevel] }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="权重变化" width="160" align="center">
+              <template #default="{ row }">
+                <span class="weight-change-text">
+                  {{ formatWeightThousands(row.beforeWeight) }}
+                  <el-icon class="arrow-icon"><Right /></el-icon>
+                  <strong class="weight-highlight">{{ formatWeightThousands(row.afterWeight) }}</strong>
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column label="匹配度" width="70" align="center">
+              <template #default="{ row }">{{ row.matchScore }}%</template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+
+        <el-tab-pane label="失败" name="failed">
+          <el-table :data="weightBatchResult.failed" size="small" border class="mt-10" max-height="260">
+            <el-table-column prop="id" label="滤镜ID" width="100" />
+            <el-table-column prop="reason" label="原因" />
+          </el-table>
+        </el-tab-pane>
+
+        <el-tab-pane label="过滤" name="filtered">
+          <el-table :data="weightBatchResult.filtered" size="small" border class="mt-10" max-height="260">
+            <el-table-column prop="filterCode" label="编码" width="140" />
+            <el-table-column prop="name" label="名称" min-width="120" show-overflow-tooltip />
+            <el-table-column label="质量" width="70" align="center">
+              <template #default="{ row }">
+                <el-tag :type="FILTER_QUALITY_LEVEL_TAG_TYPE[row.qualityLevel]" size="small">
+                  {{ FILTER_QUALITY_LEVEL_LABEL[row.qualityLevel] }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="reason" label="原因" min-width="140" show-overflow-tooltip />
+            <el-table-column label="建议权重" width="100" align="center">
+              <template #default="{ row }">{{ formatWeightThousands(row.suggestedWeight) }}</template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+      </el-tabs>
+
+      <template #footer>
+        <el-button @click="weightBatchResultVisible = false; fetchWeightList()">关闭</el-button>
+      </template>
+    </el-dialog>
+
     <el-dialog v-model="adaptRecordVisible" title="适配记录" width="700px">
       <el-table :data="adaptRecordList" size="small" border max-height="400">
         <el-table-column label="类型" width="90" align="center">
@@ -1242,8 +1659,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
-import { Search, Refresh, UploadFilled } from '@element-plus/icons-vue'
+import { ref, reactive, onMounted, watch, nextTick } from 'vue'
+import { Search, Refresh, UploadFilled, Right } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { DataTable, EmptyState } from '@/components/business'
 import {
@@ -1262,11 +1679,18 @@ import {
   FILTER_BATCH_STATUS_OPTIONS,
   FILTER_STATUS_TRANSITIONS,
   FILTER_MUTEX_CATEGORIES,
-  FILTER_MUTEX_CATEGORY_LABELS,
   FILTER_CATEGORY_SCENE_RULES,
   FILTER_CATEGORY_BIND_TYPE_LABEL,
   FILTER_CATEGORY_CHANGE_TYPE_LABEL,
-  FILTER_ADAPT_SCORE_LEVEL
+  FILTER_ADAPT_SCORE_LEVEL,
+  FILTER_QUALITY_LEVEL_LABEL,
+  FILTER_QUALITY_LEVEL_TAG_TYPE,
+  FILTER_QUALITY_RANGES,
+  FILTER_WEIGHT_CHANGE_TYPE_LABEL,
+  FILTER_BATCH_WEIGHT_MODES,
+  WEIGHT_GLOBAL_MIN,
+  WEIGHT_GLOBAL_MAX,
+  formatWeightThousands
 } from '@/constants'
 import {
   getFilterList,
@@ -1284,21 +1708,25 @@ import {
   adjustCategoryStep,
   batchCategoryMigrate,
   traceCategoryAdapt,
-  getCategoryAdaptList,
-  deleteFilter
+  validateWeightAdjust,
+  adjustWeightStep,
+  batchWeightConfig,
+  traceWeightHistory
 } from '@/api/filter'
 import type {
   FilterEffect,
   FilterEditLog,
   FilterTraceResultItem,
   FilterStatusOverview,
-  FilterStatusUpdateResult,
+  FilterStatus,
   BatchStatusResult,
   CategoryValidateResult,
-  CategoryAdjustResult,
   BatchCategoryMigrateResult,
-  CategoryTraceResult,
-  FilterCategoryAdapt
+  FilterCategoryTraceResult,
+  FilterCategoryAdapt,
+  WeightValidateResult,
+  BatchWeightResult,
+  WeightTraceResult
 } from '@/types'
 
 const activeTab = ref('entry')
@@ -1716,7 +2144,7 @@ const statusConfirmInfo = ref<{
   filterId?: number
   filterCode?: string
   filterName?: string
-  targetStatus?: string
+  targetStatus?: FilterStatus
   needSecondConfirm?: boolean
   inUseCount?: number
   useHeat?: number
@@ -1734,7 +2162,7 @@ const hfBlockedInfo = ref<{
 } | null>(null)
 
 const pendingStatusChangeQueue = reactive<Record<number, {
-  targetStatus: string
+  targetStatus: FilterStatus
   skipSecondConfirm: boolean
   operatorName: string
   violationReason: string
@@ -1802,7 +2230,7 @@ const checkRowSelectable = (row: FilterEffect) => {
   return row.status !== 'violation'
 }
 
-const handleStatusRowStyle = ({ row, rowIndex }: { row: FilterEffect; rowIndex: number }) => {
+const handleStatusRowStyle = ({ row }: { row: FilterEffect; rowIndex: number }) => {
   const isSelected = statusSelectedIds.value.includes(row.id)
   if (isSelected) {
     return { background: 'rgba(var(--el-color-primary-rgb), 0.12)' }
@@ -1813,7 +2241,7 @@ const handleStatusRowStyle = ({ row, rowIndex }: { row: FilterEffect; rowIndex: 
   return {}
 }
 
-const handleChangeStatus = async (row: FilterEffect, targetStatus: string) => {
+const handleChangeStatus = async (row: FilterEffect, targetStatus: FilterStatus) => {
   if (statusBtnDisabled[row.id]) return
 
   statusBtnDisabled[row.id] = true
@@ -1985,7 +2413,7 @@ const catAdjustPreview = ref<CategoryValidateResult | null>(null)
 const catTraceId = ref<number | undefined>(undefined)
 const catTraceLoading = ref(false)
 const catTraceSearched = ref(false)
-const catTraceResult = ref<CategoryTraceResult | null>(null)
+const catTraceResult = ref<FilterCategoryTraceResult | null>(null)
 
 const adaptRecordVisible = ref(false)
 const adaptRecordList = ref<FilterCategoryAdapt[]>([])
@@ -2170,6 +2598,267 @@ const handleViewAdaptRecords = (row: any) => {
   adaptRecordVisible.value = true
 }
 
+// ================ 滤镜热度权重管理 ================
+
+const weightFilterForm = reactive({ keyword: '', qualityLevel: '' })
+const weightList = ref<FilterEffect[]>([])
+const weightLoading = ref(false)
+const weightPage = ref(1)
+const weightPageSize = ref(20)
+const weightTotal = ref(0)
+const weightTableRef = ref()
+const weightSelectedIds = ref<number[]>([])
+
+const editingWeightId = ref<number | null>(null)
+const editingWeightValue = ref<number>(0)
+const weightInputRef = ref()
+const weightInputError = ref(false)
+const weightChangeFloatRows = ref<Map<number, number>>(new Map())
+
+const weightAdjustDialogVisible = ref(false)
+const weightAdjustFormRef = ref()
+const weightAdjustSubmitting = ref(false)
+const weightAdjustForm = reactive({
+  filterId: 0,
+  filterName: '',
+  qualityLevel: 'normal' as string,
+  useHeat: 0,
+  userRating: 0,
+  currentWeight: 0,
+  newWeight: 0,
+  reason: ''
+})
+const weightAdjustRules = {
+  newWeight: [
+    { required: true, message: '请输入权重值', trigger: 'blur' },
+    { type: 'number', min: WEIGHT_GLOBAL_MIN, max: WEIGHT_GLOBAL_MAX, message: `权重需在 ${WEIGHT_GLOBAL_MIN}-${WEIGHT_GLOBAL_MAX} 之间`, trigger: 'blur' }
+  ],
+  reason: [{ required: true, message: '请输入调整原因', trigger: 'blur' }]
+}
+const weightValidateResult = ref<WeightValidateResult | null>(null)
+
+const weightBatchMode = ref('')
+const weightBatchLoading = ref(false)
+const weightBatchProgress = reactive({ active: false, percentage: 0, status: '', message: '' })
+const weightBatchResult = ref<BatchWeightResult | null>(null)
+const weightBatchResultVisible = ref(false)
+
+const weightTraceFilterId = ref<number | undefined>(undefined)
+const weightTraceLoading = ref(false)
+const weightTraceSearched = ref(false)
+const weightTraceResult = ref<WeightTraceResult | null>(null)
+
+const fetchWeightList = async () => {
+  weightLoading.value = true
+  try {
+    const res = await getFilterList({
+      page: weightPage.value,
+      pageSize: weightPageSize.value,
+      keyword: weightFilterForm.keyword || undefined
+    })
+    let list = res.data.list || []
+    if (weightFilterForm.qualityLevel) {
+      list = list.filter((f: any) => f.qualityLevel === weightFilterForm.qualityLevel)
+    }
+    weightList.value = list
+    weightTotal.value = res.data.total
+  } catch {
+    ElMessage.error('获取权重列表失败')
+  } finally {
+    weightLoading.value = false
+  }
+}
+
+const handleResetWeightFilter = () => {
+  weightFilterForm.keyword = ''
+  weightFilterForm.qualityLevel = ''
+  weightPage.value = 1
+  fetchWeightList()
+}
+
+const handleWeightSelectionChange = (rows: FilterEffect[]) => {
+  weightSelectedIds.value = rows.map(r => r.id)
+}
+
+const handleWeightRowClass = ({ row }: { row: FilterEffect }) => {
+  if (weightChangeFloatRows.value.has(row.id)) return 'weight-row-float'
+  return ''
+}
+
+const handleOpenWeightDialog = async (row: FilterEffect) => {
+  weightAdjustForm.filterId = row.id
+  weightAdjustForm.filterName = row.name
+  weightAdjustForm.qualityLevel = row.qualityLevel || 'normal'
+  weightAdjustForm.useHeat = row.useHeat || 0
+  weightAdjustForm.userRating = row.userRating || 0
+  weightAdjustForm.currentWeight = row.sortWeight || 0
+  weightAdjustForm.newWeight = row.sortWeight || 0
+  weightAdjustForm.reason = ''
+  weightValidateResult.value = null
+  weightAdjustSubmitting.value = false
+  weightAdjustDialogVisible.value = true
+  await nextTick()
+  handleWeightAdjustChange(weightAdjustForm.newWeight)
+}
+
+const handleWeightRowDblClick = (row: FilterEffect) => {
+  handleEditWeight(row)
+}
+
+const handleEditWeight = (row: FilterEffect) => {
+  editingWeightId.value = row.id
+  editingWeightValue.value = row.sortWeight || 0
+  weightInputError.value = false
+  nextTick(() => {
+    weightInputRef.value?.focus?.()
+  })
+}
+
+const handleWeightInputBlur = async (row: FilterEffect) => {
+  if (editingWeightId.value !== row.id) return
+  await handleSaveWeight(row)
+}
+
+const handleSaveWeight = async (row: FilterEffect) => {
+  const targetWeight = editingWeightValue.value
+  if (targetWeight < WEIGHT_GLOBAL_MIN || targetWeight > WEIGHT_GLOBAL_MAX) {
+    weightInputError.value = true
+    return
+  }
+  try {
+    const validateRes = await validateWeightAdjust(row.id, targetWeight)
+    if (!validateRes.data.valid) {
+      weightInputError.value = true
+      ElMessage.warning(validateRes.data.errors[0] || '权重校验失败')
+      return
+    }
+    const reason = `行内微调：由 ${row.sortWeight || 0} 调整为 ${targetWeight}`
+    const res = await adjustWeightStep(row.id, targetWeight, undefined, reason)
+    if (res.data.rankChange !== 0) {
+      weightChangeFloatRows.value.set(row.id, Date.now())
+      setTimeout(() => {
+        weightChangeFloatRows.value.delete(row.id)
+      }, 1500)
+    }
+    editingWeightId.value = null
+    weightInputError.value = false
+    ElMessage.success(`权重已调整，排名${res.data.rankChange > 0 ? '上升' : '下降'}${Math.abs(res.data.rankChange)}位`)
+    fetchWeightList()
+  } catch (err: any) {
+    weightInputError.value = true
+    ElMessage.error(err?.message || '权重调整失败')
+  }
+}
+
+const handleWeightAdjustFocus = () => {
+  weightInputError.value = false
+}
+
+const handleWeightAdjustChange = async (val: number) => {
+  if (!weightAdjustForm.filterId) return
+  try {
+    const res = await validateWeightAdjust(weightAdjustForm.filterId, val)
+    weightValidateResult.value = res.data
+    if (!res.data.valid) {
+      weightInputError.value = true
+    } else {
+      weightInputError.value = false
+    }
+  } catch {
+    weightValidateResult.value = {
+      valid: false,
+      errors: ['校验请求失败'],
+      matchPercent: 0,
+      heatRange: { min: 0, max: 0 },
+      qualityRange: { min: 0, max: 0, default: 0 },
+      qualityLevel: '',
+      useHeat: 0,
+      userRating: 0,
+      suggestedWeight: 0
+    }
+  }
+}
+
+const submitWeightAdjust = async () => {
+  if (!weightValidateResult.value?.valid) return
+  weightAdjustSubmitting.value = true
+  try {
+    await weightAdjustFormRef.value?.validate()
+    const res = await adjustWeightStep(
+      weightAdjustForm.filterId,
+      weightAdjustForm.newWeight,
+      undefined,
+      weightAdjustForm.reason
+    )
+    ElMessage.success(`权重调整成功，排名变化 ${res.data.rankChange}`)
+    weightAdjustDialogVisible.value = false
+    fetchWeightList()
+  } catch (err: any) {
+    ElMessage.error(err?.message || '调整失败')
+  } finally {
+    weightAdjustSubmitting.value = false
+  }
+}
+
+const handleBatchWeightConfig = async () => {
+  if (!weightBatchMode.value || weightSelectedIds.value.length === 0) return
+  weightBatchLoading.value = true
+  weightBatchProgress.active = true
+  weightBatchProgress.status = ''
+  weightBatchProgress.percentage = 0
+  weightBatchProgress.message = '正在初始化批量配置...'
+
+  let progress = 0
+  const timer = setInterval(() => {
+    progress = Math.min(progress + 12, 90)
+    weightBatchProgress.percentage = progress
+    weightBatchProgress.message = `正在匹配权重区间... ${progress}%`
+  }, 150)
+
+  try {
+    const res = await batchWeightConfig(weightSelectedIds.value, weightBatchMode.value)
+    clearInterval(timer)
+    weightBatchProgress.percentage = 100
+    weightBatchProgress.status = 'success'
+    weightBatchProgress.message = `完成：成功${res.data.success.length} / 失败${res.data.failed.length} / 过滤${res.data.filtered.length}`
+    weightBatchResult.value = res.data
+    weightBatchResultVisible.value = true
+    weightTableRef.value?.clearSelection()
+  } catch (err: any) {
+    clearInterval(timer)
+    weightBatchProgress.status = 'exception'
+    weightBatchProgress.percentage = 100
+    weightBatchProgress.message = err?.message || '批量配置失败'
+  } finally {
+    weightBatchLoading.value = false
+    setTimeout(() => { weightBatchProgress.active = false }, 3500)
+  }
+}
+
+const handleWeightTrace = (row: FilterEffect) => {
+  weightTraceFilterId.value = row.id
+  handleWeightTraceById()
+  activeTab.value = 'weight'
+}
+
+const handleWeightTraceById = async () => {
+  if (!weightTraceFilterId.value) {
+    ElMessage.warning('请选择滤镜')
+    return
+  }
+  weightTraceLoading.value = true
+  weightTraceSearched.value = true
+  weightTraceResult.value = null
+  try {
+    const res = await traceWeightHistory(weightTraceFilterId.value)
+    weightTraceResult.value = res.data
+  } catch (err: any) {
+    ElMessage.error(err?.message || '溯源查询失败')
+  } finally {
+    weightTraceLoading.value = false
+  }
+}
+
 watch(activeTab, (tab) => {
   if (tab === 'status') {
     fetchStatusOverview()
@@ -2179,6 +2868,11 @@ watch(activeTab, (tab) => {
   }
   if (tab === 'category') {
     fetchCategoryList()
+  }
+  if (tab === 'weight') {
+    if (!weightList.value.length) {
+      fetchWeightList()
+    }
   }
 })
 
@@ -2743,4 +3437,189 @@ onMounted(() => {
       }
     }
   }
+
+  .weight-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .weight-batch-progress {
+    margin-bottom: 16px;
+    .progress-text {
+      margin: 6px 0 0;
+      font-size: $font-size-extra-small;
+      color: $text-secondary;
+    }
+  }
+
+  .weight-table {
+    .weight-text {
+      font-size: $font-size-medium;
+
+      strong {
+        color: $text-primary;
+        font-size: $font-size-large;
+      }
+      .weight-sub {
+        margin-left: 4px;
+        color: $text-tertiary;
+        font-size: $font-size-extra-small;
+      }
+    }
+
+    .interval-text {
+      color: $text-secondary;
+      font-size: $font-size-extra-small;
+    }
+
+    .weight-input-focus {
+      :deep(.el-input-number) {
+        transition: all 0.25s ease;
+      }
+      :deep(.el-input__wrapper) {
+        transition: all 0.25s ease;
+      }
+      &:focus-within {
+        :deep(.el-input__wrapper) {
+          transform: scale(1.05);
+          box-shadow: 0 0 0 1px $primary-color;
+        }
+      }
+    }
+
+    .weight-input-error {
+      :deep(.el-input__wrapper) {
+        border-color: $danger-color !important;
+        box-shadow: 0 0 0 1px $danger-color !important;
+        animation: shake 0.35s ease-in-out;
+      }
+    }
+
+    .weight-row-float {
+      animation: weight-row-slide 0.8s ease-out;
+      td {
+        position: relative;
+        &.weight-col {
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  .weight-slide-table {
+    :deep(.el-table__row) {
+      transition: transform 0.35s ease, background-color 0.35s ease;
+    }
+  }
+
+  .weight-batch-btn {
+    transition: all 0.3s ease;
+    &:hover:not(:disabled) {
+      box-shadow: 0 0 0 6px rgba(230, 162, 60, 0.15), 0 4px 12px rgba(230, 162, 60, 0.25);
+      transform: translateY(-1px);
+    }
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    &[disabled] {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+  }
+
+  .weight-trace-result {
+    .weight-highlight {
+      color: $primary-color;
+      font-size: $font-size-large;
+    }
+
+    .trace-summary-row {
+      margin-bottom: 16px;
+    }
+
+    .trace-issues {
+      margin-bottom: 16px;
+
+      .issues-title {
+        margin-bottom: 6px;
+        color: $text-primary;
+        font-weight: 600;
+      }
+      .issue-item {
+        margin-bottom: 4px;
+        .issue-message {
+          margin-left: 8px;
+          font-size: $font-size-small;
+          color: $text-secondary;
+        }
+      }
+    }
+
+    .weight-change-text, .rank-change-text {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: $font-size-small;
+      .arrow-icon {
+        color: $text-tertiary;
+      }
+    }
+
+    .weight-highlight {
+      color: $primary-color;
+    }
+  }
+
+  .weight-validate-hint {
+    margin-top: 8px;
+    font-size: $font-size-extra-small;
+    color: $success-color;
+
+    &.error {
+      color: $danger-color;
+      .validate-error-item {
+        line-height: 1.7;
+      }
+    }
+  }
+
+  .dialog-weight, .dialog-weight-batch {
+    :deep(.el-dialog) {
+      animation: dialog-zoom-in 0.3s ease-out;
+    }
+    &.is-leaving {
+      :deep(.el-dialog) {
+        animation: dialog-slide-out 0.25s ease-in;
+      }
+    }
+  }
+
+  .mb-15 { margin-bottom: 15px; }
+  .mt-15 { margin-top: 15px; }
+  .mt-10 { margin-top: 10px; }
+}
+
+@keyframes weight-row-slide {
+  0% {
+    transform: translateY(0);
+    background-color: rgba(64, 158, 255, 0);
+  }
+  30% {
+    transform: translateY(-4px);
+    background-color: rgba(64, 158, 255, 0.12);
+  }
+  100% {
+    transform: translateY(0);
+    background-color: rgba(64, 158, 255, 0);
+  }
+}
+
+@keyframes float-up {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
 </style>

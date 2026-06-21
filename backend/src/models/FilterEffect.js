@@ -250,6 +250,41 @@ const FilterEffect = sequelize.define(
       allowNull: false,
       comment: '推荐权重(状态联动调整)'
     },
+    userRating: {
+      type: DataTypes.DECIMAL(3, 2),
+      defaultValue: 0,
+      allowNull: false,
+      comment: '用户好评率(0-1)'
+    },
+    qualityLevel: {
+      type: DataTypes.ENUM('poor', 'normal', 'good', 'excellent'),
+      defaultValue: 'normal',
+      allowNull: false,
+      comment: '质量等级(poor=低效,normal=普通,good=优质,excellent=优秀)'
+    },
+    weightChangeCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+      comment: '权重调整次数'
+    },
+    lastWeightChangeAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '最后一次权重调整时间'
+    },
+    weightRangeMin: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+      comment: '权重区间下限'
+    },
+    weightRangeMax: {
+      type: DataTypes.INTEGER,
+      defaultValue: 9999,
+      allowNull: false,
+      comment: '权重区间上限'
+    },
     canUserUse: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,

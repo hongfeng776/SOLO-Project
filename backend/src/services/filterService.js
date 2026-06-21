@@ -1,4 +1,4 @@
-const { FilterEffect, FilterEditLog, FilterCategoryAdapt, Category, OperationLog } = require('../models')
+const { FilterEffect, FilterEditLog, FilterCategoryAdapt, FilterWeightLog, Category, OperationLog } = require('../models')
 const { Op } = require('sequelize')
 const { getPagination, buildFuzzyWhere, generateMaterialCode } = require('../utils/common')
 const ApiError = require('../utils/apiError')
@@ -38,6 +38,24 @@ const CATEGORY_SCENE_RULES = {
   scenery: ['scenery', 'landscape', 'photo']
 }
 const ADAPT_SCORE_THRESHOLD = 40
+
+const WEIGHT_GLOBAL_MIN = 0
+const WEIGHT_GLOBAL_MAX = 9999
+const WEIGHT_QUALITY_RANGES = {
+  poor: { min: 0, max: 100, default: 30 },
+  normal: { min: 100, max: 500, default: 200 },
+  good: { min: 500, max: 1500, default: 800 },
+  excellent: { min: 1500, max: 9999, default: 3000 }
+}
+const WEIGHT_HEAT_RULES = [
+  { minHeat: 0, maxHeat: 10, range: { min: 0, max: 100 } },
+  { minHeat: 10, maxHeat: 100, range: { min: 100, max: 500 } },
+  { minHeat: 100, maxHeat: 500, range: { min: 500, max: 2000 } },
+  { minHeat: 500, maxHeat: 99999, range: { min: 2000, max: 9999 } }
+]
+const WEIGHT_MATCH_THRESHOLD = 40
+const WEIGHT_ADJUST_RATING_THRESHOLD = 0.6
+const NEW_FILTER_DAYS = 7
 
 class FilterService {
   async getList(params = {}) {
@@ -1187,6 +1205,358 @@ class FilterService {
       const count = await FilterEffect.count({ where: { categoryId } })
       cache.del('filter_list_*')
     } catch {}
+  }
+
+  async validateWeightAdjust(filterId, targetWeight, userId) {
+    const filter = await FilterEffect.findByPk(filterId)
+    if (!filter) throw ApiError.notFound('滤镜不存在')
+
+    const errors = []
+
+    if (targetWeight < WEIGHT_GLOBAL_MIN || targetWeight > WEIGHT_GLOBAL_MAX) {
+      errors.push(`权重数值超出规范区间，允许范围：${WEIGHT_GLOBAL_MIN}-${WEIGHT_GLOBAL_MAX}`)
+    }
+
+    const qualityRange = WEIGHT_QUALITY_RANGES[filter.qualityLevel] || WEIGHT_QUALITY_RANGES.normal
+    if (targetWeight < qualityRange.min || targetWeight > qualityRange.max) {
+      errors.push(
+        `当前滤镜质量等级为「${filter.qualityLevel}」，权重需在 ${qualityRange.min}-${qualityRange.max} 之间`
+      )
+    }
+
+    const useHeat = filter.useHeat || 0
+    const heatRange =
+      WEIGHT_HEAT_RULES.find(r => useHeat >= r.minHeat && useHeat < r.maxHeat)?.range ||
+      { min: 0, max: WEIGHT_GLOBAL_MAX }
+    const matchPercent =
+      targetWeight >= heatRange.min && targetWeight <= heatRange.max
+        ? 100
+        : targetWeight < heatRange.min
+          ? Math.round((targetWeight / heatRange.min) * 100)
+          : Math.round((heatRange.max / targetWeight) * 100)
+
+    if (matchPercent < WEIGHT_MATCH_THRESHOLD) {
+      errors.push(
+        `权重与热度匹配度过低(${matchPercent}%)，当前热度${useHeat}对应权重区间${heatRange.min}-${heatRange.max}`
+      )
+    }
+
+    const rating = Number(filter.userRating) || 0
+    if (targetWeight > 500 && rating < WEIGHT_ADJUST_RATING_THRESHOLD) {
+      errors.push(
+        `低质量滤镜禁止设置高权重，当前好评率${(rating * 100).toFixed(0)}%低于${(WEIGHT_ADJUST_RATING_THRESHOLD * 100)}%，不得超过500`
+      )
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      matchPercent,
+      heatRange,
+      qualityRange,
+      qualityLevel: filter.qualityLevel,
+      useHeat,
+      userRating: rating,
+      suggestedWeight: qualityRange.default
+    }
+  }
+
+  async adjustWeightStep(filterId, newWeight, userId, options = {}) {
+    const { operatorName = '', reason = '' } = options
+    const validation = await this.validateWeightAdjust(filterId, newWeight, userId)
+    if (!validation.valid) {
+      throw ApiError.badRequest(validation.errors.join('；'))
+    }
+
+    const filter = await FilterEffect.findByPk(filterId)
+    if (!filter) throw ApiError.notFound('滤镜不存在')
+
+    const beforeWeight = filter.sortWeight
+    const beforeRecommend = filter.recommendWeight
+
+    const beforeRank = await FilterEffect.count({
+      where: {
+        status: 'published',
+        sortWeight: { [Op.gt]: beforeWeight }
+      }
+    })
+
+    const beforeData = filter.toJSON()
+
+    const newRecommend = Math.round(newWeight * 0.8)
+    await filter.update({
+      sortWeight: newWeight,
+      recommendWeight: newRecommend,
+      weightChangeCount: (filter.weightChangeCount || 0) + 1,
+      lastWeightChangeAt: new Date(),
+      weightRangeMin: validation.qualityRange.min,
+      weightRangeMax: validation.qualityRange.max
+    })
+
+    const afterRank = await FilterEffect.count({
+      where: {
+        status: 'published',
+        sortWeight: { [Op.gt]: newWeight }
+      }
+    })
+
+    await FilterWeightLog.create({
+      filterId,
+      filterCode: filter.filterCode,
+      filterName: filter.name,
+      beforeWeight,
+      afterWeight: newWeight,
+      beforeRecommendWeight: beforeRecommend,
+      afterRecommendWeight: newRecommend,
+      useHeatAtAdjust: filter.useHeat || 0,
+      userRatingAtAdjust: filter.userRating || 0,
+      qualityLevelAtAdjust: filter.qualityLevel,
+      changeType: 'manual',
+      weightMatchScore: validation.matchPercent,
+      matchIssues: validation.errors,
+      operatorId: userId,
+      operatorName,
+      reason: reason || `权重微调：${beforeWeight}→${newWeight}`,
+      sortRankBefore: beforeRank + 1,
+      sortRankAfter: afterRank + 1,
+      displayPriorityBefore: beforeRank < 10 ? 'TOP10' : beforeRank < 50 ? 'TOP50' : '普通',
+      displayPriorityAfter: afterRank < 10 ? 'TOP10' : afterRank < 50 ? 'TOP50' : '普通'
+    })
+
+    await FilterEditLog.create({
+      filterId,
+      filterCode: filter.filterCode,
+      filterName: filter.name,
+      editStep: 1,
+      changeType: 'weight_adjust',
+      changedFields: ['sortWeight', 'recommendWeight', 'weightChangeCount', 'lastWeightChangeAt'],
+      beforeData,
+      afterData: filter.toJSON(),
+      operatorId: userId,
+      operatorName,
+      reason: reason || `权重微调：${beforeWeight}→${newWeight}（推荐排序#${beforeRank + 1}→#${afterRank + 1}）`
+    })
+
+    cache.del('filter_list_*')
+
+    return {
+      updated: true,
+      filter: filter.toJSON(),
+      beforeWeight,
+      afterWeight: newWeight,
+      rankChange: (beforeRank + 1) - (afterRank + 1),
+      matchScore: validation.matchPercent,
+      suggestedWeight: validation.suggestedWeight
+    }
+  }
+
+  async batchWeightConfig(filterIds, mode, userId, options = {}) {
+    const { operatorName = '' } = options
+    const batchId = 'BATCH_WEIGHT_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)
+    const results = {
+      total: filterIds.length,
+      success: [],
+      failed: [],
+      filtered: [],
+      batchId,
+      excellentCount: 0,
+      goodCount: 0,
+      normalCount: 0,
+      poorCount: 0
+    }
+
+    for (const filterId of filterIds) {
+      try {
+        const filter = await FilterEffect.findByPk(filterId)
+        if (!filter) {
+          results.failed.push({ id: filterId, reason: '滤镜不存在' })
+          continue
+        }
+
+        const useHeat = filter.useHeat || 0
+        const qualityLevel = filter.qualityLevel || 'normal'
+        const rating = Number(filter.userRating) || 0
+        const createdDays = Math.floor((Date.now() - new Date(filter.createdAt).getTime()) / 86400000)
+        const isNew = createdDays <= NEW_FILTER_DAYS
+
+        let targetWeight = filter.sortWeight
+        if (mode === 'by_heat') {
+          const heatRule =
+            WEIGHT_HEAT_RULES.find(r => useHeat >= r.minHeat && useHeat < r.maxHeat) || WEIGHT_HEAT_RULES[0]
+          targetWeight = Math.round((heatRule.range.min + heatRule.range.max) / 2)
+        } else if (mode === 'by_quality') {
+          const qr = WEIGHT_QUALITY_RANGES[qualityLevel] || WEIGHT_QUALITY_RANGES.normal
+          targetWeight = qr.default
+        } else if (mode === 'by_newest') {
+          targetWeight = isNew ? Math.max(filter.sortWeight, 1500) : filter.sortWeight
+        } else if (mode === 'auto') {
+          const qr = WEIGHT_QUALITY_RANGES[qualityLevel] || WEIGHT_QUALITY_RANGES.normal
+          let base = qr.default
+          if (isNew) base = Math.max(base, 800)
+          if (useHeat > 300) base = Math.min(base + 300, WEIGHT_GLOBAL_MAX)
+          if (rating >= 0.9) base = Math.min(base + 200, WEIGHT_GLOBAL_MAX)
+          targetWeight = Math.round(base)
+        }
+
+        if (results.poorCount !== undefined && qualityLevel === 'poor') results.poorCount++
+        if (qualityLevel === 'normal') results.normalCount++
+        if (qualityLevel === 'good') results.goodCount++
+        if (qualityLevel === 'excellent') results.excellentCount++
+
+        const validation = await this.validateWeightAdjust(filterId, targetWeight, userId)
+        if (!validation.valid) {
+          results.filtered.push({
+            id: filterId,
+            filterCode: filter.filterCode,
+            name: filter.name,
+            reason: validation.errors.join('；'),
+            qualityLevel,
+            useHeat,
+            suggestedWeight: validation.suggestedWeight
+          })
+          continue
+        }
+
+        const beforeWeight = filter.sortWeight
+        const beforeRecommend = filter.recommendWeight
+        const beforeData = filter.toJSON()
+        const newRecommend = Math.round(targetWeight * 0.8)
+
+        await filter.update({
+          sortWeight: targetWeight,
+          recommendWeight: newRecommend,
+          weightChangeCount: (filter.weightChangeCount || 0) + 1,
+          lastWeightChangeAt: new Date(),
+          weightRangeMin: validation.qualityRange.min,
+          weightRangeMax: validation.qualityRange.max
+        })
+
+        await FilterWeightLog.create({
+          filterId,
+          filterCode: filter.filterCode,
+          filterName: filter.name,
+          beforeWeight,
+          afterWeight: targetWeight,
+          beforeRecommendWeight: beforeRecommend,
+          afterRecommendWeight: newRecommend,
+          useHeatAtAdjust: useHeat,
+          userRatingAtAdjust: rating,
+          qualityLevelAtAdjust: qualityLevel,
+          changeType: 'batch',
+          weightMatchScore: validation.matchPercent,
+          matchIssues: validation.errors,
+          operatorId: userId,
+          operatorName,
+          reason: `批量配置模式=${mode}：${beforeWeight}→${targetWeight}`,
+          batchId
+        })
+
+        await FilterEditLog.create({
+          filterId,
+          filterCode: filter.filterCode,
+          filterName: filter.name,
+          editStep: 1,
+          changeType: 'weight_batch',
+          changedFields: ['sortWeight', 'recommendWeight'],
+          beforeData,
+          afterData: filter.toJSON(),
+          operatorId: userId,
+          operatorName,
+          batchId,
+          reason: `批量配置模式=${mode}：${beforeWeight}→${targetWeight}`
+        })
+
+        results.success.push({
+          id: filterId,
+          filterCode: filter.filterCode,
+          name: filter.name,
+          beforeWeight,
+          afterWeight: targetWeight,
+          qualityLevel,
+          useHeat,
+          matchScore: validation.matchPercent
+        })
+      } catch (err) {
+        results.failed.push({ id: filterId, reason: err.message || '未知错误' })
+      }
+    }
+
+    cache.del('filter_list_*')
+    return results
+  }
+
+  async traceWeightHistory(filterId) {
+    const filter = await FilterEffect.findByPk(filterId)
+    if (!filter) throw ApiError.notFound('滤镜不存在')
+
+    const logs = await FilterWeightLog.findAll({
+      where: { filterId },
+      order: [['createdAt', 'DESC']]
+    })
+
+    const issues = []
+    for (const log of logs) {
+      if (log.weightMatchScore < WEIGHT_MATCH_THRESHOLD) {
+        issues.push({
+          type: 'weight_mismatch',
+          severity: 'high',
+          message: `权重错配：调整分数${log.weightMatchScore}%低于阈值${WEIGHT_MATCH_THRESHOLD}%`,
+          logId: log.id,
+          weight: log.afterWeight,
+          heat: log.useHeatAtAdjust
+        })
+      }
+
+      if (log.afterWeight > (WEIGHT_QUALITY_RANGES[log.qualityLevelAtAdjust]?.max || 500)) {
+        issues.push({
+          type: 'weight_quality_mismatch',
+          severity: 'high',
+          message: `质量等级「${log.qualityLevelAtAdjust}」权重虚高：${log.afterWeight}`,
+          logId: log.id,
+          weight: log.afterWeight,
+          qualityLevel: log.qualityLevelAtAdjust
+        })
+      }
+    }
+
+    const avgMatchScore = logs.length > 0
+      ? Math.round(logs.reduce((s, l) => s + Number(l.weightMatchScore), 0) / logs.length * 100) / 100
+      : 0
+
+    const virtualHighCount = issues.filter(i => i.type === 'weight_quality_mismatch').length
+    const mismatchCount = issues.filter(i => i.type === 'weight_mismatch').length
+
+    return {
+      filter: filter.toJSON(),
+      weightLogs: logs.map(l => l.toJSON()),
+      totalAdjustments: logs.length,
+      avgMatchScore,
+      virtualHighCount,
+      mismatchCount,
+      overallValid: issues.filter(i => i.severity === 'high' || i.severity === 'critical').length === 0,
+      issues,
+      currentWeight: filter.sortWeight,
+      currentRecommend: filter.recommendWeight,
+      weightChangeCount: filter.weightChangeCount || 0
+    }
+  }
+
+  async getWeightLogList(params = {}) {
+    const { page, pageSize, offset, limit } = getPagination(params.page, params.pageSize)
+    const where = {}
+
+    if (params.filterId) where.filterId = params.filterId
+    if (params.changeType) where.changeType = params.changeType
+    if (params.operatorId) where.operatorId = params.operatorId
+
+    const { count, rows } = await FilterWeightLog.findAndCountAll({
+      where,
+      offset,
+      limit,
+      order: [['createdAt', 'DESC']]
+    })
+
+    return { list: rows, total: count, page, pageSize }
   }
 
   async delete(id) {

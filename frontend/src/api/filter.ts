@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { PageResult, PageParams, FilterEffect, FilterValidationResult, FilterEditLog, FilterBatchResult, FilterTraceResultItem, FilterListParams, FilterStatusOverview, FilterStatusUpdateResult, BatchStatusResult, CategoryValidateResult, CategoryAdjustResult, BatchCategoryMigrateResult, CategoryTraceResult, FilterCategoryAdapt } from '@/types'
+import type { PageResult, PageParams, FilterEffect, FilterValidationResult, FilterEditLog, FilterBatchResult, FilterTraceResultItem, FilterListParams, FilterStatusOverview, FilterStatusUpdateResult, BatchStatusResult, CategoryValidateResult, CategoryAdjustResult, BatchCategoryMigrateResult, FilterCategoryTraceResult, FilterCategoryAdapt, WeightValidateResult, WeightAdjustResult, BatchWeightResult, WeightTraceResult, FilterWeightLog } from '@/types'
 
 export const getFilterList = (params: FilterListParams) => {
   return request.get<PageResult<FilterEffect>>('/filters', params)
@@ -62,11 +62,31 @@ export const batchCategoryMigrate = (filterIds: number[], categoryId: number, op
 }
 
 export const traceCategoryAdapt = (categoryId: number) => {
-  return request.get<CategoryTraceResult>('/filters/category/trace', { categoryId })
+  return request.get<FilterCategoryTraceResult>('/filters/category/trace', { categoryId })
 }
 
 export const getCategoryAdaptList = (params?: PageParams & { categoryId?: number; isMatched?: boolean; bindType?: string; changeType?: string }) => {
   return request.get<PageResult<FilterCategoryAdapt>>('/filters/category/adapts', params)
+}
+
+export const validateWeightAdjust = (filterId: number, targetWeight: number) => {
+  return request.post<WeightValidateResult>('/filters/weight/validate', { filterId, targetWeight })
+}
+
+export const adjustWeightStep = (filterId: number, newWeight: number, operatorName?: string, reason?: string) => {
+  return request.post<WeightAdjustResult>('/filters/weight/adjust', { filterId, newWeight, operatorName, reason })
+}
+
+export const batchWeightConfig = (filterIds: number[], mode: string, operatorName?: string) => {
+  return request.post<BatchWeightResult>('/filters/weight/batch-config', { filterIds, mode, operatorName })
+}
+
+export const traceWeightHistory = (filterId: number) => {
+  return request.get<WeightTraceResult>('/filters/weight/trace', { filterId })
+}
+
+export const getWeightLogList = (params?: PageParams & { filterId?: number; changeType?: string; operatorId?: number }) => {
+  return request.get<PageResult<FilterWeightLog>>('/filters/weight/logs', params)
 }
 
 export const deleteFilter = (id: number) => {
