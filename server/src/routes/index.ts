@@ -21,6 +21,7 @@ import productRoutes from './product.routes';
 import distributionOrderRoutes from './distribution-order.routes';
 import distributionActivityRoutes from './distribution-activity.routes';
 import activityLifecycleRoutes from './activity-lifecycle.routes';
+import participationRiskControlRoutes from './participation-risk-control.routes';
 import ResponseUtils from '../utils/response';
 
 const router = Router();
@@ -51,5 +52,6 @@ router.use('/permission-change-logs', permissionChangeLogRoutes);
 router.use('/distribution-orders', distributionOrderRoutes);
 router.use('/distribution-activities', distributionActivityRoutes);
 router.use('/activity-lifecycle', activityLifecycleRoutes);
+router.use('/participation-risk-control', participationRiskControlRoutes);
 
 export default router;

@@ -19,6 +19,7 @@ import productController from './Product.controller';
 import distributionOrderController from './DistributionOrder.controller';
 import distributionActivityController from './DistributionActivity.controller';
 import activityLifecycleController from './ActivityLifecycle.controller';
+import participationRiskControlController from './ParticipationRiskControl.controller';
 
 export {
   authController,
@@ -42,4 +43,5 @@ export {
   distributionOrderController,
   distributionActivityController,
   activityLifecycleController,
+  participationRiskControlController,
 };

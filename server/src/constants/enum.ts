@@ -1530,3 +1530,99 @@ export interface AbnormalRootCause {
   relatedIds?: string[];
   confidence: number;
 }
+
+export enum ParticipationEligibilityStatus {
+  PENDING = 0,
+  APPROVED = 1,
+  REJECTED = -1,
+  REVOKED = -2,
+  BLACKLISTED = -3,
+}
+
+export const PARTICIPATION_ELIGIBILITY_STATUS_LABELS: Record<ParticipationEligibilityStatus, { label: string; type: 'info' | 'success' | 'danger' | 'warning' }> = {
+  [ParticipationEligibilityStatus.PENDING]: { label: '待审核', type: 'warning' },
+  [ParticipationEligibilityStatus.APPROVED]: { label: '已通过', type: 'success' },
+  [ParticipationEligibilityStatus.REJECTED]: { label: '已拒绝', type: 'danger' },
+  [ParticipationEligibilityStatus.REVOKED]: { label: '已撤销', type: 'info' },
+  [ParticipationEligibilityStatus.BLACKLISTED]: { label: '黑名单', type: 'danger' },
+};
+
+export enum ParticipationAnomalyType {
+  BRUSH_PARTICIPATION = 'brush_participation',
+  ABNORMAL_ORDER_SURGE = 'abnormal_order_surge',
+  REWARD_ABUSE = 'reward_abuse',
+  FAKE_PERFORMANCE = 'fake_performance',
+  DUPLICATE_PARTICIPATION = 'duplicate_participation',
+  ABNORMAL_IP = 'abnormal_ip',
+  ABNORMAL_DEVICE = 'abnormal_device',
+  HIGH_FREQUENCY_OPERATION = 'high_frequency_operation',
+  OTHER = 'other',
+}
+
+export const PARTICIPATION_ANOMALY_TYPE_LABELS: Record<ParticipationAnomalyType, string> = {
+  [ParticipationAnomalyType.BRUSH_PARTICIPATION]: '刷参与量',
+  [ParticipationAnomalyType.ABNORMAL_ORDER_SURGE]: '订单量异常激增',
+  [ParticipationAnomalyType.REWARD_ABUSE]: '奖励滥用',
+  [ParticipationAnomalyType.FAKE_PERFORMANCE]: '虚假业绩',
+  [ParticipationAnomalyType.DUPLICATE_PARTICIPATION]: '重复参与',
+  [ParticipationAnomalyType.ABNORMAL_IP]: 'IP异常',
+  [ParticipationAnomalyType.ABNORMAL_DEVICE]: '设备异常',
+  [ParticipationAnomalyType.HIGH_FREQUENCY_OPERATION]: '高频操作',
+  [ParticipationAnomalyType.OTHER]: '其他异常',
+};
+
+export enum ParticipationRecordType {
+  REGISTER = 'register',
+  APPROVE = 'approve',
+  REJECT = 'reject',
+  REVOKE = 'revoke',
+  DATA_CHANGE = 'data_change',
+  REWARD_EARN = 'reward_earn',
+  ANOMALY_FLAG = 'anomaly_flag',
+  ANOMALY_RESOLVE = 'anomaly_resolve',
+  BATCH_APPROVE = 'batch_approve',
+  BATCH_REVOKE = 'batch_revoke',
+}
+
+export const PARTICIPATION_RECORD_TYPE_LABELS: Record<ParticipationRecordType, string> = {
+  [ParticipationRecordType.REGISTER]: '报名',
+  [ParticipationRecordType.APPROVE]: '审核通过',
+  [ParticipationRecordType.REJECT]: '审核拒绝',
+  [ParticipationRecordType.REVOKE]: '撤销资格',
+  [ParticipationRecordType.DATA_CHANGE]: '数据变动',
+  [ParticipationRecordType.REWARD_EARN]: '获得奖励',
+  [ParticipationRecordType.ANOMALY_FLAG]: '异常标记',
+  [ParticipationRecordType.ANOMALY_RESOLVE]: '异常解除',
+  [ParticipationRecordType.BATCH_APPROVE]: '批量审核通过',
+  [ParticipationRecordType.BATCH_REVOKE]: '批量撤销',
+};
+
+export enum ParticipationUserType {
+  PROMOTER = 'promoter',
+  CHANNEL = 'channel',
+}
+
+export const PARTICIPATION_USER_TYPE_LABELS: Record<ParticipationUserType, string> = {
+  [ParticipationUserType.PROMOTER]: '推客',
+  [ParticipationUserType.CHANNEL]: '渠道',
+};
+
+export const PARTICIPATION_ANOMALY_DETECTION_RULES = {
+  maxDailyParticipationCount: 50,
+  maxHourlyOrderCount: 200,
+  rewardAbuseThreshold: 0.8,
+  abnormalOrderSurgeMultiplier: 5,
+  highFrequencyOperationPerMinute: 30,
+  duplicateParticipationWindowHours: 24,
+  brushParticipationMinOrders: 10,
+  brushParticipationWindowMinutes: 60,
+} as const;
+
+export const PARTICIPATION_ELIGIBILITY_CHECKS = [
+  { code: 'ELIG-001', name: '用户等级校验', description: '校验用户等级是否满足活动参与门槛' },
+  { code: 'ELIG-002', name: '风控状态校验', description: '校验用户是否处于风控中状态' },
+  { code: 'ELIG-003', name: '黑名单校验', description: '校验用户是否在黑名单中' },
+  { code: 'ELIG-004', name: '历史绩效校验', description: '校验用户历史绩效是否满足要求' },
+  { code: 'ELIG-005', name: '重复参与校验', description: '校验用户是否已参与同一活动' },
+  { code: 'ELIG-006', name: '活动状态校验', description: '校验活动是否处于可参与状态' },
+] as const;

@@ -24,6 +24,7 @@ import orderStatusFlowService from './OrderStatusFlow.service';
 import orderAbnormalService from './OrderAbnormal.service';
 import distributionActivityService from './DistributionActivity.service';
 import activityLifecycleService from './ActivityLifecycle.service';
+import participationRiskControlService from './ParticipationRiskControl.service';
 
 export {
   authService,
@@ -52,4 +53,5 @@ export {
   orderAbnormalService,
   distributionActivityService,
   activityLifecycleService,
+  participationRiskControlService,
 };

@@ -40,6 +40,8 @@ import orderStatusChangeLogDao from './OrderStatusChangeLog.dao';
 import orderAbnormalRecordDao from './OrderAbnormalRecord.dao';
 import orderAbnormalEvidenceDao from './OrderAbnormalEvidence.dao';
 import marketingStatusChangeLogDao from './MarketingStatusChangeLog.dao';
+import activityParticipationDao from './ActivityParticipation.dao';
+import activityParticipationLogDao from './ActivityParticipationLog.dao';
 
 export {
   userDao,
@@ -84,4 +86,6 @@ export {
   orderAbnormalRecordDao,
   orderAbnormalEvidenceDao,
   marketingStatusChangeLogDao,
+  activityParticipationDao,
+  activityParticipationLogDao,
 };
