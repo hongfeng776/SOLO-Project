@@ -34,6 +34,8 @@ const FilterWeightLog = require('./FilterWeightLog')
 const FeaturedWork = require('./FeaturedWork')
 const FeaturedWorkLog = require('./FeaturedWorkLog')
 const ResourceVisibilityLog = require('./ResourceVisibilityLog')
+const QualityAssessmentLog = require('./QualityAssessmentLog')
+const QualityReviewLog = require('./QualityReviewLog')
 
 User.hasMany(Resource, { foreignKey: 'authorId', as: 'resources' })
 Resource.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
@@ -148,6 +150,15 @@ Resource.hasMany(ResourceVisibilityLog, { foreignKey: 'resourceId', as: 'visibil
 ResourceVisibilityLog.belongsTo(Resource, { foreignKey: 'resourceId', as: 'resource' })
 ResourceVisibilityLog.belongsTo(User, { foreignKey: 'operatorId', as: 'operator' })
 
+Resource.hasMany(QualityAssessmentLog, { foreignKey: 'resourceId', as: 'qualityAssessmentLogs' })
+QualityAssessmentLog.belongsTo(Resource, { foreignKey: 'resourceId', as: 'resource' })
+QualityAssessmentLog.belongsTo(User, { foreignKey: 'operatorId', as: 'operator' })
+
+Resource.hasMany(QualityReviewLog, { foreignKey: 'resourceId', as: 'qualityReviewLogs' })
+QualityReviewLog.belongsTo(Resource, { foreignKey: 'resourceId', as: 'resource' })
+QualityReviewLog.belongsTo(User, { foreignKey: 'reviewerId', as: 'reviewer' })
+QualityReviewLog.belongsTo(QualityAssessmentLog, { foreignKey: 'assessmentLogId', as: 'assessmentLog' })
+
 module.exports = {
   User,
   Category,
@@ -184,5 +195,7 @@ module.exports = {
   FilterWeightLog,
   FeaturedWork,
   FeaturedWorkLog,
-  ResourceVisibilityLog
+  ResourceVisibilityLog,
+  QualityAssessmentLog,
+  QualityReviewLog
 }

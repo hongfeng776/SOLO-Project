@@ -76,6 +76,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '状态管控', icon: 'View', roles: ['super_admin', 'admin', 'operator', 'auditor'] }
       },
       {
+        path: 'quality-control',
+        name: 'QualityControl',
+        component: () => import('@/views/quality-control/index.vue'),
+        meta: { title: '内容质检', icon: 'MagicStick', roles: ['super_admin', 'admin', 'operator', 'auditor'] }
+      },
+      {
         path: 'audit',
         name: 'Audit',
         component: () => import('@/views/audit/index.vue'),

@@ -209,6 +209,63 @@ const Resource = sequelize.define(
       defaultValue: 'none',
       allowNull: false,
       comment: '可见性审核状态（违规隐藏转公开需审核）'
+    },
+    qualityLevel: {
+      type: DataTypes.ENUM('excellent', 'good', 'normal', 'low_quality', 'violation'),
+      defaultValue: 'normal',
+      allowNull: false,
+      comment: '质量等级：excellent优质/good良好/normal普通/low_quality低质/violation违规'
+    },
+    qualityScore: {
+      type: DataTypes.DECIMAL(5, 2),
+      defaultValue: 0,
+      allowNull: false,
+      comment: '综合质量评分(0-100)'
+    },
+    resolutionQualityScore: {
+      type: DataTypes.DECIMAL(5, 2),
+      defaultValue: 0,
+      allowNull: false,
+      comment: '画质评分'
+    },
+    contentQualityScore: {
+      type: DataTypes.DECIMAL(5, 2),
+      defaultValue: 0,
+      allowNull: false,
+      comment: '内容质量评分'
+    },
+    compositionScore: {
+      type: DataTypes.DECIMAL(5, 2),
+      defaultValue: 0,
+      allowNull: false,
+      comment: '构图评分'
+    },
+    complianceQualityScore: {
+      type: DataTypes.DECIMAL(5, 2),
+      defaultValue: 0,
+      allowNull: false,
+      comment: '合规性评分'
+    },
+    qualityAssessedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '最近一次质量评估时间'
+    },
+    qualityReviewStatus: {
+      type: DataTypes.ENUM('none', 'pending', 'approved', 'rejected', 'locked'),
+      defaultValue: 'none',
+      allowNull: false,
+      comment: '质量复核状态：none无/pending待复核/approved复核通过/rejected复核不通过/locked已锁定'
+    },
+    qualityFlags: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      comment: '质量标记：低俗/违规/低质等标记'
+    },
+    qualityLockReason: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: '质量锁定原因'
     }
   },
   {

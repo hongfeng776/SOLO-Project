@@ -2849,4 +2849,195 @@ export interface VisibilityDetailResult {
   changeCount24h: number
 }
 
+export type QualityLevel = 'excellent' | 'good' | 'normal' | 'low_quality' | 'violation'
+
+export type QualityReviewStatus = 'none' | 'pending' | 'approved' | 'rejected' | 'locked'
+
+export type AssessType = 'auto' | 'manual' | 'batch' | 'recheck'
+
+export type ReviewResult = 'approved' | 'rejected' | 'locked'
+
+export interface QualityScores {
+  resolution: number
+  content: number
+  composition: number
+  compliance: number
+  author: number
+  overall: number
+}
+
+export interface QualityFlagIssue {
+  type: string
+  severity: 'low' | 'warning' | 'high'
+  description: string
+}
+
+export interface QualityConsistencyResult {
+  consistent: boolean
+  issues: QualityFlagIssue[]
+  score: number
+}
+
+export interface QualityAssessResult {
+  resource: any
+  assessmentLog: QualityAssessmentLogItem
+  scores: QualityScores
+  level: QualityLevel
+  flags: string[]
+  needsReview: boolean
+}
+
+export interface QualityBatchAssessResult {
+  successIds: number[]
+  failedItems: { id: number; title: string; reason: string }[]
+  excellent: { id: number; title: string; score: number }[]
+  good: { id: number; title: string; score: number }[]
+  normal: { id: number; title: string; score: number }[]
+  low_quality: { id: number; title: string; score: number }[]
+  violation: { id: number; title: string; score: number }[]
+  total: number
+  successCount: number
+  failedCount: number
+}
+
+export interface QualityReviewResult {
+  resource: any
+  reviewLog: QualityReviewLogItem
+  misjudgmentFound: boolean
+  omissionsFound: boolean
+  consistencyScore: number
+  message: string
+}
+
+export interface QualityAssessmentLogItem {
+  id: number
+  resourceId: number
+  resourceTitle: string
+  assessType: AssessType
+  oldQualityLevel: QualityLevel | null
+  newQualityLevel: QualityLevel
+  oldQualityScore: number | null
+  newQualityScore: number
+  resolutionScore: number
+  contentScore: number
+  compositionScore: number
+  complianceScore: number
+  authorQualityScore: number
+  qualityFlags: { items?: string[] } | null
+  assessBasis: any
+  operatorId: number | null
+  operatorName: string | null
+  operatorRole: string | null
+  remark: string | null
+  ip: string | null
+  userAgent: string | null
+  beforeSnapshot: any
+  afterSnapshot: any
+  isMisjudgment: boolean
+  misjudgmentNote: string | null
+  resource?: any
+  createdAt: string
+  updatedAt: string
+}
+
+export interface QualityReviewLogItem {
+  id: number
+  assessmentLogId: number | null
+  resourceId: number
+  resourceTitle: string
+  oldQualityLevel: QualityLevel
+  newQualityLevel: QualityLevel | null
+  reviewResult: ReviewResult
+  reviewReason: string | null
+  reviewBasis: any
+  reviewerId: number
+  reviewerName: string
+  reviewerRole: string | null
+  consistencyScore: number
+  misjudgmentFound: boolean
+  omissionsFound: boolean
+  ruleOptimizationNote: string | null
+  ip: string | null
+  userAgent: string | null
+  reviewedAt: string | null
+  resource?: any
+  reviewer?: any
+  assessmentLog?: QualityAssessmentLogItem
+  createdAt: string
+  updatedAt: string
+}
+
+export interface QualityStats {
+  levelDistribution: Record<QualityLevel, number>
+  pendingReview: number
+  locked: number
+  todayAssessments: number
+  todayReviews: number
+  misjudgments: number
+  avgQualityScore: string
+}
+
+export interface QualityListParams extends PageParams {
+  keyword?: string
+  qualityLevel?: QualityLevel
+  qualityReviewStatus?: QualityReviewStatus
+  fileType?: string
+  categoryId?: number
+  authorId?: number
+  minScore?: number
+  maxScore?: number
+  needsReview?: boolean
+  hasViolation?: boolean
+  sortBy?: string
+  sortOrder?: string
+}
+
+export interface QualityLogParams extends PageParams {
+  resourceId?: number
+  assessType?: AssessType
+  newQualityLevel?: QualityLevel
+  operatorId?: number
+  startTime?: string
+  endTime?: string
+  keyword?: string
+  misjudgmentOnly?: boolean
+}
+
+export interface QualityReviewLogParams extends PageParams {
+  resourceId?: number
+  reviewResult?: ReviewResult
+  reviewerId?: number
+  startTime?: string
+  endTime?: string
+  keyword?: string
+  misjudgmentOnly?: boolean
+  omissionsOnly?: boolean
+}
+
+export interface QualityAssessParams {
+  remark?: string
+}
+
+export interface QualityBatchAssessParams {
+  ids: number[]
+  remark?: string
+}
+
+export interface QualityReviewParams {
+  reviewResult: ReviewResult
+  newLevel?: QualityLevel
+  reviewReason?: string
+  lockReason?: string
+  ruleOptimizationNote?: string
+}
+
+export interface QualityDetailResult {
+  resource: any
+  assessmentLogs: QualityAssessmentLogItem[]
+  reviewLogs: QualityReviewLogItem[]
+  consistency: QualityConsistencyResult
+  scores: QualityScores
+  flags: string[]
+}
+
 
