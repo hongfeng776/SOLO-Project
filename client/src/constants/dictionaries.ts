@@ -1,4 +1,4 @@
-import { MarketType, RiskLevel, ProductType, ProductStatus, CustomerType, CustomerStatus, FlowType, FlowStatus, FlowChannel, AuditType, AuditStatus, TargetType, PermType, UserStatus, RoleStatus, PermissionStatus, TradeType, TradeStatus, AlertType, AlertLevel, AlertStatus, LogStatus, LogModule, LogAction, StockStatus, ArchiveStatus, FilingStatus, AccountStatus, Gender, Education, MaritalStatus, HoldingLockStatus, StockProductType, StockProductStatus, StockProductArchiveStatus, StockProductFilingStatus, StockClassLevel, StockClassStatus, StockClassOperationType } from '@/enums'
+import { MarketType, RiskLevel, ProductType, ProductStatus, CustomerType, CustomerStatus, FlowType, FlowStatus, FlowChannel, AuditType, AuditStatus, TargetType, PermType, UserStatus, RoleStatus, PermissionStatus, TradeType, TradeStatus, AlertType, AlertLevel, AlertStatus, LogStatus, LogModule, LogAction, StockStatus, ArchiveStatus, FilingStatus, AccountStatus, Gender, Education, MaritalStatus, HoldingLockStatus, StockProductType, StockProductStatus, StockProductArchiveStatus, StockProductFilingStatus, StockClassLevel, StockClassStatus, StockClassOperationType, StockFeeRateType, StockFeeRateStatus, StockFeeCustomerLevel, StockFeeTradeScene, StockFeeScopeType, StockFeeConflictLevel } from '@/enums'
 import { BoardType, TradeStatus as QuoteTradeStatus } from '@/types/api'
 
 export const MARKET_LABELS: Record<MarketType, string> = {
@@ -631,5 +631,114 @@ export const STOCK_CLASS_FIELD_LABELS: Record<string, string> = {
   riskTag: '风险标签',
   marketCapRange: '市值区间',
   industryCode: '行业代码',
+  description: '描述',
+}
+
+export const STOCK_FEE_RATE_TYPE_LABELS: Record<StockFeeRateType, string> = {
+  [StockFeeRateType.COMMISSION]: '交易佣金',
+  [StockFeeRateType.STAMP_DUTY]: '印花税',
+  [StockFeeRateType.TRANSFER_FEE]: '过户费',
+  [StockFeeRateType.SETTLEMENT_FEE]: '结算费',
+  [StockFeeRateType.MANAGEMENT_FEE]: '管理费',
+  [StockFeeRateType.CUSTODY_FEE]: '托管费',
+}
+
+export const STOCK_FEE_RATE_TYPE_COLORS: Record<StockFeeRateType, string> = {
+  [StockFeeRateType.COMMISSION]: '#409EFF',
+  [StockFeeRateType.STAMP_DUTY]: '#F56C6C',
+  [StockFeeRateType.TRANSFER_FEE]: '#67C23A',
+  [StockFeeRateType.SETTLEMENT_FEE]: '#E6A23C',
+  [StockFeeRateType.MANAGEMENT_FEE]: '#909399',
+  [StockFeeRateType.CUSTODY_FEE]: '#9254de',
+}
+
+export const STOCK_FEE_RATE_STATUS_LABELS: Record<StockFeeRateStatus, string> = {
+  [StockFeeRateStatus.DRAFT]: '草稿',
+  [StockFeeRateStatus.PENDING]: '待生效',
+  [StockFeeRateStatus.ACTIVE]: '已生效',
+  [StockFeeRateStatus.EXPIRED]: '已过期',
+  [StockFeeRateStatus.INVALID]: '已作废',
+}
+
+export const STOCK_FEE_RATE_STATUS_COLORS: Record<StockFeeRateStatus, string> = {
+  [StockFeeRateStatus.DRAFT]: '#909399',
+  [StockFeeRateStatus.PENDING]: '#E6A23C',
+  [StockFeeRateStatus.ACTIVE]: '#67C23A',
+  [StockFeeRateStatus.EXPIRED]: '#C0C4CC',
+  [StockFeeRateStatus.INVALID]: '#F56C6C',
+}
+
+export const STOCK_FEE_RATE_STATUS_TAG_TYPES: Record<StockFeeRateStatus, 'info' | 'warning' | 'success' | 'info' | 'danger'> = {
+  [StockFeeRateStatus.DRAFT]: 'info',
+  [StockFeeRateStatus.PENDING]: 'warning',
+  [StockFeeRateStatus.ACTIVE]: 'success',
+  [StockFeeRateStatus.EXPIRED]: 'info',
+  [StockFeeRateStatus.INVALID]: 'danger',
+}
+
+export const STOCK_FEE_CUSTOMER_LEVEL_LABELS: Record<StockFeeCustomerLevel, string> = {
+  [StockFeeCustomerLevel.NORMAL]: '普通客户',
+  [StockFeeCustomerLevel.VIP]: 'VIP客户',
+  [StockFeeCustomerLevel.INSTITUTION]: '机构客户',
+}
+
+export const STOCK_FEE_CUSTOMER_LEVEL_COLORS: Record<StockFeeCustomerLevel, string> = {
+  [StockFeeCustomerLevel.NORMAL]: '#909399',
+  [StockFeeCustomerLevel.VIP]: '#E6A23C',
+  [StockFeeCustomerLevel.INSTITUTION]: '#409EFF',
+}
+
+export const STOCK_FEE_TRADE_SCENE_LABELS: Record<StockFeeTradeScene, string> = {
+  [StockFeeTradeScene.BUY]: '买入',
+  [StockFeeTradeScene.SELL]: '卖出',
+  [StockFeeTradeScene.SUBSCRIBE]: '申购',
+  [StockFeeTradeScene.REDEEM]: '赎回',
+}
+
+export const STOCK_FEE_SCOPE_TYPE_LABELS: Record<StockFeeScopeType, string> = {
+  [StockFeeScopeType.GLOBAL]: '全局生效',
+  [StockFeeScopeType.LOCAL]: '局部生效',
+}
+
+export const STOCK_FEE_CONFLICT_LEVEL_LABELS: Record<StockFeeConflictLevel, string> = {
+  [StockFeeConflictLevel.NONE]: '无冲突',
+  [StockFeeConflictLevel.WARNING]: '警告',
+  [StockFeeConflictLevel.ERROR]: '严重冲突',
+}
+
+export const STOCK_FEE_CONFLICT_LEVEL_TAG_TYPES: Record<StockFeeConflictLevel, 'success' | 'warning' | 'danger'> = {
+  [StockFeeConflictLevel.NONE]: 'success',
+  [StockFeeConflictLevel.WARNING]: 'warning',
+  [StockFeeConflictLevel.ERROR]: 'danger',
+}
+
+export const STOCK_FEE_RATE_UNIT_LIST: string[] = ['‰', '%', '元/笔', '元/股']
+
+export const STOCK_FEE_RATE_RANGE_CONFIG: Record<string, { min: number; max: number; defaultMin?: number; defaultMax?: number }> = {
+  [StockFeeRateType.COMMISSION]: { min: 0.0001, max: 0.003, defaultMin: 5 },
+  [StockFeeRateType.STAMP_DUTY]: { min: 0, max: 0.001 },
+  [StockFeeRateType.TRANSFER_FEE]: { min: 0, max: 0.0001 },
+  [StockFeeRateType.SETTLEMENT_FEE]: { min: 0, max: 0.0005 },
+  [StockFeeRateType.MANAGEMENT_FEE]: { min: 0.0001, max: 0.02 },
+  [StockFeeRateType.CUSTODY_FEE]: { min: 0, max: 0.005 },
+}
+
+export const STOCK_FEE_FIELD_LABELS: Record<string, string> = {
+  feeCode: '费率编码',
+  feeName: '费率名称',
+  feeRateType: '费率类型',
+  feeRateValue: '费率值',
+  feeRateUnit: '费率单位',
+  minFee: '最低费用',
+  maxFee: '最高费用',
+  customerLevel: '客户等级',
+  tradeScene: '交易场景',
+  productType: '产品类型',
+  productCodes: '产品代码',
+  scopeType: '生效范围',
+  feeRateStatus: '费率状态',
+  effectiveStartTime: '生效开始时间',
+  effectiveEndTime: '生效结束时间',
+  conflictLevel: '冲突等级',
   description: '描述',
 }

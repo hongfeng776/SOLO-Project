@@ -305,6 +305,118 @@ export interface IStockClassTraceData {
   }
 }
 
+export interface IStockFeeRate {
+  id: number
+  feeCode: string
+  feeName: string
+  feeRateType: string
+  feeRateValue: number
+  feeRateUnit: string
+  minFee?: number
+  maxFee?: number
+  customerLevel: string
+  tradeScene: string
+  productType?: string
+  productCodes?: string[]
+  scopeType: string
+  feeRateStatus: string
+  effectiveStartTime: string
+  effectiveEndTime?: string
+  conflictLevel: string
+  description?: string
+  createdBy?: number
+  createdByName?: string
+  createdAt: string
+  updatedBy?: number
+  updatedByName?: string
+  updatedAt?: string
+}
+
+export interface IStockFeeRateValidation {
+  valid: boolean
+  permissionValid: boolean
+  permissionMessage: string
+  rangeValid: boolean
+  rangeMessage: string
+  productScopeValid: boolean
+  productScopeMessage: string
+  rateExceeded: boolean
+  conflictFound: boolean
+  conflictDetails: Array<{ existingFeeId: number; existingFeeName: string; conflictType: string }>
+}
+
+export interface IStockFeeRateConflict {
+  id: number
+  newFeeId: number
+  existingFeeId: number
+  conflictType: string
+  conflictLevel: string
+  description: string
+  resolved: boolean
+}
+
+export interface IStockFeeRateBatchResult {
+  total: number
+  success: number
+  failed: number
+  affectedProducts: number
+  successList: IStockFeeRate[]
+  errorList: Array<{ row: number; data: any; errors: IValidationError[]; type: string }>
+}
+
+export interface IStockFeeRateTraceData {
+  sourceInfo: {
+    createdBy: string
+    createdAt: string
+    updatedBy: string
+    updatedAt: string
+    feeCode: string
+    feeName: string
+    originalData?: Partial<IStockFeeRate>
+  }
+  versionHistory: Array<{
+    version: number
+    feeRateValue: number
+    effectiveStartTime: string
+    effectiveEndTime?: string
+    operator: string
+    operationTime: string
+    remark: string
+  }>
+  effectivePeriods: Array<{
+    startTime: string
+    endTime?: string
+    status: string
+    rateValue: number
+  }>
+  complianceCheck: {
+    passed: boolean
+    industryStandardMatch: boolean
+    issues: Array<{ type: string; severity: string; message: string; standardValue?: number; actualValue: number }>
+  }
+  calculationVerification: {
+    sampleTrades: Array<{
+      tradeId: number
+      tradeAmount: number
+      expectedFee: number
+      actualFee: number
+      passed: boolean
+    }>
+    overallAccuracy: number
+  }
+}
+
+export interface IStockFeeCalculationDetail {
+  tradeAmount: number
+  feeRateValue: number
+  feeRateType: string
+  baseFee: number
+  minFee?: number
+  maxFee?: number
+  finalFee: number
+  breakdown: Array<{ item: string; amount: number }>
+}
+
 export interface IAssetProduct {
   id: number
   productCode: string

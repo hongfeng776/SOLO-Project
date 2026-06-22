@@ -63,6 +63,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '股票分类管理', icon: 'Menu', keepAlive: true }
       },
       {
+        path: 'stock-fee-rate',
+        name: 'StockFeeRate',
+        component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/stock-fee-rate/index.vue'),
+        meta: { title: '股票费率配置', icon: 'Coin', keepAlive: true }
+      },
+      {
         path: 'product',
         name: 'Product',
         component: () => import(/* @vite-ignore *//* webpackChunkName: "trade" */ '@views/product/index.vue'),

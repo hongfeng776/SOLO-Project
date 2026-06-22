@@ -76,6 +76,18 @@ export enum StockClassStatus { ACTIVE = 'active', INACTIVE = 'inactive', MERGED 
 
 export enum StockClassOperationType { CREATE = 'create', UPDATE = 'update', DELETE = 'delete', MERGE = 'merge', MIGRATE = 'migrate', INVALIDATE = 'invalidate' }
 
+export enum StockFeeRateType { COMMISSION = 'commission', STAMP_DUTY = 'stamp_duty', TRANSFER_FEE = 'transfer_fee', SETTLEMENT_FEE = 'settlement_fee', MANAGEMENT_FEE = 'management_fee', CUSTODY_FEE = 'custody_fee' }
+
+export enum StockFeeRateStatus { DRAFT = 'draft', PENDING = 'pending', ACTIVE = 'active', EXPIRED = 'expired', INVALID = 'invalid' }
+
+export enum StockFeeCustomerLevel { NORMAL = 'normal', VIP = 'vip', INSTITUTION = 'institution' }
+
+export enum StockFeeTradeScene { BUY = 'buy', SELL = 'sell', SUBSCRIBE = 'subscribe', REDEEM = 'redeem' }
+
+export enum StockFeeScopeType { GLOBAL = 'global', LOCAL = 'local' }
+
+export enum StockFeeConflictLevel { NONE = 'none', WARNING = 'warning', ERROR = 'error' }
+
 export const HOT_RISE_THRESHOLD = 7
 
 export const RISK_FALL_THRESHOLD = -7
