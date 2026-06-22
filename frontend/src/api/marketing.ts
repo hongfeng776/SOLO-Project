@@ -18,7 +18,16 @@ import type {
   AudienceRiskStats,
   BatchAudienceResult,
   BatchExcludeResult,
-  UserEligibilityResult
+  UserEligibilityResult,
+  EffectStatisticsResult,
+  EffectEvaluation,
+  FunnelResult,
+  FraudPageResult,
+  ExportConfig,
+  ExportReportResult,
+  CompareResult,
+  InefficientMarkResult,
+  TemplateToggleResult
 } from '@/types/marketing'
 
 export const getMarketingListApi = (params: CampaignQueryParams) =>
@@ -109,3 +118,39 @@ export const getAudienceLogsApi = (id: number, params?: AuditQueryParams) =>
 
 export const getAudienceRiskStatsApi = (params?: { campaignId?: number; startDate?: string; endDate?: string }) =>
   request.get<AudienceRiskStats>('/marketing/audience-risk-stats', params)
+
+export const getEffectDetailApi = (id: number, params?: { force?: number }) =>
+  request.get<EffectStatisticsResult>(`/marketing/effect/${id}`, params)
+
+export const evaluateCampaignEffectApi = (id: number) =>
+  request.post<EffectEvaluation>(`/marketing/effect/evaluate/${id}`)
+
+export const batchEvaluateApi = (ids: number[]) =>
+  request.post<EffectEvaluation[]>('/marketing/effect/batch-evaluate', { ids })
+
+export const getEffectFunnelApi = (id: number) =>
+  request.get<FunnelResult>(`/marketing/effect/funnel/${id}`)
+
+export const getFraudInterceptApi = (id: number, params?: { page?: number; pageSize?: number }) =>
+  request.get<FraudPageResult>(`/marketing/effect/fraud/${id}`, params)
+
+export const getExportConfigApi = () =>
+  request.get<ExportConfig>('/marketing/effect/export-config')
+
+export const batchExportReportsApi = (data: {
+  ids: number[];
+  fields?: string[];
+  maskSensitive?: boolean;
+  sortBy?: string;
+  sortOrder?: string;
+}) =>
+  request.post<ExportReportResult>('/marketing/effect/batch-export', data)
+
+export const batchCompareCampaignsApi = (ids: number[]) =>
+  request.post<CompareResult>('/marketing/effect/batch-compare', { ids })
+
+export const batchMarkInefficientApi = (ids: number[]) =>
+  request.post<InefficientMarkResult>('/marketing/effect/batch-mark-inefficient', { ids })
+
+export const toggleTemplateApi = (id: number, data: { isTemplate: boolean; templateTags?: string[] }) =>
+  request.put<TemplateToggleResult>(`/marketing/effect/${id}/template`, data)

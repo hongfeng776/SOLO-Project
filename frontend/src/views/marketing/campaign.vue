@@ -80,6 +80,14 @@
           <el-icon><DataLine /></el-icon>
           风控拦截统计
         </el-button>
+        <el-button type="success" @click="handleBatchReEvaluate" :loading="evaluating">
+          <el-icon><TrendCharts /></el-icon>
+          批量计算评级
+        </el-button>
+        <el-button type="info" @click="effectBatchVisible = true">
+          <el-icon><DataAnalysis /></el-icon>
+          效果数据运维
+        </el-button>
       </template>
 
       <el-table-column type="selection" width="50" @selection-change="handleSelectionChange" />
@@ -182,6 +190,47 @@
             />
             <div class="usage-text">使用率 {{ getBudgetUsage(row) }}%</div>
           </div>
+        </template>
+      </el-table-column>
+
+      <el-table-column label="ROI/核销率" width="120" align="center">
+        <template #default="{ row }">
+          <div class="roi-cell">
+            <div class="roi-row">
+              <span class="label">ROI</span>
+              <b class="roi" :class="{ warn: Number(row.roiValue) < 1 }">
+                {{ Number(row.roiValue || 0).toFixed(2) }}
+              </b>
+            </div>
+            <div class="roi-row">
+              <span class="label">核销</span>
+              <b class="rate">{{ (Number(row.redemptionRate || 0) * 100).toFixed(0) }}%</b>
+            </div>
+          </div>
+        </template>
+      </el-table-column>
+
+      <el-table-column label="效果评级" width="110" align="center">
+        <template #default="{ row }">
+          <div v-if="row.efficiencyLevel" class="efficiency-cell" :style="{ background: EfficiencyLevelGradientMap[row.efficiencyLevel as number] }">
+            <span class="l-name">{{ EfficiencyLevelMap[row.efficiencyLevel as number] }}</span>
+            <span class="l-score">{{ Number(row.efficiencyScore || 0).toFixed(0) }}分</span>
+          </div>
+          <el-tag v-else type="info" size="small" effect="plain">未评级</el-tag>
+        </template>
+      </el-table-column>
+
+      <el-table-column label="数据校验" width="100" align="center">
+        <template #default="{ row }">
+          <el-tag
+            v-if="row.dataAuthenticity && row.dataAuthenticity !== 1"
+            size="small"
+            :color="DataAuthenticityColorMap[row.dataAuthenticity as number]"
+            effect="dark"
+          >
+            {{ DataAuthenticityMap[row.dataAuthenticity as number] }}
+          </el-tag>
+          <el-tag v-else size="small" type="info" effect="plain">待校验</el-tag>
         </template>
       </el-table-column>
 
@@ -296,102 +345,30 @@
 
     <el-dialog
       v-model="effectVisible"
-      :title="`「${currentEffectCampaign?.name || ''}」活动效果`"
-      width="720px"
-      custom-class="effect-dialog"
+      :title="`「${currentEffectCampaign?.name || ''}」活动效果分析`"
+      width="1280px"
+      custom-class="effect-dialog-upgrade"
       destroy-on-close
     >
-      <div v-if="effectData" class="effect-content">
-        <div class="effect-stats">
-          <div class="effect-card">
-            <div class="card-icon"><el-icon><Wallet /></el-icon></div>
-            <div class="card-text">
-              <h4>¥{{ formatAmount(effectData.usedBudget) }}</h4>
-              <span>已消耗预算</span>
-            </div>
-          </div>
-          <div class="effect-card">
-            <div class="card-icon" style="background: linear-gradient(135deg, #67c23a, #85ce61)"><el-icon><User /></el-icon></div>
-            <div class="card-text">
-              <h4>{{ effectData.participantCount }}</h4>
-              <span>参与用户数</span>
-            </div>
-          </div>
-          <div class="effect-card">
-            <div class="card-icon" style="background: linear-gradient(135deg, #e6a23c, #f0c78a)"><el-icon><Tickets /></el-icon></div>
-            <div class="card-text">
-              <h4>{{ effectData.useCount }}</h4>
-              <span>权益使用次数</span>
-            </div>
-          </div>
-          <div class="effect-card">
-            <div class="card-icon" style="background: linear-gradient(135deg, #909399, #a6a9ad)"><el-icon><TrendCharts /></el-icon></div>
-            <div class="card-text">
-              <h4>{{ effectData.conversionRate }}%</h4>
-              <span>核销转化率</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="budget-chart-card">
-          <div class="card-title">
-            <el-icon><DataAnalysis /></el-icon>
-            预算消耗进度
-          </div>
-          <div class="chart-content">
-            <el-progress
-              type="dashboard"
-              :percentage="parseFloat(effectData.budgetUsage)"
-              :color="[
-                { color: '#67c23a', percentage: 60 },
-                { color: '#e6a23c', percentage: 85 },
-                { color: '#f56c6c', percentage: 100 }
-              ]"
-              :stroke-width="18"
-              style="--el-progress-font-size: 24px"
-            />
-            <div class="chart-info">
-              <div class="info-row">
-                <span class="label">总预算</span>
-                <b>¥{{ formatAmount(effectData.budget) }}</b>
-              </div>
-              <div class="info-row">
-                <span class="label">已消耗</span>
-                <b class="text-primary">¥{{ formatAmount(effectData.usedBudget) }}</b>
-              </div>
-              <div class="info-row">
-                <span class="label">剩余</span>
-                <b class="text-success">¥{{ formatAmount(Number(effectData.budget) - Number(effectData.usedBudget)) }}</b>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="order-card">
-          <div class="card-title">
-            <el-icon><List /></el-icon>
-            转化数据概览
-          </div>
-          <div class="order-stats">
-            <div class="order-item">
-              <span class="label">发放数量</span>
-              <el-tag size="large" effect="plain">{{ effectData.receiveCount }}</el-tag>
-            </div>
-            <div class="order-item">
-              <span class="label">使用数量</span>
-              <el-tag size="large" type="success" effect="dark">{{ effectData.useCount }}</el-tag>
-            </div>
-            <div class="order-item">
-              <span class="label">关联订单</span>
-              <el-tag size="large" type="primary" effect="dark">{{ effectData.orderCount }}</el-tag>
-            </div>
-            <div class="order-item">
-              <span class="label">未使用</span>
-              <el-tag size="large" type="info">{{ (effectData.receiveCount || 0) - (effectData.useCount || 0) }}</el-tag>
-            </div>
-          </div>
-        </div>
-      </div>
+      <el-tabs v-model="effectActiveTab">
+        <el-tab-pane label="效果总览" name="overview">
+          <CampaignEffectDetail
+            v-if="currentEffectCampaign?.id"
+            :campaign-id="currentEffectCampaign.id as number"
+            :campaign="currentEffectCampaign"
+            @export="effectActiveTab = 'batch'"
+          />
+        </el-tab-pane>
+        <el-tab-pane label="全链路溯源" name="funnel">
+          <EffectFunnelTrace
+            v-if="currentEffectCampaign?.id"
+            :campaign-id="currentEffectCampaign.id as number"
+          />
+        </el-tab-pane>
+        <el-tab-pane label="批量运维工具" name="batch">
+          <EffectBatchToolkit @success="handleBatchSuccess" />
+        </el-tab-pane>
+      </el-tabs>
     </el-dialog>
 
     <el-dialog
@@ -473,6 +450,16 @@
         :campaign-id="currentAudienceCampaign.id as number"
       />
     </el-dialog>
+
+    <el-dialog
+      v-model="effectBatchVisible"
+      title="效果数据批量运维"
+      width="960px"
+      custom-class="effect-batch-dialog"
+      destroy-on-close
+    >
+      <EffectBatchToolkit @success="handleBatchSuccess" />
+    </el-dialog>
   </div>
 </template>
 
@@ -491,14 +478,17 @@ import MarketingBatchOperation from '@/components/MarketingBatchOperation/index.
 import MarketingAuditTrace from '@/components/MarketingAuditTrace/index.vue'
 import AudienceBatchOperation from '@/components/AudienceBatchOperation/index.vue'
 import AudienceAuditTrace from '@/components/AudienceAuditTrace/index.vue'
+import CampaignEffectDetail from '@/components/CampaignEffectDetail/index.vue'
+import EffectFunnelTrace from '@/components/EffectFunnelTrace/index.vue'
+import EffectBatchToolkit from '@/components/EffectBatchToolkit/index.vue'
 import {
   getMarketingListApi,
   deleteMarketingApi,
   updateMarketingStatusApi,
   copyCampaignApi,
-  getMarketingStatisticsApi,
   getRiskStatsApi,
-  getAudienceRiskStatsApi
+  getAudienceRiskStatsApi,
+  batchEvaluateApi
 } from '@/api/marketing'
 import {
   CampaignScene,
@@ -514,10 +504,16 @@ import {
   SceneDefaultConfig,
   AudiencePurpose,
   AudiencePurposeMap,
-  AudiencePurposeColorMap
+  AudiencePurposeColorMap,
+  EfficiencyLevel,
+  EfficiencyLevelMap,
+  EfficiencyLevelColorMap,
+  EfficiencyLevelGradientMap,
+  DataAuthenticityMap,
+  DataAuthenticityColorMap
 } from '@/enums/marketing'
 import { formatDate } from '@/utils/format'
-import type { MarketingCampaign, CampaignStatistics, RiskStats } from '@/types/marketing'
+import type { MarketingCampaign, RiskStats } from '@/types/marketing'
 
 const tableRef = ref()
 const loading = ref(false)
@@ -530,14 +526,16 @@ const editData = ref<Partial<MarketingCampaign> | null>(null)
 const auditVisible = ref(false)
 const currentAuditCampaign = ref<MarketingCampaign | null>(null)
 const effectVisible = ref(false)
+const effectActiveTab = ref<'overview' | 'funnel' | 'batch'>('overview')
 const currentEffectCampaign = ref<MarketingCampaign | null>(null)
-const effectData = ref<CampaignStatistics | null>(null)
 const riskVisible = ref(false)
 const riskLoading = ref(false)
 const riskStats = ref<RiskStats | null>(null)
 const audienceBatchVisible = ref(false)
 const audienceTraceVisible = ref(false)
 const currentAudienceCampaign = ref<MarketingCampaign | null>(null)
+const effectBatchVisible = ref(false)
+const evaluating = ref(false)
 
 const sceneList = [
   { value: CampaignScene.NEW_USER_GIFT, label: '新人礼', desc: '新用户注册专享首单优惠', icon: 'StarFilled', gradient: CampaignSceneGradientMap[CampaignScene.NEW_USER_GIFT], defaultTarget: '仅新用户' },
@@ -761,12 +759,35 @@ const handleAudienceSuccess = () => {
 
 const handleEffect = async (row: MarketingCampaign) => {
   currentEffectCampaign.value = row
+  effectActiveTab.value = 'overview'
   effectVisible.value = true
+}
+
+const handleBatchSuccess = async (action: string) => {
+  if (action === 'mark') {
+    try {
+      const ids = tableData.value.filter(c => c.status === 2).map(c => c.id as number)
+      if (ids.length) await batchEvaluateApi(ids)
+    } catch (e) {}
+    getList()
+  }
+}
+
+const handleBatchReEvaluate = async () => {
+  const ids = tableData.value.filter(c => c.status === 2).map(c => c.id as number)
+  if (ids.length === 0) {
+    ElMessage.warning('当前列表中没有进行中的活动可计算评级')
+    return
+  }
   try {
-    const res = await getMarketingStatisticsApi(row.id)
-    effectData.value = res.data as CampaignStatistics
+    evaluating.value = true
+    await batchEvaluateApi(ids)
+    ElMessage.success(`已成功触发${ids.length}个活动的评级重算`)
+    getList()
   } catch (e: any) {
-    ElMessage.error(e.message || '获取效果数据失败')
+    ElMessage.error(e.message || '批量计算评级失败')
+  } finally {
+    evaluating.value = false
   }
 }
 
@@ -1006,6 +1027,34 @@ onMounted(() => {
     }
   }
 
+  .roi-cell {
+    text-align: left;
+    .roi-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      line-height: 1.8;
+      font-size: 12px;
+      span.label { color: #909399; }
+      b.roi { color: #1f7eff; font-weight: 600; }
+      b.roi.warn { color: #f56c6c; }
+      b.rate { color: #303133; font-weight: 600; }
+    }
+  }
+
+  .efficiency-cell {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 84px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    color: #fff;
+    .l-name { font-size: 12px; font-weight: 600; }
+    .l-score { font-size: 11px; opacity: 0.92; margin-top: 2px; }
+  }
+
   .target-cell {
     display: flex;
     flex-direction: column;
@@ -1035,7 +1084,8 @@ onMounted(() => {
   }
 
   .audience-batch-dialog,
-  .audience-trace-dialog {
+  .audience-trace-dialog,
+  .effect-batch-dialog {
     :deep(.el-dialog) {
       border-radius: 16px;
     }

@@ -251,6 +251,115 @@ export const AudienceActionColorMap: Record<string, string> = {
   [AudienceAction.INVALID_PARTICIPATION]: '#f56c6c'
 }
 
+export enum EfficiencyLevel {
+  NOT_RATED = 0,
+  INEFFICIENT = 1,
+  NORMAL = 2,
+  GOOD = 3,
+  EXCELLENT = 4,
+  S = 5
+}
+
+export const EfficiencyLevelMap: Record<number, string> = {
+  [EfficiencyLevel.NOT_RATED]: '未评级',
+  [EfficiencyLevel.INEFFICIENT]: '低效',
+  [EfficiencyLevel.NORMAL]: '一般',
+  [EfficiencyLevel.GOOD]: '良好',
+  [EfficiencyLevel.EXCELLENT]: '优秀',
+  [EfficiencyLevel.S]: 'S级'
+}
+
+export const EfficiencyLevelColorMap: Record<number, string> = {
+  [EfficiencyLevel.NOT_RATED]: '#c0c4cc',
+  [EfficiencyLevel.INEFFICIENT]: '#909399',
+  [EfficiencyLevel.NORMAL]: '#409eff',
+  [EfficiencyLevel.GOOD]: '#67c23a',
+  [EfficiencyLevel.EXCELLENT]: '#f56c6c',
+  [EfficiencyLevel.S]: '#ff0050'
+}
+
+export const EfficiencyLevelGradientMap: Record<number, string> = {
+  [EfficiencyLevel.NOT_RATED]: 'linear-gradient(135deg, #c0c4cc 0%, #d3d4d6 100%)',
+  [EfficiencyLevel.INEFFICIENT]: 'linear-gradient(135deg, #909399 0%, #a6a9ad 100%)',
+  [EfficiencyLevel.NORMAL]: 'linear-gradient(135deg, #409eff 0%, #66b1ff 100%)',
+  [EfficiencyLevel.GOOD]: 'linear-gradient(135deg, #67c23a 0%, #85ce61 100%)',
+  [EfficiencyLevel.EXCELLENT]: 'linear-gradient(135deg, #f56c6c 0%, #f78989 100%)',
+  [EfficiencyLevel.S]: 'linear-gradient(135deg, #ff0050 0%, #ff4785 100%)'
+}
+
+export enum DataAuthenticity {
+  PENDING = 1,
+  REAL = 2,
+  SUSPICIOUS = 3,
+  FAKE = 4
+}
+
+export const DataAuthenticityMap: Record<number, string> = {
+  [DataAuthenticity.PENDING]: '待校验',
+  [DataAuthenticity.REAL]: '真实',
+  [DataAuthenticity.SUSPICIOUS]: '疑似造假',
+  [DataAuthenticity.FAKE]: '确认造假'
+}
+
+export const DataAuthenticityColorMap: Record<number, string> = {
+  [DataAuthenticity.PENDING]: '#909399',
+  [DataAuthenticity.REAL]: '#67c23a',
+  [DataAuthenticity.SUSPICIOUS]: '#e6a23c',
+  [DataAuthenticity.FAKE]: '#f56c6c'
+}
+
+export enum FunnelStage {
+  IMPRESSION = 'impression',
+  CLICK = 'click',
+  PARTICIPATE = 'participate',
+  RECEIVE = 'receive',
+  USE = 'use',
+  CONVERSION = 'conversion'
+}
+
+export const FunnelStageMap: Record<string, { label: string; color: string; icon: string }> = {
+  [FunnelStage.IMPRESSION]: { label: '活动曝光', color: '#66b1ff', icon: 'View' },
+  [FunnelStage.CLICK]:      { label: '点击进入', color: '#67c23a', icon: 'Pointer' },
+  [FunnelStage.PARTICIPATE]:{ label: '参与活动', color: '#e6a23c', icon: 'UserFilled' },
+  [FunnelStage.RECEIVE]:    { label: '领取权益', color: '#8e44ad', icon: 'Present' },
+  [FunnelStage.USE]:        { label: '核销使用', color: '#f56c6c', icon: 'Tickets' },
+  [FunnelStage.CONVERSION]: { label: '订单转化', color: '#ff0050', icon: 'Goods' }
+}
+
+export enum SuggestionType {
+  ROI = 'roi',
+  REDEMPTION = 'redemption',
+  CONVERSION = 'conversion',
+  CTR = 'ctr',
+  BUDGET = 'budget',
+  FRAUD = 'fraud',
+  STRATEGY = 'strategy',
+  TEMPLATE = 'template'
+}
+
+export const SuggestionLevel: Record<string, string> = {
+  danger: '高优先级',
+  warning: '中优先级',
+  info: '低优先级',
+  success: '正向建议'
+}
+
+export enum ExportFieldGroup {
+  BASIC = 'basic',
+  FINANCE = 'finance',
+  METRICS = 'metrics',
+  RATING = 'rating',
+  META = 'meta'
+}
+
+export const ExportFieldGroupMap: Record<string, string> = {
+  [ExportFieldGroup.BASIC]: '活动基础信息',
+  [ExportFieldGroup.FINANCE]: '财务与预算',
+  [ExportFieldGroup.METRICS]: '效果指标',
+  [ExportFieldGroup.RATING]: '评级与模板',
+  [ExportFieldGroup.META]: '创建信息'
+}
+
 export const SceneDefaultConfig: Record<number, Record<string, any>> = {
   [CampaignScene.NEW_USER_GIFT]: {
     targetUser: TargetUser.NEW_USER,

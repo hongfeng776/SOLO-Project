@@ -21,6 +21,21 @@ const {
   getAudienceInterceptStats,
   calculateAudienceDiff
 } = require('../services/marketingAudienceAuditService')
+const {
+  evaluateCampaign,
+  batchEvaluateCampaigns,
+  getStatisticsWithCascade,
+  compareCampaigns,
+  markInefficientCampaigns,
+  EFFICIENCY_LEVEL_CONFIG
+} = require('../services/marketingEffectService')
+const {
+  getFunnelData,
+  getFraudRecords,
+  exportCampaignReports,
+  FUNNEL_STAGES,
+  EXPORT_FIELD_CONFIG
+} = require('../services/marketingFunnelService')
 
 const getOperatorInfo = (req) => {
   return {
@@ -1119,6 +1134,141 @@ const verifyUserEligibility = async (req, res, next) => {
   }
 }
 
+const getStatisticsDetail = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const result = await getStatisticsWithCascade(id, req.query)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const evaluateCampaignEffect = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const operator = getOperatorInfo(req)
+    const result = await evaluateCampaign(id)
+    await logAction({
+      campaignId: id,
+      action: 'evaluate',
+      subAction: 're_calc_efficiency',
+      operatorId: operator.id,
+      operatorName: operator.name,
+      afterJson: JSON.stringify({ level: result.efficiencyLevel, score: result.efficiencyScore })
+    })
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchEvaluate = async (req, res, next) => {
+  try {
+    const { ids } = req.body
+    const result = await batchEvaluateCampaigns(ids)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getEffectFunnel = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const result = await getFunnelData(id, req.query)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getFraudInterceptList = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const result = await getFraudRecords(id, req.query)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getExportConfig = async (req, res, next) => {
+  try {
+    res.json(success({
+      fields: EXPORT_FIELD_CONFIG,
+      efficiencyLevels: EFFICIENCY_LEVEL_CONFIG
+    }))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchExportReports = async (req, res, next) => {
+  try {
+    const { ids, fields, maskSensitive, sortBy, sortOrder } = req.body
+    const result = await exportCampaignReports(ids, { fields, maskSensitive, sortBy, sortOrder })
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchCompareCampaigns = async (req, res, next) => {
+  try {
+    const { ids } = req.body
+    const result = await compareCampaigns(ids)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchMarkInefficient = async (req, res, next) => {
+  try {
+    const { ids } = req.body
+    const operator = getOperatorInfo(req)
+    const result = await markInefficientCampaigns(ids)
+    const logPromises = ids.map(id => logAction({
+      campaignId: id,
+      action: 'mark',
+      subAction: 'mark_inefficient',
+      operatorId: operator.id,
+      operatorName: operator.name,
+      remark: '批量标记为低效活动'
+    }))
+    await Promise.all(logPromises)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const toggleTemplate = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { isTemplate, templateTags } = req.body
+    const operator = getOperatorInfo(req)
+    const [count] = await MarketingCampaign.update(
+      { isTemplate: isTemplate ? 1 : 0, templateTags },
+      { where: { id } }
+    )
+    if (count) {
+      await logAction({
+        campaignId: id,
+        action: 'mark',
+        subAction: isTemplate ? 'mark_template' : 'unmark_template',
+        operatorId: operator.id,
+        operatorName: operator.name,
+        remark: isTemplate ? `标记为优质模板：${(templateTags || []).join('/')}` : '取消优质模板标记'
+      })
+    }
+    res.json(success({ count, isTemplate, templateTags }))
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   getList,
   getDetail,
@@ -1133,6 +1283,16 @@ module.exports = {
   batchUpdateStatus,
   batchUpdateCityTier,
   getStatistics,
+  getStatisticsDetail,
+  evaluateCampaignEffect,
+  batchEvaluate,
+  getEffectFunnel,
+  getFraudInterceptList,
+  getExportConfig,
+  batchExportReports,
+  batchCompareCampaigns,
+  batchMarkInefficient,
+  toggleTemplate,
   getAuditList,
   getRiskStats,
   getSceneConfig,

@@ -285,6 +285,96 @@ const MarketingCampaign = sequelize.define('MarketingCampaign', {
     defaultValue: 0,
     comment: '人群规则版本号，每次变更+1'
   },
+  impressionCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: '曝光次数'
+  },
+  clickCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: '点击次数'
+  },
+  conversionCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: '转化次数（产生有效订单）'
+  },
+  conversionAmount: {
+    type: DataTypes.DECIMAL(14, 2),
+    defaultValue: 0,
+    comment: '转化订单金额（GMV）'
+  },
+  efficiencyLevel: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '活动效果等级：0未评级 1低效 2一般 3良好 4优秀 5S级'
+  },
+  efficiencyScore: {
+    type: DataTypes.DECIMAL(6, 2),
+    defaultValue: 0,
+    comment: '活动效果评分（0-100）'
+  },
+  roiValue: {
+    type: DataTypes.DECIMAL(10, 4),
+    defaultValue: 0,
+    comment: 'ROI = conversionAmount / usedBudget'
+  },
+  ctrValue: {
+    type: DataTypes.DECIMAL(8, 4),
+    defaultValue: 0,
+    comment: '点击率 clickCount / impressionCount'
+  },
+  conversionRate: {
+    type: DataTypes.DECIMAL(8, 4),
+    defaultValue: 0,
+    comment: '转化率 conversionCount / receiveCount'
+  },
+  redemptionRate: {
+    type: DataTypes.DECIMAL(8, 4),
+    defaultValue: 0,
+    comment: '核销率 useCount / receiveCount'
+  },
+  optimizeSuggestions: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '优化建议数组 [{level, type, title, desc, priority}]'
+  },
+  dataAuthenticity: {
+    type: DataTypes.TINYINT,
+    defaultValue: 1,
+    comment: '数据真伪校验：1待校验 2真实 3疑似造假 4确认造假'
+  },
+  authenticityScore: {
+    type: DataTypes.DECIMAL(6, 2),
+    defaultValue: 0,
+    comment: '数据真实性评分（0-100）'
+  },
+  fraudWarningCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: '疑似虚假参与拦截次数'
+  },
+  isTemplate: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '是否标记为优质模板：0否 1是'
+  },
+  templateTags: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '优质模板标签数组 ["高ROI","高核销率","拉新效果好"]'
+  },
+  funnelData: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: '全链路漏斗快照 {impression,click,participate,receive,use,conversion,gmv}'
+  },
+  lastEvaluatedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '最近一次效果评级时间'
+  },
   creatorId: {
     type: DataTypes.INTEGER,
     allowNull: true,

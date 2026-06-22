@@ -449,3 +449,196 @@ export interface UserEligibilityResult {
   userLevel?: number;
   weight?: number
 }
+
+export interface OptimizeSuggestion {
+  level: string;
+  type: string;
+  title: string;
+  desc: string;
+  priority: number;
+}
+
+export interface SubScoreDetail {
+  roi: number;
+  redemptionRate: number;
+  conversionRate: number;
+  ctr: number;
+  budgetUsage: number;
+  audienceMatch: number;
+}
+
+export interface EffectMetrics {
+  impression: number;
+  click: number;
+  receive: number;
+  use: number;
+  participant: number;
+  conversion: number;
+  gmv: number;
+  budget: number;
+  usedBudget: number;
+  ctrValue: number;
+  redemptionRate: number;
+  conversionRate: number;
+  participationRate: number;
+  roiValue: number;
+  budgetUsage: number;
+  receiveRate: number;
+}
+
+export interface LevelConfig {
+  level: number;
+  name: string;
+  minScore: number;
+  color: string;
+  label: string;
+}
+
+export interface AuthenticityCheck {
+  type: string;
+  pass: boolean;
+  desc: string;
+}
+
+export interface AuthenticityResult {
+  score: number;
+  status: number;
+  checks: AuthenticityCheck[];
+}
+
+export interface EffectEvaluation {
+  efficiencyLevel: number;
+  efficiencyScore: number;
+  roiValue: number;
+  ctrValue: number;
+  conversionRate: number;
+  redemptionRate: number;
+  optimizeSuggestions: OptimizeSuggestion[];
+  templateTags: string[];
+  dataAuthenticity: number;
+  authenticityScore: number;
+  funnelData: any;
+  lastEvaluatedAt: string;
+  subScores: SubScoreDetail;
+  levelCfg: LevelConfig;
+  metrics: EffectMetrics;
+  authenticity: AuthenticityResult;
+}
+
+export interface EffectStatisticsResult {
+  statusValid: boolean;
+  campaignStatus: number;
+  campaignStart: string;
+  campaignEnd: string;
+  metrics: EffectMetrics;
+  evaluated: EffectEvaluation | null;
+  cascadeFilters: string[];
+}
+
+export interface FunnelStageRow {
+  key: string;
+  label: string;
+  color: string;
+  icon: string;
+  value: number;
+  displayValue: string;
+  conversionPct: number;
+  dropPct: number;
+  totalRatio: number;
+}
+
+export interface LossReason {
+  stageKey: string;
+  stageLabel: string;
+  dropPct: number;
+  level: string;
+  title: string;
+  desc: string;
+}
+
+export interface FunnelResult {
+  funnel: FunnelStageRow[];
+  gmv: number;
+  avgOrderValue: number;
+  avgAcquisitionCost: number;
+  topLossReasons: LossReason[];
+}
+
+export interface FraudRecord {
+  id: number;
+  action: string;
+  phone: string;
+  rawPhone: string;
+  userLevel: number;
+  reason: string;
+  tags: string[];
+  affectedCount: number;
+  createdAt: string;
+  riskLevel: number;
+}
+
+export interface FraudStats {
+  totalBlocked: number;
+  byType: { key: string; label: string; count: number; color: string }[];
+  estimatedSavings: number;
+}
+
+export interface FraudPageResult {
+  list: FraudRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
+  stats: FraudStats;
+}
+
+export interface ExportField {
+  key: string;
+  label: string;
+  group: string;
+  sensitive?: boolean;
+}
+
+export interface ExportConfig {
+  fields: ExportField[];
+  efficiencyLevels: LevelConfig[];
+}
+
+export interface ExportReportResult {
+  total: number;
+  columns: ExportField[];
+  rows: any[];
+  maskApplied: boolean;
+}
+
+export interface CompareDimension {
+  key: string;
+  label: string;
+  higherBetter: boolean;
+}
+
+export interface CompareCampaignItem {
+  id: number;
+  name: string;
+  code: string;
+  scene: number;
+  audiencePurpose: number;
+  status: number;
+  metrics: EffectMetrics;
+  evaluated: any;
+}
+
+export interface CompareResult {
+  list: CompareCampaignItem[];
+  dimensions: CompareDimension[];
+}
+
+export interface InefficientMarkResult {
+  marked: number;
+  totalIds: number;
+}
+
+export interface TemplateToggleResult {
+  count: number;
+  isTemplate: number;
+  templateTags: string[];
+}
