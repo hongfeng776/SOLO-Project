@@ -181,6 +181,30 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '评论审核', icon: 'ChatLineSquare', roles: ['content:audit', 'comment:audit'] },
       },
       {
+        path: 'interaction-analytics',
+        meta: { title: '互动数据分析', icon: 'DataAnalysis' },
+        children: [
+          {
+            path: '',
+            name: 'InteractionAnalytics',
+            component: () => import('@/views/analytics/index.vue'),
+            meta: { title: '互动数据统计', icon: 'DataLine', roles: ['analytics:view'] },
+          },
+          {
+            path: 'batch',
+            name: 'InteractionAnalyticsBatch',
+            component: () => import('@/views/analytics/batch.vue'),
+            meta: { title: '批量导出筛查', icon: 'FolderOpened', roles: ['analytics:view'] },
+          },
+          {
+            path: 'trace',
+            name: 'InteractionAnalyticsTrace',
+            component: () => import('@/views/analytics/trace.vue'),
+            meta: { title: '数据溯源', icon: 'Aim', roles: ['analytics:view'] },
+          },
+        ],
+      },
+      {
         path: 'messages',
         name: 'Messages',
         component: () => import('@/views/message/index.vue'),

@@ -1131,5 +1131,48 @@ export const DANMAKU_VIOLATION_TYPE = {
   OTHER: { value: 'other', label: '其他违规' },
 } as const
 
+export const INTERACTION_TYPE = {
+  COMMENT: { value: 'comment', label: '评论', color: '#409EFF', icon: 'ChatDotRound' },
+  DANMAKU: { value: 'danmaku', label: '弹幕', color: '#67C23A', icon: 'ChatLineSquare' },
+  LIKE: { value: 'like', label: '点赞', color: '#F56C6C', icon: 'Star' },
+  SHARE: { value: 'share', label: '转发', color: '#E6A23C', icon: 'Share' },
+  COLLECT: { value: 'collect', label: '收藏', color: '#722ed1', icon: 'StarFilled' },
+} as const
 
+export const INTERACTION_TAG = {
+  NORMAL: { value: 0, label: '正常', color: '#909399', type: 'info' },
+  HIGH_QUALITY: { value: 1, label: '优质', color: '#67C23A', type: 'success' },
+  NEED_OPTIMIZE: { value: 2, label: '需优化', color: '#E6A23C', type: 'warning' },
+  ABNORMAL: { value: 3, label: '异常', color: '#F56C6C', type: 'danger' },
+} as const
+
+export const TRACE_TYPE = {
+  DUPLICATE_STAT: { value: 'DUPLICATE_STAT', label: '重复统计', severity: 1, color: '#909399' },
+  ABNORMAL_FLUCTUATION: { value: 'ABNORMAL_FLUCTUATION', label: '数据异常波动', severity: 2, color: '#E6A23C' },
+  INCONSISTENT_DATA: { value: 'INCONSISTENT_DATA', label: '数据不一致', severity: 2, color: '#F56C6C' },
+  FAKE_INTERACTION: { value: 'FAKE_INTERACTION', label: '刷互动', severity: 3, color: '#F56C6C' },
+} as const
+
+export const ANALYTICS_VIEW_MODE = {
+  LIST: { value: 'list', label: '明细列表', icon: 'List' },
+  TREND: { value: 'trend', label: '趋势图表', icon: 'TrendCharts' },
+  COMPARISON: { value: 'comparison', label: '品类对比', icon: 'DataLine' },
+} as const
+
+export const EXPORT_FIELDS = {
+  contentId: { value: 'contentId', label: '内容ID' },
+  contentTitle: { value: 'contentTitle', label: '内容标题' },
+  contentCategory: { value: 'contentCategory', label: '内容品类' },
+  statDate: { value: 'statDate', label: '统计日期' },
+  commentCount: { value: 'commentCount', label: '评论数' },
+  danmakuCount: { value: 'danmakuCount', label: '弹幕数' },
+  likeCount: { value: 'likeCount', label: '点赞数' },
+  shareCount: { value: 'shareCount', label: '转发数' },
+  collectCount: { value: 'collectCount', label: '收藏数' },
+  playCount: { value: 'playCount', label: '播放数' },
+  totalInteractions: { value: 'totalInteractions', label: '总互动数' },
+  interactionRate: { value: 'interactionRate', label: '互动率' },
+  interactionTag: { value: 'interactionTag', label: '互动标签' },
+  isAnomaly: { value: 'isAnomaly', label: '是否异常' },
+} as const
 

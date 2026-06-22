@@ -32,11 +32,14 @@ const { FeedbackRecord, FeedbackLog, FeedbackArchive,
   FEEDBACK_TYPE, FEEDBACK_STATUS, FEEDBACK_PRIORITY, FEEDBACK_SOURCE,
   FEEDBACK_BATCH_ACTION, FEEDBACK_TIMELINESS, PRIORITY_TIMEOUT_HOURS,
 } = require('./UserFeedback');
+const { ContentInteractionStat } = require('./ContentInteractionStat');
+const { InteractionStatTraceLog } = require('./InteractionStatTraceLog');
 
 Content.belongsTo(Copyright, { foreignKey: 'copyright_id', as: 'copyright' });
 Copyright.hasMany(Content, { foreignKey: 'copyright_id', as: 'contents' });
 
 Content.hasMany(Comment, { foreignKey: 'content_id', as: 'comments' });
+Content.hasMany(ContentInteractionStat, { foreignKey: 'content_id', as: 'interactionStats' });
 
 CommentManageLog.belongsTo(Comment, { foreignKey: 'comment_id', as: 'comment' });
 
@@ -134,4 +137,6 @@ module.exports = {
   FEEDBACK_BATCH_ACTION,
   FEEDBACK_TIMELINESS,
   PRIORITY_TIMEOUT_HOURS,
+  ContentInteractionStat,
+  InteractionStatTraceLog,
 };

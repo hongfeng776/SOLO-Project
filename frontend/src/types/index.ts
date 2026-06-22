@@ -3146,5 +3146,120 @@ export interface DanmakuManageQueryParams extends PaginationParams {
   violationType?: string | null
 }
 
+export interface InteractionStatItem {
+  id: number
+  contentId: number
+  statDate: string
+  commentCount: number
+  danmakuCount: number
+  likeCount: number
+  shareCount: number
+  collectCount: number
+  playCount: number
+  totalInteractions: number
+  interactionRate: number
+  interactionTag: number
+  isAnomaly: number
+  anomalyTypes: string[]
+  statBatch?: string
+  remark?: string
+  content?: { id: number; contentTitle: string; contentCategory: number; isHot: number }
+}
 
+export interface InteractionTrendItem {
+  date: string
+  commentCount: number
+  danmakuCount: number
+  likeCount: number
+  shareCount: number
+  collectCount: number
+  playCount: number
+  totalInteractions: number
+}
+
+export interface CategoryComparisonItem {
+  category: number
+  categoryName: string
+  commentCount: number
+  danmakuCount: number
+  likeCount: number
+  shareCount: number
+  collectCount: number
+  playCount: number
+  totalInteractions: number
+  avgInteractionRate: number
+}
+
+export interface ExportReportParams {
+  contentCategory?: number | null
+  startDate?: string | null
+  endDate?: string | null
+  sortBy?: string | null
+  sortOrder?: string | null
+  selectedFields?: string[]
+}
+
+export interface ExportReportResult {
+  batchId: string
+  totalCount: number
+  exportFields: string[]
+  data: Record<string, any>[]
+  exportTime: string
+}
+
+export interface ScreenLowInteractionParams {
+  contentCategory?: number | null
+  startDate?: string | null
+  endDate?: string | null
+  threshold?: number | null
+}
+
+export interface ScreenLowInteractionResult {
+  totalCount: number
+  lowInteractionCount: number
+  screenedIds: number[]
+  taggedCount: number
+}
+
+export interface InteractionTraceFinding {
+  id?: number
+  contentId?: number
+  statBatch?: string
+  statDate?: string
+  traceType: 'DUPLICATE_STAT' | 'ABNORMAL_FLUCTUATION' | 'INCONSISTENT_DATA' | 'FAKE_INTERACTION'
+  traceDesc: string
+  beforeData?: Record<string, any>
+  afterData?: Record<string, any>
+  severity: 1 | 2 | 3
+  resolved: number
+  createdAt?: string
+}
+
+export interface InteractionTraceResult {
+  stats: InteractionStatItem[]
+  findings: InteractionTraceFinding[]
+  duplicateStatCount: number
+  abnormalFluctuationCount: number
+  inconsistentDataCount: number
+  fakeInteractionCount: number
+}
+
+export interface DuplicateStatCheckResult {
+  isDuplicate: boolean
+  existingStat?: InteractionStatItem
+}
+
+export interface ConsistencyValidateResult {
+  consistent: boolean
+  differences?: Record<string, { dailySum: number; contentTotal: number; diff: number }>
+}
+
+export interface InteractionAnalyticsQueryParams extends PaginationParams {
+  contentCategory?: number | null
+  startDate?: string | null
+  endDate?: string | null
+  interactionTypes?: string | null
+  interactionTag?: number | null
+  isAnomaly?: number | null
+}
 
