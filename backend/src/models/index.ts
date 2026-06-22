@@ -32,3 +32,6 @@ export { DeviceArchiveTraceLog } from './DeviceArchiveTraceLog';
 export { DeviceMonitor } from './DeviceMonitor';
 export { DeviceFaultRecord } from './DeviceFaultRecord';
 export { DeviceMonitorLog } from './DeviceMonitorLog';
+export { DeviceWorkOrder } from './DeviceWorkOrder';
+export { DeviceWorkOrderLog } from './DeviceWorkOrderLog';
+export { DeviceMaintenanceTask } from './DeviceMaintenanceTask';

@@ -581,6 +581,45 @@ const asyncRoutes: RouteRecordRaw[] = [
           permissions: ['business:deviceMonitor:trace'],
           roles: ['admin', 'manager', 'auditor']
         }
+      },
+      {
+        path: 'device-workorder/index',
+        name: 'BusinessDeviceWorkOrderIndex',
+        component: () => import('@views/business/device-workorder/index.vue'),
+        meta: {
+          title: '运维工单',
+          icon: 'Tickets',
+          componentName: 'BusinessDeviceWorkOrderIndex',
+          keepAlive: true,
+          permissions: ['business:deviceWorkOrder:query'],
+          roles: ['admin', 'manager', 'operator']
+        }
+      },
+      {
+        path: 'device-workorder/task',
+        name: 'BusinessDeviceWorkOrderTask',
+        component: () => import('@views/business/device-workorder/task.vue'),
+        meta: {
+          title: '批量任务',
+          icon: 'Files',
+          componentName: 'BusinessDeviceWorkOrderTask',
+          keepAlive: true,
+          permissions: ['business:deviceWorkOrder:batch'],
+          roles: ['admin', 'manager']
+        }
+      },
+      {
+        path: 'device-workorder/trace',
+        name: 'BusinessDeviceWorkOrderTrace',
+        component: () => import('@views/business/device-workorder/trace.vue'),
+        meta: {
+          title: '运维溯源',
+          icon: 'Search',
+          componentName: 'BusinessDeviceWorkOrderTrace',
+          keepAlive: false,
+          permissions: ['business:deviceWorkOrder:trace'],
+          roles: ['admin', 'manager', 'auditor']
+        }
       }
     ]
   },

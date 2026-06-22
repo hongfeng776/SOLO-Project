@@ -23,3 +23,4 @@ export { SettlementService } from './SettlementService';
 export { OnlinePaymentService } from './OnlinePaymentService';
 export { DeviceArchiveService } from './DeviceArchiveService';
 export { DeviceMonitorService } from './DeviceMonitorService';
+export { DeviceWorkOrderService } from './DeviceWorkOrderService';

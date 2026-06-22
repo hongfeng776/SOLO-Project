@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, OnlinePaymentController, DeviceArchiveController, DeviceMonitorController } from '../controllers';
+import { TransactionController, ProductController, CustomerController, RiskController, AccountOpeningController, CorporateAccountOpeningController, OpeningReviewController, StatusFlowController, DepositController, LoanController, LoanApprovalController, LoanRepaymentController, SettlementController, OnlinePaymentController, DeviceArchiveController, DeviceMonitorController, DeviceWorkOrderController } from '../controllers';
 import { requirePermission, requireAuth } from '../middlewares';
 
 const router = Router();
@@ -19,6 +19,7 @@ const settlementController = new SettlementController();
 const onlinePaymentController = new OnlinePaymentController();
 const deviceArchiveController = new DeviceArchiveController();
 const deviceMonitorController = new DeviceMonitorController();
+const deviceWorkOrderController = new DeviceWorkOrderController();
 
 router.get('/channel/list', requirePermission('business:channel:query'), (req, res, next) => productController.channelList(req, res, next));
 
@@ -288,5 +289,31 @@ router.post('/device-monitor/fault/:id/handle', requirePermission('business:devi
 router.get('/device-monitor/log/list', requirePermission('business:deviceMonitor:query'), (req, res, next) => deviceMonitorController.logList(req, res, next));
 // 运行溯源
 router.post('/device-monitor/trace', requirePermission('business:deviceMonitor:trace'), (req, res, next) => deviceMonitorController.trace(req, res, next));
+
+// ========== 设备运维工单模块 ==========
+// 配置枚举
+router.get('/device-workorder/config', requireAuth, (req, res, next) => deviceWorkOrderController.config(req, res, next));
+// 前置校验
+router.post('/device-workorder/precheck', requirePermission('business:deviceWorkOrder:create'), (req, res, next) => deviceWorkOrderController.preCheck(req, res, next));
+// 列表查询
+router.get('/device-workorder/list', requirePermission('business:deviceWorkOrder:query'), (req, res, next) => deviceWorkOrderController.list(req, res, next));
+// 统计信息
+router.get('/device-workorder/statistics', requirePermission('business:deviceWorkOrder:query'), (req, res, next) => deviceWorkOrderController.statistics(req, res, next));
+// 详情查询
+router.get('/device-workorder/:id', requirePermission('business:deviceWorkOrder:query'), (req, res, next) => deviceWorkOrderController.detail(req, res, next));
+// 创建工单
+router.post('/device-workorder', requirePermission('business:deviceWorkOrder:create'), (req, res, next) => deviceWorkOrderController.create(req, res, next));
+// 更新工单
+router.put('/device-workorder/:id', requirePermission('business:deviceWorkOrder:update'), (req, res, next) => deviceWorkOrderController.update(req, res, next));
+// 运维任务列表
+router.get('/device-workorder/task/list', requirePermission('business:deviceWorkOrder:query'), (req, res, next) => deviceWorkOrderController.taskList(req, res, next));
+// 运维任务详情
+router.get('/device-workorder/task/:id', requirePermission('business:deviceWorkOrder:query'), (req, res, next) => deviceWorkOrderController.taskDetail(req, res, next));
+// 批量创建任务
+router.post('/device-workorder/task/batch', requirePermission('business:deviceWorkOrder:batch'), (req, res, next) => deviceWorkOrderController.createBatchTask(req, res, next));
+// 工单日志列表
+router.get('/device-workorder/log/list', requirePermission('business:deviceWorkOrder:query'), (req, res, next) => deviceWorkOrderController.logList(req, res, next));
+// 运维溯源
+router.post('/device-workorder/trace', requirePermission('business:deviceWorkOrder:trace'), (req, res, next) => deviceWorkOrderController.trace(req, res, next));
 
 export default router;

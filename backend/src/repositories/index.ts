@@ -20,3 +20,4 @@ export { MerchantInfoRepository } from './MerchantInfoRepository';
 export { DeviceBindingRepository } from './DeviceBindingRepository';
 export { DeviceArchiveRepository } from './DeviceArchiveRepository';
 export { DeviceMonitorRepository } from './DeviceMonitorRepository';
+export { DeviceWorkOrderRepository } from './DeviceWorkOrderRepository';
