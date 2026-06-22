@@ -20,6 +20,7 @@ import distributionOrderController from './DistributionOrder.controller';
 import distributionActivityController from './DistributionActivity.controller';
 import activityLifecycleController from './ActivityLifecycle.controller';
 import participationRiskControlController from './ParticipationRiskControl.controller';
+import rewardWriteOffController from './RewardWriteOff.controller';
 
 export {
   authController,
@@ -44,4 +45,5 @@ export {
   distributionActivityController,
   activityLifecycleController,
   participationRiskControlController,
+  rewardWriteOffController,
 };

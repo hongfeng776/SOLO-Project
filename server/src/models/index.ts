@@ -45,6 +45,8 @@ import OrderAbnormalEvidence from './OrderAbnormalEvidence.model';
 import MarketingStatusChangeLog from './MarketingStatusChangeLog.model';
 import ActivityParticipation from './ActivityParticipation.model';
 import ActivityParticipationLog from './ActivityParticipationLog.model';
+import RewardWriteOff from './RewardWriteOff.model';
+import RewardWriteOffLog from './RewardWriteOffLog.model';
 
 const models = {
   User,
@@ -94,6 +96,8 @@ const models = {
   MarketingStatusChangeLog,
   ActivityParticipation,
   ActivityParticipationLog,
+  RewardWriteOff,
+  RewardWriteOffLog,
 };
 
 const associate = (): void => {
@@ -217,8 +221,15 @@ const associate = (): void => {
 
   ActivityParticipationLog.belongsTo(ActivityParticipation, { foreignKey: 'participationId', as: 'participation' });
   ActivityParticipationLog.belongsTo(Marketing, { foreignKey: 'marketingId', as: 'marketing' });
+
+  Marketing.hasMany(RewardWriteOff, { foreignKey: 'marketingId', as: 'writeOffs' });
+  RewardWriteOff.belongsTo(Marketing, { foreignKey: 'marketingId', as: 'marketing' });
+  RewardWriteOff.belongsTo(ActivityParticipation, { foreignKey: 'participationId', as: 'participation' });
+  RewardWriteOff.hasMany(RewardWriteOffLog, { foreignKey: 'writeOffId', as: 'writeOffLogs' });
+
+  RewardWriteOffLog.belongsTo(RewardWriteOff, { foreignKey: 'writeOffId', as: 'writeOff' });
 };
 
 export { associate };
-export { User, Channel, Promoter, Order, Commission, Marketing, MarketingRewardRule, MarketingTemplate, MarketingActivityLog, MarketingStatusChangeLog, ActivityParticipation, ActivityParticipationLog, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification, Product, ProductAuditLog, ProductEditApproval, ProductScheduleRule, ProductListingLog, ProductRiskRule, ProductRiskRecord, DistributionOrderQueryLog, OrderStatusChangeLog, OrderAbnormalRecord, OrderAbnormalEvidence };
+export { User, Channel, Promoter, Order, Commission, Marketing, MarketingRewardRule, MarketingTemplate, MarketingActivityLog, MarketingStatusChangeLog, ActivityParticipation, ActivityParticipationLog, RewardWriteOff, RewardWriteOffLog, Withdraw, Role, Permission, RolePermission, UserRole, OperationLog, ChannelExtension, CommissionRule, RoleDeletionLog, PromoterBlacklist, PromoterAuditLog, PromoterChangeLog, PromoterQualification, PromoterLevelRule, PromoterLevelAdjustRequest, PromoterLevelChangeLog, PromoterRiskRecord, PromoterRiskRelease, PromoterRiskBehavior, PromoterRiskWarning, ChannelAudit, ChannelAuditLog, ChannelBlacklist, ChannelQualification, Product, ProductAuditLog, ProductEditApproval, ProductScheduleRule, ProductListingLog, ProductRiskRule, ProductRiskRecord, DistributionOrderQueryLog, OrderStatusChangeLog, OrderAbnormalRecord, OrderAbnormalEvidence };
 export default models;

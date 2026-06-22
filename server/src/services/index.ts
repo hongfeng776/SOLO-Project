@@ -25,6 +25,7 @@ import orderAbnormalService from './OrderAbnormal.service';
 import distributionActivityService from './DistributionActivity.service';
 import activityLifecycleService from './ActivityLifecycle.service';
 import participationRiskControlService from './ParticipationRiskControl.service';
+import rewardWriteOffService from './RewardWriteOff.service';
 
 export {
   authService,
@@ -54,4 +55,5 @@ export {
   distributionActivityService,
   activityLifecycleService,
   participationRiskControlService,
+  rewardWriteOffService,
 };

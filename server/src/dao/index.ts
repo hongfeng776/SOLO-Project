@@ -42,6 +42,8 @@ import orderAbnormalEvidenceDao from './OrderAbnormalEvidence.dao';
 import marketingStatusChangeLogDao from './MarketingStatusChangeLog.dao';
 import activityParticipationDao from './ActivityParticipation.dao';
 import activityParticipationLogDao from './ActivityParticipationLog.dao';
+import rewardWriteOffDao from './RewardWriteOff.dao';
+import rewardWriteOffLogDao from './RewardWriteOffLog.dao';
 
 export {
   userDao,
@@ -88,4 +90,6 @@ export {
   marketingStatusChangeLogDao,
   activityParticipationDao,
   activityParticipationLogDao,
+  rewardWriteOffDao,
+  rewardWriteOffLogDao,
 };

@@ -22,6 +22,7 @@ import distributionOrderRoutes from './distribution-order.routes';
 import distributionActivityRoutes from './distribution-activity.routes';
 import activityLifecycleRoutes from './activity-lifecycle.routes';
 import participationRiskControlRoutes from './participation-risk-control.routes';
+import rewardWriteOffRoutes from './reward-write-off.routes';
 import ResponseUtils from '../utils/response';
 
 const router = Router();

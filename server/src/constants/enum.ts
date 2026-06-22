@@ -1626,3 +1626,103 @@ export const PARTICIPATION_ELIGIBILITY_CHECKS = [
   { code: 'ELIG-005', name: '重复参与校验', description: '校验用户是否已参与同一活动' },
   { code: 'ELIG-006', name: '活动状态校验', description: '校验活动是否处于可参与状态' },
 ] as const;
+
+export enum RewardWriteOffStatus {
+  PENDING = 0,
+  VERIFIED = 1,
+  SETTLED = 2,
+  CANCELLED = -1,
+  FAILED = -2,
+  OVERRIDDEN = -3,
+}
+
+export const REWARD_WRITE_OFF_STATUS_LABELS: Record<RewardWriteOffStatus, { label: string; type: 'info' | 'success' | 'danger' | 'warning' }> = {
+  [RewardWriteOffStatus.PENDING]: { label: '待核销', type: 'warning' },
+  [RewardWriteOffStatus.VERIFIED]: { label: '待发放', type: 'info' },
+  [RewardWriteOffStatus.SETTLED]: { label: '已核销', type: 'success' },
+  [RewardWriteOffStatus.CANCELLED]: { label: '已作废', type: 'info' },
+  [RewardWriteOffStatus.FAILED]: { label: '核销失败', type: 'danger' },
+  [RewardWriteOffStatus.OVERRIDDEN]: { label: '已冲正', type: 'info' },
+};
+
+export enum RewardWriteOffType {
+  ACTIVITY_REWARD = 'activity_reward',
+  COMMISSION = 'commission',
+  REFERRAL_BONUS = 'referral_bonus',
+  NEW_USER_BONUS = 'new_user_bonus',
+  LADDER_REWARD = 'ladder_reward',
+  RANKING_REWARD = 'ranking_reward',
+  FULL_AMOUNT_REWARD = 'full_amount_reward',
+}
+
+export const REWARD_WRITE_OFF_TYPE_LABELS: Record<RewardWriteOffType, string> = {
+  [RewardWriteOffType.ACTIVITY_REWARD]: '活动奖励',
+  [RewardWriteOffType.COMMISSION]: '佣金',
+  [RewardWriteOffType.REFERRAL_BONUS]: '推荐奖金',
+  [RewardWriteOffType.NEW_USER_BONUS]: '新人奖励',
+  [RewardWriteOffType.LADDER_REWARD]: '阶梯奖励',
+  [RewardWriteOffType.RANKING_REWARD]: '排名奖励',
+  [RewardWriteOffType.FULL_AMOUNT_REWARD]: '满额奖励',
+};
+
+export const REWARD_WRITE_OFF_VERIFICATION_CHECKS = [
+  { code: 'WOV-001', name: '参与资格校验', description: '校验用户参与资格是否有效' },
+  { code: 'WOV-002', name: '数据达标校验', description: '校验参与数据是否达到奖励门槛' },
+  { code: 'WOV-003', name: '数据真实性校验', description: '校验参与数据真实性，识别虚假数据' },
+  { code: 'WOV-004', name: '用户风控校验', description: '校验用户当前风控状态' },
+  { code: 'WOV-005', name: '重复核销校验', description: '校验是否已存在核销记录' },
+  { code: 'WOV-006', name: '超额核销校验', description: '校验核销金额是否超出奖励上限' },
+  { code: 'WOV-007', name: '活动规则校验', description: '系统自动比对活动规则与实际数据' },
+] as const;
+
+export enum WriteOffVerificationSeverity {
+  INFO = 'info',
+  WARNING = 'warning',
+  ERROR = 'error',
+}
+
+export enum WriteOffBatchOperationType {
+  BATCH_VERIFY = 'batch_verify',
+  BATCH_SETTLE = 'batch_settle',
+  BATCH_CANCEL = 'batch_cancel',
+  BATCH_OVERRIDE = 'batch_override',
+}
+
+export const WRITE_OFF_BATCH_OPERATION_TYPE_LABELS: Record<WriteOffBatchOperationType, string> = {
+  [WriteOffBatchOperationType.BATCH_VERIFY]: '批量复核',
+  [WriteOffBatchOperationType.BATCH_SETTLE]: '批量核销',
+  [WriteOffBatchOperationType.BATCH_CANCEL]: '批量作废',
+  [WriteOffBatchOperationType.BATCH_OVERRIDE]: '批量冲正',
+};
+
+export const REWARD_WRITE_OFF_RULES = {
+  maxDailyWriteOffPerUser: 50,
+  maxSingleWriteOffAmount: 10000,
+  writeOffAutoVerifyThreshold: 100,
+  requireManualVerificationOver: 1000,
+  anomalyWriteOffAmountRate: 0.3,
+} as const;
+
+export enum WriteOffLogType {
+  VERIFY = 'verify',
+  SETTLE = 'settle',
+  CANCEL = 'cancel',
+  OVERRIDE = 'override',
+  FAIL = 'fail',
+  BATCH_VERIFY = 'batch_verify',
+  BATCH_SETTLE = 'batch_settle',
+  BATCH_CANCEL = 'batch_cancel',
+  BATCH_OVERRIDE = 'batch_override',
+}
+
+export const WRITE_OFF_LOG_TYPE_LABELS: Record<WriteOffLogType, string> = {
+  [WriteOffLogType.VERIFY]: '复核通过',
+  [WriteOffLogType.SETTLE]: '核销发放',
+  [WriteOffLogType.CANCEL]: '作废',
+  [WriteOffLogType.OVERRIDE]: '冲正',
+  [WriteOffLogType.FAIL]: '核销失败',
+  [WriteOffLogType.BATCH_VERIFY]: '批量复核',
+  [WriteOffLogType.BATCH_SETTLE]: '批量核销',
+  [WriteOffLogType.BATCH_CANCEL]: '批量作废',
+  [WriteOffLogType.BATCH_OVERRIDE]: '批量冲正',
+};
