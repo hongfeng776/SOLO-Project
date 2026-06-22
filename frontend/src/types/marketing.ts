@@ -642,3 +642,164 @@ export interface TemplateToggleResult {
   isTemplate: number;
   templateTags: string[];
 }
+
+export interface ComplianceCheckItem {
+  type: string;
+  name: string;
+  passed: boolean;
+  message: string;
+  detail: string;
+}
+
+export interface RedemptionRecord {
+  id: number;
+  campaignId: number;
+  campaignName: string;
+  userId: number;
+  userPhone: string | null;
+  userLevel: number;
+  orderId: number | null;
+  orderNo: string | null;
+  couponId: number | null;
+  redemptionCode: string | null;
+  status: number;
+  auditLevel: number;
+  violationType: string;
+  complianceChecks: ComplianceCheckItem[];
+  complianceScore: number;
+  scene: number | null;
+  vehicleType: string | null;
+  city: string | null;
+  redemptionAmount: number;
+  orderAmount: number;
+  benefitStartTime: string | null;
+  benefitEndTime: string | null;
+  auditRemark: string | null;
+  auditorId: number | null;
+  auditorName: string | null;
+  auditAt: string | null;
+  rejectReason: string | null;
+  participateId: number | null;
+  participateTime: string | null;
+  receiveTime: string | null;
+  redemptionTime: string | null;
+  ipAddress: string | null;
+  deviceId: string | null;
+  isRevocable: number;
+  revokedAt: string | null;
+  revokerName: string | null;
+  revokeReason: string | null;
+}
+
+export interface PreCheckResult {
+  canProceed: boolean;
+  reason?: string;
+  campaignStatus?: number;
+}
+
+export interface SubmitRedemptionResult {
+  success: boolean;
+  record: RedemptionRecord;
+  auditLevel: number;
+  auditPath: string;
+  complianceScore: number;
+  violationType: string;
+  autoPassed: boolean;
+  reason?: string;
+}
+
+export interface ManualReviewResult {
+  record: RedemptionRecord;
+  action: string;
+  newStatus: number;
+}
+
+export interface BatchReviewResult {
+  approved: number[];
+  rejected: number[];
+  failed: { id: number; reason: string }[];
+}
+
+export interface RedemptionListResult {
+  list: RedemptionRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface RedemptionStats {
+  total: number;
+  byStatus: Record<number, number>;
+  byViolation: Record<string, number>;
+  autoPassCount: number;
+  manualReviewCount: number;
+  avgComplianceScore: number;
+  violationRate: number;
+}
+
+export interface TraceTimeline {
+  time: string;
+  action: string;
+  detail: string;
+  icon: string;
+  color: string;
+  checks?: ComplianceCheckItem[];
+}
+
+export interface TraceResult {
+  record: RedemptionRecord;
+  campaign: MarketingCampaign | null;
+  timeline: TraceTimeline[];
+  violationLabel: string;
+  complianceChecks: ComplianceCheckItem[];
+  complianceScore: number;
+  isViolated: boolean;
+}
+
+export interface ViolationRecord {
+  id: number;
+  campaignId: number;
+  campaignName: string;
+  userId: number;
+  userPhone: string;
+  rawPhone: string;
+  violationType: string;
+  violationLabel: string;
+  redemptionAmount: number;
+  status: number;
+  complianceScore: number;
+  redemptionTime: string;
+}
+
+export interface ViolationStats {
+  totalViolations: number;
+  byType: Record<string, number>;
+  estimatedSavings: number;
+}
+
+export interface ViolationPageResult {
+  list: ViolationRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
+  stats: ViolationStats;
+}
+
+export interface ComplianceOverviewResult {
+  total: number;
+  complianceScore: number;
+  checks: {
+    type: string;
+    name: string;
+    passCount: number;
+    failCount: number;
+    passRate: number;
+  }[];
+}
+
+export interface RedemptionConfigResult {
+  statusMap: Record<number, string>;
+  violationTypes: { value: string; label: string; level: string }[];
+  complianceCheckTypes: { type: string; name: string; weight: number }[];
+  autoPassThreshold: number;
+}

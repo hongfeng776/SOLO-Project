@@ -36,6 +36,7 @@ const PassengerExportTask = require('./PassengerExportTask')
 const PassengerBehaviorReport = require('./PassengerBehaviorReport')
 const MarketingAuditLog = require('./MarketingAuditLog')
 const MarketingAudienceLog = require('./MarketingAudienceLog')
+const MarketingRedemptionRecord = require('./MarketingRedemptionRecord')
 
 Driver.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' })
 Vehicle.belongsTo(Driver, { foreignKey: 'driverId', as: 'driver' })
@@ -108,6 +109,9 @@ MarketingAuditLog.belongsTo(MarketingCampaign, { foreignKey: 'campaignId', as: '
 MarketingCampaign.hasMany(MarketingAudienceLog, { foreignKey: 'campaignId', as: 'audienceLogs' })
 MarketingAudienceLog.belongsTo(MarketingCampaign, { foreignKey: 'campaignId', as: 'campaign' })
 
+MarketingCampaign.hasMany(MarketingRedemptionRecord, { foreignKey: 'campaignId', as: 'redemptionRecords' })
+MarketingRedemptionRecord.belongsTo(MarketingCampaign, { foreignKey: 'campaignId', as: 'campaign' })
+
 module.exports = {
   User,
   Role,
@@ -146,5 +150,6 @@ module.exports = {
   PassengerExportTask,
   PassengerBehaviorReport,
   MarketingAuditLog,
-  MarketingAudienceLog
+  MarketingAudienceLog,
+  MarketingRedemptionRecord
 }

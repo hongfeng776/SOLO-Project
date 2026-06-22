@@ -311,6 +311,7 @@
           </el-dropdown>
           <el-button link size="small" @click="handleCopy(row)">复制</el-button>
           <el-button type="info" link size="small" @click="handleEffect(row)">效果</el-button>
+          <el-button type="warning" link size="small" @click="handleRedemption(row)">核销</el-button>
           <el-button
             type="danger"
             link
@@ -460,6 +461,37 @@
     >
       <EffectBatchToolkit @success="handleBatchSuccess" />
     </el-dialog>
+
+    <el-dialog
+      v-model="redemptionVisible"
+      :title="`「${currentRedemptionCampaign?.name || ''}」权益核销审核`"
+      width="1280px"
+      custom-class="redemption-dialog"
+      destroy-on-close
+    >
+      <el-tabs v-model="redemptionActiveTab">
+        <el-tab-pane label="核销审核" name="audit">
+          <RedemptionAuditDetail
+            v-if="currentRedemptionCampaign?.id"
+            :campaign-id="currentRedemptionCampaign.id as number"
+            @trace="handleOpenTrace"
+          />
+        </el-tab-pane>
+        <el-tab-pane label="批量运维" name="batch">
+          <RedemptionBatchOperation
+            v-if="currentRedemptionCampaign?.id"
+            :campaign-id="currentRedemptionCampaign.id as number"
+            @success="handleRedemptionBatchSuccess"
+          />
+        </el-tab-pane>
+        <el-tab-pane label="核销溯源" name="trace" :disabled="!traceRecordId">
+          <RedemptionAuditTrace
+            v-if="traceRecordId"
+            :record-id="traceRecordId"
+          />
+        </el-tab-pane>
+      </el-tabs>
+    </el-dialog>
   </div>
 </template>
 
@@ -481,6 +513,9 @@ import AudienceAuditTrace from '@/components/AudienceAuditTrace/index.vue'
 import CampaignEffectDetail from '@/components/CampaignEffectDetail/index.vue'
 import EffectFunnelTrace from '@/components/EffectFunnelTrace/index.vue'
 import EffectBatchToolkit from '@/components/EffectBatchToolkit/index.vue'
+import RedemptionAuditDetail from '@/components/RedemptionAuditDetail/index.vue'
+import RedemptionBatchOperation from '@/components/RedemptionBatchOperation/index.vue'
+import RedemptionAuditTrace from '@/components/RedemptionAuditTrace/index.vue'
 import {
   getMarketingListApi,
   deleteMarketingApi,
@@ -536,6 +571,10 @@ const audienceTraceVisible = ref(false)
 const currentAudienceCampaign = ref<MarketingCampaign | null>(null)
 const effectBatchVisible = ref(false)
 const evaluating = ref(false)
+const redemptionVisible = ref(false)
+const redemptionActiveTab = ref<'audit' | 'batch' | 'trace'>('audit')
+const currentRedemptionCampaign = ref<MarketingCampaign | null>(null)
+const traceRecordId = ref<number | null>(null)
 
 const sceneList = [
   { value: CampaignScene.NEW_USER_GIFT, label: '新人礼', desc: '新用户注册专享首单优惠', icon: 'StarFilled', gradient: CampaignSceneGradientMap[CampaignScene.NEW_USER_GIFT], defaultTarget: '仅新用户' },
@@ -789,6 +828,22 @@ const handleBatchReEvaluate = async () => {
   } finally {
     evaluating.value = false
   }
+}
+
+const handleRedemption = (row: MarketingCampaign) => {
+  currentRedemptionCampaign.value = row
+  redemptionActiveTab.value = 'audit'
+  traceRecordId.value = null
+  redemptionVisible.value = true
+}
+
+const handleOpenTrace = (record: any) => {
+  traceRecordId.value = record.id
+  redemptionActiveTab.value = 'trace'
+}
+
+const handleRedemptionBatchSuccess = (action: string) => {
+  getList()
 }
 
 watch(riskVisible, (val) => {
@@ -1085,7 +1140,8 @@ onMounted(() => {
 
   .audience-batch-dialog,
   .audience-trace-dialog,
-  .effect-batch-dialog {
+  .effect-batch-dialog,
+  .redemption-dialog {
     :deep(.el-dialog) {
       border-radius: 16px;
     }

@@ -27,7 +27,17 @@ import type {
   ExportReportResult,
   CompareResult,
   InefficientMarkResult,
-  TemplateToggleResult
+  TemplateToggleResult,
+  PreCheckResult,
+  SubmitRedemptionResult,
+  ManualReviewResult,
+  BatchReviewResult,
+  RedemptionListResult,
+  RedemptionStats,
+  TraceResult,
+  ViolationPageResult,
+  ComplianceOverviewResult,
+  RedemptionConfigResult
 } from '@/types/marketing'
 
 export const getMarketingListApi = (params: CampaignQueryParams) =>
@@ -154,3 +164,42 @@ export const batchMarkInefficientApi = (ids: number[]) =>
 
 export const toggleTemplateApi = (id: number, data: { isTemplate: boolean; templateTags?: string[] }) =>
   request.put<TemplateToggleResult>(`/marketing/effect/${id}/template`, data)
+
+export const getRedemptionConfigApi = () =>
+  request.get<RedemptionConfigResult>('/marketing/redemption/config')
+
+export const preCheckRedemptionApi = (campaignId: number, data: Record<string, any>) =>
+  request.post<PreCheckResult>(`/marketing/redemption/pre-check/${campaignId}`, data)
+
+export const submitRedemptionApi = (campaignId: number, data: Record<string, any>) =>
+  request.post<SubmitRedemptionResult>(`/marketing/redemption/submit/${campaignId}`, data)
+
+export const manualReviewRedemptionApi = (recordId: number, data: { action: string; remark?: string }) =>
+  request.post<ManualReviewResult>(`/marketing/redemption/review/${recordId}`, data)
+
+export const batchManualReviewApi = (data: { ids: number[]; action: string; remark?: string }) =>
+  request.post<BatchReviewResult>('/marketing/redemption/batch-review', data)
+
+export const getRedemptionListApi = (campaignId: number, params?: Record<string, any>) =>
+  request.get<RedemptionListResult>(`/marketing/redemption/list/${campaignId}`, params)
+
+export const getRedemptionStatsApi = (campaignId: number) =>
+  request.get<RedemptionStats>(`/marketing/redemption/stats/${campaignId}`)
+
+export const revokeRedemptionApi = (recordId: number, data: { reason: string }) =>
+  request.put(`/marketing/redemption/revoke/${recordId}`, data)
+
+export const getRedemptionTraceApi = (recordId: number) =>
+  request.get<TraceResult>(`/marketing/redemption/trace/${recordId}`)
+
+export const getViolationListApi = (params?: Record<string, any>) =>
+  request.get<ViolationPageResult>('/marketing/redemption/violations', params)
+
+export const batchRejectViolationsApi = (data: { ids: number[]; reason?: string }) =>
+  request.post<BatchReviewResult>('/marketing/redemption/batch-reject', data)
+
+export const batchReviewPendingApi = (campaignId: number, data: { action: string; scene?: number; startDate?: string; endDate?: string }) =>
+  request.post<BatchReviewResult>(`/marketing/redemption/batch-pending/${campaignId}`, data)
+
+export const getComplianceOverviewApi = (campaignId: number) =>
+  request.get<ComplianceOverviewResult>(`/marketing/redemption/compliance/${campaignId}`)

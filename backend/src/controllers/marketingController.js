@@ -36,6 +36,26 @@ const {
   FUNNEL_STAGES,
   EXPORT_FIELD_CONFIG
 } = require('../services/marketingFunnelService')
+const {
+  REDEMPTION_STATUS,
+  STATUS_MAP,
+  VIOLATION_TYPES,
+  COMPLIANCE_CHECK_TYPES,
+  preCheckRedemption,
+  submitRedemption,
+  manualReview,
+  batchManualReview,
+  getRedemptionList,
+  getRedemptionStats,
+  revokeRedemption
+} = require('../services/marketingRedemptionService')
+const {
+  getTraceDetail,
+  getViolationRecords,
+  batchRejectViolations,
+  batchReviewPending,
+  getComplianceOverview
+} = require('../services/marketingRedemptionAuditService')
 
 const getOperatorInfo = (req) => {
   return {
@@ -1269,6 +1289,147 @@ const toggleTemplate = async (req, res, next) => {
   }
 }
 
+const preCheckRedemptionCtrl = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const result = await preCheckRedemption(id, req.body)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const submitRedemptionCtrl = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const operator = getOperatorInfo(req)
+    const result = await submitRedemption(id, req.body, operator)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const manualReviewRedemption = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { action, remark } = req.body
+    const operator = getOperatorInfo(req)
+    const result = await manualReview(id, action, operator, remark)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchManualReviewRedemption = async (req, res, next) => {
+  try {
+    const { ids, action, remark } = req.body
+    const operator = getOperatorInfo(req)
+    const result = await batchManualReview(ids, action, operator, remark)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getRedemptionListCtrl = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const result = await getRedemptionList(id, req.query)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getRedemptionStatsCtrl = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const result = await getRedemptionStats(id)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const revokeRedemptionCtrl = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { reason } = req.body
+    const operator = getOperatorInfo(req)
+    const result = await revokeRedemption(id, operator, reason)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getRedemptionTrace = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const result = await getTraceDetail(id)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getViolationList = async (req, res, next) => {
+  try {
+    const result = await getViolationRecords(req.query)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchRejectViolationCtrl = async (req, res, next) => {
+  try {
+    const { ids, reason } = req.body
+    const operator = getOperatorInfo(req)
+    const result = await batchRejectViolations(ids, operator, reason)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const batchReviewPendingCtrl = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { action, scene, startDate, endDate } = req.body
+    const operator = getOperatorInfo(req)
+    const result = await batchReviewPending(id, action, operator, { scene, startDate, endDate })
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getComplianceOverviewCtrl = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const result = await getComplianceOverview(id)
+    res.json(success(result))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getRedemptionConfig = async (req, res, next) => {
+  try {
+    res.json(success({
+      statusMap: STATUS_MAP,
+      violationTypes: Object.entries(VIOLATION_TYPES).map(([key, val]) => ({ value: key, label: val.label, level: val.level })),
+      complianceCheckTypes: COMPLIANCE_CHECK_TYPES,
+      autoPassThreshold: 80
+    }))
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   getList,
   getDetail,
@@ -1305,5 +1466,18 @@ module.exports = {
   updateAudienceWeights,
   getCampaignAudienceLogs,
   getAudienceRiskStats,
-  verifyUserEligibility
+  verifyUserEligibility,
+  preCheckRedemptionCtrl,
+  submitRedemptionCtrl,
+  manualReviewRedemption,
+  batchManualReviewRedemption,
+  getRedemptionListCtrl,
+  getRedemptionStatsCtrl,
+  revokeRedemptionCtrl,
+  getRedemptionTrace,
+  getViolationList,
+  batchRejectViolationCtrl,
+  batchReviewPendingCtrl,
+  getComplianceOverviewCtrl,
+  getRedemptionConfig
 }

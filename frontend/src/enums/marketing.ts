@@ -360,6 +360,127 @@ export const ExportFieldGroupMap: Record<string, string> = {
   [ExportFieldGroup.META]: '创建信息'
 }
 
+export enum RedemptionStatus {
+  PENDING = 0,
+  AUTO_PASSED = 1,
+  MANUAL_REVIEW = 2,
+  REJECTED = 3,
+  REVOKED = 4,
+  VERIFIED = 5
+}
+
+export const RedemptionStatusMap: Record<number, string> = {
+  [RedemptionStatus.PENDING]: '待核销',
+  [RedemptionStatus.AUTO_PASSED]: '自动通过',
+  [RedemptionStatus.MANUAL_REVIEW]: '人工复核中',
+  [RedemptionStatus.REJECTED]: '已驳回',
+  [RedemptionStatus.REVOKED]: '已撤销',
+  [RedemptionStatus.VERIFIED]: '已核销'
+}
+
+export const RedemptionStatusColorMap: Record<number, string> = {
+  [RedemptionStatus.PENDING]: '#e6a23c',
+  [RedemptionStatus.AUTO_PASSED]: '#67c23a',
+  [RedemptionStatus.MANUAL_REVIEW]: '#409eff',
+  [RedemptionStatus.REJECTED]: '#f56c6c',
+  [RedemptionStatus.REVOKED]: '#909399',
+  [RedemptionStatus.VERIFIED]: '#1f7eff'
+}
+
+export const RedemptionStatusTagType: Record<number, string> = {
+  [RedemptionStatus.PENDING]: 'warning',
+  [RedemptionStatus.AUTO_PASSED]: 'success',
+  [RedemptionStatus.MANUAL_REVIEW]: '',
+  [RedemptionStatus.REJECTED]: 'danger',
+  [RedemptionStatus.REVOKED]: 'info',
+  [RedemptionStatus.VERIFIED]: 'success'
+}
+
+export enum AuditLevel {
+  PENDING = 0,
+  AUTO = 1,
+  MANUAL = 2
+}
+
+export const AuditLevelMap: Record<number, string> = {
+  [AuditLevel.PENDING]: '待判定',
+  [AuditLevel.AUTO]: '自动审核',
+  [AuditLevel.MANUAL]: '人工复核'
+}
+
+export const AuditLevelColorMap: Record<number, string> = {
+  [AuditLevel.PENDING]: '#909399',
+  [AuditLevel.AUTO]: '#67c23a',
+  [AuditLevel.MANUAL]: '#e6a23c'
+}
+
+export enum ViolationType {
+  NONE = 'none',
+  DUPLICATE = 'duplicate',
+  FAKE = 'fake',
+  CROSS_SCENARIO = 'cross_scenario',
+  EXPIRED = 'expired',
+  UNQUALIFIED = 'unqualified',
+  OVER_LIMIT = 'over_limit'
+}
+
+export const ViolationTypeMap: Record<string, string> = {
+  [ViolationType.NONE]: '无违规',
+  [ViolationType.DUPLICATE]: '重复核销',
+  [ViolationType.FAKE]: '虚假核销',
+  [ViolationType.CROSS_SCENARIO]: '跨场景违规',
+  [ViolationType.EXPIRED]: '过期权益',
+  [ViolationType.UNQUALIFIED]: '无参与资格',
+  [ViolationType.OVER_LIMIT]: '超出限额'
+}
+
+export const ViolationTypeColorMap: Record<string, string> = {
+  [ViolationType.NONE]: '#67c23a',
+  [ViolationType.DUPLICATE]: '#f56c6c',
+  [ViolationType.FAKE]: '#f56c6c',
+  [ViolationType.CROSS_SCENARIO]: '#f56c6c',
+  [ViolationType.EXPIRED]: '#e6a23c',
+  [ViolationType.UNQUALIFIED]: '#e6a23c',
+  [ViolationType.OVER_LIMIT]: '#e6a23c'
+}
+
+export const ViolationTypeTagType: Record<string, string> = {
+  [ViolationType.NONE]: 'success',
+  [ViolationType.DUPLICATE]: 'danger',
+  [ViolationType.FAKE]: 'danger',
+  [ViolationType.CROSS_SCENARIO]: 'danger',
+  [ViolationType.EXPIRED]: 'warning',
+  [ViolationType.UNQUALIFIED]: 'warning',
+  [ViolationType.OVER_LIMIT]: 'warning'
+}
+
+export enum ComplianceCheckType {
+  ELIGIBILITY = 'eligibility',
+  EXPIRY = 'expiry',
+  SCENE = 'scene',
+  DUPLICATE = 'duplicate',
+  AMOUNT = 'amount',
+  FREQUENCY = 'frequency'
+}
+
+export const ComplianceCheckTypeMap: Record<string, string> = {
+  [ComplianceCheckType.ELIGIBILITY]: '用户参与资格',
+  [ComplianceCheckType.EXPIRY]: '权益有效期',
+  [ComplianceCheckType.SCENE]: '使用场景匹配',
+  [ComplianceCheckType.DUPLICATE]: '重复核销检测',
+  [ComplianceCheckType.AMOUNT]: '金额合规校验',
+  [ComplianceCheckType.FREQUENCY]: '频次限额校验'
+}
+
+export const ComplianceCheckWeightMap: Record<string, number> = {
+  [ComplianceCheckType.ELIGIBILITY]: 25,
+  [ComplianceCheckType.EXPIRY]: 20,
+  [ComplianceCheckType.SCENE]: 20,
+  [ComplianceCheckType.DUPLICATE]: 15,
+  [ComplianceCheckType.AMOUNT]: 10,
+  [ComplianceCheckType.FREQUENCY]: 10
+}
+
 export const SceneDefaultConfig: Record<number, Record<string, any>> = {
   [CampaignScene.NEW_USER_GIFT]: {
     targetUser: TargetUser.NEW_USER,
