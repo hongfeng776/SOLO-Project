@@ -95,6 +95,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/message-center/index.vue'),
         meta: { title: '消息中心', icon: 'Message' },
       },
+      {
+        path: 'message-permission',
+        name: 'MessagePermission',
+        component: () => import('@/views/message-permission/index.vue'),
+        meta: { title: '消息权限', icon: 'Lock' },
+      },
     ],
   },
   {

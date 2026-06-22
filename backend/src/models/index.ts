@@ -24,6 +24,8 @@ import MessageTemplate from './message-template.model';
 import MessageTemplateLog from './message-template-log.model';
 import MessageDelivery from './message-delivery.model';
 import MessageDeliveryLog from './message-delivery-log.model';
+import MessagePermission from './message-permission.model';
+import MessagePermissionLog from './message-permission-log.model';
 import PermissionLog from './permission-log.model';
 import LoginLog from './login-log.model';
 import Probation from './probation.model';
@@ -53,6 +55,9 @@ MessageTemplateLog.belongsTo(MessageTemplate, { foreignKey: 'templateId', as: 't
 
 MessageDelivery.hasMany(MessageDeliveryLog, { foreignKey: 'messageId', as: 'deliveryLogs' });
 MessageDeliveryLog.belongsTo(MessageDelivery, { foreignKey: 'messageId', as: 'message' });
+
+MessagePermission.hasMany(MessagePermissionLog, { foreignKey: 'permissionId', as: 'permissionLogs' });
+MessagePermissionLog.belongsTo(MessagePermission, { foreignKey: 'permissionId', as: 'permission' });
 
 User.hasMany(PermissionLog, { foreignKey: 'userId', as: 'permissionLogs' });
 PermissionLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -149,6 +154,7 @@ export {
   CompanyChangeLog, RecruitmentConfig, RecruitmentConfigLog,
   MessageTemplate, MessageTemplateLog,
   MessageDelivery, MessageDeliveryLog,
+  MessagePermission, MessagePermissionLog,
   PermissionLog, LoginLog,
   Probation, ProbationOperationLog, ProbationAssessmentIndicator,
   Regularization, RegularizationApprovalNodeRecord, RegularizationOperationLog

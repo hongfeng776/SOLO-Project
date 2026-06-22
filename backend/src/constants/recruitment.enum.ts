@@ -1658,3 +1658,78 @@ export const MESSAGE_BUSINESS_TYPE_JUMP_MAP: Record<MessageBusinessType, Message
   [MessageBusinessType.RISK_WARNING]: MessageJumpType.NONE,
   [MessageBusinessType.SYSTEM_NOTICE]: MessageJumpType.SYSTEM_PAGE,
 };
+
+export enum MessagePermissionStatus {
+  FULL_RECEIVE = 'full_receive',
+  PARTIAL_RECEIVE = 'partial_receive',
+  NO_RECEIVE = 'no_receive',
+}
+
+export const MessagePermissionStatusLabel: Record<MessagePermissionStatus, string> = {
+  [MessagePermissionStatus.FULL_RECEIVE]: '全权接收',
+  [MessagePermissionStatus.PARTIAL_RECEIVE]: '部分接收',
+  [MessagePermissionStatus.NO_RECEIVE]: '禁止接收',
+};
+
+export const MessagePermissionStatusType: Record<MessagePermissionStatus, string> = {
+  [MessagePermissionStatus.FULL_RECEIVE]: 'success',
+  [MessagePermissionStatus.PARTIAL_RECEIVE]: 'warning',
+  [MessagePermissionStatus.NO_RECEIVE]: 'danger',
+};
+
+export const MessagePermissionStatusColor: Record<MessagePermissionStatus, string> = {
+  [MessagePermissionStatus.FULL_RECEIVE]: '#67c23a',
+  [MessagePermissionStatus.PARTIAL_RECEIVE]: '#e6a23c',
+  [MessagePermissionStatus.NO_RECEIVE]: '#f56c6c',
+};
+
+export enum MessagePermissionAction {
+  CREATE = 'create',
+  UPDATE = 'update',
+  ENABLE = 'enable',
+  DISABLE = 'disable',
+  BATCH_UPDATE = 'batch_update',
+  BATCH_ENABLE = 'batch_enable',
+  BATCH_DISABLE = 'batch_disable',
+  BATCH_STANDARDIZE = 'batch_standardize',
+}
+
+export const MessagePermissionActionLabel: Record<MessagePermissionAction, string> = {
+  [MessagePermissionAction.CREATE]: '创建权限配置',
+  [MessagePermissionAction.UPDATE]: '修改权限配置',
+  [MessagePermissionAction.ENABLE]: '启用权限配置',
+  [MessagePermissionAction.DISABLE]: '停用权限配置',
+  [MessagePermissionAction.BATCH_UPDATE]: '批量更新权限',
+  [MessagePermissionAction.BATCH_ENABLE]: '批量启用权限',
+  [MessagePermissionAction.BATCH_DISABLE]: '批量停用权限',
+  [MessagePermissionAction.BATCH_STANDARDIZE]: '批量标准化权限',
+};
+
+export const ROLE_MESSAGE_SCENE_MAP: Record<string, MessageTemplateScene[]> = {
+  [UserRole.ADMIN]: [
+    MessageTemplateScene.INTERVIEW,
+    MessageTemplateScene.ONBOARD,
+    MessageTemplateScene.APPROVAL,
+    MessageTemplateScene.RISK_CONTROL,
+  ],
+  [UserRole.HR]: [
+    MessageTemplateScene.INTERVIEW,
+    MessageTemplateScene.ONBOARD,
+    MessageTemplateScene.APPROVAL,
+  ],
+  [UserRole.INTERVIEWER]: [
+    MessageTemplateScene.INTERVIEW,
+  ],
+};
+
+export const MESSAGE_PERMISSION_VALIDATION_RULES = {
+  allowCrossRoleAssignment: false,
+  allowEmptySceneForFullReceive: true,
+  requireAtLeastOneSceneForPartial: true,
+  maxScenesPerRole: 10,
+  conflictCheckEnabled: true,
+};
+
+export const MESSAGE_PERMISSION_BATCH_LIMIT = 50;
+export const MESSAGE_PERMISSION_CHANGE_HISTORY_DAYS = 180;
+export const MESSAGE_PERMISSION_CACHE_TTL_MS = 300000;

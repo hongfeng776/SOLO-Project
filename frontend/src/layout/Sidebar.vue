@@ -45,6 +45,7 @@ const menuList = ref([
   { path: '/qualification', title: '资质审核', icon: 'Stamp' },
   { path: '/message-template', title: '消息模板', icon: 'Bell' },
   { path: '/message-center', title: '消息中心', icon: 'Message' },
+  { path: '/message-permission', title: '消息权限', icon: 'Lock' },
   { path: '/system', title: '系统管理', icon: 'Setting' },
 ]);
 </script>

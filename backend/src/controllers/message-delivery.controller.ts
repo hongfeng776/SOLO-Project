@@ -1,10 +1,10 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import messageDeliveryService from '../services/message-delivery.service';
-import { success, fail } from '../utils/response';
+import { Result } from '../utils/result';
 import { MessageBusinessType, MessagePushChannel } from '../constants/recruitment.enum';
 
 class MessageDeliveryController {
-  async getMessageList(req: Request, res: Response) {
+  async getMessageList(req: Request, res: Response, next: NextFunction) {
     try {
       const {
         page = 1,
@@ -45,18 +45,18 @@ class MessageDeliveryController {
         userRole
       );
 
-      success(res, {
+      res.json(Result.success({
         list: result.rows,
         total: result.count,
         page: Number(page),
         pageSize: Number(pageSize),
-      });
-    } catch (error: any) {
-      fail(res, error.message);
+      }));
+    } catch (error) {
+      next(error);
     }
   }
 
-  async getMessageDetail(req: Request, res: Response) {
+  async getMessageDetail(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
       const currentUserId = (req as any).user?.id;
@@ -68,13 +68,13 @@ class MessageDeliveryController {
         userRole
       );
 
-      success(res, message);
-    } catch (error: any) {
-      fail(res, error.message);
+      res.json(Result.success(message));
+    } catch (error) {
+      next(error);
     }
   }
 
-  async triggerMessage(req: Request, res: Response) {
+  async triggerMessage(req: Request, res: Response, next: NextFunction) {
     try {
       const {
         businessType,
@@ -119,13 +119,13 @@ class MessageDeliveryController {
         userAgent,
       });
 
-      success(res, message);
-    } catch (error: any) {
-      fail(res, error.message);
+      res.json(Result.success(message));
+    } catch (error) {
+      next(error);
     }
   }
 
-  async markAsRead(req: Request, res: Response) {
+  async markAsRead(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
       const currentUserId = (req as any).user?.id;
@@ -139,13 +139,13 @@ class MessageDeliveryController {
         userAgent
       );
 
-      success(res, message);
-    } catch (error: any) {
-      fail(res, error.message);
+      res.json(Result.success(message));
+    } catch (error) {
+      next(error);
     }
   }
 
-  async markAsUnread(req: Request, res: Response) {
+  async markAsUnread(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
       const currentUserId = (req as any).user?.id;
@@ -159,13 +159,13 @@ class MessageDeliveryController {
         userAgent
       );
 
-      success(res, message);
-    } catch (error: any) {
-      fail(res, error.message);
+      res.json(Result.success(message));
+    } catch (error) {
+      next(error);
     }
   }
 
-  async markAllAsRead(req: Request, res: Response) {
+  async markAllAsRead(req: Request, res: Response, next: NextFunction) {
     try {
       const currentUserId = (req as any).user?.id;
       const ip = req.ip;
@@ -177,13 +177,13 @@ class MessageDeliveryController {
         userAgent
       );
 
-      success(res, result);
-    } catch (error: any) {
-      fail(res, error.message);
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
     }
   }
 
-  async retryMessage(req: Request, res: Response) {
+  async retryMessage(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
       const currentUserId = (req as any).user?.id;
@@ -197,13 +197,13 @@ class MessageDeliveryController {
         userAgent
       );
 
-      success(res, message);
-    } catch (error: any) {
-      fail(res, error.message);
+      res.json(Result.success(message));
+    } catch (error) {
+      next(error);
     }
   }
 
-  async batchRetry(req: Request, res: Response) {
+  async batchRetry(req: Request, res: Response, next: NextFunction) {
     try {
       const { ids } = req.body;
       const currentUserId = (req as any).user?.id;
@@ -215,13 +215,13 @@ class MessageDeliveryController {
         userRole
       );
 
-      success(res, result);
-    } catch (error: any) {
-      fail(res, error.message);
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
     }
   }
 
-  async batchMarkRead(req: Request, res: Response) {
+  async batchMarkRead(req: Request, res: Response, next: NextFunction) {
     try {
       const { ids } = req.body;
       const currentUserId = (req as any).user?.id;
@@ -233,13 +233,13 @@ class MessageDeliveryController {
         userRole
       );
 
-      success(res, result);
-    } catch (error: any) {
-      fail(res, error.message);
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
     }
   }
 
-  async batchDelete(req: Request, res: Response) {
+  async batchDelete(req: Request, res: Response, next: NextFunction) {
     try {
       const { ids } = req.body;
       const currentUserId = (req as any).user?.id;
@@ -251,13 +251,13 @@ class MessageDeliveryController {
         userRole
       );
 
-      success(res, result);
-    } catch (error: any) {
-      fail(res, error.message);
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
     }
   }
 
-  async batchMarkOverdueUnread(req: Request, res: Response) {
+  async batchMarkOverdueUnread(req: Request, res: Response, next: NextFunction) {
     try {
       const currentUserId = (req as any).user?.id;
       const userRole = (req as any).user?.role;
@@ -267,23 +267,23 @@ class MessageDeliveryController {
         userRole
       );
 
-      success(res, result);
-    } catch (error: any) {
-      fail(res, error.message);
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
     }
   }
 
-  async getUnreadCount(req: Request, res: Response) {
+  async getUnreadCount(req: Request, res: Response, next: NextFunction) {
     try {
       const currentUserId = (req as any).user?.id;
       const count = await messageDeliveryService.getUnreadCount(currentUserId);
-      success(res, { count });
-    } catch (error: any) {
-      fail(res, error.message);
+      res.json(Result.success({ count }));
+    } catch (error) {
+      next(error);
     }
   }
 
-  async getStats(req: Request, res: Response) {
+  async getStats(req: Request, res: Response, next: NextFunction) {
     try {
       const { days = 30 } = req.query;
       const currentUserId = (req as any).user?.id;
@@ -295,13 +295,13 @@ class MessageDeliveryController {
         Number(days)
       );
 
-      success(res, stats);
-    } catch (error: any) {
-      fail(res, error.message);
+      res.json(Result.success(stats));
+    } catch (error) {
+      next(error);
     }
   }
 
-  async getMessageLogs(req: Request, res: Response) {
+  async getMessageLogs(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
       const { page = 1, pageSize = 20 } = req.query;
@@ -316,18 +316,18 @@ class MessageDeliveryController {
         Number(pageSize)
       );
 
-      success(res, {
+      res.json(Result.success({
         list: result.rows,
         total: result.count,
         page: Number(page),
         pageSize: Number(pageSize),
-      });
-    } catch (error: any) {
-      fail(res, error.message);
+      }));
+    } catch (error) {
+      next(error);
     }
   }
 
-  async deleteMessage(req: Request, res: Response) {
+  async deleteMessage(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
       const currentUserId = (req as any).user?.id;
@@ -339,13 +339,13 @@ class MessageDeliveryController {
         userRole
       );
 
-      success(res, result);
-    } catch (error: any) {
-      fail(res, error.message);
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
     }
   }
 
-  async adminClearHistory(req: Request, res: Response) {
+  async adminClearHistory(req: Request, res: Response, next: NextFunction) {
     try {
       const { days } = req.body;
       const currentUserId = (req as any).user?.id;
@@ -357,9 +357,9 @@ class MessageDeliveryController {
         days
       );
 
-      success(res, result);
-    } catch (error: any) {
-      fail(res, error.message);
+      res.json(Result.success(result));
+    } catch (error) {
+      next(error);
     }
   }
 }

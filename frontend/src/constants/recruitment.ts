@@ -1733,3 +1733,87 @@ export const MESSAGE_MAX_RETRY_COUNT = 2;
 export const MESSAGE_UNREAD_OVERDUE_DAYS = 7;
 export const MESSAGE_BATCH_OPERATION_LIMIT = 100;
 export const MESSAGE_PUSH_STATS_DAYS = 30;
+
+export enum MessagePermissionStatus {
+  FULL_RECEIVE = 'full_receive',
+  PARTIAL_RECEIVE = 'partial_receive',
+  NO_RECEIVE = 'no_receive',
+}
+
+export const MessagePermissionStatusLabel: Record<MessagePermissionStatus, string> = {
+  [MessagePermissionStatus.FULL_RECEIVE]: '全权接收',
+  [MessagePermissionStatus.PARTIAL_RECEIVE]: '部分接收',
+  [MessagePermissionStatus.NO_RECEIVE]: '禁止接收',
+};
+
+export const MessagePermissionStatusType: Record<MessagePermissionStatus, string> = {
+  [MessagePermissionStatus.FULL_RECEIVE]: 'success',
+  [MessagePermissionStatus.PARTIAL_RECEIVE]: 'warning',
+  [MessagePermissionStatus.NO_RECEIVE]: 'danger',
+};
+
+export const MESSAGE_PERMISSION_STATUS_OPTIONS = Object.entries(MessagePermissionStatusLabel).map(
+  ([value, label]) => ({ label, value })
+);
+
+export enum MessagePermissionAction {
+  CREATE = 'create',
+  UPDATE = 'update',
+  ENABLE = 'enable',
+  DISABLE = 'disable',
+  BATCH_UPDATE = 'batch_update',
+  BATCH_ENABLE = 'batch_enable',
+  BATCH_DISABLE = 'batch_disable',
+  BATCH_STANDARDIZE = 'batch_standardize',
+}
+
+export const MessagePermissionActionLabel: Record<MessagePermissionAction, string> = {
+  [MessagePermissionAction.CREATE]: '创建配置',
+  [MessagePermissionAction.UPDATE]: '修改配置',
+  [MessagePermissionAction.ENABLE]: '启用配置',
+  [MessagePermissionAction.DISABLE]: '停用配置',
+  [MessagePermissionAction.BATCH_UPDATE]: '批量更新',
+  [MessagePermissionAction.BATCH_ENABLE]: '批量启用',
+  [MessagePermissionAction.BATCH_DISABLE]: '批量禁用',
+  [MessagePermissionAction.BATCH_STANDARDIZE]: '批量标准化',
+};
+
+export const MESSAGE_PERMISSION_BATCH_LIMIT = 50;
+export const MESSAGE_PERMISSION_LOG_RETENTION_DAYS = 180;
+
+export const ROLE_MESSAGE_SCENE_MAP: Record<string, string[]> = {
+  admin: ['interview', 'onboard', 'approval', 'risk_control'],
+  hr: ['interview', 'onboard', 'approval'],
+  interviewer: ['interview'],
+};
+
+export const ROLE_MESSAGE_SCENE_LABELS: Record<string, string> = {
+  interview: '面试',
+  onboard: '入职',
+  approval: '审批',
+  risk_control: '风控',
+};
+
+export interface PermissionValidationResult {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+  conflicts: string[];
+}
+
+export interface BatchOperationResult {
+  totalCount: number;
+  successCount: number;
+  failCount: number;
+  failedIds: number[];
+  errors: string[];
+}
+
+export interface MessagePermissionStats {
+  totalCount: number;
+  fullReceiveCount: number;
+  partialReceiveCount: number;
+  noReceiveCount: number;
+  enabledCount: number;
+  disabledCount: number;
+}

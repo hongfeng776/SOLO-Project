@@ -88,7 +88,7 @@ class MessageDeliveryDAO {
   }
 
   async getByIds(ids: number[]) {
-    return MessageDelivery.findAll({ where: { id: { [Op.in]: ids } });
+    return MessageDelivery.findAll({ where: { id: { [Op.in]: ids } } });
   }
 
   async create(data: any) {
@@ -197,9 +197,10 @@ class MessageDeliveryDAO {
   async getByBusinessAndReceiver(businessType: MessageBusinessType, businessId: number, receiverId: number) {
     return MessageDelivery.findOne({
       where: {
-      businessType,
-      businessId,
-      receiverId,
+        businessType,
+        businessId,
+        receiverId,
+      },
     });
   }
 }

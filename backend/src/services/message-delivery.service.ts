@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import messageDeliveryDAO from '../dao/message-delivery.dao';
 import messageDeliveryLogDAO from '../dao/message-delivery-log.dao';
 import messageTemplateDAO from '../dao/message-template.dao';
+import messagePermissionService from './message-permission.service';
 import {
   MessageDeliveryStatus,
   MessageBusinessType,
@@ -166,12 +167,21 @@ class MessageDeliveryService {
       throw new ForbiddenError(`接收人无权限接收该消息: ${permResult.reason}`);
     }
 
+    const scene = MESSAGE_BUSINESS_TYPE_SCENE_MAP[businessType];
+    const messagePermResult = await messagePermissionService.checkMessagePermission(
+      receiverId,
+      scene,
+      preferredChannel
+    );
+    if (!messagePermResult.allowed) {
+      throw new ForbiddenError(`消息权限校验失败: ${messagePermResult.reason}`);
+    }
+
     const user = await User.findByPk(receiverId);
     if (!user) {
       throw new BadRequestError('接收人不存在');
     }
 
-    const scene = MESSAGE_BUSINESS_TYPE_SCENE_MAP[businessType];
     const jumpType = inputJumpType || MESSAGE_BUSINESS_TYPE_JUMP_MAP[businessType];
 
     let title = inputTitle;

@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import messageDeliveryController from '../controllers/message-delivery.controller';
-import authMiddleware from '../middleware/auth.middleware';
-import { roleMiddleware } from '../middleware/role.middleware';
+import { authMiddleware, roleMiddleware } from '../middleware/auth.middleware';
 import { UserRole } from '../constants/recruitment.enum';
 
 const router = Router();
