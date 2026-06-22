@@ -50,6 +50,7 @@ import trafficWeightRuleRoutes from '@routes/traffic-weight-rule'
 import trafficAnomalyControlRoutes from '@routes/traffic-anomaly-control'
 import activityParticipationRoutes from '@routes/activity-participation'
 import activityRewardRoutes from '@routes/activity-reward'
+import activityStatsRoutes from '@routes/activity-stats'
 
 const app = express()
 
@@ -111,6 +112,7 @@ app.use('/api/traffic-weight-rule', trafficWeightRuleRoutes)
 app.use('/api/traffic-anomaly-control', trafficAnomalyControlRoutes)
 app.use('/api/activity-participation', activityParticipationRoutes)
 app.use('/api/activity-reward', activityRewardRoutes)
+app.use('/api/activity-stats', activityStatsRoutes)
 
 app.use(celebrateErrors())
 app.use(errorHandler)

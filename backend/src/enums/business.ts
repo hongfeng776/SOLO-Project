@@ -1138,3 +1138,309 @@ export const REWARD_ISSUE_CONSTRAINTS = {
   BUDGET_USAGE_WARN_RATIO: 0.8,
   DEFAULT_REWARD_EXPIRE_DAYS: 30
 }
+
+// ============================================================
+// ========== 营销活动 - 数据统计与复盘模块枚举 =================
+// ============================================================
+
+// ========== 统计维度（功能点1/2多维度筛选） ==========
+export enum StatsDimension {
+  TIME_HOUR = 'time_hour',
+  TIME_DAY = 'time_day',
+  TIME_WEEK = 'time_week',
+  USER_LEVEL = 'user_level',
+  ACTIVITY_LEVEL = 'activity_level',
+  RISK_LEVEL = 'risk_level',
+  PARTICIPATION_SCOPE = 'participation_scope',
+  CAMPAIGN_SCENE = 'campaign_scene',
+  CAMPAIGN_TYPE = 'campaign_type',
+  TASK_TYPE = 'task_type',
+  DEVICE_TYPE = 'device_type',
+  CHANNEL = 'channel',
+  REGION = 'region',
+  USER_CIRCLE = 'user_circle'
+}
+
+export const STATS_DIMENSION_NAMES: Record<string, string> = {
+  [StatsDimension.TIME_HOUR]: '时段(小时)',
+  [StatsDimension.TIME_DAY]: '时段(日)',
+  [StatsDimension.TIME_WEEK]: '时段(周)',
+  [StatsDimension.USER_LEVEL]: '用户等级',
+  [StatsDimension.ACTIVITY_LEVEL]: '活跃度',
+  [StatsDimension.RISK_LEVEL]: '风险等级',
+  [StatsDimension.PARTICIPATION_SCOPE]: '参与范围',
+  [StatsDimension.CAMPAIGN_SCENE]: '适配场景',
+  [StatsDimension.CAMPAIGN_TYPE]: '活动类型',
+  [StatsDimension.TASK_TYPE]: '任务类型',
+  [StatsDimension.DEVICE_TYPE]: '设备类型',
+  [StatsDimension.CHANNEL]: '来源渠道',
+  [StatsDimension.REGION]: '地域',
+  [StatsDimension.USER_CIRCLE]: '用户圈层'
+}
+
+// ========== 统计指标（功能点1全量数据归集） ==========
+export enum StatsMetric {
+  EXPOSURE = 'exposure',
+  CLICK = 'click',
+  VIEW = 'view',
+  PARTICIPATE = 'participate',
+  SIGNUP = 'signup',
+  TASK_COMPLETE = 'task_complete',
+  REWARD_ISSUE = 'reward_issue',
+  REWARD_ARRIVED = 'reward_arrived',
+  CONVERSION = 'conversion',
+  RETENTION_D1 = 'retention_d1',
+  RETENTION_D7 = 'retention_d7',
+  RETENTION_D30 = 'retention_d30',
+  BUDGET_USAGE = 'budget_usage',
+  ANOMALY_COUNT = 'anomaly_count'
+}
+
+export const STATS_METRIC_NAMES: Record<string, string> = {
+  [StatsMetric.EXPOSURE]: '曝光量',
+  [StatsMetric.CLICK]: '点击量',
+  [StatsMetric.VIEW]: '浏览量',
+  [StatsMetric.PARTICIPATE]: '参与量',
+  [StatsMetric.SIGNUP]: '报名量',
+  [StatsMetric.TASK_COMPLETE]: '任务完成量',
+  [StatsMetric.REWARD_ISSUE]: '奖励发放量',
+  [StatsMetric.REWARD_ARRIVED]: '奖励到账量',
+  [StatsMetric.CONVERSION]: '转化率',
+  [StatsMetric.RETENTION_D1]: '次日留存率',
+  [StatsMetric.RETENTION_D7]: '7日留存率',
+  [StatsMetric.RETENTION_D30]: '30日留存率',
+  [StatsMetric.BUDGET_USAGE]: '预算使用率',
+  [StatsMetric.ANOMALY_COUNT]: '异常量'
+}
+
+// ========== 数据异常类型（功能点2/4自动识别） ==========
+export enum StatsAnomalyType {
+  DATA_FAKE = 'data_fake',
+  DATA_FLUCTUATION = 'data_fluctuation',
+  CONVERSION_ABNORMAL = 'conversion_abnormal',
+  BUDGET_OVERRUN = 'budget_overrun',
+  RETENTION_ABNORMAL = 'retention_abnormal',
+  PARTICIPATION_SPIKE = 'participation_spike',
+  REWARD_MISMATCH = 'reward_mismatch',
+  DATA_CONFLICT = 'data_conflict',
+  DATA_MISSING = 'data_missing',
+  MANUAL_TAMPER = 'manual_tamper'
+}
+
+export const STATS_ANOMALY_TYPE_NAMES: Record<string, string> = {
+  [StatsAnomalyType.DATA_FAKE]: '虚假数据',
+  [StatsAnomalyType.DATA_FLUCTUATION]: '异常波动',
+  [StatsAnomalyType.CONVERSION_ABNORMAL]: '转化率异常',
+  [StatsAnomalyType.BUDGET_OVERRUN]: '预算超支',
+  [StatsAnomalyType.RETENTION_ABNORMAL]: '留存率异常',
+  [StatsAnomalyType.PARTICIPATION_SPIKE]: '参与量突增',
+  [StatsAnomalyType.REWARD_MISMATCH]: '奖励数据不匹配',
+  [StatsAnomalyType.DATA_CONFLICT]: '数据冲突',
+  [StatsAnomalyType.DATA_MISSING]: '关键数据缺失',
+  [StatsAnomalyType.MANUAL_TAMPER]: '疑似人工篡改'
+}
+
+// ========== 异常等级（功能点2联动） ==========
+export enum StatsAnomalyLevel {
+  NORMAL = 0,
+  WARNING = 1,
+  ERROR = 2,
+  CRITICAL = 3
+}
+
+export const STATS_ANOMALY_LEVEL_NAMES: Record<number, string> = {
+  [StatsAnomalyLevel.NORMAL]: '正常',
+  [StatsAnomalyLevel.WARNING]: '预警',
+  [StatsAnomalyLevel.ERROR]: '异常',
+  [StatsAnomalyLevel.CRITICAL]: '严重'
+}
+
+export const STATS_ANOMALY_LEVEL_COLORS: Record<number, string> = {
+  [StatsAnomalyLevel.NORMAL]: '#67c23a',
+  [StatsAnomalyLevel.WARNING]: '#e6a23c',
+  [StatsAnomalyLevel.ERROR]: '#f56c6c',
+  [StatsAnomalyLevel.CRITICAL]: '#c45655'
+}
+
+// ========== 复盘报表状态（功能点2） ==========
+export enum ReportStatus {
+  DRAFT = 0,
+  AUTO_GENERATED = 1,
+  REVIEWING = 2,
+  LOCKED = 3,
+  EXPORTED = 4,
+  ARCHIVED = 5
+}
+
+export const REPORT_STATUS_NAMES: Record<number, string> = {
+  [ReportStatus.DRAFT]: '草稿',
+  [ReportStatus.AUTO_GENERATED]: '自动生成',
+  [ReportStatus.REVIEWING]: '审核中',
+  [ReportStatus.LOCKED]: '已锁定',
+  [ReportStatus.EXPORTED]: '已导出',
+  [ReportStatus.ARCHIVED]: '已归档'
+}
+
+// ========== 导出状态（功能点3） ==========
+export enum ExportStatus {
+  PENDING = 0,
+  PROCESSING = 1,
+  SUCCESS = 2,
+  FAILED = 3,
+  EXPIRED = 4
+}
+
+export const EXPORT_STATUS_NAMES: Record<number, string> = {
+  [ExportStatus.PENDING]: '待生成',
+  [ExportStatus.PROCESSING]: '生成中',
+  [ExportStatus.SUCCESS]: '导出成功',
+  [ExportStatus.FAILED]: '导出失败',
+  [ExportStatus.EXPIRED]: '文件已过期'
+}
+
+// ========== 报表字段（功能点3自定义导出） ==========
+export enum ReportFieldKey {
+  ACTIVITY_NAME = 'activity_name',
+  ACTIVITY_TYPE = 'activity_type',
+  ACTIVITY_SCENE = 'activity_scene',
+  TIME_RANGE = 'time_range',
+  PARTICIPATION_SCOPE = 'participation_scope',
+  EXPOSURE_COUNT = 'exposure_count',
+  CLICK_COUNT = 'click_count',
+  SIGNUP_COUNT = 'signup_count',
+  PARTICIPATE_COUNT = 'participate_count',
+  TASK_COMPLETE_COUNT = 'task_complete_count',
+  CONVERSION_RATE = 'conversion_rate',
+  REWARD_TOTAL = 'reward_total',
+  REWARD_ARRIVED = 'reward_arrived',
+  BUDGET_USAGE_RATIO = 'budget_usage_ratio',
+  RETENTION_D1 = 'retention_d1',
+  RETENTION_D7 = 'retention_d7',
+  RETENTION_D30 = 'retention_d30',
+  ANOMALY_COUNT = 'anomaly_count',
+  ANOMALY_LEVEL = 'anomaly_level',
+  REPORT_STATUS = 'report_status',
+  OPTIMIZATION_SUGGESTION = 'optimization_suggestion',
+  CREATE_TIME = 'create_time',
+  UPDATE_TIME = 'update_time'
+}
+
+export const REPORT_FIELD_KEY_NAMES: Record<string, string> = {
+  [ReportFieldKey.ACTIVITY_NAME]: '活动名称',
+  [ReportFieldKey.ACTIVITY_TYPE]: '活动类型',
+  [ReportFieldKey.ACTIVITY_SCENE]: '适配场景',
+  [ReportFieldKey.TIME_RANGE]: '活动时段',
+  [ReportFieldKey.PARTICIPATION_SCOPE]: '参与范围',
+  [ReportFieldKey.EXPOSURE_COUNT]: '曝光量',
+  [ReportFieldKey.CLICK_COUNT]: '点击量',
+  [ReportFieldKey.SIGNUP_COUNT]: '报名量',
+  [ReportFieldKey.PARTICIPATE_COUNT]: '参与量',
+  [ReportFieldKey.TASK_COMPLETE_COUNT]: '任务完成量',
+  [ReportFieldKey.CONVERSION_RATE]: '转化率(%)',
+  [ReportFieldKey.REWARD_TOTAL]: '奖励总额',
+  [ReportFieldKey.REWARD_ARRIVED]: '到账总额',
+  [ReportFieldKey.BUDGET_USAGE_RATIO]: '预算使用率(%)',
+  [ReportFieldKey.RETENTION_D1]: '次日留存率(%)',
+  [ReportFieldKey.RETENTION_D7]: '7日留存率(%)',
+  [ReportFieldKey.RETENTION_D30]: '30日留存率(%)',
+  [ReportFieldKey.ANOMALY_COUNT]: '异常条目数',
+  [ReportFieldKey.ANOMALY_LEVEL]: '异常等级',
+  [ReportFieldKey.REPORT_STATUS]: '报表状态',
+  [ReportFieldKey.OPTIMIZATION_SUGGESTION]: '优化建议',
+  [ReportFieldKey.CREATE_TIME]: '创建时间',
+  [ReportFieldKey.UPDATE_TIME]: '更新时间'
+}
+
+// ========== 数据统计审计动作（功能点4溯源） ==========
+export enum StatsAuditAction {
+  SNAPSHOT_COLLECTED = 'snapshot_collected',
+  MANUAL_MODIFIED = 'manual_modified',
+  DATA_LOCKED = 'data_locked',
+  DATA_UNLOCKED = 'data_unlocked',
+  ANOMALY_DETECTED = 'anomaly_detected',
+  ANOMALY_CONFIRMED = 'anomaly_confirmed',
+  ANOMALY_IGNORED = 'anomaly_ignored',
+  ANOMALY_FIXED = 'anomaly_fixed',
+  REPORT_GENERATED = 'report_generated',
+  REPORT_UPDATED = 'report_updated',
+  REPORT_LOCKED = 'report_locked',
+  DATA_EXPORTED = 'data_exported',
+  COMPARE_GENERATED = 'compare_generated',
+  DIMENSION_MARKED = 'dimension_marked',
+  DATA_VALIDATED = 'data_validated',
+  OPTIMIZATION_OUTPUT = 'optimization_output',
+  FAKE_DATA_BLOCKED = 'fake_data_blocked',
+  FLUCTUATION_ALERTED = 'fluctuation_alerted'
+}
+
+export const STATS_AUDIT_ACTION_NAMES: Record<string, string> = {
+  [StatsAuditAction.SNAPSHOT_COLLECTED]: '数据快照归集',
+  [StatsAuditAction.MANUAL_MODIFIED]: '人工修改数据',
+  [StatsAuditAction.DATA_LOCKED]: '数据锁定',
+  [StatsAuditAction.DATA_UNLOCKED]: '数据解锁',
+  [StatsAuditAction.ANOMALY_DETECTED]: '异常检测触发',
+  [StatsAuditAction.ANOMALY_CONFIRMED]: '异常确认',
+  [StatsAuditAction.ANOMALY_IGNORED]: '异常忽略',
+  [StatsAuditAction.ANOMALY_FIXED]: '异常修复',
+  [StatsAuditAction.REPORT_GENERATED]: '复盘报表生成',
+  [StatsAuditAction.REPORT_UPDATED]: '报表更新',
+  [StatsAuditAction.REPORT_LOCKED]: '报表锁定',
+  [StatsAuditAction.DATA_EXPORTED]: '数据导出',
+  [StatsAuditAction.COMPARE_GENERATED]: '对比报告生成',
+  [StatsAuditAction.DIMENSION_MARKED]: '维度标记',
+  [StatsAuditAction.DATA_VALIDATED]: '数据校验',
+  [StatsAuditAction.OPTIMIZATION_OUTPUT]: '优化建议输出',
+  [StatsAuditAction.FAKE_DATA_BLOCKED]: '虚假数据拦截',
+  [StatsAuditAction.FLUCTUATION_ALERTED]: '波动预警触发'
+}
+
+// ========== 数据校验等级（功能点4多维度校验） ==========
+export enum DataValidationLevel {
+  AUTHENTICITY = 'authenticity',
+  CONVERSION_RATIONALITY = 'conversion_rationality',
+  REWARD_COMPLIANCE = 'reward_compliance',
+  CONSISTENCY = 'consistency',
+  TIMELINESS = 'timeliness',
+  COMPLETENESS = 'completeness'
+}
+
+export const DATA_VALIDATION_LEVEL_NAMES: Record<string, string> = {
+  [DataValidationLevel.AUTHENTICITY]: '数据真实性',
+  [DataValidationLevel.CONVERSION_RATIONALITY]: '转化率合理性',
+  [DataValidationLevel.REWARD_COMPLIANCE]: '奖励消耗合规性',
+  [DataValidationLevel.CONSISTENCY]: '多源一致性',
+  [DataValidationLevel.TIMELINESS]: '数据及时性',
+  [DataValidationLevel.COMPLETENESS]: '数据完整性'
+}
+
+// ========== 复盘优化建议优先级（功能点4） ==========
+export enum OptimizationPriority {
+  CRITICAL = 'critical',
+  HIGH = 'high',
+  MEDIUM = 'medium',
+  LOW = 'low'
+}
+
+export const OPTIMIZATION_PRIORITY_NAMES: Record<string, string> = {
+  [OptimizationPriority.CRITICAL]: '紧急',
+  [OptimizationPriority.HIGH]: '高',
+  [OptimizationPriority.MEDIUM]: '中',
+  [OptimizationPriority.LOW]: '低'
+}
+
+// ========== 数据统计常量 ==========
+export const STATS_CONSTANTS = {
+  ANOMALY_FLUCTUATION_THRESHOLD: 0.5,
+  CONVERSION_NORMAL_MIN: 0.01,
+  CONVERSION_NORMAL_MAX: 0.8,
+  CONVERSION_OPTIMAL_TARGET: 0.15,
+  BUDGET_EXCEED_WARN_RATIO: 0.95,
+  BUDGET_OVERRUN_WARN: 0.95,
+  PARTICIPATE_SPIKE: 5000,
+  RETENTION_D1_MIN: 0.1,
+  RETENTION_D7_MIN: 0.03,
+  AUTO_COLLECT_INTERVAL_MINUTES: 30,
+  EXPIRE_EXPORT_HOURS: 24,
+  MAX_EXPORT_ROWS: 100000,
+  MAX_COMPARE_ACTIVITIES: 20
+}

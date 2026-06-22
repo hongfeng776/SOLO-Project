@@ -59,6 +59,9 @@ import ActivityParticipation from './activity-participation'
 import ActivityParticipationAuditLog from './activity-participation-audit-log'
 import ActivityReward from './activity-reward'
 import ActivityRewardAuditLog from './activity-reward-audit-log'
+import ActivityStatsSnapshot from './activity-stats-snapshot'
+import ActivityReport from './activity-report'
+import ActivityStatsAuditLog from './activity-stats-audit-log'
 
 ActivityTemplate.hasMany(Activity, { as: 'activities', foreignKey: 'templateId' })
 Activity.belongsTo(ActivityTemplate, { as: 'template', foreignKey: 'templateId' })
@@ -86,6 +89,18 @@ ActivityReward.belongsTo(User, { as: 'user', foreignKey: 'userId' })
 
 ActivityReward.hasMany(ActivityRewardAuditLog, { as: 'auditLogs', foreignKey: 'rewardId' })
 ActivityRewardAuditLog.belongsTo(ActivityReward, { as: 'reward', foreignKey: 'rewardId' })
+
+Activity.hasMany(ActivityStatsSnapshot, { as: 'statsSnapshots', foreignKey: 'activityId' })
+ActivityStatsSnapshot.belongsTo(Activity, { as: 'activity', foreignKey: 'activityId' })
+
+Activity.hasMany(ActivityReport, { as: 'reports', foreignKey: 'activityId' })
+ActivityReport.belongsTo(Activity, { as: 'activity', foreignKey: 'activityId' })
+
+ActivityStatsSnapshot.hasMany(ActivityStatsAuditLog, { as: 'auditLogs', foreignKey: 'targetId', scope: { targetType: 'snapshot' } })
+ActivityReport.hasMany(ActivityStatsAuditLog, { as: 'auditLogs', foreignKey: 'targetId', scope: { targetType: 'report' } })
+ActivityStatsAuditLog.belongsTo(ActivityStatsSnapshot, { as: 'snapshot', foreignKey: 'targetId', constraints: false })
+ActivityStatsAuditLog.belongsTo(ActivityReport, { as: 'report', foreignKey: 'targetId', constraints: false })
+
 
 TrafficPool.hasMany(TrafficPoolLog, { as: 'logs', foreignKey: 'poolId' })
 TrafficPoolLog.belongsTo(TrafficPool, { as: 'pool', foreignKey: 'poolId' })
@@ -190,4 +205,4 @@ HotCommentLog.belongsTo(HotComment, { as: 'hotComment', foreignKey: 'hotCommentI
 Comment.hasMany(HotCommentLog, { as: 'hotLogs', foreignKey: 'commentId' })
 HotCommentLog.belongsTo(Comment, { as: 'comment', foreignKey: 'commentId' })
 
-export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, CommentAuditLog, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, MerchantOnboardingApply, MerchantOnboardingLog, MerchantCreditArchive, DirectMessage, DmConversation, DmAuditLog, InteractionData, InteractionAnomalyLog, HotComment, HotCommentLog, TrafficPool, TrafficPoolLog, ContentPushTask, ContentPushTrace, TrafficWeightRule, TrafficWeightRuleLog, TrafficAnomalyRecord, TrafficAnomalyHandleLog, ActivityAuditLog, ActivityTemplate, ActivityParticipation, ActivityParticipationAuditLog, ActivityReward, ActivityRewardAuditLog, UserRole, NoteTag }
+export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, CommentAuditLog, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, MerchantOnboardingApply, MerchantOnboardingLog, MerchantCreditArchive, DirectMessage, DmConversation, DmAuditLog, InteractionData, InteractionAnomalyLog, HotComment, HotCommentLog, TrafficPool, TrafficPoolLog, ContentPushTask, ContentPushTrace, TrafficWeightRule, TrafficWeightRuleLog, TrafficAnomalyRecord, TrafficAnomalyHandleLog, ActivityAuditLog, ActivityTemplate, ActivityParticipation, ActivityParticipationAuditLog, ActivityReward, ActivityRewardAuditLog, ActivityStatsSnapshot, ActivityReport, ActivityStatsAuditLog, UserRole, NoteTag }
