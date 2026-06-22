@@ -3040,4 +3040,189 @@ export interface QualityDetailResult {
   flags: string[]
 }
 
+export type DataIntegrityStatus = 'normal' | 'suspected' | 'abnormal'
+
+export type DataQueryType = 'single' | 'batch' | 'summary' | 'trace'
+
+export interface DataPreValidateResult {
+  canQuery: boolean
+  errors: string[]
+  warnings: string[]
+}
+
+export interface DataOverview {
+  totalResources: number
+  totalViews: number
+  totalLikes: number
+  totalFavorites: number
+  totalShares: number
+  totalComments: number
+  abnormalCount: number
+  qualityDistribution: Record<string, number>
+  topByHotness: { id: number; title: string; hotnessScore: number; viewCount: number; likeCount: number }[]
+  recentSnapshots: number
+  recentAnomalies: number
+}
+
+export interface DataSnapshotItem {
+  id: number
+  resourceId: number
+  resourceTitle: string
+  snapshotDate: string
+  snapshotType: string
+  viewCount: number
+  viewIncrement: number
+  likeCount: number
+  likeIncrement: number
+  favoriteCount: number
+  favoriteIncrement: number
+  shareCount: number
+  shareIncrement: number
+  commentCount: number
+  commentIncrement: number
+  downloadCount: number
+  downloadIncrement: number
+  hotnessScore: number
+  hotnessRank: number
+  trafficSources: any
+  integrityCheck: any
+  isAnomaly: boolean
+  anomalyDetails: any
+  createdAt: string
+}
+
+export interface DataIntegrityIssue {
+  type: string
+  severity: 'low' | 'medium' | 'high'
+  description: string
+}
+
+export interface DataIntegrityResult {
+  hasIssues: boolean
+  issues: DataIntegrityIssue[]
+  score: number
+}
+
+export interface ResourceDataDetail {
+  resource: any
+  currentData: {
+    viewCount: number
+    likeCount: number
+    favoriteCount: number
+    shareCount: number
+    commentCount: number
+    downloadCount: number
+    hotnessScore: number
+  }
+  dailySnapshots: DataSnapshotItem[]
+  integrityCheck: DataIntegrityResult
+  dataIntegrityStatus: DataIntegrityStatus
+}
+
+export interface BatchSummaryResult {
+  total: number
+  totalViews: number
+  totalLikes: number
+  totalFavorites: number
+  totalShares: number
+  totalComments: number
+  totalDownloads: number
+  totalHotness: number
+  avgViews: string
+  avgLikes: string
+  avgHotness: string
+  anomalyCount: number
+  qualityDistribution: Record<string, number>
+  statusDistribution: Record<string, number>
+  topByViews: { id: number; title: string; value: number }[]
+  topByLikes: { id: number; title: string; value: number }[]
+  topByHotness: { id: number; title: string; value: number }[]
+}
+
+export interface DataTraceResult {
+  resource: { id: number; title: string; qualityLevel: string }
+  currentData: {
+    viewCount: number
+    likeCount: number
+    favoriteCount: number
+    shareCount: number
+    commentCount: number
+    downloadCount: number
+  }
+  dailyIncrements: {
+    date: string
+    viewIncrement: number
+    likeIncrement: number
+    favoriteIncrement: number
+    shareIncrement: number
+    commentIncrement: number
+    downloadIncrement: number
+    hotnessScore: number
+    hotnessRank: number
+    isAnomaly: boolean
+    trafficSources: any
+  }[]
+  totalIncrements: {
+    views: number
+    likes: number
+    favorites: number
+    shares: number
+    comments: number
+  }
+  avgDaily: {
+    views: string
+    likes: string
+    favorites: string
+    shares: string
+    comments: string
+  }
+  peakDay: any
+  integrityCheck: DataIntegrityResult
+  snapshotDays: number
+}
+
+export interface DataQueryLogItem {
+  id: number
+  queryType: DataQueryType
+  operatorId: number | null
+  operatorName: string | null
+  operatorRole: string | null
+  queryParams: any
+  validationResult: any
+  resultCount: number
+  affectedResourceIds: number[] | null
+  summaryData: any
+  anomalyFound: boolean
+  anomalyDetails: any
+  ip: string | null
+  userAgent: string | null
+  remark: string | null
+  createdAt: string
+}
+
+export interface DataListParams extends PageParams {
+  keyword?: string
+  fileType?: string
+  qualityLevel?: string
+  visibility?: string
+  status?: string
+  categoryId?: number
+  authorId?: number
+  startTime?: string
+  endTime?: string
+  minScore?: number
+  maxScore?: number
+  sortBy?: string
+  sortOrder?: string
+  includeDeleted?: boolean
+  includeHidden?: boolean
+}
+
+export interface DataQueryLogParams extends PageParams {
+  queryType?: DataQueryType
+  operatorId?: number
+  startTime?: string
+  endTime?: string
+}
+
 

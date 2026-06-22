@@ -23,6 +23,7 @@ const filterRoutes = require('./filters')
 const featuredWorkRoutes = require('./featuredWorks')
 const resourceVisibilityRoutes = require('./resourceVisibility')
 const qualityControlRoutes = require('./qualityControl')
+const dataAnalyticsRoutes = require('./dataAnalytics')
 
 router.use('/auth', authRoutes)
 router.use('/resources', resourceRoutes)
@@ -46,5 +47,6 @@ router.use('/filters', filterRoutes)
 router.use('/featured-works', featuredWorkRoutes)
 router.use('/resource-visibility', resourceVisibilityRoutes)
 router.use('/quality-control', qualityControlRoutes)
+router.use('/data-analytics', dataAnalyticsRoutes)
 
 module.exports = router

@@ -36,6 +36,8 @@ const FeaturedWorkLog = require('./FeaturedWorkLog')
 const ResourceVisibilityLog = require('./ResourceVisibilityLog')
 const QualityAssessmentLog = require('./QualityAssessmentLog')
 const QualityReviewLog = require('./QualityReviewLog')
+const ResourceDataSnapshot = require('./ResourceDataSnapshot')
+const DataQueryLog = require('./DataQueryLog')
 
 User.hasMany(Resource, { foreignKey: 'authorId', as: 'resources' })
 Resource.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
@@ -159,6 +161,11 @@ QualityReviewLog.belongsTo(Resource, { foreignKey: 'resourceId', as: 'resource' 
 QualityReviewLog.belongsTo(User, { foreignKey: 'reviewerId', as: 'reviewer' })
 QualityReviewLog.belongsTo(QualityAssessmentLog, { foreignKey: 'assessmentLogId', as: 'assessmentLog' })
 
+Resource.hasMany(ResourceDataSnapshot, { foreignKey: 'resourceId', as: 'dataSnapshots' })
+ResourceDataSnapshot.belongsTo(Resource, { foreignKey: 'resourceId', as: 'resource' })
+
+DataQueryLog.belongsTo(User, { foreignKey: 'operatorId', as: 'operator' })
+
 module.exports = {
   User,
   Category,
@@ -197,5 +204,7 @@ module.exports = {
   FeaturedWorkLog,
   ResourceVisibilityLog,
   QualityAssessmentLog,
-  QualityReviewLog
+  QualityReviewLog,
+  ResourceDataSnapshot,
+  DataQueryLog
 }

@@ -266,6 +266,52 @@ const Resource = sequelize.define(
       type: DataTypes.STRING(500),
       allowNull: true,
       comment: '质量锁定原因'
+    },
+    favoriteCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+      comment: '收藏数'
+    },
+    shareCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+      comment: '转发数'
+    },
+    commentCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+      comment: '评论数'
+    },
+    hotnessScore: {
+      type: DataTypes.DECIMAL(10, 2),
+      defaultValue: 0,
+      allowNull: false,
+      comment: '热度评分(综合浏览/点赞/收藏/转发/评论加权)'
+    },
+    hotnessRank: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+      comment: '热度排名'
+    },
+    lastDataSnapshotAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '最近一次数据快照时间'
+    },
+    dataIntegrityStatus: {
+      type: DataTypes.ENUM('normal', 'suspected', 'abnormal'),
+      defaultValue: 'normal',
+      allowNull: false,
+      comment: '数据完整性状态：normal正常/suspected疑似异常/abnormal异常'
+    },
+    dataAnomalyNote: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: '数据异常说明'
     }
   },
   {

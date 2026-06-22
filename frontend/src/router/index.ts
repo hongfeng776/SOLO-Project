@@ -82,6 +82,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '内容质检', icon: 'MagicStick', roles: ['super_admin', 'admin', 'operator', 'auditor'] }
       },
       {
+        path: 'data-analytics',
+        name: 'DataAnalytics',
+        component: () => import('@/views/data-analytics/index.vue'),
+        meta: { title: '数据分析', icon: 'DataAnalysis', roles: ['super_admin', 'admin', 'operator', 'auditor'] }
+      },
+      {
         path: 'audit',
         name: 'Audit',
         component: () => import('@/views/audit/index.vue'),
