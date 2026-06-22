@@ -935,3 +935,206 @@ export const PARTICIPATION_ANTI_FRAUD_RULES = {
   BRUSH_PATTERN_WINDOW_MINUTES: 10,
   BRUSH_PATTERN_THRESHOLD: 5
 }
+
+// ============================================================
+// ========== 营销活动 - 奖励分发模块枚举 =====================
+// ============================================================
+
+// ========== 奖励发放状态机（功能点2核心） ==========
+export enum RewardStatus {
+  PENDING_ISSUE = 0,
+  LOCKED = 1,
+  ISSUED = 2,
+  ARRIVED = 3,
+  FAILED = 4,
+  ROLLBACKED = 5,
+  RECYCLED = 6,
+  REVOKED = 7
+}
+
+export const REWARD_STATUS_NAMES: Record<number, string> = {
+  [RewardStatus.PENDING_ISSUE]: '待发放',
+  [RewardStatus.LOCKED]: '额度锁定中',
+  [RewardStatus.ISSUED]: '已发放',
+  [RewardStatus.ARRIVED]: '已到账',
+  [RewardStatus.FAILED]: '发放失败',
+  [RewardStatus.ROLLBACKED]: '额度已退回',
+  [RewardStatus.RECYCLED]: '奖励已回收',
+  [RewardStatus.REVOKED]: '已撤销'
+}
+
+export const REWARD_STATUS_COLORS: Record<number, string> = {
+  [RewardStatus.PENDING_ISSUE]: '#909399',
+  [RewardStatus.LOCKED]: '#e6a23c',
+  [RewardStatus.ISSUED]: '#409eff',
+  [RewardStatus.ARRIVED]: '#67c23a',
+  [RewardStatus.FAILED]: '#f56c6c',
+  [RewardStatus.ROLLBACKED]: '#909399',
+  [RewardStatus.RECYCLED]: '#f56c6c',
+  [RewardStatus.REVOKED]: '#c0c4cc'
+}
+
+// ========== 奖励校验维度（功能点1 + 功能点4多维度） ==========
+export enum RewardCheckDimension {
+  TASK_COMPLETION = 'task_completion',
+  PARTICIPATION_COMPLIANCE = 'participation_compliance',
+  REWARD_QUALIFICATION = 'reward_qualification',
+  ACTIVITY_BUDGET = 'activity_budget',
+  REWARD_AMOUNT = 'reward_amount',
+  REWARD_QUANTITY = 'reward_quantity',
+  REWARD_RATIO = 'reward_ratio',
+  DUPLICATE_ISSUE = 'duplicate_issue',
+  FAKE_ISSUE = 'fake_issue',
+  USER_ACCOUNT = 'user_account',
+  TIMELINESS = 'timeliness',
+  DATA_CONSISTENCY = 'data_consistency',
+  DIFFERENTIAL_RULE = 'differential_rule'
+}
+
+export const REWARD_CHECK_DIMENSION_NAMES: Record<string, string> = {
+  [RewardCheckDimension.TASK_COMPLETION]: '任务完成度',
+  [RewardCheckDimension.PARTICIPATION_COMPLIANCE]: '参与合规性',
+  [RewardCheckDimension.REWARD_QUALIFICATION]: '领取资格',
+  [RewardCheckDimension.ACTIVITY_BUDGET]: '活动预算',
+  [RewardCheckDimension.REWARD_AMOUNT]: '奖励额度',
+  [RewardCheckDimension.REWARD_QUANTITY]: '奖励数量',
+  [RewardCheckDimension.REWARD_RATIO]: '奖励配比',
+  [RewardCheckDimension.DUPLICATE_ISSUE]: '重复发放',
+  [RewardCheckDimension.FAKE_ISSUE]: '虚假发放',
+  [RewardCheckDimension.USER_ACCOUNT]: '用户账户状态',
+  [RewardCheckDimension.TIMELINESS]: '发放及时性',
+  [RewardCheckDimension.DATA_CONSISTENCY]: '账目一致性',
+  [RewardCheckDimension.DIFFERENTIAL_RULE]: '差异化规则'
+}
+
+// ========== 奖励违规类型（功能点4自动拦截） ==========
+export enum RewardViolationType {
+  DUPLICATE_ISSUE = 'duplicate_issue',
+  OVER_BUDGET = 'over_budget',
+  OVER_AMOUNT = 'over_amount',
+  FAKE_ISSUE = 'fake_issue',
+  FRAUD_USER = 'fraud_user',
+  INVALID_PARTICIPATION = 'invalid_participation',
+  UNFINISHED_TASK = 'unfinished_task',
+  TIMEOUT_ISSUE = 'timeout_issue',
+  DATA_MISMATCH = 'data_mismatch',
+  MALICIOUS_RECYCLE = 'malicious_recycle'
+}
+
+export const REWARD_VIOLATION_TYPE_NAMES: Record<string, string> = {
+  [RewardViolationType.DUPLICATE_ISSUE]: '重复发放',
+  [RewardViolationType.OVER_BUDGET]: '超额发放(超预算)',
+  [RewardViolationType.OVER_AMOUNT]: '超额发放(超额度)',
+  [RewardViolationType.FAKE_ISSUE]: '虚假发放',
+  [RewardViolationType.FRAUD_USER]: '作弊用户领取',
+  [RewardViolationType.INVALID_PARTICIPATION]: '违规参与领取',
+  [RewardViolationType.UNFINISHED_TASK]: '未完成任务领取',
+  [RewardViolationType.TIMEOUT_ISSUE]: '超时未发放',
+  [RewardViolationType.DATA_MISMATCH]: '账目数据不一致',
+  [RewardViolationType.MALICIOUS_RECYCLE]: '恶意回收奖励'
+}
+
+// ========== 奖励批量操作类型（功能点3） ==========
+export enum RewardBatchAction {
+  BATCH_ISSUE = 'batch_issue',
+  BATCH_REISSUE = 'batch_reissue',
+  BATCH_RECYCLE = 'batch_recycle',
+  BATCH_LOCK = 'batch_lock',
+  BATCH_ROLLBACK = 'batch_rollback',
+  BATCH_DIFFERENTIAL = 'batch_differential'
+}
+
+export const REWARD_BATCH_ACTION_NAMES: Record<string, string> = {
+  [RewardBatchAction.BATCH_ISSUE]: '批量发放奖励',
+  [RewardBatchAction.BATCH_REISSUE]: '批量补发奖励',
+  [RewardBatchAction.BATCH_RECYCLE]: '批量回收奖励',
+  [RewardBatchAction.BATCH_LOCK]: '批量锁定额度',
+  [RewardBatchAction.BATCH_ROLLBACK]: '批量退回额度',
+  [RewardBatchAction.BATCH_DIFFERENTIAL]: '差异化批量发放'
+}
+
+// ========== 奖励审计动作类型（功能点4溯源） ==========
+export enum RewardAuditAction {
+  PENDING_CREATED = 'pending_created',
+  BUDGET_LOCKED = 'budget_locked',
+  BUDGET_ROLLBACKED = 'budget_rollbacked',
+  ISSUED = 'issued',
+  ISSUE_BLOCKED = 'issue_blocked',
+  ISSUE_FAILED = 'issue_failed',
+  ARRIVED_CONFIRMED = 'arrived_confirmed',
+  REISSUED = 'reissued',
+  RECYCLED = 'recycled',
+  RECYCLE_BLOCKED = 'recycle_blocked',
+  REVOKED = 'revoked',
+  AMOUNT_ADJUSTED = 'amount_adjusted',
+  BATCH_ISSUED = 'batch_issued',
+  BATCH_REISSUED = 'batch_reissued',
+  BATCH_RECYCLED = 'batch_recycled',
+  BUDGET_CHECK_FAILED = 'budget_check_failed',
+  DUPLICATE_BLOCKED = 'duplicate_blocked',
+  ACCOUNT_RECONCILED = 'account_reconciled',
+  MANUAL_CORRECTED = 'manual_corrected'
+}
+
+export const REWARD_AUDIT_ACTION_NAMES: Record<string, string> = {
+  [RewardAuditAction.PENDING_CREATED]: '待发放记录创建',
+  [RewardAuditAction.BUDGET_LOCKED]: '奖励额度锁定',
+  [RewardAuditAction.BUDGET_ROLLBACKED]: '额度退回预算池',
+  [RewardAuditAction.ISSUED]: '奖励已发放',
+  [RewardAuditAction.ISSUE_BLOCKED]: '发放被拦截',
+  [RewardAuditAction.ISSUE_FAILED]: '发放失败',
+  [RewardAuditAction.ARRIVED_CONFIRMED]: '到账确认',
+  [RewardAuditAction.REISSUED]: '补发奖励',
+  [RewardAuditAction.RECYCLED]: '奖励已回收',
+  [RewardAuditAction.RECYCLE_BLOCKED]: '回收被拦截',
+  [RewardAuditAction.REVOKED]: '发放已撤销',
+  [RewardAuditAction.AMOUNT_ADJUSTED]: '金额调整',
+  [RewardAuditAction.BATCH_ISSUED]: '批量发放',
+  [RewardAuditAction.BATCH_REISSUED]: '批量补发',
+  [RewardAuditAction.BATCH_RECYCLED]: '批量回收',
+  [RewardAuditAction.BUDGET_CHECK_FAILED]: '预算校验不通过',
+  [RewardAuditAction.DUPLICATE_BLOCKED]: '重复发放拦截',
+  [RewardAuditAction.ACCOUNT_RECONCILED]: '账目核对完成',
+  [RewardAuditAction.MANUAL_CORRECTED]: '人工调账'
+}
+
+// ========== 奖励差异化规则（功能点3差异化发放） ==========
+export enum RewardDifferentialFactor {
+  USER_LEVEL = 'user_level',
+  ACTIVITY_LEVEL = 'activity_level',
+  TASK_SCORE = 'task_score',
+  COMPLETION_SPEED = 'completion_speed',
+  COMPLIANCE_SCORE = 'compliance_score'
+}
+
+export const REWARD_DIFFERENTIAL_FACTOR_NAMES: Record<string, string> = {
+  [RewardDifferentialFactor.USER_LEVEL]: '用户等级',
+  [RewardDifferentialFactor.ACTIVITY_LEVEL]: '活跃度等级',
+  [RewardDifferentialFactor.TASK_SCORE]: '任务得分',
+  [RewardDifferentialFactor.COMPLETION_SPEED]: '完成速度',
+  [RewardDifferentialFactor.COMPLIANCE_SCORE]: '合规得分'
+}
+
+// ========== 奖励账目核对状态 ==========
+export enum RewardReconcileStatus {
+  PENDING = 0,
+  MATCHED = 1,
+  MISMATCH = 2,
+  CORRECTED = 3
+}
+
+export const REWARD_RECONCILE_STATUS_NAMES: Record<number, string> = {
+  [RewardReconcileStatus.PENDING]: '待核对',
+  [RewardReconcileStatus.MATCHED]: '账实一致',
+  [RewardReconcileStatus.MISMATCH]: '账实不符',
+  [RewardReconcileStatus.CORRECTED]: '人工修正'
+}
+
+// ========== 奖励发放约束常量 ==========
+export const REWARD_ISSUE_CONSTRAINTS = {
+  MAX_SINGLE_REWARD_AMOUNT: 50000,
+  MAX_DAILY_TOTAL_AMOUNT: 1000000,
+  MIN_ISSUE_INTERVAL_HOURS: 24,
+  BUDGET_USAGE_WARN_RATIO: 0.8,
+  DEFAULT_REWARD_EXPIRE_DAYS: 30
+}

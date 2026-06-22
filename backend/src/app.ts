@@ -49,6 +49,7 @@ import contentPushRoutes from '@routes/content-push'
 import trafficWeightRuleRoutes from '@routes/traffic-weight-rule'
 import trafficAnomalyControlRoutes from '@routes/traffic-anomaly-control'
 import activityParticipationRoutes from '@routes/activity-participation'
+import activityRewardRoutes from '@routes/activity-reward'
 
 const app = express()
 
@@ -109,6 +110,7 @@ app.use('/api/content-push', contentPushRoutes)
 app.use('/api/traffic-weight-rule', trafficWeightRuleRoutes)
 app.use('/api/traffic-anomaly-control', trafficAnomalyControlRoutes)
 app.use('/api/activity-participation', activityParticipationRoutes)
+app.use('/api/activity-reward', activityRewardRoutes)
 
 app.use(celebrateErrors())
 app.use(errorHandler)

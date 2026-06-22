@@ -57,6 +57,8 @@ import ActivityAuditLog from './activity-audit-log'
 import ActivityTemplate from './activity-template'
 import ActivityParticipation from './activity-participation'
 import ActivityParticipationAuditLog from './activity-participation-audit-log'
+import ActivityReward from './activity-reward'
+import ActivityRewardAuditLog from './activity-reward-audit-log'
 
 ActivityTemplate.hasMany(Activity, { as: 'activities', foreignKey: 'templateId' })
 Activity.belongsTo(ActivityTemplate, { as: 'template', foreignKey: 'templateId' })
@@ -72,6 +74,18 @@ ActivityParticipation.belongsTo(User, { as: 'user', foreignKey: 'userId' })
 
 ActivityParticipation.hasMany(ActivityParticipationAuditLog, { as: 'auditLogs', foreignKey: 'participationId' })
 ActivityParticipationAuditLog.belongsTo(ActivityParticipation, { as: 'participation', foreignKey: 'participationId' })
+
+Activity.hasMany(ActivityReward, { as: 'rewards', foreignKey: 'activityId' })
+ActivityReward.belongsTo(Activity, { as: 'activity', foreignKey: 'activityId' })
+
+ActivityParticipation.hasMany(ActivityReward, { as: 'rewards', foreignKey: 'participationId' })
+ActivityReward.belongsTo(ActivityParticipation, { as: 'participation', foreignKey: 'participationId' })
+
+User.hasMany(ActivityReward, { as: 'activityRewards', foreignKey: 'userId' })
+ActivityReward.belongsTo(User, { as: 'user', foreignKey: 'userId' })
+
+ActivityReward.hasMany(ActivityRewardAuditLog, { as: 'auditLogs', foreignKey: 'rewardId' })
+ActivityRewardAuditLog.belongsTo(ActivityReward, { as: 'reward', foreignKey: 'rewardId' })
 
 TrafficPool.hasMany(TrafficPoolLog, { as: 'logs', foreignKey: 'poolId' })
 TrafficPoolLog.belongsTo(TrafficPool, { as: 'pool', foreignKey: 'poolId' })
@@ -176,4 +190,4 @@ HotCommentLog.belongsTo(HotComment, { as: 'hotComment', foreignKey: 'hotCommentI
 Comment.hasMany(HotCommentLog, { as: 'hotLogs', foreignKey: 'commentId' })
 HotCommentLog.belongsTo(Comment, { as: 'comment', foreignKey: 'commentId' })
 
-export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, CommentAuditLog, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, MerchantOnboardingApply, MerchantOnboardingLog, MerchantCreditArchive, DirectMessage, DmConversation, DmAuditLog, InteractionData, InteractionAnomalyLog, HotComment, HotCommentLog, TrafficPool, TrafficPoolLog, ContentPushTask, ContentPushTrace, TrafficWeightRule, TrafficWeightRuleLog, TrafficAnomalyRecord, TrafficAnomalyHandleLog, ActivityAuditLog, ActivityTemplate, ActivityParticipation, ActivityParticipationAuditLog, UserRole, NoteTag }
+export { User, Role, Note, Tag, Category, TagUsageLog, Creator, Activity, Order, Comment, CommentAuditLog, ViolationRecord, ResourceSlot, OperationLog, Notification, Feedback, Settlement, NoteBatchRecord, NoteComplianceLog, PublishAbnormalLog, ReviewLog, ReviewAbnormalLog, NoteOpsLog, NoteOpsAbnormalLog, UserAccountLog, UserAbnormalLog, UserLevelLog, UserLevelConfig, BehaviorLog, RiskControlLog, PunishmentRecord, ActivityScoreLog, ActivityOperationStrategy, ActivityOperationRecord, CreatorQualificationApply, CreatorQualificationLog, CreatorBenefitConfig, MerchantOnboardingApply, MerchantOnboardingLog, MerchantCreditArchive, DirectMessage, DmConversation, DmAuditLog, InteractionData, InteractionAnomalyLog, HotComment, HotCommentLog, TrafficPool, TrafficPoolLog, ContentPushTask, ContentPushTrace, TrafficWeightRule, TrafficWeightRuleLog, TrafficAnomalyRecord, TrafficAnomalyHandleLog, ActivityAuditLog, ActivityTemplate, ActivityParticipation, ActivityParticipationAuditLog, ActivityReward, ActivityRewardAuditLog, UserRole, NoteTag }
