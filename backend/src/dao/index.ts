@@ -65,6 +65,10 @@ import { LogisticsLinkWorkOrderDao } from './LogisticsLinkWorkOrderDao';
 import { LogisticsAbnormalDetectionRuleDao } from './LogisticsAbnormalDetectionRuleDao';
 import { LogisticsLinkNodeExtensionDao } from './LogisticsLinkNodeExtensionDao';
 import { LogisticsLinkMatchRecordDao } from './LogisticsLinkMatchRecordDao';
+import { WarehouseInboundRecordDao } from './WarehouseInboundRecordDao';
+import { WarehouseOutboundRecordDao } from './WarehouseOutboundRecordDao';
+import { WarehouseInventoryRecordDao } from './WarehouseInventoryRecordDao';
+import { WarehouseTransferRecordDao } from './WarehouseTransferRecordDao';
 
 export {
   BaseDao,
@@ -136,6 +140,10 @@ export {
   LogisticsAbnormalDetectionRuleDao,
   LogisticsLinkNodeExtensionDao,
   LogisticsLinkMatchRecordDao,
+  WarehouseInboundRecordDao,
+  WarehouseOutboundRecordDao,
+  WarehouseInventoryRecordDao,
+  WarehouseTransferRecordDao,
 };
 
 export const daos = {
@@ -205,6 +213,10 @@ export const daos = {
   logisticsAbnormalDetectionRuleDao: new LogisticsAbnormalDetectionRuleDao(),
   logisticsLinkNodeExtensionDao: new LogisticsLinkNodeExtensionDao(),
   logisticsLinkMatchRecordDao: new LogisticsLinkMatchRecordDao(),
+  warehouseInboundRecordDao: new WarehouseInboundRecordDao(),
+  warehouseOutboundRecordDao: new WarehouseOutboundRecordDao(),
+  warehouseInventoryRecordDao: new WarehouseInventoryRecordDao(),
+  warehouseTransferRecordDao: new WarehouseTransferRecordDao(),
 };
 
 export default daos;

@@ -1832,3 +1832,259 @@ export const WorkOrderStatusMap: Record<number, { label: string; type: string }>
   [WorkOrderStatus.ESCALATED]: { label: '已升级', type: 'danger' },
 }
 
+export enum InboundType {
+  PURCHASE = 1,
+  RETURN = 2,
+  TRANSFER = 3,
+  SUPPLEMENT = 4,
+}
+
+export const InboundTypeMap: Record<number, { label: string; type: TagType }> = {
+  [InboundType.PURCHASE]: { label: '采购入库', type: 'primary' },
+  [InboundType.RETURN]: { label: '退货入库', type: 'success' },
+  [InboundType.TRANSFER]: { label: '调拨入库', type: 'warning' },
+  [InboundType.SUPPLEMENT]: { label: '补货入库', type: 'info' },
+}
+
+export enum InboundStatus {
+  PENDING = 0,
+  CONFIRMED = 1,
+  COMPLETED = 2,
+  REJECTED = 3,
+  CANCELLED = 4,
+}
+
+export const InboundStatusMap: Record<number, { label: string; type: TagType }> = {
+  [InboundStatus.PENDING]: { label: '待确认', type: 'info' },
+  [InboundStatus.CONFIRMED]: { label: '已确认', type: 'primary' },
+  [InboundStatus.COMPLETED]: { label: '已完成', type: 'success' },
+  [InboundStatus.REJECTED]: { label: '已拒绝', type: 'danger' },
+  [InboundStatus.CANCELLED]: { label: '已取消', type: 'info' },
+}
+
+export enum OutboundType {
+  ORDER = 1,
+  TRANSFER = 2,
+  SAMPLE = 3,
+  DAMAGE = 4,
+}
+
+export const OutboundTypeMap: Record<number, { label: string; type: TagType }> = {
+  [OutboundType.ORDER]: { label: '订单出库', type: 'primary' },
+  [OutboundType.TRANSFER]: { label: '调拨出库', type: 'warning' },
+  [OutboundType.SAMPLE]: { label: '样品出库', type: 'info' },
+  [OutboundType.DAMAGE]: { label: '损耗出库', type: 'danger' },
+}
+
+export enum InventoryType {
+  NORMAL = 1,
+  LOSS = 2,
+  ABNORMAL = 3,
+}
+
+export const InventoryTypeMap: Record<number, { label: string; type: TagType }> = {
+  [InventoryType.NORMAL]: { label: '正常库存', type: 'success' },
+  [InventoryType.LOSS]: { label: '损耗库存', type: 'warning' },
+  [InventoryType.ABNORMAL]: { label: '异常库存', type: 'danger' },
+}
+
+export enum CountStatus {
+  PENDING = 0,
+  COUNTING = 1,
+  COMPLETED = 2,
+  CONFIRMED = 3,
+  CANCELLED = 4,
+}
+
+export const CountStatusMap: Record<number, { label: string; type: TagType }> = {
+  [CountStatus.PENDING]: { label: '待盘点', type: 'info' },
+  [CountStatus.COUNTING]: { label: '盘点中', type: 'primary' },
+  [CountStatus.COMPLETED]: { label: '已完成', type: 'success' },
+  [CountStatus.CONFIRMED]: { label: '已确认', type: 'success' },
+  [CountStatus.CANCELLED]: { label: '已取消', type: 'info' },
+}
+
+export enum TransferStatus {
+  PENDING = 0,
+  IN_TRANSIT = 1,
+  COMPLETED = 2,
+  REJECTED = 3,
+  CANCELLED = 4,
+}
+
+export const TransferStatusMap: Record<number, { label: string; type: TagType }> = {
+  [TransferStatus.PENDING]: { label: '待审核', type: 'info' },
+  [TransferStatus.IN_TRANSIT]: { label: '调拨中', type: 'primary' },
+  [TransferStatus.COMPLETED]: { label: '已完成', type: 'success' },
+  [TransferStatus.REJECTED]: { label: '已拒绝', type: 'danger' },
+  [TransferStatus.CANCELLED]: { label: '已取消', type: 'info' },
+}
+
+export interface InventoryRecord {
+  id: number
+  inventory_no: string
+  goods_id: number
+  goods_code: string
+  goods_name: string
+  goods_spec?: string
+  batch_no: string
+  production_date?: string
+  expiry_date?: string
+  warehouse_location: string
+  warehouse_zone?: string
+  shelf_no?: string
+  system_quantity: number
+  actual_quantity: number
+  diff_quantity: number
+  inventory_type: number
+  count_status: number
+  is_synced_front: boolean
+  is_synced_merchant: boolean
+  is_synced_logistics: boolean
+  normal_quantity: number
+  loss_quantity: number
+  abnormal_quantity: number
+  loss_reason?: string
+  abnormal_reason?: string
+  low_stock_threshold: number
+  is_low_stock_alert: boolean
+  unit_price?: number
+  total_amount?: number
+  last_count_operator_id?: number
+  last_count_operator_name?: string
+  last_count_time?: string
+  last_correct_operator_id?: number
+  last_correct_operator_name?: string
+  last_correct_time?: string
+  operator_id?: number
+  operator_name?: string
+  remark?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface InboundRecord {
+  id: number
+  inbound_no: string
+  goods_id: number
+  goods_code: string
+  goods_name: string
+  goods_spec?: string
+  batch_no: string
+  production_date?: string
+  expiry_date?: string
+  type: number
+  quantity: number
+  unit_cost?: number
+  total_cost?: number
+  warehouse_location: string
+  warehouse_zone?: string
+  shelf_no?: string
+  status: number
+  validation_result?: any
+  is_synced: boolean
+  operator_id?: number
+  operator_name?: string
+  confirmed_by?: number
+  confirmed_by_name?: string
+  confirmed_at?: string
+  remark?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface OutboundRecord {
+  id: number
+  outbound_no: string
+  goods_id: number
+  goods_code: string
+  goods_name: string
+  goods_spec?: string
+  batch_no: string
+  type: number
+  quantity: number
+  warehouse_location: string
+  order_id?: number
+  order_no?: string
+  transfer_target_location?: number
+  transfer_target_name?: string
+  status: number
+  validation_result?: any
+  is_over_quantity_intercepted: boolean
+  intercept_reason?: string
+  is_synced: boolean
+  operator_id?: number
+  operator_name?: string
+  confirmed_by?: number
+  confirmed_by_name?: string
+  confirmed_at?: string
+  remark?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface TransferRecord {
+  id: number
+  transfer_no: string
+  goods_id: number
+  goods_code: string
+  goods_name: string
+  goods_spec?: string
+  batch_no: string
+  quantity: number
+  from_location: string
+  from_zone?: string
+  to_location: string
+  to_zone?: string
+  status: number
+  reason?: string
+  is_from_deducted: boolean
+  is_to_added: boolean
+  expected_arrival_time?: string
+  actual_arrival_time?: string
+  operator_id?: number
+  operator_name?: string
+  reviewed_by?: number
+  reviewed_by_name?: string
+  reviewed_at?: string
+  remark?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface InventoryValidationResult {
+  valid: boolean
+  errors: Array<{ field: string; message: string; severity: 'error' | 'warning' }>
+  warnings: string[]
+}
+
+export interface InventoryBatchPermission {
+  can_count: boolean
+  can_transfer: boolean
+  can_alert: boolean
+  can_import: boolean
+}
+
+export interface InventoryConsistencyReport {
+  total_items: number
+  consistent_items: number
+  inconsistent_items: number
+  fake_data_detected: number
+  over_quantity_detected: number
+  duplicate_batch_detected: number
+  consistency_score: number
+  issues: string[]
+  recommendations: string[]
+}
+
+export interface InventoryFullTrace {
+  inventory_info: InventoryRecord
+  goods_info: any
+  inbound_records: InboundRecord[]
+  outbound_records: OutboundRecord[]
+  transfer_records: TransferRecord[]
+  count_history: any[]
+  correction_history: any[]
+  consistency_report: InventoryConsistencyReport
+}
+

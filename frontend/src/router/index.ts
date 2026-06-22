@@ -113,6 +113,20 @@ const routes: RouteRecordRaw[] = [
         ]
       },
       {
+        path: 'warehouse',
+        name: 'Warehouse',
+        redirect: '/warehouse/inventory',
+        meta: { title: '仓储管理', icon: 'Box', requiresAuth: true },
+        children: [
+          {
+            path: 'inventory',
+            name: 'WarehouseInventory',
+            component: () => import('@/views/warehouse/inventory/index.vue'),
+            meta: { title: '库存管控', icon: 'Box', requiresAuth: true }
+          }
+        ]
+      },
+      {
         path: 'merchant',
         name: 'Merchant',
         redirect: '/merchant/list',

@@ -59,6 +59,10 @@ import { LogisticsLinkWorkOrder } from './LogisticsLinkWorkOrder';
 import { LogisticsAbnormalDetectionRule } from './LogisticsAbnormalDetectionRule';
 import { LogisticsLinkNodeExtension } from './LogisticsLinkNodeExtension';
 import { LogisticsLinkMatchRecord } from './LogisticsLinkMatchRecord';
+import { WarehouseInboundRecord } from './WarehouseInboundRecord';
+import { WarehouseOutboundRecord } from './WarehouseOutboundRecord';
+import { WarehouseInventoryRecord } from './WarehouseInventoryRecord';
+import { WarehouseTransferRecord } from './WarehouseTransferRecord';
 
 export {
   Admin,
@@ -122,6 +126,10 @@ export {
   LogisticsAbnormalDetectionRule,
   LogisticsLinkNodeExtension,
   LogisticsLinkMatchRecord,
+  WarehouseInboundRecord,
+  WarehouseOutboundRecord,
+  WarehouseInventoryRecord,
+  WarehouseTransferRecord,
 };
 
 export const models = {
@@ -186,6 +194,10 @@ export const models = {
   LogisticsAbnormalDetectionRule,
   LogisticsLinkNodeExtension,
   LogisticsLinkMatchRecord,
+  WarehouseInboundRecord,
+  WarehouseOutboundRecord,
+  WarehouseInventoryRecord,
+  WarehouseTransferRecord,
 };
 
 export default models;

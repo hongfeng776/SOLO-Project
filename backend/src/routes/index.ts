@@ -57,6 +57,10 @@ import logisticsLinkMatchRouter from './logisticsLinkMatch';
 import logisticsAbnormalMonitorRouter from './logisticsAbnormalMonitor';
 import logisticsLinkBatchRouter from './logisticsLinkBatch';
 import logisticsLinkTraceRouter from './logisticsLinkTrace';
+import warehouseStockValidateRouter from './warehouseStockValidate';
+import warehouseInventoryCountRouter from './warehouseInventoryCount';
+import warehouseInventoryBatchRouter from './warehouseInventoryBatch';
+import warehouseInventoryTraceRouter from './warehouseInventoryTrace';
 
 const router = Router();
 
@@ -118,5 +122,9 @@ router.use('/logisticsLinkMatch', logisticsLinkMatchRouter);
 router.use('/logisticsAbnormalMonitor', logisticsAbnormalMonitorRouter);
 router.use('/logisticsLinkBatch', logisticsLinkBatchRouter);
 router.use('/logisticsLinkTrace', logisticsLinkTraceRouter);
+router.use('/warehouseStockValidate', warehouseStockValidateRouter);
+router.use('/warehouseInventoryCount', warehouseInventoryCountRouter);
+router.use('/warehouseInventoryBatch', warehouseInventoryBatchRouter);
+router.use('/warehouseInventoryTrace', warehouseInventoryTraceRouter);
 
 export default router;
