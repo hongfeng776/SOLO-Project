@@ -26,6 +26,7 @@ const ticketController = require('../controllers/TicketController')
 const scenicSpotController = require('../controllers/ScenicSpotController')
 const ticketTypeController = require('../controllers/TicketTypeController')
 const ticketInventoryController = require('../controllers/TicketInventoryController')
+const ticketFulfillmentController = require('../controllers/TicketFulfillmentController')
 const orderController = require('../controllers/OrderController')
 const merchantController = require('../controllers/MerchantController')
 const businessTravelController = require('../controllers/BusinessTravelController')
@@ -241,6 +242,16 @@ router.post('/ticket-inventory/:id/ops/verify', auth(['admin', 'senior_ticket_op
 router.post('/ticket-inventory/ops/check-expired', auth(['admin']), ticketInventoryController.checkExpired.bind(ticketInventoryController));
 router.get('/ticket-inventory/:id/ops/logs', auth(), pagination, ticketInventoryController.getLogs.bind(ticketInventoryController));
 router.get('/ticket-inventory/ops/logs/all', auth(), pagination, ticketInventoryController.getAllLogs.bind(ticketInventoryController));
+
+registerCrudRoutes('ticket-fulfillment', ticketFulfillmentController);
+router.get('/ticket-fulfillment/ops/stats', auth(), ticketFulfillmentController.getStats.bind(ticketFulfillmentController));
+router.get('/ticket-fulfillment/ops/permission', auth(), ticketFulfillmentController.checkPermission.bind(ticketFulfillmentController));
+router.post('/ticket-fulfillment/ops/verify', auth(['admin', 'ticket_operator', 'senior_ticket_operator', 'gate_operator', 'gate_supervisor']), ticketFulfillmentController.verifyTicket.bind(ticketFulfillmentController));
+router.post('/ticket-fulfillment/ops/batch', auth(['admin', 'senior_ticket_operator']), ticketFulfillmentController.batchOperation.bind(ticketFulfillmentController));
+router.get('/ticket-fulfillment/:id/ops/integrity', auth(), ticketFulfillmentController.checkIntegrity.bind(ticketFulfillmentController));
+router.post('/ticket-fulfillment/ops/check-expired', auth(['admin']), ticketFulfillmentController.checkExpired.bind(ticketFulfillmentController));
+router.get('/ticket-fulfillment/:id/ops/logs', auth(), pagination, ticketFulfillmentController.getLogs.bind(ticketFulfillmentController));
+router.get('/ticket-fulfillment/ops/logs/all', auth(), pagination, ticketFulfillmentController.getAllLogs.bind(ticketFulfillmentController));
 
 router.get('/orders', auth(), pagination, orderController.list.bind(orderController));
 router.get('/orders/:id', auth(), orderController.get.bind(orderController));

@@ -1405,6 +1405,55 @@ export const InventoryReviewStatusEnum = {
   rejected: { value: 'rejected', label: '已驳回', color: '#ff4d4f' }
 }
 
+export const FulfillStatusEnum = {
+  pending: { value: 'pending', label: '待核销', icon: 'Clock', color: '#1890ff', tagClass: 'tag-ff-pending', gradient: 'linear-gradient(135deg, #1890ff, #69c0ff)' },
+  verified: { value: 'verified', label: '已核销', icon: 'CircleCheckFilled', color: '#52c41a', tagClass: 'tag-ff-verified', gradient: 'linear-gradient(135deg, #52c41a, #95de64)' },
+  expired: { value: 'expired', label: '过期作废', icon: 'CircleClose', color: '#8c8c8c', tagClass: 'tag-ff-expired', gradient: 'linear-gradient(135deg, #8c8c8c, #bfbfbf)' },
+  refund: { value: 'refund', label: '退票失效', icon: 'RefreshLeft', color: '#fa8c16', tagClass: 'tag-ff-refund', gradient: 'linear-gradient(135deg, #fa8c16, #ffc069)' },
+  abnormal: { value: 'abnormal', label: '异常状态', icon: 'WarningFilled', color: '#ff4d4f', tagClass: 'tag-ff-abnormal', gradient: 'linear-gradient(135deg, #ff4d4f, #ff7875)' }
+}
+
+export const FulfillVerifyResultEnum = {
+  pass: { value: 'pass', label: '通过', class: 'verify-pass', color: '#52c41a', icon: 'CircleCheckFilled' },
+  repeat: { value: 'repeat', label: '重复核销', class: 'verify-repeat', color: '#faad14', icon: 'RefreshRight' },
+  expired: { value: 'expired', label: '已过期', class: 'verify-expired', color: '#8c8c8c', icon: 'CircleClose' },
+  user_mismatch: { value: 'user_mismatch', label: '用户不符', class: 'verify-mismatch', color: '#722ed1', icon: 'User' },
+  time_mismatch: { value: 'time_mismatch', label: '时段不符', class: 'verify-time', color: '#eb2f96', icon: 'Clock' },
+  fake: { value: 'fake', label: '虚假凭证', class: 'verify-fake', color: '#ff4d4f', icon: 'WarningFilled' }
+}
+
+export const FulfillLogTypeEnum = {
+  create: { value: 'create', label: '创建记录', color: '#1890ff', icon: 'Plus' },
+  verify: { value: 'verify', label: '核销成功', color: '#52c41a', icon: 'CircleCheckFilled' },
+  verify_fail: { value: 'verify_fail', label: '核销失败', color: '#ff4d4f', icon: 'CircleCloseFilled' },
+  repeat: { value: 'repeat', label: '重复核销', color: '#faad14', icon: 'RefreshRight' },
+  expire: { value: 'expire', label: '自动过期', color: '#8c8c8c', icon: 'CircleClose' },
+  refund: { value: 'refund', label: '退票处理', color: '#fa8c16', icon: 'RefreshLeft' },
+  abnormal_mark: { value: 'abnormal_mark', label: '标记异常', color: '#ff4d4f', icon: 'WarningFilled' },
+  abnormal_handle: { value: 'abnormal_handle', label: '处理异常', color: '#722ed1', icon: 'Tools' },
+  batch: { value: 'batch', label: '批量操作', color: '#13c2c2', icon: 'Files' },
+  sync: { value: 'sync', label: '数据同步', color: '#1890ff', icon: 'Refresh' },
+  manual_edit: { value: 'manual_edit', label: '人工修改', color: '#eb2f96', icon: 'Edit' }
+}
+
+export const FulfillAbnormalTypeEnum = {
+  repeat: { value: 'repeat', label: '重复核销', color: '#faad14' },
+  fake: { value: 'fake', label: '虚假凭证', color: '#ff4d4f' },
+  time: { value: 'time', label: '时段异常', color: '#eb2f96' },
+  location: { value: 'location', label: '地点异常', color: '#722ed1' },
+  user_mismatch: { value: 'user_mismatch', label: '用户不符', color: '#13c2c2' },
+  order_invalid: { value: 'order_invalid', label: '订单异常', color: '#fa8c16' },
+  other: { value: 'other', label: '其他异常', color: '#8c8c8c' }
+}
+
+export const FulfillBatchOperationEnum = {
+  mark_expired: { value: 'mark_expired', label: '批量标记过期', icon: 'CircleClose', color: '#8c8c8c' },
+  mark_abnormal: { value: 'mark_abnormal', label: '批量标记异常', icon: 'WarningFilled', color: '#ff4d4f' },
+  handle_abnormal: { value: 'handle_abnormal', label: '批量处理异常', icon: 'Tools', color: '#722ed1' },
+  sync_fulfillment: { value: 'sync_fulfillment', label: '批量同步数据', icon: 'Refresh', color: '#1890ff' },
+  force_void: { value: 'force_void', label: '批量强制作废', icon: 'Delete', color: '#fa8c16' }
+}
+
 export default {
   OrderStatusEnum,
   OrderSourceEnum,
@@ -1551,6 +1600,11 @@ export default {
   InventoryVerifyResultEnum,
   InventoryBatchOperationEnum,
   InventoryReviewStatusEnum,
+  FulfillStatusEnum,
+  FulfillVerifyResultEnum,
+  FulfillLogTypeEnum,
+  FulfillAbnormalTypeEnum,
+  FulfillBatchOperationEnum,
   formatPriceThousandth,
   getEnumLabel,
   getEnumType,
