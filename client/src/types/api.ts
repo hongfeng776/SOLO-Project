@@ -417,6 +417,149 @@ export interface IStockFeeCalculationDetail {
   breakdown: Array<{ item: string; amount: number }>
 }
 
+export interface IStockStatusSyncRecord {
+  id: number
+  syncCode: string
+  stockCode: string
+  stockName: string
+  fromStatus: string
+  toStatus: string
+  changeType: string
+  syncSource: string
+  announcementId: string
+  announcementTitle?: string
+  announcementPublishTime?: string
+  effectiveTime: string
+  riskLevel: string
+  auditStatus: string
+  auditRemark?: string
+  tradingLocked: boolean
+  holdingCleared: boolean
+  pushedToClient: boolean
+  affectedHoldings: number
+  affectedOrders: number
+  operatorId?: number
+  operatorName?: string
+  operationTime: string
+  remark?: string
+  createdAt: string
+}
+
+export interface IStockStatusAnnouncement {
+  id: number
+  announcementId: string
+  announcementCode: string
+  announcementTitle: string
+  exchange: string
+  stockCode: string
+  stockName: string
+  publishTime: string
+  effectiveTime: string
+  targetStatus: string
+  announcementType: string
+  synced: boolean
+  syncTime?: string
+  content?: string
+  url?: string
+}
+
+export interface IStockStatusValidateResult {
+  valid: boolean
+  permissionValid: boolean
+  permissionMessage: string
+  currentStatusValid: boolean
+  currentStatusMessage: string
+  announcementExist: boolean
+  announcementMessage: string
+  announcementMatched: boolean
+  announcementDetail?: IStockStatusAnnouncement
+  canChange: boolean
+  blockReason: string
+  allowedTransitions: string[]
+}
+
+export interface IStockStatusLockResult {
+  stockCode: string
+  stockName: string
+  previousStatus: string
+  newStatus: string
+  tradingLocked: boolean
+  holdingCleared: boolean
+  lockedAccounts: number
+  pendingOrdersCancelled: number
+  positionsLiquidated: number
+  clientNotificationsSent: number
+  affectedCustomerCount: number
+  syncStatus: 'success' | 'partial' | 'failed'
+  syncMessage: string
+}
+
+export interface IStockStatusBatchResult {
+  total: number
+  validated: number
+  success: number
+  failed: number
+  skipped: number
+  successList: IStockStatusSyncRecord[]
+  errorList: Array<{
+    stockCode: string
+    stockName: string
+    errorCode: string
+    errorMessage: string
+    announcementMissing: boolean
+  }>
+  skippedList: Array<{
+    stockCode: string
+    stockName: string
+    reason: string
+    currentStatus: string
+  }>
+  dataLockReleased: boolean
+  listRefreshPartial: boolean
+}
+
+export interface IStockStatusTraceData {
+  sourceInfo: {
+    firstListingDate: string
+    initialStatus: string
+    totalChangeCount: number
+    listingExchange: string
+  }
+  lifecycleRecords: Array<{
+    sequence: number
+    fromStatus: string
+    toStatus: string
+    changeType: string
+    syncSource: string
+    effectiveTime: string
+    operator: string
+    durationDays: number
+  }>
+  complianceCheck: {
+    passed: boolean
+    timelinessPassed: boolean
+    accuracyPassed: boolean
+    regulatoryPassed: boolean
+    totalScore: number
+    issues: Array<{
+      checkItem: string
+      severity: string
+      description: string
+      expectedTime?: string
+      actualTime?: string
+      delayHours?: number
+    }>
+  }
+  marketComparison: {
+    marketStatus: string
+    platformStatus: string
+    consistent: boolean
+    timeDiffSeconds: number
+    lastSyncExchangeTime: string
+    lastSyncPlatformTime: string
+  }
+}
+
 export interface IAssetProduct {
   id: number
   productCode: string

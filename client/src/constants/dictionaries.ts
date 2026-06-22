@@ -1,4 +1,4 @@
-import { MarketType, RiskLevel, ProductType, ProductStatus, CustomerType, CustomerStatus, FlowType, FlowStatus, FlowChannel, AuditType, AuditStatus, TargetType, PermType, UserStatus, RoleStatus, PermissionStatus, TradeType, TradeStatus, AlertType, AlertLevel, AlertStatus, LogStatus, LogModule, LogAction, StockStatus, ArchiveStatus, FilingStatus, AccountStatus, Gender, Education, MaritalStatus, HoldingLockStatus, StockProductType, StockProductStatus, StockProductArchiveStatus, StockProductFilingStatus, StockClassLevel, StockClassStatus, StockClassOperationType, StockFeeRateType, StockFeeRateStatus, StockFeeCustomerLevel, StockFeeTradeScene, StockFeeScopeType, StockFeeConflictLevel } from '@/enums'
+import { MarketType, RiskLevel, ProductType, ProductStatus, CustomerType, CustomerStatus, FlowType, FlowStatus, FlowChannel, AuditType, AuditStatus, TargetType, PermType, UserStatus, RoleStatus, PermissionStatus, TradeType, TradeStatus, AlertType, AlertLevel, AlertStatus, LogStatus, LogModule, LogAction, StockStatus, ArchiveStatus, FilingStatus, AccountStatus, Gender, Education, MaritalStatus, HoldingLockStatus, StockProductType, StockProductStatus, StockProductArchiveStatus, StockProductFilingStatus, StockClassLevel, StockClassStatus, StockClassOperationType, StockFeeRateType, StockFeeRateStatus, StockFeeCustomerLevel, StockFeeTradeScene, StockFeeScopeType, StockFeeConflictLevel, StockStatusChangeType, StockStatusSyncSource, StockStatusRiskLevel, StockStatusAuditStatus } from '@/enums'
 import { BoardType, TradeStatus as QuoteTradeStatus } from '@/types/api'
 
 export const MARKET_LABELS: Record<MarketType, string> = {
@@ -741,4 +741,108 @@ export const STOCK_FEE_FIELD_LABELS: Record<string, string> = {
   effectiveEndTime: '生效结束时间',
   conflictLevel: '冲突等级',
   description: '描述',
+}
+
+export const STOCK_STATUS_CHANGE_TYPE_LABELS: Record<StockStatusChangeType, string> = {
+  [StockStatusChangeType.AUTO_SYNC]: '自动同步',
+  [StockStatusChangeType.MANUAL_UPDATE]: '手动更新',
+  [StockStatusChangeType.ANNOUNCEMENT_TRIGGER]: '公告触发',
+  [StockStatusChangeType.BATCH_SYNC]: '批量同步',
+}
+
+export const STOCK_STATUS_CHANGE_TYPE_COLORS: Record<StockStatusChangeType, string> = {
+  [StockStatusChangeType.AUTO_SYNC]: '#67C23A',
+  [StockStatusChangeType.MANUAL_UPDATE]: '#409EFF',
+  [StockStatusChangeType.ANNOUNCEMENT_TRIGGER]: '#E6A23C',
+  [StockStatusChangeType.BATCH_SYNC]: '#9254de',
+}
+
+export const STOCK_STATUS_CHANGE_TYPE_TAG_TYPES: Record<StockStatusChangeType, 'success' | 'primary' | 'warning' | 'info'> = {
+  [StockStatusChangeType.AUTO_SYNC]: 'success',
+  [StockStatusChangeType.MANUAL_UPDATE]: 'primary',
+  [StockStatusChangeType.ANNOUNCEMENT_TRIGGER]: 'warning',
+  [StockStatusChangeType.BATCH_SYNC]: 'info',
+}
+
+export const STOCK_STATUS_SYNC_SOURCE_LABELS: Record<StockStatusSyncSource, string> = {
+  [StockStatusSyncSource.SSE]: '上交所',
+  [StockStatusSyncSource.SZSE]: '深交所',
+  [StockStatusSyncSource.HKEX]: '港交所',
+  [StockStatusSyncSource.NASDAQ]: '纳斯达克',
+  [StockStatusSyncSource.NYSE]: '纽交所',
+  [StockStatusSyncSource.MANUAL]: '手动录入',
+}
+
+export const STOCK_STATUS_SYNC_SOURCE_COLORS: Record<StockStatusSyncSource, string> = {
+  [StockStatusSyncSource.SSE]: '#F56C6C',
+  [StockStatusSyncSource.SZSE]: '#409EFF',
+  [StockStatusSyncSource.HKEX]: '#67C23A',
+  [StockStatusSyncSource.NASDAQ]: '#9254de',
+  [StockStatusSyncSource.NYSE]: '#E6A23C',
+  [StockStatusSyncSource.MANUAL]: '#909399',
+}
+
+export const STOCK_STATUS_RISK_LEVEL_LABELS: Record<StockStatusRiskLevel, string> = {
+  [StockStatusRiskLevel.NO_RISK]: '无风险',
+  [StockStatusRiskLevel.LOW_RISK]: '低风险',
+  [StockStatusRiskLevel.MEDIUM_RISK]: '中风险',
+  [StockStatusRiskLevel.HIGH_RISK]: '高风险',
+  [StockStatusRiskLevel.CRITICAL]: '极高风险',
+}
+
+export const STOCK_STATUS_RISK_LEVEL_COLORS: Record<StockStatusRiskLevel, string> = {
+  [StockStatusRiskLevel.NO_RISK]: '#67C23A',
+  [StockStatusRiskLevel.LOW_RISK]: '#909399',
+  [StockStatusRiskLevel.MEDIUM_RISK]: '#E6A23C',
+  [StockStatusRiskLevel.HIGH_RISK]: '#F56C6C',
+  [StockStatusRiskLevel.CRITICAL]: '#9254de',
+}
+
+export const STOCK_STATUS_RISK_LEVEL_TAG_TYPES: Record<StockStatusRiskLevel, 'success' | 'info' | 'warning' | 'danger'> = {
+  [StockStatusRiskLevel.NO_RISK]: 'success',
+  [StockStatusRiskLevel.LOW_RISK]: 'info',
+  [StockStatusRiskLevel.MEDIUM_RISK]: 'warning',
+  [StockStatusRiskLevel.HIGH_RISK]: 'danger',
+  [StockStatusRiskLevel.CRITICAL]: 'danger',
+}
+
+export const STOCK_STATUS_AUDIT_STATUS_LABELS: Record<StockStatusAuditStatus, string> = {
+  [StockStatusAuditStatus.PENDING]: '待审核',
+  [StockStatusAuditStatus.APPROVED]: '审核通过',
+  [StockStatusAuditStatus.REJECTED]: '审核驳回',
+  [StockStatusAuditStatus.SKIPPED]: '免审',
+}
+
+export const STOCK_STATUS_AUDIT_STATUS_TAG_TYPES: Record<StockStatusAuditStatus, 'warning' | 'success' | 'danger' | 'info'> = {
+  [StockStatusAuditStatus.PENDING]: 'warning',
+  [StockStatusAuditStatus.APPROVED]: 'success',
+  [StockStatusAuditStatus.REJECTED]: 'danger',
+  [StockStatusAuditStatus.SKIPPED]: 'info',
+}
+
+export const STOCK_STATUS_TRANSITION_RULES: Record<string, string[]> = {
+  normal: ['suspended', 'delisted', 'paused'],
+  suspended: ['normal', 'delisted', 'paused'],
+  paused: ['normal', 'suspended', 'delisted'],
+  delisted: [],
+}
+
+export const STOCK_STATUS_FIELD_LABELS: Record<string, string> = {
+  syncCode: '同步编码',
+  stockCode: '股票代码',
+  stockName: '股票名称',
+  fromStatus: '原状态',
+  toStatus: '目标状态',
+  changeType: '变更类型',
+  syncSource: '数据来源',
+  announcementId: '公告编号',
+  announcementTitle: '公告标题',
+  effectiveTime: '生效时间',
+  riskLevel: '风险等级',
+  auditStatus: '审核状态',
+  tradingLocked: '交易锁定',
+  holdingCleared: '持仓清空',
+  pushedToClient: '客户推送',
+  operatorName: '操作人',
+  operationTime: '操作时间',
 }

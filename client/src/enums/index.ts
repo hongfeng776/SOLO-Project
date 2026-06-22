@@ -88,6 +88,14 @@ export enum StockFeeScopeType { GLOBAL = 'global', LOCAL = 'local' }
 
 export enum StockFeeConflictLevel { NONE = 'none', WARNING = 'warning', ERROR = 'error' }
 
+export enum StockStatusChangeType { AUTO_SYNC = 'auto_sync', MANUAL_UPDATE = 'manual_update', ANNOUNCEMENT_TRIGGER = 'announcement_trigger', BATCH_SYNC = 'batch_sync' }
+
+export enum StockStatusSyncSource { SSE = 'sse', SZSE = 'szse', HKEX = 'hkex', NASDAQ = 'nasdaq', NYSE = 'nyse', MANUAL = 'manual' }
+
+export enum StockStatusRiskLevel { NO_RISK = 'no_risk', LOW_RISK = 'low_risk', MEDIUM_RISK = 'medium_risk', HIGH_RISK = 'high_risk', CRITICAL = 'critical' }
+
+export enum StockStatusAuditStatus { PENDING = 'pending', APPROVED = 'approved', REJECTED = 'rejected', SKIPPED = 'skipped' }
+
 export const HOT_RISE_THRESHOLD = 7
 
 export const RISK_FALL_THRESHOLD = -7
