@@ -145,6 +145,12 @@ export const routes = [
         meta: { title: '票种规则配置', icon: 'Tickets', roles: ['admin', 'ticket_operator', 'senior_ticket_operator', 'ticket_auditor', 'package_auditor'] }
       },
       {
+        path: 'ticket-inventory-ops',
+        name: 'TicketInventoryOps',
+        component: () => import('@/views/ticket-inventory/TicketInventoryOps.vue'),
+        meta: { title: '分时库存配置', icon: 'DataLine', roles: ['admin', 'ticket_operator', 'senior_ticket_operator', 'inventory_operator', 'inventory_auditor'] }
+      },
+      {
         path: 'business-travel',
         name: 'BusinessTravelManage',
         component: () => import('@/views/product/BusinessTravel.vue'),

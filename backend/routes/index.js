@@ -25,6 +25,7 @@ const carController = require('../controllers/CarController')
 const ticketController = require('../controllers/TicketController')
 const scenicSpotController = require('../controllers/ScenicSpotController')
 const ticketTypeController = require('../controllers/TicketTypeController')
+const ticketInventoryController = require('../controllers/TicketInventoryController')
 const orderController = require('../controllers/OrderController')
 const merchantController = require('../controllers/MerchantController')
 const businessTravelController = require('../controllers/BusinessTravelController')
@@ -230,6 +231,16 @@ router.post('/ticket-types/ops/batch', auth(['admin', 'senior_ticket_operator'])
 router.post('/ticket-types/:id/ops/verify', auth(['admin', 'senior_ticket_operator', 'ticket_auditor']), ticketTypeController.verifyTicket.bind(ticketTypeController));
 router.get('/ticket-types/:id/ops/logs', auth(), pagination, ticketTypeController.getLogs.bind(ticketTypeController));
 router.get('/ticket-types/ops/logs/all', auth(), pagination, ticketTypeController.getAllLogs.bind(ticketTypeController));
+
+registerCrudRoutes('ticket-inventory', ticketInventoryController);
+router.get('/ticket-inventory/ops/stats', auth(), ticketInventoryController.getStats.bind(ticketInventoryController));
+router.get('/ticket-inventory/ops/permission', auth(), ticketInventoryController.checkPermission.bind(ticketInventoryController));
+router.put('/ticket-inventory/:id/ops/status', auth(), ticketInventoryController.setStatus.bind(ticketInventoryController));
+router.post('/ticket-inventory/ops/batch', auth(['admin', 'senior_ticket_operator']), ticketInventoryController.batchOperation.bind(ticketInventoryController));
+router.post('/ticket-inventory/:id/ops/verify', auth(['admin', 'senior_ticket_operator', 'inventory_auditor']), ticketInventoryController.verifyInventory.bind(ticketInventoryController));
+router.post('/ticket-inventory/ops/check-expired', auth(['admin']), ticketInventoryController.checkExpired.bind(ticketInventoryController));
+router.get('/ticket-inventory/:id/ops/logs', auth(), pagination, ticketInventoryController.getLogs.bind(ticketInventoryController));
+router.get('/ticket-inventory/ops/logs/all', auth(), pagination, ticketInventoryController.getAllLogs.bind(ticketInventoryController));
 
 router.get('/orders', auth(), pagination, orderController.list.bind(orderController));
 router.get('/orders/:id', auth(), orderController.get.bind(orderController));

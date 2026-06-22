@@ -1354,6 +1354,57 @@ export const TicketBatchOperationEnum = {
   adjust_time: { value: 'adjust_time', label: '批量调整使用时段', icon: 'Clock', color: '#fa8c16' }
 }
 
+export const InventorySessionTypeEnum = {
+  daily: { value: 'daily', label: '日常场次', icon: 'Sunny', color: '#1890ff', tagClass: 'tag-inv-daily', gradient: 'linear-gradient(135deg, #1890ff, #69c0ff)' },
+  weekend: { value: 'weekend', label: '周末场次', icon: 'Coffee', color: '#52c41a', tagClass: 'tag-inv-weekend', gradient: 'linear-gradient(135deg, #52c41a, #95de64)' },
+  holiday: { value: 'holiday', label: '节假日场次', icon: 'Present', color: '#fa8c16', tagClass: 'tag-inv-holiday', gradient: 'linear-gradient(135deg, #fa8c16, #ffc069)' },
+  performance: { value: 'performance', label: '专属展演场次', icon: 'Tickets', color: '#eb2f96', tagClass: 'tag-inv-performance', gradient: 'linear-gradient(135deg, #eb2f96, #ff85c0)' }
+}
+
+export const InventoryStatusEnum = {
+  active: { value: 'active', label: '开放预约', color: '#52c41a', tagClass: 'tag-inv-active' },
+  locked: { value: 'locked', label: '已锁定', color: '#faad14', tagClass: 'tag-inv-locked' },
+  sold_out: { value: 'sold_out', label: '已售罄', color: '#ff4d4f', tagClass: 'tag-inv-soldout' },
+  closed: { value: 'closed', label: '已关闭', color: '#8c8c8c', tagClass: 'tag-inv-closed' },
+  expired: { value: 'expired', label: '已过期', color: '#bfbfbf', tagClass: 'tag-inv-expired' }
+}
+
+export const InventoryLogTypeEnum = {
+  create: { value: 'create', label: '库存创建', color: '#52c41a', icon: 'Plus' },
+  adjust: { value: 'adjust', label: '库存调整', color: '#1890ff', icon: 'Edit' },
+  lock: { value: 'lock', label: '库存锁定', color: '#faad14', icon: 'Lock' },
+  unlock: { value: 'unlock', label: '库存解锁', color: '#13c2c2', icon: 'Unlock' },
+  occupy: { value: 'occupy', label: '库存占用', color: '#722ed1', icon: 'Minus' },
+  release: { value: 'release', label: '库存释放', color: '#13c2c2', icon: 'Plus' },
+  use: { value: 'use', label: '库存核销', color: '#52c41a', icon: 'CircleCheckFilled' },
+  expire: { value: 'expire', label: '场次过期', color: '#bfbfbf', icon: 'Clock' },
+  close: { value: 'close', label: '场次关闭', color: '#8c8c8c', icon: 'CircleClose' },
+  batch: { value: 'batch', label: '批量操作', color: '#722ed1', icon: 'Files' },
+  verify: { value: 'verify', label: '库存审核', color: '#eb2f96', icon: 'CircleCheck' }
+}
+
+export const InventoryVerifyResultEnum = {
+  pass: { value: 'pass', label: '通过', class: 'verify-pass', icon: 'CircleCheckFilled' },
+  warning: { value: 'warning', label: '存疑', class: 'verify-warning', icon: 'Warning' },
+  block: { value: 'block', label: '已拦截', class: 'verify-block', icon: 'CircleCloseFilled' }
+}
+
+export const InventoryBatchOperationEnum = {
+  increase_holiday: { value: 'increase_holiday', label: '批量增加节假日库存', icon: 'Plus', color: '#fa8c16', needsReview: true },
+  lock_full: { value: 'lock_full', label: '批量锁定满员场次', icon: 'Lock', color: '#faad14' },
+  clear_expired: { value: 'clear_expired', label: '批量清空过期场次', icon: 'Delete', color: '#8c8c8c' },
+  set_status: { value: 'set_status', label: '批量设置状态', icon: 'SwitchButton', color: '#1890ff' },
+  adjust_quota: { value: 'adjust_quota', label: '批量调整库存配额', icon: 'Edit', color: '#52c41a', needsReview: true },
+  adjust_limit: { value: 'adjust_limit', label: '批量调整单次限购', icon: 'Key', color: '#722ed1' },
+  adjust_advance: { value: 'adjust_advance', label: '批量调整预约规则', icon: 'Clock', color: '#13c2c2' }
+}
+
+export const InventoryReviewStatusEnum = {
+  pending: { value: 'pending', label: '待复核', color: '#faad14' },
+  approved: { value: 'approved', label: '已通过', color: '#52c41a' },
+  rejected: { value: 'rejected', label: '已驳回', color: '#ff4d4f' }
+}
+
 export default {
   OrderStatusEnum,
   OrderSourceEnum,
@@ -1494,6 +1545,12 @@ export default {
   HotelFulfillmentVerifyStatusEnum,
   HotelFulfillmentLogTypeEnum,
   HotelFulfillmentBatchOperationEnum,
+  InventorySessionTypeEnum,
+  InventoryStatusEnum,
+  InventoryLogTypeEnum,
+  InventoryVerifyResultEnum,
+  InventoryBatchOperationEnum,
+  InventoryReviewStatusEnum,
   formatPriceThousandth,
   getEnumLabel,
   getEnumType,
